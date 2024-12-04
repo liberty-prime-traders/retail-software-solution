@@ -1,9 +1,10 @@
 plugins {
+	kotlin("kapt") version "1.9.25"
 	kotlin("jvm") version "1.9.25"
 	kotlin("plugin.spring") version "1.9.25"
+	kotlin("plugin.jpa") version "1.9.25"
 	id("org.springframework.boot") version "3.3.5"
 	id("io.spring.dependency-management") version "1.1.6"
-	kotlin("plugin.jpa") version "1.9.25"
 }
 
 group = "me.ezra-home"
@@ -23,18 +24,30 @@ configurations {
 
 repositories {
 	mavenCentral()
+	gradlePluginPortal()
 }
 
 dependencies {
+	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.1.4")
+
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+
 	implementation("org.liquibase:liquibase-core")
-	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
-	annotationProcessor("org.projectlombok:lombok")
+
+	implementation("com.google.guava:guava:33.3.1-jre")
+	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
+	implementation("org.mapstruct:mapstruct:1.6.3")
+	kapt("org.mapstruct:mapstruct-processor:1.6.3")
+
+	compileOnly("org.projectlombok:lombok")
+	kapt("org.projectlombok:lombok")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -55,3 +68,4 @@ allOpen {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+

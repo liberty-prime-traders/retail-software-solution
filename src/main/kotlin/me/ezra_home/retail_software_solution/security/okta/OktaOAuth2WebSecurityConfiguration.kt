@@ -14,7 +14,9 @@ class OktaOAuth2WebSecurityConfiguration {
     @Bean
     @Throws(Exception::class)
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        return http.authorizeHttpRequests { it.requestMatchers("/secured/**").authenticated().requestMatchers("/**").permitAll() }
+        return http
+            .authorizeHttpRequests { it.requestMatchers("/secured/**").authenticated().anyRequest().permitAll() }
+            .csrf { it.disable() }
             .oauth2ResourceServer { it.jwt(Customizer.withDefaults()) }
             .build()
     }

@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: '1'
+      author: ezra
+      changes:
+        - createTable:
+            tableName: audit
+            columns:
+              - column:
+                  name: entity_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: audit_entity_name_not_null
+
+              - column:
+                  name: entity_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: audit_entity_id_not_null
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: audit_created_by_id_notnull
+
+              - column:
+                  name: last_updated_by_id
+                  type: uuid
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: last_updated_on
+                  type: timestamptz
+
+              - column:
+                  name: active_ind
+                  type: boolean
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: status
+                  type: varchar(5)
+
+        - addPrimaryKey:
+            tableName: audit
+            columnNames: entity_id, entity_name

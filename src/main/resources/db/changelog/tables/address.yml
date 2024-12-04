@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: '1'
+      author: ezra
+      changes:
+        - createTable:
+            tableName: address
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: line1
+                  type: varchar(100)
+
+              - column:
+                  name: line2
+                  type: varchar(50)
+
+              - column:
+                  name: line3
+                  type: varchar(30)
+
+              - column:
+                  name: state
+                  type: varchar(100)
+
+              - column:
+                  name: postal_code
+                  type: varchar(10)
+
+              - column:
+                  name: country
+                  type: varchar(100)
