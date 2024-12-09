@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: '1'
+      author: ezra
+      changes:
+        - createTable:
+            tableName: sys_user
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: okta_id
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sys_user_okta_id_notnull

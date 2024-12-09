@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: retail-software-solution
+
+  datasource:
+    url: jdbc:postgresql://${DB_DOMAIN}:${DB_PORT}/${DB_NAME}?stringtype=unspecified&serverTimezone=UTC
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      auto-commit: false
+
+  cache:
+    caffeine:
+      spec: maximumSize=100
+
+  liquibase:
+    change-log: classpath:db/changelog/db-changelog-master.yml
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 5000
+            logger-level: full
+  jpa:
+    show-sql: ${SHOW_SQL:false}
+    open-in-view: false
+
+  task:
+    scheduling:
+      pool:
+        size: 5
+
+  jackson:
+    time-zone: UTC
+    default-property-inclusion: non_null
+
+okta:
+  oauth2:
+    issuer: https://${OKTA_DOMAIN}
+    client-id: ${OKTA_CLIENT_ID}
+    client-secret: ${OKTA_CLIENT_SECRET}
+
+  client:
+    org-url: https://${OKTA_DOMAIN}
+    token: ${OKTA_API_TOKEN}
+
+server:
+  port: ${PORT:8080}

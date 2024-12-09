@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - property:
+      dbms: postgresql
+      name: uuid_function
+      value: gen_random_uuid()
+
+  - property:
+      dbms: postgresql
+      name: now
+      value: current_timestamp
+
+  - property:
+      dbms: postgresql
+      name: today
+      value: current_date
+
+  - includeAll:
+      path: tables
+      relativeToChangelogFile: true
