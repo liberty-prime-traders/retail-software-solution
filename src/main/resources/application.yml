@@ -16,14 +16,6 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db-changelog-master.yml
 
-  cloud:
-    openfeign:
-      client:
-        config:
-          default:
-            connect-timeout: 5000
-            read-timeout: 5000
-            logger-level: full
   jpa:
     show-sql: ${SHOW_SQL:false}
     open-in-view: false
