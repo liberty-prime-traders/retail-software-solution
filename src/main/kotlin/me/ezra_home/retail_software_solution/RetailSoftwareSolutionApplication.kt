@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching
-import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.transaction.annotation.EnableTransactionManagement
 
@@ -11,7 +10,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 @EnableCaching
 @EnableScheduling
 @EnableTransactionManagement
-@EnableFeignClients
 class RetailSoftwareSolutionApplication
 
 fun main(args: Array<String>) {
