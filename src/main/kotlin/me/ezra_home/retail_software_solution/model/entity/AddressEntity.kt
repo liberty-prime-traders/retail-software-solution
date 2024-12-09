@@ -2,15 +2,13 @@ package me.ezra_home.retail_software_solution.model.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Size
-import me.ezra_home.retail_software_solution.business.audit.auditmanager.AuditListener
 import me.ezra_home.retail_software_solution.model.util.TableNames
+import java.util.UUID
 
 @Entity
 @Table(name = TableNames.ADDRESS)
-@EntityListeners(AuditListener::class)
 class AddressEntity(
 
     @Size(max = 100)
@@ -35,6 +33,12 @@ class AddressEntity(
 
     @Size(max = 100)
     @Column(name = "country", length = 100)
-    open var country: String? = null
+    open var country: String? = null,
 
-): BaseEntity()
+    @Column(name = "predecessor_of_id")
+    open var predecessorOfId: UUID? = null,
+
+    @Column(name = "usage_count")
+    open var usageCount: Long? = null
+
+): AuditableEntity()

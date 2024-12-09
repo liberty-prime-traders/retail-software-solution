@@ -29,9 +29,9 @@ repositories {
 
 dependencies {
 	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
+	implementation("com.okta.spring:okta-spring-sdk")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.1.4")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")

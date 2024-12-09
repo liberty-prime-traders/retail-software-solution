@@ -11,6 +11,6 @@ import org.mapstruct.ReportingPolicy
     unmappedSourcePolicy = ReportingPolicy.IGNORE,
     injectionStrategy = InjectionStrategy.CONSTRUCTOR,
     componentModel = MappingConstants.ComponentModel.SPRING,
-    uses = [UserQualifier::class]
+    uses = [UserQualifier::class, OptionalQualifier::class]
 )
 interface RtsMapperConfig

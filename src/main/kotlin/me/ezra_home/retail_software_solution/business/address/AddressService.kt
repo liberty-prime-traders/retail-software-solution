@@ -1,39 +1,34 @@
 package me.ezra_home.retail_software_solution.business.address
 
-import me.ezra_home.retail_software_solution.business.audit.AuditMapper
-import me.ezra_home.retail_software_solution.business.audit.AuditService
-import me.ezra_home.retail_software_solution.model.util.TableNames
+import me.ezra_home.retail_software_solution.business.address.dto.AddressInsertDto
+import me.ezra_home.retail_software_solution.business.address.dto.AddressResponseDto
+import me.ezra_home.retail_software_solution.business.address.dto.AddressUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.util.Objects
 
 @Service
 class AddressService(
     private val addressMapper: AddressMapper,
-    private val addressCache: AddressCache,
-    private val auditService: AuditService,
-    private val auditMapper: AuditMapper
+    private val addressCache: AddressCache
 ) {
 
-    fun getAllAddresses(): Collection<AddressWithAudit> {
-        val auditsForAddress = auditService.getAuditsForTable(TableNames.ADDRESS)
-        return addressCache.getAllAddresses().map { address ->
-            val auditForAddress = auditsForAddress.find { Objects.equals(it.id?.entityId, address.id) }
-            AddressWithAudit(
-                auditMapper.toDto(auditForAddress!!),
-                addressMapper.toDto(address)
-            )
-        }
+    @Transactional
+    fun getAllAddresses(): Collection<AddressResponseDto> {
+        return addressCache.getAllAddresses().map { addressMapper.toDto(it) }
     }
 
-    fun createAddress(addressDto: AddressDto): AddressDto {
-        val newAddressEntity = addressMapper.toEntity(addressDto)
+    @Transactional
+    fun createAddress(addressInsertDto: AddressInsertDto): AddressResponseDto {
+        val newAddressEntity = addressMapper.toEntity(addressInsertDto)
         val savedAddressEntity = addressCache.upsertAddress(newAddressEntity)
         return addressMapper.toDto(savedAddressEntity)
     }
 
-    fun updateAddress(addressDto: AddressDto): AddressDto {
+    @Transactional
+    fun updateAddress(addressDto: AddressUpdateDto): AddressResponseDto {
         val addressToUpdate = addressCache.getAllAddresses().find { Objects.equals(addressDto.id, it.id) }
         if (addressToUpdate == null) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Attempted to Update non-existent record")
         addressMapper.partialUpdate(addressDto, addressToUpdate)

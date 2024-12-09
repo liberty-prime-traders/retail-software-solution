@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/secured/test")
+@RequestMapping("secured/test")
 class SecuredTestController {
 
     @GetMapping("restricted")

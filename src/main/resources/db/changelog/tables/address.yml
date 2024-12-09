@@ -36,3 +36,23 @@ databaseChangeLog:
               - column:
                   name: country
                   type: varchar(100)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: address_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
