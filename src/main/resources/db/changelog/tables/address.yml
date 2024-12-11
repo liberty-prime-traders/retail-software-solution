@@ -2,6 +2,11 @@ databaseChangeLog:
   - changeSet:
       id: '1'
       author: ezra
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: address
       changes:
         - createTable:
             tableName: address
