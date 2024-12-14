@@ -5,7 +5,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.ReportingPolicy
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
-import me.ezra_home.retail_software_solution.model.entity.FruitEntityDt
+import me.ezra_home.retail_software_solution.model.entity.FruitEntityDto
 
 @Mapper(
     componentModel = "spring",
