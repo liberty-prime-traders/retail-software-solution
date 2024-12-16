@@ -11,6 +11,6 @@ import java.util.UUID
 abstract class BaseEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", updatable = false)
     open var id: UUID? = null
 )
