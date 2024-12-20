@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.util.mapper.userinfo
+package me.ezra_home.retail_software_solution.business.util.mappers.userinfo
 
 import org.mapstruct.Qualifier
 

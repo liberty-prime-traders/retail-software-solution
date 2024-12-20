@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.security
+package me.ezra_home.retail_software_solution.configuration.security
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.CorsRegistry

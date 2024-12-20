@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.util.cache
+package me.ezra_home.retail_software_solution.configuration.cache
 
 class CacheNames {
     companion object {

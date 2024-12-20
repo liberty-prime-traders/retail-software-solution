@@ -15,8 +15,7 @@ class SysUserService(private val sysUserCache: SysUserCache,
     @Transactional
     fun addSystemUser(): SysUserDto {
         val oktaId = sessionContextProvider.getSession().oktaId
-        val allSystemUserRecords = sysUserCache.getSystemUsers()
-        val systemUser = allSystemUserRecords.find { Objects.equals(oktaId, it.oktaId) }
+        val systemUser = sysUserCache.getSystemUsers().find { Objects.equals(oktaId, it.oktaId) }
             ?: sysUserCache.addSystemUser(SysUserEntity(oktaId))
         val oktaRecordForNewUser = sysUserCache.getUsersFromOkta().find { Objects.equals(oktaId, it.id) }
         return sysUserMapper.oktaToSystemUser(oktaRecordForNewUser) { systemUser.id }

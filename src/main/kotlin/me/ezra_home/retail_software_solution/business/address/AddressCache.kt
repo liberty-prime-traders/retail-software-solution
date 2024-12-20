@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.business.address
 
-import me.ezra_home.retail_software_solution.business.util.cache.CacheNames
+import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.model.entity.AddressEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

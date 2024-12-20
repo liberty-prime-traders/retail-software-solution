@@ -29,7 +29,7 @@ class AddressService(
 
     @Transactional
     fun updateAddress(addressDto: AddressUpdateDto): AddressResponseDto {
-        val addressToUpdate = addressCache.getAllAddresses().find { Objects.equals(addressDto.id, it.id) }
+        val addressToUpdate = addressCache.getAllAddresses().find { Objects.equals(addressDto.getIdFromOptional(), it.id) }
         if (addressToUpdate == null) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Attempted to Update non-existent record")
         addressMapper.partialUpdate(addressDto, addressToUpdate)
         val updatedAddress = addressCache.upsertAddress(addressToUpdate)

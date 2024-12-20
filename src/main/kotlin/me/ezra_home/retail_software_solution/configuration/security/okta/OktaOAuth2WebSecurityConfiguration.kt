@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.security.okta
+package me.ezra_home.retail_software_solution.configuration.security.okta
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.util.mapper
+package me.ezra_home.retail_software_solution.business.util.mappers
 
 import org.springframework.stereotype.Component
 import java.util.Optional

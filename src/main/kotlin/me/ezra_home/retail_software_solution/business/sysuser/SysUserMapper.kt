@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.business.sysuser
 
 import com.okta.sdk.resource.user.User
-import me.ezra_home.retail_software_solution.business.util.mapper.RtsMapperConfig
+import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

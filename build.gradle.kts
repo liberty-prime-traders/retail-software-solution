@@ -34,6 +34,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("com.google.code.gson:gson:2.10.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
 	implementation("org.liquibase:liquibase-core")
@@ -41,6 +42,7 @@ dependencies {
 
 	implementation("com.google.guava:guava:33.3.1-jre")
 	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+	implementation("org.springframework.boot:spring-boot-starter-cache")
 
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	kapt("org.mapstruct:mapstruct-processor:1.6.3")
