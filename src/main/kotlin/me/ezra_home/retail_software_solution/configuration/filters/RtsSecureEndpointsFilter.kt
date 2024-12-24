@@ -1,9 +1,10 @@
-package me.ezra_home.retail_software_solution.rest.session.filters
+package me.ezra_home.retail_software_solution.configuration.filters
 
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
+import jakarta.servlet.http.HttpServletRequest
 import me.ezra_home.retail_software_solution.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.rest.session.SessionContextProvider
 import org.springframework.security.core.context.SecurityContextHolder
@@ -20,6 +21,10 @@ class RtsSecureEndpointsFilter(
         private const val OKTA_ID_KEY = "uid"
     }
     override fun doFilter(request: ServletRequest?, response: ServletResponse?, chain: FilterChain?) {
+        if (request is HttpServletRequest && request.method.equals("OPTIONS", ignoreCase = true)) {
+            chain?.doFilter(request, response)
+            return
+        }
         val authentication = SecurityContextHolder.getContext().authentication
         val jwt = authentication.principal as DefaultOAuth2AuthenticatedPrincipal
         val oktaIdForCurrentUser = jwt.attributes[OKTA_ID_KEY] as String
