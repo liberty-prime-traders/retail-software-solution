@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.rest.session.filters
+package me.ezra_home.retail_software_solution.configuration.filters
 
 import me.ezra_home.retail_software_solution.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.rest.session.SessionContextProvider
