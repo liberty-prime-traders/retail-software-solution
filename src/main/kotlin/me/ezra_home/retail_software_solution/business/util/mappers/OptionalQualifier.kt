@@ -5,5 +5,5 @@ import java.util.Optional
 
 @Component
 class OptionalQualifier {
-    fun <T> fromOptional(optional: Optional<T>): T? = optional.get()
+    fun <T> fromOptional(optional: Optional<T>): T? = optional.orElse(null)
 }

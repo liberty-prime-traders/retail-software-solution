@@ -17,6 +17,5 @@ data class AddressResponseDto(
     val country: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val predecessorOfId: UUID?,
     val usageCount: Long?
 ) : Serializable
