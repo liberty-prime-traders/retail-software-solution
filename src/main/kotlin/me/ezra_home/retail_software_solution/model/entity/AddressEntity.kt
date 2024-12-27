@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Size
 import me.ezra_home.retail_software_solution.model.util.TableNames
-import java.util.UUID
 
 @Entity
 @Table(name = TableNames.ADDRESS)
@@ -33,12 +32,6 @@ class AddressEntity(
 
     @Size(max = 100)
     @Column(name = "country", length = 100)
-    open var country: String? = null,
-
-    @Column(name = "predecessor_of_id")
-    open var predecessorOfId: UUID? = null,
-
-    @Column(name = "usage_count")
-    open var usageCount: Long? = null
+    open var country: String? = null
 
 ): AuditableEntity()
