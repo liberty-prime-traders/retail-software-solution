@@ -6,13 +6,13 @@ import java.util.UUID
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.FruitEntity}
  */
-data class FruitResponseDTO(
+data class FruitResponseDTO (
     val id: UUID?,
     val name: String,
     val alternateName: String?,
     val color: String?,
     val cost: Double?,
     val edibleInd: Boolean,
-    val createdById: UUID?,
+    val createdBy: String?,
     val createdOn: OffsetDateTime?,
 )

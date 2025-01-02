@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.business.fruit
 
+import com.google.common.base.Strings
 import jakarta.transaction.Transactional
 import me.ezra_home.retail_software_solution.business.fruit.dto.FruitResponseDTO
 import me.ezra_home.retail_software_solution.business.fruit.dto.FruitUpdateDTO
@@ -8,6 +9,7 @@ import me.ezra_home.retail_software_solution.business.util.exceptions.QueriedByE
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister
 import org.springframework.stereotype.Service
+import java.util.Optional
 import java.util.UUID
 
 @Service
@@ -24,7 +26,7 @@ class FruitService(
     @Transactional
     fun createFruit(fruitInsertDTO: FruitInsertDTO): FruitResponseDTO {
         // Validation (if necessary)
-        validateNameOnSave(fruitInsertDTO.name)
+        validateNameOnSave(Optional.ofNullable(fruitInsertDTO.name))
 
         // Converting DTO to entity and saving it to the cache
         val entity = fruitMapper.toEntity(fruitInsertDTO)
@@ -34,13 +36,13 @@ class FruitService(
         return fruitMapper.toResponseDto(entity)
     }
 
-    private fun validateNameOnSave(name: String?) {
-        if (name.isNullOrEmpty()) {
+    private fun validateNameOnSave(name: Optional<String>?) {
+        if (name == null || name.isEmpty || Strings.isNullOrEmpty(name.get()) ) {
             throw RtsGenericException("A fruit must have a name")
         }
 
         val fruitWithMatchingName = fruitCache.getAllFruits().find {
-            it.name == name
+            it.name == name.get()
         }
 
         if (fruitWithMatchingName != null) {

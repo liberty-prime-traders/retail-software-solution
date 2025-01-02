@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.model.util.TableNames
 
 @Entity
 @Table(name = TableNames.FRUIT)
-class FruitEntity(
+class FruitEntity (
         @Column(name = "name", nullable = false) 
         open var name: String,
 

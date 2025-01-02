@@ -7,11 +7,11 @@ import java.util.*
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.FruitEntity}
  */
 
-data class FruitUpdateDTO(
+data class FruitUpdateDTO (
     val id: UUID? = null,
-    val name: String?,
-    val alternateName: String?,
-    val color: String?,
-    val cost: Double?,
-    val edibleInd: Boolean?
+    val name: Optional<String>?,
+    val alternateName: Optional<String>?,
+    val color: Optional<String>?,
+    val cost: Optional<Double>?,
+    val edibleInd: Optional<Boolean>?
 ) : Serializable
