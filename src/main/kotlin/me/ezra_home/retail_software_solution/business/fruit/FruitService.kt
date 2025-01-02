@@ -9,7 +9,9 @@ import me.ezra_home.retail_software_solution.business.util.exceptions.QueriedByE
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.Optional
+import java.util.Objects
+import java.util.UUID
 
 @Service
 class FruitService(
@@ -67,7 +69,7 @@ class FruitService(
                 if (usageCount != null && usageCount > 0L) {
                     throw RtsGenericException("Fruit ${entity.name} has $usageCount usage(s) and cannot be deleted")
                 }
-                fruitCache.deleteFruit(id) // Deleting fruit from the cache
+                fruitCache.deleteFruit(id)
             }
         }
     }
