@@ -27,6 +27,7 @@ interface FruitMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toResponseDto(fruitEntity: FruitEntity): FruitResponseDTO
 
+
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
