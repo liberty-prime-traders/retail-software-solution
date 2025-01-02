@@ -7,10 +7,10 @@ import java.io.Serializable
  */
 
 data class FruitInsertDTO (
-    val name: String,
+    val name: String? = null,
     val alternateName: String?  = null,
     val color: String? = null,
     val cost: Double? = null,
-    val edibleInd: Boolean
+    val edibleInd: Boolean? = null
 ) : Serializable
 

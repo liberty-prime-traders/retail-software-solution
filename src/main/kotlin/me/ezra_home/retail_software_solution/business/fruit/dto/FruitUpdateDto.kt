@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.business.fruit.dto
 
 import java.io.Serializable
-import java.util.*
+import java.util.Optional
+import java.util.UUID
 
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.FruitEntity}

@@ -9,8 +9,7 @@ import me.ezra_home.retail_software_solution.business.util.exceptions.QueriedByE
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister
 import org.springframework.stereotype.Service
-import java.util.Optional
-import java.util.UUID
+import java.util.*
 
 @Service
 class FruitService(
@@ -25,28 +24,25 @@ class FruitService(
 
     @Transactional
     fun createFruit(fruitInsertDTO: FruitInsertDTO): FruitResponseDTO {
-        // Validation (if necessary)
         validateNameOnSave(Optional.ofNullable(fruitInsertDTO.name))
 
-        // Converting DTO to entity and saving it to the cache
         val entity = fruitMapper.toEntity(fruitInsertDTO)
         fruitCache.upsertFruit(entity)
 
-        // Returning the created fruit as a response DTO
         return fruitMapper.toResponseDto(entity)
     }
 
-    private fun validateNameOnSave(name: Optional<String>?) {
+    private fun validateNameOnSave(name: Optional<String>?, id: UUID? = null) {
         if (name == null || name.isEmpty || Strings.isNullOrEmpty(name.get()) ) {
             throw RtsGenericException("A fruit must have a name")
         }
 
         val fruitWithMatchingName = fruitCache.getAllFruits().find {
-            it.name == name.get()
+            it.name == name.get() && !Objects.equals(it.id, id)
         }
 
         if (fruitWithMatchingName != null) {
-            throw RtsGenericException("A fruit with the name '$name' already exists")
+            throw RtsGenericException("A fruit with the name '${name.get()}' already exists")
         }
     }
 
@@ -54,24 +50,17 @@ class FruitService(
     fun updateFruit(fruitUpdateDTO: FruitUpdateDTO): FruitResponseDTO {
         val id = fruitUpdateDTO.id ?: throw QueriedByEmptyIdException()
 
-        // Fetching the fruit from the cache and validating
         val entityFromCache = fruitCache.getAllFruits().find { it.id == id } ?: throw ChangeSetPersister.NotFoundException()
-        validateNameOnSave(fruitUpdateDTO.name)
-
-        // Mapping the updates
+        validateNameOnSave(fruitUpdateDTO.name, fruitUpdateDTO.id)
         fruitMapper.partialUpdate(fruitUpdateDTO, entityFromCache)
-
-        // Saving updated entity to the cache
         fruitCache.upsertFruit(entityFromCache)
 
-        // Returning updated fruit as a response DTO
         return fruitMapper.toResponseDto(entityFromCache)
     }
 
     @Transactional
     fun deleteFruit(id: UUID?) {
         if (id != null) {
-            // Fetching the fruit entity from cache
             val entity = fruitCache.getAllFruits().find { it.id == id }
             if (entity != null) {
                 val usageCount = entity.usageCount
