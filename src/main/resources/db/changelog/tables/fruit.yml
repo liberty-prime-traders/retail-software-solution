@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fruit-table
+      author: yourname
+      changes:
+        - createTable:
+            tableName: fruit
+            columns:
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: alternate_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: color
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: cost
+                  type: DECIMAL(10,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: edible_ind
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
