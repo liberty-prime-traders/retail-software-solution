@@ -2,7 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: create-fruit-table
       author: kenneth
-      preCondition:
+      preConditions:
         - not:
             tableExists:
               tableName: fruit
@@ -42,6 +42,14 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: fruit_edible_ind_notnull
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
 
               - column:
                   name: created_by_id
