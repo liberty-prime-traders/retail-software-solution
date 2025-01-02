@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fruit-table
+      author: kenneth
+      preCondition:
+        - not:
+            tableExists:
+              tableName: fruit
+      changes:
+        - createTable:
+            tableName: fruit
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fruit_name_notnull
+              - column:
+                  name: alternate_name
+                  type: varchar(255)
+
+              - column:
+                  name: color
+                  type: varchar(100)
+
+              - column:
+                  name: cost
+                  type: decimal(10,2)
+
+              - column:
+                  name: edible_ind
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fruit_edible_ind_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fruit_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
