@@ -23,6 +23,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: fruit_name_notnull
+
               - column:
                   name: alternate_name
                   type: varchar(255)
