@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-fruit-table
-      author: yourname
+      author: kenneth
       changes:
         - createTable:
             tableName: fruit
