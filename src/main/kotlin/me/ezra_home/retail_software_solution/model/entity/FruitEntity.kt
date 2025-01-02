@@ -7,20 +7,20 @@ import me.ezra_home.retail_software_solution.model.util.TableNames
 
 @Entity
 @Table(name = TableNames.FRUIT)
-class FruitEntity(
+class FruitEntity (
         @Column(name = "name", nullable = false) 
-        open val name: String,
+        open var name: String,
 
         @Column(name = "alternate_name") 
-        open val alternateName: String? = null,
+        open var alternateName: String? = null,
 
         @Column(name = "color") 
-        open val color: String? = null,
+        open var color: String? = null,
 
         @Column(name = "cost", precision = 10, scale = 2) 
-        open val cost: Double? = null,
+        open var cost: Double? = null,
 
         @Column(name = "edible_ind", nullable = false) 
-        open val edibleInd: Boolean,
+        open var edibleInd: Boolean,
 
 ) : AuditableEntity()
