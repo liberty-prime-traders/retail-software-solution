@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.business.organization.dto.Organizat
 import me.ezra_home.retail_software_solution.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.business.organization.dto.OrganizationUpdateDto
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -35,8 +34,8 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
         organizationService.updateOrganization(organizationUpdateDto)
 
     @DeleteMapping("{id}")
-    fun deleteOrganization(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
+    fun deleteOrganization(@PathVariable id: UUID?): ResponseEntity<HttpStatus> {
         organizationService.deleteOrganization(id)
-        return ResponseEntity(HttpStatusCode.valueOf(HttpStatus.NO_CONTENT.value()))
+        return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 }

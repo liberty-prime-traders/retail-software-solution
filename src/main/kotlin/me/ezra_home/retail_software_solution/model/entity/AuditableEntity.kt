@@ -11,10 +11,10 @@ import java.util.UUID
 @MappedSuperclass
 abstract class AuditableEntity(
     @NotNull
-    @Column(name = "created_by_id", updatable = false)
+    @Column(name = "created_by_id", nullable = false, updatable = false)
     open var createdById: UUID? = null,
 
-    @CreationTimestamp(source = SourceType.DB)
+    @CreationTimestamp(source = SourceType.VM)
     @Column(name = "created_on", updatable = false)
     open var createdOn: OffsetDateTime? = null,
 
@@ -22,6 +22,6 @@ abstract class AuditableEntity(
     open var predecessorOfId: UUID? = null,
 
     @Column(name = "usage_count")
-    open var usageCount: Long? = null
+    open var usageCount: Long = 0
 
 ): BaseEntity()
