@@ -5,7 +5,7 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.model.util.HasCode
 import java.util.EnumSet
 
-@Converter(autoApply = true)
+@Converter
 open class EnumConverter<ENUM>(private val enumClass: Class<ENUM>) : AttributeConverter<ENUM, String?>
         where ENUM: Enum<ENUM>, ENUM: HasCode {
 
