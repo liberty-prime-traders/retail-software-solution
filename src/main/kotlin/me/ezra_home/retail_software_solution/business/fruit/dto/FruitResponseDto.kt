@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.fruit
+package me.ezra_home.retail_software_solution.business.fruit.dto
 
 import java.io.Serializable
 import java.math.BigDecimal
