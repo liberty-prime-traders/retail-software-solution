@@ -4,6 +4,9 @@ import java.util.Objects
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryUpdateDto
+import me.ezra_home.retail_software_solution.business.location.LocationService.Companion.NAME_ALREADY_EXISTS
+import me.ezra_home.retail_software_solution.business.location.LocationService.Companion.NAME_IS_REQUIRED
+import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,10 +31,22 @@ class CategoryService(
 
     @Transactional
     fun updateCategory(categoryDto: CategoryUpdateDto): CategoryResponseDto {
+        validateCategoryUpdate(categoryDto)
         val categoryToUpdate = categoryCache.getAllCategories().find { Objects.equals(categoryDto.id, it.id) }
         if (categoryToUpdate == null) throw UpdatingNonExistingRecordException()
         categoryMapper.partialUpdate(categoryDto, categoryToUpdate)
         val updatedCategory = categoryCache.upsertCategories(categoryToUpdate)
         return categoryMapper.toDto(updatedCategory)
+    }
+
+    private fun validateCategoryUpdate(categoryUpdateDto: CategoryUpdateDto) {
+        val name = categoryUpdateDto.categoryName?.orElse(null)
+            ?: throw RtsGenericException(NAME_IS_REQUIRED)
+
+        if (categoryCache.getAllCategories().any {
+                it.categoryName.equals(name, ignoreCase = true) && it.id != categoryUpdateDto.id
+            }) {
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+        }
     }
 }
