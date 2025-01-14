@@ -10,10 +10,10 @@ import me.ezra_home.retail_software_solution.model.util.TableNames
 class CategoryEntity(
 
     @Column(name = "category_type")
-    open var category_type: String? = null,
+    open var categoryType: String? = null,
 
     @Column(name = "category_name")
-    open var category_name: String? = null,
+    open var categoryName: String? = null,
 
     @Column(name = "description")
     open var description: String? = null,

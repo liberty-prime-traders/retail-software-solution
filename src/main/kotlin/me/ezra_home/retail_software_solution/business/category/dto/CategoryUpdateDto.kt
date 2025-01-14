@@ -7,7 +7,7 @@ import java.util.UUID
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.CategoryEntity}
  */
-class CategoryUpdateDto (
+data class CategoryUpdateDto (
     val id: UUID? = null,
     val categoryType: Optional<String>? = null,
     val categoryName: Optional<String>? = null,

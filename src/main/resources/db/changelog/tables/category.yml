@@ -34,7 +34,7 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: address_created_by_id_notnull
+                    notNullConstraintName: category_created_by_id_notnull
 
               - column:
                   name: created_on

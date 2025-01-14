@@ -7,7 +7,7 @@ import java.util.UUID
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.CategoryEntity}
  */
-class CategoryResponseDto (
+data class CategoryResponseDto (
     val id: UUID?,
     val categoryType: String?,
     val categoryName: String?,
