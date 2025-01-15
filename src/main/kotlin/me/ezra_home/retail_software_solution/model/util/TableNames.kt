@@ -7,5 +7,6 @@ class TableNames {
         const val SYS_USER = "sys_user"
         const val LOCATION = "location"
         const val CATEGORY = "category"
+        const val TITLE = "title"
     }
 }
