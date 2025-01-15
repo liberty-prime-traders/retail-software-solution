@@ -6,6 +6,7 @@ class CacheNames {
         const val ADDRESS = "Address"
         const val ORGANIZATION = "Organization"
         const val LOCATION = "Location"
+        const val CATEGORY = "Category"
     }
 
 }
