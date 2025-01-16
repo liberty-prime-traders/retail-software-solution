@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.business.jobtitle
 
 import java.util.Objects
+import java.util.UUID
 import me.ezra_home.retail_software_solution.business.jobtitle.dto.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.business.jobtitle.dto.JobTitleUpdateDto
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -12,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class JobTitleService(
     private val titleMapper: JobTitleMapper,
-    private val titleCache: JobTitleCache
+    private val titleCache: JobTitleCache,
+    private val jobTitleCache: JobTitleCache
 ) {
 
     @Transactional
@@ -36,4 +39,19 @@ class JobTitleService(
         val updatedTitle = titleCache.upsertJobTitles(titleToUpdate)
         return titleMapper.toDto(updatedTitle)
     }
+
+    @Transactional
+    fun deleteJobTitle(id: UUID?) {
+        if (id != null) {
+            val entity = jobTitleCache.getAllJobTitles().find { it.id == id }
+            if (entity != null) {
+                val usageCount = entity.usageCount
+                if (usageCount > 0L) {
+                    throw RtsGenericException("Job Title ${entity.value} has $usageCount usage(s) and cannot be deleted")
+                }
+                jobTitleCache.deleteJobTitle(id)
+            }
+        }
+    }
+
 }
