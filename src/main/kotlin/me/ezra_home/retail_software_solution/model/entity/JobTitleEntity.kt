@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.model.util.TableNames
 
 @Entity
 @Table(name = TableNames.TITLE)
-class TitleEntity (
+class JobTitleEntity (
     @Column(name = "value")
     var value: String? = null,
 ) : AuditableEntity()

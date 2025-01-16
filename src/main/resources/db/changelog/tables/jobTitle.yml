@@ -1,14 +1,14 @@
 databaseChangeLog:
   - changeSet:
-      id: 'title_table'
+      id: 'jobTitle_table'
       author: kenneth
       preConditions:
         - not:
             - tableExists:
-                tableName: title
+                tableName: jobTitle
       changes:
         - createTable:
-            tableName: title
+            tableName: jobTitle
             columns:
               - column:
                   name: id
@@ -26,7 +26,7 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: title_created_by_id_notnull
+                    notNullConstraintName: jobTitle_created_by_id_notnull
 
               - column:
                   name: created_on

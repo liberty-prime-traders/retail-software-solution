@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.business.title
+package me.ezra_home.retail_software_solution.business.jobtitle
 
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.model.entity.TitleEntity
+import me.ezra_home.retail_software_solution.model.entity.JobTitleEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.TITLE])
-class TitleCache(private val titleRepository: TitleRepository) {
+class JobTitleCache(private val titleRepository: JobTitleRepository) {
 
     @Cacheable
-    fun getAllTitles(): Collection<TitleEntity> = titleRepository.findAll()
+    fun getAllJobTitles(): Collection<JobTitleEntity> = titleRepository.findAll()
 
     @CacheEvict(allEntries = true)
-    fun upsertTitles(titleEntity: TitleEntity): TitleEntity = titleRepository.save(titleEntity)
+    fun upsertJobTitles(titleEntity: JobTitleEntity): JobTitleEntity = titleRepository.save(titleEntity)
 }
