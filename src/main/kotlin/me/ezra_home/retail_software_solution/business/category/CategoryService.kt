@@ -23,10 +23,18 @@ class CategoryService(
 
     @Transactional
     fun createCategory(categoryInsertDto: CategoryInsertDto): CategoryResponseDto {
+        val categoryName = categoryInsertDto.categoryName?.takeIf { it.isNotBlank() }
+            ?: throw RtsGenericException(NAME_IS_REQUIRED)
+
+        if (categoryCache.getAllCategories().any { it.categoryName.equals(categoryName, ignoreCase = true) }) {
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))
+        }
+
         val newCategoryEntity = categoryMapper.toEntity(categoryInsertDto)
         val savedCategoryEntity = categoryCache.upsertCategories(newCategoryEntity)
         return categoryMapper.toDto(savedCategoryEntity)
     }
+
 
     @Transactional
     fun updateCategory(categoryDto: CategoryUpdateDto): CategoryResponseDto {
