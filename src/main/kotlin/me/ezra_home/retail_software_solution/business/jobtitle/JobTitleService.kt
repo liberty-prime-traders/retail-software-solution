@@ -33,6 +33,7 @@ class JobTitleService(
 
     @Transactional
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
+        validateJobTitleUpdate(titleDto)
         val titleToUpdate = titleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
         if (titleToUpdate == null) throw UpdatingNonExistingRecordException()
         titleMapper.partialUpdate(titleDto, titleToUpdate)
@@ -52,6 +53,22 @@ class JobTitleService(
                 jobTitleCache.deleteJobTitle(id)
             }
         }
+    }
+    
+    private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {
+        val value = jobTitleUpdateDto.value?.orElse(null)
+            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
+
+        if (jobTitleCache.getAllJobTitles().any {
+                it.value.equals(value, ignoreCase = true) && it.id != jobTitleUpdateDto.id
+            }) {
+            throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value))
+        }
+    }
+
+    companion object {
+        const val VALUE_IS_REQUIRED = "A value must have a name"
+        const val VALUE_ALREADY_EXISTS = "A value with the name %s is already assigned."
     }
 
 }
