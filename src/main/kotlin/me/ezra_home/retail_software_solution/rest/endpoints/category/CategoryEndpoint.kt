@@ -38,6 +38,6 @@ class CategoryEndpoint(private val categoryService: CategoryService) {
     @DeleteMapping("{id}")
     fun deleteCategory(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
         categoryService.deleteCategory(id)
-        return ResponseEntity(HttpStatusCode.valueOf(HttpStatus.NO_CONTENT.value()))
+        return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 }
