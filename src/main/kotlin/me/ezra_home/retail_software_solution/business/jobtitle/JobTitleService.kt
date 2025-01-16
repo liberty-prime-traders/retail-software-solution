@@ -13,32 +13,39 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class JobTitleService(
-    private val titleMapper: JobTitleMapper,
-    private val titleCache: JobTitleCache,
+    private val jobTitleMapper: JobTitleMapper,
     private val jobTitleCache: JobTitleCache
 ) {
 
     @Transactional
     fun getAllJobTitles(): Collection<JobTitleResponseDto> {
-        return titleCache.getAllJobTitles().map { titleMapper.toDto(it) }
+        return jobTitleCache.getAllJobTitles().map { jobTitleMapper.toDto(it) }
     }
 
     @Transactional
     fun createJobTitle(titleInsertDto: JobTitleInsertDto): JobTitleResponseDto {
-        val newTitleEntity = titleMapper.toEntity(titleInsertDto)
-        val savedTitleEntity = titleCache.upsertJobTitles(newTitleEntity)
-        return titleMapper.toDto(savedTitleEntity)
+        val value = titleInsertDto.value?.takeIf { it.isNotBlank() }
+            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
+
+        if (jobTitleCache.getAllJobTitles().any { it.value.equals(value, ignoreCase = true) }) {
+            throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value))
+        }
+
+        val newTitleEntity = jobTitleMapper.toEntity(titleInsertDto)
+        val savedTitleEntity = jobTitleCache.upsertJobTitles(newTitleEntity)
+        return jobTitleMapper.toDto(savedTitleEntity)
     }
+
 
 
     @Transactional
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
         validateJobTitleUpdate(titleDto)
-        val titleToUpdate = titleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
+        val titleToUpdate = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
         if (titleToUpdate == null) throw UpdatingNonExistingRecordException()
-        titleMapper.partialUpdate(titleDto, titleToUpdate)
-        val updatedTitle = titleCache.upsertJobTitles(titleToUpdate)
-        return titleMapper.toDto(updatedTitle)
+        jobTitleMapper.partialUpdate(titleDto, titleToUpdate)
+        val updatedTitle = jobTitleCache.upsertJobTitles(titleToUpdate)
+        return jobTitleMapper.toDto(updatedTitle)
     }
 
     @Transactional
