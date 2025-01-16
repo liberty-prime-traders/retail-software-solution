@@ -1,11 +1,10 @@
 package me.ezra_home.retail_software_solution.business.category
 
 import java.util.Objects
+import java.util.UUID
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryUpdateDto
-import me.ezra_home.retail_software_solution.business.location.LocationService.Companion.NAME_ALREADY_EXISTS
-import me.ezra_home.retail_software_solution.business.location.LocationService.Companion.NAME_IS_REQUIRED
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -49,4 +48,24 @@ class CategoryService(
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
         }
     }
+
+    @Transactional
+    fun deleteCategory(id: UUID?) {
+        if (id != null) {
+            val entity = categoryCache.getAllCategories().find { it.id == id }
+            if (entity != null) {
+                val usageCount = entity.usageCount
+                if (usageCount > 0L) {
+                    throw RtsGenericException("Category ${entity.categoryName} has $usageCount usage(s) and cannot be deleted")
+                }
+                categoryCache.deleteCategory(id)
+            }
+        }
+    }
+    
+    companion object {
+        const val NAME_IS_REQUIRED = "A category must have a name"
+        const val NAME_ALREADY_EXISTS = "A category with the name %s is already assigned to the given organization"
+    }
+    
 }

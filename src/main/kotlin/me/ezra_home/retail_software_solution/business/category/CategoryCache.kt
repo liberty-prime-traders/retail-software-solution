@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.business.category
 
+import java.util.UUID
 import me.ezra_home.retail_software_solution.model.entity.CategoryEntity
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import org.springframework.cache.annotation.CacheConfig
@@ -16,4 +17,9 @@ class CategoryCache(private val categoryRepository: CategoryRepository) {
 
     @CacheEvict(allEntries = true)
     fun upsertCategories(categoryEntity: CategoryEntity): CategoryEntity = categoryRepository.save(categoryEntity)
+
+    @CacheEvict(allEntries = true)
+    fun deleteCategory(id: UUID) {
+        categoryRepository.deleteById(id)
+    }
 }
