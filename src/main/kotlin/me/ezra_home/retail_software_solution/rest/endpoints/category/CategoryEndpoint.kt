@@ -1,11 +1,17 @@
 package me.ezra_home.retail_software_solution.rest.endpoints.category
 
+import java.util.UUID
 import me.ezra_home.retail_software_solution.business.category.CategoryService
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.business.category.dto.CategoryUpdateDto
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -28,4 +34,10 @@ class CategoryEndpoint(private val categoryService: CategoryService) {
     @GetMapping
     fun getAllCategories(): Collection<CategoryResponseDto> =
         categoryService.getAllCategories()
+
+    @DeleteMapping("{id}")
+    fun deleteCategory(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
+        categoryService.deleteCategory(id)
+        return ResponseEntity(HttpStatus.NO_CONTENT)
+    }
 }
