@@ -5,15 +5,20 @@ import jakarta.transaction.Transactional
 import me.ezra_home.retail_software_solution.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.business.util.usagecount.UsageCountUpdateParameters
+import me.ezra_home.retail_software_solution.business.util.usagecount.UsageCountUpdateType
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.Optional
 import java.util.UUID
 
 @Service
-class LocationService(private val locationCache: LocationCache, private val locationMapper: LocationMapper) {
+class LocationService(private val locationCache: LocationCache,
+                      private val organizationCache: OrganizationCache,
+                      private val locationMapper: LocationMapper) {
 
     @Transactional
     fun getLocationsForOrganization(organizationId: UUID): Collection<LocationResponseDto> {
@@ -53,7 +58,17 @@ class LocationService(private val locationCache: LocationCache, private val loca
             throw UpdatingNonExistingRecordException()
         }
         locationMapper.partialUpdate(locationUpdateDto, locationEntity)
+        locationCache.upsertLocation(locationEntity)
+        incrementOrganizationUsage(locationUpdateDto.organizationId!!.get())
         return locationMapper.toResponseDto(locationEntity)
+    }
+
+    private fun incrementOrganizationUsage(organizationId: UUID) {
+        organizationCache.updateUsageCount(UsageCountUpdateParameters(
+            recordId = organizationId,
+            scale = 1,
+            usageCountUpdateType = UsageCountUpdateType.INCREMENT
+        ))
     }
 
     private fun validateLocationUpdate(locationUpdateDto: LocationUpdateDto) {

@@ -1,6 +1,5 @@
-package me.ezra_home.retail_software_solution.configuration.mapping
+package me.ezra_home.retail_software_solution.business.util.mappers
 
-import me.ezra_home.retail_software_solution.business.util.mappers.OptionalQualifier
 import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.UserQualifier
 import org.mapstruct.InjectionStrategy
 import org.mapstruct.MapperConfig

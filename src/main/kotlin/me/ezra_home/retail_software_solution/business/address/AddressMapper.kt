@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.business.address
 import me.ezra_home.retail_software_solution.business.address.dto.AddressInsertDto
 import me.ezra_home.retail_software_solution.business.address.dto.AddressResponseDto
 import me.ezra_home.retail_software_solution.business.address.dto.AddressUpdateDto
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.business.util.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.CreatedBy
 import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.FullName
 import me.ezra_home.retail_software_solution.model.entity.AddressEntity

@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.business.location
 
 import me.ezra_home.retail_software_solution.model.entity.LocationEntity
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -9,4 +10,7 @@ import java.util.UUID
 interface LocationRepository : JpaRepository<LocationEntity, UUID> {
 
     fun findByOrganizationId(organizationId: UUID): Collection<LocationEntity>
+
+    @Query("select distinct l.id from LocationEntity l")
+    fun getDistinctLocationIds(): Collection<UUID>
 }
