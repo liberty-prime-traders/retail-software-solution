@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'jobtitle_table'
+      author: kenneth
+      preConditions:
+        - not:
+            - tableExists:
+                tableName: jobtitle
+      changes:
+        - createTable:
+            tableName: jobtitle
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: value
+                  type: varchar
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jobtitle_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
+                  defaultValueNumeric: '0'
