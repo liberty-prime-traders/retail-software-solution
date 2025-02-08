@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'unit_table'
+      author: kenneth
+      preConditions:
+        - not:
+            - tableExists:
+                tableName: unit
+      changes:
+        - createTable:
+            tableName: unit
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_code_notnull
+
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_name_notnull
+
+              - column:
+                  name: data_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_data_type_notnull
+
+              - column:
+                  name: decimal_count
+                  type: smallint
+
+              - column:
+                  name: enumerated
+                  type: bool
+
+              - column:
+                  name: enumeration_options
+                  type: nvarchar(1000)
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_created_by_id_notnull
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
+                  defaultValueNumeric: '0'
