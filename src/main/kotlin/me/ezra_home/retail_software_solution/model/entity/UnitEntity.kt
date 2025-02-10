@@ -26,6 +26,6 @@ class UnitEntity(
     var enumerated: Boolean? = null,
 
     @Column(name = "enumeration_options")
-    var enumeration_options: String? = null,
+    var enumerationOptions: String? = null,
 
 ): AuditableEntity()
