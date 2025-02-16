@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.business.category.dto
 
-import me.ezra_home.retail_software_solution.model.enums.CategoryType
 import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -10,7 +9,7 @@ import java.util.UUID
  */
 data class CategoryResponseDto (
     val id: UUID?,
-    val categoryType: CategoryType?,
+    val categoryType: String?,
     val categoryName: String?,
     val description: String?,
     val createdBy: String?,

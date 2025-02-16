@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.business.unit
 
+import java.util.Objects
 import java.util.UUID
 import me.ezra_home.retail_software_solution.business.unit.dto.UnitInsertDto
 import me.ezra_home.retail_software_solution.business.unit.dto.UnitResponseDto
@@ -27,8 +28,8 @@ class UnitService(
         UnitValidator.validateInsert(unitInsertDto, existingUnits)
 
         val newUnitEntity = unitMapper.toEntity(unitInsertDto)
-        unitCache.upsertUnit(newUnitEntity)
-        return unitMapper.toDto(newUnitEntity)
+        val savedUnitEntity = unitCache.upsertUnit(newUnitEntity)
+        return unitMapper.toDto(savedUnitEntity)
     }
 
     @Transactional

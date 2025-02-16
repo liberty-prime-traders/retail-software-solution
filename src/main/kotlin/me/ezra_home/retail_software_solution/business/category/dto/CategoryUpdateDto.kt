@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.business.category.dto
 
-import me.ezra_home.retail_software_solution.model.enums.CategoryType
 import java.io.Serializable
 import java.util.Optional
 import java.util.UUID
@@ -10,7 +9,7 @@ import java.util.UUID
  */
 data class CategoryUpdateDto (
     val id: UUID? = null,
-    val categoryType: Optional<CategoryType>? = null,
+    val categoryType: Optional<String>? = null,
     val categoryName: Optional<String>? = null,
     val description: Optional<String>? = null,
 ) : Serializable
