@@ -1,8 +1,10 @@
 package me.ezra_home.retail_software_solution.model.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.model.converter.StringListConverter
 import me.ezra_home.retail_software_solution.model.enums.DataType
 import me.ezra_home.retail_software_solution.model.util.TableNames
 
@@ -25,7 +27,8 @@ class UnitEntity(
     @Column(name = "enumerated")
     var enumerated: Boolean? = null,
 
-    @Column(name = "enumeration_options")
-    var enumerationOptions: String? = null,
+    @Convert(converter = StringListConverter::class)
+    @Column(name = "enumeration_options", columnDefinition = "TEXT")
+    var enumerationOptions: List<String>? = null,
 
 ): AuditableEntity()
