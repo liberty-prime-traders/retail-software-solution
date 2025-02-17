@@ -8,13 +8,13 @@ import me.ezra_home.retail_software_solution.model.enums.DataType
 
 object UnitValidator {
     fun validateInsert(unitInsertDto: UnitInsertDto, existingUnits: Collection<UnitEntity>) {
-        val name = unitInsertDto.name?.takeIf { it.isNotBlank() }
+        val name = unitInsertDto.name.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(UnitValidationMessages.NAME_IS_REQUIRED)
 
-        val code = unitInsertDto.code?.takeIf { it.isNotBlank() }
+        val code = unitInsertDto.code.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(UnitValidationMessages.CODE_IS_REQUIRED)
 
-        val dataType = unitInsertDto.dataType?.takeIf { !it.equals(null) }
+        val dataType = unitInsertDto.dataType.takeIf { !it.equals(null) }
             ?: throw RtsGenericException(UnitValidationMessages.DATA_TYPE_IS_REQUIRED)
 
         if (dataType == DataType.TEXT && unitInsertDto.decimalCount != null) {
@@ -61,7 +61,7 @@ object UnitValidator {
             throw RtsGenericException(UnitValidationMessages.DECIMAL_COUNT_MODIFICATION_NOT_ALLOWED)
         }
 
-        if (unitUpdateDto.enumerationOptions?.isEmpty == false && unitUpdateDto.enumerated?.orElse(null) != true && existingUnit.enumerated != true) {
+        if (unitUpdateDto.enumerationOptions?.isEmpty() == false && unitUpdateDto.enumerated?.orElse(null) != true && existingUnit.enumerated != true) {
             throw RtsGenericException(UnitValidationMessages.ENUMERATION_OPTIONS_REQUIRE_ENUMERATED)
         }
     }

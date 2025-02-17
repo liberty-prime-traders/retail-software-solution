@@ -15,5 +15,5 @@ data class UnitUpdateDto (
     val code: Optional<String>? = null,
     val decimalCount: Optional<Short>? = null,
     val enumerated: Optional<Boolean>? = null,
-    val enumerationOptions: Optional<List<String>>? = null,
+    val enumerationOptions: List<String>? = null,
 ) : Serializable

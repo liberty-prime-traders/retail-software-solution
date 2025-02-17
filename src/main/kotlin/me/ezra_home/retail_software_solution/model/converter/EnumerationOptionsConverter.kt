@@ -14,7 +14,9 @@ class StringListConverter : AttributeConverter<List<String>, String> {
         return attribute?.let { objectMapper.writeValueAsString(it) } ?: "[]"
     }
 
-    override fun convertToEntityAttribute(dbData: String?): List<String>? {
-        return dbData?.let { objectMapper.readValue(it) }
+    override fun convertToEntityAttribute(dbData: String?): List<String> {
+        return dbData?.let {
+            objectMapper.readValue<List<String>>(it)
+        } ?: emptyList()
     }
 }

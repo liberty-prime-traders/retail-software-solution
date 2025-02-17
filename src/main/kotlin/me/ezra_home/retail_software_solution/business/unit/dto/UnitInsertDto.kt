@@ -7,9 +7,9 @@ import java.io.Serializable
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.UnitEntity}
  */
 data class UnitInsertDto(
-    val dataType: DataType? = null,
-    val name: String? = null,
-    val code: String? = null,
+    val dataType: DataType,
+    val name: String,
+    val code: String,
     val decimalCount: Short? = null,
     val enumerated: Boolean? = null,
     val enumerationOptions: List<String>? = null,
