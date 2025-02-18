@@ -8,6 +8,6 @@ class TableNames {
         const val LOCATION = "location"
         const val CATEGORY = "category"
         const val TITLE = "jobtitle"
-        const val UNITGROUP = "unitgroup"
+        const val UNITGROUP = "unit_group"
     }
 }

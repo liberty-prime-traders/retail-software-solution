@@ -1,14 +1,14 @@
 databaseChangeLog:
   - changeSet:
-      id: 'unitgroup_table'
+      id: 'unit_group_table'
       author: kenneth
       preConditions:
         - not:
             - tableExists:
-                tableName: unitgroup
+                tableName: unit_group
       changes:
         - createTable:
-            tableName: unitgroup
+            tableName: unit_group
             columns:
               - column:
                   name: id
@@ -22,7 +22,7 @@ databaseChangeLog:
                   type: nvarchar2(100)
                   constraints:
                     nullable: false
-                    notNullConstraintName: unitgroup_name_notnull
+                    notNullConstraintName: unit_group_name_notnull
 
               - column:
                   name: description
@@ -33,7 +33,7 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: unitgroup_created_by_id_notnull
+                    notNullConstraintName: unit_group_created_by_id_notnull
 
               - column:
                   name: created_on
