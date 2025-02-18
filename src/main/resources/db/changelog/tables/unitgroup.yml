@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'unit_group_table'
+      author: kenneth
+      preConditions:
+        - not:
+            - tableExists:
+                tableName: unit_group
+      changes:
+        - createTable:
+            tableName: unit_group
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_group_name_notnull
+
+              - column:
+                  name: description
+                  type: varchar
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_group_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
+                  defaultValueNumeric: '0'
