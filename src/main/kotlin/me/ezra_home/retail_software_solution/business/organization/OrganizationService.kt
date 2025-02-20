@@ -37,7 +37,7 @@ class OrganizationService(
             throw RtsGenericException("An Organization must have a name")
         }
         val organizationWithMatchingName = organizationCache.getAllOrganizations().find {
-            it.name == name.get() && !Objects.equals(it.id, id)
+            it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
         }
         if (organizationWithMatchingName != null) {
             throw RtsGenericException("An organization using the name '${name.get()}' already exists")
