@@ -38,7 +38,7 @@ class LocationService(private val locationCache: LocationCache, private val loca
         val organizationId = locationInsertDto.organizationId
             ?: throw RtsGenericException(MISSING_ORGANIZATION)
         val siblingLocations = locationCache.getByOrganizationId(organizationId)
-        val locationWithMatchingName = siblingLocations.find { Objects.equals(it.name, locationInsertDto.name) }
+        val locationWithMatchingName = siblingLocations.find { it.name.equals(locationInsertDto.name, ignoreCase = true) }
         if (locationWithMatchingName != null) {
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))
         }
@@ -67,7 +67,7 @@ class LocationService(private val locationCache: LocationCache, private val loca
         }
         val siblingLocations = locationCache.getByOrganizationId(organizationId.get())
         val locationWithMatchingName = siblingLocations.find {
-            Objects.equals(it.name, name.get()) && !Objects.equals(it.id, locationUpdateDto.id)
+            it.name.equals(name.get(), ignoreCase=true) && !Objects.equals(it.id, locationUpdateDto.id)
         }
         if (locationWithMatchingName != null) {
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))

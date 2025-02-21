@@ -38,7 +38,7 @@ class UnitGroupService(
             throw RtsGenericException("An UnitGroup must have a name")
         }
         val unitGroupWithMatchingName = unitGroupCache.getAllUnitGroups().find {
-            it.name == name.get() && !Objects.equals(it.id, id)
+            it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
         }
         if (unitGroupWithMatchingName != null) {
             throw RtsGenericException("An UnitGroup using the name '${name.get()}' already exists")
