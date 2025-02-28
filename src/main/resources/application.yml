@@ -1,41 +1,42 @@
 spring:
-  application:
-    name: retail-software-solution
-
   datasource:
-    url: jdbc:postgresql://${DB_DOMAIN}:${DB_PORT}/${DB_NAME}?stringtype=unspecified&serverTimezone=UTC
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/rtss
+    username: chumo
+    password: pw
+    driver-class-name: org.postgresql.Driver
     hikari:
       auto-commit: false
-  cache:
-    caffeine:
-      spec: maximumSize=100
-
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
   liquibase:
     change-log: classpath:db/changelog/db-changelog-master.yml
-
-  jpa:
-    show-sql: ${SHOW_SQL:false}
-    open-in-view: false
-  task:
-    scheduling:
-      pool:
-        size: 5
-  jackson:
-    time-zone: UTC
-    default-property-inclusion: non_null
+    enabled: true
+    default-schema: public
 
 okta:
   oauth2:
-    issuer: https://${OKTA_DOMAIN}
-    client-id: ${OKTA_CLIENT_ID}
-    client-secret: ${OKTA_CLIENT_SECRET}
+    issuer: https://dev-53842745.okta.com/oauth2/default  # Add /oauth2/default
+    client-id: 0oalpixre116COtDC5d7
+    client-secret: 4p_vRrU674E3Q4qAVoZHJoj0HqeZVQhTVucOBPu7FktpxUhBrZ4v_ogr4RNl0x6K
   client:
-    org-url: https://${OKTA_DOMAIN}
-    token: ${OKTA_API_TOKEN}
+    org-url: https://dev-53842745.okta.com
+    token: 00wrrOFzU9vLRFztyF1z4JWjLe4b2ynyA7jb0v2nVM
 
 server:
-  port: ${PORT:8080}
+  port: 8080
   error:
     include-message: always
+
+spring.jmx.enabled: true
