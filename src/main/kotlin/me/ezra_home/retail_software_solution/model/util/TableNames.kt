@@ -9,5 +9,6 @@ class TableNames {
         const val CATEGORY = "category"
         const val TITLE = "jobtitle"
         const val UNITGROUP = "unit_group"
+        const val UNITVALUE = "unit_value"
     }
 }
