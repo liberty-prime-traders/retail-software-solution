@@ -1,81 +1,83 @@
 databaseChangeLog:
   - changeSet:
-      id: 'fruit'
+      id: 'initialize_fruit_table'
       author: 'cox101'
       preConditions:
         - not:
-          - tableExist:
-              tableName: fruit
-
+            - tableExists:
+                tableName: fruit
       changes:
         - createTable:
             tableName: fruit
             columns:
               - column:
                   name: id
-                  type: int
-                  autoIncrement: true
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
                   constraints:
                     primaryKey: true
-                    nullable: false
-                    unique: true
+                    constraintName: fruit_pkey
 
               - column:
-                  name: fruit
+                  name: name
                   type: varchar(255)
                   constraints:
                     nullable: false
-                    unique: true
+                    constraintName: fruit_name_notnull
 
               - column:
-                  name: another_name
+                  name: alternate_name
                   type: varchar(255)
-                  constraints:
-                    unique: true
 
               - column:
                   name: color
                   type: varchar(100)
                   constraints:
                     nullable: false
+                    constraintName: fruit_color_notnull
 
               - column:
                   name: cost
-                  type: decimal (10,2)
+                  type: decimal(10,2)
                   constraints:
                     nullable: false
-                    checkConstraint: cost >= 0
+                    constraintName: fruit_cost_notnull
 
               - column:
                   name: edible_ind
                   type: boolean
                   constraints:
                     nullable: false
+                    constraintName: fruit_edible_ind_notnull
 
               - column:
-                  name: created_at
-                  type:  timestampstz
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    constraintName: fruit_created_by_id_notnull
+                    foreignKeyName: fk_fruit_created_by
+                    references: users(id)
+
+              - column:
+                  name: created_on
+                  type: timestamptz
                   defaultValueComputed: ${now}
                   constraints:
                     nullable: false
+                    constraintName: fruit_created_on_notnull
 
               - column:
-                  name: updated_at
-                  type: timestampstz
-                  defaultValueComputed: ${now}
+                  name: predecessor_of_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_fruit_predecessor
+                    references: fruit(id)
 
-              - createIndex:
-                  indexName: idx_fruit_name
-                  tableName: fruit
-                  columns:
-                    - column:
-                        name: name
-
-              - createIndex:
-                  indexName: idx_fruit_color
-                  tableName: fruit
-                  columns:
-                    - column:
-                        name: color
-
-
+              - column:
+                  name: usage_count
+                  type: bigint
+                  defaultValueNumeric: '0'
+                  constraints:
+                    nullable: false
+                    constraintName: fruit_usage_count_notnull
