@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'fruit'
+      author: 'cox101'
+      preConditions:
+        - not:
+          - tableExist:
+              tableName: fruit
+
+      changes:
+        - createTable:
+            tableName: fruit
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: fruit
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: another_name
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+
+              - column:
+                  name: color
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: cost
+                  type: decimal (10,2)
+                  constraints:
+                    nullable: false
+                    checkConstraint: cost >= 0
+
+              - column:
+                  name: edible_ind
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type:  timestampstz
+                  defaultValueComputed: ${now}
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestampstz
+                  defaultValueComputed: ${now}
+
+              - createIndex:
+                  indexName: idx_fruit_name
+                  tableName: fruit
+                  columns:
+                    - column:
+                        name: name
+
+              - createIndex:
+                  indexName: idx_fruit_color
+                  tableName: fruit
+                  columns:
+                    - column:
+                        name: color
+
+
