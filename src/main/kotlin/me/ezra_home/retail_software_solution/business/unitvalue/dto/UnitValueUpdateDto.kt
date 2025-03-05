@@ -9,7 +9,7 @@ import java.util.UUID
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.UnitValueEntity}
  */
-data class OrganizationUpdateDto (
+data class UnitValueUpdateDto (
     val id: UUID? = null,
     val name: Optional<String>? = null,
     val code: Optional<String>? = null,
