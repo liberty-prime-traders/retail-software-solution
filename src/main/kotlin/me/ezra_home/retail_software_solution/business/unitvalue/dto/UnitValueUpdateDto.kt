@@ -16,5 +16,5 @@ data class UnitValueUpdateDto (
     val description: Optional<String>? = null,
     val unitGroupId: Optional<UUID>? = null,
     val baseUnit: Optional<UUID>? = null,
-    val conversionFactor: Optional<DecimalMax>? = null
+    val conversionFactor: Optional<Double>? = null
  ) : Serializable

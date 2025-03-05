@@ -30,6 +30,6 @@ class UnitValueEntity(
     var baseUnit: UUID? = null,
 
     @Column(name = "conversion_factor")
-    var conversionFactor: DecimalMax? = null,
+    var conversionFactor: Double? = null,
 
 ): AuditableEntity()

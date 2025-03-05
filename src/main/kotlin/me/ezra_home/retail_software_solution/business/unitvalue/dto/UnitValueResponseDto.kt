@@ -14,7 +14,7 @@ data class UnitValueResponseDto (
     val description: String?,
     val unitGroupId: UUID?,
     val baseUnit: UUID?,
-    val conversionFactor: DecimalMax?,
+    val conversionFactor: Double?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val usageCount: Long?,

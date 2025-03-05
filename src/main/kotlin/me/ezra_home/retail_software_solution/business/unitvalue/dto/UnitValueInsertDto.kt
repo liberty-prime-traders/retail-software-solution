@@ -14,5 +14,5 @@ data class UnitValueInsertDto(
     val description: String? = null,
     val unitGroupId: UUID,
     val baseUnit: UUID,
-    val conversionFactor: DecimalMax
+    val conversionFactor: Double
 ) : Serializable
