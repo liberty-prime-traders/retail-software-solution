@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.business.unitvalue
 
 import com.google.common.base.Strings
 import jakarta.transaction.Transactional
+import me.ezra_home.retail_software_solution.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.business.unitvalue.dto.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.business.unitvalue.dto.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.business.unitvalue.dto.UnitValueUpdateDto
@@ -9,11 +10,14 @@ import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGeneric
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
-import java.util.Optional
 import java.util.UUID
 
 @Service
-class UnitValueService(private val unitValueCache: UnitValueCache, private val unitValueMapper: UnitValueMapper) {
+class UnitValueService(
+    private val unitValueCache: UnitValueCache,
+    private val unitValueMapper: UnitValueMapper,
+    private val unitGroupCache: UnitGroupCache
+) {
 
     @Transactional
     fun getUnitValuesForUnitGroup(unitGroupId: UUID): Collection<UnitValueResponseDto> {
@@ -26,21 +30,29 @@ class UnitValueService(private val unitValueCache: UnitValueCache, private val u
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
+        val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueEntity.unitGroupId }
+        if(unitGroup == null){
+            throw RtsGenericException("UnitGroup with the provided id does not exist")
+        }
+        unitGroup.usageCount += 1L
         unitValueCache.upsertUnitValue(unitValueEntity)
         return unitValueMapper.toResponseDto(unitValueEntity)
     }
 
     private fun validateUnitValueInsert(unitValueInsertDto: UnitValueInsertDto) {
-        val name = Optional.ofNullable(unitValueInsertDto.name)
-        if (name.isEmpty || Strings.isNullOrEmpty(name.get())) {
+        val name = unitValueInsertDto.name
+        if (Strings.isNullOrEmpty(name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
         val unitGroupId = unitValueInsertDto.unitGroupId
-            ?: throw RtsGenericException(MISSING_UNITGROUP)
         val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId)
         val unitValueWithMatchingName = siblingUnitValues.find { it.name.equals(unitValueInsertDto.name, ignoreCase = true) }
         if (unitValueWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+        }
+
+        if(unitValueInsertDto.baseUnit != null && unitValueInsertDto.conversionFactor == null){
+            throw RtsGenericException("Conversion factor required for the base unit.")
         }
     }
 
@@ -58,7 +70,7 @@ class UnitValueService(private val unitValueCache: UnitValueCache, private val u
 
     private fun validateUnitValueUpdate(unitValueUpdateDto: UnitValueUpdateDto) {
         val name = unitValueUpdateDto.name
-        if (name == null || name.isEmpty || Strings.isNullOrEmpty(name.get())) {
+        if (Strings.isNullOrEmpty(name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
         val unitGroupId = unitValueUpdateDto.unitGroupId
@@ -67,16 +79,37 @@ class UnitValueService(private val unitValueCache: UnitValueCache, private val u
         }
         val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId.get())
         val unitValueWithMatchingName = siblingUnitValues.find {
-            it.name.equals(name.get(), ignoreCase=true) && !Objects.equals(it.id, unitValueUpdateDto.id)
+            it.name.equals(name, ignoreCase=true) && !Objects.equals(it.id, unitValueUpdateDto.id)
         }
         if (unitValueWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+        }
+
+        if(unitValueUpdateDto.baseUnit != null && unitValueUpdateDto.conversionFactor == null){
+            throw RtsGenericException("Conversion factor required for the base unit.")
         }
     }
 
     @Transactional
     fun deleteUnitValue(id: UUID?) {
-        unitValueCache.deleteUnitValue(id)
+        if (id != null) {
+            val entity = unitValueCache.getAllUnitValues().find { it.id == id }
+            if (entity != null) {
+                val usageCount = entity.usageCount
+                if (usageCount > 0) {
+                    throw RtsGenericException("UnitValue ${entity.name} has $usageCount usage(s) and cannot be deleted")
+                }
+
+                val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == entity.unitGroupId }
+                if(unitGroup != null && unitGroup.usageCount > 0){
+                    unitGroup.usageCount -= 1L
+                }
+
+                unitValueCache.deleteUnitValue(id)
+
+            }
+
+        }
     }
 
     companion object {

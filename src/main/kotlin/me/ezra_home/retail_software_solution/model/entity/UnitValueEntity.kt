@@ -4,7 +4,6 @@ import java.util.UUID
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.NotNull
 import me.ezra_home.retail_software_solution.model.util.TableNames
 

@@ -21,6 +21,11 @@ class UnitValueCache(private val unitValueRepository: UnitValueRepository) {
         return unitValueRepository.findByUnitGroupId(unitGroupId)
     }
 
+    @Cacheable
+    fun getAllUnitValues(): Collection<UnitValueEntity> {
+        return unitValueRepository.findAll()
+    }
+
     @CacheEvict(allEntries = true)
     fun upsertUnitValue(unitValueEntity: UnitValueEntity) {
         unitValueRepository.save(unitValueEntity)

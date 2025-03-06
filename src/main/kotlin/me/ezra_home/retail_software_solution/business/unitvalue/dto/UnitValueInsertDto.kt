@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.business.unitvalue.dto
 
-import jakarta.validation.constraints.DecimalMax
 import java.io.Serializable
 import java.util.UUID
 
@@ -10,9 +9,9 @@ import java.util.UUID
  */
 data class UnitValueInsertDto(
     val name: String,
-    val code: String? = null,
+    val code: String,
     val description: String? = null,
     val unitGroupId: UUID,
-    val baseUnit: UUID,
-    val conversionFactor: Double
+    val baseUnit: UUID? = null,
+    val conversionFactor: Double? = null
 ) : Serializable
