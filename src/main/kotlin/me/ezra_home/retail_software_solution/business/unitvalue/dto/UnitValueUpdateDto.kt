@@ -13,7 +13,7 @@ data class UnitValueUpdateDto (
     val name: String,
     val code: String,
     val description: Optional<String>? = null,
-    val unitGroupId: Optional<UUID>? = null,
+    val unitGroupId: UUID,
     val baseUnit: Optional<UUID>? = null,
     val conversionFactor: Optional<Double>? = null
  ) : Serializable

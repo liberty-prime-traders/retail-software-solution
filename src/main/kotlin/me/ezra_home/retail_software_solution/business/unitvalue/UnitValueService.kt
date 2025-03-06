@@ -30,36 +30,39 @@ class UnitValueService(
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
-        val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueEntity.unitGroupId }
-        if(unitGroup == null){
-            throw RtsGenericException("UnitGroup with the provided id does not exist")
-        }
-        unitGroup.usageCount += 1L
         unitValueCache.upsertUnitValue(unitValueEntity)
         return unitValueMapper.toResponseDto(unitValueEntity)
     }
 
     private fun validateUnitValueInsert(unitValueInsertDto: UnitValueInsertDto) {
-        val name = unitValueInsertDto.name
-        if (Strings.isNullOrEmpty(name)) {
+        if (Strings.isNullOrEmpty(unitValueInsertDto.name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
+        }
+        if (Strings.isNullOrEmpty(unitValueInsertDto.code)) {
+            throw RtsGenericException(CODE_IS_REQUIRED)
         }
         val unitGroupId = unitValueInsertDto.unitGroupId
         val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId)
         val unitValueWithMatchingName = siblingUnitValues.find { it.name.equals(unitValueInsertDto.name, ignoreCase = true) }
         if (unitValueWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueInsertDto.name))
         }
 
         if(unitValueInsertDto.baseUnit != null && unitValueInsertDto.conversionFactor == null){
             throw RtsGenericException("Conversion factor required for the base unit.")
         }
+
+        val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueInsertDto.unitGroupId }
+        if(unitGroup == null){
+            throw RtsGenericException("UnitGroup with the provided id does not exist")
+        }
+        unitGroup.usageCount += 1L
     }
 
     @Transactional
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
         validateUnitValueUpdate(unitValueUpdateDto)
-        val unitValueEntity = unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId?.get())
+        val unitValueEntity = unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId)
             .find { Objects.equals(it.id, unitValueUpdateDto.id) }
         if (unitValueEntity == null) {
             throw UpdatingNonExistingRecordException()
@@ -69,20 +72,22 @@ class UnitValueService(
     }
 
     private fun validateUnitValueUpdate(unitValueUpdateDto: UnitValueUpdateDto) {
-        val name = unitValueUpdateDto.name
-        if (Strings.isNullOrEmpty(name)) {
+        if (Strings.isNullOrEmpty(unitValueUpdateDto.name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
-        val unitGroupId = unitValueUpdateDto.unitGroupId
-        if (unitGroupId == null || unitGroupId.isEmpty) {
-            throw RtsGenericException(MISSING_UNITGROUP)
+
+        if (Strings.isNullOrEmpty(unitValueUpdateDto.code)) {
+            throw RtsGenericException(CODE_IS_REQUIRED)
         }
-        val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId.get())
+
+        val unitGroupId = unitValueUpdateDto.unitGroupId
+
+        val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId)
         val unitValueWithMatchingName = siblingUnitValues.find {
-            it.name.equals(name, ignoreCase=true) && !Objects.equals(it.id, unitValueUpdateDto.id)
+            it.name.equals(unitValueUpdateDto.name, ignoreCase=true) && !Objects.equals(it.id, unitValueUpdateDto.id)
         }
         if (unitValueWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueUpdateDto.name))
         }
 
         if(unitValueUpdateDto.baseUnit != null && unitValueUpdateDto.conversionFactor == null){
@@ -114,7 +119,7 @@ class UnitValueService(
 
     companion object {
         const val NAME_IS_REQUIRED = "A unit value must have a name"
-        const val MISSING_UNITGROUP = "A unitv alue cannot be saved without an unit group Id"
+        const val CODE_IS_REQUIRED = "A unit code must have a name"
         const val NAME_ALREADY_EXISTS = "A unit value with the name %s is already assigned to the given unit group"
     }
 }
