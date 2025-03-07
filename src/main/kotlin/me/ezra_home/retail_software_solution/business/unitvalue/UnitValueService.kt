@@ -30,6 +30,8 @@ class UnitValueService(
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
+        val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueInsertDto.unitGroupId }
+        unitGroup?.usageCount?.plus(1L)
         unitValueCache.upsertUnitValue(unitValueEntity)
         return unitValueMapper.toResponseDto(unitValueEntity)
     }
@@ -60,17 +62,22 @@ class UnitValueService(
         if(unitGroup == null){
             throw RtsGenericException("UnitGroup with the provided id does not exist")
         }
-        unitGroup.usageCount += 1L
     }
 
     @Transactional
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
         validateUnitValueUpdate(unitValueUpdateDto)
-        val unitValueEntity = unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId?.get())
-            .find { Objects.equals(it.id, unitValueUpdateDto.id) }
+        val unitValueEntity = unitValueCache.getAllUnitValues().find { Objects.equals(it.id, unitValueUpdateDto.id) }
         if (unitValueEntity == null) {
             throw UpdatingNonExistingRecordException()
         }
+        val oldUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueUpdateDto.unitGroupId?.get() }
+        val newUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueEntity.unitGroupId }
+        if(oldUnitGroup != null && newUnitGroup != null && oldUnitGroup != newUnitGroup){
+            oldUnitGroup.usageCount -= 1L
+            newUnitGroup.usageCount += 1L
+        }
+        
         unitValueMapper.partialUpdate(unitValueUpdateDto, unitValueEntity)
         return unitValueMapper.toResponseDto(unitValueEntity)
     }
@@ -99,14 +106,9 @@ class UnitValueService(
             throw RtsGenericException("Conversion factor required for the base unit.")
         }
 
-        if(unitGroupId?.get() != unitValueUpdateDto.unitGroupId?.get()){
-            val oldUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitGroupId?.get() }
-            val newUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueUpdateDto.unitGroupId?.get()}
-            if(newUnitGroup == null){
-                throw RtsGenericException("UnitGroup with the provided id does not exist")
-            }
-            oldUnitGroup?.usageCount?.minus(1L)
-            newUnitGroup.usageCount += 1L
+        val newUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueUpdateDto.unitGroupId?.get()}
+        if(newUnitGroup == null){
+            throw RtsGenericException("UnitGroup with the provided id does not exist")
         }
     }
 
