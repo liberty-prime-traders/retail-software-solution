@@ -43,8 +43,8 @@ class UnitValueService(
         if (Strings.isNullOrEmpty(unitValueInsertDto.code)) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
-        val unitGroupId = unitValueInsertDto.unitGroupId
-        val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId)
+
+        val siblingUnitValues = unitValueCache.getAllUnitValues()
         val unitValueWithMatchingName = siblingUnitValues.find { it.name.equals(unitValueInsertDto.name, ignoreCase = true) }
         if (unitValueWithMatchingName != null) {
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueInsertDto.name))
@@ -54,7 +54,7 @@ class UnitValueService(
             throw RtsGenericException("Conversion factor required for the base unit.")
         }
 
-        if(unitValueCache.getAllUnitValues().find { it.baseUnit == unitValueInsertDto.baseUnit } == null){
+        if(unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId).find { it.baseUnit == unitValueInsertDto.baseUnit } != null){
             throw RtsGenericException("The base unit does not exist.")
         }
 
@@ -104,6 +104,10 @@ class UnitValueService(
 
         if(unitValueUpdateDto.baseUnit != null && unitValueUpdateDto.conversionFactor == null){
             throw RtsGenericException("Conversion factor required for the base unit.")
+        }
+
+        if(unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId?.get()).find { it.baseUnit == unitValueUpdateDto.baseUnit?.get() } != null){
+            throw RtsGenericException("The base unit does not exist.")
         }
 
         val newUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueUpdateDto.unitGroupId?.get()}
