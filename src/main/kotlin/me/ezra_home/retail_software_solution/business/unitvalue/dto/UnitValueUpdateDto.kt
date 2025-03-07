@@ -10,10 +10,10 @@ import java.util.UUID
  */
 data class UnitValueUpdateDto (
     val id: UUID? = null,
-    val name: String,
-    val code: String,
+    val name: Optional<String>? = null,
+    val code: Optional<String>? = null,
     val description: Optional<String>? = null,
-    val unitGroupId: UUID,
+    val unitGroupId: Optional<UUID>? = null,
     val baseUnit: Optional<UUID>? = null,
     val conversionFactor: Optional<Double>? = null
  ) : Serializable

@@ -52,6 +52,10 @@ class UnitValueService(
             throw RtsGenericException("Conversion factor required for the base unit.")
         }
 
+        if(unitValueCache.getAllUnitValues().find { it.baseUnit == unitValueInsertDto.baseUnit } == null){
+            throw RtsGenericException("The base unit does not exist.")
+        }
+
         val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueInsertDto.unitGroupId }
         if(unitGroup == null){
             throw RtsGenericException("UnitGroup with the provided id does not exist")
@@ -62,7 +66,7 @@ class UnitValueService(
     @Transactional
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
         validateUnitValueUpdate(unitValueUpdateDto)
-        val unitValueEntity = unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId)
+        val unitValueEntity = unitValueCache.getByUnitGroupId(unitValueUpdateDto.unitGroupId?.get())
             .find { Objects.equals(it.id, unitValueUpdateDto.id) }
         if (unitValueEntity == null) {
             throw UpdatingNonExistingRecordException()
@@ -72,26 +76,37 @@ class UnitValueService(
     }
 
     private fun validateUnitValueUpdate(unitValueUpdateDto: UnitValueUpdateDto) {
-        if (Strings.isNullOrEmpty(unitValueUpdateDto.name)) {
+        val name = unitValueUpdateDto.name
+        if (Strings.isNullOrEmpty(name.toString())) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
 
-        if (Strings.isNullOrEmpty(unitValueUpdateDto.code)) {
+        if (Strings.isNullOrEmpty(unitValueUpdateDto.code.toString())) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
 
         val unitGroupId = unitValueUpdateDto.unitGroupId
 
-        val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId)
+        val siblingUnitValues = unitValueCache.getByUnitGroupId(unitGroupId?.get())
         val unitValueWithMatchingName = siblingUnitValues.find {
-            it.name.equals(unitValueUpdateDto.name, ignoreCase=true) && !Objects.equals(it.id, unitValueUpdateDto.id)
+            it.name.equals(name.toString(),ignoreCase = true) && !Objects.equals(it.id, unitValueUpdateDto.id)
         }
         if (unitValueWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueUpdateDto.name))
+            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.toString()))
         }
 
         if(unitValueUpdateDto.baseUnit != null && unitValueUpdateDto.conversionFactor == null){
             throw RtsGenericException("Conversion factor required for the base unit.")
+        }
+
+        if(unitGroupId?.get() != unitValueUpdateDto.unitGroupId?.get()){
+            val oldUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitGroupId?.get() }
+            val newUnitGroup = unitGroupCache.getAllUnitGroups().find { it.id == unitValueUpdateDto.unitGroupId?.get()}
+            if(newUnitGroup == null){
+                throw RtsGenericException("UnitGroup with the provided id does not exist")
+            }
+            oldUnitGroup?.usageCount?.minus(1L)
+            newUnitGroup.usageCount += 1L
         }
     }
 
@@ -106,7 +121,7 @@ class UnitValueService(
                 }
 
                 val unitGroup = unitGroupCache.getAllUnitGroups().find { it.id == entity.unitGroupId }
-                if(unitGroup != null && unitGroup.usageCount > 0){
+                if(unitGroup != null){
                     unitGroup.usageCount -= 1L
                 }
 
