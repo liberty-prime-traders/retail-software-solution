@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 
 @Entity
-@Table(name = "fruit")
+@Table(name = TableNames.FRUIT)
 class FruitEntity(
 
         @Column(nullable = false)
