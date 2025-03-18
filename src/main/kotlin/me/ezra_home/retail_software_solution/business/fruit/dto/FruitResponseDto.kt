@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.model.dto
+package me.ezra_home.retail_software_solution.fruit.dto
 
 import java.math.BigDecimal
 import java.util.UUID

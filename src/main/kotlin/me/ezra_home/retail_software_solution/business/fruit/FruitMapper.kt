@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.model.mapper
 
-import me.ezra_home.retail_software_solution.model.dto.*
+import me.ezra_home.retail_software_solution.model.dto.FruitInsertDto
+import me.ezra_home.retail_software_solution.model.dto.FruitUpdateDto
+import me.ezra_home.retail_software_solution.model.dto.FruitResponseDto
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
 
 fun FruitRequestDTO.toEntity(): FruitEntity {
