@@ -15,10 +15,9 @@ interface FruitMapper {
         val INSTANCE: FruitMapper = Mappers.getMapper(FruitMapper::class.java)
     }
 
-    // Converts Entity to Response DTO
     @Mapping(source = "cost", target = "cost", numberFormat = "Ksh #,###.00")
     fun toResponseDTO(entity: FruitEntity): FruitResponseDTO
 
-    // Converts Request DTO to Entity
+ 
     fun toEntity(request: FruitRequestDTO): FruitEntity
 }
