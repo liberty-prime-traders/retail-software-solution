@@ -12,7 +12,7 @@ data class FruitResponseDTO(
     var color: String,
     var cost: BigDecimal,
     var edible: Boolean,
-    var createdById: String?,
+    var createdBy: String?,
     var createdOn: OffsetDateTime?,
     var predecessorOfId: UUID?,
     var usageCount: Long
