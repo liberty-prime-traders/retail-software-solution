@@ -5,7 +5,6 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-// DTO for inserting (creating) a fruit record
 data class FruitInsertDto(
     val name: String,
     val alternateName: String?,

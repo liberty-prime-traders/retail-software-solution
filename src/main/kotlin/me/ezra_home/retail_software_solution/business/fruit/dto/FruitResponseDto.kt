@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.util.UUID
 import java.time.OffsetDateTime
 
+
 data class FruitResponseDTO(
     var id: UUID,
     var name: String,
@@ -11,7 +12,7 @@ data class FruitResponseDTO(
     var color: String,
     var cost: BigDecimal,
     var edible: Boolean,
-    var createdById: UUID?,
+    var createdById: String?,
     var createdOn: OffsetDateTime?,
     var predecessorOfId: UUID?,
     var usageCount: Long

@@ -1,10 +1,13 @@
 package me.ezra_home.retail_software_solution.fruit.dto
 
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
-import java.text.NumberFormat
 import java.util.Locale
+import java.math.BigDecimal
 
 
+/**
+ * DTO for {@link me.ezra_home.retail_software_solution.model.entity.FruitEntity}
+ */
 data class FruitUpdateDto(
     val name: String?,
     val alternateName: String?,
