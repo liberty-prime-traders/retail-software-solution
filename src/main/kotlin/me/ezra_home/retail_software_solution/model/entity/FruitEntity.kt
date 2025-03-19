@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.model.entity
 
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
 import java.math.BigDecimal
 
 @Entity
