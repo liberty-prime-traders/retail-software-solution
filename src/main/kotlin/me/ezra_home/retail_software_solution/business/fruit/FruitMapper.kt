@@ -4,28 +4,21 @@ import me.ezra_home.retail_software_solution.model.dto.FruitInsertDto
 import me.ezra_home.retail_software_solution.model.dto.FruitUpdateDto
 import me.ezra_home.retail_software_solution.model.dto.FruitResponseDto
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
+import org.mapstruct.factory.Mappers
 
-fun FruitRequestDTO.toEntity(): FruitEntity {
-    return FruitEntity(
-        name = this.name,
-        alternateName = this.alternateName,
-        color = this.color,
-        cost = this.cost,
-        edible = this.edible
-    )
-}
+@Mapper(componentModel = "spring")
+interface FruitMapper {
 
-fun FruitEntity.toResponseDTO(): FruitResponseDTO {
-    return FruitResponseDTO(
-        id = this.id!!,
-        name = this.name,
-        alternateName = this.alternateName,
-        color = this.color,
-        cost = this.cost,
-        edible = this.edible,
-        createdById = this.createdById,
-        createdOn = this.createdOn,
-        predecessorOfId = this.predecessorOfId,
-        usageCount = this.usageCount
-    )
+    companion object {
+        val INSTANCE: FruitMapper = Mappers.getMapper(FruitMapper::class.java)
+    }
+
+    // Converts Entity to Response DTO
+    @Mapping(source = "cost", target = "cost", numberFormat = "Ksh #,###.00")
+    fun toResponseDTO(entity: FruitEntity): FruitResponseDTO
+
+    // Converts Request DTO to Entity
+    fun toEntity(request: FruitRequestDTO): FruitEntity
 }
