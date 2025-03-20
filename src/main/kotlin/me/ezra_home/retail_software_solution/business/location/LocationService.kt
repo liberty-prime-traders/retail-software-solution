@@ -76,7 +76,15 @@ class LocationService(private val locationCache: LocationCache, private val loca
 
     @Transactional
     fun deleteLocation(id: UUID?) {
-        locationCache.deleteLocation(id)
+        id?.let {
+            locationCache.getAllLocations().find { it.id == id }?.let {entity ->
+                val usageCount = entity.usageCount
+                if (usageCount > 0L) {
+                    throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")
+                }
+                locationCache.deleteLocation(id)
+            }
+        }
     }
 
     companion object {

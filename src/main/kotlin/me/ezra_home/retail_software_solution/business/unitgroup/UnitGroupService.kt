@@ -61,7 +61,7 @@ class UnitGroupService(
             val entity = unitGroupCache.getAllUnitGroups().find { it.id == id }
             if (entity != null) {
                 val usageCount = entity.usageCount
-                if (usageCount != null && usageCount > 0L) {
+                if (usageCount > 0L) {
                     throw RtsGenericException("UnitGroup ${entity.name} has $usageCount usage(s) and cannot be deleted")
                 }
                 unitGroupCache.deleteUnitGroup(id)

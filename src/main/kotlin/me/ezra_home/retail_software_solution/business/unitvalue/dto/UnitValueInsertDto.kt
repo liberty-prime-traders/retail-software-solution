@@ -8,10 +8,10 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.UnitValueEntity}
  */
 data class UnitValueInsertDto(
-    val name: String,
-    val code: String,
+    val name: String? = null,
+    val code: String? = null,
     val description: String? = null,
-    val unitGroupId: UUID,
+    val unitGroupId: UUID? = null,
     val baseUnit: UUID? = null,
     val conversionFactor: Double? = null
 ) : Serializable
