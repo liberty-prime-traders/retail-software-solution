@@ -1,23 +1,26 @@
-package me.ezra_home.retail_software_solution.model.mapper
+package me.ezra_home.retail_software_solution.business.fruit
 
-import me.ezra_home.retail_software_solution.model.dto.FruitInsertDto
-import me.ezra_home.retail_software_solution.model.dto.FruitUpdateDto
-import me.ezra_home.retail_software_solution.model.dto.FruitResponseDto
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitInsertDto
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitResponseDto
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitUpdateDto
+import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
-import org.mapstruct.Mapper
-import org.mapstruct.Mapping
-import org.mapstruct.factory.Mappers
+import org.mapstruct.*
 
-@Mapper(componentModel = "spring")
+@Mapper(config = RtsMapperConfig::class)
 interface FruitMapper {
 
-    companion object {
-        val INSTANCE: FruitMapper = Mappers.getMapper(FruitMapper::class.java)
-    }
+    @Mapping(source = "createdBy", target = "createdBy", qualifiedBy = [FullName::class])
+    fun toDto(fruitEntity: FruitEntity): FruitResponseDto
 
-    @Mapping(source = "cost", target = "cost", numberFormat = "Ksh #,###.00")
-    fun toResponseDTO(entity: FruitEntity): FruitResponseDTO
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @BeanMapping(qualifiedBy = [CreatedBy::class])
+    fun toEntity(fruitInsertDto: FruitInsertDto): FruitEntity
 
- 
-    fun toEntity(request: FruitRequestDTO): FruitEntity
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    fun partialUpdate(fruitUpdateDto: FruitUpdateDto, @MappingTarget fruitEntity: FruitEntity)
 }

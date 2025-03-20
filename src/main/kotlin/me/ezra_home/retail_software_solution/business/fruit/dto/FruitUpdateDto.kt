@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.fruit.dto
+package me.ezra_home.retail_software_solution.business.fruit.dto
 
-import me.ezra_home.retail_software_solution.model.entity.FruitEntity
-import java.util.Locale
+import java.io.Serializable
 import java.math.BigDecimal
+import java.util.Optional
 import java.util.UUID
 
 
@@ -15,7 +15,7 @@ data class FruitUpdateDto(
     val alternateName: Optional<String>? = null,
     val color: Optional<String>? = null,
     val cost: Optional<BigDecimal>? = null,
-    val removalCost: Optional<BigDecimal>? = null,
     val edible: Optional<Boolean>? = null
 ) : Serializable
+
 
