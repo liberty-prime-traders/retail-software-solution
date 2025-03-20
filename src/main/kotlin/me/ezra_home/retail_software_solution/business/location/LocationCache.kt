@@ -14,6 +14,11 @@ import java.util.UUID
 class LocationCache(private val locationRepository: LocationRepository) {
 
     @Cacheable
+    fun getAllLocations(): Collection<LocationEntity> {
+        return locationRepository.findAll()
+    }
+
+    @Cacheable
     fun getByOrganizationId(organizationId: UUID?): Collection<LocationEntity> {
         if (organizationId == null) {
             throw QueriedByEmptyIdException()
