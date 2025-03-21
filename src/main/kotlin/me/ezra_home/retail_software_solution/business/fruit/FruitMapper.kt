@@ -1,11 +1,17 @@
 package me.ezra_home.retail_software_solution.business.fruit
 
+import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.CreatedBy
+import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.business.fruit.dto.FruitInsertDto
 import me.ezra_home.retail_software_solution.business.fruit.dto.FruitResponseDto
 import me.ezra_home.retail_software_solution.business.fruit.dto.FruitUpdateDto
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.model.entity.FruitEntity
-import org.mapstruct.*
+import org.mapstruct.BeanMapping
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
+import org.mapstruct.MappingTarget
+import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
 interface FruitMapper {
