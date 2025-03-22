@@ -14,18 +14,16 @@ class UnitValueEntity(
     @Column(name = "name", nullable = false)
     var name: String? = null,
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     var description: String? = null,
 
     @Column(name = "code")
     var code: String? = null,
 
-    @NotNull
     @Column(name = "unit_group_id", nullable = false)
     var unitGroupId: UUID? = null,
 
-    @NotNull
-    @Column(name = "base_unit", nullable = false)
+    @Column(name = "base_unit")
     var baseUnit: UUID? = null,
 
     @Column(name = "conversion_factor")

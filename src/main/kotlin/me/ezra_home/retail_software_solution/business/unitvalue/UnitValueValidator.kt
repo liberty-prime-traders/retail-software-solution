@@ -35,7 +35,7 @@ class UnitValueValidator(
             throw RtsGenericException(CONVERSION_FACTOR_IS_REQUIRED)
         }
 
-        if(unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId).find { it.baseUnit == unitValueInsertDto.baseUnit } == null){
+        if(unitValueInsertDto.baseUnit != null && unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId).find { it.baseUnit == unitValueInsertDto.baseUnit } == null){
             throw RtsGenericException(BASE_UNIT_MUST_BE_IN_GROUP)
         }
 
