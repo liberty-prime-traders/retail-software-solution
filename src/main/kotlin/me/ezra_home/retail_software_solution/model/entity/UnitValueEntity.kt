@@ -14,10 +14,10 @@ class UnitValueEntity(
     @Column(name = "name", nullable = false)
     var name: String? = null,
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description")
     var description: String? = null,
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = false)
     var code: String? = null,
 
     @Column(name = "unit_group_id", nullable = false)
