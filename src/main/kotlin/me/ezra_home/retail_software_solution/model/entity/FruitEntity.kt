@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.model.entity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.model.util.TableNames
 import java.math.BigDecimal
 
 @Entity
@@ -12,8 +13,8 @@ class FruitEntity(
         @Column(nullable = false)
         var name: String,
 
-        @Column(name = "alternate_name")
-        var alternateName: String? = null,
+        @Column(name = "fruit_name")
+        var fruitName: String?,
 
         @Column(nullable = false)
         var color: String,
