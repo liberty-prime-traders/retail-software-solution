@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.business.fruit.dto
 import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.model.entity.FruitEntity}
@@ -11,7 +11,7 @@ import java.util.UUID
 data class FruitResponseDto(
     val id: UUID?,
     val name: String?,
-    val alternateName: String?,
+    val fruitName: String?,
     val color: String?,
     val cost: BigDecimal?,
     val edible: Boolean?,

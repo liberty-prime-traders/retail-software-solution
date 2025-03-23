@@ -4,7 +4,7 @@ import java.math.BigDecimal
 
 data class FruitInsertDto(
     val name: String,
-    val alternateName: String?,
+    val fruitName: String?,
     val color: String,
     val cost: BigDecimal,
     val edible: Boolean
