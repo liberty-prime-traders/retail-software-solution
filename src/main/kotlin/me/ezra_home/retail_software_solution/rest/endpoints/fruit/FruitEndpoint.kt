@@ -1,47 +1,34 @@
-package me.ezra_home.retail_software_solution.controller
+package me.ezra_home.retail_software_solution.rest.endpoints.fruit
 
-import me.ezra_home.retail_software_solution.model.dto.FruitRequestDTO
-import me.ezra_home.retail_software_solution.model.dto.FruitResponseDTO
-import me.ezra_home.retail_software_solution.service.FruitService
+import me.ezra_home.retail_software_solution.business.fruit.FruitService
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitInsertDto
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitResponseDto
+import me.ezra_home.retail_software_solution.business.fruit.dto.FruitUpdateDto
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
+import org.springframework.web.bind.annotation.*
+import java.util.*
 
+@CrossOrigin
 @RestController
-@RequestMapping("secured/fruits")
-class FruitController(private val fruitService: FruitService) {
-
-    @GetMapping("{id}")
-    fun getFruitById(@PathVariable id: UUID): FruitResponseDTO {
-        return fruitService.getFruitById(id)
-    }
-
-    @GetMapping("search")
-    fun getFruitByName(@RequestParam name: String): FruitResponseDTO {
-        return fruitService.getFruitByName(name)
-    }
+@RequestMapping("secured/fruit")
+class FruitEndpoint(private val fruitService: FruitService) {
 
     @PostMapping
-    fun createFruit(@RequestBody request: FruitRequestDTO): FruitResponseDTO {
-        return fruitService.createFruit(request)
-    }
+    fun createFruit(@RequestBody fruitInsertDto: FruitInsertDto): FruitResponseDto =
+        fruitService.createFruit(fruitInsertDto)
 
-    @PutMapping("{id}")
-    fun updateFruit(@PathVariable id: UUID, @RequestBody request: FruitRequestDTO): FruitResponseDTO {
-        return fruitService.updateFruit(id, request)
-    }
+    @PutMapping
+    fun updateFruit(@RequestBody fruitUpdateDto: FruitUpdateDto): FruitResponseDto =
+        fruitService.updateFruit(fruitUpdateDto)
+
+    @GetMapping
+    fun getAllFruits(): Collection<FruitResponseDto> =
+        fruitService.getAllFruits()
 
     @DeleteMapping("{id}")
     fun deleteFruit(@PathVariable id: UUID): ResponseEntity<Unit> {
         fruitService.deleteFruit(id)
-        return ResponseEntity.noContent().build()
+        return ResponseEntity(HttpStatus.NO_CONTENT)
     }
 }
