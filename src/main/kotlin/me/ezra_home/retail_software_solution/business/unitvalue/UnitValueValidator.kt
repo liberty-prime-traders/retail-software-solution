@@ -36,7 +36,7 @@ class UnitValueValidator(
         }
 
         val baseUnitExists = unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId)
-            .any { it.baseUnit == unitValueInsertDto.baseUnit }
+            .any { it.id == unitValueInsertDto.baseUnit }
 
         if (unitValueInsertDto.baseUnit != null && !baseUnitExists) {
             throw RtsGenericException(BASE_UNIT_MUST_BE_IN_GROUP)
