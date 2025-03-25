@@ -1,0 +1,39 @@
+package me.ezra_home.retail_software_solution.configuration.filters
+
+import jakarta.servlet.Filter
+import jakarta.servlet.FilterChain
+import jakarta.servlet.ServletRequest
+import jakarta.servlet.ServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import org.springframework.stereotype.Component
+import java.util.UUID
+
+@Component
+class TenantFilter(private val locationCache: LocationCache): Filter {
+
+    companion object {
+        private const val LOCATION_ID_HEADER = "X-Location-ID"
+        private const val ORGANIZATION_ID_HEADER = "X-Organization-ID"
+    }
+
+    override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+        val sessionContext = SessionContextProvider.getSession()
+        val httpServletRequest = request as HttpServletRequest
+        sessionContext.organizationId = httpServletRequest.getHeader(ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) }
+        initializeSessionSchemaName(httpServletRequest)
+        try {
+            chain.doFilter(request, response)
+        } finally {
+            SessionContextProvider.clear()
+        }
+    }
+
+    private fun initializeSessionSchemaName(httpServletRequest: HttpServletRequest) {
+        httpServletRequest.getHeader(LOCATION_ID_HEADER)?.let { UUID.fromString(it) }
+            ?.let { locId -> locationCache.getAllLocations().find { it.id == locId }?.schemaName }
+            ?.let { SessionContextProvider.getSession().schemaName = it }
+        SessionContextProvider.getSession().filteredForLocation = true
+    }
+}

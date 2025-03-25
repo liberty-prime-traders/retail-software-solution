@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-reserved-subdomain-table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: reserved_subdomain
+      changes:
+        - createTable:
+            tableName: reserved_subdomain
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: subdomain
+                  type: nvarchar2(63)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: reserved_subdomain_subdomain_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: reserved_subdomain_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  constraints:
+                      nullable: false
+                      notNullConstraintName: reserved_subdomain_status_notnull
