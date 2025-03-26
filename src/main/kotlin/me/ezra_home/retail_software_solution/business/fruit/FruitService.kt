@@ -21,10 +21,10 @@ class FruitService(
     }
     @Transactional
     fun createFruit(fruitInsertDto: FruitInsertDto): FruitResponseDto {
-        val fruitName: String = fruitInsertDto.fruitName?.takeIf { it.isNotBlank() }
+        val fruitName :String = fruitInsertDto.name.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(NAME_IS_REQUIRED)
 
-        if (fruitCache.getAllFruits().any { it.fruitName.equals(fruitName, ignoreCase = true) }) {
+        if (fruitCache.getAllFruits().any { it.name.equals(fruitName, ignoreCase = true) }) {
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, fruitName))
         }
         val newFruitEntity = fruitMapper.toEntity(fruitInsertDto)
@@ -44,11 +44,11 @@ class FruitService(
     }
 
     private fun validateFruitUpdate(fruitUpdateDto: FruitUpdateDto) {
-        val name = fruitUpdateDto.fruitName?.orElse(null)
+        val name = fruitUpdateDto.name?.orElse(null)
             ?: throw RtsGenericException(NAME_IS_REQUIRED)
 
         if (fruitCache.getAllFruits().any {
-                it.fruitName.equals(name, ignoreCase = true) && it.id != fruitUpdateDto.id
+                it.name.equals(name, ignoreCase = true) && it.id != fruitUpdateDto.id
             }) {
             throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
         }
@@ -61,7 +61,7 @@ class FruitService(
 
         val usageCount = entity.usageCount
         if (usageCount > 0L) {
-            throw RtsGenericException("Fruit ${entity.fruitName} has $usageCount usage(s) and cannot be deleted")
+            throw RtsGenericException("Fruit ${entity.name} has $usageCount usage(s) and cannot be deleted")
         }
         fruitCache.deleteFruit(id)
     }
