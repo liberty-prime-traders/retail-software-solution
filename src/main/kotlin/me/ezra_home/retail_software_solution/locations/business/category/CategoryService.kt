@@ -1,27 +1,27 @@
 package me.ezra_home.retail_software_solution.locations.business.category
 
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryUpdateDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
+@TransactionalOnLocationSchema
 class CategoryService(
     private val categoryMapper: CategoryMapper,
     private val categoryCache: CategoryCache
 ) {
 
-    @Transactional
+    @TransactionalOnLocationSchema(readOnly = true)
     fun getAllCategories(): Collection<CategoryResponseDto> {
         return categoryCache.getAllCategories().map { categoryMapper.toDto(it) }
     }
 
-    @Transactional
     fun createCategory(categoryInsertDto: CategoryInsertDto): CategoryResponseDto {
         val categoryName = categoryInsertDto.categoryName?.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(NAME_IS_REQUIRED)
@@ -35,8 +35,6 @@ class CategoryService(
         return categoryMapper.toDto(savedCategoryEntity)
     }
 
-
-    @Transactional
     fun updateCategory(categoryDto: CategoryUpdateDto): CategoryResponseDto {
         validateCategoryUpdate(categoryDto)
         val categoryToUpdate = categoryCache.getAllCategories().find { Objects.equals(categoryDto.id, it.id) }
@@ -57,7 +55,6 @@ class CategoryService(
         }
     }
 
-    @Transactional
     fun deleteCategory(id: UUID?) {
         if (id != null) {
             val entity = categoryCache.getAllCategories().find { it.id == id }

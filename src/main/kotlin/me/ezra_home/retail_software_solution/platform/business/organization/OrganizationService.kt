@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
-import jakarta.transaction.Transactional
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.subdomain.SubdomainService
+import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -15,18 +15,18 @@ import java.util.Optional
 import java.util.UUID
 
 @Service
+@TransactionalOnPlatformSchema
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
-    private val subdomainService: SubdomainService
+    private val reservedSubdomainService: ReservedSubdomainService
 ) {
 
-    @Transactional
+    @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllOrganizations(): Collection<OrganizationResponseDto> {
         return organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
     }
 
-    @Transactional
     fun createOrganization(organizationInsertDto: OrganizationInsertDto): OrganizationResponseDto {
         validateNameOnSave(Optional.ofNullable(organizationInsertDto.name))
         markSubdomainAsUsed(organizationInsertDto)
@@ -52,15 +52,14 @@ class OrganizationService(
         if (intendedSubdomain.isNullOrBlank()) {
             throw RtsGenericException("An Organization must have a subdomain")
         }
-        val reservedSubdomain = subdomainService.getReservedSubdomains()
+        val reservedSubdomain = reservedSubdomainService.getReservedSubdomains()
             .find { it.subdomain == intendedSubdomain && it.status == Status.UNUSED }
         if (reservedSubdomain == null) {
             throw RtsGenericException("Subdomain '$intendedSubdomain' was not reserved")
         }
-        subdomainService.markSubdomainAsUsed(reservedSubdomain.id)
+        reservedSubdomainService.markSubdomainAsUsed(reservedSubdomain.id)
     }
 
-    @Transactional
     fun updateOrganization(organizationUpdateDto: OrganizationUpdateDto): OrganizationResponseDto {
         val id = organizationUpdateDto.id ?: throw QueriedByEmptyIdException()
         val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == id } ?: throw NotFoundException()
@@ -70,7 +69,6 @@ class OrganizationService(
         return organizationMapper.toResponseDto(entityFromDatabase)
     }
 
-    @Transactional
     fun deleteOrganization(id: UUID?) {
         id?.let {
             organizationCache.getAllOrganizations().find { it.id == id }?.let {entity ->

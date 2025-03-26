@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.rest.endpoints.platform.organization
 
-import me.ezra_home.retail_software_solution.configuration.datasource.UsesPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
@@ -21,11 +20,9 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/organizations")
-@UsesPlatformSchema
 class OrganizationEndpoint(private val organizationService: OrganizationService) {
 
     @GetMapping
-    @UsesPlatformSchema(readOnly = true)
     fun getAllOrganizations(): Collection<OrganizationResponseDto> = organizationService.getAllOrganizations()
 
     @PostMapping

@@ -5,13 +5,21 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
+import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.stereotype.Component
+import org.springframework.transaction.support.DefaultTransactionDefinition
 import java.util.UUID
 
 @Component
-class TenantFilter(private val locationCache: LocationCache): Filter {
+class TenantFilter(
+    private val locationCache: LocationCache,
+    @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
+    private val platformTransactionManager: JpaTransactionManager
+): Filter {
 
     companion object {
         private const val LOCATION_ID_HEADER = "X-Location-ID"
@@ -31,9 +39,11 @@ class TenantFilter(private val locationCache: LocationCache): Filter {
     }
 
     private fun initializeSessionSchemaName(httpServletRequest: HttpServletRequest) {
+        val platformStatus = platformTransactionManager.getTransaction(DefaultTransactionDefinition())
         httpServletRequest.getHeader(LOCATION_ID_HEADER)?.let { UUID.fromString(it) }
             ?.let { locId -> locationCache.getAllLocations().find { it.id == locId }?.schemaName }
             ?.let { SessionContextProvider.getSession().schemaName = it }
+        platformTransactionManager.commit(platformStatus)
         SessionContextProvider.getSession().filteredForLocation = true
     }
 }

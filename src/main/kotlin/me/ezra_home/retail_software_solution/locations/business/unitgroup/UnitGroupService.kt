@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.unitgroup
 
 
-import jakarta.transaction.Transactional
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupUpdateDto
@@ -14,17 +14,17 @@ import java.util.Optional
 import java.util.UUID
 
 @Service
+@TransactionalOnLocationSchema
 class UnitGroupService(
     private val unitGroupMapper: UnitGroupMapper,
     private val unitGroupCache: UnitGroupCache
 ) {
 
-    @Transactional
+    @TransactionalOnLocationSchema(readOnly = true)
     fun getAllUnitGroups(): Collection<UnitGroupResponseDto> {
         return unitGroupCache.getAllUnitGroups().map { unitGroupMapper.toResponseDto(it) }
     }
 
-    @Transactional
     fun createUnitGroup(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto {
         validateNameOnSave(Optional.ofNullable(unitGroupInsertDto.name))
         val entity = unitGroupMapper.toEntity(unitGroupInsertDto)
@@ -44,7 +44,6 @@ class UnitGroupService(
         }
     }
 
-    @Transactional
     fun updateUnitGroup(unitGroupUpdateDto: UnitGroupUpdateDto): UnitGroupResponseDto {
         val id = unitGroupUpdateDto.id ?: throw QueriedByEmptyIdException()
         val entityFromDatabase = unitGroupCache.getAllUnitGroups().find { it.id == id } ?: throw NotFoundException()
@@ -54,7 +53,6 @@ class UnitGroupService(
         return unitGroupMapper.toResponseDto(entityFromDatabase)
     }
 
-    @Transactional
     fun deleteUnitGroup(id: UUID?) {
         if (id != null) {
             val entity = unitGroupCache.getAllUnitGroups().find { it.id == id }

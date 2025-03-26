@@ -8,5 +8,7 @@ import java.util.UUID
 
 @Repository
 interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
-    fun findByCreatedByIdAndStatus(createdById: UUID, status: Status): List<ReservedSubdomainEntity>
+
+    fun findByCreatedByIdAndStatus(createdById: UUID,status: Status): List<ReservedSubdomainEntity>
+    fun findByStatusNot(status: Status): List<ReservedSubdomainEntity>
 }

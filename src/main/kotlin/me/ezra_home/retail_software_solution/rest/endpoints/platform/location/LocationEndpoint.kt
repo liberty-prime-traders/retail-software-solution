@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.rest.endpoints.platform.location
 
-import me.ezra_home.retail_software_solution.configuration.datasource.UsesPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.location.LocationService
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
@@ -23,11 +22,9 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/locations")
-@UsesPlatformSchema
 class LocationEndpoint(private val locationService: LocationService) {
 
     @GetMapping
-    @UsesPlatformSchema(readOnly = true)
     fun getForOrganization(@RequestParam("organizationId") organizationId: UUID): Collection<LocationResponseDto> =
         locationService.getLocationsForOrganization(organizationId)
 
