@@ -30,7 +30,7 @@ class PlatformSchemaDataSourceConfig {
     ): LocalContainerEntityManagerFactoryBean {
         val em = LocalContainerEntityManagerFactoryBean()
         em.dataSource = dataSource
-        em.setPackagesToScan("me.ezra_home.retail_software_solution.platform.model")
+        em.setPackagesToScan("me.ezra_home.retail_software_solution.platform")
         em.jpaVendorAdapter = HibernateJpaVendorAdapter()
         em.setJpaPropertyMap(mapOf("hibernate.ddl.auto" to "none"))
         return em

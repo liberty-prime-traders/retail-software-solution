@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.unitvalue
 
-import jakarta.transaction.Transactional
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.UnitGroupUsageCountManager
 import me.ezra_home.retail_software_solution.locations.business.unitvalue.dto.UnitValueInsertDto
@@ -14,6 +14,7 @@ import java.util.Objects
 import java.util.UUID
 
 @Service
+@TransactionalOnLocationSchema
 class UnitValueService(
     private val unitValueCache: UnitValueCache,
     private val unitValueMapper: UnitValueMapper,
@@ -22,14 +23,13 @@ class UnitValueService(
     private val unitGroupUsageCountManager: UnitGroupUsageCountManager
 ) {
 
-    @Transactional
+    @TransactionalOnLocationSchema(readOnly = true)
     fun getUnitValuesForUnitGroup(unitGroupId: UUID): Collection<UnitValueResponseDto> {
         return unitValueCache.getByUnitGroupId(unitGroupId).map {
             unitValueMapper.toResponseDto(it)
         }
     }
 
-    @Transactional
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
@@ -38,7 +38,6 @@ class UnitValueService(
         return unitValueMapper.toResponseDto(unitValueEntity)
     }
 
-    @Transactional
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueUpdate(unitValueUpdateDto)
         val unitValueFromDb = unitValueCache.getAllUnitValues().find { Objects.equals(it.id, unitValueUpdateDto.id) }
@@ -66,7 +65,6 @@ class UnitValueService(
         return unitValueUpdateDto.unitGroupId!!.get() != unitValueFromDb.unitGroupId
     }
 
-    @Transactional
     fun deleteUnitValue(id: UUID?) {
         id?.let {
             unitValueCache.getAllUnitValues().find { it.id == id }?.let {entity ->

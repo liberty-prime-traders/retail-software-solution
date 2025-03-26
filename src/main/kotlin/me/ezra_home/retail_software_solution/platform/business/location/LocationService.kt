@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.location
 
-import jakarta.transaction.Transactional
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
@@ -12,16 +12,16 @@ import java.util.Optional
 import java.util.UUID
 
 @Service
+@TransactionalOnPlatformSchema
 class LocationService(private val locationCache: LocationCache, private val locationMapper: LocationMapper) {
 
-    @Transactional
+    @TransactionalOnPlatformSchema(readOnly = true)
     fun getLocationsForOrganization(organizationId: UUID): Collection<LocationResponseDto> {
         return locationCache.getByOrganizationId(organizationId).map {
             locationMapper.toResponseDto(it)
         }
     }
 
-    @Transactional
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         validateLocationInsert(locationInsertDto)
         val locationEntity = locationMapper.toEntity(locationInsertDto)
@@ -43,7 +43,6 @@ class LocationService(private val locationCache: LocationCache, private val loca
         }
     }
 
-    @Transactional
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {
         validateLocationUpdate(locationUpdateDto)
         val locationEntity = locationCache.getByOrganizationId(locationUpdateDto.organizationId?.get())
@@ -73,7 +72,6 @@ class LocationService(private val locationCache: LocationCache, private val loca
         }
     }
 
-    @Transactional
     fun deleteLocation(id: UUID?) {
         id?.let {
             locationCache.getAllLocations().find { it.id == id }?.let {entity ->

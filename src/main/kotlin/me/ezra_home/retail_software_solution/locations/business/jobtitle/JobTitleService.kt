@@ -1,28 +1,28 @@
 package me.ezra_home.retail_software_solution.locations.business.jobtitle
 
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleUpdateDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 
 @Service
+@TransactionalOnLocationSchema
 class JobTitleService(
     private val jobTitleMapper: JobTitleMapper,
     private val jobTitleCache: JobTitleCache
 ) {
 
-    @Transactional
+    @TransactionalOnLocationSchema(readOnly = true)
     fun getAllJobTitles(): Collection<JobTitleResponseDto> {
         return jobTitleCache.getAllJobTitles().map { jobTitleMapper.toDto(it) }
     }
 
-    @Transactional
     fun createJobTitle(titleInsertDto: JobTitleInsertDto): JobTitleResponseDto {
         val value = titleInsertDto.value?.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(VALUE_IS_REQUIRED)
@@ -36,9 +36,6 @@ class JobTitleService(
         return jobTitleMapper.toDto(savedTitleEntity)
     }
 
-
-
-    @Transactional
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
         validateJobTitleUpdate(titleDto)
         val titleToUpdate = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
@@ -48,7 +45,6 @@ class JobTitleService(
         return jobTitleMapper.toDto(updatedTitle)
     }
 
-    @Transactional
     fun deleteJobTitle(id: UUID?) {
         if (id != null) {
             val entity = jobTitleCache.getAllJobTitles().find { it.id == id }

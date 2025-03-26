@@ -9,6 +9,8 @@ spring:
       password: ${DB_PASSWORD}
       hikari:
         auto-commit: false
+        idle-timeout: 300000  # 5 minutes
+        max-lifetime: 600000
 
     platform: # Datasource for location metadata
       jdbc-url: jdbc:postgresql://${DB_DOMAIN}/${DB_NAME}?sslmode=require
@@ -16,6 +18,8 @@ spring:
       password: ${DB_PASSWORD}
       hikari:
         auto-commit: false
+        idle-timeout: 300000  # 5 minutes
+        max-lifetime: 600000
 
   cache:
     caffeine:
@@ -49,3 +53,9 @@ server:
   port: ${PORT:8080}
   error:
     include-message: always
+
+logging:
+  level:
+    org:
+      springframework: DEBUG
+      hibernate: DEBUG

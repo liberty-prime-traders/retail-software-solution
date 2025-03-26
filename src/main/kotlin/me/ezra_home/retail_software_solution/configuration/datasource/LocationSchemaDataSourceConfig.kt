@@ -35,7 +35,7 @@ class LocationSchemaDataSourceConfig {
         val em = LocalContainerEntityManagerFactoryBean()
         val dataSourcePackage = "me.ezra_home.retail_software_solution.configuration.datasource"
         em.dataSource = dataSource
-        em.setPackagesToScan("me.ezra_home.retail_software_solution.locations.model")
+        em.setPackagesToScan("me.ezra_home.retail_software_solution.locations")
         em.jpaVendorAdapter = HibernateJpaVendorAdapter()
         em.setJpaPropertyMap(mapOf(
             "hibernate.ddl.auto" to "none",
