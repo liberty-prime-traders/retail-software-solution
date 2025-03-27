@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGeneric
 import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
+import java.util.UUID
 
 @Service
 class FruitService(
