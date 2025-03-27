@@ -4,12 +4,7 @@ import java.text.Normalizer
 
 object SubdomainGenerator {
 
-    fun generateSubdomain(suggestedSubdomain: String): Result<String> {
-        val subdomain = doGenerateSubdomain(suggestedSubdomain)
-        return Result.success(subdomain)
-    }
-
-    private fun doGenerateSubdomain(suggestedSubdomain: String): String {
+    fun generateSubdomain(suggestedSubdomain: String): String {
         val normalized = Normalizer.normalize(suggestedSubdomain, Normalizer.Form.NFD)
             .replace("[^\\p{ASCII}]".toRegex(), "")
 
