@@ -4,13 +4,15 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminService
+import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminValidator
+import me.ezra_home.retail_software_solution.platform.business.organizationadmin.dto.OrganizationAdminInsertDto
 import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
-import java.util.Objects
 import java.util.Optional
 import java.util.UUID
 
@@ -19,7 +21,10 @@ import java.util.UUID
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
-    private val reservedSubdomainService: ReservedSubdomainService
+    private val reservedSubdomainService: ReservedSubdomainService,
+    private val organizationAdminService: OrganizationAdminService,
+    private val organizationValidator: OrganizationValidator,
+    private val organizationAdminValidator: OrganizationAdminValidator
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -28,23 +33,12 @@ class OrganizationService(
     }
 
     fun createOrganization(organizationInsertDto: OrganizationInsertDto): OrganizationResponseDto {
-        validateNameOnSave(Optional.ofNullable(organizationInsertDto.name))
+        organizationValidator.validateNameOnSave(Optional.ofNullable(organizationInsertDto.name))
         markSubdomainAsUsed(organizationInsertDto)
         val entity = organizationMapper.toEntity(organizationInsertDto)
         organizationCache.upsertOrganization(entity)
+        organizationAdminService.createOrganizationAdmin(OrganizationAdminInsertDto(entity.id, entity.createdById))
         return organizationMapper.toResponseDto(entity)
-    }
-
-    private fun validateNameOnSave(name: Optional<String>?, id: UUID? = null) {
-        if (name == null || name.isEmpty || name.get().isBlank()) {
-            throw RtsGenericException("An Organization must have a name")
-        }
-        val organizationWithMatchingName = organizationCache.getAllOrganizations().find {
-            it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
-        }
-        if (organizationWithMatchingName != null) {
-            throw RtsGenericException("An organization using the name '${name.get()}' already exists")
-        }
     }
 
     private fun markSubdomainAsUsed(organizationInsertDto: OrganizationInsertDto) {
@@ -62,8 +56,9 @@ class OrganizationService(
 
     fun updateOrganization(organizationUpdateDto: OrganizationUpdateDto): OrganizationResponseDto {
         val id = organizationUpdateDto.id ?: throw QueriedByEmptyIdException()
+        organizationAdminValidator.canCurrentUserOperateOnOrganization(id)
+        organizationValidator.validateNameOnSave(organizationUpdateDto.name, organizationUpdateDto.id)
         val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == id } ?: throw NotFoundException()
-        validateNameOnSave(organizationUpdateDto.name, organizationUpdateDto.id)
         organizationMapper.partialUpdate(organizationUpdateDto, entityFromDatabase)
         organizationCache.upsertOrganization(entityFromDatabase)
         return organizationMapper.toResponseDto(entityFromDatabase)
@@ -71,6 +66,7 @@ class OrganizationService(
 
     fun deleteOrganization(id: UUID?) {
         id?.let {
+            organizationAdminValidator.canCurrentUserOperateOnOrganization(id)
             organizationCache.getAllOrganizations().find { it.id == id }?.let {entity ->
                 val usageCount = entity.usageCount
                 if (usageCount > 0L) {

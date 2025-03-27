@@ -5,11 +5,12 @@ class CacheNames {
         const val USER = "User"
         const val ADDRESS = "Address"
         const val ORGANIZATION = "Organization"
+        const val ORGANIZATION_ADMIN = "OrganizationAdmin"
         const val LOCATION = "Location"
         const val CATEGORY = "Category"
         const val TITLE = "Title"
-        const val UNITGROUP = "Unit Group"
-        const val UNITVALUE = "Unit Value"
+        const val UNITGROUP = "UnitGroup"
+        const val UNITVALUE = "UnitValue"
     }
 
 }
