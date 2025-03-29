@@ -27,6 +27,9 @@ databaseChangeLog:
               - column:
                   name: code
                   type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_value_code_notnull
 
               - column:
                   name: description
@@ -42,9 +45,6 @@ databaseChangeLog:
               - column:
                   name: base_unit
                   type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: unit_value_base_unit_notnull
 
               - column:
                   name: conversion_factor

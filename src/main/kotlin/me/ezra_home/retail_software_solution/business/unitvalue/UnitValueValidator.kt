@@ -35,7 +35,10 @@ class UnitValueValidator(
             throw RtsGenericException(CONVERSION_FACTOR_IS_REQUIRED)
         }
 
-        if(unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId).find { it.baseUnit == unitValueInsertDto.baseUnit } == null){
+        val baseUnitExists = unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId)
+            .any { it.id == unitValueInsertDto.baseUnit }
+
+        if (unitValueInsertDto.baseUnit != null && !baseUnitExists) {
             throw RtsGenericException(BASE_UNIT_MUST_BE_IN_GROUP)
         }
 
