@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest
 import me.ezra_home.retail_software_solution.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.rest.session.SessionContextProvider
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
 import java.util.Objects
 
 
@@ -26,8 +26,9 @@ class RtsSecureEndpointsFilter(
             return
         }
         val authentication = SecurityContextHolder.getContext().authentication
-        val jwt = authentication.principal as DefaultOAuth2AuthenticatedPrincipal
-        val oktaIdForCurrentUser = jwt.attributes[OKTA_ID_KEY] as String
+        val jwt = authentication.principal as Jwt
+
+        val oktaIdForCurrentUser = jwt.claims[OKTA_ID_KEY] as String
         val systemIdForCurrentUser = oktaIdForCurrentUser.let { oktaId ->
             sysUserCache.getAllUsers().find { Objects.equals(oktaId, it.oktaId) }?.id
         }
