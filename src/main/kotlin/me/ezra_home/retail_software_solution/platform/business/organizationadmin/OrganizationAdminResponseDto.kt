@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.platform.business.organizationadmin.dto
+package me.ezra_home.retail_software_solution.platform.business.organizationadmin
 
 import java.io.Serializable
 import java.time.OffsetDateTime

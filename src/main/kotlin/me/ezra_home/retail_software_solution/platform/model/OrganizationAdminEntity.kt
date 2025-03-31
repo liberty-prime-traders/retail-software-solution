@@ -24,4 +24,8 @@ class OrganizationAdminEntity(
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null
 
-): BaseEntity()
+): BaseEntity() {
+    fun isActive(): Boolean {
+        return endOn == null
+    }
+}
