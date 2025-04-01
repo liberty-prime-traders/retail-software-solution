@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.LOCATION_ID_HEADER
+import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.ORGANIZATION_ID_HEADER
 import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import org.springframework.beans.factory.annotation.Qualifier
@@ -19,11 +21,6 @@ class TenantFilter(
     @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
     private val platformTransactionManager: JpaTransactionManager
 ): OncePerRequestFilter() {
-
-    companion object {
-        private const val LOCATION_ID_HEADER = "X-Location-ID"
-        private const val ORGANIZATION_ID_HEADER = "X-Organization-ID"
-    }
 
     override fun doFilterInternal(httpServletRequest: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         val sessionContext = SessionContextProvider.getSession()

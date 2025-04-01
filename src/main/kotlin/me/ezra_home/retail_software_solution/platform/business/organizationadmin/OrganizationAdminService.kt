@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.platform.business.organizationadmi
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.dto.OrganizationAdminInsertDto
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.dto.OrganizationAdminResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
+import me.ezra_home.retail_software_solution.platform.model.OrganizationAdminEntity
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -16,36 +16,35 @@ class OrganizationAdminService(
     private val organizationAdminMapper: OrganizationAdminMapper,
     private val organizationAdminCache: OrganizationAdminCache,
     private val sysUserService: SysUserService,
-    private val organizationCache: OrganizationCache,
-    private val organizationAdminValidator: OrganizationAdminValidator
+    private val organizationCache: OrganizationCache
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun getAdminHistoryForOrganization(organizationId: UUID?): Collection<OrganizationAdminResponseDto> {
-        organizationAdminValidator.canCurrentUserOperateOnOrganization(organizationId)
+    fun getAdminHistoryForOrganization(): Collection<OrganizationAdminResponseDto> {
+        val organizationId = SessionContextProvider.getOrganizationId()
         return organizationAdminCache.getAdminHistoryForOrganization(organizationId)
             .map { organizationAdminMapper.toResponseDto(it) }
     }
 
-    fun createOrganizationAdmin(organizationInsertDto: OrganizationAdminInsertDto): OrganizationAdminResponseDto {
-        validateUserAndOrganizationExist(organizationInsertDto)
-        organizationAdminValidator.canCurrentUserOperateOnOrganization(organizationInsertDto.organizationId)
-        val entity = organizationAdminMapper.toEntity(organizationInsertDto)
+    fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
+        val organizationId = SessionContextProvider.getOrganizationId()
+        validateUserAndOrganizationExist(adminId, organizationId)
+        val entity = OrganizationAdminEntity(adminId = adminId, organizationId = organizationId)
         organizationAdminCache.upsertOrganization(entity)
         return organizationAdminMapper.toResponseDto(entity)
     }
 
-    private fun validateUserAndOrganizationExist(organizationInsertDto: OrganizationAdminInsertDto) {
-        organizationCache.getAllOrganizations().find { it.id == organizationInsertDto.organizationId }
-            ?: throw RtsGenericException("Organization with id ${organizationInsertDto.organizationId} not found")
-        sysUserService.getAllUsers().find { it.id == organizationInsertDto.adminId }
-            ?: throw RtsGenericException("User with id ${organizationInsertDto.adminId} not found")
+    private fun validateUserAndOrganizationExist(adminId: UUID, organizationId: UUID?) {
+        organizationCache.getAllOrganizations().find { it.id == organizationId }
+            ?: throw RtsGenericException("Organization with id $organizationId not found")
+        sysUserService.getAllUsers().find { it.id == adminId }
+            ?: throw RtsGenericException("User with id $adminId not found")
     }
 
-    fun terminateOrganizationAdmin(organizationInsertDto: OrganizationAdminInsertDto) {
-        organizationAdminValidator.canCurrentUserOperateOnOrganization(organizationInsertDto.organizationId)
-        organizationAdminCache.getAdminHistoryForOrganization(organizationInsertDto.organizationId)
-            .find { it.endOn == null && it.adminId == organizationInsertDto.adminId }
+    fun terminateOrganizationAdmin(adminId: UUID) {
+        val organizationId = SessionContextProvider.getOrganizationId()
+        organizationAdminCache.getAdminHistoryForOrganization(organizationId)
+            .find { it.isActive() && it.adminId == SessionContextProvider.getUserId() }
             ?.let {
                 it.endOn = OffsetDateTime.now()
                 organizationAdminCache.upsertOrganization(it)

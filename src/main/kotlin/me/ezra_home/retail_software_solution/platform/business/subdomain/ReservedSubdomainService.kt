@@ -33,8 +33,7 @@ class ReservedSubdomainService(
     }
 
     private fun reserveSubdomain(sanitizedSubdomain: String): String {
-        val sysUserId = SessionContextProvider.getSession().systemUserId
-            ?: throw RtsGenericException("User id not found in session")
+        val sysUserId = SessionContextProvider.getUserId()
         subdomainRepository.abandonSubdomainsForUser(sysUserId)
         val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED).apply { createdById = sysUserId }
         subdomainRepository.save(reservedSubdomain)
