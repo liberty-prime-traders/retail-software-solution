@@ -14,7 +14,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-abstract class LocationMapper {
+interface LocationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
@@ -22,17 +22,20 @@ abstract class LocationMapper {
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
+    @Mapping(target = "organizationId", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
-    abstract fun toEntity(locationInsertDto: LocationInsertDto): LocationEntity
+    fun toEntity(locationInsertDto: LocationInsertDto): LocationEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    abstract fun toResponseDto(locationEntity: LocationEntity): LocationResponseDto
+    fun toResponseDto(locationEntity: LocationEntity): LocationResponseDto
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
+    @Mapping(target = "organizationId", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    abstract fun partialUpdate(locationUpdateDto: LocationUpdateDto, @MappingTarget locationEntity: LocationEntity)
+    fun partialUpdate(locationUpdateDto: LocationUpdateDto, @MappingTarget locationEntity: LocationEntity)
 }

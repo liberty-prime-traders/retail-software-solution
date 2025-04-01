@@ -35,7 +35,12 @@ class TenantFilter(
 
     private fun initializeSessionSchemaName(httpServletRequest: HttpServletRequest) {
         val platformStatus = platformTransactionManager.getTransaction(DefaultTransactionDefinition())
-        httpServletRequest.getHeader(LOCATION_ID_HEADER)?.let { UUID.fromString(it) }
+        httpServletRequest.getHeader(LOCATION_ID_HEADER)
+            ?.let {
+                val locationId = UUID.fromString(it)
+                SessionContextProvider.getSession().locationId = locationId
+                locationId
+            }
             ?.let { locId -> locationCache.getAllLocations().find { it.id == locId }?.schemaName }
             ?.let { SessionContextProvider.getSession().schemaName = it }
         platformTransactionManager.commit(platformStatus)

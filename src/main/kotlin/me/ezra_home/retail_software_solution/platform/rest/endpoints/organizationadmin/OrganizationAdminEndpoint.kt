@@ -16,20 +16,18 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/organization-admins")
+@PreAuthorize("rtsPermissions.isOrganizationAdmin()")
 class OrganizationAdminEndpoint(private val organizationAdminService: OrganizationAdminService) {
 
     @GetMapping
-    @PreAuthorize("rtsPermissions.operateOnOrganization()")
     fun getAdminHistoryForOrganization(): Collection<OrganizationAdminResponseDto> =
         organizationAdminService.getAdminHistoryForOrganization()
 
     @PostMapping("{adminId}")
-    @PreAuthorize("rtsPermissions.operateOnOrganization()")
     fun createOrganizationAdmin(@PathVariable("adminId") adminId: UUID): OrganizationAdminResponseDto =
         organizationAdminService.createOrganizationAdmin(adminId)
 
     @PostMapping("terminate/{adminId}")
-    @PreAuthorize("rtsPermissions.operateOnOrganization()")
     fun terminateOrganizationAdmin(@PathVariable("adminId") adminId: UUID): ResponseEntity<HttpStatus> {
         organizationAdminService.terminateOrganizationAdmin(adminId)
         return ResponseEntity(HttpStatus.NO_CONTENT)

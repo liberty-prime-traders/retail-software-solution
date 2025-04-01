@@ -32,7 +32,7 @@ class OrganizationService(
         markSubdomainAsUsed(organizationInsertDto)
         val entity = organizationMapper.toEntity(organizationInsertDto)
         organizationCache.upsertOrganization(entity)
-        organizationAdminCache.upsertOrganization(OrganizationAdminEntity(organizationId = entity.id, adminId = entity.createdById))
+        organizationAdminCache.upsertOrganization(OrganizationAdminEntity(entity.id).apply { adminId = entity.createdById })
         return organizationMapper.toResponseDto(entity)
     }
 

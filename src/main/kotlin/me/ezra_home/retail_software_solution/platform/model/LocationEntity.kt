@@ -14,7 +14,7 @@ import java.util.UUID
 class LocationEntity(
 
     @NotNull
-    @Column(name = "organization_id", nullable = false)
+    @Column(name = "organization_id", nullable = false, updatable = false)
     var organizationId: UUID? = null,
 
     @NotNull
@@ -28,7 +28,7 @@ class LocationEntity(
     var description: String? = null,
 
     @NotNull
-    @Column(name = "schema_name", length = 100, nullable = false)
+    @Column(name = "schema_name", length = 100, nullable = false, updatable = false)
     var schemaName: String? = null
 
 ): AuditableEntity()
