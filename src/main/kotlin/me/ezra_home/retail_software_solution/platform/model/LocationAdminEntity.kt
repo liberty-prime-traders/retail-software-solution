@@ -7,10 +7,10 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 
 @Entity
-@Table(name = TableNames.ORGANIZATION_ADMIN)
-class OrganizationAdminEntity(
+@Table(name = TableNames.LOCATION_ADMIN)
+class LocationAdminEntity(
 
-    @Column(name = "organization_id", updatable = false)
-    var organizationId: UUID? = null,
+    @Column(name = "location_id", updatable = false)
+    var locationId: UUID? = null,
 
 ): BaseAdminEntity()

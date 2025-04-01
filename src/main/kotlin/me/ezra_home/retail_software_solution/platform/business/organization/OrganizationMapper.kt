@@ -26,12 +26,12 @@ interface OrganizationMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toResponseDto(organizationEntity: OrganizationEntity): OrganizationResponseDto
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "subdomain", ignore = true)
-    @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(organizationUpsertDto: OrganizationUpsertDto, @MappingTarget organizationEntity: OrganizationEntity)
 }

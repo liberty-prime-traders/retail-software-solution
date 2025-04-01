@@ -31,12 +31,12 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
         organizationService.createOrganization(organizationInsertDto)
 
     @PutMapping
-    @PreAuthorize("rtsPermissions.operateOnOrganization()")
+    @PreAuthorize("rtsPermissions.isOrganizationAdmin()")
     fun updateOrganization(@RequestBody organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto =
         organizationService.updateOrganization(organizationUpdateDto)
 
     @DeleteMapping
-    @PreAuthorize("rtsPermissions.operateOnOrganization()")
+    @PreAuthorize("rtsPermissions.isOrganizationAdmin()")
     fun deleteOrganization(): ResponseEntity<HttpStatus> {
         organizationService.deleteOrganization()
         return ResponseEntity(HttpStatus.NO_CONTENT)

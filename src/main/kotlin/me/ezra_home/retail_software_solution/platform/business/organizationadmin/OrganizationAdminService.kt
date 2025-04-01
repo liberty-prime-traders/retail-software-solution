@@ -29,7 +29,7 @@ class OrganizationAdminService(
     fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
         validateUserAndOrganizationExist(adminId, organizationId)
-        val entity = OrganizationAdminEntity(adminId = adminId, organizationId = organizationId)
+        val entity = OrganizationAdminEntity(organizationId).apply { this.adminId = adminId }
         organizationAdminCache.upsertOrganization(entity)
         return organizationAdminMapper.toResponseDto(entity)
     }
@@ -44,7 +44,7 @@ class OrganizationAdminService(
     fun terminateOrganizationAdmin(adminId: UUID) {
         val organizationId = SessionContextProvider.getOrganizationId()
         organizationAdminCache.getAdminHistoryForOrganization(organizationId)
-            .find { it.isActive() && it.adminId == SessionContextProvider.getUserId() }
+            .find { it.isActive() && it.adminId == adminId }
             ?.let {
                 it.endOn = OffsetDateTime.now()
                 organizationAdminCache.upsertOrganization(it)

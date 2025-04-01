@@ -10,5 +10,6 @@ object TableNames {
     const val UNITVALUE = "unit_value"
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
+    const val LOCATION_ADMIN = "location_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
 }
