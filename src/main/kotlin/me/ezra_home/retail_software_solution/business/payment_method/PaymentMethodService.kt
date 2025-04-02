@@ -7,9 +7,11 @@ import me.ezra_home.retail_software_solution.business.payment_method.dto.Payment
 import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodUpdateDto
 import me.ezra_home.retail_software_solution.business.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
+import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.Objects
+import java.util.Optional
+import java.util.UUID
 
 @Service
 class PaymentMethodService (
@@ -34,10 +36,10 @@ class PaymentMethodService (
         if (name == null || name.isEmpty || Strings.isNullOrEmpty(name.get())) {
             throw RtsGenericException("A Payment Method must have a name")
         }
-        val organizationWithMatchingName = paymentMethodCache.getAllPaymentMethods().find {
+        val paymentMethodWithMatchingName = paymentMethodCache.getAllPaymentMethods().find {
             it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
         }
-        if (organizationWithMatchingName != null) {
+        if (paymentMethodWithMatchingName != null) {
             throw RtsGenericException("A Payment Method using the name '${name.get()}' already exists")
         }
     }
@@ -45,7 +47,7 @@ class PaymentMethodService (
     @Transactional
     fun updatePaymentMethod(paymentMethodUpdateDto: PaymentMethodUpdateDto): PaymentMethodResponseDto {
         val id = paymentMethodUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val entityFromDatabase = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw NotFoundException()
+        val entityFromDatabase = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
         validateNameOnSave(paymentMethodUpdateDto.name, paymentMethodUpdateDto.id)
         paymentMethodMapper.partialUpdate(paymentMethodUpdateDto, entityFromDatabase)
         paymentMethodCache.upsertPaymentMethod(entityFromDatabase)

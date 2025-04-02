@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.model.util.TableNames
 class PaymentMethodEntity (
 
     @Column(name = "name", unique = true, length = 100)
-    var name: String,
+    var name: String? = null,
 
     @Column(name = "description", length = 1000)
     var description: String? = null,
