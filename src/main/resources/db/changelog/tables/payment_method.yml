@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: '1'
+      id: 'create-payment-method-table'
       author: adongo
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       preConditions:
@@ -10,20 +10,20 @@ databaseChangeLog:
                 tableName: payment_method
       changes:
         - createTable:
+            tableName: payment_method
             columns:
               - column:
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                    primaryKeyName: pk_payment_method
                   name: id
                   type: uuid
                   defaultValueComputed: ${uuid_function}
-              - column:
                   constraints:
-                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_payment_method
+              - column:
                   name: created_by_id
                   type: uuid
+                  constraints:
+                    nullable: false
               - column:
                   name: created_on
                   type: timestamptz
@@ -44,4 +44,3 @@ databaseChangeLog:
               - column:
                   name: description
                   type: nvarchar2(1000)
-            tableName: payment_method

@@ -10,6 +10,6 @@ class TableNames {
         const val TITLE = "jobtitle"
         const val UNITGROUP = "unit_group"
         const val UNITVALUE = "unit_value"
-        const val   PAYMENT_METHOD = "payment_method"
+        const val PAYMENT_METHOD = "payment_method"
     }
 }
