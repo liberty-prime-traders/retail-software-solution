@@ -17,7 +17,7 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/location-admins")
-@PreAuthorize("rtsPermissions.isLocationAdmin()")
+@PreAuthorize("@rtsPermissions.isLocationAdmin()")
 class LocationAdminEndpoint(private val locationAdminService: LocationAdminService) {
 
     @GetMapping

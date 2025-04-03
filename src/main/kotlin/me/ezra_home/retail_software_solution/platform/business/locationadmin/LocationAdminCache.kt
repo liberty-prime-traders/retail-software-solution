@@ -16,7 +16,7 @@ class LocationAdminCache(private val locationAdminRepository: LocationAdminRepos
             ?: throw QueriedByEmptyIdException()
     }
 
-    fun upsertLocation(locationAdminEntity: LocationAdminEntity) {
+    fun upsertLocationAdmin(locationAdminEntity: LocationAdminEntity) {
         locationAdminRepository.save(locationAdminEntity)
     }
 }

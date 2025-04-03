@@ -4,13 +4,14 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationUsageCounter
+import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
-import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
@@ -18,12 +19,14 @@ class LocationService(
     private val locationCache: LocationCache,
     private val locationMapper: LocationMapper,
     private val locationValidator: LocationValidator,
-    private val organizationUsageCounter: OrganizationUsageCounter
+    private val locationAdminCache: LocationAdminCache,
+    private val organizationUsageCounter: OrganizationUsageCounter,
+    private val locationSchemaCreator: LocationSchemaCreator
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun getLocationsForOrganization(organizationId: UUID): Collection<LocationResponseDto> {
-        return locationCache.getByOrganizationId(organizationId).map {
+    fun getLocationsForOrganization(): Collection<LocationResponseDto> {
+        return locationCache.getByOrganizationId(SessionContextProvider.getOrganizationId()).map {
             locationMapper.toResponseDto(it)
         }
     }
@@ -31,10 +34,21 @@ class LocationService(
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
         locationValidator.validateLocationInsert(locationInsertDto, organizationId)
-        val locationEntity = locationMapper.toEntity(locationInsertDto).apply { this.organizationId = organizationId }
+        val schemaName = createLocationSchema(locationInsertDto.name!!)
+        val locationEntity = locationMapper.toEntity(locationInsertDto).apply {
+            this.organizationId = organizationId
+            this.schemaName = schemaName
+        }
         locationCache.upsertLocation(locationEntity)
+        locationAdminCache.upsertLocationAdmin(LocationAdminEntity(locationEntity.id).apply { adminId = locationEntity.createdById })
         organizationUsageCounter.incrementUsageCount(organizationId)
         return locationMapper.toResponseDto(locationEntity)
+    }
+
+    private fun createLocationSchema(locationName: String): String {
+        val schemaName = "loc_${locationName.lowercase().replace(" ", "_")}"
+        locationSchemaCreator.createSchema(schemaName)
+        return schemaName
     }
 
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {

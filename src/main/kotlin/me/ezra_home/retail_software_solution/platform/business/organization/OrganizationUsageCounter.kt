@@ -11,14 +11,14 @@ class OrganizationUsageCounter(private val organizationCache: OrganizationCache)
 
     override fun incrementUsageCount(id: UUID?) {
         organizationCache.getAllOrganizations().find { it.id == id }?.let {
-            it.usageCount.plus(1L)
+            it.usageCount = it.usageCount.plus(1L)
             organizationCache.upsertOrganization(it)
         }
     }
 
     override fun decrementUsageCount(id: UUID?) {
         organizationCache.getAllOrganizations().find { it.id == id }?.let {
-            it.usageCount.minus(1L)
+            it.usageCount = it.usageCount.minus(1L)
             organizationCache.upsertOrganization(it)
         }
     }
