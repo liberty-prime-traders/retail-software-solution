@@ -3,6 +3,7 @@ databaseChangeLog:
       id: 'create-job-title-table'
       author: kenneth
       preConditions:
+        - onFail: MARK_RAN
         - not:
             - tableExists:
                 tableName: job_title

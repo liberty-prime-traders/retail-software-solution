@@ -16,7 +16,7 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/organization-admins")
-@PreAuthorize("rtsPermissions.isOrganizationAdmin()")
+@PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
 class OrganizationAdminEndpoint(private val organizationAdminService: OrganizationAdminService) {
 
     @GetMapping

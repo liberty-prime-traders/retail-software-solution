@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 @CrossOrigin
 @RestController
@@ -25,22 +23,22 @@ import java.util.UUID
 class LocationEndpoint(private val locationService: LocationService) {
 
     @GetMapping
-    @PreAuthorize("rtsPermissions.isOrganizationAdmin()")
-    fun getForOrganization(@RequestParam("organizationId") organizationId: UUID): Collection<LocationResponseDto> =
-        locationService.getLocationsForOrganization(organizationId)
+    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
+    fun getForOrganization(): Collection<LocationResponseDto> =
+        locationService.getLocationsForOrganization()
 
     @PostMapping
-    @PreAuthorize("rtsPermissions.isOrganizationAdmin()")
+    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
     fun createLocation(@RequestBody locationInsertDto: LocationInsertDto): LocationResponseDto =
         locationService.createLocation(locationInsertDto)
 
     @PutMapping
-    @PreAuthorize("rtsPermissions.isLocationAdmin()")
+    @PreAuthorize("@rtsPermissions.isLocationAdmin()")
     fun updateLocation(@RequestBody locationUpdateDto: LocationUpdateDto): LocationResponseDto =
         locationService.updateLocation(locationUpdateDto)
 
     @DeleteMapping
-    @PreAuthorize("rtsPermissions.isLocationAdmin()")
+    @PreAuthorize("@rtsPermissions.isLocationAdmin()")
     fun deleteLocation(): ResponseEntity<HttpStatusCode> {
         locationService.deleteLocation()
         return ResponseEntity(HttpStatus.NO_CONTENT)

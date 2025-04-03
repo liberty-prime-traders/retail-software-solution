@@ -31,7 +31,7 @@ class LocationAdminService(
         val locationId = SessionContextProvider.getLocationId()
         validateUserAndLocationExist(adminId, locationId)
         val entity = LocationAdminEntity(locationId).apply { this.adminId = adminId }
-        locationAdminCache.upsertLocation(entity)
+        locationAdminCache.upsertLocationAdmin(entity)
         return locationAdminMapper.toResponseDto(entity)
     }
 
@@ -48,7 +48,7 @@ class LocationAdminService(
             .find { it.isActive() && it.adminId == adminId }
             ?.let {
                 it.endOn = OffsetDateTime.now()
-                locationAdminCache.upsertLocation(it)
+                locationAdminCache.upsertLocationAdmin(it)
             }
     }
 }

@@ -11,14 +11,14 @@ class UnitGroupUsageCounter(private val unitGroupCache: UnitGroupCache) : UsageC
 
     override fun incrementUsageCount(id: UUID?) {
         unitGroupCache.getAllUnitGroups().find { it.id == id }?.let {
-            it.usageCount.plus(1L)
+            it.usageCount = it.usageCount.plus(1L)
             unitGroupCache.upsertUnitGroup(it)
         }
     }
 
     override fun decrementUsageCount(id: UUID?) {
         unitGroupCache.getAllUnitGroups().find { it.id == id }?.let {
-            it.usageCount.minus(1L)
+            it.usageCount = it.usageCount.minus(1L)
             unitGroupCache.upsertUnitGroup(it)
         }
     }
