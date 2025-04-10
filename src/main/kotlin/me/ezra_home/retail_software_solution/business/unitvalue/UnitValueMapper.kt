@@ -13,7 +13,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
-@Mapper(config = RtsMapperConfig::class)
+@Mapper(config = RtsMapperConfig::class, uses = [UnitValueQualifier::class])
 abstract class UnitValueMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -25,6 +25,7 @@ abstract class UnitValueMapper {
     abstract fun toEntity(unitValueInsertDto: UnitValueInsertDto): UnitValueEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "baseUnit", target = "baseUnitName", qualifiedBy = [BaseUnitName::class])
     abstract fun toResponseDto(unitValueEntity: UnitValueEntity): UnitValueResponseDto
 
     @Mapping(target = "createdById", ignore = true)
