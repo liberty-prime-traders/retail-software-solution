@@ -3,25 +3,39 @@ spring:
     name: retail-software-solution
 
   datasource:
-    url: jdbc:postgresql://${DB_DOMAIN}:${DB_PORT}/${DB_NAME}?sslmode=prefer
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    hikari:
-      auto-commit: false
+    location: # Datasource for each location's schema
+      jdbc-url: jdbc:postgresql://${DB_DOMAIN}:${DB_PORT}/${DB_NAME}?sslmode=prefer
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      hikari:
+        auto-commit: false
+        idle-timeout: 300000  # 5 minutes
+        max-lifetime: 600000
+
+    platform: # Datasource for location metadata
+      jdbc-url: jdbc:postgresql://${DB_DOMAIN}:${DB_PORT}/${DB_NAME}?sslmode=prefer
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      hikari:
+        auto-commit: false
+        idle-timeout: 300000  # 5 minutes
+        max-lifetime: 600000
+
   cache:
     caffeine:
       spec: maximumSize=100
 
-  liquibase:
-    change-log: classpath:db/changelog/db-changelog-master.yml
-
   jpa:
     show-sql: ${SHOW_SQL:false}
     open-in-view: false
+    hibernate:
+      ddl-auto: none
+
   task:
     scheduling:
       pool:
         size: 5
+
   jackson:
     time-zone: UTC
     default-property-inclusion: non_null
