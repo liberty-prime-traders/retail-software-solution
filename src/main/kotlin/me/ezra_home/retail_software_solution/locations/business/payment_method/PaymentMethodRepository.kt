@@ -1,6 +1,6 @@
-package me.ezra_home.retail_software_solution.business.payment_method
+package me.ezra_home.retail_software_solution.locations.business.payment_method
 
-import me.ezra_home.retail_software_solution.model.entity.PaymentMethodEntity
+import me.ezra_home.retail_software_solution.locations.model.PaymentMethodEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

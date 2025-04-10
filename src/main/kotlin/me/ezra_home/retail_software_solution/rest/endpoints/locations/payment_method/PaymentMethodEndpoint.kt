@@ -1,9 +1,9 @@
-package me.ezra_home.retail_software_solution.rest.endpoints.payment_method
+package me.ezra_home.retail_software_solution.rest.endpoints.locations.payment_method
 
-import me.ezra_home.retail_software_solution.business.payment_method.PaymentMethodService
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodInsertDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodResponseDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.PaymentMethodService
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodInsertDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodResponseDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin

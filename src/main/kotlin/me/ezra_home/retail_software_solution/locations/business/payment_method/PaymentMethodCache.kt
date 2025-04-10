@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.business.payment_method
+package me.ezra_home.retail_software_solution.locations.business.payment_method
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.model.entity.PaymentMethodEntity
+import me.ezra_home.retail_software_solution.locations.model.PaymentMethodEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable

@@ -11,4 +11,5 @@ object TableNames {
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
+    const val PAYMENT_METHOD = "payment_method"
 }

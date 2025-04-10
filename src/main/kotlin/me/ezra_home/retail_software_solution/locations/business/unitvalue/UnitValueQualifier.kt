@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.business.unitvalue
+package me.ezra_home.retail_software_solution.locations.business.unitvalue
 
+import me.ezra_home.retail_software_solution.business.unitvalue.BaseUnitName
 import org.springframework.stereotype.Component
 import java.util.UUID
 

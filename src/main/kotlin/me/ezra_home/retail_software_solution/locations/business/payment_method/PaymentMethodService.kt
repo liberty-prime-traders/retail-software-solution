@@ -1,30 +1,30 @@
-package me.ezra_home.retail_software_solution.business.payment_method
+package me.ezra_home.retail_software_solution.locations.business.payment_method
 
 import com.google.common.base.Strings
-import jakarta.transaction.Transactional
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodInsertDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodResponseDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodUpdateDto
-import me.ezra_home.retail_software_solution.business.util.exceptions.QueriedByEmptyIdException
-import me.ezra_home.retail_software_solution.business.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.business.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodInsertDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodResponseDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodUpdateDto
+import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.Optional
 import java.util.UUID
 
 @Service
+@TransactionalOnLocationSchema
 class PaymentMethodService (
     private val paymentMethodMapper: PaymentMethodMapper,
     private val paymentMethodCache: PaymentMethodCache
 ) {
 
-    @Transactional
+    @TransactionalOnLocationSchema(readOnly = true)
     fun getAllPaymentMethods(): Collection<PaymentMethodResponseDto> {
         return paymentMethodCache.getAllPaymentMethods().map { paymentMethodMapper.toResponseDto(it) }
     }
 
-    @Transactional
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
         val entity = paymentMethodMapper.toEntity(paymentMethodInsertDto)
@@ -44,7 +44,6 @@ class PaymentMethodService (
         }
     }
 
-    @Transactional
     fun updatePaymentMethod(paymentMethodUpdateDto: PaymentMethodUpdateDto): PaymentMethodResponseDto {
         val id = paymentMethodUpdateDto.id ?: throw QueriedByEmptyIdException()
         val entityFromDatabase = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
@@ -54,7 +53,7 @@ class PaymentMethodService (
         return paymentMethodMapper.toResponseDto(entityFromDatabase)
     }
 
-    @Transactional
+    @TransactionalOnLocationSchema
     fun deletePaymentMethod(id: UUID?) {
         if (id != null) {
             val entity = paymentMethodCache.getAllPaymentMethods().find { it.id == id }

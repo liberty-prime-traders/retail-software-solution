@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.payment_method.dto
+package me.ezra_home.retail_software_solution.locations.business.payment_method.dto
 
 import java.io.Serializable
 import java.time.OffsetDateTime

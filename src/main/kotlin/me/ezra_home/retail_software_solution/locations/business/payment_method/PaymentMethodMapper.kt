@@ -1,12 +1,12 @@
-package me.ezra_home.retail_software_solution.business.payment_method
+package me.ezra_home.retail_software_solution.locations.business.payment_method
 
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodInsertDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodResponseDto
-import me.ezra_home.retail_software_solution.business.payment_method.dto.PaymentMethodUpdateDto
-import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodInsertDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodResponseDto
+import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodUpdateDto
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
-import me.ezra_home.retail_software_solution.model.entity.PaymentMethodEntity
+import me.ezra_home.retail_software_solution.locations.model.PaymentMethodEntity
+import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
+import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
