@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.category.dto.CategoryUpdateDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -23,13 +24,9 @@ class CategoryService(
     }
 
     fun createCategory(categoryInsertDto: CategoryInsertDto): CategoryResponseDto {
-        val categoryName = categoryInsertDto.categoryName?.takeIf { it.isNotBlank() }
-            ?: throw RtsGenericException(NAME_IS_REQUIRED)
-
-        if (categoryCache.getAllCategories().any { it.categoryName.equals(categoryName, ignoreCase = true) }) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))
-        }
-
+        val categoryName = StringUtils.getValueOrException(categoryInsertDto.categoryName, NAME_IS_REQUIRED)
+        categoryCache.getAllCategories().find { StringUtils.isEquivalent(it.categoryName, categoryName) }
+            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))}
         val newCategoryEntity = categoryMapper.toEntity(categoryInsertDto)
         val savedCategoryEntity = categoryCache.upsertCategories(newCategoryEntity)
         return categoryMapper.toDto(savedCategoryEntity)
@@ -45,20 +42,15 @@ class CategoryService(
     }
 
     private fun validateCategoryUpdate(categoryUpdateDto: CategoryUpdateDto) {
-        val name = categoryUpdateDto.categoryName?.orElse(null)
-            ?: throw RtsGenericException(NAME_IS_REQUIRED)
-
-        if (categoryCache.getAllCategories().any {
-                it.categoryName.equals(name, ignoreCase = true) && it.id != categoryUpdateDto.id
-            }) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
-        }
+        val name = StringUtils.getValueOrException(categoryUpdateDto.categoryName, NAME_IS_REQUIRED)
+        categoryCache.getAllCategories()
+            .find { StringUtils.isEquivalent(it.categoryName, name) && it.id != categoryUpdateDto.id }
+            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
     }
 
     fun deleteCategory(id: UUID?) {
-        if (id != null) {
-            val entity = categoryCache.getAllCategories().find { it.id == id }
-            if (entity != null) {
+        id?.let {
+            categoryCache.getAllCategories().find { it.id == id }?.let { entity ->
                 val usageCount = entity.usageCount
                 if (usageCount > 0L) {
                     throw RtsGenericException("Category ${entity.categoryName} has $usageCount usage(s) and cannot be deleted")

@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.locations.business.unitgroup.dto.UnitGroupUpdateDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
@@ -32,16 +33,11 @@ class UnitGroupService(
         return unitGroupMapper.toResponseDto(entity)
     }
 
-    private fun validateNameOnSave(name: Optional<String>?, id: UUID? = null) {
-        if (name == null || name.isEmpty || name.get().isBlank()) {
-            throw RtsGenericException("An UnitGroup must have a name")
-        }
-        val unitGroupWithMatchingName = unitGroupCache.getAllUnitGroups().find {
-            it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
-        }
-        if (unitGroupWithMatchingName != null) {
-            throw RtsGenericException("An UnitGroup using the name '${name.get()}' already exists")
-        }
+    private fun validateNameOnSave(optionalName: Optional<String>?, id: UUID? = null) {
+        val name = StringUtils.getValueOrException(optionalName, "An UnitGroup must have a name")
+        unitGroupCache.getAllUnitGroups()
+            .find { StringUtils.isEquivalent(it.name, name) && !Objects.equals(it.id, id) }
+            ?.let { throw RtsGenericException("An UnitGroup using the name '$name' already exists") }
     }
 
     fun updateUnitGroup(unitGroupUpdateDto: UnitGroupUpdateDto): UnitGroupResponseDto {
@@ -54,16 +50,14 @@ class UnitGroupService(
     }
 
     fun deleteUnitGroup(id: UUID?) {
-        if (id != null) {
-            val entity = unitGroupCache.getAllUnitGroups().find { it.id == id }
-            if (entity != null) {
+        id?.let {
+            unitGroupCache.getAllUnitGroups().find { it.id == id }?.let { entity ->
                 val usageCount = entity.usageCount
                 if (usageCount > 0L) {
                     throw RtsGenericException("UnitGroup ${entity.name} has $usageCount usage(s) and cannot be deleted")
                 }
                 unitGroupCache.deleteUnitGroup(id)
             }
-
         }
     }
 }

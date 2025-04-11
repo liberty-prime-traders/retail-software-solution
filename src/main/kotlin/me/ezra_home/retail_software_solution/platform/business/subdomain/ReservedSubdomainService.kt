@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.subdomain
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.repository.findByIdOrNull
@@ -22,10 +23,10 @@ class ReservedSubdomainService(
     }
 
     fun sanitizeThenReserveSubdomain(suggestedSubdomain: String?): String {
-        if (suggestedSubdomain.isNullOrBlank()) {
+        if (StringUtils.hasValue(suggestedSubdomain)) {
             throw RtsGenericException("An empty subdomain cannot be verified")
         }
-        val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain)
+        val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain!!)
         subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain }?.let {
             throw RtsGenericException("Subdomain '$subdomain' is taken")
         }
