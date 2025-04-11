@@ -57,10 +57,10 @@ class LocationSchemaDataSourceConfig {
     fun locationSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
-        val liquibase = SpringLiquibase()
-        liquibase.dataSource = dataSource
-        liquibase.changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
-        liquibase.setShouldRun(false)
-        return liquibase
+        return SpringLiquibase().apply {
+            this.dataSource = dataSource
+            changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
+            setShouldRun(false)
+        }
     }
 }

@@ -13,7 +13,6 @@ data class LocationResponseDto(
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val usageCount: Long,
-    val organizationId: UUID?,
     val locationType: LocationType?,
     val name: String?,
     val description: String?

@@ -17,32 +17,27 @@ class ReservedSubdomainService(
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun sanitizeSubdomain(suggestedSubdomain: String?): Result<String> {
-        if (suggestedSubdomain.isNullOrBlank()) {
-            return Result.failure(RtsGenericException("Subdomain is required"))
-        }
-        val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain)
-        subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain.getOrNull() }?.let {
-            return Result.failure(RtsGenericException("Subdomain '$subdomain' is taken"))
-        }
-        return subdomain
+    fun getReservedSubdomains(): Collection<ReservedSubdomainDto> {
+        return subdomainRepository.findAll().map { reservedSubdomainMapper.toDto(it) }
     }
 
-    fun reserveSubdomain(subdomain: String?): Result<UUID?> {
-        val sysUserId = SessionContextProvider.getSession().systemUserId
-            ?: throw RtsGenericException("User id not found in session")
-        subdomainRepository.findByCreatedByIdAndStatus(sysUserId, Status.UNUSED).firstOrNull()?.let {
-            throw RtsGenericException("User already has a reserved subdomain")
+    fun sanitizeThenReserveSubdomain(suggestedSubdomain: String?): String {
+        if (suggestedSubdomain.isNullOrBlank()) {
+            throw RtsGenericException("An empty subdomain cannot be verified")
         }
-        val subdomainToReserve = sanitizeSubdomain(subdomain).getOrNull().let {
-            if (it != subdomain || it.isNullOrBlank()) {
-                throw RtsGenericException("Subdomain '$subdomain' was not sanitized")
-            }
-            it
+        val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain)
+        subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain }?.let {
+            throw RtsGenericException("Subdomain '$subdomain' is taken")
         }
-        val reservedSubdomain = ReservedSubdomainEntity(subdomainToReserve, Status.UNUSED).apply { createdById = sysUserId }
+        return reserveSubdomain(subdomain)
+    }
+
+    private fun reserveSubdomain(sanitizedSubdomain: String): String {
+        val sysUserId = SessionContextProvider.getUserId()
+        subdomainRepository.abandonSubdomainsForUser(sysUserId)
+        val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED).apply { createdById = sysUserId }
         subdomainRepository.save(reservedSubdomain)
-        return Result.success(reservedSubdomain.id)
+        return sanitizedSubdomain
     }
 
     fun releaseSubdomain(id: UUID?) {
@@ -63,8 +58,4 @@ class ReservedSubdomainService(
         }
     }
 
-    @TransactionalOnPlatformSchema(readOnly = true)
-    fun getReservedSubdomains(): Collection<ReservedSubdomainDto> {
-        return subdomainRepository.findAll().map { reservedSubdomainMapper.toDto(it) }
-    }
 }

@@ -1,25 +1,25 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
+import me.ezra_home.retail_software_solution.platform.model.OrganizationAdminEntity
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
-import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
-import java.util.Objects
-import java.util.Optional
-import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
-    private val reservedSubdomainService: ReservedSubdomainService
+    private val reservedSubdomainService: ReservedSubdomainService,
+    private val organizationAdminCache: OrganizationAdminCache,
+    private val organizationValidator: OrganizationValidator
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -27,27 +27,16 @@ class OrganizationService(
         return organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
     }
 
-    fun createOrganization(organizationInsertDto: OrganizationInsertDto): OrganizationResponseDto {
-        validateNameOnSave(Optional.ofNullable(organizationInsertDto.name))
+    fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
+        organizationValidator.validateNameOnSave(organizationInsertDto.name)
         markSubdomainAsUsed(organizationInsertDto)
         val entity = organizationMapper.toEntity(organizationInsertDto)
         organizationCache.upsertOrganization(entity)
+        organizationAdminCache.upsertOrganization(OrganizationAdminEntity(entity.id).apply { adminId = entity.createdById })
         return organizationMapper.toResponseDto(entity)
     }
 
-    private fun validateNameOnSave(name: Optional<String>?, id: UUID? = null) {
-        if (name == null || name.isEmpty || name.get().isBlank()) {
-            throw RtsGenericException("An Organization must have a name")
-        }
-        val organizationWithMatchingName = organizationCache.getAllOrganizations().find {
-            it.name.equals(name.get(), ignoreCase = true) && !Objects.equals(it.id, id)
-        }
-        if (organizationWithMatchingName != null) {
-            throw RtsGenericException("An organization using the name '${name.get()}' already exists")
-        }
-    }
-
-    private fun markSubdomainAsUsed(organizationInsertDto: OrganizationInsertDto) {
+    private fun markSubdomainAsUsed(organizationInsertDto: OrganizationUpsertDto) {
         val intendedSubdomain = organizationInsertDto.subdomain
         if (intendedSubdomain.isNullOrBlank()) {
             throw RtsGenericException("An Organization must have a subdomain")
@@ -60,24 +49,23 @@ class OrganizationService(
         reservedSubdomainService.markSubdomainAsUsed(reservedSubdomain.id)
     }
 
-    fun updateOrganization(organizationUpdateDto: OrganizationUpdateDto): OrganizationResponseDto {
-        val id = organizationUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == id } ?: throw NotFoundException()
-        validateNameOnSave(organizationUpdateDto.name, organizationUpdateDto.id)
+    fun updateOrganization(organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto {
+        val organizationId = SessionContextProvider.getOrganizationId()
+        organizationValidator.validateNameOnSave(organizationUpdateDto.name, organizationId)
+        val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == organizationId } ?: throw NotFoundException()
         organizationMapper.partialUpdate(organizationUpdateDto, entityFromDatabase)
         organizationCache.upsertOrganization(entityFromDatabase)
         return organizationMapper.toResponseDto(entityFromDatabase)
     }
 
-    fun deleteOrganization(id: UUID?) {
-        id?.let {
-            organizationCache.getAllOrganizations().find { it.id == id }?.let {entity ->
-                val usageCount = entity.usageCount
-                if (usageCount > 0L) {
-                    throw RtsGenericException("Organization ${entity.name} has $usageCount usage(s) and cannot be deleted")
-                }
-                organizationCache.deleteOrganization(id)
+    fun deleteOrganization() {
+        val organizationId = SessionContextProvider.getOrganizationId()
+        organizationCache.getAllOrganizations().find { it.id == organizationId }?.let {entity ->
+            val usageCount = entity.usageCount
+            if (usageCount > 0L) {
+                throw RtsGenericException("Organization ${entity.name} has $usageCount usage(s) and cannot be deleted")
             }
+            organizationCache.deleteOrganization(organizationId)
         }
     }
 }

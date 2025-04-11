@@ -3,12 +3,18 @@ package me.ezra_home.retail_software_solution.platform.business.subdomain
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.util.enums.Status
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
 interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
 
-    fun findByCreatedByIdAndStatus(createdById: UUID,status: Status): List<ReservedSubdomainEntity>
     fun findByStatusNot(status: Status): List<ReservedSubdomainEntity>
+
+    @Modifying
+    @Query("update ReservedSubdomainEntity r set r.status = 'ABND' where r.createdById = :createdById and r.status = 'UNSD'")
+    fun abandonSubdomainsForUser(@Param("createdById") createdById: UUID)
 }

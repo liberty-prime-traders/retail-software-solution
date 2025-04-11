@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-@CacheConfig(cacheNames = [CacheNames.UNITGROUP])
+@CacheConfig(cacheNames = [CacheNames.UNIT_GROUP])
 class UnitGroupCache(private val unitGroupRepository: UnitGroupRepository) {
 
     @Cacheable

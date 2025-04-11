@@ -4,49 +4,58 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminCache
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationUsageCounter
+import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
-import java.util.Optional
-import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
-class LocationService(private val locationCache: LocationCache, private val locationMapper: LocationMapper) {
+class LocationService(
+    private val locationCache: LocationCache,
+    private val locationMapper: LocationMapper,
+    private val locationValidator: LocationValidator,
+    private val locationAdminCache: LocationAdminCache,
+    private val organizationUsageCounter: OrganizationUsageCounter,
+    private val locationSchemaCreator: LocationSchemaCreator
+) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun getLocationsForOrganization(organizationId: UUID): Collection<LocationResponseDto> {
-        return locationCache.getByOrganizationId(organizationId).map {
+    fun getLocationsForOrganization(): Collection<LocationResponseDto> {
+        return locationCache.getByOrganizationId(SessionContextProvider.getOrganizationId()).map {
             locationMapper.toResponseDto(it)
         }
     }
 
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
-        validateLocationInsert(locationInsertDto)
-        val locationEntity = locationMapper.toEntity(locationInsertDto)
+        val organizationId = SessionContextProvider.getOrganizationId()
+        locationValidator.validateLocationInsert(locationInsertDto, organizationId)
+        val schemaName = createLocationSchema(locationInsertDto.name!!)
+        val locationEntity = locationMapper.toEntity(locationInsertDto).apply {
+            this.organizationId = organizationId
+            this.schemaName = schemaName
+        }
         locationCache.upsertLocation(locationEntity)
+        locationAdminCache.upsertLocationAdmin(LocationAdminEntity(locationEntity.id).apply { adminId = locationEntity.createdById })
+        organizationUsageCounter.incrementUsageCount(organizationId)
         return locationMapper.toResponseDto(locationEntity)
     }
 
-    private fun validateLocationInsert(locationInsertDto: LocationInsertDto) {
-        val name = Optional.ofNullable(locationInsertDto.name)
-        if (name.isEmpty || name.get().isBlank()) {
-            throw RtsGenericException(NAME_IS_REQUIRED)
-        }
-        val organizationId = locationInsertDto.organizationId
-            ?: throw RtsGenericException(MISSING_ORGANIZATION)
-        val siblingLocations = locationCache.getByOrganizationId(organizationId)
-        val locationWithMatchingName = siblingLocations.find { it.name.equals(locationInsertDto.name, ignoreCase = true) }
-        if (locationWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))
-        }
+    private fun createLocationSchema(locationName: String): String {
+        val schemaName = "loc_${locationName.lowercase().replace(" ", "_")}"
+        locationSchemaCreator.createSchema(schemaName)
+        return schemaName
     }
 
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {
-        validateLocationUpdate(locationUpdateDto)
-        val locationEntity = locationCache.getByOrganizationId(locationUpdateDto.organizationId?.get())
-            .find { Objects.equals(it.id, locationUpdateDto.id) }
+        val organizationId = SessionContextProvider.getOrganizationId()
+        val locationId = SessionContextProvider.getLocationId()
+        locationValidator.validateLocationUpdate(locationUpdateDto, organizationId)
+        val locationEntity = locationCache.getByOrganizationId(organizationId).find { Objects.equals(it.id, locationId) }
         if (locationEntity == null) {
             throw UpdatingNonExistingRecordException()
         }
@@ -54,39 +63,20 @@ class LocationService(private val locationCache: LocationCache, private val loca
         return locationMapper.toResponseDto(locationEntity)
     }
 
-    private fun validateLocationUpdate(locationUpdateDto: LocationUpdateDto) {
-        val name = locationUpdateDto.name
-        if (name == null || name.isEmpty || name.get().isBlank()) {
-            throw RtsGenericException(NAME_IS_REQUIRED)
-        }
-        val organizationId = locationUpdateDto.organizationId
-        if (organizationId == null || organizationId.isEmpty) {
-            throw RtsGenericException(MISSING_ORGANIZATION)
-        }
-        val siblingLocations = locationCache.getByOrganizationId(organizationId.get())
-        val locationWithMatchingName = siblingLocations.find {
-            it.name.equals(name.get(), ignoreCase=true) && !Objects.equals(it.id, locationUpdateDto.id)
-        }
-        if (locationWithMatchingName != null) {
-            throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name.get()))
-        }
-    }
-
-    fun deleteLocation(id: UUID?) {
-        id?.let {
-            locationCache.getAllLocations().find { it.id == id }?.let {entity ->
-                val usageCount = entity.usageCount
-                if (usageCount > 0L) {
-                    throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")
-                }
-                locationCache.deleteLocation(id)
+    fun deleteLocation() {
+        val locationId = SessionContextProvider.getLocationId()
+        locationCache.getAllLocations().find { it.id == locationId }?.let {entity ->
+            val usageCount = entity.usageCount
+            if (usageCount > 0L) {
+                throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")
             }
+            locationCache.deleteLocation(locationId)
+            organizationUsageCounter.decrementUsageCount(SessionContextProvider.getOrganizationId())
         }
     }
 
     companion object {
         const val NAME_IS_REQUIRED = "A location must have a name"
-        const val MISSING_ORGANIZATION = "A location cannot be saved without an organization Id"
         const val NAME_ALREADY_EXISTS = "A location with the name %s is already assigned to the given organization"
     }
 }

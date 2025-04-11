@@ -23,6 +23,6 @@ class UserQualifier(private val sysUserCache: SysUserCache, ) {
     @CreatedBy
     @AfterMapping
     fun setCreatedBy(@MappingTarget auditableEntity: AuditableEntity) {
-        auditableEntity.createdById = SessionContextProvider.getSession().systemUserId
+        auditableEntity.createdById = SessionContextProvider.getUserId()
     }
 }

@@ -8,5 +8,6 @@ data class SessionContext(
     var systemUserId: UUID? = null,
     var schemaName: String? = null,
     var filteredForLocation: Boolean = false,
-    var organizationId: UUID? = null
+    var organizationId: UUID? = null,
+    var locationId: UUID? = null
 )

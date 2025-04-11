@@ -47,11 +47,11 @@ class PlatformSchemaDataSourceConfig {
     fun platformSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
-        val liquibase = SpringLiquibase()
-        liquibase.dataSource = dataSource
-        liquibase.changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
-        liquibase.defaultSchema = "platform"
-        liquibase.setShouldRun(true)
-        return liquibase
+        return SpringLiquibase().apply {
+            this.dataSource = dataSource
+            changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
+            defaultSchema = "platform"
+            setShouldRun(true)
+        }
     }
 }
