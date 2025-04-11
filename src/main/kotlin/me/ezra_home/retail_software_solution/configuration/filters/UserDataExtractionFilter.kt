@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
+
 @Component
 @Filter(name = "UserDataExtractionFilter")
 class UserDataExtractionFilter(
@@ -34,10 +35,8 @@ class UserDataExtractionFilter(
         }
         val authentication = SecurityContextHolder.getContext().authentication
         val jwt = authentication.principal as Jwt
-
-        val oktaIdForCurrentUser = jwt.claims[OKTA_ID_KEY] as String
         val sessionContext = SessionContextProvider.getSession()
-        sessionContext.oktaId = oktaIdForCurrentUser
+        sessionContext.oktaId = jwt.claims[OKTA_ID_KEY] as String
         initializeSystemUserId(sessionContext)
 
         try {
@@ -49,8 +48,8 @@ class UserDataExtractionFilter(
 
     private fun initializeSystemUserId(sessionContext: SessionContext) {
         val platformStatus = platformTransactionManager.getTransaction(null)
-        val systemUserId = sysUserCache.getAllUsers().find { it.oktaId == sessionContext.oktaId }?.id
-        sessionContext.systemUserId = systemUserId
+        sysUserCache.getAllUsers().find { it.oktaId == sessionContext.oktaId }
+            ?.let { sessionContext.systemUserId = it.id }
         platformTransactionManager.commit(platformStatus)
     }
 }

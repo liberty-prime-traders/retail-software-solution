@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-payment-method-table'
+      author: adongo
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: payment_method
+      changes:
+        - createTable:
+            tableName: payment_method
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_payment_method
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueComputed: ${now}
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+              - column:
+                  name: usage_count
+                  type: BIGINT
+                  defaultValueNumeric: '0'
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: payment_method_name_unique
+              - column:
+                  name: description
+                  type: nvarchar2(1000)
