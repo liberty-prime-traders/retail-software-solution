@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.rest.endpoints.locations.payment_method
+package me.ezra_home.retail_software_solution.locations.rest.endpoints.payment_method
 
 import me.ezra_home.retail_software_solution.locations.business.payment_method.PaymentMethodService
 import me.ezra_home.retail_software_solution.locations.business.payment_method.dto.PaymentMethodInsertDto

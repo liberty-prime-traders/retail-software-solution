@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create_variation_table'
+      author: ezra
+      preConditions:
+        - not:
+            - tableExists:
+                tableName: variation
+      changes:
+        - createTable:
+            tableName: variation
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: varchar
+
+              - column:
+                  name: description
+                  type: varchar
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: variation_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: predecessor_of_id
+                  type: uuid
+
+              - column:
+                  name: usage_count
+                  type: bigint
+                  defaultValueNumeric: '0'

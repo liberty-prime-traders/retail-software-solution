@@ -5,7 +5,7 @@ object TableNames {
     const val SYS_USER = "sys_user"
     const val LOCATION = "location"
     const val CATEGORY = "category"
-    const val TITLE = "job_title"
+    const val JOB_TITLE = "job_title"
     const val UNIT_GROUP = "unit_group"
     const val UNITVALUE = "unit_value"
     const val ORGANIZATION = "organization"
@@ -13,4 +13,5 @@ object TableNames {
     const val LOCATION_ADMIN = "location_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
     const val PAYMENT_METHOD = "payment_method"
+    const val VARIATION = "variation"
 }

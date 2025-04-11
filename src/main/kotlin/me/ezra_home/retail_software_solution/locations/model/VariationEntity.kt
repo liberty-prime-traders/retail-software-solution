@@ -7,9 +7,8 @@ import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
-@Table(name = TableNames.UNIT_GROUP)
-class UnitGroupEntity(
-
+@Table(name = TableNames.VARIATION)
+class VariationEntity (
     @Column(name = "name", nullable = false)
     var name: String? = null,
 

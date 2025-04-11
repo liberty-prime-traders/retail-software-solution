@@ -11,16 +11,18 @@ import org.springframework.stereotype.Service
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.TITLE])
-class JobTitleCache(private val titleRepository: JobTitleRepository) {
+class JobTitleCache(private val jobTitleRepository: JobTitleRepository) {
 
     @Cacheable
-    fun getAllJobTitles(): Collection<JobTitleEntity> = titleRepository.findAll()
+    fun getAllJobTitles(): Collection<JobTitleEntity> = jobTitleRepository.findAll()
 
     @CacheEvict(allEntries = true)
-    fun upsertJobTitles(titleEntity: JobTitleEntity): JobTitleEntity = titleRepository.save(titleEntity)
+    fun upsertJobTitle(jobTitleEntity: JobTitleEntity) {
+        jobTitleRepository.save(jobTitleEntity)
+    }
 
     @CacheEvict(allEntries = true)
     fun deleteJobTitle(id: UUID) {
-        titleRepository.deleteById(id)
+        jobTitleRepository.deleteById(id)
     }
 }
