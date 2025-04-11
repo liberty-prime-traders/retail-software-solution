@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.locations.business.jobtitle.dto.JobTitleUpdateDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -24,10 +25,8 @@ class JobTitleService(
     }
 
     fun createJobTitle(titleInsertDto: JobTitleInsertDto): JobTitleResponseDto {
-        val value = titleInsertDto.value?.takeIf { it.isNotBlank() }
-            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
-
-        jobTitleCache.getAllJobTitles().find { it.value.equals(value, ignoreCase = true) }
+        val value = StringUtils.getValueOrException(titleInsertDto.value, VALUE_IS_REQUIRED)
+        jobTitleCache.getAllJobTitles().find { StringUtils.isEquivalent(it.value, value) }
             ?.let { throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
 
         val newTitleEntity = jobTitleMapper.toEntity(titleInsertDto)
@@ -45,17 +44,14 @@ class JobTitleService(
     }
 
     private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {
-        val value = jobTitleUpdateDto.value?.orElse(null)?.takeIf { it.isNotBlank() }
-            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
-
+        val value = StringUtils.getValueOrException(jobTitleUpdateDto.value, VALUE_IS_REQUIRED)
         jobTitleCache.getAllJobTitles().find { it.value.equals(value, ignoreCase = true) && it.id != jobTitleUpdateDto.id }
             ?.let{ throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
     }
 
     fun deleteJobTitle(id: UUID?) {
-        if (id != null) {
-            val entity = jobTitleCache.getAllJobTitles().find { it.id == id }
-            if (entity != null) {
+        id?.let {
+            jobTitleCache.getAllJobTitles().find { it.id == id }?.let { entity ->
                 val usageCount = entity.usageCount
                 if (usageCount > 0L) {
                     throw RtsGenericException("Job Title ${entity.value} has $usageCount usage(s) and cannot be deleted")

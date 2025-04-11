@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationInsertDto
 import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationResponseDto
 import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationUpdateDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -29,9 +30,8 @@ class VariationService(
     }
 
     fun validateVariationInsert(variationInsertDto: VariationInsertDto) {
-        val variationName = variationInsertDto.name?.takeIf { it.isNotBlank() }
-            ?: throw RtsGenericException(NAME_IS_REQUIRED)
-        variationCache.getAllVariations().find { it.name.equals(variationName, ignoreCase = true) }
+        val variationName = StringUtils.getValueOrException(variationInsertDto.name, NAME_IS_REQUIRED)
+        variationCache.getAllVariations().find { StringUtils.isEquivalent(it.name, variationName) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, variationName)) }
     }
 
@@ -45,9 +45,9 @@ class VariationService(
     }
 
     fun validateVariationUpdate(variationUpdateDto: VariationUpdateDto) {
-        val variationName = variationUpdateDto.name?.orElse(null)?.takeIf { it.isNotBlank() }
-            ?: throw RtsGenericException(NAME_IS_REQUIRED)
-        variationCache.getAllVariations().find { it.name.equals(variationName, ignoreCase = true) && it.id != variationUpdateDto.id }
+        val variationName = StringUtils.getValueOrException(variationUpdateDto.name, NAME_IS_REQUIRED)
+        variationCache.getAllVariations()
+            .find { StringUtils.isEquivalent(it.name, variationName) && it.id != variationUpdateDto.id }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, variationName)) }
     }
 
