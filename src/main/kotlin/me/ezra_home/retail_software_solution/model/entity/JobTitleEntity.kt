@@ -6,7 +6,7 @@ import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.model.util.TableNames
 
 @Entity
-@Table(name = TableNames.TITLE)
+@Table(name = TableNames.JOB_TITLE)
 class JobTitleEntity (
     @Column(name = "value")
     var value: String? = null,

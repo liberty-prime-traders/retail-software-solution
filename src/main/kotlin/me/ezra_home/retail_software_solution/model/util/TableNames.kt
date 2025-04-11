@@ -7,7 +7,8 @@ class TableNames {
         const val SYS_USER = "sys_user"
         const val LOCATION = "location"
         const val CATEGORY = "category"
-        const val TITLE = "jobtitle"
-        const val UNITGROUP = "unit_group"
+        const val JOB_TITLE = "job_title"
+        const val UNIT_GROUP = "unit_group"
+        const val VARIATION = "variation"
     }
 }

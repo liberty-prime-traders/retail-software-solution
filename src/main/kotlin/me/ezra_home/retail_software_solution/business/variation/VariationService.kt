@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.business.variation
 
 import jakarta.persistence.EntityNotFoundException
 import me.ezra_home.retail_software_solution.business.variation.cache.VariationCache
-import me.ezra_home.retail_software_solution.business.variation.dto.VariationCreateDto
-import me.ezra_home.retail_software_solution.business.variation.dto.VariationDto
-import me.ezra_home.retail_software_solution.business.variation.dto.VariationUpdateRequest
+import me.ezra_home.retail_software_solution.business.variation.dto.VariationInsertDto
+import me.ezra_home.retail_software_solution.business.variation.dto.VariationResponseDto
+import me.ezra_home.retail_software_solution.business.variation.dto.VariationUpdateDto
 import org.springframework.stereotype.Service
 
 @Service
@@ -13,19 +13,19 @@ class VariationService(
     private val variationMapper: VariationMapper,
     private val variationCache: VariationCache
 ) {
-    fun create(createDto: VariationCreateDto): VariationDto {
+    fun create(createDto: VariationInsertDto): VariationResponseDto {
         val entity = variationMapper.toEntity(createDto)
         val savedEntity = variationRepository.save(entity)
         return variationMapper.toDto(savedEntity)
     }
 
-    fun findById(id: Long): VariationDto {
+    fun findById(id: Long): VariationResponseDto {
         val entity = variationRepository.findById(id)
             .orElseThrow { EntityNotFoundException("Variation not found with id: $id") }
         return variationMapper.toDto(entity)
     }
 
-    fun update(id: Long, updateRequest: VariationUpdateRequest): VariationDto {
+    fun update(id: Long, updateRequest: VariationUpdateDto): VariationResponseDto {
         val existingEntity = variationRepository.findById(id)
             .orElseThrow { EntityNotFoundException("Variation not found with id: $id") }
 
@@ -41,7 +41,7 @@ class VariationService(
         variationRepository.deleteById(id)
     }
 
-    fun findAll(): List<VariationDto> {
+    fun findAll(): List<VariationResponseDto> {
         return variationRepository.findAll()
             .map { variationMapper.toDto(it) }
     }
