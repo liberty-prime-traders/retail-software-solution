@@ -1,11 +1,12 @@
-package me.ezra_home.retail_software_solution.business.variation
+package me.ezra_home.retail_software_solution.locations.business.variation
 
-import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.business.util.mappers.userinfo.FullName
-import me.ezra_home.retail_software_solution.business.variation.dto.VariationInsertDto
-import me.ezra_home.retail_software_solution.business.variation.dto.VariationResponseDto
+import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationInsertDto
+import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationResponseDto
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
-import me.ezra_home.retail_software_solution.model.entity.VariationEntity
+import me.ezra_home.retail_software_solution.locations.business.variation.dto.VariationUpdateDto
+import me.ezra_home.retail_software_solution.locations.model.VariationEntity
+import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
+import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -32,5 +33,5 @@ interface VariationMapper {
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(variationInsertDto: VariationInsertDto, @MappingTarget variationEntity: VariationEntity)
+    fun partialUpdate(variationUpdateDto: VariationUpdateDto, @MappingTarget variationEntity: VariationEntity)
 }

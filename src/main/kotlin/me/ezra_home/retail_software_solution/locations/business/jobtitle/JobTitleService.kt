@@ -27,22 +27,29 @@ class JobTitleService(
         val value = titleInsertDto.value?.takeIf { it.isNotBlank() }
             ?: throw RtsGenericException(VALUE_IS_REQUIRED)
 
-        if (jobTitleCache.getAllJobTitles().any { it.value.equals(value, ignoreCase = true) }) {
-            throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value))
-        }
+        jobTitleCache.getAllJobTitles().find { it.value.equals(value, ignoreCase = true) }
+            ?.let { throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
 
         val newTitleEntity = jobTitleMapper.toEntity(titleInsertDto)
-        val savedTitleEntity = jobTitleCache.upsertJobTitles(newTitleEntity)
-        return jobTitleMapper.toDto(savedTitleEntity)
+        jobTitleCache.upsertJobTitle(newTitleEntity)
+        return jobTitleMapper.toDto(newTitleEntity)
     }
 
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
         validateJobTitleUpdate(titleDto)
         val titleToUpdate = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
-        if (titleToUpdate == null) throw UpdatingNonExistingRecordException()
+            ?: throw UpdatingNonExistingRecordException()
         jobTitleMapper.partialUpdate(titleDto, titleToUpdate)
-        val updatedTitle = jobTitleCache.upsertJobTitles(titleToUpdate)
-        return jobTitleMapper.toDto(updatedTitle)
+        jobTitleCache.upsertJobTitle(titleToUpdate)
+        return jobTitleMapper.toDto(titleToUpdate)
+    }
+
+    private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {
+        val value = jobTitleUpdateDto.value?.orElse(null)?.takeIf { it.isNotBlank() }
+            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
+
+        jobTitleCache.getAllJobTitles().find { it.value.equals(value, ignoreCase = true) && it.id != jobTitleUpdateDto.id }
+            ?.let{ throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
     }
 
     fun deleteJobTitle(id: UUID?) {
@@ -57,21 +64,10 @@ class JobTitleService(
             }
         }
     }
-    
-    private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {
-        val value = jobTitleUpdateDto.value?.orElse(null)
-            ?: throw RtsGenericException(VALUE_IS_REQUIRED)
-
-        if (jobTitleCache.getAllJobTitles().any {
-                it.value.equals(value, ignoreCase = true) && it.id != jobTitleUpdateDto.id
-            }) {
-            throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value))
-        }
-    }
 
     companion object {
-        const val VALUE_IS_REQUIRED = "A value must have a name"
-        const val VALUE_ALREADY_EXISTS = "A value with the name %s is already assigned."
+        const val VALUE_IS_REQUIRED = "A job title must have a value"
+        const val VALUE_ALREADY_EXISTS = "A job title with the value %s already exists."
     }
 
 }

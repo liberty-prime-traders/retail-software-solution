@@ -53,7 +53,6 @@ class PaymentMethodService (
         return paymentMethodMapper.toResponseDto(entityFromDatabase)
     }
 
-    @TransactionalOnLocationSchema
     fun deletePaymentMethod(id: UUID?) {
         if (id != null) {
             val entity = paymentMethodCache.getAllPaymentMethods().find { it.id == id }
