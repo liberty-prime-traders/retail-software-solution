@@ -22,7 +22,7 @@ class ReservedSubdomainEndpoint(private val reservedSubdomainService: ReservedSu
 
     @PostMapping("{suggestedSubdomain}")
     @PreAuthorize("hasRole('${RtsRoles.ROLE_CREATE_ORGANIZATION}')")
-    fun sanitizeThenReserveSubdomain(@PathVariable suggestedSubdomain: String): String =
+    fun sanitizeThenReserveSubdomain(@PathVariable suggestedSubdomain: String): ReservedSubdomainDto =
         reservedSubdomainService.sanitizeThenReserveSubdomain(suggestedSubdomain)
 
     @GetMapping

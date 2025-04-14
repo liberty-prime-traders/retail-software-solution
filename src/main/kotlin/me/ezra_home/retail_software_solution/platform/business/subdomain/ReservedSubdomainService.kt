@@ -22,7 +22,7 @@ class ReservedSubdomainService(
         return subdomainRepository.findAll().map { reservedSubdomainMapper.toDto(it) }
     }
 
-    fun sanitizeThenReserveSubdomain(suggestedSubdomain: String?): String {
+    fun sanitizeThenReserveSubdomain(suggestedSubdomain: String?): ReservedSubdomainDto {
         if (StringUtils.hasValue(suggestedSubdomain)) {
             throw RtsGenericException("An empty subdomain cannot be verified")
         }
@@ -30,15 +30,14 @@ class ReservedSubdomainService(
         subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain }?.let {
             throw RtsGenericException("Subdomain '$subdomain' is taken")
         }
-        return reserveSubdomain(subdomain)
+        return reservedSubdomainMapper.toDto(reserveSubdomain(subdomain))
     }
 
-    private fun reserveSubdomain(sanitizedSubdomain: String): String {
+    private fun reserveSubdomain(sanitizedSubdomain: String): ReservedSubdomainEntity {
         val sysUserId = SessionContextProvider.getUserId()
         subdomainRepository.abandonSubdomainsForUser(sysUserId)
         val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED).apply { createdById = sysUserId }
-        subdomainRepository.save(reservedSubdomain)
-        return sanitizedSubdomain
+        return subdomainRepository.save(reservedSubdomain)
     }
 
     fun releaseSubdomain(id: UUID?) {
