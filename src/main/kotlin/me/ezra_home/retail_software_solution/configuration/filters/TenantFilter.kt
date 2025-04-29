@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.L
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.ORGANIZATION_ID_HEADER
 import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.stereotype.Component
@@ -24,7 +25,9 @@ class TenantFilter(
 
     override fun doFilterInternal(httpServletRequest: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         val sessionContext = SessionContextProvider.getSession()
-        sessionContext.organizationId = httpServletRequest.getHeader(ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) }
+        sessionContext.organizationId = httpServletRequest.getHeader(ORGANIZATION_ID_HEADER)
+            ?.takeIf { StringUtils.hasValue(it) }
+            ?.let { UUID.fromString(it) }
         initializeSessionSchemaName(httpServletRequest)
         try {
             chain.doFilter(httpServletRequest, response)
@@ -36,6 +39,7 @@ class TenantFilter(
     private fun initializeSessionSchemaName(httpServletRequest: HttpServletRequest) {
         val platformStatus = platformTransactionManager.getTransaction(DefaultTransactionDefinition())
         httpServletRequest.getHeader(LOCATION_ID_HEADER)
+            ?.takeIf { StringUtils.hasValue(it) }
             ?.let {
                 val locationId = UUID.fromString(it)
                 SessionContextProvider.getSession().locationId = locationId

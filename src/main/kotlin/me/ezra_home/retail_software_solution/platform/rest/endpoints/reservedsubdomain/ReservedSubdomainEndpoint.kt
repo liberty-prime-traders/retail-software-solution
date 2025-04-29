@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -20,9 +20,9 @@ import java.util.UUID
 @RequestMapping("secured/reserved-subdomains")
 class ReservedSubdomainEndpoint(private val reservedSubdomainService: ReservedSubdomainService) {
 
-    @PostMapping("{suggestedSubdomain}")
+    @GetMapping("verify")
     @PreAuthorize("hasRole('${RtsRoles.ROLE_CREATE_ORGANIZATION}')")
-    fun sanitizeThenReserveSubdomain(@PathVariable suggestedSubdomain: String): String =
+    fun sanitizeThenReserveSubdomain(@RequestParam("suggestedSubdomain") suggestedSubdomain: String): ReservedSubdomainDto =
         reservedSubdomainService.sanitizeThenReserveSubdomain(suggestedSubdomain)
 
     @GetMapping
