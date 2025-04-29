@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-org-join-request-table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: org_join_request
+      changes:
+        - createTable:
+            tableName: org_join_request
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: subdomain
+                  type: nvarchar2(63)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_join_request_subdomain_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_join_request_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_join_request_status_notnull
