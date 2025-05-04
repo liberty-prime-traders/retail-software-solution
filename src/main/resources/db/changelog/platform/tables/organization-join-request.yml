@@ -43,3 +43,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: org_join_request_status_notnull
+
+              - column:
+                  name: organization_id
+                  type: uuid
+                  constraints:
+                    notNullConstraintName: org_join_request_organization_id_notnull

@@ -50,4 +50,9 @@ class OrganizationAdminService(
                 organizationAdminCache.upsertOrganization(it)
             }
     }
+
+    fun isUserAdmin(organizationId: UUID, userId: UUID): Boolean {
+        return organizationAdminCache.getAdminHistoryForOrganization(organizationId)
+            .find { it.isActive() && it.adminId == userId } != null
+    }
 }

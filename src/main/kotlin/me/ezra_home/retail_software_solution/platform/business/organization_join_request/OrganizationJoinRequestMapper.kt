@@ -1,0 +1,34 @@
+package me.ezra_home.retail_software_solution.platform.business.organization_join_request
+
+import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
+import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
+import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
+import org.mapstruct.NullValueMappingStrategy
+
+@Mapper(
+    config = RtsMapperConfig::class,
+    nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT
+)
+interface OrganizationJoinRequestMapper {
+
+    fun toLaunchResponse(
+        organization: OrganizationResponseDto?,
+        isOrganizationAdmin: Boolean,
+        accessRequested: Boolean
+    ): OrganizationLaunchResponseDto
+
+    @Mapping(source = "subdomain", target = "domain")
+    @Mapping(source = "createdOn", target = "requestedDate")
+    fun toDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestResponseDto
+
+    @Mapping(source = "createdById", target = "fullName", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdOn", target = "requestedDate")
+    fun toAdminDto(entity: OrganizationJoinRequestEntity): OrganizationAdminJoinRequestResponseDto
+
+}
