@@ -1,32 +1,27 @@
 package me.ezra_home.retail_software_solution.configuration.datasource
 
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.stereotype.Component
 import java.sql.Connection
 import javax.sql.DataSource
 
-@Component(DataSourceBeanNames.ORGANIZATION_SCHEMA_CONNECTION_PROVIDER)
-class OrganizationSchemaConnectionProvider(
-    @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE) private val dataSource: DataSource
-): MultiTenantConnectionProvider<String> {
+class RtsMultiTenantConnectionProvider(private val dataSource: DataSource): MultiTenantConnectionProvider<String> {
 
     override fun getAnyConnection(): Connection = dataSource.connection
 
-    override fun getConnection(organizationSchema: String): Connection {
+    override fun getConnection(schemaName: String): Connection {
         val connection = getAnyConnection()
         try {
             connection.createStatement().use { statement ->
-                statement.execute("SET SCHEMA '$organizationSchema'") // PostgreSQL syntax
+                statement.execute("SET SCHEMA '$schemaName'") // PostgreSQL syntax
             }
         } catch (e: Exception) {
             connection.close()
-            throw RuntimeException("Failed to set schema to '$organizationSchema'", e)
+            throw RuntimeException("Failed to set schema to '$schemaName'", e)
         }
         return connection
     }
 
-    override fun releaseConnection(organizationSchema: String, connection: Connection) {
+    override fun releaseConnection(schemaName: String, connection: Connection) {
         connection.close()
     }
 

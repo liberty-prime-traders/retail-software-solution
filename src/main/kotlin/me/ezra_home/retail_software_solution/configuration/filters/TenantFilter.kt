@@ -29,6 +29,7 @@ class TenantFilter(
             ?.takeIf { StringUtils.hasValue(it) }
             ?.let { UUID.fromString(it) }
         initializeSessionSchemaName(httpServletRequest)
+        SessionContextProvider.getSession().tenantFilterIsComplete = true
         try {
             chain.doFilter(httpServletRequest, response)
         } finally {
@@ -45,9 +46,8 @@ class TenantFilter(
                 SessionContextProvider.getSession().locationId = locationId
                 locationId
             }
-            ?.let { locId -> locationCache.getAllLocations().find { it.id == locId }?.schemaName }
-            ?.let { SessionContextProvider.getSession().schemaName = it }
+            ?.let { locationId -> locationCache.getAllLocations().find { it.id == locationId }?.schemaName }
+            ?.let { SessionContextProvider.getSession().locationSchemaName = it }
         platformTransactionManager.commit(platformStatus)
-        SessionContextProvider.getSession().filteredForLocation = true
     }
 }
