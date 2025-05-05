@@ -61,7 +61,7 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
     fun getJoinRequests(): Collection<OrganizationAdminJoinRequestResponseDto> =
         organizationService.getOrganizationJoinRequests()
 
-    @GetMapping("/admit/{joinRequestId}")
+    @PostMapping("/admit/{joinRequestId}")
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
     fun admitUser(@PathVariable joinRequestId: UUID): ResponseEntity<HttpStatusCode> {
         return ResponseEntity(HttpStatus.OK)
