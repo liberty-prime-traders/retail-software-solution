@@ -7,6 +7,7 @@ data class SessionContext(
     var oktaId: String? = null,
     var systemUserId: UUID? = null,
     var locationSchemaName: String? = null,
+    var organizationSchemaName: String? = null,
     var tenantFilterIsComplete: Boolean = false,
     var organizationId: UUID? = null,
     var locationId: UUID? = null

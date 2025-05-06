@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.LOCATION_ID_HEADER
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.ORGANIZATION_ID_HEADER
 import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier
@@ -19,6 +20,7 @@ import java.util.UUID
 @Component
 class TenantFilter(
     private val locationCache: LocationCache,
+    private val organizationCache: OrganizationCache,
     @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
     private val platformTransactionManager: JpaTransactionManager
 ): OncePerRequestFilter() {
@@ -48,6 +50,16 @@ class TenantFilter(
             }
             ?.let { locationId -> locationCache.getAllLocations().find { it.id == locationId }?.schemaName }
             ?.let { SessionContextProvider.getSession().locationSchemaName = it }
+
+        httpServletRequest.getHeader(ORGANIZATION_ID_HEADER)
+                ?.takeIf { StringUtils.hasValue(it) }
+                ?.let {
+                    val organizationId = UUID.fromString(it)
+                    SessionContextProvider.getSession().organizationId = organizationId
+                    organizationCache.getAllOrganizations().find { org -> org.id == organizationId }?.schemaName
+                }
+                ?.let { schemaName -> SessionContextProvider.getSession().organizationSchemaName = schemaName }
+
         platformTransactionManager.commit(platformStatus)
     }
 }
