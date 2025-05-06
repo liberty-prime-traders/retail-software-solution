@@ -30,7 +30,7 @@ class OrganizationAdminService(
         val organizationId = SessionContextProvider.getOrganizationId()
         validateUserAndOrganizationExist(adminId, organizationId)
         val entity = OrganizationAdminEntity(organizationId).apply { this.adminId = adminId }
-        organizationAdminCache.upsertOrganization(entity)
+        organizationAdminCache.upsertOrganizationAdmin(entity)
         return organizationAdminMapper.toResponseDto(entity)
     }
 
@@ -47,7 +47,7 @@ class OrganizationAdminService(
             .find { it.isActive() && it.adminId == adminId }
             ?.let {
                 it.endOn = OffsetDateTime.now()
-                organizationAdminCache.upsertOrganization(it)
+                organizationAdminCache.upsertOrganizationAdmin(it)
             }
     }
 }

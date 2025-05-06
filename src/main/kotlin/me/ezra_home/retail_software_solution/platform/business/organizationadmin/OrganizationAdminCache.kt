@@ -20,7 +20,7 @@ class OrganizationAdminCache(private val organizationAdminRepository: Organizati
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganization(organizationAdminEntity: OrganizationAdminEntity) {
+    fun upsertOrganizationAdmin(organizationAdminEntity: OrganizationAdminEntity) {
         organizationAdminRepository.save(organizationAdminEntity)
     }
 }
