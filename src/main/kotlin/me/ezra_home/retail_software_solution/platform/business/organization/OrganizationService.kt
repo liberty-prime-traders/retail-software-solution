@@ -19,7 +19,8 @@ class OrganizationService(
     private val organizationCache: OrganizationCache,
     private val reservedSubdomainService: ReservedSubdomainService,
     private val organizationAdminCache: OrganizationAdminCache,
-    private val organizationValidator: OrganizationValidator
+    private val organizationValidator: OrganizationValidator,
+    private val organizationSchemaCreator: OrganizationSchemaCreator
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -30,7 +31,10 @@ class OrganizationService(
     fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
         organizationValidator.validateNameOnSave(organizationInsertDto.name)
         markSubdomainAsUsed(organizationInsertDto)
-        val entity = organizationMapper.toEntity(organizationInsertDto)
+        val schemaName = createOrganizationSchema(organizationInsertDto.name!!.orElseThrow())
+        val entity = organizationMapper.toEntity(organizationInsertDto).apply {
+            this.schemaName = schemaName
+        }
         organizationCache.upsertOrganization(entity)
         organizationAdminCache.upsertOrganization(OrganizationAdminEntity(entity.id).apply { adminId = entity.createdById })
         return organizationMapper.toResponseDto(entity)
@@ -47,6 +51,12 @@ class OrganizationService(
             throw RtsGenericException("Subdomain '$intendedSubdomain' was not reserved")
         }
         reservedSubdomainService.markSubdomainAsUsed(reservedSubdomain.id)
+    }
+
+    private fun createOrganizationSchema(organizationName: String): String {
+        val schemaName = "org_${organizationName.lowercase().replace(" ", "_")}"
+        organizationSchemaCreator.createSchema(schemaName)
+        return schemaName
     }
 
     fun updateOrganization(organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto {
