@@ -19,7 +19,7 @@ import javax.sql.DataSource
     entityManagerFactoryRef = DataSourceBeanNames.ORGANIZATION_SCHEMA_ENTITY_MANAGER_FACTORY,
     transactionManagerRef = DataSourceBeanNames.ORGANIZATION_SCHEMA_TRANSACTION_MANAGER
 )
-class OrganizationSchemaDataSourceConfig(private val locationTenantIdentifier: LocationTenantIdentifier) {
+class OrganizationSchemaDataSourceConfig(private val organizationTenantIdentifier: OrganizationTenantIdentifier) {
 
     @Primary
     @Bean(name = [DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE])
@@ -32,7 +32,7 @@ class OrganizationSchemaDataSourceConfig(private val locationTenantIdentifier: L
         @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_CONNECTION_PROVIDER) connectionProvider: MultiTenantConnectionProvider<String>
     ): LocalContainerEntityManagerFactoryBean {
         val packagesToScan = "me.ezra_home.retail_software_solution.organizations"
-        return EntityManagerFactoryBuilder.build(dataSource, connectionProvider, packagesToScan, locationTenantIdentifier)
+        return EntityManagerFactoryBuilder.build(dataSource, connectionProvider, packagesToScan, organizationTenantIdentifier)
     }
 
     @Bean(name = [DataSourceBeanNames.ORGANIZATION_SCHEMA_TRANSACTION_MANAGER])
