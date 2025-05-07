@@ -31,14 +31,19 @@ class OrganizationService(
     fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
         organizationValidator.validateNameOnSave(organizationInsertDto.name)
         markSubdomainAsUsed(organizationInsertDto)
-        val schemaName = "org_${organizationInsertDto.subdomain}"
-        organizationSchemaCreator.createSchema(schemaName)
+        val schemaName = createOrganizationSchema(organizationInsertDto.subdomain!!)
         val entity = organizationMapper.toEntity(organizationInsertDto).apply {
             this.schemaName = schemaName
         }
         organizationCache.upsertOrganization(entity)
         organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.id).apply { adminId = entity.createdById })
         return organizationMapper.toResponseDto(entity)
+    }
+
+    private fun createOrganizationSchema(subdomain: String): String {
+        val schemaName = "org_${subdomain.lowercase().replace("-", "_")}"
+        organizationSchemaCreator.createSchema(schemaName)
+        return schemaName
     }
 
     private fun markSubdomainAsUsed(organizationInsertDto: OrganizationUpsertDto) {
