@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
-@Table(name = TableNames.UNITVALUE)
+@Table(name = TableNames.UNIT_VALUE)
 class UnitValueEntity(
 
     @Column(name = "name", nullable = false)

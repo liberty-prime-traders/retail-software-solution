@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.business.locationadmin
+package me.ezra_home.retail_software_solution.organizations.business.locationadmin
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
+import me.ezra_home.retail_software_solution.organizations.model.LocationAdminEntity
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.stereotype.Component

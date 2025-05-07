@@ -1,9 +1,9 @@
-package me.ezra_home.retail_software_solution.platform.business.location
+package me.ezra_home.retail_software_solution.organizations.business.location
 
-import me.ezra_home.retail_software_solution.platform.business.location.LocationService.Companion.NAME_ALREADY_EXISTS
-import me.ezra_home.retail_software_solution.platform.business.location.LocationService.Companion.NAME_IS_REQUIRED
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationService.Companion.NAME_ALREADY_EXISTS
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationService.Companion.NAME_IS_REQUIRED
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

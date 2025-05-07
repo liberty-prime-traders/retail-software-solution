@@ -1,9 +1,9 @@
-package me.ezra_home.retail_software_solution.platform.rest.endpoints.location
+package me.ezra_home.retail_software_solution.organizations.rest.endpoints.location
 
-import me.ezra_home.retail_software_solution.platform.business.location.LocationService
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationService
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity

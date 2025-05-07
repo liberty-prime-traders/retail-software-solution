@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.business.locationadmin
+package me.ezra_home.retail_software_solution.organizations.business.locationadmin
 
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
-import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
+import me.ezra_home.retail_software_solution.organizations.model.LocationAdminEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

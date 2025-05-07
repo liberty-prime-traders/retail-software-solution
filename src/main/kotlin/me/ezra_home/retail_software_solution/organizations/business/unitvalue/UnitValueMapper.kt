@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
-import me.ezra_home.retail_software_solution.business.unitvalue.BaseUnitName
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.BaseUnitName
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueResponseDto

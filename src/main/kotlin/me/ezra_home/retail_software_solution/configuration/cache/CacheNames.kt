@@ -11,7 +11,7 @@ class CacheNames {
         const val CATEGORY = "Category"
         const val TITLE = "Title"
         const val UNIT_GROUP = "UnitGroup"
-        const val UNITVALUE = "UnitValue"
+        const val UNIT_VALUE = "UnitValue"
         const val PAYMENT_METHOD = "PaymentMethod"
         const val VARIATION = "Variation"
     }

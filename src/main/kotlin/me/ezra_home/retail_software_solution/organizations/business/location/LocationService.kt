@@ -1,12 +1,12 @@
-package me.ezra_home.retail_software_solution.platform.business.location
+package me.ezra_home.retail_software_solution.organizations.business.location
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminCache
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.locationadmin.LocationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationUsageCounter
-import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
+import me.ezra_home.retail_software_solution.organizations.model.LocationAdminEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 import java.util.Objects
 
 @Service
-@TransactionalOnPlatformSchema
+@TransactionalOnOrganizationSchema
 class LocationService(
     private val locationCache: LocationCache,
     private val locationMapper: LocationMapper,
@@ -24,7 +24,7 @@ class LocationService(
     private val locationSchemaCreator: LocationSchemaCreator
 ) {
 
-    @TransactionalOnPlatformSchema(readOnly = true)
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getLocationsForOrganization(): Collection<LocationResponseDto> {
         return locationCache.getByOrganizationId(SessionContextProvider.getOrganizationId()).map {
             locationMapper.toResponseDto(it)

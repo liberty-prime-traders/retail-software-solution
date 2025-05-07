@@ -1,9 +1,9 @@
-package me.ezra_home.retail_software_solution.platform.business.locationadmin
+package me.ezra_home.retail_software_solution.organizations.business.locationadmin
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
-import me.ezra_home.retail_software_solution.platform.model.LocationAdminEntity
+import me.ezra_home.retail_software_solution.organizations.model.LocationAdminEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -12,7 +12,7 @@ import java.util.UUID
 
 
 @Service
-@TransactionalOnPlatformSchema
+@TransactionalOnOrganizationSchema
 class LocationAdminService(
     private val locationAdminMapper: LocationAdminMapper,
     private val locationAdminCache: LocationAdminCache,
@@ -20,7 +20,7 @@ class LocationAdminService(
     private val locationCache: LocationCache
 ) {
 
-    @TransactionalOnPlatformSchema(readOnly = true)
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAdminHistoryForLocation(): Collection<LocationAdminResponseDto> {
         val locationId = SessionContextProvider.getLocationId()
         return locationAdminCache.getAdminHistoryForLocation(locationId)

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.platform.business.location
+package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.util.business.SchemaCreator

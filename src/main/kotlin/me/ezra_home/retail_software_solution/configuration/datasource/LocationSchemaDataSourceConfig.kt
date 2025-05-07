@@ -48,7 +48,7 @@ class LocationSchemaDataSourceConfig(private val locationTenantIdentifier: Locat
     ): SpringLiquibase {
         return SpringLiquibase().apply {
             this.dataSource = dataSource
-            changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
+            changeLog = "classpath:db/changelog/locations/db-changelog-master.yml"
             setShouldRun(false)
         }
     }

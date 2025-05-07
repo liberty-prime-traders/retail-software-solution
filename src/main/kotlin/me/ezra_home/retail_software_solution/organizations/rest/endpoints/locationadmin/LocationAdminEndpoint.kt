@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.rest.endpoints.locationadmin
+package me.ezra_home.retail_software_solution.organizations.rest.endpoints.locationadmin
 
-import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminResponseDto
-import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminService
+import me.ezra_home.retail_software_solution.organizations.business.locationadmin.LocationAdminResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.locationadmin.LocationAdminService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize

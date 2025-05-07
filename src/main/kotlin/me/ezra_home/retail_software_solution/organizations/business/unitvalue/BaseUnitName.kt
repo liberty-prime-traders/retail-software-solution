@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.business.unitvalue
+package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import org.mapstruct.Qualifier
 

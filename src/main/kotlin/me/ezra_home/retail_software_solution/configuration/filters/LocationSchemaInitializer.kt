@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.configuration.filters
 import jakarta.servlet.http.HttpServletRequest
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.LOCATION_ID_HEADER
-import me.ezra_home.retail_software_solution.platform.business.location.LocationCache
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier

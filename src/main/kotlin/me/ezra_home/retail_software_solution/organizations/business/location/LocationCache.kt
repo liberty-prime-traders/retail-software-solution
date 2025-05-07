@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.business.location
+package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.model.LocationEntity
+import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

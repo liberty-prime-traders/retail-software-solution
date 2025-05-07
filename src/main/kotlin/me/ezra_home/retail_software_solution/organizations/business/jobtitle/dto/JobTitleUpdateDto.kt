@@ -5,7 +5,7 @@ import java.util.Optional
 import java.util.UUID
 
 /**
- * DTO for {@link me.ezra_home.retail_software_solution.model.entity.JobTitleEntity}
+ * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.JobTitleEntity}
  */
 data class JobTitleUpdateDto (
     val id: UUID? = null,

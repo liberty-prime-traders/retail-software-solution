@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-@CacheConfig(cacheNames = [CacheNames.UNITVALUE])
+@CacheConfig(cacheNames = [CacheNames.UNIT_VALUE])
 class UnitValueCache(private val unitValueRepository: UnitValueRepository) {
 
     @Cacheable

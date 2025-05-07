@@ -7,7 +7,7 @@ object TableNames {
     const val CATEGORY = "category"
     const val JOB_TITLE = "job_title"
     const val UNIT_GROUP = "unit_group"
-    const val UNITVALUE = "unit_value"
+    const val UNIT_VALUE = "unit_value"
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val LOCATION_ADMIN = "location_admin"

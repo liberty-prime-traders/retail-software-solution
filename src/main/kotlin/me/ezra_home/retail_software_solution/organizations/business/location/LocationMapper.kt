@@ -1,10 +1,10 @@
-package me.ezra_home.retail_software_solution.platform.business.location
+package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.platform.model.LocationEntity
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
 import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
 import org.mapstruct.BeanMapping

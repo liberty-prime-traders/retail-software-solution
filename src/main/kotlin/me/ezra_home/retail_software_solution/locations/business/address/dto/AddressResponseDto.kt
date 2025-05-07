@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
- * DTO for {@link me.ezra_home.retail_software_solution.model.entity.AddressEntity}
+ * DTO for {@link me.ezra_home.retail_software_solution.locations.model.entity.AddressEntity}
  */
 data class AddressResponseDto(
     val id: UUID?,

@@ -6,7 +6,7 @@ import java.util.UUID
 
 
 /**
- * DTO for {@link me.ezra_home.retail_software_solution.model.entity.UnitValueEntity}
+ * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.UnitValueEntity}
  */
 data class UnitValueUpdateDto (
     val id: UUID? = null,

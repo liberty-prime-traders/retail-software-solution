@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.configuration.security
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.locationadmin.LocationAdminCache
+import me.ezra_home.retail_software_solution.organizations.business.locationadmin.LocationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.PlatformAdmin
