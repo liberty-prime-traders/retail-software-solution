@@ -18,16 +18,16 @@ class OrganizationJoinRequestCache(private val organizationJoinRequestRepository
         organizationJoinRequestRepository.save(organizationJoinRequestEntity)
     }
 
-    @Cacheable(key = "{#subdomain,#userId,#status}")
+    @Cacheable
     fun existsBySubdomainAndCreatedByIdAndStatus(
         subdomain: String,
         userId: UUID,
         status: JoinRequestStatus
     ) = organizationJoinRequestRepository.existsBySubdomainAndCreatedByIdAndStatus(subdomain, userId, status)
 
-    @Cacheable(key = "{#createdById}")
-    fun getLoggedInUserJoinRequest(createdById: UUID): Collection<OrganizationJoinRequestEntity> {
-        return organizationJoinRequestRepository.findAllByCreatedById(createdById)
+    @Cacheable
+    fun getUserJoinRequests(userId: UUID): Collection<OrganizationJoinRequestEntity> {
+        return organizationJoinRequestRepository.findAllByCreatedById(userId)
     }
 
     @Cacheable(key = "#organizationId")

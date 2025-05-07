@@ -17,7 +17,7 @@ class OrganizationCache(private val organizationRepository: OrganizationReposito
         return organizationRepository.findAll()
     }
 
-    @Cacheable(key = "#domain")
+    @Cacheable
     fun getOrganizationByDomain(domain: String): OrganizationEntity? {
         return organizationRepository.findOneBySubdomain(domain)
     }

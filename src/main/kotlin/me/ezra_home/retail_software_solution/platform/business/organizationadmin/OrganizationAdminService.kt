@@ -51,7 +51,7 @@ class OrganizationAdminService(
             }
     }
 
-    fun isUserAdmin(organizationId: UUID, userId: UUID): Boolean {
+    fun isOrganizationAdmin(organizationId: UUID, userId: UUID): Boolean {
         return organizationAdminCache.getAdminHistoryForOrganization(organizationId)
             .find { it.isActive() && it.adminId == userId } != null
     }
