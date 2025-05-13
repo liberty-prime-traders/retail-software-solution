@@ -10,7 +10,6 @@ object TableNames {
     const val UNIT_VALUE = "unit_value"
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
-    const val LOCATION_ADMIN = "location_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
     const val PAYMENT_METHOD = "payment_method"
     const val VARIATION = "variation"

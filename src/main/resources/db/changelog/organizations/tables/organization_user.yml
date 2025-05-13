@@ -1,15 +1,15 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-location-admin-table'
+      id: 'create-organization-user-table'
       author: ezra
       preConditions:
         - onFail: MARK_RAN
         - not:
             - tableExists:
-                tableName: location_admin
+                tableName: organization_user
       changes:
         - createTable:
-            tableName: location_admin
+            tableName: organization_user
             columns:
               - column:
                   name: id
@@ -19,18 +19,11 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: admin_id
+                  name: user_id
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: location_admin_admin_id_notnull
-
-              - column:
-                  name: location_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: location_admin_location_id_notnull
+                    notNullConstraintName: organization_user_user_id_notnull
 
               - column:
                   name: start_on
@@ -40,3 +33,7 @@ databaseChangeLog:
               - column:
                   name: end_on
                   type: timestamptz
+
+              - column:
+                  name: join_request_id
+                  type: uuid

@@ -11,13 +11,13 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 class OrganizationEntity(
 
     @Column(name = "name")
-    open var name: String,
+    var name: String,
 
     @Column(name = "description")
-    open var description: String? = null,
+    var description: String? = null,
 
     @Column(name = "subdomain", updatable = false)
-    open var subdomain: String? = null,
+    var subdomain: String? = null,
 
     @Column(name = "schema_name", length = 100, nullable = false, updatable = false)
     var schemaName: String? = null

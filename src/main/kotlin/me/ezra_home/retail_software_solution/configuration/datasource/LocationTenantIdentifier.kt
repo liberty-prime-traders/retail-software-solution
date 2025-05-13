@@ -11,7 +11,7 @@ class LocationTenantIdentifier: CurrentTenantIdentifierResolver<String> {
     override fun resolveCurrentTenantIdentifier(): String {
         val schemaName = SessionContextProvider.getSession().locationSchemaName
         if (schemaName.isNullOrBlank() && SessionContextProvider.getSession().tenantFilterIsComplete) {
-            throw RtsGenericException("Schema name is not set in the session context")
+            throw RtsGenericException("Location schema name is not set in the session context")
         }
         // The default schema is used during the application startup when the session context is not yet available
         // This schema does not exist in the database, but it is used to satisfy the Hibernate's metadata validation

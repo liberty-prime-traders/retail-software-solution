@@ -9,22 +9,21 @@ import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.Objects
-import java.util.UUID
 
 @Component
 class LocationValidator(private val locationCache: LocationCache) {
 
-    fun validateLocationInsert(locationInsertDto: LocationInsertDto, organizationId: UUID) {
+    fun validateLocationInsert(locationInsertDto: LocationInsertDto) {
         val name = StringUtils.getValueOrException(locationInsertDto.name, NAME_IS_REQUIRED)
-        locationCache.getByOrganizationId(organizationId)
+        locationCache.getAllLocations()
             .find { StringUtils.isEquivalent(it.name, locationInsertDto.name) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
     }
 
-    fun validateLocationUpdate(locationUpdateDto: LocationUpdateDto, organizationId: UUID) {
+    fun validateLocationUpdate(locationUpdateDto: LocationUpdateDto) {
         val name = StringUtils.getValueOrException(locationUpdateDto.name, NAME_IS_REQUIRED)
         val locationId = SessionContextProvider.getLocationId()
-        locationCache.getByOrganizationId(organizationId)
+        locationCache.getAllLocations()
             .find { StringUtils.isEquivalent(it.name, name) && !Objects.equals(it.id, locationId) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
     }

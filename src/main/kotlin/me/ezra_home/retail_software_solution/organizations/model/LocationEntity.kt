@@ -4,18 +4,13 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotNull
-import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.enums.LocationType
+import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
-import java.util.UUID
 
 @Entity
 @Table(name = TableNames.LOCATION)
 class LocationEntity(
-
-    @NotNull
-    @Column(name = "organization_id", nullable = false, updatable = false)
-    var organizationId: UUID? = null,
 
     @NotNull
     @Column(name = "location_type", nullable = false)

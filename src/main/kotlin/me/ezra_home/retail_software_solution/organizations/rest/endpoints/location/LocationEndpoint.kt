@@ -25,7 +25,7 @@ class LocationEndpoint(private val locationService: LocationService) {
     @GetMapping
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
     fun getForOrganization(): Collection<LocationResponseDto> =
-        locationService.getLocationsForOrganization()
+        locationService.getAllLocations()
 
     @PostMapping
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
@@ -33,12 +33,12 @@ class LocationEndpoint(private val locationService: LocationService) {
         locationService.createLocation(locationInsertDto)
 
     @PutMapping
-    @PreAuthorize("@rtsPermissions.isLocationAdmin()")
+    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
     fun updateLocation(@RequestBody locationUpdateDto: LocationUpdateDto): LocationResponseDto =
         locationService.updateLocation(locationUpdateDto)
 
     @DeleteMapping
-    @PreAuthorize("@rtsPermissions.isLocationAdmin()")
+    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
     fun deleteLocation(): ResponseEntity<HttpStatusCode> {
         locationService.deleteLocation()
         return ResponseEntity(HttpStatus.NO_CONTENT)

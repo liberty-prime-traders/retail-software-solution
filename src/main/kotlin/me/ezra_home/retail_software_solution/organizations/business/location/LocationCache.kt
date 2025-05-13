@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
-import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -16,14 +15,6 @@ class LocationCache(private val locationRepository: LocationRepository) {
     @Cacheable
     fun getAllLocations(): Collection<LocationEntity> {
         return locationRepository.findAll()
-    }
-
-    @Cacheable
-    fun getByOrganizationId(organizationId: UUID?): Collection<LocationEntity> {
-        if (organizationId == null) {
-            throw QueriedByEmptyIdException()
-        }
-        return locationRepository.findByOrganizationId(organizationId)
     }
 
     @CacheEvict(allEntries = true)

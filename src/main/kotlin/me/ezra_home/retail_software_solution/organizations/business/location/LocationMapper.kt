@@ -22,7 +22,6 @@ interface LocationMapper {
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
-    @Mapping(target = "organizationId", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(locationInsertDto: LocationInsertDto): LocationEntity
 
@@ -35,7 +34,6 @@ interface LocationMapper {
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
-    @Mapping(target = "organizationId", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(locationUpdateDto: LocationUpdateDto, @MappingTarget locationEntity: LocationEntity)
 }

@@ -25,7 +25,7 @@ object SchemaCreator {
         runMigration(schemaName, dataSource, changeLog)
     }
 
-    private fun dropSchema(schemaName: String, dataSource: DataSource) {
+    fun dropSchema(schemaName: String, dataSource: DataSource) {
         try {
             dataSource.connection.use { connection ->
                 connection.createStatement().use { statement ->

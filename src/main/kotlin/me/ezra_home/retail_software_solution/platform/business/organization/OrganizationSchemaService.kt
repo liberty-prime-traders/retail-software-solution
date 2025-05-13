@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 import javax.sql.DataSource
 
 @Service
-class OrganizationSchemaCreator(
+class OrganizationSchemaService(
     @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
     private val dataSource: DataSource
 ) {
@@ -20,4 +20,7 @@ class OrganizationSchemaCreator(
         SchemaCreator.createSchema(schemaName, dataSource, changeLog)
     }
 
+    fun dropSchema(schemaName: String) {
+        SchemaCreator.dropSchema(schemaName, dataSource)
+    }
 }

@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.rest.endpoints.organizationadmin
+package me.ezra_home.retail_software_solution.organizations.rest.endpoints.organizationadmin
 
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminService
+import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -21,7 +21,7 @@ class OrganizationAdminEndpoint(private val organizationAdminService: Organizati
 
     @GetMapping
     fun getAdminHistoryForOrganization(): Collection<OrganizationAdminResponseDto> =
-        organizationAdminService.getAdminHistoryForOrganization()
+        organizationAdminService.getAdminHistory()
 
     @PostMapping("{adminId}")
     fun createOrganizationAdmin(@PathVariable("adminId") adminId: UUID): OrganizationAdminResponseDto =
