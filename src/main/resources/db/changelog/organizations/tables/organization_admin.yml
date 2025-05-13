@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-organization-admin-table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: organization_admin
+      changes:
+        - createTable:
+            tableName: organization_admin
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_admin_user_id_notnull
+
+              - column:
+                  name: start_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: end_on
+                  type: timestamptz

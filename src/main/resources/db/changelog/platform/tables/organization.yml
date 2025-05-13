@@ -56,3 +56,12 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: '0'
+
+              - column:
+                  name: schema_name
+                  type: nvarchar2(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: organization_schema_name_unique
+                    nullable: false
+                    notNullConstraintName: organization_schema_name_notnull

@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
-import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
 import javax.sql.DataSource
 
 @Configuration
@@ -20,10 +19,10 @@ import javax.sql.DataSource
     entityManagerFactoryRef = DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY,
     transactionManagerRef = DataSourceBeanNames.LOCATION_SCHEMA_TRANSACTION_MANAGER
 )
-class LocationSchemaDataSourceConfig {
+class LocationSchemaDataSourceConfig(private val locationTenantIdentifier: LocationTenantIdentifier) {
 
-    @Bean(name = [DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE])
     @Primary
+    @Bean(name = [DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE])
     @ConfigurationProperties(prefix = "spring.datasource.location")
     fun locationSchemaDataSource(): DataSource = DataSourceBuilder.create().build()
 
@@ -32,18 +31,8 @@ class LocationSchemaDataSourceConfig {
         @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE) dataSource: DataSource,
         @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_CONNECTION_PROVIDER) connectionProvider: MultiTenantConnectionProvider<String>
     ): LocalContainerEntityManagerFactoryBean {
-        val em = LocalContainerEntityManagerFactoryBean()
-        val dataSourcePackage = "me.ezra_home.retail_software_solution.configuration.datasource"
-        em.dataSource = dataSource
-        em.setPackagesToScan("me.ezra_home.retail_software_solution.locations")
-        em.jpaVendorAdapter = HibernateJpaVendorAdapter()
-        em.setJpaPropertyMap(mapOf(
-            "hibernate.ddl.auto" to "none",
-            "hibernate.multiTenancy" to "SCHEMA",
-            "hibernate.tenant_identifier_resolver" to "$dataSourcePackage.TenantIdentifierResolver",
-            "hibernate.multi_tenant_connection_provider" to connectionProvider
-        ))
-        return em
+        val packagesToScan = "me.ezra_home.retail_software_solution.locations"
+        return EntityManagerFactoryBuilder.build(dataSource, connectionProvider, packagesToScan, locationTenantIdentifier)
     }
 
     @Bean(name = [DataSourceBeanNames.LOCATION_SCHEMA_TRANSACTION_MANAGER])
@@ -59,7 +48,7 @@ class LocationSchemaDataSourceConfig {
     ): SpringLiquibase {
         return SpringLiquibase().apply {
             this.dataSource = dataSource
-            changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
+            changeLog = "classpath:db/changelog/locations/db-changelog-master.yml"
             setShouldRun(false)
         }
     }

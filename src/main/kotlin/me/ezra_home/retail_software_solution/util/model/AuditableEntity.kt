@@ -7,9 +7,9 @@ import java.util.UUID
 @MappedSuperclass
 abstract class AuditableEntity(
     @Column(name = "predecessor_of_id")
-    open var predecessorOfId: UUID? = null,
+    var predecessorOfId: UUID? = null,
 
     @Column(name = "usage_count")
-    open var usageCount: Long = 0
+    var usageCount: Long = 0
 
 ): HasCreatorEntity()

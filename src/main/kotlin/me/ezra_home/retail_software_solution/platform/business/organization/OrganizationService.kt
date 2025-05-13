@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminCache
+import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
@@ -9,7 +11,6 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
-import me.ezra_home.retail_software_solution.platform.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -25,6 +26,7 @@ class OrganizationService(
     private val organizationAdminCache: OrganizationAdminCache,
     private val organizationValidator: OrganizationValidator,
     private val organizationJoinRequestService: OrganizationJoinRequestService,
+    private val organizationSchemaService: OrganizationSchemaService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -35,12 +37,26 @@ class OrganizationService(
     fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
         organizationValidator.validateNameOnSave(organizationInsertDto.name)
         markSubdomainAsUsed(organizationInsertDto)
-        val entity = organizationMapper.toEntity(organizationInsertDto)
-        organizationCache.upsertOrganization(entity)
-        organizationAdminCache.upsertOrganization(OrganizationAdminEntity(entity.id).apply {
-            adminId = entity.createdById
-        })
-        return organizationMapper.toResponseDto(entity)
+        val schemaName = createOrganizationSchema(organizationInsertDto.subdomain!!)
+        try {
+            SessionContextProvider.getSession().organizationSchemaName = schemaName
+            val entity = organizationMapper.toEntity(organizationInsertDto).apply {
+                this.schemaName = schemaName
+            }
+            organizationCache.upsertOrganization(entity)
+            organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById))
+            return organizationMapper.toResponseDto(entity)
+        } catch (e: Exception) {
+            organizationSchemaService.dropSchema(schemaName)
+            throw e
+        }
+
+    }
+
+    private fun createOrganizationSchema(subdomain: String): String {
+        val schemaName = "org_${subdomain.lowercase().replace("-", "_")}"
+        organizationSchemaService.createSchema(schemaName)
+        return schemaName
     }
 
     private fun markSubdomainAsUsed(organizationInsertDto: OrganizationUpsertDto) {
@@ -59,8 +75,8 @@ class OrganizationService(
     fun updateOrganization(organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
         organizationValidator.validateNameOnSave(organizationUpdateDto.name, organizationId)
-        val entityFromDatabase =
-            organizationCache.getAllOrganizations().find { it.id == organizationId } ?: throw NotFoundException()
+        val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == organizationId }
+            ?: throw NotFoundException()
         organizationMapper.partialUpdate(organizationUpdateDto, entityFromDatabase)
         organizationCache.upsertOrganization(entityFromDatabase)
         return organizationMapper.toResponseDto(entityFromDatabase)

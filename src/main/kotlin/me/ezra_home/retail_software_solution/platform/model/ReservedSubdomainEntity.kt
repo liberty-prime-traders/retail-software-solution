@@ -13,9 +13,9 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @Table(name = TableNames.RESERVED_SUBDOMAIN)
 class ReservedSubdomainEntity(
     @Column(name = "subdomain", updatable = false)
-    open var subdomain: String? = null,
+     var subdomain: String? = null,
 
     @Column(name = "status")
     @Convert(converter = StatusConverter::class)
-    open var status: Status? = null
+     var status: Status? = null
 ): HasCreatorEntity()
