@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminCache
+import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
-import me.ezra_home.retail_software_solution.platform.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -19,7 +19,8 @@ class OrganizationService(
     private val organizationCache: OrganizationCache,
     private val reservedSubdomainService: ReservedSubdomainService,
     private val organizationAdminCache: OrganizationAdminCache,
-    private val organizationValidator: OrganizationValidator
+    private val organizationValidator: OrganizationValidator,
+    private val organizationSchemaService: OrganizationSchemaService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -30,10 +31,26 @@ class OrganizationService(
     fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
         organizationValidator.validateNameOnSave(organizationInsertDto.name)
         markSubdomainAsUsed(organizationInsertDto)
-        val entity = organizationMapper.toEntity(organizationInsertDto)
-        organizationCache.upsertOrganization(entity)
-        organizationAdminCache.upsertOrganization(OrganizationAdminEntity(entity.id).apply { adminId = entity.createdById })
-        return organizationMapper.toResponseDto(entity)
+        val schemaName = createOrganizationSchema(organizationInsertDto.subdomain!!)
+        try {
+            SessionContextProvider.getSession().organizationSchemaName = schemaName
+            val entity = organizationMapper.toEntity(organizationInsertDto).apply {
+                this.schemaName = schemaName
+            }
+            organizationCache.upsertOrganization(entity)
+            organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById))
+            return organizationMapper.toResponseDto(entity)
+        } catch (e: Exception) {
+            organizationSchemaService.dropSchema(schemaName)
+            throw e
+        }
+
+    }
+
+    private fun createOrganizationSchema(subdomain: String): String {
+        val schemaName = "org_${subdomain.lowercase().replace("-", "_")}"
+        organizationSchemaService.createSchema(schemaName)
+        return schemaName
     }
 
     private fun markSubdomainAsUsed(organizationInsertDto: OrganizationUpsertDto) {

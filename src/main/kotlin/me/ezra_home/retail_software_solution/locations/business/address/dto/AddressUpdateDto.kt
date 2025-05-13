@@ -5,7 +5,7 @@ import java.util.Optional
 import java.util.UUID
 
 /**
- * DTO for {@link me.ezra_home.retail_software_solution.model.entity.AddressEntity}
+ * DTO for {@link me.ezra_home.retail_software_solution.locations.model.entity.AddressEntity}
  */
 data class AddressUpdateDto (
     val id: UUID? = null,

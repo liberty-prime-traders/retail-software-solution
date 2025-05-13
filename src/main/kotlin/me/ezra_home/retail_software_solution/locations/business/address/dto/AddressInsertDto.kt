@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.address.dto
 import java.io.Serializable
 
 /**
- * DTO for {@link me.ezra_home.retail_software_solution.model.entity.AddressEntity}
+ * DTO for {@link me.ezra_home.retail_software_solution.locations.model.entity.AddressEntity}
  */
 data class AddressInsertDto(
     val line1: String? = null,

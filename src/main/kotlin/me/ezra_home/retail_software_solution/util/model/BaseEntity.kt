@@ -12,5 +12,5 @@ abstract class BaseEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
-    open var id: UUID? = null
+    var id: UUID? = null
 )
