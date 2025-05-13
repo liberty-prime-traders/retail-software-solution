@@ -13,4 +13,6 @@ object TableNames {
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
     const val PAYMENT_METHOD = "payment_method"
     const val VARIATION = "variation"
+    const val ORGANIZATION_JOIN_REQUEST = "org_join_request"
+    const val ORGANIZATION_USER = "organization_user"
 }

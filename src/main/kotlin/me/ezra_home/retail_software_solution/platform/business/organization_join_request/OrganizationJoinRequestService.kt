@@ -1,0 +1,52 @@
+package me.ezra_home.retail_software_solution.platform.business.organization_join_request
+
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationMapper
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
+import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
+import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
+import org.springframework.stereotype.Service
+import java.util.UUID
+
+@Service
+@TransactionalOnPlatformSchema
+class OrganizationJoinRequestService(
+    private val organizationMapper: OrganizationMapper,
+    private val organizationJoinRequestCache: OrganizationJoinRequestCache,
+    private val organizationJoinRequestMapper: OrganizationJoinRequestMapper
+) {
+
+    fun createJoinRequest(
+        subdomain: String, userId: UUID, organization: OrganizationEntity?
+    ): OrganizationLaunchResponseDto {
+        val hasPendingRequest = organizationJoinRequestCache.existsBySubdomainAndCreatedByIdAndStatus(
+            subdomain, userId, JoinRequestStatus.PENDING
+        )
+        if (hasPendingRequest.not()) {
+            val joinRequest = OrganizationJoinRequestEntity(
+                subdomain, JoinRequestStatus.PENDING, organization?.id
+            ).apply { createdById = userId }
+            organizationJoinRequestCache.upsertOrganizationJoinRequest(joinRequest)
+        }
+        return organizationJoinRequestMapper.toLaunchResponse(
+            organization = organization?.let { organizationMapper.toResponseDto(it) },
+            isOrganizationAdmin = false,
+            accessRequested = true
+        )
+    }
+
+    fun getUserJoinRequests(): Collection<OrganizationJoinRequestResponseDto> {
+        return organizationJoinRequestCache.getUserJoinRequests(SessionContextProvider.getUserId())
+            .map { organizationJoinRequestMapper.toDto(it) }
+    }
+
+    fun getOrganizationJoinRequests(): Collection<OrganizationAdminJoinRequestResponseDto> {
+        return organizationJoinRequestCache.getOrganizationJoinRequests(SessionContextProvider.getOrganizationId())
+            .map { organizationJoinRequestMapper.toAdminDto(it) }
+    }
+
+}

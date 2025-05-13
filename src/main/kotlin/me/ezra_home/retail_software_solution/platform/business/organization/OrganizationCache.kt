@@ -17,6 +17,11 @@ class OrganizationCache(private val organizationRepository: OrganizationReposito
         return organizationRepository.findAll()
     }
 
+    @Cacheable
+    fun getOrganizationByDomain(domain: String): OrganizationEntity? {
+        return organizationRepository.findOneBySubdomain(domain)
+    }
+
     @CacheEvict(allEntries = true)
     fun upsertOrganization(organizationEntity: OrganizationEntity) {
         organizationRepository.save(organizationEntity)
