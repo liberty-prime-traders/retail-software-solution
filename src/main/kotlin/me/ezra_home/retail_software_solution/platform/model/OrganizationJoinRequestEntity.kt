@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatusConverter
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
-import java.util.*
+import java.util.UUID
 
 @Entity
 @Table(name = TableNames.ORGANIZATION_JOIN_REQUEST)
@@ -24,4 +24,4 @@ class OrganizationJoinRequestEntity(
     @Column(name = "organization_id", nullable = true, updatable = false)
     var organizationId: UUID?,
 
-) : HasCreatorEntity()
+    ) : HasCreatorEntity()

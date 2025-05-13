@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.data.jpa.repository.JpaRepository
-import java.util.*
+import java.util.UUID
 
 interface OrganizationJoinRequestRepository : JpaRepository<OrganizationJoinRequestEntity, UUID> {
 
