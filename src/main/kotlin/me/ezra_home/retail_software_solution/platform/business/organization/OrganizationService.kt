@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminCache
+import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organizationadmin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
@@ -26,7 +26,10 @@ class OrganizationService(
     private val organizationAdminCache: OrganizationAdminCache,
     private val organizationValidator: OrganizationValidator,
     private val organizationJoinRequestService: OrganizationJoinRequestService,
-    private val organizationSchemaService: OrganizationSchemaService
+    private val organizationSchemaService: OrganizationSchemaService,
+    private val organizationUserService: OrganizationUserService,
+    private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
+    private val organizationAdminService: OrganizationAdminService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -94,18 +97,17 @@ class OrganizationService(
     }
 
     fun attemptOrganizationLaunch(domain: String): OrganizationLaunchResponseDto {
-        val sysUserId = SessionContextProvider.getUserId()
-        return organizationJoinRequestService.attemptOrganizationLaunch(domain, sysUserId)
+        val userId = SessionContextProvider.getUserId()
+        val organization = organizationCache.getOrganizationByDomain(domain)
+            ?: return organizationJoinRequestService.createJoinRequest(domain, userId, null)
+        return if (organizationUserService.isOrganizationMember(userId)) {
+            organizationJoinRequestMapper.toLaunchResponse(
+                organization = organizationMapper.toResponseDto(organization),
+                isOrganizationAdmin = organizationAdminService.isOrganizationAdmin(userId),
+                accessRequested = false
+            )
+        } else {
+            organizationJoinRequestService.createJoinRequest(domain, userId, organization)
+        }
     }
-
-    fun getUserJoinRequests(): Collection<OrganizationJoinRequestResponseDto> {
-        val sysUserId = SessionContextProvider.getUserId()
-        return organizationJoinRequestService.getUserJoinRequests(sysUserId)
-    }
-
-    fun getOrganizationJoinRequests(): Collection<OrganizationAdminJoinRequestResponseDto> {
-        val organizationId = SessionContextProvider.getOrganizationId()
-        return organizationJoinRequestService.getOrganizationJoinRequests(organizationId)
-    }
-
 }

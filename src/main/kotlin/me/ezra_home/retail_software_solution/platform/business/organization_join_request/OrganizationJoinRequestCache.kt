@@ -30,7 +30,7 @@ class OrganizationJoinRequestCache(private val organizationJoinRequestRepository
         return organizationJoinRequestRepository.findAllByCreatedById(userId)
     }
 
-    @Cacheable(key = "#organizationId")
+    @Cacheable
     fun getOrganizationJoinRequests(organizationId: UUID): Collection<OrganizationJoinRequestEntity> {
         return organizationJoinRequestRepository.findByOrganizationId(organizationId)
     }

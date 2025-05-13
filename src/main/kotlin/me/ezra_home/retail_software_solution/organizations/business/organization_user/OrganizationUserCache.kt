@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.platform.business.organization_user
+package me.ezra_home.retail_software_solution.organizations.business.organization_user
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.model.OrganizationUserEntity
+import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -12,9 +12,9 @@ import java.util.UUID
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
 class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
 
-    @Cacheable(key = "{#organizationId,#userId}")
-    fun existsByOrganizationIdAndUserId(organizationId: UUID, userId: UUID): Boolean {
-        return organizationUserRepository.existsByOrganizationIdAndUserId(organizationId, userId)
+    @Cacheable
+    fun existsByOrganizationIdAndUserId(userId: UUID): Boolean {
+        return organizationUserRepository.existsByUserId(userId)
     }
 
     @CacheEvict(allEntries = true)
