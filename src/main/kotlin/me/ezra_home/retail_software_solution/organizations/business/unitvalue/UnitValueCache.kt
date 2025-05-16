@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.configuration.cache.SchemaLevel
 import me.ezra_home.retail_software_solution.organizations.model.UnitValueEntity
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
+@CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.UNIT_VALUE])
 class UnitValueCache(private val unitValueRepository: UnitValueRepository) {
 

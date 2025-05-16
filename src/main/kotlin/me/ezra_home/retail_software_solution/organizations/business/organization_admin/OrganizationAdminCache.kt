@@ -1,6 +1,8 @@
-package me.ezra_home.retail_software_solution.organizations.business.organizationadmin
+package me.ezra_home.retail_software_solution.organizations.business.organization_admin
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.configuration.cache.SchemaLevel
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -8,6 +10,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 
 @Component
+@CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_ADMIN])
 class OrganizationAdminCache(private val organizationAdminRepository: OrganizationAdminRepository) {
 

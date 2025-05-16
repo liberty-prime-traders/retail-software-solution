@@ -1,8 +1,9 @@
-package me.ezra_home.retail_software_solution.organizations.business.organizationadmin
+package me.ezra_home.retail_software_solution.organizations.business.organization_admin
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
+import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -43,7 +44,8 @@ class OrganizationAdminService(
             }
     }
 
-    fun isOrganizationAdmin(userId: UUID): Boolean {
+    fun isOrganizationAdmin(): Boolean {
+        val userId = SessionContextProvider.getUserId()
         return organizationAdminCache.getAdminHistory()
             .find { it.isActive() && it.userId == userId } != null
     }
