@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.organizationadmin
+package me.ezra_home.retail_software_solution.organizations.business.organization_admin
 
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity

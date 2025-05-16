@@ -26,7 +26,7 @@ class UnitGroupEndpoint(private val unitGroupService: UnitGroupService) {
     fun getAllUnitGroups(): Collection<UnitGroupResponseDto> = unitGroupService.getAllUnitGroups()
 
     @PostMapping
-    fun updateUnitGroup(@RequestBody unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto =
+    fun createUnitGroup(@RequestBody unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto =
         unitGroupService.createUnitGroup(unitGroupInsertDto)
 
     @PutMapping

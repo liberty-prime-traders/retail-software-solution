@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
-import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminCache
-import me.ezra_home.retail_software_solution.organizations.business.organizationadmin.OrganizationAdminService
+import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
+import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
@@ -103,7 +103,7 @@ class OrganizationService(
         return if (organizationUserService.isOrganizationMember(userId)) {
             organizationJoinRequestMapper.toLaunchResponse(
                 organization = organizationMapper.toResponseDto(organization),
-                isOrganizationAdmin = organizationAdminService.isOrganizationAdmin(userId),
+                isOrganizationAdmin = organizationAdminService.isOrganizationAdmin(),
                 accessRequested = false
             )
         } else {
