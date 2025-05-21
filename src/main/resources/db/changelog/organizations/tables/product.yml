@@ -21,7 +21,9 @@ databaseChangeLog:
               - column:
                   name: category_id
                   type: uuid
-                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_category_id_notnull
 
               - column:
                   name: name

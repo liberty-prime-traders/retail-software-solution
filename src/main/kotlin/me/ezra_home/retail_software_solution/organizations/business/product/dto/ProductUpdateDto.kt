@@ -9,7 +9,7 @@ import java.util.UUID
  */
 data class ProductUpdateDto (
     val id: UUID? = null,
-    val categoryName: Optional<String>? = null,
+    val productName: Optional<String>? = null,
     val description: Optional<String>? = null,
     val categoryId: UUID? = null,
 ) : Serializable
