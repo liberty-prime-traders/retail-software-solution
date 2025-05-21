@@ -15,4 +15,5 @@ object TableNames {
     const val VARIATION = "variation"
     const val ORGANIZATION_JOIN_REQUEST = "org_join_request"
     const val ORGANIZATION_USER = "organization_user"
+    const val PRODUCT = "product"
 }
