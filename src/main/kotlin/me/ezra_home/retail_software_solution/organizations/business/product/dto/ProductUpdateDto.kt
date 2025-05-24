@@ -11,5 +11,5 @@ data class ProductUpdateDto (
     val id: UUID? = null,
     val productName: Optional<String>? = null,
     val description: Optional<String>? = null,
-    val categoryId: UUID? = null,
+    val categoryId: Optional<UUID>? = null,
 ) : Serializable

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @CrossOrigin
 @RestController
-@RequestMapping("secured/product")
+@RequestMapping("secured/products")
 class ProductEndpoint(private val productService: ProductService) {
 
     @PostMapping
@@ -32,8 +32,8 @@ class ProductEndpoint(private val productService: ProductService) {
         productService.updateProduct(productDto)
 
     @GetMapping
-    fun getAllCategories(): Collection<ProductResponseDto> =
-        productService.getAllCategories()
+    fun getAllProducts(): Collection<ProductResponseDto> =
+        productService.getAllProducts()
 
     @DeleteMapping("{id}")
     fun deleteProduct(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {

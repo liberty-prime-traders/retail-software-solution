@@ -4,6 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.category.CategoryCache
+import me.ezra_home.retail_software_solution.organizations.business.category.CategoryUsageCounter
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -15,42 +17,67 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class ProductService(
     private val productMapper: ProductMapper,
-    private val productCache: ProductCache
+    private val productCache: ProductCache,
+    private val categoryCache: CategoryCache,
+    private val categoryUsageCounter: CategoryUsageCounter
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getAllCategories(): Collection<ProductResponseDto> {
-        return productCache.getAllCategories().map { productMapper.toDto(it) }
+    fun getAllProducts(): Collection<ProductResponseDto> {
+        return productCache.getAllProducts().map { productMapper.toDto(it) }
     }
 
     fun createProduct(productInsertDto: ProductInsertDto): ProductResponseDto {
-        val productName = StringUtils.getValueOrException(productInsertDto.productName, NAME_IS_REQUIRED)
-        productCache.getAllCategories().find { StringUtils.isEquivalent(it.productName, productName) }
-            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, productName))}
-        val newProductEntity = productMapper.toEntity(productInsertDto)
-        val savedProductEntity = productCache.upsertCategories(newProductEntity)
-        return productMapper.toDto(savedProductEntity)
+        validateProductInsert(productInsertDto)
+        val productEntity = productMapper.toEntity(productInsertDto)
+        categoryUsageCounter.incrementUsageCount(productInsertDto.categoryId)
+        productCache.upsertProducts(productEntity)
+        return productMapper.toDto(productEntity)
     }
 
     fun updateProduct(productDto: ProductUpdateDto): ProductResponseDto {
         validateProductUpdate(productDto)
-        val productToUpdate = productCache.getAllCategories().find { Objects.equals(productDto.id, it.id) }
+        val productToUpdate = productCache.getAllProducts().find { Objects.equals(productDto.id, it.id) }
         if (productToUpdate == null) throw UpdatingNonExistingRecordException()
+        if (productDto.categoryId != null) {
+            categoryCache.getAllCategories().find { it.id == productToUpdate.categoryId }?.let {
+                categoryUsageCounter.decrementUsageCount(it)
+            }
+            categoryCache.getAllCategories().find { it.id == productDto.categoryId.get() }?.let {
+                categoryUsageCounter.incrementUsageCount(it)
+            }
+        }
         productMapper.partialUpdate(productDto, productToUpdate)
-        val updatedProduct = productCache.upsertCategories(productToUpdate)
+        val updatedProduct = productCache.upsertProducts(productToUpdate)
         return productMapper.toDto(updatedProduct)
     }
 
     private fun validateProductUpdate(productUpdateDto: ProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
-        productCache.getAllCategories()
+        productCache.getAllProducts()
             .find { StringUtils.isEquivalent(it.productName, name) && it.id != productUpdateDto.id }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        if (productUpdateDto.categoryId != null && categoryCache.getAllCategories().none { it.id == productUpdateDto.categoryId.get()}){
+            throw RtsGenericException(INVALID_CATEGORY_ID)
+        }
+    }
+
+    private fun validateProductInsert(productInsertDto: ProductInsertDto) {
+        val name = StringUtils.getValueOrException(productInsertDto.productName, NAME_IS_REQUIRED)
+        productCache.getAllProducts()
+            .find { StringUtils.isEquivalent(it.productName, name)}
+            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        if (productInsertDto.categoryId == null){
+            throw RtsGenericException(CATEGORY_ID_REQUIRED)
+        }
+        else if(categoryCache.getAllCategories().none { it.id == productInsertDto.categoryId}){
+            throw RtsGenericException(INVALID_CATEGORY_ID)
+        }
     }
 
     fun deleteProduct(id: UUID?) {
         id?.let {
-            productCache.getAllCategories().find { it.id == id }?.let { entity ->
+            productCache.getAllProducts().find { it.id == id }?.let { entity ->
                 val usageCount = entity.usageCount
                 if (usageCount > 0L) {
                     throw RtsGenericException("Product ${entity.productName} has $usageCount usage(s) and cannot be deleted")
@@ -62,7 +89,9 @@ class ProductService(
     
     companion object {
         const val NAME_IS_REQUIRED = "A product must have a name"
-        const val NAME_ALREADY_EXISTS = "A product with the name %s is already assigned."
+        const val NAME_ALREADY_EXISTS = "A product with the name %s already exists."
+        const val INVALID_CATEGORY_ID = "The category ID provided does not exists."
+        const val CATEGORY_ID_REQUIRED = "The category ID is required."
     }
     
 }

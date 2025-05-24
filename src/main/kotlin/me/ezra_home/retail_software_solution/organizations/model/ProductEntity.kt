@@ -21,4 +21,4 @@ class ProductEntity(
     @Column(name = "category_id", nullable = false)
     var categoryId: UUID? = null,
 
-    ): AuditableEntity()
+): AuditableEntity()
