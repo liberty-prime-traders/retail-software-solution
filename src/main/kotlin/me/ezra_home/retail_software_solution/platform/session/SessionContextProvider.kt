@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
+import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID
@@ -27,5 +28,10 @@ object SessionContextProvider {
 
     fun clear() {
         sessionContextThreadLocal.remove()
+    }
+
+    fun initOrganization(organization: OrganizationEntity) {
+        getSession().organizationId = organization.id
+        getSession().organizationSchemaName = organization.schemaName
     }
 }
