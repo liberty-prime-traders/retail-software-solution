@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import me.ezra_home.retail_software_solution.configuration.serializer.DatesToMillis
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import java.io.Serializable
 import java.time.OffsetDateTime
@@ -8,6 +10,7 @@ import java.util.UUID
 data class OrganizationAdminJoinRequestResponseDto(
     val id: UUID?,
     val fullName: String,
+    @JsonSerialize(using = DatesToMillis::class)
     val requestedDate: OffsetDateTime,
     val status: JoinRequestStatus
 ) : Serializable

@@ -22,6 +22,7 @@ class HibernateProxyTypeAdapter private constructor(private val context: Gson) :
             }
         }
     }
+
     @Throws(IOException::class)
     override fun read(input: JsonReader): HibernateProxy? {
         throw UnsupportedOperationException("Not supported")

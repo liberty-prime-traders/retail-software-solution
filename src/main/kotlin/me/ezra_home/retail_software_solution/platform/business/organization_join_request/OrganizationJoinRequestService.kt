@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
@@ -15,7 +14,6 @@ import java.util.UUID
 @Service
 @TransactionalOnPlatformSchema
 class OrganizationJoinRequestService(
-    private val organizationMapper: OrganizationMapper,
     private val organizationJoinRequestCache: OrganizationJoinRequestCache,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper
 ) {
@@ -33,7 +31,7 @@ class OrganizationJoinRequestService(
             organizationJoinRequestCache.upsertOrganizationJoinRequest(joinRequest)
         }
         return organizationJoinRequestMapper.toLaunchResponse(
-            organization = organization?.let { organizationMapper.toResponseDto(it) },
+            organization = null,
             isOrganizationAdmin = false,
             accessRequested = true
         )

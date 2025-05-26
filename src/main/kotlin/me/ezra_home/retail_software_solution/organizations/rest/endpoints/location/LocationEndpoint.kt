@@ -24,6 +24,7 @@ class LocationEndpoint(private val locationService: LocationService) {
 
     @GetMapping
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
+    //TODO: Change to @PreAuthorize("@rtsPermissions.isOrganizationMember()") when user locations are implemented
     fun getForOrganization(): Collection<LocationResponseDto> =
         locationService.getAllLocations()
 

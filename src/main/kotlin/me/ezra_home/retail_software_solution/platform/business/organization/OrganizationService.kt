@@ -100,6 +100,7 @@ class OrganizationService(
         val userId = SessionContextProvider.getUserId()
         val organization = organizationCache.getOrganizationByDomain(domain)
             ?: return organizationJoinRequestService.createJoinRequest(domain, userId, null)
+        SessionContextProvider.initOrganization(organization)
         return if (organizationUserService.isOrganizationMember(userId)) {
             organizationJoinRequestMapper.toLaunchResponse(
                 organization = organizationMapper.toResponseDto(organization),
