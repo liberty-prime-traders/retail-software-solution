@@ -7,29 +7,20 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
 import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
-import me.ezra_home.retail_software_solution.organizations.business.category.CategoryService
+import me.ezra_home.retail_software_solution.util.business.mappers.category.CategoryName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
-import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
 @Mapper(config = RtsMapperConfig::class)
-abstract class ProductMapper {
-
-    @Autowired
-    protected lateinit var categoryService: CategoryService
+interface ProductMapper {
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(target = "categoryName", expression = "java(resolveCategoryName(productEntity.getCategoryId()))")
+    @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [CategoryName::class])
     abstract fun toDto(productEntity: ProductEntity): ProductResponseDto
-
-    protected fun resolveCategoryName(categoryId: UUID?): String? {
-        val cachedCategories = categoryService.getCachedCategoryMap()
-        return categoryId?.let { cachedCategories[it]?.categoryName }
-    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
