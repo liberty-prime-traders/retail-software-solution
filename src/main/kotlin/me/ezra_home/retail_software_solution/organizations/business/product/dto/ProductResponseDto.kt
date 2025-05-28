@@ -11,7 +11,7 @@ data class ProductResponseDto (
     val id: UUID?,
     val productName: String?,
     val description: String?,
-    val categoryId: UUID? = null,
+    val categoryName: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val usageCount: Long?
