@@ -53,13 +53,16 @@ class ProductService(
         return productMapper.toDto(updatedProduct)
     }
 
-    private fun validateProductUpdate(productUpdateDto: ProductUpdateDto) {
+    private fun validateProductUpdate(productUpdateDto: ProductUpdateDto, productToUpdate: ProductEntity) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
         productCache.getAllProducts()
             .find { StringUtils.isEquivalent(it.productName, name) && it.id != productUpdateDto.id }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
         if (productUpdateDto.categoryId != null && categoryCache.getAllCategories().none { it.id == productUpdateDto.categoryId.get()}){
             throw RtsGenericException(INVALID_CATEGORY_ID)
+        }
+        else if(productUpdateDto.categoryId != null && productUpdateDto.categoryId.get() == productToUpdate.categoryId) {
+            throw RtsGenericException(CATEGORY_TYPE_DO_NOT_MATCH)
         }
     }
 
