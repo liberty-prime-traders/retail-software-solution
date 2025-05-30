@@ -19,7 +19,7 @@ class ProductCache(private val productRepository: ProductRepository) {
     fun getAllProducts(): Collection<ProductEntity> = productRepository.findAll()
 
     @CacheEvict(allEntries = true)
-    fun upsertProducts(productEntity: ProductEntity): ProductEntity = productRepository.save(productEntity)
+    fun upsertProducts(productEntity: ProductEntity) = productRepository.save(productEntity)
 
     @CacheEvict(allEntries = true)
     fun deleteProduct(id: UUID) {
