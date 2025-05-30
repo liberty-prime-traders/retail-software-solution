@@ -1,0 +1,43 @@
+package me.ezra_home.retail_software_solution.organizations.rest.endpoints.product
+
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
+import java.util.UUID
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.CrossOrigin
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+@CrossOrigin
+@RestController
+@RequestMapping("secured/products")
+class ProductEndpoint(private val productService: ProductService) {
+
+    @PostMapping
+    fun createProduct(@RequestBody productInsertDto: ProductInsertDto): ProductResponseDto =
+        productService.createProduct(productInsertDto)
+
+    @PutMapping
+    fun updateProduct(@RequestBody productDto: ProductUpdateDto): ProductResponseDto =
+        productService.updateProduct(productDto)
+
+    @GetMapping
+    fun getAllProducts(): Collection<ProductResponseDto> =
+        productService.getAllProducts()
+
+    @DeleteMapping("{id}")
+    fun deleteProduct(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
+        productService.deleteProduct(id)
+        return ResponseEntity(HttpStatus.NO_CONTENT)
+    }
+}

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.util.business.mappers.userinfo
+package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity

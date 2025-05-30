@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException

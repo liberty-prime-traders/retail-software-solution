@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.configuration.mapping
 
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.UserQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.OptionalQualifier
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.UserQualifier
 import org.mapstruct.InjectionStrategy
 import org.mapstruct.MapperConfig
 import org.mapstruct.MappingConstants

@@ -4,8 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConf
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

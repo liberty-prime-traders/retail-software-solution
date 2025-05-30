@@ -18,6 +18,11 @@ class CategoryCache(private val categoryRepository: CategoryRepository) {
     @Cacheable
     fun getAllCategories(): Collection<CategoryEntity> = categoryRepository.findAll()
 
+    @Cacheable
+    fun getCategoriesById(): Map<UUID, CategoryEntity> {
+        return getAllCategories().associateBy { it.id!! }
+    }
+
     @CacheEvict(allEntries = true)
     fun upsertCategories(categoryEntity: CategoryEntity): CategoryEntity = categoryRepository.save(categoryEntity)
 

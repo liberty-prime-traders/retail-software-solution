@@ -1,12 +1,12 @@
-package me.ezra_home.retail_software_solution.organizations.business.category
+package me.ezra_home.retail_software_solution.organizations.business.category.mapping
 
 import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryUpdateDto
 import me.ezra_home.retail_software_solution.organizations.model.CategoryEntity
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
