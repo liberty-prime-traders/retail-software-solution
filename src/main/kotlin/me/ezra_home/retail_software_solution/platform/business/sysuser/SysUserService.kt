@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
 import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import org.springframework.stereotype.Service

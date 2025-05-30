@@ -5,8 +5,8 @@ import me.ezra_home.retail_software_solution.locations.business.address.dto.Addr
 import me.ezra_home.retail_software_solution.locations.business.address.dto.AddressResponseDto
 import me.ezra_home.retail_software_solution.locations.business.address.dto.AddressUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.AddressEntity
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

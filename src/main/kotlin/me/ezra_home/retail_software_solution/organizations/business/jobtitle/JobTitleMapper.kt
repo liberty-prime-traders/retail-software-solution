@@ -5,8 +5,8 @@ import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleUpdateDto
 import me.ezra_home.retail_software_solution.organizations.model.JobTitleEntity
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.CreatedBy
-import me.ezra_home.retail_software_solution.util.business.mappers.userinfo.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

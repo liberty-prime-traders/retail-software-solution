@@ -4,11 +4,11 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.category.dto.CategoryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import org.springframework.cache.annotation.Cacheable
 import java.util.Objects
 import java.util.UUID
 
@@ -22,13 +22,6 @@ class CategoryService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllCategories(): Collection<CategoryResponseDto> {
         return categoryCache.getAllCategories().map { categoryMapper.toDto(it) }
-    }
-
-    @Cacheable("categoryCache")
-    fun getCachedCategoryMap(): Map<UUID, CategoryResponseDto> {
-        return categoryCache.getAllCategories()
-            .filter { it.id != null }
-            .associate { it.id!! to categoryMapper.toDto(it) }
     }
 
     fun createCategory(categoryInsertDto: CategoryInsertDto): CategoryResponseDto {
