@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints.organization
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.dto.OrganizationUserResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
@@ -9,7 +11,6 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -28,7 +29,8 @@ import java.util.UUID
 @RequestMapping("secured/organizations")
 class OrganizationEndpoint(
     private val organizationService: OrganizationService,
-    private val organizationJoinRequestService: OrganizationJoinRequestService
+    private val organizationJoinRequestService: OrganizationJoinRequestService,
+    private val organizationUserService: OrganizationUserService
 ) {
 
     @GetMapping
@@ -65,10 +67,10 @@ class OrganizationEndpoint(
     fun getJoinRequests(): Collection<OrganizationAdminJoinRequestResponseDto> =
         organizationJoinRequestService.getOrganizationJoinRequests()
 
-    @PostMapping("admit/{joinRequestId}")
+    @PostMapping("join-requests/admit")
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    fun admitUser(@PathVariable joinRequestId: UUID): ResponseEntity<HttpStatusCode> {
-        return ResponseEntity(HttpStatus.OK)
+    fun admitUsers(@RequestBody joinRequestIds: List<UUID>): Collection<OrganizationUserResponseDto> {
+        return organizationUserService.admitUsers(joinRequestIds)
     }
 
 }
