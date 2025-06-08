@@ -24,6 +24,7 @@ class OrganizationAdminEndpoint(private val organizationAdminService: Organizati
         organizationAdminService.getAdminHistory()
 
     @GetMapping("is-admin")
+    @PreAuthorize("permitAll()")
     fun isOrganizationAdmin(): ResponseEntity<Boolean> {
         val isAdmin = organizationAdminService.isOrganizationAdmin()
         return ResponseEntity.ok(isAdmin)

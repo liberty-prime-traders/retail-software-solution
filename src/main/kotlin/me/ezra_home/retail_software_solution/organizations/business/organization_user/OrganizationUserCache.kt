@@ -28,4 +28,9 @@ class OrganizationUserCache(private val organizationUserRepository: Organization
     fun upsertOrganizationUser(organizationUserEntity: OrganizationUserEntity) {
         organizationUserRepository.save(organizationUserEntity)
     }
+
+    @CacheEvict(allEntries = true)
+    fun upsertOrganizationUsers(organizationUserEntities: Collection<OrganizationUserEntity>) {
+        organizationUserRepository.saveAll(organizationUserEntities)
+    }
 }

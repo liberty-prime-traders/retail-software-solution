@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.platform.business.subdomain
+package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
 import java.text.Normalizer
 

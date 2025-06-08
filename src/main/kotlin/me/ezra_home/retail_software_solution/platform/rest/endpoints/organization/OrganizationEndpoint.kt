@@ -1,14 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints.organization
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.dto.OrganizationUserResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,16 +17,11 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 @CrossOrigin
 @RestController
 @RequestMapping("secured/organizations")
-class OrganizationEndpoint(
-    private val organizationService: OrganizationService,
-    private val organizationJoinRequestService: OrganizationJoinRequestService,
-    private val organizationUserService: OrganizationUserService
-) {
+class OrganizationEndpoint(private val organizationService: OrganizationService) {
 
     @GetMapping
     @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
@@ -57,20 +47,4 @@ class OrganizationEndpoint(
     @PostMapping("launch/{domain}")
     fun launchOrganization(@PathVariable domain: String): OrganizationLaunchResponseDto =
         organizationService.attemptOrganizationLaunch(domain)
-
-    @GetMapping("me/join-requests")
-    fun getUserJoinRequests(): Collection<OrganizationJoinRequestResponseDto> =
-        organizationJoinRequestService.getUserJoinRequests()
-
-    @GetMapping("join-requests")
-    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    fun getJoinRequests(): Collection<OrganizationAdminJoinRequestResponseDto> =
-        organizationJoinRequestService.getOrganizationJoinRequests()
-
-    @PostMapping("join-requests/admit")
-    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    fun admitUsers(@RequestBody joinRequestIds: List<UUID>): Collection<OrganizationUserResponseDto> {
-        return organizationUserService.admitUsers(joinRequestIds)
-    }
-
 }

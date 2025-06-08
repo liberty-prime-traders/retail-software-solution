@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.platform.rest.endpoints.reservedsubdomain
+package me.ezra_home.retail_software_solution.platform.rest.endpoints.reserved_subdomain
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
-import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainDto
-import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainDto
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize

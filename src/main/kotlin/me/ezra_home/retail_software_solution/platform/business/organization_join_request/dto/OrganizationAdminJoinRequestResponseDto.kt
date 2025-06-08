@@ -10,6 +10,7 @@ import java.util.UUID
 data class OrganizationAdminJoinRequestResponseDto(
     val id: UUID?,
     val fullName: String,
+    val createdById: UUID,
     @JsonSerialize(using = DatesToMillis::class)
     val requestedDate: OffsetDateTime,
     val status: JoinRequestStatus

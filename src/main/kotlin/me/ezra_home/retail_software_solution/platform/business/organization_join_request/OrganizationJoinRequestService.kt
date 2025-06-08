@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
@@ -9,13 +10,15 @@ import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequ
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.stereotype.Service
+import java.util.Collections
 import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
 class OrganizationJoinRequestService(
     private val organizationJoinRequestCache: OrganizationJoinRequestCache,
-    private val organizationJoinRequestMapper: OrganizationJoinRequestMapper
+    private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
+    private val organizationUserService: OrganizationUserService
 ) {
 
     fun createJoinRequest(
@@ -47,4 +50,18 @@ class OrganizationJoinRequestService(
             .map { organizationJoinRequestMapper.toAdminDto(it) }
     }
 
+    fun admitUsers(joinRequestIds: Collection<UUID>): Collection<OrganizationAdminJoinRequestResponseDto> {
+        if (joinRequestIds.isEmpty()) {
+            return Collections.emptyList()
+        }
+        return organizationJoinRequestCache.getOrganizationJoinRequests(SessionContextProvider.getOrganizationId())
+            .filter { joinRequestIds.contains(it.id) && it.status == JoinRequestStatus.PENDING }
+            .map { it.status = JoinRequestStatus.APPROVED; it }
+            .let { filteredJoinRequests ->
+                organizationJoinRequestCache.upsertOrganizationJoinRequests(filteredJoinRequests)
+                val joinRequestsResponse = filteredJoinRequests.map { organizationJoinRequestMapper.toAdminDto(it) }
+                organizationUserService.admitJoinRequests(joinRequestsResponse)
+                joinRequestsResponse
+            }
+    }
 }

@@ -18,6 +18,11 @@ class OrganizationJoinRequestCache(private val organizationJoinRequestRepository
         organizationJoinRequestRepository.save(organizationJoinRequestEntity)
     }
 
+    @CacheEvict(allEntries = true)
+    fun upsertOrganizationJoinRequests(organizationJoinRequestEntities: Collection<OrganizationJoinRequestEntity>) {
+        organizationJoinRequestRepository.saveAll(organizationJoinRequestEntities)
+    }
+
     @Cacheable
     fun existsBySubdomainAndCreatedByIdAndStatus(
         subdomain: String,
