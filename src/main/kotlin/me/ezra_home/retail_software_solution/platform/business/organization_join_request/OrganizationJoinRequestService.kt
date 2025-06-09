@@ -51,17 +51,28 @@ class OrganizationJoinRequestService(
     }
 
     fun admitUsers(joinRequestIds: Collection<UUID>): Collection<OrganizationAdminJoinRequestResponseDto> {
+        val joinRequestsResponse = updateJoinRequests(joinRequestIds, JoinRequestStatus.APPROVED)
+        organizationUserService.admitJoinRequests(joinRequestsResponse)
+        return joinRequestsResponse
+    }
+
+    fun denyUsers(joinRequestIds: Collection<UUID>): Collection<OrganizationAdminJoinRequestResponseDto> {
+        return updateJoinRequests(joinRequestIds, JoinRequestStatus.DENIED)
+    }
+
+    private fun updateJoinRequests(
+        joinRequestIds: Collection<UUID>,
+        newStatus: JoinRequestStatus
+    ): Collection<OrganizationAdminJoinRequestResponseDto> {
         if (joinRequestIds.isEmpty()) {
             return Collections.emptyList()
         }
         return organizationJoinRequestCache.getOrganizationJoinRequests(SessionContextProvider.getOrganizationId())
             .filter { joinRequestIds.contains(it.id) && it.status == JoinRequestStatus.PENDING }
-            .map { it.status = JoinRequestStatus.APPROVED; it }
+            .map { it.status = newStatus; it }
             .let { filteredJoinRequests ->
                 organizationJoinRequestCache.upsertOrganizationJoinRequests(filteredJoinRequests)
-                val joinRequestsResponse = filteredJoinRequests.map { organizationJoinRequestMapper.toAdminDto(it) }
-                organizationUserService.admitJoinRequests(joinRequestsResponse)
-                joinRequestsResponse
+                filteredJoinRequests.map { organizationJoinRequestMapper.toAdminDto(it) }
             }
     }
 }

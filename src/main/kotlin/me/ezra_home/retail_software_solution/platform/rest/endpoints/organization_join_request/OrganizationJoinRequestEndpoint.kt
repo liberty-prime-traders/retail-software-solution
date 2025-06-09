@@ -31,4 +31,10 @@ class OrganizationJoinRequestEndpoint(private val organizationJoinRequestService
     fun admitUsers(@RequestBody joinRequestIds: Collection<UUID>): Collection<OrganizationAdminJoinRequestResponseDto> {
         return organizationJoinRequestService.admitUsers(joinRequestIds)
     }
+
+    @PostMapping("deny")
+    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
+    fun denyUsers(@RequestBody joinRequestIds: Collection<UUID>): Collection<OrganizationAdminJoinRequestResponseDto> {
+        return organizationJoinRequestService.denyUsers(joinRequestIds)
+    }
 }
