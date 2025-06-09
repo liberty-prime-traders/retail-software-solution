@@ -8,6 +8,6 @@ import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
 interface OrganizationAdminMapper {
-    @Mapping(source = "userId", target = "admin", qualifiedBy = [FullName::class])
+    @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])
     fun toResponseDto(organizationAdminEntity: OrganizationAdminEntity): OrganizationAdminResponseDto
 }

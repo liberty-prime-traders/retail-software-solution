@@ -19,6 +19,10 @@ class LocationSchemaInitializer(
     private val organizationTransactionManager: JpaTransactionManager
 ) {
     fun initialize(httpServletRequest: HttpServletRequest) {
+        if (!StringUtils.hasValue(SessionContextProvider.getSession().organizationSchemaName)) {
+            // If the organization schema name is not set, skip initialization
+            return
+        }
         val organizationStatus = organizationTransactionManager.getTransaction(DefaultTransactionDefinition())
         try {
             doInitialize(httpServletRequest)

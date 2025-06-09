@@ -14,6 +14,10 @@ import java.util.UUID
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
 class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
+    @Cacheable
+    fun getOrganizationUsers(): Collection<OrganizationUserEntity> {
+        return organizationUserRepository.findAll()
+    }
 
     @Cacheable
     fun existsByOrganizationIdAndUserId(userId: UUID): Boolean {
@@ -23,5 +27,10 @@ class OrganizationUserCache(private val organizationUserRepository: Organization
     @CacheEvict(allEntries = true)
     fun upsertOrganizationUser(organizationUserEntity: OrganizationUserEntity) {
         organizationUserRepository.save(organizationUserEntity)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun upsertOrganizationUsers(organizationUserEntities: Collection<OrganizationUserEntity>) {
+        organizationUserRepository.saveAll(organizationUserEntities)
     }
 }

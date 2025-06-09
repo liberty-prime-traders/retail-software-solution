@@ -9,7 +9,7 @@ import java.util.UUID
  */
 data class OrganizationAdminResponseDto(
     val id: UUID?,
-    val admin: String?,
+    val user: String?,
     val startOn: OffsetDateTime?,
     val endOn: OffsetDateTime?
 ) : Serializable

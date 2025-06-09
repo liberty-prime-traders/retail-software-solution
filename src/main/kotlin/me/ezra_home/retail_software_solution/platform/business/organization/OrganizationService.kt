@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization.dto.
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.business.subdomain.ReservedSubdomainService
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
