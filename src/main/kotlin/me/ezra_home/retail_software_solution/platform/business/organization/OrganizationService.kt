@@ -1,12 +1,14 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationWithLocations
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
+    private val locationCache: LocationCache,
     private val reservedSubdomainService: ReservedSubdomainService,
     private val organizationAdminCache: OrganizationAdminCache,
     private val organizationValidator: OrganizationValidator,
@@ -110,5 +113,20 @@ class OrganizationService(
         } else {
             organizationJoinRequestService.createJoinRequest(domain, userId, organization)
         }
+    }
+
+    fun getAllOrganizationsWithLocations(): List<OrganizationWithLocations> {
+        val organizationsWithLocations = mutableListOf<OrganizationWithLocations>()
+        for (organization in organizationCache.getAllOrganizations()) {
+            SessionContextProvider.initOrganization(organization)
+            val locations = locationCache.getAllLocations()
+            organizationsWithLocations.add(
+                OrganizationWithLocations(
+                    organization = organization,
+                    locations = locations
+                )
+            )
+        }
+        return organizationsWithLocations.toList()
     }
 }

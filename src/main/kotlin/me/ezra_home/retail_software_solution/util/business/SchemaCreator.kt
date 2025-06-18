@@ -22,7 +22,12 @@ object SchemaCreator {
             throw RtsGenericException("Failed to create schema $schemaName: ${e.message}")
         }
 
-        runMigration(schemaName, dataSource, changeLog)
+        runMigration(
+            schemaName = schemaName,
+            dataSource = dataSource,
+            changeLog = changeLog,
+            shouldDropSchemaOnFailure = true
+        )
     }
 
     fun dropSchema(schemaName: String, dataSource: DataSource) {
@@ -39,7 +44,13 @@ object SchemaCreator {
 
     }
 
-    private fun runMigration(schemaName: String, dataSource: DataSource , changeLog: String) {
+    fun runMigration(
+        schemaName: String,
+        dataSource: DataSource,
+        changeLog: String,
+        liquibaseLabel: String? = null,
+        shouldDropSchemaOnFailure: Boolean = false
+    ) {
         try {
             val database = DatabaseFactory.getInstance()
                 .findCorrectDatabaseImplementation(JdbcConnection(dataSource.connection))
@@ -47,10 +58,15 @@ object SchemaCreator {
             val commandScope = CommandScope(UpdateCommandStep.COMMAND_NAME[0])
                 .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog)
                 .addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database)
+            if (liquibaseLabel != null) {
+                commandScope.addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
+            }
             commandScope.execute()
 
         } catch (e: Exception) {
-            dropSchema(schemaName, dataSource)
+            if (shouldDropSchemaOnFailure) {
+                dropSchema(schemaName, dataSource)
+            }
             throw RtsGenericException("Failed to run migration for schema $schemaName: ${e.message}")
         }
     }

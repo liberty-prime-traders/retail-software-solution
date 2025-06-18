@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 'create_variation_table'
       author: ezra
+      labels: 1.0.0
       preConditions:
         - not:
             - tableExists:

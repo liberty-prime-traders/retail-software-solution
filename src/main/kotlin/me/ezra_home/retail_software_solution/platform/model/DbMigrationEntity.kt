@@ -1,0 +1,43 @@
+package me.ezra_home.retail_software_solution.platform.model
+
+import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.enums.MigrationResult
+import me.ezra_home.retail_software_solution.util.enums.MigrationResultConverter
+import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
+import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
+import me.ezra_home.retail_software_solution.util.model.BaseEntity
+import me.ezra_home.retail_software_solution.util.model.TableNames
+import java.time.OffsetDateTime
+import java.util.UUID
+
+@Entity
+@Table(name = TableNames.DB_MIGRATION)
+class DbMigrationEntity(
+
+    @Column(name = "db_version_id", nullable = false, updatable = false)
+    val dbVersionId: UUID,
+
+    @Column(name = "schema_owner_id", nullable = false, updatable = false)
+    val schemaOwnerId: UUID,
+
+    @Column(name = "schema_owner_type", nullable = false, length = 5)
+    @Convert(converter = SchemaOwnerTypeConverter::class)
+    val schemaOwnerType: SchemaOwnerType,
+
+    @Column(name = "start_on", nullable = false)
+    val startOn: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(name = "end_on")
+    var endOn: OffsetDateTime? = null,
+
+    @Column(name = "migration_result", nullable = false, length = 10)
+    @Convert(converter = MigrationResultConverter::class)
+    var migrationResult: MigrationResult,
+
+    @Column(name = "message", length = 100)
+    var message: String? = null
+
+) : BaseEntity()

@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-db-migration-table'
+      author: adongo
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: db_migration
+      changes:
+        - createTable:
+            tableName: db_migration
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: db_version_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_db_version_id_notnull
+
+              - column:
+                  name: schema_owner_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_schema_owner_id_not_null
+
+              - column:
+                  name: schema_owner_type
+                  type: nvarchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_schema_owner_type_not_null
+
+              - column:
+                  name: start_on
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_start_on_not_null
+
+              - column:
+                  name: end_on
+                  type: timestamptz
+
+              - column:
+                  name: migration_result
+                  type: nvarchar(10)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_migration_result_not_null
+
+              - column:
+                  name: message
+                  type: nvarchar(100)
