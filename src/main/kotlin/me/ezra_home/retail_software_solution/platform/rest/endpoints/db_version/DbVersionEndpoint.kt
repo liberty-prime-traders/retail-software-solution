@@ -5,7 +5,13 @@ import me.ezra_home.retail_software_solution.platform.business.db_version.DbVers
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionCreationDto
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.CrossOrigin
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @CrossOrigin
@@ -14,13 +20,11 @@ import java.util.UUID
 @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
 class DbVersionEndpoint(private val dbVersionService: DbVersionService) {
     @PostMapping
-    fun createVersion(@RequestBody request: DbVersionCreationDto): DbVersionResponseDto =
-        dbVersionService.createDbVersion(request)
+    fun createVersion(@RequestBody dbVersionCreationDto: DbVersionCreationDto): DbVersionResponseDto =
+        dbVersionService.createDbVersion(dbVersionCreationDto)
 
     @GetMapping
-    fun getAllDbVersions(): Collection<DbVersionResponseDto> {
-        return dbVersionService.getAllDbVersions()
-    }
+    fun getAllDbVersions(): Collection<DbVersionResponseDto> = dbVersionService.getAllDbVersions()
 
     @PostMapping("/{versionId}/activate")
     fun activateVersion(@PathVariable versionId: UUID): DbVersionResponseDto =

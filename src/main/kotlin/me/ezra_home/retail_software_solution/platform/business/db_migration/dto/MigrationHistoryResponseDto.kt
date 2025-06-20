@@ -7,7 +7,7 @@ import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID
 
-data class MigrationHistoryResponse(
+data class MigrationHistoryResponseDto(
     val organizationId: UUID?,
     val organizationName: String?,
     val versionNumber: String?,

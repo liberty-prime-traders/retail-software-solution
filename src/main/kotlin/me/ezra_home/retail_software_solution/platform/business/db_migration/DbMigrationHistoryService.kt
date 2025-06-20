@@ -3,8 +3,8 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.LocationMigrationResponse
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.MigrationHistoryResponse
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionRepository
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.MigrationHistoryResponseDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.stereotype.Service
@@ -14,24 +14,24 @@ import java.util.UUID
 @Service
 @TransactionalOnPlatformSchema(readOnly = true)
 class DbMigrationHistoryService(
-    private val dbMigrationRepository: DbMigrationRepository,
-    private val dbVersionRepository: DbVersionRepository,
+    private val dbMigrationCache: DbMigrationCache,
+    private val dbVersionCache: DbVersionCache,
     private val organizationService: OrganizationService,
 ) {
     fun getMigrationHistory(
         startDateTime: OffsetDateTime?,
         endDateTime: OffsetDateTime?
-    ): List<MigrationHistoryResponse> {
+    ): List<MigrationHistoryResponseDto> {
         val allMigrations = if (startDateTime != null && endDateTime != null) {
-            dbMigrationRepository.findByStartOnBetweenOrderByStartOnDesc(
+            dbMigrationCache.getAllDbMigrationsFilteredByDate(
                 startDateTime,
                 endDateTime
             )
         } else {
-            dbMigrationRepository.findAll().sortedByDescending { it.startOn }
+            dbMigrationCache.getAllDbMigrations().sortedByDescending { it.startOn }
         }
 
-        val dbVersionsMap = dbVersionRepository.findAll().associateBy { it.id }
+        val dbVersionsMap = dbVersionCache.getAllDbVersions().associateBy { it.id }
         val organizationsWithLocations = organizationService.getAllOrganizationsWithLocations()
 
         fun findLocationWithOrgId(locationId: UUID): Pair<LocationEntity, UUID>? {
@@ -45,7 +45,7 @@ class DbMigrationHistoryService(
         }
 
         val organizationMigrationsMap = mutableMapOf<UUID, MutableList<LocationMigrationResponse>>()
-        val topLevelOrgMigrations = mutableListOf<MigrationHistoryResponse>()
+        val topLevelOrgMigrations = mutableListOf<MigrationHistoryResponseDto>()
 
         for (migration in allMigrations) {
             val versionNumber = dbVersionsMap[migration.dbVersionId]?.versionNumber ?: "UNKNOWN"
@@ -55,7 +55,7 @@ class DbMigrationHistoryService(
                     val organizationName =
                         organizationsWithLocations.find { it.organization.id == migration.schemaOwnerId }?.organization?.name
                     topLevelOrgMigrations.add(
-                        MigrationHistoryResponse(
+                        MigrationHistoryResponseDto(
                             organizationId = migration.schemaOwnerId,
                             organizationName = organizationName,
                             versionNumber = versionNumber,
