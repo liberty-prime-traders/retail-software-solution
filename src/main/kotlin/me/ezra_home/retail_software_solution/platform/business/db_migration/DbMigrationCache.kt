@@ -35,7 +35,7 @@ class DbMigrationCache(private val dbMigrationRepository: DbMigrationRepository)
         schemaOwnerId: UUID,
         schemaOwnerType: SchemaOwnerType,
         dbVersionId: UUID
-    ): List<DbMigrationEntity> {
+    ): DbMigrationEntity? {
         return dbMigrationRepository.findTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
             schemaOwnerId = schemaOwnerId,
             schemaOwnerType = schemaOwnerType,

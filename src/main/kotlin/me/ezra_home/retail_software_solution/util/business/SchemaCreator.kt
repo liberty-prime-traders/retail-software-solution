@@ -22,12 +22,18 @@ object SchemaCreator {
             throw RtsGenericException("Failed to create schema $schemaName: ${e.message}")
         }
 
-        runMigration(
-            schemaName = schemaName,
-            dataSource = dataSource,
-            changeLog = changeLog,
-            shouldDropSchemaOnFailure = true
-        )
+        try {
+            runMigration(
+                schemaName = schemaName,
+                dataSource = dataSource,
+                changeLog = changeLog,
+                liquibaseLabel = "initial" // TODO provide latest version
+            )
+        } catch (e: Exception) {
+            dropSchema(schemaName, dataSource)
+            throw RtsGenericException("Failed to run migration for schema $schemaName: ${e.message}")
+        }
+
     }
 
     fun dropSchema(schemaName: String, dataSource: DataSource) {
@@ -48,8 +54,7 @@ object SchemaCreator {
         schemaName: String,
         dataSource: DataSource,
         changeLog: String,
-        liquibaseLabel: String? = null,
-        shouldDropSchemaOnFailure: Boolean = false
+        liquibaseLabel: String
     ) {
         try {
             val database = DatabaseFactory.getInstance()
@@ -58,15 +63,10 @@ object SchemaCreator {
             val commandScope = CommandScope(UpdateCommandStep.COMMAND_NAME[0])
                 .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog)
                 .addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database)
-            if (liquibaseLabel != null) {
-                commandScope.addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
-            }
+            commandScope.addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
             commandScope.execute()
 
         } catch (e: Exception) {
-            if (shouldDropSchemaOnFailure) {
-                dropSchema(schemaName, dataSource)
-            }
             throw RtsGenericException("Failed to run migration for schema $schemaName: ${e.message}")
         }
     }

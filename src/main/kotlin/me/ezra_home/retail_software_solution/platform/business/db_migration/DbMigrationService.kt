@@ -49,8 +49,7 @@ class DbMigrationService(
         val latestActivatedVersion = dbVersionCache.getLatestActivatedDbVersion()
             ?: throw RtsGenericException("No active DB version found to migrate to.")
 
-        val previousVersionId = latestActivatedVersion.prevVersionId
-        if (previousVersionId != null) {
+        latestActivatedVersion.prevVersionId?.let { previousVersionId ->
             val previousMigration =
                 dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
                     dbMigrationRequestDto.schemaOwnerId,
@@ -58,9 +57,9 @@ class DbMigrationService(
                     previousVersionId
                 )
 
-            if (previousMigration.isEmpty().not()) {
-                if (previousMigration[0].migrationResult != MigrationResult.SUCCESS) {
-                    throw RtsGenericException("Previous version migration (ID: $previousVersionId) for owner ${dbMigrationRequestDto.schemaOwnerId} of type ${dbMigrationRequestDto.schemaOwnerType} was not successful.")
+            previousMigration?.run {
+                if (previousMigration.migrationResult != MigrationResult.SUCCESS) {
+                    throw RtsGenericException("Previous migration attempt (Version: $previousVersionId) at this ${dbMigrationRequestDto.schemaOwnerType} was not successful.")
                 }
             }
         }
@@ -80,10 +79,7 @@ class DbMigrationService(
         return  dbMigrationMapper.toResponseDto(dbMigrationEntity)
     }
 
-    private fun migrateOrganizationAndLocations(
-        schemaOwnerId: UUID,
-        targetDbVersion: DbVersionEntity
-    ): DbMigrationEntity {
+    private fun migrateOrganizationAndLocations(schemaOwnerId: UUID, targetDbVersion: DbVersionEntity): DbMigrationEntity {
         val organization = organizationCache.getAllOrganizations().find { it.id == schemaOwnerId }
             ?: throw RtsGenericException("Organization not found")
         val organizationSchemaName = organization.schemaName

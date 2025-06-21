@@ -16,5 +16,5 @@ interface DbMigrationRepository : JpaRepository<DbMigrationEntity, UUID> {
         schemaOwnerId: UUID,
         schemaOwnerType: SchemaOwnerType,
         dbVersionId: UUID
-    ): List<DbMigrationEntity>
+    ): DbMigrationEntity?
 }
