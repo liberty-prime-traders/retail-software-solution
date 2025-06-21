@@ -6,7 +6,7 @@ import java.util.UUID
 /**
  * DTO for {@link me.ezra_home.retail_software_solution.platform.model.DbVersionEntity}
  */
-data class DbVersionCreationDto(
-    val versionNumber: String,
+data class DbVersionInsertDto(
+    val versionNumber: String? = null,
     val prevVersionId: UUID? = null
 ) : Serializable

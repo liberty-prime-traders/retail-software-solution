@@ -2,9 +2,10 @@ package me.ezra_home.retail_software_solution.platform.business.db_version
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionCreationDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionInsertDto
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
@@ -17,19 +18,18 @@ class DbVersionService(
     private val dbVersionCache: DbVersionCache,
     private val dbVersionMapper: DbVersionMapper
 ) {
-    fun createDbVersion(dbVersionCreationDto: DbVersionCreationDto): DbVersionResponseDto {
-        if (dbVersionCache.getDbVersionByVersionNumber(dbVersionCreationDto.versionNumber) != null) {
-            throw RtsGenericException("DB Version with number '${dbVersionCreationDto.versionNumber}' already exists.")
-        }
-        val prevVersionEntity = dbVersionCreationDto.prevVersionId?.let {
-            val prevDbVersion = dbVersionCache.getAllDbVersions().find { dbVersion -> dbVersion.id == it}
-                ?: throw NotFoundException()
-            prevDbVersion
+    fun createDbVersion(dbVersionInsertDto: DbVersionInsertDto): DbVersionResponseDto {
+        val versionNumber = dbVersionInsertDto.versionNumber ?: throw RtsGenericException("Version number must be provided.")
+        dbVersionCache.getAllDbVersions()
+            .find { StringUtils.isEquivalent(it.versionNumber, dbVersionInsertDto.versionNumber) }
+            ?.let { throw RtsGenericException("DB Version '${dbVersionInsertDto.versionNumber}' already exists.") }
+        val prevVersionEntity = dbVersionInsertDto.prevVersionId?.let { prevVersionId ->
+            dbVersionCache.getAllDbVersions().find { it.id == prevVersionId} ?: throw NotFoundException()
         }
         val lastSequenceNumber = dbVersionCache.getLatestDbVersion()?.sequenceNumber ?: 0L
         val newSequenceNumber = lastSequenceNumber.plus(1)
         val dbVersionEntity = DbVersionEntity(
-            versionNumber = dbVersionCreationDto.versionNumber,
+            versionNumber = versionNumber,
             sequenceNumber = newSequenceNumber,
             prevVersionId = prevVersionEntity?.id,
         ).apply {
@@ -41,8 +41,7 @@ class DbVersionService(
 
     fun activateDbVersion(versionId: UUID): DbVersionResponseDto {
         val allDbVersions = dbVersionCache.getAllDbVersions()
-        val dbVersionToActivate = allDbVersions.find { it.id == versionId}
-            ?: throw NotFoundException()
+        val dbVersionToActivate = allDbVersions.find { it.id == versionId} ?: throw NotFoundException()
         if (dbVersionToActivate.prevVersionId != null) {
             val prevDBVersionEntity = allDbVersions.find { it.id == dbVersionToActivate.prevVersionId!!}
                 ?: throw RtsGenericException("Previous DB version does not exist.")
@@ -50,18 +49,16 @@ class DbVersionService(
                 throw RtsGenericException("Previous version must be activated first")
             }
         }
-        if (dbVersionToActivate.activatedOn != null) {
-            throw RtsGenericException("The DB version was already activated")
+        if (dbVersionToActivate.activatedOn == null) {
+            dbVersionToActivate.activatedOn = OffsetDateTime.now()
+            dbVersionCache.upsertDbVersion(dbVersionToActivate)
         }
-        dbVersionToActivate.activatedOn = OffsetDateTime.now()
-        dbVersionCache.upsertDbVersion(dbVersionToActivate)
         return dbVersionMapper.toResponseDto(dbVersionToActivate)
     }
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllDbVersions(): Collection<DbVersionResponseDto> {
         return dbVersionCache.getAllDbVersions()
-            .sortedByDescending { it.sequenceNumber }
             .map { dbVersionMapper.toResponseDto(it) }
     }
 }

@@ -9,13 +9,6 @@ import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
 interface DbVersionMapper {
-//    @Mapping(target = "id", ignore = true)
-//    @Mapping(target = "createdById", ignore = true)
-//    @Mapping(target = "createdOn", ignore = true)
-//    @Mapping(target = "activatedOn", ignore = true)
-//    @Mapping(target = "sequenceNumber", ignore = true)
-//    fun toEntity(dbVersionUpsertDto: DbVersionUpsertDto): DbVersionEntity
-
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toResponseDto(dbVersionEntity: DbVersionEntity): DbVersionResponseDto
 }

@@ -17,11 +17,6 @@ class DbVersionCache(private val dbVersionRepository: DbVersionRepository) {
     }
 
     @Cacheable
-    fun getDbVersionByVersionNumber(versionNumber: String): DbVersionEntity? {
-        return dbVersionRepository.findByVersionNumber(versionNumber)
-    }
-
-    @Cacheable
     fun getLatestActivatedDbVersion(): DbVersionEntity? {
         return dbVersionRepository.findTopByActivatedOnIsNotNullOrderBySequenceNumberDesc()
     }
