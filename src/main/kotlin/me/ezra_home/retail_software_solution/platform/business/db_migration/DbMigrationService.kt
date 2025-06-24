@@ -9,12 +9,11 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.MigrationHistoryResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.SchemaCreator
-import me.ezra_home.retail_software_solution.util.enums.MigrationResult
+import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.beans.factory.annotation.Qualifier
@@ -31,7 +30,6 @@ class DbMigrationService(
     private val dbVersionCache: DbVersionCache,
     private val dbMigrationHistoryService: DbMigrationHistoryService,
     private val organizationCache: OrganizationCache,
-    private val organizationService: OrganizationService,
     private val locationCache: LocationCache,
     @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
     private val organizationDataSource: DataSource,
@@ -46,9 +44,26 @@ class DbMigrationService(
 
     @TransactionalOnPlatformSchema
     fun runSchemaMigration(dbMigrationRequestDto: DbMigrationRequestDto): DbMigrationResponseDto {
+        val latestActivatedVersion = validateMigrationPreconditions(dbMigrationRequestDto)
+        val dbMigrationEntity = when (dbMigrationRequestDto.schemaOwnerType) {
+            SchemaOwnerType.ORGANIZATION -> migrateOrganizationAndLocations(
+                schemaOwnerId = dbMigrationRequestDto.schemaOwnerId,
+                targetDbVersion = latestActivatedVersion
+            )
+
+            SchemaOwnerType.LOCATION -> {
+                migrateLocation(
+                    location = validateLocationExistence(dbMigrationRequestDto),
+                    targetDbVersion = latestActivatedVersion
+                )
+            }
+        }
+        return dbMigrationMapper.toResponseDto(dbMigrationEntity)
+    }
+
+    private fun validateMigrationPreconditions(dbMigrationRequestDto: DbMigrationRequestDto): DbVersionEntity {
         val latestActivatedVersion = dbVersionCache.getLatestActivatedDbVersion()
             ?: throw RtsGenericException("No active DB version found to migrate to.")
-
         latestActivatedVersion.prevVersionId?.let { previousVersionId ->
             val previousMigration =
                 dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
@@ -56,30 +71,30 @@ class DbMigrationService(
                     dbMigrationRequestDto.schemaOwnerType,
                     previousVersionId
                 )
-
             previousMigration?.run {
-                if (previousMigration.migrationResult != MigrationResult.SUCCESS) {
-                    throw RtsGenericException("Previous migration attempt (Version: $previousVersionId) at this ${dbMigrationRequestDto.schemaOwnerType} was not successful.")
+                if (previousMigration.status != MigrationStatus.SUCCESS) {
+                    throw RtsGenericException("Previous migration attempt (Version: $previousVersionId) was not successful.")
                 }
             }
         }
-
-        val dbMigrationEntity = when (dbMigrationRequestDto.schemaOwnerType) {
-            SchemaOwnerType.ORGANIZATION -> migrateOrganizationAndLocations(
-                dbMigrationRequestDto.schemaOwnerId,
-                latestActivatedVersion
-            )
-
-            SchemaOwnerType.LOCATION -> migrateSingleLocation(
-                dbMigrationRequestDto.schemaOwnerId,
-                latestActivatedVersion
-            )
-        }
-
-        return  dbMigrationMapper.toResponseDto(dbMigrationEntity)
+        return latestActivatedVersion
     }
 
-    private fun migrateOrganizationAndLocations(schemaOwnerId: UUID, targetDbVersion: DbVersionEntity): DbMigrationEntity {
+    private fun validateLocationExistence(dbMigrationRequestDto: DbMigrationRequestDto): LocationEntity {
+        val organizationId = dbMigrationRequestDto.organizationId
+            ?: throw RtsGenericException("organizationId is required")
+        val organization = organizationCache.getAllOrganizations().find { it.id == organizationId }
+            ?: throw RtsGenericException("Organization not found")
+        SessionContextProvider.initOrganization(organization)
+        val location = locationCache.getAllLocations().find { it.id == dbMigrationRequestDto.schemaOwnerId }
+            ?: throw RtsGenericException("Location does not exist")
+        return location
+    }
+
+    private fun migrateOrganizationAndLocations(
+        schemaOwnerId: UUID,
+        targetDbVersion: DbVersionEntity
+    ): DbMigrationEntity {
         val organization = organizationCache.getAllOrganizations().find { it.id == schemaOwnerId }
             ?: throw RtsGenericException("Organization not found")
         val organizationSchemaName = organization.schemaName
@@ -89,12 +104,11 @@ class DbMigrationService(
             dbVersionId = targetDbVersion.id!!,
             schemaOwnerId = schemaOwnerId,
             schemaOwnerType = SchemaOwnerType.ORGANIZATION,
-            migrationResult = MigrationResult.PARTIAL,
+            status = MigrationStatus.INITIATED,
             message = "Migration in progress for organization and its locations."
         )
         dbMigrationCache.upsertDbMigration(orgMigration)
 
-        var orgMigrationSuccess = true
         var orgMigrationMessage: String? = null
         val failedLocations = mutableListOf<String>()
 
@@ -110,86 +124,45 @@ class DbMigrationService(
             SessionContextProvider.initOrganization(organization)
             val locations = locationCache.getAllLocations()
             locations.forEach { location ->
-                val locationSchemaName = location.schemaName
-                    ?: run {
-                        failedLocations.add("Location ${location.name} (ID: ${location.id}) - No schema name")
-                        return@forEach
-                    }
-
-                var locMigrationEntity: DbMigrationEntity? = null
                 try {
-                    locMigrationEntity = DbMigrationEntity(
-                        dbVersionId = targetDbVersion.id!!,
-                        schemaOwnerId = location.id!!,
-                        schemaOwnerType = SchemaOwnerType.LOCATION,
-                        migrationResult = MigrationResult.PARTIAL,
-                        message = "Location migration in progress."
-                    )
-                    dbMigrationCache.upsertDbMigration(locMigrationEntity)
-
-                    SchemaCreator.runMigration(
-                        schemaName = locationSchemaName,
-                        dataSource = locationDataSource,
-                        changeLog = locationChangeLog,
-                        liquibaseLabel = targetDbVersion.versionNumber
-                    )
-                    locMigrationEntity.migrationResult = MigrationResult.SUCCESS
-                    locMigrationEntity.message = "Successfully migrated."
+                    migrateLocation(location, targetDbVersion)
                 } catch (e: Exception) {
                     failedLocations.add("Location ${location.name} (ID: ${location.id}) - ${e.message}")
-                    if (locMigrationEntity != null) {
-                        locMigrationEntity.migrationResult = MigrationResult.FAILURE
-                        locMigrationEntity.message = e.message?.take(100) ?: "Unknown error"
-                    }
-                } finally {
-                    locMigrationEntity?.apply {
-                        endOn = OffsetDateTime.now()
-                        dbMigrationCache.upsertDbMigration(this)
-                    }
                 }
             }
 
             if (failedLocations.isNotEmpty()) {
-                orgMigrationSuccess = false
+                orgMigration.status = MigrationStatus.PARTIAL
                 orgMigrationMessage =
                     "Organization migrated, but some locations failed: ${failedLocations.joinToString("; ")}"
             } else {
+                orgMigration.status = MigrationStatus.SUCCESS
                 orgMigrationMessage = "Organization and all locations migrated successfully."
             }
-
         } catch (e: Exception) {
-            orgMigrationSuccess = false
+            orgMigration.status = MigrationStatus.FAILURE
             orgMigrationMessage = e.message?.take(100) ?: "Unknown error during organization migration."
             throw RtsGenericException("Organization migration failed: $orgMigrationMessage") // Abandon request
         } finally {
             orgMigration.endOn = OffsetDateTime.now()
-            orgMigration.migrationResult = if (orgMigrationSuccess) MigrationResult.SUCCESS else MigrationResult.FAILURE
             orgMigration.message = orgMigrationMessage?.take(100)
             dbMigrationCache.upsertDbMigration(orgMigration)
         }
         return orgMigration
     }
 
-    private fun migrateSingleLocation(locationId: UUID, targetDbVersion: DbVersionEntity): DbMigrationEntity {
-        val organizationsWithLocations = organizationService.getAllOrganizationsWithLocations()
-        var location: LocationEntity? = null
-
-        for (organizationWithLocations in organizationsWithLocations) {
-            location = organizationWithLocations.locations.find { it.id == locationId }
-        }
-
-        if (location == null) {
-            throw RtsGenericException("Location does not exist")
-        }
-
+    private fun migrateLocation(
+        location: LocationEntity,
+        targetDbVersion: DbVersionEntity
+    ): DbMigrationEntity {
         val locationSchemaName = location.schemaName
             ?: throw RtsGenericException("Location ${location.name} has no schema name.")
 
         val locationMigration = DbMigrationEntity(
             dbVersionId = targetDbVersion.id!!,
-            schemaOwnerId = locationId,
+            schemaOwnerId = location.id!!,
             schemaOwnerType = SchemaOwnerType.LOCATION,
-            migrationResult = MigrationResult.PARTIAL,
+            status = MigrationStatus.INITIATED,
             message = "Locations migration in progress."
         )
         dbMigrationCache.upsertDbMigration(locationMigration)
@@ -201,11 +174,11 @@ class DbMigrationService(
                 changeLog = locationChangeLog,
                 liquibaseLabel = targetDbVersion.versionNumber
             )
-            locationMigration.migrationResult = MigrationResult.SUCCESS
+            locationMigration.status = MigrationStatus.SUCCESS
             locationMigration.message = "Successfully migrated."
         } catch (e: Exception) {
-            locationMigration.migrationResult = MigrationResult.FAILURE
-            locationMigration.message = e.message?.take(255) ?: "Unknown error"
+            locationMigration.status = MigrationStatus.FAILURE
+            locationMigration.message = e.message?.take(100) ?: "Unknown error"
             throw RtsGenericException("Location migration failed: ${locationMigration.message}")
         } finally {
             locationMigration.endOn = OffsetDateTime.now()

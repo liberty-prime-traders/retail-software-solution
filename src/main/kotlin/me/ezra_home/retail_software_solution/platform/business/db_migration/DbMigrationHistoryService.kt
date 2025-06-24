@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -22,14 +23,10 @@ class DbMigrationHistoryService(
         startDateTime: OffsetDateTime?,
         endDateTime: OffsetDateTime?
     ): List<MigrationHistoryResponseDto> {
-        val allMigrations = if (startDateTime != null && endDateTime != null) {
-            dbMigrationCache.getAllDbMigrationsFilteredByDate(
-                startDateTime,
-                endDateTime
-            )
-        } else {
-            dbMigrationCache.getAllDbMigrations().sortedByDescending { it.startOn }
-        }
+        startDateTime ?: throw RtsGenericException("Start date is required")
+        endDateTime ?: throw RtsGenericException("End date is required")
+
+        val allMigrations = dbMigrationCache.getAllDbMigrationsFilteredByDate(startDateTime, endDateTime)
 
         val dbVersionsMap = dbVersionCache.getAllDbVersions().associateBy { it.id }
         val organizationsWithLocations = organizationService.getAllOrganizationsWithLocations()
@@ -61,7 +58,7 @@ class DbMigrationHistoryService(
                             versionNumber = versionNumber,
                             startDate = migration.startOn,
                             endDate = migration.endOn,
-                            migrationResult = migration.migrationResult,
+                            status = migration.status,
                             message = migration.message,
                             locations = mutableListOf()
                         )
@@ -81,7 +78,7 @@ class DbMigrationHistoryService(
                                 versionNumber = versionNumber,
                                 startDate = migration.startOn,
                                 endDate = migration.endOn,
-                                migrationResult = migration.migrationResult,
+                                status = migration.status,
                                 message = migration.message
                             )
                         )

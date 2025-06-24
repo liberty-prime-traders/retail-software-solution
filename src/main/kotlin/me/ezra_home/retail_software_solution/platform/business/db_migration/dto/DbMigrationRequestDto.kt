@@ -5,6 +5,7 @@ import java.io.Serializable
 import java.util.UUID
 
 data class DbMigrationRequestDto(
+    val organizationId: UUID?,
     val schemaOwnerId: UUID,
     val schemaOwnerType: SchemaOwnerType
 ) : Serializable

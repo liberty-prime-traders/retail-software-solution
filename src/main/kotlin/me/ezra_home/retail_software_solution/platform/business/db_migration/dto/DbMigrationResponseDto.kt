@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration.dto
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import me.ezra_home.retail_software_solution.configuration.serializer.DatesToMillis
-import me.ezra_home.retail_software_solution.util.enums.MigrationResult
+import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import java.io.Serializable
 import java.time.OffsetDateTime
@@ -17,6 +17,6 @@ data class DbMigrationResponseDto(
     val startOn: OffsetDateTime?,
     @JsonSerialize(using = DatesToMillis::class)
     val endOn: OffsetDateTime?,
-    val migrationResult: MigrationResult,
+    val status: MigrationStatus,
     val message: String?
 ) : Serializable

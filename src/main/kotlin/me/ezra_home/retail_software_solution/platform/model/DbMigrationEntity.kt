@@ -4,8 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.util.enums.MigrationResult
-import me.ezra_home.retail_software_solution.util.enums.MigrationResultConverter
+import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
+import me.ezra_home.retail_software_solution.util.enums.MigrationStatusConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
 import me.ezra_home.retail_software_solution.util.model.BaseEntity
@@ -33,9 +33,9 @@ class DbMigrationEntity(
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null,
 
-    @Column(name = "migration_result", nullable = false, length = 10)
-    @Convert(converter = MigrationResultConverter::class)
-    var migrationResult: MigrationResult,
+    @Column(name = "status", nullable = false, length = 10)
+    @Convert(converter = MigrationStatusConverter::class)
+    var status: MigrationStatus,
 
     @Column(name = "message", length = 100)
     var message: String? = null

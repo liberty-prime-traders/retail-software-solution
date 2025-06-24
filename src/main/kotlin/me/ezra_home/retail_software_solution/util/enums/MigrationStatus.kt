@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.util.enums
 
-enum class MigrationResult(override val code: String) : HasCode {
+enum class MigrationStatus(override val code: String) : HasCode {
+    INITIATED("INITIATED"),
     SUCCESS("SUCCESS"),
     PARTIAL("PARTIAL"),
     FAILURE("FAILURE")

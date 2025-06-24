@@ -8,16 +8,11 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
-import java.util.*
+import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_MIGRATION])
 class DbMigrationCache(private val dbMigrationRepository: DbMigrationRepository) {
-
-    @Cacheable
-    fun getAllDbMigrations(): Collection<DbMigrationEntity> {
-        return dbMigrationRepository.findAll()
-    }
 
     @Cacheable
     fun getAllDbMigrationsFilteredByDate(

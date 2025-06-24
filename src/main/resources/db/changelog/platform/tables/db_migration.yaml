@@ -51,11 +51,11 @@ databaseChangeLog:
                   type: timestamptz
 
               - column:
-                  name: migration_result
+                  name: status
                   type: nvarchar(10)
                   constraints:
                     nullable: false
-                    notNullConstraintName: db_migration_migration_result_not_null
+                    notNullConstraintName: db_migration_status_not_null
 
               - column:
                   name: message
