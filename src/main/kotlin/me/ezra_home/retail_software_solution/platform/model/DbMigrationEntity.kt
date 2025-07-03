@@ -6,6 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatusConverter
+import me.ezra_home.retail_software_solution.util.enums.MigrationType
+import me.ezra_home.retail_software_solution.util.enums.MigrationTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
 import me.ezra_home.retail_software_solution.util.model.BaseEntity
@@ -37,7 +39,14 @@ class DbMigrationEntity(
     @Convert(converter = MigrationStatusConverter::class)
     var status: MigrationStatus,
 
+    @Column(name = "type", length = 20)
+    @Convert(converter = MigrationTypeConverter::class)
+    var type: MigrationType? = null,
+
     @Column(name = "message", length = 100)
-    var message: String? = null
+    var message: String? = null,
+
+    @Column(name = "migration_parent_id", updatable = false)
+    var migrationParentId: UUID? = null
 
 ) : BaseEntity()

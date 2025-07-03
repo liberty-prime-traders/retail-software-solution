@@ -58,5 +58,13 @@ databaseChangeLog:
                     notNullConstraintName: db_migration_status_not_null
 
               - column:
+                  name: type
+                  type: nvarchar(20)
+
+              - column:
                   name: message
                   type: nvarchar(100)
+
+              - column:
+                  name: migration_parent_id
+                  type: uuid

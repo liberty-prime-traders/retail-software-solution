@@ -6,12 +6,14 @@ import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.util.business.SchemaCreator
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
+import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 @Component
@@ -25,7 +27,9 @@ class LocationMigrationHandler(
 
     fun migrateLocation(
         location: LocationEntity,
-        targetDbVersion: DbVersionEntity
+        targetDbVersion: DbVersionEntity,
+        migrationType: MigrationType? = null,
+        migrationParentId: UUID? = null
     ): DbMigrationEntity {
         val locationSchemaName = location.schemaName
             ?: throw RtsGenericException("Location ${location.name} has no schema name.")
@@ -35,7 +39,9 @@ class LocationMigrationHandler(
             schemaOwnerId = location.id!!,
             schemaOwnerType = SchemaOwnerType.LOCATION,
             status = MigrationStatus.INITIATED,
-            message = "Locations migration in progress."
+            type = migrationType,
+            message = "Locations migration in progress.",
+            migrationParentId = migrationParentId
         )
         dbMigrationCache.upsertDbMigration(locationMigration)
 
@@ -47,7 +53,7 @@ class LocationMigrationHandler(
                 liquibaseLabel = targetDbVersion.versionNumber
             )
             locationMigration.status = MigrationStatus.SUCCESS
-            locationMigration.message = "Successfully migrated."
+            locationMigration.message = "Successfully migrated"
         } catch (e: Exception) {
             locationMigration.status = MigrationStatus.FAILURE
             locationMigration.message = e.message?.take(100) ?: "Unknown error"

@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -20,12 +19,9 @@ class DbMigrationHistoryService(
     private val organizationService: OrganizationService,
 ) {
     fun getMigrationHistory(
-        startDateTime: OffsetDateTime?,
-        endDateTime: OffsetDateTime?
+        startDateTime: OffsetDateTime,
+        endDateTime: OffsetDateTime
     ): List<MigrationHistoryResponseDto> {
-        startDateTime ?: throw RtsGenericException("Start date is required")
-        endDateTime ?: throw RtsGenericException("End date is required")
-
         val allMigrations = dbMigrationCache.getAllDbMigrationsFilteredByDate(startDateTime, endDateTime)
 
         val dbVersionsMap = dbVersionCache.getAllDbVersions().associateBy { it.id }
@@ -60,6 +56,8 @@ class DbMigrationHistoryService(
                             endDate = migration.endOn,
                             status = migration.status,
                             message = migration.message,
+                            type = migration.type,
+                            migrationParentId = migration.migrationParentId,
                             locations = mutableListOf()
                         )
                     )
@@ -79,7 +77,8 @@ class DbMigrationHistoryService(
                                 startDate = migration.startOn,
                                 endDate = migration.endOn,
                                 status = migration.status,
-                                message = migration.message
+                                message = migration.message,
+                                migrationParentId = migration.migrationParentId,
                             )
                         )
                 }

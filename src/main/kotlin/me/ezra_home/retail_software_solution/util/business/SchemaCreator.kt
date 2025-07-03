@@ -27,7 +27,7 @@ object SchemaCreator {
                 schemaName = schemaName,
                 dataSource = dataSource,
                 changeLog = changeLog,
-                liquibaseLabel = "initial" // TODO provide latest version
+//                liquibaseLabel = "initial" // TODO provide latest version
             )
         } catch (e: Exception) {
             dropSchema(schemaName, dataSource)
@@ -54,7 +54,7 @@ object SchemaCreator {
         schemaName: String,
         dataSource: DataSource,
         changeLog: String,
-        liquibaseLabel: String
+        liquibaseLabel: String? = null
     ) {
         try {
             val database = DatabaseFactory.getInstance()

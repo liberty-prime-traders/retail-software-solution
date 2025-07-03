@@ -11,6 +11,7 @@ data class LocationMigrationResponse(
     val locationId: UUID?,
     val locationName: String?,
     val versionNumber: String?,
+    val migrationParentId: UUID?,
     @JsonSerialize(using = DatesToMillis::class)
     val startDate: OffsetDateTime?,
     @JsonSerialize(using = DatesToMillis::class)
