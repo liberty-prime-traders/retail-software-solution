@@ -27,7 +27,6 @@ object SchemaCreator {
                 schemaName = schemaName,
                 dataSource = dataSource,
                 changeLog = changeLog,
-//                liquibaseLabel = "initial" // TODO provide latest version
             )
         } catch (e: Exception) {
             dropSchema(schemaName, dataSource)
@@ -63,7 +62,7 @@ object SchemaCreator {
             val commandScope = CommandScope(UpdateCommandStep.COMMAND_NAME[0])
                 .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog)
                 .addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database)
-            commandScope.addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
+                .addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
             commandScope.execute()
 
         } catch (e: Exception) {

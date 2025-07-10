@@ -13,6 +13,7 @@ data class DbMigrationResponseDto(
     val id: UUID?,
     val dbVersionId: UUID?,
     val schemaOwnerId: UUID?,
+    val schemaOwner: String?,
     val schemaOwnerType: SchemaOwnerType?,
     val type: MigrationType?,
     val migrationParentId: UUID?,

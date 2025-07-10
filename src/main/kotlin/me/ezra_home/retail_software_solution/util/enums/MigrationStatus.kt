@@ -4,5 +4,6 @@ enum class MigrationStatus(override val code: String) : HasCode {
     INITIATED("INITIATED"),
     SUCCESS("SUCCESS"),
     PARTIAL("PARTIAL"),
+    IGNORED("IGNORED"),
     FAILURE("FAILURE")
 }

@@ -52,7 +52,6 @@ class OrganizationMigrationHandler(
         )
         dbMigrationCache.upsertDbMigration(orgMigration)
 
-        var orgMigrationOverallMessage: String?
         var locationMigrationResults: List<DbMigrationEntity>
         var failedLocationsMessages: List<String>
 
@@ -79,14 +78,13 @@ class OrganizationMigrationHandler(
                 overallSuccessMessage = "Organization and all its specified locations migrated successfully",
                 overallPartialMessage = "Organization migrated, but some locations failed"
             )
-            orgMigrationOverallMessage = orgMigration.message
 
         } catch (e: Exception) {
             orgMigration.endOn = OffsetDateTime.now()
             orgMigration.status = MigrationStatus.FAILURE
-            orgMigrationOverallMessage = e.message?.take(100) ?: "Unknown error during organization migration"
+            orgMigration.message = e.message?.take(100) ?: "Unknown error during organization migration"
             dbMigrationCache.upsertDbMigration(orgMigration)
-            throw RtsGenericException("Organization migration failed: $orgMigrationOverallMessage")
+            throw RtsGenericException("Organization migration failed: ${orgMigration.message}")
         }
 
         return OrganizationLocationsMigration(
@@ -113,7 +111,6 @@ class OrganizationMigrationHandler(
         )
         dbMigrationCache.upsertDbMigration(newOrgMigration)
 
-        var newOrgMigrationMessage: String?
         var failedLocationsMessages: List<String>
         var locationMigrationResults: List<DbMigrationEntity>
 
@@ -128,7 +125,7 @@ class OrganizationMigrationHandler(
             }
 
             if (actualLocationIdsToRetry.isEmpty()) {
-                newOrgMigration.status = MigrationStatus.SUCCESS
+                newOrgMigration.status = MigrationStatus.IGNORED
                 newOrgMigration.message = "No failed locations to retry or provided locations were already successful"
                 newOrgMigration.endOn = OffsetDateTime.now()
                 dbMigrationCache.upsertDbMigration(newOrgMigration)
@@ -153,14 +150,13 @@ class OrganizationMigrationHandler(
                 overallSuccessMessage = "All specified locations successfully retried",
                 overallPartialMessage = "Successfully retried some locations, but others failed"
             )
-            newOrgMigrationMessage = newOrgMigration.message
 
         } catch (e: Exception) {
             newOrgMigration.endOn = OffsetDateTime.now()
             newOrgMigration.status = MigrationStatus.FAILURE
-            newOrgMigrationMessage = e.message?.take(100) ?: "Unknown error during locations migration retry"
+            newOrgMigration.message = e.message?.take(100) ?: "Unknown error during locations migration retry"
             dbMigrationCache.upsertDbMigration(newOrgMigration)
-            throw RtsGenericException("Locations migrations retry failed: $newOrgMigrationMessage")
+            throw RtsGenericException("Locations migrations retry failed: ${newOrgMigration.message}")
         }
 
         val parentLocationsMigrations = dbMigrationCache.getDbLocationMigrationsByMigrationsParentId(
