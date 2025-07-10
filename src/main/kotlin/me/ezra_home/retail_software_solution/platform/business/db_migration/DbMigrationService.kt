@@ -21,10 +21,10 @@ class DbMigrationService(
 ) {
     @TransactionalOnPlatformSchema
     fun runSchemaMigration(dbMigrationRequestDto: DbMigrationRequestDto): DbMigrationResponseDto {
-        val latestActivatedVersion = validateMigrationPreconditions(dbMigrationRequestDto)
+        val targetDbVersion = validateMigrationPreconditions(dbMigrationRequestDto)
         val organizationLocationsMigration = organizationMigrationHandler.migrateOrganizationAndLocations(
             schemaOwnerId = dbMigrationRequestDto.schemaOwnerId,
-            targetDbVersion = latestActivatedVersion,
+            targetDbVersion = targetDbVersion,
             locationIdsToMigrate = dbMigrationRequestDto.locationIdsToMigrate
         )
         return dbMigrationMapper.toResponseDto(organizationLocationsMigration.organizationMigration).apply {
@@ -37,24 +37,29 @@ class DbMigrationService(
         if (dbMigrationRequestDto.locationIdsToMigrate.isEmpty()) {
             throw RtsGenericException("At least one location must be specified for migration")
         }
-        val latestActivatedVersion = dbVersionCache.getLatestActivatedDbVersion()
-            ?: throw RtsGenericException("No active DB version found to migrate to")
-        latestActivatedVersion.let { previousVersion ->
-            val previousMigration =
-                previousVersion.prevVersionId?.let {
-                    dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
-                        dbMigrationRequestDto.schemaOwnerId, SchemaOwnerType.ORGANIZATION, it
-                    )
-                }
-            previousMigration?.run {
-                if (previousMigration.status != MigrationStatus.SUCCESS) {
-                    throw RtsGenericException("Previous migration attempt (Version: ${previousVersion.versionNumber}) was not successful.")
-                }
+        val targetDbVersion =
+            dbVersionCache.getAllDbVersions().find { it.id == dbMigrationRequestDto.targetDbVersionId }
+                ?: throw RtsGenericException("Target DB version not found")
+        targetDbVersion.activatedOn ?: throw RtsGenericException("Target DB version is inactive")
+        val prevDbVersion = dbVersionCache.getAllDbVersions().find { it.id == targetDbVersion.prevVersionId }
+        val previousMigration =
+            prevDbVersion?.id?.let {
+                dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
+                    dbMigrationRequestDto.schemaOwnerId, SchemaOwnerType.ORGANIZATION, it
+                )
+            }
+        previousMigration?.run {
+            if (previousMigration.status != MigrationStatus.SUCCESS) {
+                throw RtsGenericException("Previous migration attempt (Version: ${prevDbVersion.versionNumber}) was not successful.")
             }
         }
-        return latestActivatedVersion
-    }
 
+        if (prevDbVersion != null && previousMigration == null) {
+            throw RtsGenericException("Organization must first migrate to version ${prevDbVersion.versionNumber}")
+        }
+
+        return targetDbVersion
+    }
 
     @TransactionalOnPlatformSchema
     fun retryFailedLocationMigrations(dbMigrationRetryRequestDto: DbMigrationRetryRequestDto): DbMigrationResponseDto {

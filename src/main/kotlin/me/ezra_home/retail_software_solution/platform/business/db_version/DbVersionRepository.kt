@@ -5,7 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 interface DbVersionRepository : JpaRepository<DbVersionEntity, UUID> {
-    fun findByVersionNumber(versionNumber: String): DbVersionEntity?
     fun findTopByOrderBySequenceNumberDesc(): DbVersionEntity?
-    fun findTopByActivatedOnIsNotNullOrderBySequenceNumberDesc(): DbVersionEntity?
 }

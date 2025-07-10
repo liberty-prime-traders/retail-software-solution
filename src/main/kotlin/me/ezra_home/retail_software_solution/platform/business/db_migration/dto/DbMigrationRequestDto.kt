@@ -6,4 +6,5 @@ import java.util.UUID
 data class DbMigrationRequestDto(
     val schemaOwnerId: UUID,
     val locationIdsToMigrate: Set<UUID>,
+    val targetDbVersionId: UUID
 ) : Serializable
