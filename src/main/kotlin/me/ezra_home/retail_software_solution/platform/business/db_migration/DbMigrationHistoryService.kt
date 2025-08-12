@@ -49,6 +49,7 @@ class DbMigrationHistoryService(
                         organizationsWithLocations.find { it.organization.id == migration.schemaOwnerId }?.organization?.name
                     topLevelOrgMigrations.add(
                         MigrationHistoryResponseDto(
+                            id = migration.id,
                             organizationId = migration.schemaOwnerId,
                             organizationName = organizationName,
                             versionNumber = versionNumber,

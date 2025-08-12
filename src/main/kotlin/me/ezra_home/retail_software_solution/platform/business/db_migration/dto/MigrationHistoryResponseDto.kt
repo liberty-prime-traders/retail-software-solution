@@ -9,6 +9,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class MigrationHistoryResponseDto(
+    val id: UUID?,
     val organizationId: UUID?,
     val organizationName: String?,
     val versionNumber: String?,
