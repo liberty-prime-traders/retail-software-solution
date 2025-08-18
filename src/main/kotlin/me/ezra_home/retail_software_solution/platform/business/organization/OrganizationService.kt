@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationMapper
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
@@ -18,6 +20,7 @@ import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
@@ -32,7 +35,8 @@ class OrganizationService(
     private val organizationSchemaService: OrganizationSchemaService,
     private val organizationUserService: OrganizationUserService,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
-    private val organizationAdminService: OrganizationAdminService
+    private val organizationAdminService: OrganizationAdminService,
+    private val locationMapper: LocationMapper
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -128,5 +132,15 @@ class OrganizationService(
             )
         }
         return organizationsWithLocations.toList()
+    }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getOrganizationLocations(organizationId: UUID): Collection<LocationResponseDto> {
+        val organization = organizationCache.getAllOrganizations()
+            .find { it.id == organizationId }
+            ?: throw RtsGenericException("The organization with id $organizationId does not exist")
+        SessionContextProvider.initOrganization(organization)
+        return locationCache.getAllLocations()
+            .map { locationMapper.toResponseDto(it) }
     }
 }
