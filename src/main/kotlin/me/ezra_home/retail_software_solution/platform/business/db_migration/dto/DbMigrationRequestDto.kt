@@ -1,0 +1,10 @@
+package me.ezra_home.retail_software_solution.platform.business.db_migration.dto
+
+import java.io.Serializable
+import java.util.UUID
+
+data class DbMigrationRequestDto(
+    val schemaOwnerId: UUID,
+    val locationIdsToMigrate: Set<UUID>,
+    val targetDbVersionId: UUID
+) : Serializable

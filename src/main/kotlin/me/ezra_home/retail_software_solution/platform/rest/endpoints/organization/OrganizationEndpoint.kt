@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints.organization
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @CrossOrigin
 @RestController
@@ -47,4 +49,12 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
     @PostMapping("launch/{domain}")
     fun launchOrganization(@PathVariable domain: String): OrganizationLaunchResponseDto =
         organizationService.attemptOrganizationLaunch(domain)
+
+    @GetMapping("/{organizationId}/locations")
+    @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
+    fun getOrganizationLocations(
+        @PathVariable organizationId: UUID,
+    ): Collection<LocationResponseDto> {
+        return organizationService.getOrganizationLocations(organizationId)
+    }
 }

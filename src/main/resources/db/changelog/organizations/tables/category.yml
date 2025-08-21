@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 'create-category-table'
       author: kenneth
+      labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:

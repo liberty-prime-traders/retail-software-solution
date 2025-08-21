@@ -1,12 +1,16 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationMapper
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationWithLocations
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
@@ -16,12 +20,14 @@ import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnPlatformSchema
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
+    private val locationCache: LocationCache,
     private val reservedSubdomainService: ReservedSubdomainService,
     private val organizationAdminCache: OrganizationAdminCache,
     private val organizationValidator: OrganizationValidator,
@@ -29,7 +35,8 @@ class OrganizationService(
     private val organizationSchemaService: OrganizationSchemaService,
     private val organizationUserService: OrganizationUserService,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
-    private val organizationAdminService: OrganizationAdminService
+    private val organizationAdminService: OrganizationAdminService,
+    private val locationMapper: LocationMapper
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -110,5 +117,30 @@ class OrganizationService(
         } else {
             organizationJoinRequestService.createJoinRequest(domain, userId, organization)
         }
+    }
+
+    fun getAllOrganizationsWithLocations(): List<OrganizationWithLocations> {
+        val organizationsWithLocations = mutableListOf<OrganizationWithLocations>()
+        for (organization in organizationCache.getAllOrganizations()) {
+            SessionContextProvider.initOrganization(organization)
+            val locations = locationCache.getAllLocations()
+            organizationsWithLocations.add(
+                OrganizationWithLocations(
+                    organization = organization,
+                    locations = locations
+                )
+            )
+        }
+        return organizationsWithLocations.toList()
+    }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getOrganizationLocations(organizationId: UUID): Collection<LocationResponseDto> {
+        val organization = organizationCache.getAllOrganizations()
+            .find { it.id == organizationId }
+            ?: throw RtsGenericException("The organization with id $organizationId does not exist")
+        SessionContextProvider.initOrganization(organization)
+        return locationCache.getAllLocations()
+            .map { locationMapper.toResponseDto(it) }
     }
 }

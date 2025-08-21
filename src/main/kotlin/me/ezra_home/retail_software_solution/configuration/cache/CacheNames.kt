@@ -17,5 +17,7 @@ class CacheNames {
         const val PAYMENT_METHOD = "PaymentMethod"
         const val VARIATION = "Variation"
         const val PRODUCT = "Product"
+        const val DB_VERSION = "DbVersion"
+        const val DB_MIGRATION = "DbMigration"
     }
 }
