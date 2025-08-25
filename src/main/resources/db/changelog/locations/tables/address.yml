@@ -21,27 +21,27 @@ databaseChangeLog:
 
               - column:
                   name: line1
-                  type: varchar(100)
+                  type: nvarchar2(100)
 
               - column:
                   name: line2
-                  type: varchar(50)
+                  type: nvarchar2(50)
 
               - column:
                   name: line3
-                  type: varchar(30)
+                  type: nvarchar2(30)
 
               - column:
                   name: state
-                  type: varchar(100)
+                  type: nvarchar2(100)
 
               - column:
                   name: postal_code
-                  type: varchar(10)
+                  type: nvarchar2(10)
 
               - column:
                   name: country
-                  type: varchar(100)
+                  type: nvarchar2(100)
 
               - column:
                   name: created_by_id

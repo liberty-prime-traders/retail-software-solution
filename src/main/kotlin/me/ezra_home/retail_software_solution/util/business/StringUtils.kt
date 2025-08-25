@@ -11,7 +11,7 @@ object StringUtils {
 
     fun getValueOrException(str: Optional<String>?, exceptionMessage: String): String {
         if (hasValue(str)) {
-            return str!!.get()
+            return str!!.get().trim()
         }
         throw RtsGenericException(exceptionMessage)
     }
@@ -20,7 +20,7 @@ object StringUtils {
         return hasValue(Optional.ofNullable(str))
     }
 
-    private fun hasValue(str: Optional<String>?): Boolean {
+    fun hasValue(str: Optional<String>?): Boolean {
         return str != null && str.isPresent && str.get().isNotBlank()
     }
 

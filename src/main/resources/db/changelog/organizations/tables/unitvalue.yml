@@ -20,27 +20,22 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: global_id
-                  type: uuid
-                  defaultValueComputed: ${uuid_function}
-
-              - column:
                   name: name
-                  type: varchar(100)
+                  type: nvarchar2(100)
                   constraints:
                     nullable: false
                     notNullConstraintName: unit_value_name_notnull
 
               - column:
                   name: code
-                  type: varchar(5)
+                  type: nvarchar2(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: unit_value_code_notnull
 
               - column:
                   name: description
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: unit_group_id

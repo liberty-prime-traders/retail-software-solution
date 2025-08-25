@@ -9,7 +9,7 @@ import javax.sql.DataSource
 
 @Service
 class OrganizationSchemaService(
-    @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
+    @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
     private val dataSource: DataSource
 ) {
 

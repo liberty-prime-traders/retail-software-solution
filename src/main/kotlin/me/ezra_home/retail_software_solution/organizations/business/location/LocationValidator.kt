@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.location.Loc
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationService.Companion.NAME_IS_REQUIRED
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

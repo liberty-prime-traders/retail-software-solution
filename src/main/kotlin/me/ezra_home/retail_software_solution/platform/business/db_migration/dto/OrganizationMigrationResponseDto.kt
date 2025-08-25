@@ -7,14 +7,15 @@ import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID
 
-data class LocationMigrationResponse(
-    val locationId: UUID,
-    val locationName: String,
+data class OrganizationMigrationResponseDto(
+    val id: UUID,
+    val organizationName: String,
     val versionNumber: String,
     @field:JsonSerialize(using = DatesToMillis::class)
     val startOn: OffsetDateTime,
     @field:JsonSerialize(using = DatesToMillis::class)
     val endOn: OffsetDateTime?,
     val status: MigrationStatus,
-    val message: String?
+    val message: String?,
+    var locations: List<LocationMigrationResponse>?
 ) : Serializable

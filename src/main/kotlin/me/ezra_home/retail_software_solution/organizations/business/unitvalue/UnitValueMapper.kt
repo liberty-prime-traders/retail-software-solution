@@ -25,7 +25,7 @@ abstract class UnitValueMapper {
     abstract fun toEntity(unitValueInsertDto: UnitValueInsertDto): UnitValueEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(source = "baseUnit", target = "baseUnitName", qualifiedBy = [BaseUnitName::class])
+    @Mapping(source = "baseUnit", target = "baseUnitName", qualifiedBy = [UnitName::class])
     abstract fun toResponseDto(unitValueEntity: UnitValueEntity): UnitValueResponseDto
 
     @Mapping(target = "createdById", ignore = true)

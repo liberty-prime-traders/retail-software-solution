@@ -15,7 +15,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
@@ -119,7 +119,7 @@ class OrganizationService(
         }
     }
 
-    fun getAllOrganizationsWithLocations(): List<OrganizationWithLocations> {
+    fun getAllOrganizationsWithLocations(): Collection<OrganizationWithLocations> {
         val organizationsWithLocations = mutableListOf<OrganizationWithLocations>()
         for (organization in organizationCache.getAllOrganizations()) {
             SessionContextProvider.initOrganization(organization)
@@ -131,7 +131,7 @@ class OrganizationService(
                 )
             )
         }
-        return organizationsWithLocations.toList()
+        return organizationsWithLocations
     }
 
     @TransactionalOnPlatformSchema(readOnly = true)

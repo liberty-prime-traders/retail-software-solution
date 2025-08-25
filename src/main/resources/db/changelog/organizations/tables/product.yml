@@ -28,11 +28,11 @@ databaseChangeLog:
 
               - column:
                   name: name
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: description
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: created_by_id

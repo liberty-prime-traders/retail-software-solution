@@ -20,7 +20,7 @@ databaseChangeLog:
 
               - column:
                   name: okta_id
-                  type: varchar(50)
+                  type: nvarchar2(50)
                   constraints:
                     nullable: false
                     notNullConstraintName: sys_user_okta_id_notnull

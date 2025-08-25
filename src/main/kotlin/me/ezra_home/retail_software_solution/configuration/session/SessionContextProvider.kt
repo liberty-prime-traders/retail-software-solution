@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.platform.session
+package me.ezra_home.retail_software_solution.configuration.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity

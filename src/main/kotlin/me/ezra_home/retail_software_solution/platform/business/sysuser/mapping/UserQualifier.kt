@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import org.mapstruct.AfterMapping
 import org.mapstruct.MappingTarget
 import org.springframework.stereotype.Component

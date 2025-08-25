@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.configuration.datasource
 
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver
 import org.springframework.stereotype.Component

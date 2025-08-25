@@ -2,8 +2,9 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRetryRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationMigrationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.mapping.DbMigrationMapper
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
@@ -12,6 +13,7 @@ import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
+@TransactionalOnPlatformSchema
 @Service
 class DbMigrationService(
     private val dbMigrationMapper: DbMigrationMapper,
@@ -19,17 +21,16 @@ class DbMigrationService(
     private val dbVersionCache: DbVersionCache,
     private val organizationMigrationHandler: OrganizationMigrationHandler,
 ) {
-    @TransactionalOnPlatformSchema
-    fun runSchemaMigration(dbMigrationRequestDto: DbMigrationRequestDto): DbMigrationResponseDto {
+
+    fun runSchemaMigration(dbMigrationRequestDto: DbMigrationRequestDto): OrganizationMigrationResponseDto {
         val targetDbVersion = validateMigrationPreconditions(dbMigrationRequestDto)
         val organizationLocationsMigration = organizationMigrationHandler.migrateOrganizationAndLocations(
-            schemaOwnerId = dbMigrationRequestDto.schemaOwnerId,
+            schemaOwnerId = dbMigrationRequestDto.organizationId,
             targetDbVersion = targetDbVersion,
             locationIdsToMigrate = dbMigrationRequestDto.locationIdsToMigrate
         )
-        return dbMigrationMapper.toResponseDto(organizationLocationsMigration.organizationMigration).apply {
-            locations =
-                organizationLocationsMigration.locationMigrations.map { dbMigrationMapper.toResponseDto(it) }
+        return dbMigrationMapper.toOrganizationResponseDto(organizationLocationsMigration.organizationMigration).apply {
+            locations = organizationLocationsMigration.locationMigrations.map { dbMigrationMapper.toLocationResponseDto(it) }
         }
     }
 
@@ -37,21 +38,18 @@ class DbMigrationService(
         if (dbMigrationRequestDto.locationIdsToMigrate.isEmpty()) {
             throw RtsGenericException("At least one location must be specified for migration")
         }
-        val targetDbVersion =
-            dbVersionCache.getAllDbVersions().find { it.id == dbMigrationRequestDto.targetDbVersionId }
-                ?: throw RtsGenericException("Target DB version not found")
+        val existingDbVersions = dbVersionCache.getAllDbVersions()
+        val targetDbVersion = existingDbVersions.find { it.id == dbMigrationRequestDto.targetDbVersionId }
+            ?: throw RtsGenericException("Target DB version not found")
         targetDbVersion.activatedOn ?: throw RtsGenericException("Target DB version is inactive")
-        val prevDbVersion = dbVersionCache.getAllDbVersions().find { it.id == targetDbVersion.prevVersionId }
-        val previousMigration =
-            prevDbVersion?.id?.let {
-                dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
-                    dbMigrationRequestDto.schemaOwnerId, SchemaOwnerType.ORGANIZATION, it
-                )
-            }
-        previousMigration?.run {
-            if (previousMigration.status != MigrationStatus.SUCCESS) {
-                throw RtsGenericException("Previous migration attempt (Version: ${prevDbVersion.versionNumber}) was not successful.")
-            }
+        val prevDbVersion = existingDbVersions.find { it.id == targetDbVersion.prevVersionId }
+        val previousMigration = prevDbVersion?.id?.let {
+            dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
+                dbMigrationRequestDto.organizationId, SchemaOwnerType.ORGANIZATION, it
+            )
+        }
+        if (previousMigration != null && previousMigration.status != MigrationStatus.SUCCESS) {
+            throw RtsGenericException("Previous migration attempt (Version: ${prevDbVersion.versionNumber}) was not successful.")
         }
 
         if (prevDbVersion != null && previousMigration == null) {
@@ -61,8 +59,7 @@ class DbMigrationService(
         return targetDbVersion
     }
 
-    @TransactionalOnPlatformSchema
-    fun retryFailedLocationMigrations(dbMigrationRetryRequestDto: DbMigrationRetryRequestDto): DbMigrationResponseDto {
+    fun retryFailedLocationMigrations(dbMigrationRetryRequestDto: DbMigrationRetryRequestDto): OrganizationMigrationResponseDto {
         val originalOrgMigration = validateThenReturnOriginalMigration(dbMigrationRetryRequestDto)
         val targetDbVersion = dbVersionCache.getAllDbVersions().find { it.id == originalOrgMigration.dbVersionId }
             ?: throw RtsGenericException("Target DB version not found for original migration")
@@ -71,15 +68,15 @@ class DbMigrationService(
             targetDbVersion = targetDbVersion,
             locationIdsToRetry = dbMigrationRetryRequestDto.locationIdsToMigrate
         )
-        return dbMigrationMapper.toResponseDto(organizationLocationsMigration.organizationMigration).apply {
-            locations = organizationLocationsMigration.locationMigrations.map { dbMigrationMapper.toResponseDto(it) }
+        return dbMigrationMapper.toOrganizationResponseDto(organizationLocationsMigration.organizationMigration).apply {
+            locations = organizationLocationsMigration.locationMigrations.map { dbMigrationMapper.toLocationResponseDto(it) }
         }
     }
 
     private fun validateThenReturnOriginalMigration(dbMigrationRetryRequestDto: DbMigrationRetryRequestDto): DbMigrationEntity {
-        val originalOrgMigration =
-            dbMigrationCache.getAllDbMigrations().find { it.id == dbMigrationRetryRequestDto.orgMigrationId }
-                ?: throw RtsGenericException("Original DB migration not found")
+        val originalOrgMigration = dbMigrationCache.getAllDbMigrations()
+            .find { it.id == dbMigrationRetryRequestDto.orgMigrationId }
+            ?: throw RtsGenericException("Original DB migration not found")
         if (originalOrgMigration.schemaOwnerType != SchemaOwnerType.ORGANIZATION) {
             throw RtsGenericException("Only organization-level migrations can be retried")
         }

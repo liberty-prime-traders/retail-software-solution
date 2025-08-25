@@ -1,10 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.db_version
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionInsertDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionMapper
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
@@ -18,6 +19,7 @@ class DbVersionService(
     private val dbVersionCache: DbVersionCache,
     private val dbVersionMapper: DbVersionMapper
 ) {
+
     fun createDbVersion(dbVersionInsertDto: DbVersionInsertDto): DbVersionResponseDto {
         val versionNumber = dbVersionInsertDto.versionNumber ?: throw RtsGenericException("Version number must be provided.")
         dbVersionCache.getAllDbVersions()
@@ -61,4 +63,5 @@ class DbVersionService(
         return dbVersionCache.getAllDbVersions()
             .map { dbVersionMapper.toResponseDto(it) }
     }
+
 }
