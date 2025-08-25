@@ -5,8 +5,8 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
-import me.ezra_home.retail_software_solution.platform.session.SessionContext
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContext
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import org.hibernate.annotations.Filter
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.JpaTransactionManager
@@ -20,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Filter(name = "UserDataExtractionFilter")
 class UserDataExtractionFilter(
     private val sysUserCache: SysUserCache,
-    @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
+    @param:Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
     private val platformTransactionManager: JpaTransactionManager
 ) : OncePerRequestFilter() {
 

@@ -41,7 +41,7 @@ class DbMigrationEntity(
 
     @Column(name = "type", length = 20)
     @Convert(converter = MigrationTypeConverter::class)
-    var type: MigrationType? = null,
+    var migrationType: MigrationType? = null,
 
     @Column(name = "message", length = 100)
     var message: String? = null,

@@ -20,11 +20,6 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: global_id
-                  type: uuid
-                  defaultValueComputed: ${uuid_function}
-
-              - column:
                   name: name
                   type: nvarchar2(100)
                   constraints:
@@ -33,7 +28,7 @@ databaseChangeLog:
 
               - column:
                   name: description
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: created_by_id

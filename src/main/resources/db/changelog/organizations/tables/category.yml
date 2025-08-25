@@ -20,21 +20,16 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: global_id
-                  type: uuid
-                  defaultValueComputed: ${uuid_function}
-
-              - column:
                   name: category_type
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: category_name
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: description
-                  type: varchar
+                  type: nvarchar2
 
               - column:
                   name: created_by_id

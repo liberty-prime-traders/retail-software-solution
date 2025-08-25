@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.reserved_subdoma
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

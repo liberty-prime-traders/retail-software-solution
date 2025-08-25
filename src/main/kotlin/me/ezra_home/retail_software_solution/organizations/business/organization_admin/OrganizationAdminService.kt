@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime

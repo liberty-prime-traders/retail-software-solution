@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.configuration.filters
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 

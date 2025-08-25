@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
-import me.ezra_home.retail_software_solution.platform.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.SchemaCreator
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.MigrationType
@@ -26,7 +26,7 @@ class OrganizationMigrationHandler(
     private val organizationCache: OrganizationCache,
     private val locationCache: LocationCache,
     private val locationMigrationHandler: LocationMigrationHandler,
-    @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
+    @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
     private val organizationDataSource: DataSource,
 ) {
     @Value("\${spring.datasource.organization.changelog}")
@@ -47,7 +47,7 @@ class OrganizationMigrationHandler(
             schemaOwnerId = schemaOwnerId,
             schemaOwnerType = SchemaOwnerType.ORGANIZATION,
             status = MigrationStatus.INITIATED,
-            type = MigrationType.ORG_WITH_LOCATIONS,
+            migrationType = MigrationType.ORG_WITH_LOCATIONS,
             message = "Migration in progress for organization and its locations."
         )
         dbMigrationCache.upsertDbMigration(orgMigration)
@@ -107,7 +107,7 @@ class OrganizationMigrationHandler(
             status = MigrationStatus.INITIATED,
             message = "Retry of failed locations from migration ${originalOrgMigration.id}",
             migrationParentId = originalOrgMigration.id!!,
-            type = MigrationType.LOCATIONS_ONLY
+            migrationType = MigrationType.LOCATIONS_ONLY
         )
         dbMigrationCache.upsertDbMigration(newOrgMigration)
 

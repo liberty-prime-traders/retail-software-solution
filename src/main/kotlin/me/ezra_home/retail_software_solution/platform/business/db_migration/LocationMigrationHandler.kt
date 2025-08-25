@@ -19,7 +19,7 @@ import javax.sql.DataSource
 @Component
 class LocationMigrationHandler(
     private val dbMigrationCache: DbMigrationCache,
-    @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
+    @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
     private val locationDataSource: DataSource,
 ) {
     @Value("\${spring.datasource.location.changelog}")
@@ -39,7 +39,7 @@ class LocationMigrationHandler(
             schemaOwnerId = location.id!!,
             schemaOwnerType = SchemaOwnerType.LOCATION,
             status = MigrationStatus.INITIATED,
-            type = migrationType,
+            migrationType = migrationType,
             message = "Locations migration in progress.",
             migrationParentId = migrationParentId
         )
