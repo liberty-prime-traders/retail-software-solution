@@ -18,4 +18,5 @@ object TableNames {
     const val PRODUCT = "product"
     const val DB_VERSION = "db_version"
     const val DB_MIGRATION = "db_migration"
+    const val TABLE_REGISTRY = "table_registry"
 }
