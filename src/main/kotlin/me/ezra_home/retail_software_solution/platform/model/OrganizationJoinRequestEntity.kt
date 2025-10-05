@@ -24,4 +24,7 @@ class OrganizationJoinRequestEntity(
     @Column(name = "organization_id", nullable = true, updatable = false)
     var organizationId: UUID?,
 
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null,
+
     ) : HasCreatorEntity()

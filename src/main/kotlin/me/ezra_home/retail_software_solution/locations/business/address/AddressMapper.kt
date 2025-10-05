@@ -23,6 +23,7 @@ interface AddressMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(addressInsertDto: AddressInsertDto): AddressEntity
 
@@ -30,6 +31,7 @@ interface AddressMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(addressDto: AddressUpdateDto, @MappingTarget addressEntity: AddressEntity)
 }

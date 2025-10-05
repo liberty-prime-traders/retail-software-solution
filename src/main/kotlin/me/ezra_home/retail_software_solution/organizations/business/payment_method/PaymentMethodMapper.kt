@@ -21,6 +21,7 @@ interface PaymentMethodMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodEntity
 
@@ -31,6 +32,7 @@ interface PaymentMethodMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(paymentMethodUpdateDto: PaymentMethodUpdateDto, @MappingTarget paymentMethodEntity: PaymentMethodEntity)
 }

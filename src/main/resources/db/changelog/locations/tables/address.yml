@@ -63,3 +63,9 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: '0'
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true

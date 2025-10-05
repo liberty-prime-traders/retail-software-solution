@@ -8,6 +8,8 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
@@ -19,7 +21,8 @@ class ProductService(
     private val productCache: ProductCache,
     private val categoryCache: CategoryCache,
     private val categoryUsageCounter: CategoryUsageCounter,
-    private val productValidator: ProductValidator
+    private val productValidator: ProductValidator,
+    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -30,6 +33,7 @@ class ProductService(
     fun createProduct(productInsertDto: ProductInsertDto): ProductResponseDto {
         productValidator.validateProductInsert(productInsertDto)
         val productEntity = productMapper.toEntity(productInsertDto)
+        productEntity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.PRODUCT)
         categoryUsageCounter.incrementUsageCount(productInsertDto.categoryId)
         productCache.upsertProducts(productEntity)
         return productMapper.toDto(productEntity)

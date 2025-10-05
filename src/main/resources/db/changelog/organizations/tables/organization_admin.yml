@@ -34,3 +34,23 @@ databaseChangeLog:
               - column:
                   name: end_on
                   type: timestamptz
+
+  - changeSet:
+      id: 'add_reference_number_to_organization_admin'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: organization_admin
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: organization_admin
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true

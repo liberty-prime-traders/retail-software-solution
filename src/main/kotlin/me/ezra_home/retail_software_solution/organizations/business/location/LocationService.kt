@@ -5,8 +5,13 @@ import me.ezra_home.retail_software_solution.organizations.business.location.dto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.prefix_configuration.LocationPrefixConfigurationService
+import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryService
+import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.util.service.LocationReferenceNumberGeneratorService
+import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.springframework.stereotype.Service
 import java.util.Objects
 
@@ -16,7 +21,10 @@ class LocationService(
     private val locationCache: LocationCache,
     private val locationMapper: LocationMapper,
     private val locationValidator: LocationValidator,
-    private val locationSchemaService: LocationSchemaService
+    private val locationSchemaService: LocationSchemaService,
+    private val locationPrefixConfigurationService: LocationPrefixConfigurationService,
+    private val tableRegistryService: TableRegistryService,
+    private val locationReferenceNumberGeneratorService: LocationReferenceNumberGeneratorService,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -31,9 +39,23 @@ class LocationService(
         val schemaName = createLocationSchema(locationInsertDto.name!!)
         try {
             val locationEntity = locationMapper.toEntity(locationInsertDto).apply {
+                SessionContextProvider.getSession().locationSchemaName = schemaName
+                this.referenceNumber =
+                    locationReferenceNumberGeneratorService.generateReferenceNumber(TableNames.LOCATION)
                 this.schemaName = schemaName
             }
             locationCache.upsertLocation(locationEntity)
+            val userId = SessionContextProvider.getUserId()
+            val registryRecords = tableRegistryService.getAllForSchemaLevel(SchemaLevel.LOCATION)
+            val tablePrefix = locationPrefixConfigurationService.getPrefixForTableName(TableNames.LOCATION)
+                ?: throw RtsGenericException("Table prefix not found for table: ${TableNames.LOCATION}")
+            registryRecords.forEach { registryRecord ->
+                locationPrefixConfigurationService.bulkCreateForRegistry(
+                    registryRecord.id!!,
+                    tablePrefix,
+                    userId
+                )
+            }
             return locationMapper.toResponseDto(locationEntity)
         } catch (e: Exception) {
             locationSchemaService.dropSchema(schemaName)
@@ -60,7 +82,7 @@ class LocationService(
 
     fun deleteLocation() {
         val locationId = SessionContextProvider.getLocationId()
-        locationCache.getAllLocations().find { it.id == locationId }?.let {entity ->
+        locationCache.getAllLocations().find { it.id == locationId }?.let { entity ->
             val usageCount = entity.usageCount
             if (usageCount > 0L) {
                 throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")

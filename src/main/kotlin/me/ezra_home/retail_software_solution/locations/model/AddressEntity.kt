@@ -33,6 +33,9 @@ class AddressEntity(
 
     @Size(max = 100)
     @Column(name = "country", length = 100)
-    var country: String? = null
+    var country: String? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 
 ): AuditableEntity()

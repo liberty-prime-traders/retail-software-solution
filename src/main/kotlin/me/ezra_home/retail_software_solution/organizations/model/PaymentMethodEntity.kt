@@ -16,4 +16,7 @@ class PaymentMethodEntity (
     @Column(name = "description", length = 1000)
     var description: String? = null,
 
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null,
+
 ): AuditableEntity()

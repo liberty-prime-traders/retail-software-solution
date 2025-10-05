@@ -24,3 +24,22 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: sys_user_okta_id_notnull
+  - changeSet:
+      id: 'add_reference_number_to_sys_user'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: sys_user
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: sys_user
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar(30)
+                  constraints:
+                    unique: true

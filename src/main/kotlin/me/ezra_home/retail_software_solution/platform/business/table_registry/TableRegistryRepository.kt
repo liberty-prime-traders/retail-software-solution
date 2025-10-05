@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface TableRegistryRepository: JpaRepository<TableRegistryEntity, UUID>
+interface TableRegistryRepository: JpaRepository<TableRegistryEntity, UUID> {
+    fun findByTableName(tableName: String): TableRegistryEntity?
+}

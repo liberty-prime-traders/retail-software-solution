@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.platform.business.table_registry.dt
 import me.ezra_home.retail_software_solution.platform.model.TableRegistryEntity
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -73,5 +74,15 @@ class TableRegistryService(
 
     fun delete(id: UUID?) {
         id?.let { tableRegistryCache.deleteTableRegistry(it) }
+    }
+
+    fun getAllForSchemaLevel(schemaLevel: SchemaLevel): List<TableRegistryEntity> {
+        return tableRegistryCache.getAllTableRegistries()
+            .filter { it.schemaLevel == schemaLevel }
+    }
+
+    fun getTableRegistryForTableName(tableName: String): TableRegistryEntity {
+        return tableRegistryCache.findByTableName(tableName)
+            ?: throw RtsGenericException("Table registry not found for table: $tableName")
     }
 }

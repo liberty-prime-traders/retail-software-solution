@@ -24,6 +24,7 @@ interface TableRegistryMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "nextNumber", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(dto: TableRegistryInsertDto): TableRegistryEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
@@ -34,6 +35,7 @@ interface TableRegistryMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "nextNumber", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun updateEntity(dto: TableRegistryUpdateDto, @MappingTarget entity: TableRegistryEntity): TableRegistryEntity
 }

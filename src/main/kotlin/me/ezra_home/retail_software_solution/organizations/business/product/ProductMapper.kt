@@ -30,6 +30,7 @@ interface ProductMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(productInsertDto: ProductInsertDto): ProductEntity
 
@@ -37,6 +38,7 @@ interface ProductMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(productDto: ProductUpdateDto, @MappingTarget productEntity: ProductEntity)
 }

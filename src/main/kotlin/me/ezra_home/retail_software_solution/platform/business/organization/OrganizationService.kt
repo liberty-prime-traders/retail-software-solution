@@ -16,8 +16,13 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.organizations.business.prefix_configuration.OrganizationPrefixConfigurationService
+import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryService
+import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
+import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -36,7 +41,10 @@ class OrganizationService(
     private val organizationUserService: OrganizationUserService,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
     private val organizationAdminService: OrganizationAdminService,
-    private val locationMapper: LocationMapper
+    private val locationMapper: LocationMapper,
+    private val tableRegistryService: TableRegistryService,
+    private val organizationPrefixConfigurationService: OrganizationPrefixConfigurationService,
+    private val organizationReferenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -52,8 +60,22 @@ class OrganizationService(
             SessionContextProvider.getSession().organizationSchemaName = schemaName
             val entity = organizationMapper.toEntity(organizationInsertDto).apply {
                 this.schemaName = schemaName
+                this.referenceNumber = organizationReferenceNumberGeneratorService.generateReferenceNumber(
+                    TableNames.ORGANIZATION
+                )
             }
             organizationCache.upsertOrganization(entity)
+            val userId = SessionContextProvider.getUserId()
+            val registryRecords = tableRegistryService.getAllForSchemaLevel(SchemaLevel.ORGANIZATION)
+            organizationPrefixConfigurationService.getPrefixForTableName(TableNames.ORGANIZATION)
+                ?: throw RtsGenericException("Table prefix not found for table: ${TableNames.ORGANIZATION}")
+            registryRecords.forEach { registryRecord ->
+                organizationPrefixConfigurationService.bulkCreateForRegistry(
+                    registryRecord.id!!,
+                    registryRecord.defaultPrefix!!,
+                    userId
+                )
+            }
             organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById))
             return organizationMapper.toResponseDto(entity)
         } catch (e: Exception) {

@@ -19,5 +19,9 @@ class CacheNames {
         const val DB_VERSION = "DbVersion"
         const val DB_MIGRATION = "DbMigration"
         const val TABLE_REGISTRY = "TableRegistry"
+        const val PREFIX_SEQUENCE_TRACKER = "PrefixSequenceTracker"
+        const val LOCATION_PREFIX_SEQUENCE_TRACKER = "LocationPrefixSequenceTracker"
+        const val ORGANIZATION_PREFIX_CONFIGURATION  = "OrganizationPrefixConfiguration"
+        const val LOCATION_PREFIX_CONFIGURATION  = "LocationPrefixConfiguration"
     }
 }

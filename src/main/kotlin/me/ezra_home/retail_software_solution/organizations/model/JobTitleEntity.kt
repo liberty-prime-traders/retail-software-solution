@@ -11,4 +11,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 class JobTitleEntity (
     @Column(name = "value")
     var value: String? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null,
 ) : AuditableEntity()

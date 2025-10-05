@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create_location_prefix_configuration_table'
+      author: adongo
+      labels: 1.0.0
+      preConditions:
+        - not:
+            - tableExists:
+                tableName: prefix_configuration
+      changes:
+        - createTable:
+            tableName: prefix_configuration
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: table_registry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_prefix_configuration_registry_id_not_null
+              - column:
+                  name: prefix
+                  type: nvarchar(100)
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueComputed: ${now}
+              - column:
+                  name: updated_on
+                  type: timestamptz
+                  defaultValueComputed: ${now}
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_prefix_configuration_created_by_id_not_null
+              - column:
+                  name: reference_number
+                  type: nvarchar(30)
+                  constraints:
+                    unique: true

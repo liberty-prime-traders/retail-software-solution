@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdm
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -14,7 +16,8 @@ import java.util.UUID
 class OrganizationAdminService(
     private val organizationAdminMapper: OrganizationAdminMapper,
     private val organizationAdminCache: OrganizationAdminCache,
-    private val sysUserService: SysUserService
+    private val sysUserService: SysUserService,
+    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -26,6 +29,7 @@ class OrganizationAdminService(
     fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
         validateUserExists(adminId)
         val entity = OrganizationAdminEntity(adminId)
+        entity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.ORGANIZATION_ADMIN)
         organizationAdminCache.upsertOrganizationAdmin(entity)
         return organizationAdminMapper.toResponseDto(entity)
     }

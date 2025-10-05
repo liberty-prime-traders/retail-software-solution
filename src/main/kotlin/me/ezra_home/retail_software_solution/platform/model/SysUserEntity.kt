@@ -12,6 +12,9 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 class SysUserEntity(
     @NotNull
     @Column(name = "okta_id", nullable = false, length = 50)
-    var oktaId: String? = null
+    var oktaId: String? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 
 ): BaseEntity()

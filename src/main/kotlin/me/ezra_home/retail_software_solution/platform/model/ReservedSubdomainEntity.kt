@@ -17,5 +17,8 @@ class ReservedSubdomainEntity(
 
     @Column(name = "status")
     @Convert(converter = StatusConverter::class)
-     var status: Status? = null
+     var status: Status? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 ): HasCreatorEntity()

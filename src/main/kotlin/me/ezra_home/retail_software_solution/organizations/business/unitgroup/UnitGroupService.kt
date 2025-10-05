@@ -8,6 +8,8 @@ import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dt
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -18,7 +20,8 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class UnitGroupService(
     private val unitGroupMapper: UnitGroupMapper,
-    private val unitGroupCache: UnitGroupCache
+    private val unitGroupCache: UnitGroupCache,
+    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -29,6 +32,7 @@ class UnitGroupService(
     fun createUnitGroup(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto {
         validateNameOnSave(Optional.ofNullable(unitGroupInsertDto.name))
         val entity = unitGroupMapper.toEntity(unitGroupInsertDto)
+        entity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.UNIT_GROUP)
         unitGroupCache.upsertUnitGroup(entity)
         return unitGroupMapper.toResponseDto(entity)
     }

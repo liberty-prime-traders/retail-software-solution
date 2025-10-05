@@ -51,3 +51,23 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: '0'
+
+  - changeSet:
+      id: 'add_reference_number_to_category'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: category
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: category
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true

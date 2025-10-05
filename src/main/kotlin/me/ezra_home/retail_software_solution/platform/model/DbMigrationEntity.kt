@@ -47,6 +47,9 @@ class DbMigrationEntity(
     var message: String? = null,
 
     @Column(name = "migration_parent_id", updatable = false)
-    var migrationParentId: UUID? = null
+    var migrationParentId: UUID? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 
 ) : BaseEntity()

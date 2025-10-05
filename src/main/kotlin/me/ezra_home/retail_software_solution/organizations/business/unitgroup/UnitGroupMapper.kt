@@ -21,6 +21,7 @@ interface UnitGroupMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupEntity
 
@@ -32,6 +33,7 @@ interface UnitGroupMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(unitGroupUpdateDto: UnitGroupUpdateDto, @MappingTarget unitGroupEntity: UnitGroupEntity)
 }

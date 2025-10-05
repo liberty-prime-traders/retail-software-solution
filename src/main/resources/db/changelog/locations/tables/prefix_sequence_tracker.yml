@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create_prefix_sequence_tracker_table'
+      author: adongo
+      labels: 1.0.2
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: prefix_sequence_tracker
+      changes:
+        - createTable:
+            tableName: prefix_sequence_tracker
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: table_registry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: prefix
+                  type: nvarchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_number
+                  type: bigint
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueComputed: ${now}
+              - column:
+                  name: created_by_id
+                  type: uuid
+        - addUniqueConstraint:
+            tableName: prefix_sequence_tracker
+            columnNames: table_registry_id, prefix
+            constraintName: uk_prefix_sequence_tracker_registry_prefix
+

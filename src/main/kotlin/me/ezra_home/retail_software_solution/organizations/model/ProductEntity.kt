@@ -20,4 +20,7 @@ class ProductEntity(
     @Column(name = "category_id", nullable = false)
     var categoryId: UUID? = null,
 
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null,
+
 ): AuditableEntity()

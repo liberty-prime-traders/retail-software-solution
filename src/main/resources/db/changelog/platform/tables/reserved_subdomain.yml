@@ -43,3 +43,22 @@ databaseChangeLog:
                   constraints:
                       nullable: false
                       notNullConstraintName: reserved_subdomain_status_notnull
+  - changeSet:
+      id: 'add_reference_number_to_reserved_subdomain'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: reserved_subdomain
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: reserved_subdomain
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar(30)
+                  constraints:
+                    unique: true

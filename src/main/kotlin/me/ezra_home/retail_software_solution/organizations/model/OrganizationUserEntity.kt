@@ -12,6 +12,6 @@ import java.util.UUID
 class OrganizationUserEntity(
 
     @Column(name = "join_request_id", updatable = false)
-    var joinRequestId: UUID? = null
+    var joinRequestId: UUID? = null,
 
 ) : ExpirableAssignmentEntity()

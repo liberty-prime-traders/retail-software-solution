@@ -24,6 +24,7 @@ interface JobTitleMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(titleInsertDto: JobTitleInsertDto): JobTitleEntity
 
@@ -31,6 +32,7 @@ interface JobTitleMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(titleUpdateDto: JobTitleUpdateDto, @MappingTarget titleEntity: JobTitleEntity)
 }

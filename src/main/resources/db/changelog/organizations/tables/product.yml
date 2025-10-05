@@ -54,3 +54,23 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: '0'
+
+  - changeSet:
+      id: 'add_reference_number_to_product'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: product
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: product
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true

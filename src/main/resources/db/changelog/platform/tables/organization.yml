@@ -65,3 +65,23 @@ databaseChangeLog:
                     uniqueConstraintName: organization_schema_name_unique
                     nullable: false
                     notNullConstraintName: organization_schema_name_notnull
+
+  - changeSet:
+      id: 'add_reference_number_to_organization'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: organization
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: organization
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar(30)
+                  constraints:
+                    unique: true

@@ -51,3 +51,23 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+  - changeSet:
+      id: 'add_reference_number_to_db_version'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: db_version
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: db_version
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar(30)
+                  constraints:
+                    unique: true

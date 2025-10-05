@@ -17,6 +17,9 @@ class TableRegistryCache(
     @Cacheable
     fun getAllTableRegistries(): Collection<TableRegistryEntity> = repository.findAll()
 
+    @Cacheable
+    fun findByTableName(tableName: String): TableRegistryEntity? = repository.findByTableName(tableName)
+
     @CacheEvict(allEntries = true)
     fun upsertTableRegistry(entity: TableRegistryEntity) = repository.save(entity)
 

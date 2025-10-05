@@ -36,5 +36,8 @@ class TableRegistryEntity(
     var userFacing: Boolean? = false,
 
     @Column(name = "next_number", nullable = false, insertable = false)
-    var nextNumber: Long = 1L
+    var nextNumber: Long = 1L,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 ): HasCreatorEntity()

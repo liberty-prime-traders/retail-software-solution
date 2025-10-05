@@ -43,3 +43,23 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: '0'
+
+  - changeSet:
+      id: 'add_reference_number_to_job_title'
+      author: adongo
+      labels: 1.0.1
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: job_title
+                columnName: reference_number
+      changes:
+        - addColumn:
+            tableName: job_title
+            columns:
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true

@@ -18,5 +18,8 @@ class CategoryEntity(
     var categoryName: String? = null,
 
     @Column(name = "description")
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 ): AuditableEntity()

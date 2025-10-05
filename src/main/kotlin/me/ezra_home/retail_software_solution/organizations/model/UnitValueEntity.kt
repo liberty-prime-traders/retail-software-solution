@@ -30,4 +30,7 @@ class UnitValueEntity(
     @Column(name = "conversion_factor")
     var conversionFactor: Double? = null,
 
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null,
+
 ): AuditableEntity()

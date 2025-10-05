@@ -24,6 +24,9 @@ class LocationEntity(
 
     @NotNull
     @Column(name = "schema_name", length = 100, nullable = false, updatable = false)
-    var schemaName: String? = null
+    var schemaName: String? = null,
+
+    @Column(name = "reference_number", unique = true)
+    var referenceNumber: String? = null
 
 ): AuditableEntity()
