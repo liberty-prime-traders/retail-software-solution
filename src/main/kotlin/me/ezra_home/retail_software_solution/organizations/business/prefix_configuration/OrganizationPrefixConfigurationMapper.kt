@@ -18,7 +18,6 @@ interface OrganizationPrefixConfigurationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "updatedOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(dto: PrefixConfigurationInsertDto): OrganizationPrefixConfigurationEntity
 
@@ -28,7 +27,6 @@ interface OrganizationPrefixConfigurationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "updatedOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun updateEntity(

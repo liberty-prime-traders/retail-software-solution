@@ -5,7 +5,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
-import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
@@ -16,9 +15,6 @@ class OrganizationPrefixConfigurationEntity(
 
     @Column(name = "prefix", length = 100)
     var prefix: String? = null,
-
-    @Column(name = "updated_on")
-    var updatedOn: OffsetDateTime? = null,
 
     @Column(name = "reference_number", unique = true)
     var referenceNumber: String? = null

@@ -27,11 +27,10 @@ class LocationPrefixConfigurationService(
         val entity = locationPrefixConfigurationCache.getById(dto.prefixConfigurationId)
             ?: throw RtsGenericException("Prefix configuration not found")
         entity.prefix = dto.prefix
-        entity.updatedOn = OffsetDateTime.now()
         return locationPrefixConfigurationMapper.toDto(locationPrefixConfigurationCache.upsertPrefixConfiguration(entity))
     }
 
-    fun bulkCreateForRegistry(tableRegistryId: UUID, defaultPrefix: String, userId: UUID) {
+    fun createForRegistry(tableRegistryId: UUID, defaultPrefix: String, userId: UUID) {
         val entity = LocationPrefixConfigurationEntity(
             tableRegistryId = tableRegistryId,
             prefix = defaultPrefix

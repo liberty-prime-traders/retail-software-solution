@@ -82,20 +82,6 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: table_registry_created_by_id_not_null
 
-  - changeSet:
-      id: 'add_reference_number_to_table_registry'
-      author: adongo
-      labels: 1.0.1
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: table_registry
-                columnName: reference_number
-      changes:
-        - addColumn:
-            tableName: table_registry
-            columns:
               - column:
                   name: reference_number
                   type: nvarchar(30)

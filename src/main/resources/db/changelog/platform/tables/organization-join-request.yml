@@ -50,20 +50,6 @@ databaseChangeLog:
                   constraints:
                     notNullConstraintName: org_join_request_organization_id_notnull
 
-  - changeSet:
-      id: 'add_reference_number_to_org_join_request'
-      author: adongo
-      labels: 1.0.1
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: org_join_request
-                columnName: reference_number
-      changes:
-        - addColumn:
-            tableName: org_join_request
-            columns:
               - column:
                   name: reference_number
                   type: nvarchar(30)

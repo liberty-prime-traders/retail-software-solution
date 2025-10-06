@@ -4,6 +4,7 @@ databaseChangeLog:
       author: adongo
       labels: 1.0.0
       preConditions:
+        - onFail: MARK_RAN
         - not:
             - tableExists:
                 tableName: prefix_configuration
@@ -28,10 +29,6 @@ databaseChangeLog:
                   type: nvarchar(100)
               - column:
                   name: created_on
-                  type: timestamptz
-                  defaultValueComputed: ${now}
-              - column:
-                  name: updated_on
                   type: timestamptz
                   defaultValueComputed: ${now}
               - column:

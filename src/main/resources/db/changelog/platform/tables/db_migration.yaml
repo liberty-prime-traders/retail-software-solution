@@ -69,20 +69,6 @@ databaseChangeLog:
                   name: migration_parent_id
                   type: uuid
 
-  - changeSet:
-      id: 'add_reference_number_to_db_migration'
-      author: adongo
-      labels: 1.0.1
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: db_migration
-                columnName: reference_number
-      changes:
-        - addColumn:
-            tableName: db_migration
-            columns:
               - column:
                   name: reference_number
                   type: nvarchar(30)

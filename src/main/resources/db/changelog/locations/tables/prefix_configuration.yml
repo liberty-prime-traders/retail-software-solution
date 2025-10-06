@@ -4,6 +4,7 @@ databaseChangeLog:
       author: adongo
       labels: 1.0.0
       preConditions:
+        - onFail: MARK_RAN
         - not:
             - tableExists:
                 tableName: prefix_configuration
@@ -31,10 +32,6 @@ databaseChangeLog:
                   type: timestamptz
                   defaultValueComputed: ${now}
               - column:
-                  name: updated_on
-                  type: timestamptz
-                  defaultValueComputed: ${now}
-              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
@@ -42,6 +39,6 @@ databaseChangeLog:
                     notNullConstraintName: location_prefix_configuration_created_by_id_not_null
               - column:
                   name: reference_number
-                  type: nvarchar(30)
+                  type: nvarchar2(30)
                   constraints:
                     unique: true

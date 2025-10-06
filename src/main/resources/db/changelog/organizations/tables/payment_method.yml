@@ -45,21 +45,6 @@ databaseChangeLog:
               - column:
                   name: description
                   type: nvarchar2(1000)
-
-  - changeSet:
-      id: 'add_reference_number_to_payment_method'
-      author: adongo
-      labels: 1.0.1
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: payment_method
-                columnName: reference_number
-      changes:
-        - addColumn:
-            tableName: payment_method
-            columns:
               - column:
                   name: reference_number
                   type: nvarchar2(30)

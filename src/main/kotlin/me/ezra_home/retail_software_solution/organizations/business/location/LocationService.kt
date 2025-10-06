@@ -50,7 +50,7 @@ class LocationService(
             val tablePrefix = locationPrefixConfigurationService.getPrefixForTableName(TableNames.LOCATION)
                 ?: throw RtsGenericException("Table prefix not found for table: ${TableNames.LOCATION}")
             registryRecords.forEach { registryRecord ->
-                locationPrefixConfigurationService.bulkCreateForRegistry(
+                locationPrefixConfigurationService.createForRegistry(
                     registryRecord.id!!,
                     tablePrefix,
                     userId

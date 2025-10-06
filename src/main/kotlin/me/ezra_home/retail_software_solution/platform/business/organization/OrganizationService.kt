@@ -70,7 +70,7 @@ class OrganizationService(
             organizationPrefixConfigurationService.getPrefixForTableName(TableNames.ORGANIZATION)
                 ?: throw RtsGenericException("Table prefix not found for table: ${TableNames.ORGANIZATION}")
             registryRecords.forEach { registryRecord ->
-                organizationPrefixConfigurationService.bulkCreateForRegistry(
+                organizationPrefixConfigurationService.createForRegistry(
                     registryRecord.id!!,
                     registryRecord.defaultPrefix!!,
                     userId

@@ -39,20 +39,6 @@ databaseChangeLog:
                   name: join_request_id
                   type: uuid
 
-  - changeSet:
-      id: 'add_reference_number_to_organization_user'
-      author: adongo
-      labels: 1.0.1
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: organization_user
-                columnName: reference_number
-      changes:
-        - addColumn:
-            tableName: organization_user
-            columns:
               - column:
                   name: reference_number
                   type: nvarchar2(30)
