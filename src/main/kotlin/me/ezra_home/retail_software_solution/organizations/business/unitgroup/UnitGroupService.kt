@@ -8,8 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dt
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.model.TableNames
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -21,7 +19,6 @@ import java.util.UUID
 class UnitGroupService(
     private val unitGroupMapper: UnitGroupMapper,
     private val unitGroupCache: UnitGroupCache,
-    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

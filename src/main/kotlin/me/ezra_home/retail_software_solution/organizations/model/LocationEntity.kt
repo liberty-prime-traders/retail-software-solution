@@ -7,7 +7,6 @@ import jakarta.persistence.Table
 import jakarta.validation.constraints.NotNull
 import me.ezra_home.retail_software_solution.util.enums.LocationType
 import me.ezra_home.retail_software_solution.util.listeners.LocationReferenceNumberEntityListener
-import me.ezra_home.retail_software_solution.util.listeners.OrganizationReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
