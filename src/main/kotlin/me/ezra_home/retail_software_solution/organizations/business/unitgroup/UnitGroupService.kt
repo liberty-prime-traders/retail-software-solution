@@ -32,7 +32,6 @@ class UnitGroupService(
     fun createUnitGroup(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto {
         validateNameOnSave(Optional.ofNullable(unitGroupInsertDto.name))
         val entity = unitGroupMapper.toEntity(unitGroupInsertDto)
-        entity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.UNIT_GROUP)
         unitGroupCache.upsertUnitGroup(entity)
         return unitGroupMapper.toResponseDto(entity)
     }

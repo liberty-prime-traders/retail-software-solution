@@ -8,8 +8,6 @@ import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
-import me.ezra_home.retail_software_solution.util.model.TableNames
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.Optional
@@ -20,7 +18,6 @@ import java.util.UUID
 class PaymentMethodService (
     private val paymentMethodMapper: PaymentMethodMapper,
     private val paymentMethodCache: PaymentMethodCache,
-    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -31,7 +28,6 @@ class PaymentMethodService (
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
         val entity = paymentMethodMapper.toEntity(paymentMethodInsertDto)
-        entity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.PAYMENT_METHOD)
         paymentMethodCache.upsertPaymentMethod(entity)
         return paymentMethodMapper.toResponseDto(entity)
     }

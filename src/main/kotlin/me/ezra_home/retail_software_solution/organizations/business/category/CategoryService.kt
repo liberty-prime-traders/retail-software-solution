@@ -8,8 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.category.map
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
-import me.ezra_home.retail_software_solution.util.model.TableNames
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
@@ -19,7 +17,6 @@ import java.util.UUID
 class CategoryService(
     private val categoryMapper: CategoryMapper,
     private val categoryCache: CategoryCache,
-    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -32,7 +29,6 @@ class CategoryService(
         categoryCache.getAllCategories().find { StringUtils.isEquivalent(it.categoryName, categoryName) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))}
         val newCategoryEntity = categoryMapper.toEntity(categoryInsertDto)
-        newCategoryEntity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.CATEGORY)
         val savedCategoryEntity = categoryCache.upsertCategories(newCategoryEntity)
         return categoryMapper.toDto(savedCategoryEntity)
     }

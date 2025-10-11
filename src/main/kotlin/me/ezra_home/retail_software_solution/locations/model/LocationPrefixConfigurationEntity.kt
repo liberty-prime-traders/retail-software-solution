@@ -2,13 +2,16 @@ package me.ezra_home.retail_software_solution.locations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.listeners.LocationReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.PREFIX_CONFIGURATION)
+@EntityListeners(LocationReferenceNumberEntityListener::class)
 class LocationPrefixConfigurationEntity(
     @Column(name = "table_registry_id", updatable = false)
     val tableRegistryId: UUID? = null,

@@ -2,12 +2,15 @@ package me.ezra_home.retail_software_solution.locations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.listeners.LocationReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
 @Table(name = TableNames.VARIATION)
+@EntityListeners(LocationReferenceNumberEntityListener::class)
 class VariationEntity (
     @Column(name = "name", nullable = false)
     var name: String? = null,

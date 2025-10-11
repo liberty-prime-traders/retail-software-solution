@@ -2,13 +2,16 @@ package me.ezra_home.retail_software_solution.locations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Size
+import me.ezra_home.retail_software_solution.util.listeners.LocationReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
 @Table(name = TableNames.ADDRESS)
+@EntityListeners(LocationReferenceNumberEntityListener::class)
 class AddressEntity(
 
     @Size(max = 100)

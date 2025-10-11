@@ -18,7 +18,6 @@ import me.ezra_home.retail_software_solution.platform.business.reserved_subdomai
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.prefix_configuration.OrganizationPrefixConfigurationService
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryService
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -44,7 +43,6 @@ class OrganizationService(
     private val locationMapper: LocationMapper,
     private val tableRegistryService: TableRegistryService,
     private val organizationPrefixConfigurationService: OrganizationPrefixConfigurationService,
-    private val organizationReferenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -60,9 +58,6 @@ class OrganizationService(
             SessionContextProvider.getSession().organizationSchemaName = schemaName
             val entity = organizationMapper.toEntity(organizationInsertDto).apply {
                 this.schemaName = schemaName
-                this.referenceNumber = organizationReferenceNumberGeneratorService.generateReferenceNumber(
-                    TableNames.ORGANIZATION
-                )
             }
             organizationCache.upsertOrganization(entity)
             val userId = SessionContextProvider.getUserId()

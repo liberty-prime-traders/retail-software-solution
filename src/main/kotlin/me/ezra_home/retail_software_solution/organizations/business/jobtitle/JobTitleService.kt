@@ -7,8 +7,6 @@ import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
-import me.ezra_home.retail_software_solution.util.model.TableNames
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
@@ -19,7 +17,6 @@ import java.util.UUID
 class JobTitleService(
     private val jobTitleMapper: JobTitleMapper,
     private val jobTitleCache: JobTitleCache,
-    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -33,7 +30,6 @@ class JobTitleService(
             ?.let { throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
 
         val newTitleEntity = jobTitleMapper.toEntity(titleInsertDto)
-        newTitleEntity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.JOB_TITLE)
         jobTitleCache.upsertJobTitle(newTitleEntity)
         return jobTitleMapper.toDto(newTitleEntity)
     }

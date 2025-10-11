@@ -9,8 +9,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dt
 import me.ezra_home.retail_software_solution.organizations.model.UnitValueEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
-import me.ezra_home.retail_software_solution.util.model.TableNames
-import me.ezra_home.retail_software_solution.util.service.OrganizationReferenceNumberGeneratorService
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
@@ -23,7 +21,6 @@ class UnitValueService(
     private val unitGroupCache: UnitGroupCache,
     private val unitValueValidator: UnitValueValidator,
     private val unitGroupUsageCounter: UnitGroupUsageCounter,
-    private val referenceNumberGeneratorService: OrganizationReferenceNumberGeneratorService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -36,7 +33,6 @@ class UnitValueService(
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
-        unitValueEntity.referenceNumber = referenceNumberGeneratorService.generateReferenceNumber(TableNames.UNIT_VALUE)
         unitGroupUsageCounter.incrementUsageCount(unitValueInsertDto.unitGroupId)
         unitValueCache.upsertUnitValue(unitValueEntity)
         return unitValueMapper.toResponseDto(unitValueEntity)

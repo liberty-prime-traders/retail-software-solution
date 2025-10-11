@@ -3,13 +3,15 @@ package me.ezra_home.retail_software_solution.organizations.model
 import java.util.UUID
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
-import jakarta.validation.constraints.NotNull
+import me.ezra_home.retail_software_solution.util.listeners.OrganizationReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
 @Table(name = TableNames.UNIT_VALUE)
+@EntityListeners(OrganizationReferenceNumberEntityListener::class)
 class UnitValueEntity(
 
     @Column(name = "name", nullable = false)
