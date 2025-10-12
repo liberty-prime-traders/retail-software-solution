@@ -11,20 +11,20 @@ import java.util.UUID
 @Component
 @CacheConfig(cacheNames = [CacheNames.TABLE_REGISTRY])
 class TableRegistryCache(
-    private val repository: TableRegistryRepository
+    private val tableRegistryRepository: TableRegistryRepository
 ) {
 
     @Cacheable
-    fun getAllTableRegistries(): Collection<TableRegistryEntity> = repository.findAll()
+    fun getAllTableRegistries(): Collection<TableRegistryEntity> = tableRegistryRepository.findAll()
 
     @Cacheable
-    fun findByTableName(tableName: String): TableRegistryEntity? = repository.findByTableName(tableName)
+    fun findByTableName(tableName: String): TableRegistryEntity? = tableRegistryRepository.findByTableName(tableName)
 
     @CacheEvict(allEntries = true)
-    fun upsertTableRegistry(entity: TableRegistryEntity) = repository.save(entity)
+    fun upsertTableRegistry(entity: TableRegistryEntity) = tableRegistryRepository.save(entity)
 
     @CacheEvict(allEntries = true)
     fun deleteTableRegistry(id: UUID) {
-        repository.deleteById(id)
+        tableRegistryRepository.deleteById(id)
     }
 }
