@@ -3,30 +3,23 @@ package me.ezra_home.retail_software_solution.platform.rest.endpoints.db_version
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionInsertDto
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
-@CrossOrigin
 @RestController
 @RequestMapping("/secured/db-versions")
 @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
 class DbVersionEndpoint(private val dbVersionService: DbVersionService) {
-    @PostMapping
-    fun createVersion(@RequestBody dbVersionInsertDto: DbVersionInsertDto): DbVersionResponseDto =
-        dbVersionService.createDbVersion(dbVersionInsertDto)
 
     @GetMapping
     fun getAllDbVersions(): Collection<DbVersionResponseDto> = dbVersionService.getAllDbVersions()
 
-    @PostMapping("/{versionId}/activate")
+    @PutMapping("/{versionId}/activate")
     fun activateVersion(@PathVariable versionId: UUID): DbVersionResponseDto =
         dbVersionService.activateDbVersion(versionId)
 }

@@ -16,9 +16,8 @@ class DbVersionCache(private val dbVersionRepository: DbVersionRepository) {
         return dbVersionRepository.findAll()
     }
 
-   @Cacheable
-    fun getLatestDbVersion(): DbVersionEntity? {
-        return dbVersionRepository.findTopByOrderBySequenceNumberDesc()
+    fun findMaxSequenceNumber(): Long? {
+        return dbVersionRepository.findMaxSequenceNumber()
     }
 
     @CacheEvict(allEntries = true)

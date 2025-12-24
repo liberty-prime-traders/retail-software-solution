@@ -4,7 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Size
-import me.ezra_home.retail_software_solution.util.model.AuditableEntity
+import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
@@ -35,4 +35,4 @@ class AddressEntity(
     @Column(name = "country", length = 100)
     var country: String? = null
 
-): AuditableEntity()
+): HasCreatorEntity()

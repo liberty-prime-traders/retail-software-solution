@@ -8,7 +8,7 @@ import java.util.UUID
 class DbVersionQualifier(private final val dbVersionCache: DbVersionCache) {
 
     @DbVersionNumber
-    fun resolveMinimumVersion(versionId: UUID?): String? {
+    fun resolveVersionNumber(versionId: UUID?): String? {
         return versionId?.let {
             dbVersionCache.getAllDbVersions().find { it.id == versionId }?.versionNumber
         }

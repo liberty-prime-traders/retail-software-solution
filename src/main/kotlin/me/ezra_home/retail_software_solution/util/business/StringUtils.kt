@@ -5,6 +5,14 @@ import java.util.Optional
 
 object StringUtils {
 
+    fun getValueOrNull(str: String?): String? {
+        return if (hasValue(str)) {
+            str!!.trim().replace("\u00A0", " ")
+        } else {
+            null
+        }
+    }
+
     fun getValueOrException(str: String?, exceptionMessage: String): String {
         return getValueOrException(Optional.ofNullable(str), exceptionMessage)
     }

@@ -4,6 +4,6 @@ import org.springframework.stereotype.Component
 import java.util.Optional
 
 @Component
-class OptionalQualifier {
+object OptionalQualifier {
     fun <T> fromOptional(optional: Optional<T>): T? = optional.orElse(null)
 }
