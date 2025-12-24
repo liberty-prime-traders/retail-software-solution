@@ -22,6 +22,8 @@ databaseChangeLog:
                   name: name
                   type: nvarchar2(100)
                   constraints:
+                    nullable: false
+                    notNullConstraintName: organization_name_notnull
                     unique: true
                     uniqueConstraintName: organization_name_unique
 
@@ -31,6 +33,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: organization_subdomain_notnull
+                    unique: true
+                    uniqueConstraintName: organization_subdomain_unique
 
               - column:
                   name: description
@@ -47,15 +51,6 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
-
-              - column:
-                  name: predecessor_of_id
-                  type: uuid
-
-              - column:
-                  name: usage_count
-                  type: bigint
-                  defaultValueNumeric: '0'
 
               - column:
                   name: schema_name

@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.util.model
 
+import kotlin.reflect.KProperty1
+
 object TableNames {
     const val ADDRESS = "address"
     const val SYS_USER = "sys_user"
@@ -19,4 +21,10 @@ object TableNames {
     const val DB_VERSION = "db_version"
     const val DB_MIGRATION = "db_migration"
     const val TABLE_REGISTRY = "table_registry"
+    const val PRODUCT_VARIATION = "product_variation"
+
+    fun exists(name: String?): Boolean =
+        this::class.members
+            .filterIsInstance<KProperty1<TableNames, *>>()
+            .any { it.get(this) == name }
 }
