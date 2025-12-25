@@ -21,15 +21,11 @@ interface AddressMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(addressInsertDto: AddressInsertDto): AddressEntity
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(addressDto: AddressUpdateDto, @MappingTarget addressEntity: AddressEntity)
 }

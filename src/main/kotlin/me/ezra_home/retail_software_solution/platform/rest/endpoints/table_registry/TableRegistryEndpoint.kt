@@ -21,7 +21,7 @@ class TableRegistryEndpoint(private val tableRegistryService: TableRegistryServi
     @GetMapping
     fun getAll(): Collection<TableRegistryResponseDto> = tableRegistryService.getAll()
 
-    @PutMapping("validate/{id}")
+    @PutMapping("{id}/validate")
     fun validate(@PathVariable id: UUID): TableRegistryResponseDto = tableRegistryService.validate(id)
 
     @PutMapping

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionMapper
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -38,9 +37,7 @@ class DbVersionService(
     }
 
     private fun verifyDbVersionForActivation(dbVersion: DbVersionEntity, allDbVersions: Collection<DbVersionEntity>) {
-        allDbVersions.find { StringUtils.isEquivalent(it.versionNumber, dbVersion.versionNumber) }
-            ?.let { throw RtsGenericException("An DB Version '${dbVersion.versionNumber}' already exists.") }
-        dbVersion.prevVersionId?.let { prevVersionId ->
+          dbVersion.prevVersionId?.let { prevVersionId ->
             if (prevVersionId == dbVersion.id) {
                 throw RtsGenericException("A DB version cannot point to itself as previous version.")
             }

@@ -25,19 +25,11 @@ class TableRegistryService(
         val allTables = tableRegistryCache.getAllTables()
         val entity = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
         if (!entity.validated) {
-            validateRequiredFields(entity)
-            validateUniqueness(entity.tableName, entity.defaultPrefix, entity.displayName, entity.id, allTables)
             validateName(entity.tableName)
             entity.validated = true
             tableRegistryCache.upsertTable(entity)
         }
         return tableRegistryMapper.toDto(entity)
-    }
-
-    private fun validateRequiredFields(entity: TableRegistryEntity) {
-        StringUtils.getValueOrException(entity.tableName, "Table name is required")
-        StringUtils.getValueOrException(entity.defaultPrefix, "Default prefix is required")
-        StringUtils.getValueOrException(entity.displayName, "Display name is required")
     }
 
     private fun validateName(name: String?) {
@@ -51,12 +43,17 @@ class TableRegistryService(
          tableRegistryMapper.patchEntity(dto, entity)
          val effectiveDefaultPrefix = entity.defaultPrefix
          val effDisplayName = entity.displayName
-         validateUniqueness(entity.tableName, effectiveDefaultPrefix, effDisplayName, entity.id, allTables)
          validateRequiredFields(entity)
+         validateUniqueness(entity.tableName, effectiveDefaultPrefix, effDisplayName, entity.id, allTables)
          tableRegistryCache.upsertTable(entity)
          return tableRegistryMapper.toDto(entity)
      }
 
+    private fun validateRequiredFields(entity: TableRegistryEntity) {
+        StringUtils.getValueOrException(entity.tableName, "Table name is required")
+        StringUtils.getValueOrException(entity.defaultPrefix, "Default prefix is required")
+        StringUtils.getValueOrException(entity.displayName, "Display name is required")
+    }
 
     private fun validateUniqueness(tableName: String?, defaultPrefix: String?, displayName: String?, tableId: UUID?, allTables: Collection<TableRegistryEntity>) {
         if (!tableName.isNullOrBlank()) {

@@ -18,8 +18,6 @@ interface OrganizationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
     @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(organizationUpsertDto: OrganizationUpsertDto): OrganizationEntity
@@ -30,8 +28,6 @@ interface OrganizationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
     @Mapping(target = "subdomain", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
