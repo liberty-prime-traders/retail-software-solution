@@ -1,10 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationService.Companion.NAME_ALREADY_EXISTS
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationService.Companion.NAME_IS_REQUIRED
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -12,6 +10,12 @@ import java.util.Objects
 
 @Component
 class LocationValidator(private val locationCache: LocationCache) {
+
+
+    companion object {
+        const val NAME_IS_REQUIRED = "A location must have a name"
+        const val NAME_ALREADY_EXISTS = "A location with the name %s already exists"
+    }
 
     fun validateLocationInsert(locationInsertDto: LocationInsertDto) {
         val name = StringUtils.getValueOrException(locationInsertDto.name, NAME_IS_REQUIRED)

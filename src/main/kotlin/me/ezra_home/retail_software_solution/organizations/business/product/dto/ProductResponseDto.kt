@@ -14,5 +14,5 @@ data class ProductResponseDto (
     val categoryName: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val usageCount: Long?
+    val baseUnit: String?
 ) : Serializable

@@ -36,7 +36,7 @@ class ProductEndpoint(private val productService: ProductService) {
         productService.getAllProducts()
 
     @DeleteMapping("{id}")
-    fun deleteProduct(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
+    fun deleteProduct(@PathVariable id: UUID): ResponseEntity<HttpStatusCode> {
         productService.deleteProduct(id)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

@@ -12,11 +12,9 @@ data class TableRegistryResponseDto(
     val tableName: String?,
     val defaultPrefix: String?,
     val minimumVersion: String?,
-    val minimumVersionId: UUID?,
     val schemaLevel: SchemaLevel?,
     val displayName: String?,
     val description: String?,
     val userFacing: Boolean?,
-    val createdBy: String?,
-    val nextNumber: Long?
+    val validated: Boolean?
 ): Serializable

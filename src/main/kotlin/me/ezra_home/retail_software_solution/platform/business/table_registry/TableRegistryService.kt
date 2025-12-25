@@ -1,13 +1,12 @@
 package me.ezra_home.retail_software_solution.platform.business.table_registry
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.table_registry.dto.TableRegistryInsertDto
 import me.ezra_home.retail_software_solution.platform.business.table_registry.dto.TableRegistryResponseDto
 import me.ezra_home.retail_software_solution.platform.business.table_registry.dto.TableRegistryUpdateDto
 import me.ezra_home.retail_software_solution.platform.model.TableRegistryEntity
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -20,58 +19,58 @@ class TableRegistryService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAll(): Collection<TableRegistryResponseDto> =
-        tableRegistryCache.getAllTableRegistries().map { tableRegistryMapper.toDto(it) }
+        tableRegistryCache.getAllTables().map { tableRegistryMapper.toDto(it) }
 
-    fun create(dto: TableRegistryInsertDto): TableRegistryResponseDto {
-        val tableName = StringUtils.getValueOrException(dto.tableName, "Table name is required")
-        val defaultPrefix = StringUtils.getValueOrException(dto.defaultPrefix, "Default prefix is required")
-        val minimumVersionId = dto.minimumVersionId ?: throw RtsGenericException("Minimum version id is required")
-        val schemaLevel = dto.schemaLevel ?: throw RtsGenericException("Schema level is required")
-        val displayName = StringUtils.getValueOrException(dto.displayName, "Display name is required")
-        val description = StringUtils.getValueOrException(dto.description, "Description is required")
-        val userFacing = dto.userFacing ?: false
-
-        validateUniqueness(tableName, defaultPrefix, displayName, null)
-
-        val validatedDto = TableRegistryInsertDto(tableName, defaultPrefix, minimumVersionId, schemaLevel, displayName, description, userFacing)
-        val entity: TableRegistryEntity = tableRegistryMapper.toEntity(validatedDto).apply { createdById = SessionContextProvider.getUserId() }
-
-        tableRegistryCache.upsertTableRegistry(entity)
+    fun validate(id: UUID): TableRegistryResponseDto {
+        val allTables = tableRegistryCache.getAllTables()
+        val entity = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
+        if (!entity.validated) {
+            validateName(entity.tableName)
+            entity.validated = true
+            tableRegistryCache.upsertTable(entity)
+        }
         return tableRegistryMapper.toDto(entity)
     }
 
-     fun update(dto: TableRegistryUpdateDto): TableRegistryResponseDto {
-         val id = dto.id ?: throw RtsGenericException("Registry id is required")
-         val entity = tableRegistryCache.getAllTableRegistries().find { it.id == id } ?: throw RtsGenericException("Registry not found")
-         val effectiveTableName = if (StringUtils.hasValue(dto.tableName)) dto.tableName?.get() else null
-         val effectiveDefaultPrefix = if (StringUtils.hasValue(dto.defaultPrefix)) dto.defaultPrefix?.get() else null
-         val effDisplayName = if (StringUtils.hasValue(dto.displayName)) dto.displayName?.get() else null
-         validateUniqueness(effectiveTableName, effectiveDefaultPrefix, effDisplayName, entity.id)
+    private fun validateName(name: String?) {
+        require(TableName.exists(name)) { "Table name '$name' is not recognized in the system" }
+    }
 
-         tableRegistryMapper.updateEntity(dto, entity)
-         tableRegistryCache.upsertTableRegistry(entity)
+     fun update(dto: TableRegistryUpdateDto): TableRegistryResponseDto {
+         val id = dto.id ?: throw RtsGenericException("Table Registry id is required for update")
+         val allTables = tableRegistryCache.getAllTables()
+         val entity = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
+         tableRegistryMapper.patchEntity(dto, entity)
+         val effectiveDefaultPrefix = entity.defaultPrefix
+         val effDisplayName = entity.displayName
+         validateRequiredFields(entity)
+         validateUniqueness(entity.tableName, effectiveDefaultPrefix, effDisplayName, entity.id, allTables)
+         tableRegistryCache.upsertTable(entity)
          return tableRegistryMapper.toDto(entity)
      }
 
-    private fun validateUniqueness(tableName: String?, defaultPrefix: String?, displayName: String?, ignoreId: UUID?) {
+    private fun validateRequiredFields(entity: TableRegistryEntity) {
+        StringUtils.getValueOrException(entity.tableName, "Table name is required")
+        StringUtils.getValueOrException(entity.defaultPrefix, "Default prefix is required")
+        StringUtils.getValueOrException(entity.displayName, "Display name is required")
+    }
+
+    private fun validateUniqueness(tableName: String?, defaultPrefix: String?, displayName: String?, tableId: UUID?, allTables: Collection<TableRegistryEntity>) {
         if (!tableName.isNullOrBlank()) {
-            tableRegistryCache.getAllTableRegistries()
-                .find { StringUtils.isEquivalent(it.tableName, tableName) && it.id != ignoreId }
-                ?.let { throw RtsGenericException("A Table Registry using the table name '$tableName' already exists") }
+            allTables
+                .find { StringUtils.isEquivalent(it.tableName, tableName) && it.id != tableId }
+                ?.let { throw RtsGenericException("A Table using the name '$tableName' already exists") }
         }
         if (!defaultPrefix.isNullOrBlank()) {
-            tableRegistryCache.getAllTableRegistries()
-                .find { StringUtils.isEquivalent(it.defaultPrefix, defaultPrefix) && it.id != ignoreId }
-                ?.let { throw RtsGenericException("A Table Registry using the default prefix '$defaultPrefix' already exists") }
+            allTables
+                .find { StringUtils.isEquivalent(it.defaultPrefix, defaultPrefix) && it.id != tableId }
+                ?.let { throw RtsGenericException("A Table using the default prefix '$defaultPrefix' already exists") }
         }
         if (!displayName.isNullOrBlank()) {
-            tableRegistryCache.getAllTableRegistries()
-                .find { StringUtils.isEquivalent(it.displayName, displayName) && it.id != ignoreId }
-                ?.let { throw RtsGenericException("A Table Registry using the display name '$displayName' already exists") }
+            allTables
+                .find { StringUtils.isEquivalent(it.displayName, displayName) && it.id != tableId }
+                ?.let { throw RtsGenericException("A Table using the display name '$displayName' already exists") }
         }
     }
 
-    fun delete(id: UUID?) {
-        id?.let { tableRegistryCache.deleteTableRegistry(it) }
-    }
 }
