@@ -17,3 +17,11 @@ databaseChangeLog:
   - includeAll:
       path: tables
       relativeToChangelogFile: true
+
+  - includeAll:
+      path: version-entries
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: registry-entries
+      relativeToChangelogFile: true

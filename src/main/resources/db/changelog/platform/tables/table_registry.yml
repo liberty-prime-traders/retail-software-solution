@@ -20,17 +20,21 @@ databaseChangeLog:
 
               - column:
                   name: table_name
-                  type: nvarchar
+                  type: nvarchar(100)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_table_name_not_null
+                    unique: true
+                    uniqueConstraintName: table_registry_table_name_unique
 
               - column:
                   name: default_prefix
-                  type: nvarchar
+                  type: nvarchar(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_default_prefix_not_null
+                    unique: true
+                    uniqueConstraintName: table_registry_default_prefix_unique
 
               - column:
                   name: minimum_version_id
@@ -41,24 +45,26 @@ databaseChangeLog:
 
               - column:
                   name: schema_level
-                  type: nvarchar
+                  type: nvarchar(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_schema_level_not_null
 
               - column:
                   name: display_name
-                  type: nvarchar
+                  type: nvarchar(255)
                   constraints:
-                    nullable: false
-                    notNullConstraintName: table_registry_display_name_not_null
+                      nullable: false
+                      notNullConstraintName: table_registry_display_name_not_null
+                      unique: true
+                      uniqueConstraintName: table_registry_display_name_unique
 
               - column:
                   name: description
-                  type: nvarchar
+                  type: nvarchar(1000)
                   constraints:
-                    nullable: false
-                    notNullConstraintName: table_registry_description_not_null
+                      nullable: false
+                      notNullConstraintName: table_registry_description_not_null
 
               - column:
                   name: user_facing
@@ -66,21 +72,9 @@ databaseChangeLog:
                   defaultValueBoolean: false
 
               - column:
-                  name: next_number
-                  type: bigint
-                  defaultValueNumeric: '1'
-
-              - column:
-                  name: created_on
-                  type: timestamptz
-                  defaultValueComputed: ${now}
-
-              - column:
-                  name: created_by_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: table_registry_created_by_id_not_null
+                  name: validated
+                  type: boolean
+                  defaultValueBoolean: false
 
               - column:
                   name: reference_number

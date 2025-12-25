@@ -68,9 +68,4 @@ class LocationService(
             locationCache.deleteLocation(locationId)
         }
     }
-
-    companion object {
-        const val NAME_IS_REQUIRED = "A location must have a name"
-        const val NAME_ALREADY_EXISTS = "A location with the name %s already exists"
-    }
 }

@@ -2,28 +2,31 @@ package me.ezra_home.retail_software_solution.organizations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.util.listeners.OrganizationReferenceNumberEntityListener
-import me.ezra_home.retail_software_solution.util.model.AuditableEntity
+import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.PRODUCT)
-@EntityListeners(OrganizationReferenceNumberEntityListener::class)
 class ProductEntity(
 
     @Column(name = "name", nullable = false)
-    var productName: String? = null,
+    var productName: String,
 
     @Column(name = "description")
     var description: String? = null,
 
     @Column(name = "category_id", nullable = false)
-    var categoryId: UUID? = null,
+    var categoryId: UUID,
+
+    @Column(name = "base_unit_id")
+    var baseUnitId: UUID,
+
+    @Column(name = "cursor", insertable = false, updatable = false)
+    var cursor: Long,
 
     @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null,
+    var referenceNumber: String? = null
 
-): AuditableEntity()
+): HasCreatorEntity()

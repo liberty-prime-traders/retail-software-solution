@@ -24,36 +24,23 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: db_version_version_number_notnull
+                    unique: true
+                    uniqueConstraintName: db_version_version_number_unique
 
               - column:
                   name: sequence_number
                   type: BIGINT
                   constraints:
-                    nullable: false
-                    notNullConstraintName: db_version_sequence_number_notnull
+                    unique: true
+                    uniqueConstraintName: db_version_sequence_number_unique
 
               - column:
                   name: prev_version_id
                   type: uuid
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: db_version_prev_version_id_unique
 
               - column:
                   name: activated_on
                   type: timestamptz
-
-              - column:
-                  name: created_by_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: db_version_created_by_id_notnull
-
-              - column:
-                  name: created_on
-                  type: timestamptz
-                  defaultValueDate: ${now}
-
-              - column:
-                  name: reference_number
-                  type: nvarchar(30)
-                  constraints:
-                    unique: true

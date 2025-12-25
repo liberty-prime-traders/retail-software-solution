@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.organizations.business.category.Cat
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -52,15 +51,9 @@ class ProductService(
         return productMapper.toDto(productToUpdate)
     }
 
-    fun deleteProduct(id: UUID?) {
-        id?.let {
-            productCache.getAllProducts().find { it.id == id }?.let { entity ->
-                val usageCount = entity.usageCount
-                if (usageCount > 0L) {
-                    throw RtsGenericException("Product ${entity.productName} has $usageCount usage(s) and cannot be deleted")
-                }
-                productCache.deleteProduct(id)
-            }
+    fun deleteProduct(id: UUID) {
+        productCache.getAllProducts().find { it.id == id }?.apply {
+            productCache.deleteProduct(id)
         }
     }
 }

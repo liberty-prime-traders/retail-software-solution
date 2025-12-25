@@ -10,4 +10,5 @@ data class ProductInsertDto(
     val productName: String? = null,
     val description: String? = null,
     val categoryId: UUID? = null,
+    val baseUnitId: UUID? = null
 ) : Serializable

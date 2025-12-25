@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.hibernate.annotations.Filter
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.JpaTransactionManager
@@ -33,11 +34,16 @@ class UserDataExtractionFilter(
             chain.doFilter(request, response)
             return
         }
-        val authentication = SecurityContextHolder.getContext().authentication
-        val jwt = authentication.principal as Jwt
-        val sessionContext = SessionContextProvider.getSession()
-        sessionContext.oktaId = jwt.claims[OKTA_ID_KEY] as String
-        initializeSystemUserId(sessionContext)
+
+        try {
+            val authentication = SecurityContextHolder.getContext().authentication
+            val jwt = authentication.principal as Jwt
+            val sessionContext = SessionContextProvider.getSession()
+            sessionContext.oktaId = jwt.claims[OKTA_ID_KEY] as String
+            initializeSystemUserId(sessionContext)
+        } catch (_: ClassCastException) {
+            throw RtsGenericException("Failed to extract user data from security context")
+        }
 
         try {
             chain.doFilter(request, response)

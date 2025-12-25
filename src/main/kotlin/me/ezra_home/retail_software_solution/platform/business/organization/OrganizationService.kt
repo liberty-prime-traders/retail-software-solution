@@ -111,11 +111,7 @@ class OrganizationService(
 
     fun deleteOrganization() {
         val organizationId = SessionContextProvider.getOrganizationId()
-        organizationCache.getAllOrganizations().find { it.id == organizationId }?.let { entity ->
-            val usageCount = entity.usageCount
-            if (usageCount > 0L) {
-                throw RtsGenericException("Organization ${entity.name} has $usageCount usage(s) and cannot be deleted")
-            }
+        organizationCache.getAllOrganizations().find { it.id == organizationId }?.apply {
             organizationCache.deleteOrganization(organizationId)
         }
     }

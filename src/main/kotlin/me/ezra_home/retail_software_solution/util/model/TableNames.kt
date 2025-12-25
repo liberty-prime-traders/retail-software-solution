@@ -19,7 +19,4 @@ object TableNames {
     const val DB_VERSION = "db_version"
     const val DB_MIGRATION = "db_migration"
     const val TABLE_REGISTRY = "table_registry"
-    const val PREFIX_CONFIGURATION = "prefix_configuration"
-    const val PREFIX_SEQUENCE_TRACKER = "prefix_sequence_tracker"
-    const val ORGANIZATION_PREFIX_SEQUENCE_TRACKER = "organization_prefix_sequence_tracker"
 }

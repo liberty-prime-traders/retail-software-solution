@@ -47,13 +47,15 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
-                  name: predecessor_of_id
-                  type: uuid
+                  name: cursor
+                  type: bigserial
 
               - column:
-                  name: usage_count
-                  type: bigint
-                  defaultValueNumeric: '0'
+                  name: base_unit_id
+                  type: uuid
+                  constraints:
+                      nullable: false
+                      notNullConstraintName: product_base_unit_id_notnull
 
               - column:
                   name: reference_number

@@ -12,8 +12,5 @@ data class DbVersionResponseDto(
     val sequenceNumber: Long?,
     val prevVersion: String?,
     @field:JsonSerialize(using = DatesToMillis::class)
-    val activatedOn: OffsetDateTime?,
-    @field:JsonSerialize(using = DatesToMillis::class)
-    val createdOn: OffsetDateTime?,
-    val createdBy: String?
+    val activatedOn: OffsetDateTime?
 ): Serializable
