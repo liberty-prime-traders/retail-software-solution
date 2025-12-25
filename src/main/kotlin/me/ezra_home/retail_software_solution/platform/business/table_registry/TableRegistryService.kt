@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.platform.business.table_registry.dt
 import me.ezra_home.retail_software_solution.platform.model.TableRegistryEntity
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -33,7 +33,7 @@ class TableRegistryService(
     }
 
     private fun validateName(name: String?) {
-        require(TableNames.exists(name)) { "Table name '$name' is not recognized in the system" }
+        require(TableName.exists(name)) { "Table name '$name' is not recognized in the system" }
     }
 
      fun update(dto: TableRegistryUpdateDto): TableRegistryResponseDto {
