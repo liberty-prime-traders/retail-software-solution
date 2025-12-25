@@ -14,14 +14,10 @@ class CacheNames {
         const val UNIT_GROUP = "UnitGroup"
         const val UNIT_VALUE = "UnitValue"
         const val PAYMENT_METHOD = "PaymentMethod"
-        const val VARIATION = "Variation"
         const val PRODUCT = "Product"
         const val DB_VERSION = "DbVersion"
         const val DB_MIGRATION = "DbMigration"
         const val TABLE_REGISTRY = "TableRegistry"
-        const val PREFIX_SEQUENCE_TRACKER = "PrefixSequenceTracker"
-        const val LOCATION_PREFIX_SEQUENCE_TRACKER = "LocationPrefixSequenceTracker"
-        const val ORGANIZATION_PREFIX_CONFIGURATION  = "OrganizationPrefixConfiguration"
-        const val LOCATION_PREFIX_CONFIGURATION  = "LocationPrefixConfiguration"
+        const val ORG_TABLE_REGISTRY = "OrgTableRegistry"
     }
 }

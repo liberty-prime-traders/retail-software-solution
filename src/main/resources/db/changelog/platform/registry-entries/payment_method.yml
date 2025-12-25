@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-entry-for-organization-in-table-registry'
+      id: 'create-entry-for-payment-method-in-table-registry'
       author: ezra
       changes:
         - insert:
@@ -11,22 +11,22 @@ databaseChangeLog:
                   valueComputed: ${uuid_function}
               - column:
                   name: table_name
-                  value: organization
+                  value: payment_method
               - column:
                   name: default_prefix
-                  value: ORG
+                  value: PMTH
               - column:
                   name: minimum_version_id
                   valueComputed: (SELECT id FROM db_version WHERE version_number = '1.0.0')
               - column:
                   name: schema_level
-                  value: PLT
+                  value: ORG
               - column:
                   name: display_name
-                  value: Organization
+                  value: Payment Method
               - column:
                   name: description
-                  value: Table containing organizations
+                  value: Table containing payment methods
               - column:
                   name: reference_number
-                  value: PTBL09
+                  value: PTBL12

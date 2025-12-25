@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-entry-for-organization-in-table-registry'
+      id: 'create-entry-for-table-registry-in-table-registry'
       author: ezra
       changes:
         - insert:
@@ -11,10 +11,10 @@ databaseChangeLog:
                   valueComputed: ${uuid_function}
               - column:
                   name: table_name
-                  value: organization
+                  value: table_registry
               - column:
                   name: default_prefix
-                  value: ORG
+                  value: PTBL
               - column:
                   name: minimum_version_id
                   valueComputed: (SELECT id FROM db_version WHERE version_number = '1.0.0')
@@ -23,10 +23,10 @@ databaseChangeLog:
                   value: PLT
               - column:
                   name: display_name
-                  value: Organization
+                  value: Table Registry
               - column:
                   name: description
-                  value: Table containing organizations
+                  value: Registry of all tables in the system
               - column:
                   name: reference_number
-                  value: PTBL09
+                  value: PTBL01
