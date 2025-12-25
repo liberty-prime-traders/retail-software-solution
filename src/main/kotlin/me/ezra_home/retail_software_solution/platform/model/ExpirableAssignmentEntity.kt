@@ -14,13 +14,13 @@ abstract class ExpirableAssignmentEntity(
 
     @Column(name = "start_on", updatable = false)
     @CreationTimestamp
-    var startOn: OffsetDateTime? = null,
+    var startOn: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null,
 
     @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null
+    var referenceNumber: String? = null = ""
 
 ): BaseEntity() {
     fun isActive(): Boolean {

@@ -25,6 +25,6 @@ class OrganizationJoinRequestEntity(
     var organizationId: UUID?,
 
     @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null,
+    var referenceNumber: String? = null
 
-    ) : HasCreatorEntity()
+) : HasCreatorEntity()

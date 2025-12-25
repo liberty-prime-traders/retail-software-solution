@@ -17,7 +17,7 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class PaymentMethodService (
     private val paymentMethodMapper: PaymentMethodMapper,
-    private val paymentMethodCache: PaymentMethodCache,
+    private val paymentMethodCache: PaymentMethodCache
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
