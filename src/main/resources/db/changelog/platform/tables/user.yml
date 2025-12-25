@@ -27,6 +27,9 @@ databaseChangeLog:
 
               - column:
                   name: reference_number
-                  type: nvarchar(30)
+                  type: nvarchar2(30)
                   constraints:
                     unique: true
+                    uniqueConstraintName: sys_user_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: sys_user_reference_number_not_null

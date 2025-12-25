@@ -27,3 +27,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Table containing organizations
+              - column:
+                  name: reference_number
+                  value: ORG001

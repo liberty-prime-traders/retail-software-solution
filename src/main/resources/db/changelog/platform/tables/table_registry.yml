@@ -20,7 +20,7 @@ databaseChangeLog:
 
               - column:
                   name: table_name
-                  type: nvarchar(100)
+                  type: nvarchar2(100)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_table_name_not_null
@@ -29,7 +29,7 @@ databaseChangeLog:
 
               - column:
                   name: default_prefix
-                  type: nvarchar(5)
+                  type: nvarchar2(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_default_prefix_not_null
@@ -45,14 +45,14 @@ databaseChangeLog:
 
               - column:
                   name: schema_level
-                  type: nvarchar(5)
+                  type: nvarchar2(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: table_registry_schema_level_not_null
 
               - column:
                   name: display_name
-                  type: nvarchar(255)
+                  type: nvarchar2(255)
                   constraints:
                       nullable: false
                       notNullConstraintName: table_registry_display_name_not_null
@@ -61,7 +61,7 @@ databaseChangeLog:
 
               - column:
                   name: description
-                  type: nvarchar(1000)
+                  type: nvarchar2(1000)
                   constraints:
                       nullable: false
                       notNullConstraintName: table_registry_description_not_null
@@ -78,6 +78,9 @@ databaseChangeLog:
 
               - column:
                   name: reference_number
-                  type: nvarchar(30)
+                  type: nvarchar2(30)
                   constraints:
                     unique: true
+                    uniqueConstraintName: table_registry_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: table_registry_reference_number_not_null

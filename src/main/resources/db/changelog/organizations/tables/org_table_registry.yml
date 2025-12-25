@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create_org_table_registry_table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: org_table_registry
+      changes:
+        - createTable:
+            tableName: org_table_registry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: registry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_table_registry_registry_id_not_null
+                    unique: true
+                    uniqueConstraintName: org_table_registry_registry_id_unique
+
+              - column:
+                  name: default_prefix
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_table_registry_default_prefix_not_null
+                    unique: true
+                    uniqueConstraintName: org_table_registry_default_prefix_unique
+
+              - column:
+                  name: display_name
+                  type: nvarchar2(255)
+                  constraints:
+                      nullable: false
+                      notNullConstraintName: org_table_registry_display_name_not_null
+                      unique: true
+                      uniqueConstraintName: org_table_registry_display_name_unique
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: org_table_registry_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: org_table_registry_reference_number_not_null

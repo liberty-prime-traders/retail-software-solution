@@ -56,3 +56,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
+                    uniqueConstraintName: unit_group_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: unit_group_reference_number_not_null

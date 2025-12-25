@@ -62,3 +62,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
+                    uniqueConstraintName: product_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: product_reference_number_not_null

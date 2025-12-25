@@ -57,3 +57,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
+                    uniqueConstraintName: category_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: category_reference_number_not_null
