@@ -2,13 +2,19 @@ package me.ezra_home.retail_software_solution.organizations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Size
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
+import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
 @Table(name = TableNames.ADDRESS)
+@HasReference(tableName = TableName.ADDRESS)
+@EntityListeners(ReferenceNumberEntityListener::class)
 class AddressEntity(
 
     @Size(max = 100)

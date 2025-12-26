@@ -19,7 +19,7 @@ enum class TableName(val tableName: String) {
     DB_VERSION(TableNames.DB_VERSION),
     DB_MIGRATION(TableNames.DB_MIGRATION),
     TABLE_REGISTRY(TableNames.TABLE_REGISTRY),
-    PRODUCT_VARIATION(TableNames.PRODUCT_VARIATION);
+    ORG_TABLE_REGISTRY(TableNames.ORG_TABLE_REGISTRY);
 
     companion object {
         private val tableNameSet: Set<String> = entries.map { it.tableName }.toSet()

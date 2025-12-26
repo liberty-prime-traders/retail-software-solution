@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-sequence-db-version-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - createSequence:
+            sequenceName: seq_db_version_reference_number
+            startValue: 1
+            incrementBy: 1

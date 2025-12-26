@@ -20,7 +20,7 @@ abstract class ExpirableAssignmentEntity(
     var endOn: OffsetDateTime? = null,
 
     @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null = ""
+    var referenceNumber: String? = null
 
 ): BaseEntity() {
     fun isActive(): Boolean {

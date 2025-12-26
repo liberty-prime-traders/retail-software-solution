@@ -2,14 +2,20 @@ package me.ezra_home.retail_software_solution.organizations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotNull
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.LocationType
+import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.TableName
 
 @Entity
 @Table(name = TableNames.LOCATION)
+@HasReference(tableName = TableName.LOCATION)
+@EntityListeners(ReferenceNumberEntityListener::class)
 class LocationEntity(
 
     @Column(name = "location_type", nullable = false)

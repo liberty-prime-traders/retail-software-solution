@@ -50,7 +50,7 @@ class PlatformSchemaDataSourceConfig {
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
-            defaultSchema = "platform"
+            defaultSchema = DataSourceBeanNames.PLATFORM_SCHEMA_NAME
             setShouldRun(true)
         }
     }

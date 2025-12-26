@@ -22,9 +22,6 @@ class DbVersionEntity(
     val prevVersionId: UUID? = null,
 
     @Column(name = "activated_on")
-    var activatedOn: OffsetDateTime? = null,
-
-    @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null
+    var activatedOn: OffsetDateTime? = null
 
 ) : BaseEntity()

@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.configuration.cache
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.util.typeadapters.HibernateProxyTypeAdapter
 import me.ezra_home.retail_software_solution.configuration.util.typeadapters.OffsetDateTimeAdapter
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
@@ -38,7 +39,7 @@ class RtsCacheConfig : CachingConfigurer {
         val schemaLevel = target::class.annotations.find { it is CacheSchemaLevel }
             ?.let {it as CacheSchemaLevel}
             ?.schemaLevel
-        val default = "platform"
+        val default = DataSourceBeanNames.PLATFORM_SCHEMA_NAME
         if (schemaLevel == null) {
             return default
         }

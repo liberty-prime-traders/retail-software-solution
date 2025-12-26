@@ -17,4 +17,6 @@ object DataSourceBeanNames {
     const val ORGANIZATION_SCHEMA_DATA_SOURCE = "organizationSchemaDataSource"
     const val ORGANIZATION_SCHEMA_CONNECTION_PROVIDER = "OrganizationSchemaConnectionProvider"
     const val ORGANIZATION_SCHEMA_LIQUIBASE = "organizationSchemaLiquibase"
+
+    const val PLATFORM_SCHEMA_NAME = "platform"
 }

@@ -17,3 +17,11 @@ databaseChangeLog:
   - includeAll:
       path: tables
       relativeToChangelogFile: true
+
+  - includeAll:
+      path: sequences
+      relativeToChangelogFile: true
+
+  - include:
+      file: ../shared/procedures/get_next_sequence_values.yml
+      relativeToChangelogFile: true

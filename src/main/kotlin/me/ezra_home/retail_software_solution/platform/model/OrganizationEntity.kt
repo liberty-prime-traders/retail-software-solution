@@ -2,12 +2,18 @@ package me.ezra_home.retail_software_solution.platform.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.TableName
 
 @Entity
 @Table(name = TableNames.ORGANIZATION)
+@HasReference(tableName = TableName.ORGANIZATION)
+@EntityListeners(ReferenceNumberEntityListener::class)
 class OrganizationEntity(
 
     @Column(name = "name")

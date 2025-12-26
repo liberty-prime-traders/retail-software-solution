@@ -2,13 +2,19 @@ package me.ezra_home.retail_software_solution.organizations.model
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.TableName
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.PRODUCT)
+@HasReference(tableName = TableName.PRODUCT)
+@EntityListeners(ReferenceNumberEntityListener::class)
 class ProductEntity(
 
     @Column(name = "name", nullable = false)
