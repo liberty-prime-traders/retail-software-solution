@@ -46,6 +46,9 @@ class ReferenceNumberGenerator(
             .firstOrNull { it.tableName == tableName.tableName }
             ?: throw RtsGenericException("Table ${tableName.tableName} not found in platform registry")
 
+        if (!platformTable.validated) {
+            throw RtsGenericException("Table ${tableName.tableName} is not validated hence cannot generate reference number")
+        }
         if (schemaLevel != SchemaLevel.PLATFORM) {
             orgTableRegistryCache.getAllTables()
                 .firstOrNull { it.registryId == platformTable.id }

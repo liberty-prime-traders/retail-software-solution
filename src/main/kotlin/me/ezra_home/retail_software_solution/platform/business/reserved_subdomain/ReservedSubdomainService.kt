@@ -27,9 +27,10 @@ class ReservedSubdomainService(
             throw RtsGenericException("An empty subdomain cannot be verified")
         }
         val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain!!)
-        subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain }?.let {
-            throw RtsGenericException("Subdomain '$subdomain' is taken")
-        }
+        val userId = SessionContextProvider.getUserId()
+        subdomainRepository.findByStatusNotAndSubdomain(Status.ABANDONED, subdomain)
+            .find { it.status == Status.USED || it.createdById != userId }
+            ?.let { throw RtsGenericException("Subdomain '$subdomain' is taken") }
         return reservedSubdomainMapper.toDto(reserveSubdomain(subdomain))
     }
 

@@ -14,5 +14,5 @@ abstract class HasCreatorEntity(
 
     @CreationTimestamp(source = SourceType.VM)
     @Column(name = "created_on", updatable = false)
-    var createdOn: OffsetDateTime? = null,
+    var createdOn: OffsetDateTime? = null
 ): BaseEntity()

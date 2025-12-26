@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
-import me.ezra_home.retail_software_solution.util.model.AuditableEntity
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import org.mapstruct.AfterMapping
 import org.mapstruct.MappingTarget
 import org.springframework.stereotype.Component
@@ -22,7 +22,7 @@ class UserQualifier(private val sysUserCache: SysUserCache, ) {
 
     @CreatedBy
     @AfterMapping
-    fun setCreatedBy(@MappingTarget auditableEntity: AuditableEntity) {
-        auditableEntity.createdById = SessionContextProvider.getUserId()
+    fun setCreatedBy(@MappingTarget hasCreatorEntity: HasCreatorEntity) {
+        hasCreatorEntity.createdById = SessionContextProvider.getUserId()
     }
 }
