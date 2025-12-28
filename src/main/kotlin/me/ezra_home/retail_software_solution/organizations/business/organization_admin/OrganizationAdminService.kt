@@ -14,7 +14,7 @@ import java.util.UUID
 class OrganizationAdminService(
     private val organizationAdminMapper: OrganizationAdminMapper,
     private val organizationAdminCache: OrganizationAdminCache,
-    private val sysUserService: SysUserService
+    private val sysUserService: SysUserService,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -26,7 +26,6 @@ class OrganizationAdminService(
     fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
         validateUserExists(adminId)
         val entity = OrganizationAdminEntity(adminId)
-        organizationAdminCache.upsertOrganizationAdmin(entity)
         return organizationAdminMapper.toResponseDto(entity)
     }
 

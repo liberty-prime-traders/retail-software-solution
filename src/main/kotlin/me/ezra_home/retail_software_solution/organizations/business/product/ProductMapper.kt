@@ -1,11 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryName
 import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryNameQualifier
@@ -32,12 +31,13 @@ interface ProductMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "cursor", ignore = true)
-    @BeanMapping(qualifiedBy = [CreatedBy::class])
+    @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(productInsertDto: ProductInsertDto): ProductEntity
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "cursor", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(productDto: ProductUpdateDto, @MappingTarget productEntity: ProductEntity)
 }

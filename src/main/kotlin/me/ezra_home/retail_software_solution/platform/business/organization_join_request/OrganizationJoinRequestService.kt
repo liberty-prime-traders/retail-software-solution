@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.stereotype.Service
 import java.util.Collections
@@ -30,7 +30,7 @@ class OrganizationJoinRequestService(
         if (hasPendingRequest.not()) {
             val joinRequest = OrganizationJoinRequestEntity(
                 subdomain, JoinRequestStatus.PENDING, organization?.id
-            ).apply { createdById = userId }
+            )
             organizationJoinRequestCache.upsertOrganizationJoinRequest(joinRequest)
         }
         return organizationJoinRequestMapper.toLaunchResponse(

@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -27,16 +27,17 @@ class ReservedSubdomainService(
             throw RtsGenericException("An empty subdomain cannot be verified")
         }
         val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain!!)
-        subdomainRepository.findByStatusNot(Status.ABANDONED).find { it.subdomain == subdomain }?.let {
-            throw RtsGenericException("Subdomain '$subdomain' is taken")
-        }
+        val userId = SessionContextProvider.getUserId()
+        subdomainRepository.findByStatusNotAndSubdomain(Status.ABANDONED, subdomain)
+            .find { it.status == Status.USED || it.createdById != userId }
+            ?.let { throw RtsGenericException("Subdomain '$subdomain' is taken") }
         return reservedSubdomainMapper.toDto(reserveSubdomain(subdomain))
     }
 
     private fun reserveSubdomain(sanitizedSubdomain: String): ReservedSubdomainEntity {
         val sysUserId = SessionContextProvider.getUserId()
         subdomainRepository.abandonSubdomainsForUser(sysUserId)
-        val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED).apply { createdById = sysUserId }
+        val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED)
         return subdomainRepository.save(reservedSubdomain)
     }
 

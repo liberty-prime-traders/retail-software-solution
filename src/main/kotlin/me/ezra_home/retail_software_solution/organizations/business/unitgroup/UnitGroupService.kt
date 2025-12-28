@@ -18,7 +18,7 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class UnitGroupService(
     private val unitGroupMapper: UnitGroupMapper,
-    private val unitGroupCache: UnitGroupCache
+    private val unitGroupCache: UnitGroupCache,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

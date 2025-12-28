@@ -16,7 +16,7 @@ class LocationService(
     private val locationCache: LocationCache,
     private val locationMapper: LocationMapper,
     private val locationValidator: LocationValidator,
-    private val locationSchemaService: LocationSchemaService
+    private val locationSchemaService: LocationSchemaService,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -60,7 +60,7 @@ class LocationService(
 
     fun deleteLocation() {
         val locationId = SessionContextProvider.getLocationId()
-        locationCache.getAllLocations().find { it.id == locationId }?.let {entity ->
+        locationCache.getAllLocations().find { it.id == locationId }?.let { entity ->
             val usageCount = entity.usageCount
             if (usageCount > 0L) {
                 throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")

@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationMapper
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
@@ -15,7 +16,6 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.Status
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
@@ -54,7 +54,7 @@ class OrganizationService(
                 this.schemaName = schemaName
             }
             organizationCache.upsertOrganization(entity)
-            organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById))
+            organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById!!))
             return organizationMapper.toResponseDto(entity)
         } catch (e: Exception) {
             organizationSchemaService.dropSchema(schemaName)

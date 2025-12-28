@@ -55,3 +55,12 @@ databaseChangeLog:
                   name: usage_count
                   type: bigint
                   defaultValueNumeric: "0"
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: location_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: location_reference_number_not_null

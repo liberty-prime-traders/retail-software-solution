@@ -16,7 +16,7 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class CategoryService(
     private val categoryMapper: CategoryMapper,
-    private val categoryCache: CategoryCache
+    private val categoryCache: CategoryCache,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

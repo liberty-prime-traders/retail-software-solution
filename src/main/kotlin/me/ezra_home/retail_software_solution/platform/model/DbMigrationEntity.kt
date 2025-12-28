@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatusConverter
 import me.ezra_home.retail_software_solution.util.enums.MigrationType
@@ -11,12 +12,14 @@ import me.ezra_home.retail_software_solution.util.enums.MigrationTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
 import me.ezra_home.retail_software_solution.util.model.BaseEntity
+import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.DB_MIGRATION)
+@HasReference(tableName = TableName.DB_MIGRATION)
 class DbMigrationEntity(
 
     @Column(name = "db_version_id", nullable = false, updatable = false)

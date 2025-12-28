@@ -20,7 +20,7 @@ databaseChangeLog:
 
               - column:
                   name: version_number
-                  type: nvarchar(15)
+                  type: nvarchar2(15)
                   constraints:
                     nullable: false
                     notNullConstraintName: db_version_version_number_notnull

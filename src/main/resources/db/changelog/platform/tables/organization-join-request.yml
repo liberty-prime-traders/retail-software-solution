@@ -49,3 +49,12 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     notNullConstraintName: org_join_request_organization_id_notnull
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: org_join_request_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: org_join_request_reference_number_not_null

@@ -12,7 +12,7 @@ import java.util.UUID
 @Repository
 interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
 
-    fun findByStatusNot(status: Status): List<ReservedSubdomainEntity>
+    fun findByStatusNotAndSubdomain(status: Status, subdomain: String): List<ReservedSubdomainEntity>
 
     @Modifying
     @Query("update ReservedSubdomainEntity r set r.status = 'ABND' where r.createdById = :createdById and r.status = 'UNSD'")

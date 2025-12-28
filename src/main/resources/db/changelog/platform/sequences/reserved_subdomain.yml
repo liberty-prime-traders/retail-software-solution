@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-sequence-reserved-subdomain-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - createSequence:
+            sequenceName: seq_reserved_subdomain_reference_number
+            startValue: 1
+            incrementBy: 1

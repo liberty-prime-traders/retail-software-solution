@@ -18,7 +18,7 @@ class ProductService(
     private val productCache: ProductCache,
     private val categoryCache: CategoryCache,
     private val categoryUsageCounter: CategoryUsageCounter,
-    private val productValidator: ProductValidator
+    private val productValidator: ProductValidator,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

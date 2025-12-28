@@ -1,72 +1,86 @@
 databaseChangeLog:
   - changeSet:
-        id: 'create_table_registry_table'
-        author: ezra
-        changes:
-          - createTable:
-              tableName: table_registry
-              columns:
-                - column:
-                    name: id
-                    type: uuid
-                    defaultValueComputed: ${uuid_function}
-                    constraints:
-                      primaryKey: true
+      id: 'create_table_registry_table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: table_registry
+      changes:
+        - createTable:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
 
-                - column:
-                    name: table_name
-                    type: nvarchar(100)
-                    constraints:
+              - column:
+                  name: table_name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: table_registry_table_name_not_null
+                    unique: true
+                    uniqueConstraintName: table_registry_table_name_unique
+
+              - column:
+                  name: default_prefix
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: table_registry_default_prefix_not_null
+                    unique: true
+                    uniqueConstraintName: table_registry_default_prefix_unique
+
+              - column:
+                  name: minimum_version_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: table_registry_minimum_version_id_not_null
+
+              - column:
+                  name: schema_level
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: table_registry_schema_level_not_null
+
+              - column:
+                  name: display_name
+                  type: nvarchar2(255)
+                  constraints:
                       nullable: false
-                      notNullConstraintName: table_registry_table_name_not_null
+                      notNullConstraintName: table_registry_display_name_not_null
                       unique: true
-                      uniqueConstraintName: table_registry_table_name_unique
+                      uniqueConstraintName: table_registry_display_name_unique
 
-                - column:
-                    name: default_prefix
-                    type: nvarchar(5)
-                    constraints:
+              - column:
+                  name: description
+                  type: nvarchar2(1000)
+                  constraints:
                       nullable: false
-                      notNullConstraintName: table_registry_default_prefix_not_null
-                      unique: true
-                      uniqueConstraintName: table_registry_default_prefix_unique
+                      notNullConstraintName: table_registry_description_not_null
 
-                - column:
-                    name: minimum_version_id
-                    type: uuid
-                    constraints:
-                      nullable: false
-                      notNullConstraintName: table_registry_minimum_version_id_not_null
+              - column:
+                  name: user_facing
+                  type: boolean
+                  defaultValueBoolean: false
 
-                - column:
-                    name: schema_level
-                    type: nvarchar(5)
-                    constraints:
-                      nullable: false
-                      notNullConstraintName: table_registry_schema_level_not_null
+              - column:
+                  name: validated
+                  type: boolean
+                  defaultValueBoolean: false
 
-                - column:
-                    name: display_name
-                    type: nvarchar(255)
-                    constraints:
-                        nullable: false
-                        notNullConstraintName: table_registry_display_name_not_null
-                        unique: true
-                        uniqueConstraintName: table_registry_display_name_unique
-
-                - column:
-                    name: description
-                    type: nvarchar(1000)
-                    constraints:
-                        nullable: false
-                        notNullConstraintName: table_registry_description_not_null
-
-                - column:
-                    name: user_facing
-                    type: boolean
-                    defaultValueBoolean: false
-
-                - column:
-                    name: validated
-                    type: boolean
-                    defaultValueBoolean: false
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: table_registry_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: table_registry_reference_number_not_null

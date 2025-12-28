@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-function-get-next-sequence-values'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION get_next_sequence_values(
+                  p_sequence_name VARCHAR,
+                  p_count INTEGER
+              )
+              RETURNS TABLE(sequence_value BIGINT) AS $$
+              DECLARE
+                  v_start_value BIGINT;
+              BEGIN
+                  -- Get the first value from the sequence
+                  SELECT nextval(p_sequence_name) INTO v_start_value;
+
+                  -- If requesting multiple values, advance the sequence
+                  IF p_count > 1 THEN
+                      PERFORM setval(p_sequence_name, v_start_value + p_count - 1);
+                  END IF;
+
+                  -- Return the range of values
+                  RETURN QUERY
+                  SELECT generate_series(v_start_value, v_start_value + p_count - 1);
+              END;
+              $$ LANGUAGE plpgsql;

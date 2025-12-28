@@ -56,15 +56,19 @@ object SchemaCreator {
         liquibaseLabel: String? = null
     ) {
         try {
-            val database = DatabaseFactory.getInstance()
-                .findCorrectDatabaseImplementation(JdbcConnection(dataSource.connection))
-                .apply { defaultSchemaName = schemaName }
-            val commandScope = CommandScope(UpdateCommandStep.COMMAND_NAME[0])
-                .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog)
-                .addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database)
-                .addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
-            commandScope.execute()
-
+            dataSource.connection.use { conn ->
+                val database = DatabaseFactory.getInstance()
+                    .findCorrectDatabaseImplementation(JdbcConnection(conn))
+                    .apply {
+                        defaultSchemaName = schemaName
+                        outputDefaultSchema = true
+                    }
+                val commandScope = CommandScope(UpdateCommandStep.COMMAND_NAME[0])
+                    .addArgumentValue(UpdateCommandStep.CHANGELOG_FILE_ARG, changeLog)
+                    .addArgumentValue(DbUrlConnectionArgumentsCommandStep.DATABASE_ARG, database)
+                    .addArgumentValue(UpdateCommandStep.LABEL_FILTER_ARG, liquibaseLabel)
+                commandScope.execute()
+            }
         } catch (e: Exception) {
             throw RtsGenericException("Failed to run migration for schema $schemaName: ${e.message}")
         }

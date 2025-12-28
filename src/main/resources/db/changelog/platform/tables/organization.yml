@@ -60,3 +60,12 @@ databaseChangeLog:
                     uniqueConstraintName: organization_schema_name_unique
                     nullable: false
                     notNullConstraintName: organization_schema_name_notnull
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: organization_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: organization_reference_number_not_null

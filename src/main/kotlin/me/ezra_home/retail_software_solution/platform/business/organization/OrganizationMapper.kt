@@ -1,9 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import org.mapstruct.BeanMapping
@@ -19,7 +18,7 @@ interface OrganizationMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
-    @BeanMapping(qualifiedBy = [CreatedBy::class])
+    @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(organizationUpsertDto: OrganizationUpsertDto): OrganizationEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
@@ -30,6 +29,7 @@ interface OrganizationMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
     @Mapping(target = "subdomain", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(organizationUpsertDto: OrganizationUpsertDto, @MappingTarget organizationEntity: OrganizationEntity)
 }

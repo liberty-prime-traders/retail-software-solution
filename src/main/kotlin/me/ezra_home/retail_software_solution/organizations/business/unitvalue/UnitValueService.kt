@@ -20,7 +20,7 @@ class UnitValueService(
     private val unitValueMapper: UnitValueMapper,
     private val unitGroupCache: UnitGroupCache,
     private val unitValueValidator: UnitValueValidator,
-    private val unitGroupUsageCounter: UnitGroupUsageCounter
+    private val unitGroupUsageCounter: UnitGroupUsageCounter,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

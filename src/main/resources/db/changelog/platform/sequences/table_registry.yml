@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-sequence-table-registry-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - createSequence:
+            sequenceName: seq_table_registry_reference_number
+            startValue: 1
+            incrementBy: 1

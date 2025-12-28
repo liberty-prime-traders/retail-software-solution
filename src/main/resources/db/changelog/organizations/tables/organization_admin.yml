@@ -34,3 +34,27 @@ databaseChangeLog:
               - column:
                   name: end_on
                   type: timestamptz
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: organization_admin_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: organization_admin_reference_number_not_null
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                      nullable: false
+                      notNullConstraintName: organization_admin_created_at_not_null
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_admin_created_by_id_not_null

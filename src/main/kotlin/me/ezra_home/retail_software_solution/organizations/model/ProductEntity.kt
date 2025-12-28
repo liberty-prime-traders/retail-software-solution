@@ -3,12 +3,15 @@ package me.ezra_home.retail_software_solution.organizations.model
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
+import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.PRODUCT)
+@HasReference(tableName = TableName.PRODUCT)
 class ProductEntity(
 
     @Column(name = "name", nullable = false)
@@ -22,8 +25,8 @@ class ProductEntity(
 
     @Column(name = "base_unit_id")
     var baseUnitId: UUID,
-    
+
     @Column(name = "cursor", insertable = false, updatable = false)
     var cursor: Long
 
-): HasCreatorEntity()
+): HasReferenceEntity()

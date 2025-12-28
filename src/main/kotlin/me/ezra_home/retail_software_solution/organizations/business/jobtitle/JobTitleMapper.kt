@@ -1,11 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleUpdateDto
 import me.ezra_home.retail_software_solution.organizations.model.JobTitleEntity
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -24,13 +23,14 @@ interface JobTitleMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
-    @BeanMapping(qualifiedBy = [CreatedBy::class])
+    @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(titleInsertDto: JobTitleInsertDto): JobTitleEntity
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(titleUpdateDto: JobTitleUpdateDto, @MappingTarget titleEntity: JobTitleEntity)
 }

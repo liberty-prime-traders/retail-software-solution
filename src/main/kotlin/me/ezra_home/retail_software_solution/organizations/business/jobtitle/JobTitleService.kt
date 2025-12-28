@@ -16,7 +16,7 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class JobTitleService(
     private val jobTitleMapper: JobTitleMapper,
-    private val jobTitleCache: JobTitleCache
+    private val jobTitleCache: JobTitleCache,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)

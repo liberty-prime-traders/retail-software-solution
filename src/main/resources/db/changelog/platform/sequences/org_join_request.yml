@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-sequence-org-join-request-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - createSequence:
+            sequenceName: seq_org_join_request_reference_number
+            startValue: 1
+            incrementBy: 1

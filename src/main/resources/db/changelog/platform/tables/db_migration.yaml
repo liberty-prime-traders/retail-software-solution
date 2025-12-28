@@ -34,7 +34,7 @@ databaseChangeLog:
 
               - column:
                   name: schema_owner_type
-                  type: nvarchar(5)
+                  type: nvarchar2(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: db_migration_schema_owner_type_not_null
@@ -52,19 +52,28 @@ databaseChangeLog:
 
               - column:
                   name: status
-                  type: nvarchar(10)
+                  type: nvarchar2(10)
                   constraints:
                     nullable: false
                     notNullConstraintName: db_migration_status_not_null
 
               - column:
                   name: type
-                  type: nvarchar(20)
+                  type: nvarchar2(20)
 
               - column:
                   name: message
-                  type: nvarchar(100)
+                  type: nvarchar2(100)
 
               - column:
                   name: migration_parent_id
                   type: uuid
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: db_migration_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: db_migration_reference_number_not_null
