@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.platform.model
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
@@ -12,7 +11,6 @@ import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.enums.MigrationTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
-import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.BaseEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -22,7 +20,6 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.DB_MIGRATION)
 @HasReference(tableName = TableName.DB_MIGRATION)
-@EntityListeners(ReferenceNumberEntityListener::class)
 class DbMigrationEntity(
 
     @Column(name = "db_version_id", nullable = false, updatable = false)
@@ -53,9 +50,6 @@ class DbMigrationEntity(
     var message: String? = null,
 
     @Column(name = "migration_parent_id", updatable = false)
-    var migrationParentId: UUID? = null,
-
-    @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null
+    var migrationParentId: UUID? = null
 
 ) : BaseEntity()

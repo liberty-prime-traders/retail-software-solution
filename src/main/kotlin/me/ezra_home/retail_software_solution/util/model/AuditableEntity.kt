@@ -12,4 +12,4 @@ abstract class AuditableEntity(
     @Column(name = "usage_count")
     var usageCount: Long = 0
 
-): HasCreatorEntity()
+): HasReferenceEntity()

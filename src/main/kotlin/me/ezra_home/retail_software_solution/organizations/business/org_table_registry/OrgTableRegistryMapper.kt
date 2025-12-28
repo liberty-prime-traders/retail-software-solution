@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_table_registry
 
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameQualifier
@@ -23,7 +23,6 @@ interface OrgTableRegistryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "registryId", ignore = true)
-    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun patchEntity(dto: OrgTableRegistryUpdateDto, @MappingTarget entity: OrgTableRegistryEntity): OrgTableRegistryEntity
 }

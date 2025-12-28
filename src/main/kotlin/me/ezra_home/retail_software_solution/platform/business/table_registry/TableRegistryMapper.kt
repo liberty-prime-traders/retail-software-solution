@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.table_registry
 
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionQualifier
 import me.ezra_home.retail_software_solution.platform.business.table_registry.dto.TableRegistryResponseDto
@@ -26,7 +26,6 @@ interface TableRegistryMapper {
     @Mapping(target = "minimumVersionId", ignore = true)
     @Mapping(target = "schemaLevel", ignore = true)
     @Mapping(target = "validated", ignore = true)
-    @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun patchEntity(dto: TableRegistryUpdateDto, @MappingTarget entity: TableRegistryEntity): TableRegistryEntity
 }

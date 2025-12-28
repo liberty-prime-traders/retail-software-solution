@@ -3,9 +3,8 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodUpdateDto
-import me.ezra_home.retail_software_solution.configuration.mapping.RtsMapperConfig
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.model.PaymentMethodEntity
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.CreatedBy
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -22,7 +21,6 @@ interface PaymentMethodMapper {
     @Mapping(target = "predecessorOfId", ignore = true)
     @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    @BeanMapping(qualifiedBy = [CreatedBy::class])
     fun toEntity(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])

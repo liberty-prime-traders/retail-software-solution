@@ -3,21 +3,18 @@ package me.ezra_home.retail_software_solution.platform.model
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevelConverter
-import me.ezra_home.retail_software_solution.util.listeners.ReferenceNumberEntityListener
 import me.ezra_home.retail_software_solution.util.model.BaseEntity
-import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.model.TableName
+import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 
 @Entity
 @Table(name = TableNames.TABLE_REGISTRY)
 @HasReference(tableName = TableName.TABLE_REGISTRY)
-@EntityListeners(ReferenceNumberEntityListener::class)
 class TableRegistryEntity(
     @Column(name = "table_name", insertable = false, updatable = false)
     var tableName: String,
@@ -42,8 +39,5 @@ class TableRegistryEntity(
     var userFacing: Boolean = false,
 
     @Column(name = "validated", nullable = false)
-    var validated: Boolean = false,
-
-    @Column(name = "reference_number", unique = true)
-    var referenceNumber: String? = null
+    var validated: Boolean = false
 ): BaseEntity()

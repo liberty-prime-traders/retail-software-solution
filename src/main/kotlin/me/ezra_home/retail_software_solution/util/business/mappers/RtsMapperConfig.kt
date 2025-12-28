@@ -1,9 +1,6 @@
-package me.ezra_home.retail_software_solution.configuration.mapping
+package me.ezra_home.retail_software_solution.util.business.mappers
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.mapping.DbMigrationQualifier
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.UserQualifier
-import me.ezra_home.retail_software_solution.util.business.mappers.OptionalQualifier
-import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import org.mapstruct.InjectionStrategy
 import org.mapstruct.MapperConfig
 import org.mapstruct.MappingConstants
