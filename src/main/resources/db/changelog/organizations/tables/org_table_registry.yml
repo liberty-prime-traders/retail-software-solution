@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: 'create_org_table_registry_table'
       author: ezra
+      labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:

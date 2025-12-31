@@ -18,8 +18,6 @@ abstract class UnitValueMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     abstract fun toEntity(unitValueInsertDto: UnitValueInsertDto): UnitValueEntity
 
@@ -29,9 +27,8 @@ abstract class UnitValueMapper {
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "unitGroupId", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     abstract fun partialUpdate(unitValueUpdateDto: UnitValueUpdateDto, @MappingTarget unitValueEntity: UnitValueEntity)
 }

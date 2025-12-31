@@ -34,7 +34,7 @@ class UnitGroupEndpoint(private val unitGroupService: UnitGroupService) {
         unitGroupService.updateUnitGroup(unitGroupUpdateDto)
 
     @DeleteMapping("{id}")
-    fun deleteUnitGroup(@PathVariable id: UUID?): ResponseEntity<HttpStatus> {
+    fun deleteUnitGroup(@PathVariable id: UUID): ResponseEntity<HttpStatus> {
         unitGroupService.deleteUnitGroup(id)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }
