@@ -8,7 +8,6 @@ data class UnitGroupResponseDto(
     val id: UUID?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val usageCount: Long?,
     val name: String?,
     val description: String?
 ) : Serializable
