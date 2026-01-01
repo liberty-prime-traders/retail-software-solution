@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-entry-for-tag-in-table-registry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: tag
+              - column:
+                  name: default_prefix
+                  value: TAG
+              - column:
+                  name: minimum_version_id
+                  valueComputed: (SELECT id FROM db_version WHERE version_number = '1.0.0')
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Tag
+              - column:
+                  name: description
+                  value: Table containing tags for organization-level tagging
+              - column:
+                  name: reference_number
+                  value: PTBL19

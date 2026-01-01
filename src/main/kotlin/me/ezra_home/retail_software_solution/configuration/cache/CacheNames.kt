@@ -19,5 +19,6 @@ class CacheNames {
         const val DB_MIGRATION = "DbMigration"
         const val TABLE_REGISTRY = "TableRegistry"
         const val ORG_TABLE_REGISTRY = "OrgTableRegistry"
+        const val TAG = "Tag"
     }
 }

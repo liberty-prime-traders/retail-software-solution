@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-sequence-tag-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - createSequence:
+            sequenceName: seq_tag_reference_number
+            startValue: 1
+            incrementBy: 1

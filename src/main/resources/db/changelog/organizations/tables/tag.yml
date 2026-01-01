@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-tag-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tag
+      changes:
+        - createTable:
+            tableName: tag
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: tag_name
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tag_name_notnull
+
+              - column:
+                  name: description
+                  type: nvarchar2(255)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tag_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: tag_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: tag_reference_number_not_null
