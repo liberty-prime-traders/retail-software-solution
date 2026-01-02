@@ -21,15 +21,15 @@ databaseChangeLog:
 
               - column:
                   name: category_type
-                  type: nvarchar2
+                  type: nvarchar2(5)
 
               - column:
                   name: category_name
-                  type: nvarchar2
+                  type: nvarchar2(50)
 
               - column:
                   name: description
-                  type: nvarchar2
+                  type: nvarchar2(400)
 
               - column:
                   name: created_by_id

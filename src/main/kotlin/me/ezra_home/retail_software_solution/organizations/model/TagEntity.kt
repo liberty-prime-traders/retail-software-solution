@@ -7,22 +7,23 @@ import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.CategoryType
 import me.ezra_home.retail_software_solution.util.enums.CategoryTypeConverter
-import me.ezra_home.retail_software_solution.util.model.AuditableEntity
+import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 @Entity
-@Table(name = TableNames.CATEGORY)
-@HasReference(tableName = TableName.CATEGORY)
-class CategoryEntity(
+@Table(name = TableNames.TAG)
+@HasReference(tableName = TableName.TAG)
+class TagEntity(
 
-    @Column(name = "category_type", nullable = false)
+    @Column(name = "category")
     @Convert(converter = CategoryTypeConverter::class)
-    var categoryType: CategoryType? = null,
+    var category: CategoryType,
 
-    @Column(name = "category_name", nullable = false)
-    var categoryName: String? = null,
+    @Column(name = "tag_name", nullable = false)
+    var tagName: String,
 
     @Column(name = "description")
     var description: String? = null
-): AuditableEntity()
+
+): HasReferenceEntity()

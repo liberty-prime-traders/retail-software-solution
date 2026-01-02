@@ -1,16 +1,16 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-unit-group-table'
-      author: kenneth
+      id: 'create-tag-table'
+      author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - tableExists:
-                tableName: unit_group
+                tableName: tag
       changes:
         - createTable:
-            tableName: unit_group
+            tableName: tag
             columns:
               - column:
                   name: id
@@ -20,22 +20,26 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: name
-                  type: nvarchar2(100)
+                  name: category
+                  type: nvarchar2(5)
+
+              - column:
+                  name: tag_name
+                  type: nvarchar2(50)
                   constraints:
                     nullable: false
-                    notNullConstraintName: unit_group_name_notnull
+                    notNullConstraintName: tag_name_notnull
 
               - column:
                   name: description
-                  type: nvarchar2(400)
+                  type: nvarchar2(255)
 
               - column:
                   name: created_by_id
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: unit_group_created_by_id_notnull
+                    notNullConstraintName: tag_created_by_id_notnull
 
               - column:
                   name: created_on
@@ -47,6 +51,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: unit_group_reference_number_unique
+                    uniqueConstraintName: tag_reference_number_unique
                     nullable: false
-                    notNullConstraintName: unit_group_reference_number_not_null
+                    notNullConstraintName: tag_reference_number_not_null

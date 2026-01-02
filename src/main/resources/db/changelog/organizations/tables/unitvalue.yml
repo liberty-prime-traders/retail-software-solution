@@ -35,7 +35,7 @@ databaseChangeLog:
 
               - column:
                   name: description
-                  type: nvarchar2
+                  type: nvarchar2(400)
 
               - column:
                   name: unit_group_id

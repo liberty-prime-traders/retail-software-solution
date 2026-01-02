@@ -3,8 +3,16 @@ databaseChangeLog:
       id: 'create-sequence-unit-value-reference-number'
       author: ezra
       labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sequenceExists:
+                sequenceName: seq_unit_value_reference_number
       changes:
         - createSequence:
             sequenceName: seq_unit_value_reference_number
             startValue: 1
             incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: seq_unit_value_reference_number

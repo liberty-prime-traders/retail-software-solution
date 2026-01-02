@@ -15,11 +15,19 @@ databaseChangeLog:
       value: current_date
 
   - includeAll:
+      path: extensions
+      relativeToChangelogFile: true
+
+  - includeAll:
       path: tables
       relativeToChangelogFile: true
 
   - includeAll:
       path: sequences
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: indexes
       relativeToChangelogFile: true
 
   - include:

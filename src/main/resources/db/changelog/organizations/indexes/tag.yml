@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-gin-index-on-tag-name-for-similarity'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_tag_name_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_tag_name_trgm ON tag USING GIN (tag_name gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: tag
+            indexName: idx_tag_name_trgm
