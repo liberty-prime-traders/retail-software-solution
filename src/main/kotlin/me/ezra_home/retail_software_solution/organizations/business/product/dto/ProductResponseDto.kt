@@ -12,7 +12,9 @@ data class ProductResponseDto (
     val productName: String?,
     val description: String?,
     val categoryName: String?,
+    val categoryId: UUID?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val baseUnit: String?
+    val baseUnit: String?,
+    val tags: List<TagSummaryDto>? = null
 ) : Serializable

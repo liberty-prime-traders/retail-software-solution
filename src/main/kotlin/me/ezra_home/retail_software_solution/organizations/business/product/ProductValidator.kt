@@ -11,27 +11,22 @@ import java.util.UUID
 
 @Component
 class ProductValidator(
-    private val productCache: ProductCache,
+    private val productRepository: ProductRepository,
     private val categoryCache: CategoryCache
 ) {
 
     fun validateProductUpdate(productUpdateDto: ProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
-        productCache.getAllProducts()
-            .find { StringUtils.isEquivalent(it.productName, name) && it.id != productUpdateDto.id }
-            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
-
-        if (productUpdateDto.categoryId != null) {
-            validateProductCategory(productUpdateDto.categoryId.get())
+        productUpdateDto.baseUnitId?.isEmpty?.let {
+            throw RtsGenericException("A product must have a base unit.")
         }
-    }
-
-    fun validateProductInsert(productInsertDto: ProductInsertDto) {
-        val name = StringUtils.getValueOrException(productInsertDto.productName, NAME_IS_REQUIRED)
-        productCache.getAllProducts()
-            .find { StringUtils.isEquivalent(it.productName, name)}
-            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
-        validateProductCategory(productInsertDto.categoryId)
+        productRepository.findFirstByProductNameIgnoreCase(name)
+            ?.let {
+                if(it.id != productUpdateDto.id) {
+                    throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
+                }
+            }
+        validateProductCategory(productUpdateDto.categoryId?.get())
     }
 
     private fun validateProductCategory(categoryId: UUID?) {
@@ -41,14 +36,21 @@ class ProductValidator(
             if (CategoryType.PRODUCT != category.categoryType) {
                 throw RtsGenericException(CATEGORY_TYPE_MUST_BE_PRODUCT)
             }
-        } ?: throw RtsGenericException(CATEGORY_ID_REQUIRED)
+        }
     }
+
+    fun validateProductInsert(productInsertDto: ProductInsertDto) {
+        val name = StringUtils.getValueOrException(productInsertDto.productName, NAME_IS_REQUIRED)
+        productRepository.findFirstByProductNameIgnoreCase(name)
+            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        validateProductCategory(productInsertDto.categoryId)
+    }
+
 
     companion object {
         const val NAME_IS_REQUIRED = "A product must have a name"
         const val NAME_ALREADY_EXISTS = "A product with the name %s already exists."
         const val INVALID_CATEGORY_ID = "The category ID provided does not exist."
-        const val CATEGORY_ID_REQUIRED = "The category ID is required."
         const val CATEGORY_TYPE_MUST_BE_PRODUCT = "The category type provided must be PRODUCT."
     }
 }
