@@ -3,8 +3,16 @@ databaseChangeLog:
       id: 'create-sequence-payment-method-reference-number'
       author: ezra
       labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sequenceExists:
+                sequenceName: seq_payment_method_reference_number
       changes:
         - createSequence:
             sequenceName: seq_payment_method_reference_number
             startValue: 1
             incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: seq_payment_method_reference_number

@@ -20,6 +20,10 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
+                  name: category
+                  type: nvarchar2(5)
+
+              - column:
                   name: tag_name
                   type: nvarchar2(50)
                   constraints:

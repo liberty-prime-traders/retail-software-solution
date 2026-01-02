@@ -28,7 +28,7 @@ databaseChangeLog:
 
               - column:
                   name: description
-                  type: nvarchar2
+                  type: nvarchar2(400)
 
               - column:
                   name: created_by_id
