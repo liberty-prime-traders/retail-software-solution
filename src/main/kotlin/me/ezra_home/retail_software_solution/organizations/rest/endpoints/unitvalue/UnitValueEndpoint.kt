@@ -25,8 +25,13 @@ import java.util.UUID
 class UnitValueEndpoint(private val unitValueService: UnitValueService) {
 
     @GetMapping
-    fun getForUnitGroup(@RequestParam("unitGroupId") unitGroupId: UUID): Collection<UnitValueResponseDto> =
-        unitValueService.getUnitValuesForUnitGroup(unitGroupId)
+    fun getForUnitGroup(@RequestParam("unitGroupId") unitGroupId: UUID?): Collection<UnitValueResponseDto> {
+        return if (unitGroupId == null) {
+            unitValueService.getAllUnitValues()
+        } else {
+            unitValueService.getUnitValuesForUnitGroup(unitGroupId)
+        }
+    }
 
     @PostMapping
     fun createUnitValue(@RequestBody unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto =

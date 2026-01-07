@@ -20,12 +20,11 @@ class ProductValidator(
         productUpdateDto.baseUnitId?.isEmpty?.let {
             throw RtsGenericException("A product must have a base unit.")
         }
-        productRepository.findFirstByProductNameIgnoreCase(name)
-            ?.let {
-                if(it.id != productUpdateDto.id) {
-                    throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
-                }
+        productRepository.findFirstByProductNameIgnoreCase(name)?.let {
+            if(it.id != productUpdateDto.id) {
+                throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
             }
+        }
         validateProductCategory(productUpdateDto.categoryId?.get())
     }
 

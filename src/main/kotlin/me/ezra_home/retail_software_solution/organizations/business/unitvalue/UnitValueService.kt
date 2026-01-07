@@ -24,6 +24,13 @@ class UnitValueService(
         }
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllUnitValues(): Collection<UnitValueResponseDto> {
+        return unitValueCache.getAllUnitValues().map {
+            unitValueMapper.toResponseDto(it)
+        }
+    }
+
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueInsert(unitValueInsertDto)
         val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)

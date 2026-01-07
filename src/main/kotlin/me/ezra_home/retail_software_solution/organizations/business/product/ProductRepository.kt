@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface ProductRepository: JpaRepository<ProductEntity, UUID> {
-    @Query("SELECT p FROM ProductEntity p ORDER BY p.productName ASC limit 50")
+    @Query("SELECT p FROM ProductEntity p ORDER BY p.cursor ASC limit 50")
     fun findTopProducts(): Collection<ProductEntity>
 
     fun findFirstByProductNameIgnoreCase(productName: String): ProductEntity?

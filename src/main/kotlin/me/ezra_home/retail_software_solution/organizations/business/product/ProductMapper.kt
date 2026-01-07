@@ -27,7 +27,7 @@ interface ProductMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [CategoryName::class])
     @Mapping(source = "baseUnitId", target = "baseUnit", qualifiedBy = [UnitName::class])
-    @Mapping(source = "id", target = "tags", qualifiedBy = [ActiveProductTags::class])
+    @Mapping(source = "id", target = "activeTags", qualifiedBy = [ActiveProductTags::class])
     fun toDto(productEntity: ProductEntity): ProductResponseDto
 
     @Mapping(target = "id", ignore = true)

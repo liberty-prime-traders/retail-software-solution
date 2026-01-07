@@ -31,7 +31,7 @@ class ProductEndpoint(private val productService: ProductService) {
 
     @GetMapping
     fun getAllProducts(): Collection<ProductResponseDto> =
-        productService.getAllProducts()
+        productService.getTopProducts()
 
     @DeleteMapping("{id}")
     fun deleteProduct(@PathVariable id: UUID): ResponseEntity<HttpStatusCode> {

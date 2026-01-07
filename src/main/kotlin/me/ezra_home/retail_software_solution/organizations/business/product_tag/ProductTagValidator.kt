@@ -21,4 +21,13 @@ class ProductTagValidator(
             )
         }
     }
+
+    fun validateNoOverlap(tagsToAdd: Set<UUID>, tagsToRemove: Set<UUID>) {
+        val overlap = tagsToAdd.intersect(tagsToRemove)
+        if (overlap.isNotEmpty()) {
+            throw RtsGenericException(
+                "The following tag IDs are present in both tagsToAdd and tagsToRemove: ${overlap.joinToString(", ")}"
+            )
+        }
+    }
 }
