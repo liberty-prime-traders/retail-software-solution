@@ -35,12 +35,14 @@ interface ProductMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "status", ignore = true)
     fun toEntity(productInsertDto: ProductInsertDto): ProductEntity
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(productDto: ProductUpdateDto, @MappingTarget productEntity: ProductEntity)
 }

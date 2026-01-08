@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.enums.MigrationTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
-import me.ezra_home.retail_software_solution.util.model.BaseEntity
+import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.time.OffsetDateTime
@@ -52,4 +52,4 @@ class DbMigrationEntity(
     @Column(name = "migration_parent_id", updatable = false)
     var migrationParentId: UUID? = null
 
-) : BaseEntity()
+) : HasReferenceEntity()

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
-import me.ezra_home.retail_software_solution.util.enums.Status
+import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import java.io.Serializable
 import java.util.UUID
 
@@ -11,6 +11,6 @@ data class ReservedSubdomainDto(
     val id: UUID?,
     val subdomain: String?,
     val createdBy: String?,
-    val status: Status?,
+    val status: ReservedDomainStatus?,
     val referenceNumber: String?
 ): Serializable

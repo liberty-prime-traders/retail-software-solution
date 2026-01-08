@@ -1,9 +1,6 @@
 package me.ezra_home.retail_software_solution.util.enums
 
-enum class Status(override val code: String) : HasCode {
-    ACTIVE("A"),
-    STOPPED("S"),
-
+enum class ReservedDomainStatus(override val code: String) : HasCode {
     USED("USD"),
     UNUSED("UNSD"),
     ABANDONED("ABND");

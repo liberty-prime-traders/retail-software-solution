@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.util.business.StringUtils
-import me.ezra_home.retail_software_solution.util.enums.Status
+import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
@@ -28,8 +28,8 @@ class ReservedSubdomainService(
         }
         val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain!!)
         val userId = SessionContextProvider.getUserId()
-        subdomainRepository.findByStatusNotAndSubdomain(Status.ABANDONED, subdomain)
-            .find { it.status == Status.USED || it.createdById != userId }
+        subdomainRepository.findByStatusNotAndSubdomain(ReservedDomainStatus.ABANDONED, subdomain)
+            .find { it.status == ReservedDomainStatus.USED || it.createdById != userId }
             ?.let { throw RtsGenericException("Subdomain '$subdomain' is taken") }
         return reservedSubdomainMapper.toDto(reserveSubdomain(subdomain))
     }
@@ -37,14 +37,14 @@ class ReservedSubdomainService(
     private fun reserveSubdomain(sanitizedSubdomain: String): ReservedSubdomainEntity {
         val sysUserId = SessionContextProvider.getUserId()
         subdomainRepository.abandonSubdomainsForUser(sysUserId)
-        val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, Status.UNUSED)
+        val reservedSubdomain = ReservedSubdomainEntity(sanitizedSubdomain, ReservedDomainStatus.UNUSED)
         return subdomainRepository.save(reservedSubdomain)
     }
 
     fun releaseSubdomain(id: UUID?) {
         id?.let{
             subdomainRepository.findByIdOrNull(id)?.let {
-                it.status = Status.ABANDONED
+                it.status = ReservedDomainStatus.ABANDONED
                 subdomainRepository.save(it)
             }
         }
@@ -53,7 +53,7 @@ class ReservedSubdomainService(
     fun markSubdomainAsUsed(id: UUID?) {
         id?.let{
             subdomainRepository.findByIdOrNull(id)?.let {
-                it.status = Status.USED
+                it.status = ReservedDomainStatus.USED
                 subdomainRepository.save(it)
             }
         }

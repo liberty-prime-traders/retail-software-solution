@@ -16,7 +16,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
-import me.ezra_home.retail_software_solution.util.enums.Status
+import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
@@ -75,7 +75,7 @@ class OrganizationService(
             throw RtsGenericException("An Organization must have a subdomain")
         }
         val reservedSubdomain = reservedSubdomainService.getReservedSubdomains()
-            .find { it.subdomain == intendedSubdomain && it.status == Status.UNUSED }
+            .find { it.subdomain == intendedSubdomain && it.status == ReservedDomainStatus.UNUSED }
         if (reservedSubdomain == null) {
             throw RtsGenericException("Subdomain '$intendedSubdomain' was not reserved")
         }

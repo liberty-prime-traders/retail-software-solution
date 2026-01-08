@@ -70,6 +70,18 @@ databaseChangeLog:
                   type: uuid
 
               - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: db_migration_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:

@@ -62,3 +62,12 @@ databaseChangeLog:
                     uniqueConstraintName: product_reference_number_unique
                     nullable: false
                     notNullConstraintName: product_reference_number_not_null
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  defaultValue: A
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_status_notnull
+

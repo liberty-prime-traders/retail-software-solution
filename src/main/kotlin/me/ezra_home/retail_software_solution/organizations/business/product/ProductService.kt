@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagService
+import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
+import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -27,6 +29,7 @@ class ProductService(
     fun createProduct(productInsertDto: ProductInsertDto): ProductResponseDto {
         productValidator.validateProductInsert(productInsertDto)
         val productEntity = productMapper.toEntity(productInsertDto)
+        productEntity.status = ProductStatus.ACTIVE
         productCache.upsertProduct(productEntity)
         if (productEntity.id != null) {
             productTagService.manageProductTags(
@@ -52,7 +55,24 @@ class ProductService(
         return productMapper.toDto(productToUpdate)
     }
 
-    fun deleteProduct(id: UUID) {
-        productCache.deleteProduct(id)
+    fun deactivateProduct(productId: UUID): ProductResponseDto {
+        val productToDeactivate = productRepository.findById(productId).orElseThrow {
+            UpdatingNonExistingRecordException()
+        }
+        return updateStatus(productToDeactivate, ProductStatus.DISCONTINUED)
     }
+
+    fun reactivateProduct(productId: UUID): ProductResponseDto {
+        val productToDeactivate = productRepository.findById(productId).orElseThrow {
+            UpdatingNonExistingRecordException()
+        }
+        return updateStatus(productToDeactivate, ProductStatus.ACTIVE)
+    }
+
+    private fun updateStatus(product: ProductEntity, status: ProductStatus): ProductResponseDto {
+        product.status = status
+        productCache.upsertProduct(product)
+        return productMapper.toDto(product)
+    }
+
 }
