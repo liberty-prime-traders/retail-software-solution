@@ -3,4 +3,4 @@ package me.ezra_home.retail_software_solution.util.enums
 import jakarta.persistence.Converter
 
 @Converter(autoApply = true)
-class StatusConverter: EnumConverter<Status>(Status::class.java)
+class ProductStatusConverter: EnumConverter<ProductStatus>(ProductStatus::class.java)

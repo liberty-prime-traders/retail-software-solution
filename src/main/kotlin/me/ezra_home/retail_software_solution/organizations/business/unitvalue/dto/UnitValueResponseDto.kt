@@ -17,5 +17,6 @@ data class UnitValueResponseDto (
     val conversionFactor: Double?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val unitGroupId: UUID
+    val unitGroupId: UUID,
+    val referenceNumber: String?
 ) : Serializable

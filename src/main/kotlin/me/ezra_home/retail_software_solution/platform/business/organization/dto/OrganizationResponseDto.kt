@@ -16,5 +16,6 @@ data class OrganizationResponseDto(
     val createdOn: OffsetDateTime?,
     val name: String?,
     val description: String?,
-    val subdomain: String?
+    val subdomain: String?,
+    val referenceNumber: String?
 ) : Serializable

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-foreign-key-product-tag-product'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_product_tag_product
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product_tag
+            baseColumnNames: product_id
+            referencedTableName: product
+            referencedColumnNames: id
+            constraintName: fk_product_tag_product
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product_tag
+            constraintName: fk_product_tag_product
+
+  - changeSet:
+      id: 'add-foreign-key-product-tag-tag'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_product_tag_tag
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product_tag
+            baseColumnNames: tag_id
+            referencedTableName: tag
+            referencedColumnNames: id
+            constraintName: fk_product_tag_tag
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product_tag
+            constraintName: fk_product_tag_tag

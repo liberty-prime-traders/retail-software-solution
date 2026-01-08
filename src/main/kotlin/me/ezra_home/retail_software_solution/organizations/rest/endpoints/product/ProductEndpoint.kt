@@ -4,12 +4,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Prod
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
-import java.util.UUID
-import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -17,8 +11,8 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
-@CrossOrigin
 @RestController
 @RequestMapping("secured/products")
 class ProductEndpoint(private val productService: ProductService) {
@@ -31,13 +25,15 @@ class ProductEndpoint(private val productService: ProductService) {
     fun updateProduct(@RequestBody productDto: ProductUpdateDto): ProductResponseDto =
         productService.updateProduct(productDto)
 
+    @PutMapping("{productId}/deactivate")
+    fun deactivateProduct(@PathVariable productId: UUID): ProductResponseDto =
+        productService.deactivateProduct(productId)
+
+    @PutMapping("{productId}/reactivate")
+    fun reactivateProduct(@PathVariable productId: UUID): ProductResponseDto =
+        productService.reactivateProduct(productId)
+
     @GetMapping
     fun getAllProducts(): Collection<ProductResponseDto> =
-        productService.getAllProducts()
-
-    @DeleteMapping("{id}")
-    fun deleteProduct(@PathVariable id: UUID): ResponseEntity<HttpStatusCode> {
-        productService.deleteProduct(id)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
-    }
+        productService.getTopProducts()
 }

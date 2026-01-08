@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-entry-for-product-tag-in-table-registry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: product_tag
+              - column:
+                  name: default_prefix
+                  value: PTAG
+              - column:
+                  name: minimum_version_id
+                  valueComputed: (SELECT id FROM db_version WHERE version_number = '1.0.0')
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Product Tag
+              - column:
+                  name: description
+                  value: Table containing product tag assignments
+              - column:
+                  name: reference_number
+                  value: PTBL20

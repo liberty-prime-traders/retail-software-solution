@@ -7,7 +7,7 @@ object StringUtils {
 
     fun getValueOrNull(str: String?): String? {
         return if (hasValue(str)) {
-            str!!.trim().replace("\u00A0", " ")
+            normalize(str!!)
         } else {
             null
         }
@@ -47,7 +47,13 @@ object StringUtils {
         return normalizedStr1 == normalizedStr2
     }
 
-    private fun removeAllSpaces(str: String): String {
-        return str.replace("\\s+".toRegex(), "")
+    fun removeAllSpaces(str: String): String {
+        return normalize(str).replace("\\s+".toRegex(), "")
+    }
+
+    fun normalize(str: String): String {
+        return str.replace("\u00A0", " ")
+            .trim()
+            .replace("\\s+".toRegex(), " ")
     }
 }

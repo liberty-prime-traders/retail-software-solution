@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-product-tag-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: product_tag
+      changes:
+        - createTable:
+            tableName: product_tag
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tag_product_id_notnull
+
+              - column:
+                  name: tag_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tag_tag_id_notnull
+
+              - column:
+                  name: start_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: end_on
+                  type: timestamptz
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tag_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: product_tag_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: product_tag_reference_number_not_null

@@ -23,6 +23,10 @@ databaseChangeLog:
       relativeToChangelogFile: true
 
   - includeAll:
+      path: foreign_keys
+      relativeToChangelogFile: true
+
+  - includeAll:
       path: sequences
       relativeToChangelogFile: true
 

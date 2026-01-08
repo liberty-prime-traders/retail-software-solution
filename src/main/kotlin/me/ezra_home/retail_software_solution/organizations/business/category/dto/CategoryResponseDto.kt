@@ -15,5 +15,6 @@ data class CategoryResponseDto (
     val description: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val usageCount: Long?
+    val usageCount: Long?,
+    val referenceNumber: String?
 ) : Serializable

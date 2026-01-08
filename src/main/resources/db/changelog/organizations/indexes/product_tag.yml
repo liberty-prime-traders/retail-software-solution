@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-index-product-tag-product-id'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_tag_product_id
+      changes:
+        - createIndex:
+            indexName: idx_product_tag_product_id
+            tableName: product_tag
+            columns:
+              - column:
+                  name: product_id
+      rollback:
+        - dropIndex:
+            tableName: product_tag
+            indexName: idx_product_tag_product_id
+
+  - changeSet:
+      id: 'create-index-product-tag-tag-id'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_tag_tag_id
+      changes:
+        - createIndex:
+            indexName: idx_product_tag_tag_id
+            tableName: product_tag
+            columns:
+              - column:
+                  name: tag_id
+      rollback:
+        - dropIndex:
+            tableName: product_tag
+            indexName: idx_product_tag_tag_id
+
+  - changeSet:
+      id: 'create-unique-index-product-tag-active'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_tag_active_unique
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_product_tag_active_unique ON product_tag (product_id, tag_id) WHERE end_on IS NULL;
+      rollback:
+        - dropIndex:
+            tableName: product_tag
+            indexName: idx_product_tag_active_unique

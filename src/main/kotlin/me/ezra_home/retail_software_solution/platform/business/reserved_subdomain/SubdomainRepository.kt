@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
-import me.ezra_home.retail_software_solution.util.enums.Status
+import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -12,7 +12,7 @@ import java.util.UUID
 @Repository
 interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
 
-    fun findByStatusNotAndSubdomain(status: Status, subdomain: String): List<ReservedSubdomainEntity>
+    fun findByStatusNotAndSubdomain(reservedDomainStatus: ReservedDomainStatus, subdomain: String): List<ReservedSubdomainEntity>
 
     @Modifying
     @Query("update ReservedSubdomainEntity r set r.status = 'ABND' where r.createdById = :createdById and r.status = 'UNSD'")

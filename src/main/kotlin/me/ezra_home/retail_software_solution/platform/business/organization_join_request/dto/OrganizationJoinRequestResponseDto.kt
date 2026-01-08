@@ -12,7 +12,8 @@ data class OrganizationJoinRequestResponseDto(
     val domain: String,
     val status: JoinRequestStatus,
 
-    @JsonSerialize(using = DatesToMillis::class)
-    val requestedDate: OffsetDateTime
+    @field:JsonSerialize(using = DatesToMillis::class)
+    val requestedDate: OffsetDateTime,
+    val referenceNumber: String?
 
 ) : Serializable

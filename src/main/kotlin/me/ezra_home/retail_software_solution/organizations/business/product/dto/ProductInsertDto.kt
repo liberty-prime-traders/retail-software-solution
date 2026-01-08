@@ -7,8 +7,9 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.ProductEntity}
  */
 data class ProductInsertDto(
-    val productName: String? = null,
+    val productName: String,
     val description: String? = null,
     val categoryId: UUID? = null,
-    val baseUnitId: UUID? = null
+    val baseUnitId: UUID,
+    val tagsToAdd: Set<UUID> = emptySet()
 ) : Serializable
