@@ -16,5 +16,6 @@ data class OrganizationUserResponseDto(
     @JsonSerialize(using = DatesToMillis::class)
     val startOn: OffsetDateTime?,
     @JsonSerialize(using = DatesToMillis::class)
-    val endOn: OffsetDateTime?
+    val endOn: OffsetDateTime?,
+    val referenceNumber: String?
 ) : Serializable

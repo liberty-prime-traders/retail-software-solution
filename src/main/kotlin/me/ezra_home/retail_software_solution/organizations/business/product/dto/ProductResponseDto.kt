@@ -17,5 +17,6 @@ data class ProductResponseDto (
     val createdOn: OffsetDateTime?,
     val baseUnit: String?,
     val baseUnitId: UUID?,
-    val activeTags: List<TagSummaryDto>? = null
+    val activeTags: List<TagSummaryDto>? = null,
+    val referenceNumber: String?
 ) : Serializable

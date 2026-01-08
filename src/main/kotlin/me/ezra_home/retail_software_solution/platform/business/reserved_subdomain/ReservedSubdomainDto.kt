@@ -11,5 +11,6 @@ data class ReservedSubdomainDto(
     val id: UUID?,
     val subdomain: String?,
     val createdBy: String?,
-    val status: Status?
+    val status: Status?,
+    val referenceNumber: String?
 ): Serializable

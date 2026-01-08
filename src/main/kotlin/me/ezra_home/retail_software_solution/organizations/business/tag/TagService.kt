@@ -83,7 +83,7 @@ class TagService(
     companion object {
         const val NAME_IS_REQUIRED = "A tag must have a name"
         const val NAME_ALREADY_EXISTS = "A tag with the name %s already exists."
-        const val SIMILARITY_THRESHOLD = 0.1 // 10% similarity threshold
+        const val SIMILARITY_THRESHOLD = 0.4 // 40% similarity threshold
     }
 
 }

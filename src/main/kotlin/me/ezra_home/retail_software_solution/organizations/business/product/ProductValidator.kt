@@ -17,7 +17,7 @@ class ProductValidator(
 
     fun validateProductUpdate(productUpdateDto: ProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
-        productUpdateDto.baseUnitId?.isEmpty?.let {
+        if(productUpdateDto.baseUnitId?.isPresent != true) {
             throw RtsGenericException("A product must have a base unit.")
         }
         productRepository.findFirstByProductNameIgnoreCase(name)?.let {

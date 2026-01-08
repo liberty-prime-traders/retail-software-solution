@@ -15,5 +15,6 @@ data class LocationResponseDto(
     val usageCount: Long,
     val locationType: LocationType?,
     val name: String?,
-    val description: String?
+    val description: String?,
+    val referenceNumber: String?
 ) : Serializable
