@@ -4,6 +4,10 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Prod
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchParameters
+import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchService
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,11 +19,18 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("secured/products")
-class ProductEndpoint(private val productService: ProductService) {
+class ProductEndpoint(
+    private val productService: ProductService,
+    private val productSearchService: ProductSearchService
+) {
 
     @PostMapping
     fun createProduct(@RequestBody productInsertDto: ProductInsertDto): ProductResponseDto =
         productService.createProduct(productInsertDto)
+
+    @PostMapping("structured-search")
+    fun searchWithParameters(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> =
+        productSearchService.searchWithParameters(pageRequest)
 
     @PutMapping
     fun updateProduct(@RequestBody productDto: ProductUpdateDto): ProductResponseDto =

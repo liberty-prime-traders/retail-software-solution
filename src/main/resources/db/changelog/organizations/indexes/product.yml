@@ -1,0 +1,120 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-gin-index-product-name-trgm'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_name_gin_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_name_gin_trgm ON product USING gin (name gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_name_gin_trgm
+
+  - changeSet:
+      id: 'create-gin-index-product-description-trgm'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_description_gin_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_description_gin_trgm ON product USING gin (description gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_description_gin_trgm
+
+  - changeSet:
+      id: 'create-gin-index-product-reference-number-trgm'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_reference_number_gin_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_reference_number_gin_trgm ON product USING gin (reference_number gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_reference_number_gin_trgm
+
+  - changeSet:
+      id: 'create-index-product-cursor'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_cursor
+      changes:
+        - createIndex:
+            indexName: idx_product_cursor
+            tableName: product
+            columns:
+              - column:
+                  name: cursor
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_cursor
+
+  - changeSet:
+      id: 'create-composite-index-product-status-cursor'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_status_cursor
+      changes:
+        - createIndex:
+            indexName: idx_product_status_cursor
+            tableName: product
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: cursor
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_status_cursor
+
+  - changeSet:
+      id: 'create-composite-index-product-category-status-cursor'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_category_status_cursor
+      changes:
+        - createIndex:
+            indexName: idx_product_category_status_cursor
+            tableName: product
+            columns:
+              - column:
+                  name: category_id
+              - column:
+                  name: status
+              - column:
+                  name: cursor
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_category_status_cursor

@@ -31,7 +31,7 @@ class ProductEntity(
 
     @Convert(converter = ProductStatusConverter::class)
     @Column(name = "status", nullable = false)
-    var status: ProductStatus = ProductStatus.ACTIVE,
+    var status: ProductStatus? = ProductStatus.ACTIVE,
 
     @Column(name = "cursor", insertable = false, updatable = false)
     var cursor: Long

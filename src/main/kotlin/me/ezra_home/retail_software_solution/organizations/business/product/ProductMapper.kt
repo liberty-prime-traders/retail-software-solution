@@ -1,17 +1,17 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryName
+import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryName
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitName
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
+import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

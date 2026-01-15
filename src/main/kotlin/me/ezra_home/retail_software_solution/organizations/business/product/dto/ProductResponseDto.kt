@@ -20,5 +20,6 @@ data class ProductResponseDto (
     val baseUnitId: UUID?,
     val status: ProductStatus?,
     val activeTags: List<TagSummaryDto>? = null,
-    val referenceNumber: String?
+    val referenceNumber: String?,
+    val cursor: Long
 ) : Serializable

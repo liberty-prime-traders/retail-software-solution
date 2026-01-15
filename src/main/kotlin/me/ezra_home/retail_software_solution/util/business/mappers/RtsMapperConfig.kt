@@ -15,7 +15,9 @@ import org.mapstruct.ReportingPolicy
         UserQualifier::class,
         OptionalQualifier::class,
         StringQualifier::class,
-        DbMigrationQualifier::class
+        DbMigrationQualifier::class,
+        DateQualifier::class,
+        EnumQualifier::class
     ]
 )
 interface RtsMapperConfig
