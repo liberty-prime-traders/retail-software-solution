@@ -34,44 +34,6 @@ databaseChangeLog:
             indexName: idx_product_description_gin_trgm
 
   - changeSet:
-      id: 'create-gin-index-product-reference-number-trgm'
-      author: ezra
-      labels: 1.0.0
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - indexExists:
-                indexName: idx_product_reference_number_gin_trgm
-      changes:
-        - sql:
-            sql: CREATE INDEX idx_product_reference_number_gin_trgm ON product USING gin (reference_number gin_trgm_ops);
-      rollback:
-        - dropIndex:
-            tableName: product
-            indexName: idx_product_reference_number_gin_trgm
-
-  - changeSet:
-      id: 'create-index-product-cursor'
-      author: ezra
-      labels: 1.0.0
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - indexExists:
-                indexName: idx_product_cursor
-      changes:
-        - createIndex:
-            indexName: idx_product_cursor
-            tableName: product
-            columns:
-              - column:
-                  name: cursor
-      rollback:
-        - dropIndex:
-            tableName: product
-            indexName: idx_product_cursor
-
-  - changeSet:
       id: 'create-composite-index-product-status-cursor'
       author: ezra
       labels: 1.0.0
@@ -118,3 +80,79 @@ databaseChangeLog:
         - dropIndex:
             tableName: product
             indexName: idx_product_category_status_cursor
+
+  - changeSet:
+      id: 'create-composite-index-product-group-status-cursor'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_group_status_cursor
+      changes:
+        - createIndex:
+            indexName: idx_product_group_status_cursor
+            tableName: product
+            columns:
+              - column:
+                  name: product_group_id
+              - column:
+                  name: status
+              - column:
+                  name: cursor
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_group_status_cursor
+
+  - changeSet:
+      id: 'create-index-product-reference-number-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_reference_number_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_reference_number_pattern ON product (reference_number text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_reference_number_pattern
+
+  - changeSet:
+      id: 'create-gin-index-product-search-vector'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_search_vector
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_search_vector ON product USING gin (search_vector);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_search_vector
+
+  - changeSet:
+      id: 'create-gin-index-product-combined-search-trgm'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_combined_search_gin_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_combined_search_gin_trgm ON product USING gin ((LOWER(name) || ' ' || LOWER(COALESCE(description, ''))) gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_combined_search_gin_trgm

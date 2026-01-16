@@ -1,0 +1,25 @@
+package me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder
+
+object Aliases {
+    object ColumnNames {
+        object Product {
+            const val TABLE_ALIAS = "p"
+            const val ID = "id"
+            const val CURSOR = "cursor"
+            const val STATUS = "status"
+            const val NAME = "name"
+            const val DESCRIPTION = "description"
+            const val REFERENCE_NUMBER = "reference_number"
+            const val CATEGORY_ID = "category_id"
+            const val PRODUCT_GROUP_ID = "product_group_id"
+            const val SEARCH_VECTOR = "search_vector"
+        }
+
+        object ProductTag {
+            const val TABLE_ALIAS = "pt"
+            const val TAG_ID = "tag_id"
+            const val PRODUCT_ID = "product_id"
+            const val END_ON = "end_on"
+        }
+    }
+}

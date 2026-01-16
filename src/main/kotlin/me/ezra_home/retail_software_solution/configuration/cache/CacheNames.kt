@@ -15,6 +15,7 @@ class CacheNames {
         const val UNIT_VALUE = "UnitValue"
         const val PAYMENT_METHOD = "PaymentMethod"
         const val PRODUCT = "Product"
+        const val PRODUCT_GROUP = "ProductGroup"
         const val PRODUCT_TAG = "ProductTag"
         const val DB_VERSION = "DbVersion"
         const val DB_MIGRATION = "DbMigration"

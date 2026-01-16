@@ -1,0 +1,13 @@
+package me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder
+
+object ParameterNames {
+  const val PREVIOUS_CURSOR = "previousCursor"
+  const val STATUS_LIST = "statusList"
+  const val NAME_OR_DESCRIPTION = "nameOrDescription"
+  const val REFERENCE_NUMBER = "referenceNumber"
+  const val CATEGORY_IDS = "categoryIds"
+  const val PRODUCT_GROUP_IDS = "productGroupIds"
+  const val TAG_IDS = "tagIds"
+  const val TAG_IDS_COUNT = "tagIdsCount"
+  const val PAGE_SIZE = "pageSize"
+}

@@ -71,3 +71,38 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: product_status_notnull
 
+              - column:
+                  name: product_group_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_group_id_notnull
+
+              - column:
+                  name: search_vector
+                  type: tsvector
+
+  - changeSet:
+      id: 'create-product-search-vector-trigger'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            sql: |
+              CREATE OR REPLACE FUNCTION update_product_search_vector()
+              RETURNS trigger AS $$
+              BEGIN
+                NEW.search_vector := to_tsvector('english', COALESCE(NEW.name, '') || ' ' || COALESCE(NEW.description, ''));
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+              CREATE TRIGGER trigger_update_product_search_vector
+              BEFORE INSERT OR UPDATE OF name, description ON product
+              FOR EACH ROW
+              EXECUTE FUNCTION update_product_search_vector();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trigger_update_product_search_vector ON product;
+              DROP FUNCTION IF EXISTS update_product_search_vector();

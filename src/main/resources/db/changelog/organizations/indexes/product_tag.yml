@@ -15,3 +15,21 @@ databaseChangeLog:
         - dropIndex:
             tableName: product_tag
             indexName: idx_product_tag_active_unique
+
+
+  - changeSet:
+      id: 'create-index-product-tag-tag-id-active'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_tag_tag_id_active
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_tag_tag_id_active ON product_tag (tag_id, product_id) WHERE end_on IS NULL;
+      rollback:
+        - dropIndex:
+            tableName: product_tag
+            indexName: idx_product_tag_tag_id_active

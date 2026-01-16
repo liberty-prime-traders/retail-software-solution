@@ -20,6 +20,9 @@ class ProductValidator(
         if(productUpdateDto.baseUnitId?.isPresent != true) {
             throw RtsGenericException("A product must have a base unit.")
         }
+        if (productUpdateDto.productGroupId?.isPresent != true) {
+            throw RtsGenericException("A product must belong to a product group.")
+        }
         productRepository.findFirstByProductNameIgnoreCase(name)?.let {
             if(it.id != productUpdateDto.id) {
                 throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
