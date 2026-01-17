@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import java.util.UUID
 
 @Entity
 @Table(name = TableNames.PRODUCT_GROUP)
@@ -17,6 +18,9 @@ class ProductGroupEntity(
     var groupName: String,
 
     @Column(name = "description")
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "category_id", nullable = false)
+    var categoryId: UUID
 
 ): HasReferenceEntity()

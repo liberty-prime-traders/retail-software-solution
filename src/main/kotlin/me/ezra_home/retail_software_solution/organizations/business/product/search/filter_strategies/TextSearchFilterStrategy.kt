@@ -25,7 +25,7 @@ class TextSearchFilterStrategy(
 
                 SearchMode.TRIGRAM -> {
                     context.whereClauses.add(
-                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) || ' ' || LOWER(COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, ''))) " +
+                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) || ' ' || LOWER(COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '')) || ' ' || LOWER(COALESCE(${p.TABLE_ALIAS}.${p.PRODUCT_GROUP_NAME}, ''))) " +
                         "% LOWER(:$NAME_OR_DESCRIPTION)"
                     )
                     context.params[NAME_OR_DESCRIPTION] = text
@@ -33,16 +33,17 @@ class TextSearchFilterStrategy(
 
                 SearchMode.PREFIX -> {
                     context.whereClauses.add(
-                        "(${p.TABLE_ALIAS}.${p.NAME} ILIKE :$NAME_OR_DESCRIPTION " +
-                        "OR COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '') ILIKE :$NAME_OR_DESCRIPTION)"
+                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) LIKE LOWER(:$NAME_OR_DESCRIPTION) " +
+                        "OR LOWER(COALESCE(${p.TABLE_ALIAS}.${p.PRODUCT_GROUP_NAME}, '')) LIKE LOWER(:$NAME_OR_DESCRIPTION))"
                     )
                     context.params[NAME_OR_DESCRIPTION] = "$text%"
                 }
 
                 SearchMode.WILDCARD -> {
                     context.whereClauses.add(
-                        "(${p.TABLE_ALIAS}.${p.NAME} ILIKE :$NAME_OR_DESCRIPTION " +
-                        "OR COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '') ILIKE :$NAME_OR_DESCRIPTION)"
+                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) LIKE LOWER(:$NAME_OR_DESCRIPTION) " +
+                        "OR LOWER(COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '')) LIKE LOWER(:$NAME_OR_DESCRIPTION) " +
+                        "OR LOWER(COALESCE(${p.TABLE_ALIAS}.${p.PRODUCT_GROUP_NAME}, '')) LIKE LOWER(:$NAME_OR_DESCRIPTION))"
                     )
                     context.params[NAME_OR_DESCRIPTION] = "%$text%"
                 }

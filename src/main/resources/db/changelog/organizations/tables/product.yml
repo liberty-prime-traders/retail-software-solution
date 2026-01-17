@@ -20,10 +20,6 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: category_id
-                  type: uuid
-
-              - column:
                   name: name
                   type: nvarchar2(100)
 
@@ -82,27 +78,6 @@ databaseChangeLog:
                   name: search_vector
                   type: tsvector
 
-  - changeSet:
-      id: 'create-product-search-vector-trigger'
-      author: ezra
-      labels: 1.0.0
-      changes:
-        - sql:
-            sql: |
-              CREATE OR REPLACE FUNCTION update_product_search_vector()
-              RETURNS trigger AS $$
-              BEGIN
-                NEW.search_vector := to_tsvector('english', COALESCE(NEW.name, '') || ' ' || COALESCE(NEW.description, ''));
-                RETURN NEW;
-              END;
-              $$ LANGUAGE plpgsql;
-
-              CREATE TRIGGER trigger_update_product_search_vector
-              BEFORE INSERT OR UPDATE OF name, description ON product
-              FOR EACH ROW
-              EXECUTE FUNCTION update_product_search_vector();
-      rollback:
-        - sql:
-            sql: |
-              DROP TRIGGER IF EXISTS trigger_update_product_search_vector ON product;
-              DROP FUNCTION IF EXISTS update_product_search_vector();
+              - column:
+                  name: product_group_name
+                  type: nvarchar2(100)

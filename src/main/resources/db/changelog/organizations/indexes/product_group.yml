@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-index-product-group-category'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_group_category
+      changes:
+        - createIndex:
+            indexName: idx_product_group_category
+            tableName: product_group
+            columns:
+              - column:
+                  name: category_id
+      rollback:
+        - dropIndex:
+            tableName: product_group
+            indexName: idx_product_group_category

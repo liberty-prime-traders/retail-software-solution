@@ -1,10 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryName
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.mapping.ProductCategoryId
+import me.ezra_home.retail_software_solution.organizations.business.product.mapping.ProductCategoryName
+import me.ezra_home.retail_software_solution.organizations.business.product.mapping.ProductCategoryQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitName
@@ -20,12 +21,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(
     config = RtsMapperConfig::class,
-    uses = [CategoryNameQualifier::class, UnitValueQualifier::class, ProductTagQualifier::class]
+    uses = [ProductCategoryQualifier::class, UnitValueQualifier::class, ProductTagQualifier::class]
 )
 interface ProductMapper {
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [CategoryName::class])
+    @Mapping(source = "productGroupId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
+    @Mapping(source = "productGroupId", target = "categoryId", qualifiedBy = [ProductCategoryId::class])
     @Mapping(source = "baseUnitId", target = "baseUnit", qualifiedBy = [UnitName::class])
     @Mapping(source = "id", target = "activeTags", qualifiedBy = [ActiveProductTags::class])
     fun toDto(productEntity: ProductEntity): ProductResponseDto
@@ -36,6 +38,7 @@ interface ProductMapper {
     @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "productGroupName", ignore = true)
     fun toEntity(productInsertDto: ProductInsertDto): ProductEntity
 
     @Mapping(target = "createdById", ignore = true)
@@ -43,6 +46,7 @@ interface ProductMapper {
     @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "productGroupName", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(productDto: ProductUpdateDto, @MappingTarget productEntity: ProductEntity)
 }

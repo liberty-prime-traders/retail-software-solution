@@ -10,5 +10,6 @@ import java.util.UUID
 data class ProductGroupUpdateDto(
   val id: UUID,
   val groupName: Optional<String>? = null,
-  val description: Optional<String>? = null
+  val description: Optional<String>? = null,
+  val categoryId: Optional<UUID>? = null
 ) : Serializable

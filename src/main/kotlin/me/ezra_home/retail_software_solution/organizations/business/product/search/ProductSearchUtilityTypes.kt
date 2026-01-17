@@ -10,7 +10,6 @@ object ProductSearchUtilityTypes {
     data class QueryMetadata(
         val queryName: String = "product_search",
         val categoryIdsCount: Int = 0,
-        val productGroupIdsCount: Int = 0,
         val tagIdsCount: Int = 0,
         val statusListCount: Int = 0,
         val hasTextSearch: Boolean = false,

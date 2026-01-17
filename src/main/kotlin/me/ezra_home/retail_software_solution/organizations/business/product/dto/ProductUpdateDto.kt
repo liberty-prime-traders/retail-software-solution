@@ -11,7 +11,6 @@ data class ProductUpdateDto (
     val id: UUID,
     val productName: Optional<String>? = null,
     val description: Optional<String>? = null,
-    val categoryId: Optional<UUID>? = null,
     val productGroupId: Optional<UUID>? = null,
     val baseUnitId: Optional<UUID>? = null,
     val tagsToAdd: Set<UUID> = emptySet(),

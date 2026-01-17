@@ -8,9 +8,6 @@ object ProductSearchValidator {
     require(params.categoryIds.size <= MAX_ARRAY_SIZE) {
       "categoryIds exceeds maximum size of $MAX_ARRAY_SIZE"
     }
-    require(params.productGroupIds.size <= MAX_ARRAY_SIZE) {
-      "productGroupIds exceeds maximum size of $MAX_ARRAY_SIZE"
-    }
     require(params.tagsIds.size <= MAX_ARRAY_SIZE) {
       "tagIds exceeds maximum size of $MAX_ARRAY_SIZE"
     }

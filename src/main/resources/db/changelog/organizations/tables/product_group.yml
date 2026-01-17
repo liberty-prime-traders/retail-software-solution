@@ -50,3 +50,10 @@ databaseChangeLog:
                     uniqueConstraintName: product_group_reference_number_unique
                     nullable: false
                     notNullConstraintName: product_group_reference_number_not_null
+
+              - column:
+                  name: category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_group_category_id_notnull

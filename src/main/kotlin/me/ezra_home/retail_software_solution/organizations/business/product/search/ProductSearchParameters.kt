@@ -4,18 +4,17 @@ import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import java.util.UUID
 
 enum class SearchMode {
-    NONE,       // No text search
-    FULLTEXT,   // tsvector @@ tsquery
-    TRIGRAM,    // trigram % similarity
-    PREFIX,     // ILIKE 'text%'
-    WILDCARD    // ILIKE '%text%'
+    NONE,
+    FULLTEXT,
+    TRIGRAM,
+    PREFIX,
+    WILDCARD
 }
 
 data class ProductSearchParameters(
-    val productNameOrDescription: String? = null,
+    val searchText: String? = null,
     val referenceNumber: String? = null,
     val categoryIds: Set<UUID> = emptySet(),
-    val productGroupIds: Set<UUID> = emptySet(),
     val tagsIds: Set<UUID> = emptySet(),
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
     val searchMode: SearchMode = SearchMode.NONE

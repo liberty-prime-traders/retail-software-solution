@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
+import jakarta.persistence.QueryTimeoutException
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.product.ProductMapper
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
@@ -20,7 +21,7 @@ class ProductSearchService(
     val pageSize = pageRequest.requestedSize
     ProductSearchValidator.validateArraySizes(pageRequest.parameters)
 
-    val searchText = pageRequest.parameters.productNameOrDescription
+    val searchText = pageRequest.parameters.searchText
 
     if (searchText.isNullOrBlank()) {
       return executeQueryAndMapResults(
@@ -58,12 +59,21 @@ class ProductSearchService(
       return prefixResults
     }
 
-    if (searchText.length >= 3) {
-      return executeQueryAndMapResults(
-        pageRequest.parameters.copy(searchMode = SearchMode.WILDCARD),
-        pageRequest.previousCursor,
-        pageSize
-      )
+    if (searchText.length in 3..6) {
+      return try{
+        executeQueryAndMapResults(
+          pageRequest.parameters.copy(searchMode = SearchMode.WILDCARD),
+          pageRequest.previousCursor,
+          pageSize,
+          setTimeout = true
+        )
+      } catch (e: QueryTimeoutException) {
+        PageResponse(
+          currentCursor = pageRequest.previousCursor,
+          hasMore = false,
+          contents = emptyList()
+        )
+      }
     }
 
     return PageResponse(
@@ -76,10 +86,11 @@ class ProductSearchService(
   private fun executeQueryAndMapResults(
     params: ProductSearchParameters,
     previousCursor: Long,
-    pageSize: Int
+    pageSize: Int,
+    setTimeout: Boolean = false,
   ): PageResponse<ProductResponseDto> {
     val sqlQuery = Builder.buildSearchQuery(params, previousCursor)
-    val results: List<ProductEntity> = executor.executeQuery(sqlQuery, pageSize + 1)
+    val results: List<ProductEntity> = executor.executeQuery(sqlQuery, pageSize + 1, setTimeout)
 
     val hasMore = results.size > pageSize
     val pageResults = if (hasMore) results.take(pageSize) else results
@@ -91,5 +102,11 @@ class ProductSearchService(
       hasMore = hasMore,
       contents = contents
     )
+  }
+
+  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters>): String {
+    ProductSearchValidator.validateArraySizes(pageRequest.parameters)
+    val sqlQuery = Builder.buildSearchQuery(pageRequest.parameters, pageRequest.previousCursor)
+    return ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize)
   }
 }

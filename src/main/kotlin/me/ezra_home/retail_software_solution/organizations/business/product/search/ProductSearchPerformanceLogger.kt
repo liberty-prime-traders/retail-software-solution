@@ -1,30 +1,21 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Component
 
-@Component
-class ProductSearchPerformanceLogger {
+object ProductSearchPerformanceLogger {
 
-  companion object {
-    private const val SLOW_QUERY_THRESHOLD_MS = 1000
-    private val logger = LoggerFactory.getLogger(ProductSearchPerformanceLogger::class.java)
-  }
+  private const val SLOW_QUERY_THRESHOLD_MS = 1000
+  private val logger = LoggerFactory.getLogger(ProductSearchPerformanceLogger::class.java)
 
-  fun logPerformance(
-    startTime: Long,
-    metadata: ProductSearchUtilityTypes.QueryMetadata,
-    resultSize: Int
-  ) {
+  fun logPerformance(startTime: Long, metadata: ProductSearchUtilityTypes.QueryMetadata, resultSize: Int) {
     val duration = System.currentTimeMillis() - startTime
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
       logger.warn(
-        "Slow query detected: query={}, duration={}ms, categoryIdsCount={}, productGroupIdsCount={}, " +
+        "Slow query detected: query={}, duration={}ms, categoryIdsCount={}, " +
         "tagIdsCount={}, statusListCount={}, hasTextSearch={}, hasReferenceNumberSearch={}, hasTagFilter={}, resultSize={}",
         metadata.queryName,
         duration,
         metadata.categoryIdsCount,
-        metadata.productGroupIdsCount,
         metadata.tagIdsCount,
         metadata.statusListCount,
         metadata.hasTextSearch,

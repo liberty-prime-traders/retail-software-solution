@@ -32,6 +32,10 @@ class ProductEndpoint(
     fun searchWithParameters(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> =
         productSearchService.searchWithParameters(pageRequest)
 
+    @PostMapping("structured-search/debug-query")
+    fun debugSearchQuery(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): String =
+        productSearchService.generateFormattedQuery(pageRequest)
+
     @PutMapping
     fun updateProduct(@RequestBody productDto: ProductUpdateDto): ProductResponseDto =
         productService.updateProduct(productDto)

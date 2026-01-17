@@ -15,6 +15,7 @@ data class ProductResponseDto (
     val categoryName: String?,
     val categoryId: UUID?,
     val productGroupId: UUID?,
+    val productGroupName: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val baseUnit: String?,

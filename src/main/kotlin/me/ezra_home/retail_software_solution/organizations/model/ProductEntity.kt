@@ -23,11 +23,11 @@ class ProductEntity(
     @Column(name = "description")
     var description: String? = null,
 
-    @Column(name = "category_id", nullable = false)
-    var categoryId: UUID,
-
     @Column(name = "product_group_id", nullable = false)
     var productGroupId: UUID,
+
+    @Column(name = "product_group_name", insertable = false, updatable = false)
+    var productGroupName: String? = null,
 
     @Column(name = "base_unit_id")
     var baseUnitId: UUID,

@@ -9,7 +9,6 @@ import java.util.UUID
 data class ProductInsertDto(
     val productName: String,
     val description: String? = null,
-    val categoryId: UUID? = null,
     val productGroupId: UUID,
     val baseUnitId: UUID,
     val tagsToAdd: Set<UUID> = emptySet()
