@@ -31,7 +31,6 @@ class ProductSearchService(
       )
     }
 
-    // Stage 1: Full-text search (fastest for word matches)
     val fullTextResults = executeQueryAndMapResults(
       pageRequest.parameters.copy(searchMode = SearchMode.FULLTEXT),
       pageRequest.previousCursor,

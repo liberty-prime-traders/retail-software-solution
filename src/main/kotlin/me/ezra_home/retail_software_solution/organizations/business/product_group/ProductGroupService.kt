@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product_grou
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnOrganizationSchema
@@ -36,5 +37,9 @@ class ProductGroupService(
     productGroupMapper.partialUpdate(productGroupDto, productGroupToUpdate)
     productGroupCache.upsertProductGroup(productGroupToUpdate)
     return productGroupMapper.toDto(productGroupToUpdate)
+  }
+
+  fun deleteProductGroup(productGroupId: UUID) {
+    productGroupCache.deleteProductGroupById(productGroupId)
   }
 }

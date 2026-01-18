@@ -1,0 +1,156 @@
+package me.ezra_home.retail_software_solution.organizations.business.product.search
+
+import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
+import me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder.Builder
+import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class BuilderTest {
+
+  @Test
+  fun `minimal query with cursor and status`() {
+    val params = ProductSearchParameters(statusList = setOf(ProductStatus.ACTIVE))
+    val result = Builder.buildSearchQuery(params, previousCursor = 100L)
+
+    assertTrue(result.sql.contains("SELECT p.*"))
+    assertTrue(result.sql.contains("FROM product p"))
+    assertTrue(result.sql.contains("p.cursor > :previousCursor"))
+    assertTrue(result.sql.contains("p.status = ANY(:statusList)"))
+    assertFalse(result.sql.contains("GROUP BY"))
+    assertEquals(100L, result.params["previousCursor"])
+    assertTrue((result.params["statusList"] as Array<*>).contentEquals(arrayOf("A")))
+  }
+
+  @Test
+  fun `text search adds correct clause per mode`() {
+    val fulltext = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.FULLTEXT),
+      previousCursor = 0L
+    )
+    val trigram = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "pakaging", searchMode = SearchMode.TRIGRAM),
+      previousCursor = 0L
+    )
+    val prefix = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "comp", searchMode = SearchMode.PREFIX),
+      previousCursor = 0L
+    )
+    val wildcard = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "tab", searchMode = SearchMode.WILDCARD),
+      previousCursor = 0L
+    )
+
+    assertTrue(fulltext.sql.contains("p.search_vector @@ plainto_tsquery"))
+    assertEquals("laptop", fulltext.params["nameOrDescription"])
+
+    assertTrue(trigram.sql.contains("LOWER(p.name) % LOWER(:nameOrDescription)"))
+    assertTrue(trigram.sql.contains("OR LOWER(COALESCE(p.description, '')) % LOWER(:nameOrDescription)"))
+    assertTrue(trigram.sql.contains("OR LOWER(COALESCE(p.product_group_name, '')) % LOWER(:nameOrDescription)"))
+    assertEquals("pakaging", trigram.params["nameOrDescription"])
+
+    assertTrue(prefix.sql.contains("LOWER(p.name) LIKE LOWER(:nameOrDescription)"))
+    assertEquals("comp%", prefix.params["nameOrDescription"])
+
+    assertTrue(wildcard.sql.contains("LOWER(COALESCE(p.description, ''))"))
+    assertEquals("%tab%", wildcard.params["nameOrDescription"])
+  }
+
+  @Test
+  fun `blank or NONE search mode ignored`() {
+    val blank = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "   ", searchMode = SearchMode.FULLTEXT),
+      previousCursor = 0L
+    )
+    val none = Builder.buildSearchQuery(
+      ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.NONE),
+      previousCursor = 0L
+    )
+
+    assertFalse(blank.params.containsKey("nameOrDescription"))
+    assertFalse(none.params.containsKey("nameOrDescription"))
+  }
+
+  @Test
+  fun `category filter adds product_group join`() {
+    val result = Builder.buildSearchQuery(
+      ProductSearchParameters(categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
+      previousCursor = 0L
+    )
+
+    assertTrue(result.sql.contains("INNER JOIN product_group pg ON p.product_group_id = pg.id"))
+    assertTrue(result.sql.contains("pg.category_id = ANY(:categoryIds)"))
+    assertEquals(2, (result.params["categoryIds"] as Array<*>).size)
+  }
+
+  @Test
+  fun `tag filter triggers subquery pattern`() {
+    val result = Builder.buildSearchQuery(
+      ProductSearchParameters(tagsIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
+      previousCursor = 0L
+    )
+
+    assertTrue(result.sql.contains("SELECT p.*"))
+    assertTrue(result.sql.contains("FROM ("))
+    assertTrue(result.sql.contains("filtered_products.id"))
+    assertTrue(result.sql.contains("INNER JOIN product_tag pt"))
+    assertTrue(result.sql.contains("GROUP BY"))
+    assertTrue(result.sql.contains("HAVING COUNT(DISTINCT pt.tag_id) = :tagIdsCount"))
+    assertTrue(result.sql.contains("pt.end_on IS NULL"))
+    assertEquals(2, result.params["tagIdsCount"])
+  }
+
+  @Test
+  fun `tag filter with category includes product_group join in subquery`() {
+    val result = Builder.buildSearchQuery(
+      ProductSearchParameters(
+        tagsIds = setOf(TestUUIDs.UUID1),
+        categoryIds = setOf(TestUUIDs.UUID2)
+      ),
+      previousCursor = 0L
+    )
+
+    assertTrue(result.sql.contains("INNER JOIN product_group pg"))
+    assertTrue(result.sql.contains("INNER JOIN product_tag pt"))
+  }
+
+  @Test
+  fun `combined filters produce correct metadata`() {
+    val result = Builder.buildSearchQuery(
+      ProductSearchParameters(
+        searchText = "laptop",
+        searchMode = SearchMode.FULLTEXT,
+        referenceNumber = "REF",
+        categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
+        tagsIds = setOf(TestUUIDs.UUID3),
+        statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
+      ),
+      previousCursor = 0L
+    )
+
+    assertEquals(2, result.metadata.categoryIdsCount)
+    assertEquals(1, result.metadata.tagIdsCount)
+    assertEquals(2, result.metadata.statusListCount)
+    assertTrue(result.metadata.hasTextSearch)
+    assertTrue(result.metadata.hasReferenceNumberSearch)
+    assertTrue(result.metadata.hasTagFilter)
+  }
+
+  @Test
+  fun `multiple status codes formatted correctly`() {
+    val result = Builder.buildSearchQuery(
+      ProductSearchParameters(
+        statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.AWAITING_FINAL_SALE)
+      ),
+      previousCursor = 0L
+    )
+
+    val statusArray = result.params["statusList"] as Array<*>
+    assertEquals(3, statusArray.size)
+    assertTrue(statusArray.contains("A"))
+    assertTrue(statusArray.contains("X"))
+    assertTrue(statusArray.contains("AFS"))
+  }
+}

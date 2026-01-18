@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
@@ -21,4 +22,9 @@ class ProductGroupCache(private val productGroupRepository: ProductGroupReposito
   fun upsertProductGroup(productGroupEntity: ProductGroupEntity) {
     productGroupRepository.save(productGroupEntity)
   }
+
+  @CacheEvict(allEntries = true)
+  fun deleteProductGroupById(productGroupId: UUID) {
+        productGroupRepository.deleteById(productGroupId)
+    }
 }

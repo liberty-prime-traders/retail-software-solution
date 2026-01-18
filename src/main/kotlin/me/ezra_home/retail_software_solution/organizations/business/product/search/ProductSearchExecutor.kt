@@ -31,17 +31,17 @@ class ProductSearchExecutor(
     val params = sqlQuery.params.toMutableMap()
     params[ParameterNames.PAGE_SIZE] = coercedPageSize
 
-    val entityManager = organizationEmf.getObject()!!.createEntityManager()
-    val query: Query = entityManager.createNativeQuery(sqlQuery.sql, ProductEntity::class.java)
-    params.forEach { (key, value) -> query.setParameter(key, value) }
-    if (setTimeout) {
-      query.setHint("jakarta.persistence.query.timeout", 2000)
+    organizationEmf.getObject()!!.createEntityManager().use { entityManager ->
+      val query: Query = entityManager.createNativeQuery(sqlQuery.sql, ProductEntity::class.java)
+      params.forEach { (key, value) -> query.setParameter(key, value) }
+      if (setTimeout) {
+        query.setHint("jakarta.persistence.query.timeout", 2000)
+      }
+      @Suppress("UNCHECKED_CAST")
+      val results = query.resultList as List<ProductEntity>
+
+      ProductSearchPerformanceLogger.logPerformance(startTime, sqlQuery.metadata, results.size)
+      return results
     }
-
-    @Suppress("UNCHECKED_CAST")
-    val results = query.resultList as List<ProductEntity>
-
-    ProductSearchPerformanceLogger.logPerformance(startTime, sqlQuery.metadata, results.size)
-    return results
   }
 }

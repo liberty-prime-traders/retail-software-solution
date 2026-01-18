@@ -25,8 +25,9 @@ class TextSearchFilterStrategy(
 
                 SearchMode.TRIGRAM -> {
                     context.whereClauses.add(
-                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) || ' ' || LOWER(COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '')) || ' ' || LOWER(COALESCE(${p.TABLE_ALIAS}.${p.PRODUCT_GROUP_NAME}, ''))) " +
-                        "% LOWER(:$NAME_OR_DESCRIPTION)"
+                        "(LOWER(${p.TABLE_ALIAS}.${p.NAME}) % LOWER(:$NAME_OR_DESCRIPTION) " +
+                        "OR LOWER(COALESCE(${p.TABLE_ALIAS}.${p.DESCRIPTION}, '')) % LOWER(:$NAME_OR_DESCRIPTION) " +
+                        "OR LOWER(COALESCE(${p.TABLE_ALIAS}.${p.PRODUCT_GROUP_NAME}, '')) % LOWER(:$NAME_OR_DESCRIPTION))"
                     )
                     context.params[NAME_OR_DESCRIPTION] = text
                 }

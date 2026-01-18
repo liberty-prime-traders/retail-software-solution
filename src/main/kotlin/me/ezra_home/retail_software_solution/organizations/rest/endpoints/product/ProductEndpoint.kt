@@ -28,11 +28,11 @@ class ProductEndpoint(
     fun createProduct(@RequestBody productInsertDto: ProductInsertDto): ProductResponseDto =
         productService.createProduct(productInsertDto)
 
-    @PostMapping("structured-search")
-    fun searchWithParameters(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> =
+    @PostMapping("search")
+    fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> =
         productSearchService.searchWithParameters(pageRequest)
 
-    @PostMapping("structured-search/debug-query")
+    @PostMapping("search/debug-query")
     fun debugSearchQuery(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): String =
         productSearchService.generateFormattedQuery(pageRequest)
 
@@ -49,6 +49,5 @@ class ProductEndpoint(
         productService.reactivateProduct(productId)
 
     @GetMapping
-    fun getAllProducts(): Collection<ProductResponseDto> =
-        productService.getTopProducts()
+    fun getAllProducts(): Collection<ProductResponseDto> = productService.getTopProducts()
 }
