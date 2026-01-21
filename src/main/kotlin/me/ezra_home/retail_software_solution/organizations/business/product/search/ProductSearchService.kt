@@ -17,84 +17,59 @@ class ProductSearchService(
   private val executor: ProductSearchExecutor
 ) {
 
-  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> {
-    val pageSize = pageRequest.requestedSize
+  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<ProductResponseDto, String> {
     ProductSearchValidator.validateArraySizes(pageRequest.parameters)
-
     val searchText = pageRequest.parameters.searchText
 
     if (searchText.isNullOrBlank()) {
-      return executeQueryAndMapResults(
-        pageRequest.parameters.copy(searchMode = SearchMode.NONE),
-        pageRequest.previousCursor,
-        pageSize
-      )
+      return executeQuery(pageRequest.parameters, pageRequest.previousCursor, pageRequest.requestedSize, SearchMode.NONE)
     }
 
-    val fullTextResults = executeQueryAndMapResults(
-      pageRequest.parameters.copy(searchMode = SearchMode.FULLTEXT),
-      pageRequest.previousCursor,
-      pageSize
-    )
-    if (fullTextResults.contents.isNotEmpty()) {
-      return fullTextResults
+    val searchModes = when {
+      searchText.length <= 3 -> listOf(SearchMode.PREFIX, SearchMode.TRIGRAM)
+      searchText.length <= 4 -> listOf(SearchMode.PREFIX, SearchMode.TRIGRAM, SearchMode.WILDCARD)
+      searchText.length <= 6 -> listOf(SearchMode.FULLTEXT, SearchMode.TRIGRAM, SearchMode.PREFIX, SearchMode.WILDCARD)
+      else -> listOf(SearchMode.FULLTEXT, SearchMode.TRIGRAM, SearchMode.PREFIX)
     }
 
-    val trigramResults = executeQueryAndMapResults(
-      pageRequest.parameters.copy(searchMode = SearchMode.TRIGRAM),
-      pageRequest.previousCursor,
-      pageSize
-    )
-    if (trigramResults.contents.isNotEmpty()) {
-      return trigramResults
-    }
-
-    val prefixResults = executeQueryAndMapResults(
-      pageRequest.parameters.copy(searchMode = SearchMode.PREFIX),
-      pageRequest.previousCursor,
-      pageSize
-    )
-    if (prefixResults.contents.isNotEmpty()) {
-      return prefixResults
-    }
-
-    if (searchText.length in 3..6) {
-      return try{
-        executeQueryAndMapResults(
-          pageRequest.parameters.copy(searchMode = SearchMode.WILDCARD),
+    searchModes.forEach { mode ->
+      try {
+        val result = executeQuery(
+          pageRequest.parameters,
           pageRequest.previousCursor,
-          pageSize,
-          setTimeout = true
+          pageRequest.requestedSize,
+          mode
         )
-      } catch (e: QueryTimeoutException) {
-        PageResponse(
-          currentCursor = pageRequest.previousCursor,
-          hasMore = false,
-          contents = emptyList()
-        )
+        if (result.contents.isNotEmpty()) return result
+      } catch (_: QueryTimeoutException) {
       }
     }
 
-    return PageResponse(
-      currentCursor = pageRequest.previousCursor,
-      hasMore = false,
-      contents = emptyList()
-    )
+    return PageResponse(pageRequest.previousCursor, false, emptyList())
+  }
+
+  private fun executeQuery(
+    params: ProductSearchParameters,
+    previousName: String,
+    pageSize: Int,
+    searchMode: SearchMode
+  ): PageResponse<ProductResponseDto, String> {
+    return executeQueryAndMapResults(params.copy(searchMode = searchMode), previousName, pageSize, searchMode == SearchMode.WILDCARD)
   }
 
   private fun executeQueryAndMapResults(
     params: ProductSearchParameters,
-    previousCursor: Long,
+    previousName: String,
     pageSize: Int,
     setTimeout: Boolean = false,
-  ): PageResponse<ProductResponseDto> {
-    val sqlQuery = Builder.buildSearchQuery(params, previousCursor)
+  ): PageResponse<ProductResponseDto, String> {
+    val sqlQuery = Builder.buildSearchQuery(params, previousName)
     val results: List<ProductEntity> = executor.executeQuery(sqlQuery, pageSize + 1, setTimeout)
 
     val hasMore = results.size > pageSize
     val pageResults = if (hasMore) results.take(pageSize) else results
     val contents: Collection<ProductResponseDto> = pageResults.map { productMapper.toDto(it) }
-    val currentCursor = contents.lastOrNull()?.cursor ?: previousCursor
+    val currentCursor = contents.lastOrNull()?.productName ?: previousName
 
     return PageResponse(
       currentCursor = currentCursor,
@@ -103,7 +78,7 @@ class ProductSearchService(
     )
   }
 
-  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters>): String {
+  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
     ProductSearchValidator.validateArraySizes(pageRequest.parameters)
     val sqlQuery = Builder.buildSearchQuery(pageRequest.parameters, pageRequest.previousCursor)
     return ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize)

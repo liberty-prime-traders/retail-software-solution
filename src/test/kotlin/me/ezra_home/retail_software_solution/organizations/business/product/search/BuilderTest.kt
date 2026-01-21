@@ -11,16 +11,16 @@ import kotlin.test.assertTrue
 class BuilderTest {
 
   @Test
-  fun `minimal query with cursor and status`() {
+  fun `minimal query with name and status`() {
     val params = ProductSearchParameters(statusList = setOf(ProductStatus.ACTIVE))
-    val result = Builder.buildSearchQuery(params, previousCursor = 100L)
+    val result = Builder.buildSearchQuery(params, previousName = "Product A")
 
     assertTrue(result.sql.contains("SELECT p.*"))
     assertTrue(result.sql.contains("FROM product p"))
-    assertTrue(result.sql.contains("p.cursor > :previousCursor"))
+    assertTrue(result.sql.contains("LOWER(p.name) > LOWER(:previousName)"))
     assertTrue(result.sql.contains("p.status = ANY(:statusList)"))
     assertFalse(result.sql.contains("GROUP BY"))
-    assertEquals(100L, result.params["previousCursor"])
+    assertEquals("Product A", result.params["previousName"])
     assertTrue((result.params["statusList"] as Array<*>).contentEquals(arrayOf("A")))
   }
 
@@ -28,19 +28,19 @@ class BuilderTest {
   fun `text search adds correct clause per mode`() {
     val fulltext = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.FULLTEXT),
-      previousCursor = 0L
+      previousName = ""
     )
     val trigram = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "pakaging", searchMode = SearchMode.TRIGRAM),
-      previousCursor = 0L
+      previousName = ""
     )
     val prefix = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "comp", searchMode = SearchMode.PREFIX),
-      previousCursor = 0L
+      previousName = ""
     )
     val wildcard = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "tab", searchMode = SearchMode.WILDCARD),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertTrue(fulltext.sql.contains("p.search_vector @@ plainto_tsquery"))
@@ -62,11 +62,11 @@ class BuilderTest {
   fun `blank or NONE search mode ignored`() {
     val blank = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "   ", searchMode = SearchMode.FULLTEXT),
-      previousCursor = 0L
+      previousName = ""
     )
     val none = Builder.buildSearchQuery(
       ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.NONE),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertFalse(blank.params.containsKey("nameOrDescription"))
@@ -77,7 +77,7 @@ class BuilderTest {
   fun `category filter adds product_group join`() {
     val result = Builder.buildSearchQuery(
       ProductSearchParameters(categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertTrue(result.sql.contains("INNER JOIN product_group pg ON p.product_group_id = pg.id"))
@@ -89,7 +89,7 @@ class BuilderTest {
   fun `tag filter triggers subquery pattern`() {
     val result = Builder.buildSearchQuery(
       ProductSearchParameters(tagsIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertTrue(result.sql.contains("SELECT p.*"))
@@ -109,7 +109,7 @@ class BuilderTest {
         tagsIds = setOf(TestUUIDs.UUID1),
         categoryIds = setOf(TestUUIDs.UUID2)
       ),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertTrue(result.sql.contains("INNER JOIN product_group pg"))
@@ -127,7 +127,7 @@ class BuilderTest {
         tagsIds = setOf(TestUUIDs.UUID3),
         statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
       ),
-      previousCursor = 0L
+      previousName = ""
     )
 
     assertEquals(2, result.metadata.categoryIdsCount)
@@ -144,7 +144,7 @@ class BuilderTest {
       ProductSearchParameters(
         statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.AWAITING_FINAL_SALE)
       ),
-      previousCursor = 0L
+      previousName = ""
     )
 
     val statusArray = result.params["statusList"] as Array<*>

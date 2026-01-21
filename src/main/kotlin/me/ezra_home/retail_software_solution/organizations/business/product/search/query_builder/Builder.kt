@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product.sea
 import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchParameters
 import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchUtilityTypes
 import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.CategoryFilterStrategy
-import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.CursorFilterStrategy
+import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.NameFilterStrategy
 import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.QueryBuilderContext
 import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.ReferenceNumberFilterStrategy
 import me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies.StatusFilterStrategy
@@ -20,7 +20,7 @@ object Builder {
 
     fun buildSearchQuery(
         searchParams: ProductSearchParameters,
-        previousCursor: Long
+        previousName: String
     ): ProductSearchUtilityTypes.SqlQuery {
         val context = QueryBuilderContext()
         val hasTagFilter = searchParams.tagsIds.isNotEmpty()
@@ -30,7 +30,7 @@ object Builder {
         context.whereClauses.add("1=1")
 
         val statusCodes = extractStatusCodes(searchParams)
-        applyFilters(context, searchParams, previousCursor, statusCodes)
+        applyFilters(context, searchParams, previousName, statusCodes)
 
         val sql = buildQuery(context, hasTagFilter, hasCategoryFilter)
         val metadata = buildMetadata(searchParams, statusCodes, hasTagFilter)
@@ -41,11 +41,10 @@ object Builder {
     private fun applyFilters(
         context: QueryBuilderContext,
         searchParams: ProductSearchParameters,
-        previousCursor: Long,
+        previousName: String,
         statusCodes: Set<String>
     ) {
-        // Order matters: cursor and status are always present
-        CursorFilterStrategy(previousCursor).apply(context)
+        NameFilterStrategy(previousName).apply(context)
         StatusFilterStrategy(statusCodes).apply(context)
 
         TextSearchFilterStrategy(searchParams.searchText, searchParams.searchMode).apply(context)
@@ -77,7 +76,7 @@ object Builder {
             FROM ${TableNames.PRODUCT} ${P.TABLE_ALIAS}
             $joinClause
             WHERE ${context.whereClauses.joinToString(" AND ")}
-            ORDER BY ${P.TABLE_ALIAS}.${P.CURSOR}
+            ORDER BY LOWER(${P.TABLE_ALIAS}.${P.NAME})
             LIMIT :${ParameterNames.PAGE_SIZE}
         """.trimIndent()
     }
@@ -115,22 +114,22 @@ object Builder {
         return """
             SELECT ${P.TABLE_ALIAS}.*
             FROM (
-              SELECT filtered_products.${P.ID}, filtered_products.${P.CURSOR}
+              SELECT filtered_products.${P.ID}, filtered_products.${P.NAME}
               FROM (
-                SELECT ${P.TABLE_ALIAS}.${P.ID}, ${P.TABLE_ALIAS}.${P.CURSOR}
+                SELECT ${P.TABLE_ALIAS}.${P.ID}, ${P.TABLE_ALIAS}.${P.NAME}
                 FROM ${TableNames.PRODUCT} ${P.TABLE_ALIAS}
                 $productGroupJoin
                 WHERE ${productFilters.joinToString(" AND ")}
               ) filtered_products
               INNER JOIN ${TableNames.PRODUCT_TAG} ${PT.TABLE_ALIAS} ON ${PT.TABLE_ALIAS}.${PT.PRODUCT_ID} = filtered_products.${P.ID}
               WHERE ${tagFilters.joinToString(" AND ")}
-              GROUP BY filtered_products.${P.ID}, filtered_products.${P.CURSOR}
+              GROUP BY filtered_products.${P.ID}, filtered_products.${P.NAME}
               $havingClause
-              ORDER BY filtered_products.${P.CURSOR}
+              ORDER BY LOWER(filtered_products.${P.NAME})
               LIMIT :${ParameterNames.PAGE_SIZE}
             ) final_ids
             INNER JOIN ${TableNames.PRODUCT} ${P.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${P.ID} = final_ids.${P.ID}
-            ORDER BY ${P.TABLE_ALIAS}.${P.CURSOR}
+            ORDER BY LOWER(${P.TABLE_ALIAS}.${P.NAME})
         """.trimIndent()
     }
 

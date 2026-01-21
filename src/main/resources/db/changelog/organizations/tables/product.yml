@@ -40,10 +40,6 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
-                  name: cursor
-                  type: bigserial
-
-              - column:
                   name: base_unit_id
                   type: uuid
                   constraints:

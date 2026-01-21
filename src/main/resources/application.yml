@@ -47,10 +47,6 @@ spring:
       pool:
         size: 5
 
-  jackson:
-    time-zone: UTC
-    default-property-inclusion: non_null
-
 okta:
   oauth2:
     issuer: https://${OKTA_DOMAIN}/oauth2/default

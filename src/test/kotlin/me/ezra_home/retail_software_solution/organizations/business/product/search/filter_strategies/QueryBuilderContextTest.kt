@@ -11,7 +11,7 @@ class QueryBuilderContextTest {
   fun `accumulates filters from multiple strategies`() {
     val context = QueryBuilderContext()
 
-    CursorFilterStrategy(100L).apply(context)
+    NameFilterStrategy("Product A").apply(context)
     StatusFilterStrategy(setOf("A")).apply(context)
     TextSearchFilterStrategy("laptop", SearchMode.FULLTEXT).apply(context)
 
@@ -23,7 +23,7 @@ class QueryBuilderContextTest {
   fun `supports both WHERE and HAVING clauses`() {
     val context = QueryBuilderContext()
 
-    CursorFilterStrategy(0L).apply(context)
+    NameFilterStrategy("").apply(context)
     TagFilterStrategy(setOf(java.util.UUID.randomUUID())).apply(context)
 
     assertTrue(context.whereClauses.isNotEmpty())

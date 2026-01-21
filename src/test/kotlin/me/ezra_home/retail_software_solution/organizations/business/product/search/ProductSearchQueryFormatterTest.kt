@@ -54,8 +54,8 @@ class ProductSearchQueryFormatterTest {
   @Test
   fun `formats number parameters without quotes`() {
     val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
-      sql = "SELECT * FROM product WHERE cursor > :previousCursor AND count = :tagCount",
-      params = mapOf("previousCursor" to 12345L, "tagCount" to 2),
+      sql = "SELECT * FROM product WHERE count = :tagCount AND price > :minPrice",
+      params = mapOf("tagCount" to 2, "minPrice" to 12345L),
       metadata = ProductSearchUtilityTypes.QueryMetadata()
     )
 
@@ -100,7 +100,7 @@ class ProductSearchQueryFormatterTest {
       sql = """
         SELECT p.*
         FROM (
-          SELECT p.id WHERE p.cursor > :previousCursor
+          SELECT p.id WHERE LOWER(p.name) > LOWER(:previousName)
           AND p.status = ANY(:statusList)
           AND p.name LIKE :searchText
           AND pt.tag_id = ANY(:tagIds)
@@ -109,7 +109,7 @@ class ProductSearchQueryFormatterTest {
         ) final_ids
       """.trimIndent(),
       params = mapOf(
-        "previousCursor" to 500L,
+        "previousName" to "Product A",
         "statusList" to arrayOf("A"),
         "searchText" to "%laptop%",
         "tagIds" to arrayOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
@@ -120,13 +120,13 @@ class ProductSearchQueryFormatterTest {
 
     val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100)
 
-    assertFalse(result.contains(":previousCursor"))
+    assertFalse(result.contains(":previousName"))
     assertFalse(result.contains(":statusList"))
     assertFalse(result.contains(":searchText"))
     assertFalse(result.contains(":tagIds"))
     assertFalse(result.contains(":tagIdsCount"))
     assertFalse(result.contains(":pageSize"))
-    assertTrue(result.contains("500"))
+    assertTrue(result.contains("'Product A'"))
     assertTrue(result.contains("'%laptop%'"))
     assertTrue(result.contains("100"))
   }

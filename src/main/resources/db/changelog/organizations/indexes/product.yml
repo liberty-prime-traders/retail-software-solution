@@ -109,18 +109,18 @@ databaseChangeLog:
             indexName: idx_product_group_name_trgm
 
   - changeSet:
-      id: 'create-index-product-name-lower-pattern'
+      id: 'create-unique-index-product-name-lower'
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_product_name_lower_pattern
+                indexName: idx_product_name_lower_unique
       changes:
         - sql:
-            sql: CREATE INDEX idx_product_name_lower_pattern ON product (LOWER(name) text_pattern_ops);
+            sql: CREATE UNIQUE INDEX idx_product_name_lower_unique ON product (LOWER(name));
       rollback:
         - dropIndex:
             tableName: product
-            indexName: idx_product_name_lower_pattern
+            indexName: idx_product_name_lower_unique

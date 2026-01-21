@@ -29,11 +29,11 @@ class ProductEndpoint(
         productService.createProduct(productInsertDto)
 
     @PostMapping("search")
-    fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): PageResponse<ProductResponseDto> =
+    fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<ProductResponseDto, String> =
         productSearchService.searchWithParameters(pageRequest)
 
     @PostMapping("search/debug-query")
-    fun debugSearchQuery(@RequestBody pageRequest: PageRequest<ProductSearchParameters>): String =
+    fun debugSearchQuery(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): String =
         productSearchService.generateFormattedQuery(pageRequest)
 
     @PutMapping

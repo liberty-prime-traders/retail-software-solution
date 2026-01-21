@@ -35,7 +35,6 @@ interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "productGroupName", ignore = true)
@@ -43,7 +42,6 @@ interface ProductMapper {
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "cursor", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "productGroupName", ignore = true)
