@@ -1,51 +1,37 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-composite-index-product-status-cursor'
+      id: 'create-composite-index-product-status-name'
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_product_status_cursor
+                indexName: idx_product_status_name_lower
       changes:
-        - createIndex:
-            indexName: idx_product_status_cursor
-            tableName: product
-            columns:
-              - column:
-                  name: status
-              - column:
-                  name: cursor
+        - sql:
+            sql: CREATE INDEX idx_product_status_name_lower ON product (status, LOWER(name));
       rollback:
         - dropIndex:
             tableName: product
-            indexName: idx_product_status_cursor
+            indexName: idx_product_status_name_lower
 
   - changeSet:
-      id: 'create-composite-index-product-group-status-cursor'
+      id: 'create-composite-index-product-group-status-name'
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_product_group_status_cursor
+                indexName: idx_product_group_status_name_lower
       changes:
-        - createIndex:
-            indexName: idx_product_group_status_cursor
-            tableName: product
-            columns:
-              - column:
-                  name: product_group_id
-              - column:
-                  name: status
-              - column:
-                  name: cursor
+        - sql:
+            sql: CREATE INDEX idx_product_group_status_name_lower ON product (product_group_id, status, LOWER(name));
       rollback:
         - dropIndex:
             tableName: product
-            indexName: idx_product_group_status_cursor
+            indexName: idx_product_group_status_name_lower
 
   - changeSet:
       id: 'create-index-product-reference-number-pattern'

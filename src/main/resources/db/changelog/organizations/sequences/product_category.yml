@@ -7,12 +7,12 @@ databaseChangeLog:
         - onFail: MARK_RAN
         - not:
             - sequenceExists:
-                sequenceName: seq_category_reference_number
+                sequenceName: seq_product_category_reference_number
       changes:
         - createSequence:
-            sequenceName: seq_category_reference_number
+            sequenceName: seq_product_category_reference_number
             startValue: 1
             incrementBy: 1
       rollback:
         - dropSequence:
-            sequenceName: seq_category_reference_number
+            sequenceName: seq_product_category_reference_number

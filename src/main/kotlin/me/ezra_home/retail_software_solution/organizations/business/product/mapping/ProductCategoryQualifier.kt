@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.mapping
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.category.CategoryCache
+import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
 import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupCache
 import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
@@ -21,7 +21,7 @@ annotation class ProductCategoryId
 @TransactionalOnOrganizationSchema
 class ProductCategoryQualifier(
   private val productGroupCache: ProductGroupCache,
-  private val categoryCache: CategoryCache
+  private val productCategoryCache: ProductCategoryCache
 ) {
 
   @ProductCategoryName
@@ -30,7 +30,7 @@ class ProductCategoryQualifier(
       productGroupCache.findAllProductGroups().find { it.id == pgId }
     }
     val categoryId = productGroup?.categoryId
-    val categoriesById = categoryCache.getCategoriesById()
+    val categoriesById = productCategoryCache.getCategoriesById()
     return categoryId?.let { categoriesById[it]?.categoryName }
   }
 

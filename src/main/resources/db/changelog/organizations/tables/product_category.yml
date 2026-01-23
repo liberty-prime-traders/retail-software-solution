@@ -1,16 +1,16 @@
 databaseChangeLog:
   - changeSet:
-      id: 'create-category-table'
+      id: 'create-product-category-table'
       author: kenneth
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - tableExists:
-                tableName: category
+                tableName: product_category
       changes:
         - createTable:
-            tableName: category
+            tableName: product_category
             columns:
               - column:
                   name: id
@@ -18,10 +18,6 @@ databaseChangeLog:
                   defaultValueComputed: ${uuid_function}
                   constraints:
                     primaryKey: true
-
-              - column:
-                  name: category_type
-                  type: nvarchar2(5)
 
               - column:
                   name: category_name
@@ -36,7 +32,7 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: category_created_by_id_notnull
+                    notNullConstraintName: product_category_created_by_id_notnull
 
               - column:
                   name: created_on
@@ -44,19 +40,10 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
-                  name: predecessor_of_id
-                  type: uuid
-
-              - column:
-                  name: usage_count
-                  type: bigint
-                  defaultValueNumeric: '0'
-
-              - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: category_reference_number_unique
+                    uniqueConstraintName: product_category_reference_number_unique
                     nullable: false
-                    notNullConstraintName: category_reference_number_not_null
+                    notNullConstraintName: product_category_reference_number_not_null

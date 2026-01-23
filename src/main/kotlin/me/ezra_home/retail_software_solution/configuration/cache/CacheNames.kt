@@ -9,7 +9,7 @@ class CacheNames {
         const val ORGANIZATION_USER = "OrganizationUser"
         const val ORGANIZATION_JOIN_REQUEST = "OrganizationJoinRequest"
         const val LOCATION = "Location"
-        const val CATEGORY = "Category"
+        const val PRODUCT_CATEGORY = "Product Category"
         const val TITLE = "Title"
         const val UNIT_GROUP = "UnitGroup"
         const val UNIT_VALUE = "UnitValue"

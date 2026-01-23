@@ -5,7 +5,6 @@ object Aliases {
         object Product {
             const val TABLE_ALIAS = "p"
             const val ID = "id"
-            const val CURSOR = "cursor"
             const val STATUS = "status"
             const val NAME = "name"
             const val DESCRIPTION = "description"

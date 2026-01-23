@@ -41,8 +41,7 @@ class ProductSearchService(
           mode
         )
         if (result.contents.isNotEmpty()) return result
-      } catch (_: QueryTimeoutException) {
-      }
+      } catch (_: QueryTimeoutException) {}
     }
 
     return PageResponse(pageRequest.previousCursor, false, emptyList())

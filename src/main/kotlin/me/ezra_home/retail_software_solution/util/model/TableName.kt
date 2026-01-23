@@ -4,7 +4,7 @@ enum class TableName(val tableName: String) {
     ADDRESS(TableNames.ADDRESS),
     SYS_USER(TableNames.SYS_USER),
     LOCATION(TableNames.LOCATION),
-    CATEGORY(TableNames.CATEGORY),
+    PRODUCT_CATEGORY(TableNames.PRODUCT_CATEGORY),
     JOB_TITLE(TableNames.JOB_TITLE),
     UNIT_GROUP(TableNames.UNIT_GROUP),
     UNIT_VALUE(TableNames.UNIT_VALUE),

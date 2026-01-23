@@ -84,7 +84,7 @@ object Builder {
     /**
      * Builds query with optimized subquery pattern for tag filtering.
      *
-     * Key optimization: Filter products FIRST using composite indexes (status/cursor),
+     * Key optimization: Filter products FIRST using composite indexes,
      * THEN join with product_tag. This ensures the join operates on a small filtered set
      * rather than the entire product_tag table.
      *

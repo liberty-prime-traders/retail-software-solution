@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_group
 
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryName
-import me.ezra_home.retail_software_solution.organizations.business.category.mapping.CategoryNameQualifier
+import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryName
+import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
@@ -14,11 +14,11 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
-@Mapper(config = RtsMapperConfig::class, uses = [CategoryNameQualifier::class])
+@Mapper(config = RtsMapperConfig::class, uses = [ProductCategoryNameQualifier::class])
 interface ProductGroupMapper {
 
   @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-  @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [CategoryName::class])
+  @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
   fun toDto(productGroupEntity: ProductGroupEntity): ProductGroupResponseDto
 
   @Mapping(target = "id", ignore = true)
