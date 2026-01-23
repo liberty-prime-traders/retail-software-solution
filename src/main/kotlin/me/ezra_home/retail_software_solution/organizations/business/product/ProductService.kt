@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagService
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -18,12 +19,15 @@ class ProductService(
     private val productCache: ProductCache,
     private val productRepository: ProductRepository,
     private val productValidator: ProductValidator,
-    private val productTagService: ProductTagService
+    private val productTagService: ProductTagService,
+    private val productTagQualifier: ProductTagQualifier
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getTopProducts(): Collection<ProductResponseDto> {
-        return productCache.findTopProducts().map { productMapper.toDto(it) }
+    fun findAllProducts(): Collection<ProductResponseDto> {
+        val products = productCache.findAllProducts()
+        val dtos = products.map { productMapper.toDtoWithoutTags(it) }
+        return productTagQualifier.populateTagsForProducts(dtos)
     }
 
     fun createProduct(productInsertDto: ProductInsertDto): ProductResponseDto {

@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.sear
 import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -48,6 +47,4 @@ class ProductEndpoint(
     fun reactivateProduct(@PathVariable productId: UUID): ProductResponseDto =
         productService.reactivateProduct(productId)
 
-    @GetMapping
-    fun getAllProducts(): Collection<ProductResponseDto> = productService.getTopProducts()
 }
