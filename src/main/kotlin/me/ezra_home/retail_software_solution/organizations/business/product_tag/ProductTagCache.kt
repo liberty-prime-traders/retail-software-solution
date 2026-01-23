@@ -23,6 +23,11 @@ class ProductTagCache(private val productTagRepository: ProductTagRepository) {
     fun findActiveTagIdsByProductId(productId: UUID): Collection<UUID> =
         productTagRepository.findActiveTagIdsByProductId(productId)
 
+    fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagEntity> {
+        if (productIds.isEmpty()) return emptyList()
+        return productTagRepository.findActiveProductTagsByProductIds(productIds)
+    }
+
     @CacheEvict(allEntries = true)
     fun saveAllProductTags(productTagEntities: List<ProductTagEntity>) {
         productTagRepository.saveAll(productTagEntities)

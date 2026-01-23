@@ -13,7 +13,7 @@ databaseChangeLog:
       dbms: postgresql
       name: today
       value: current_date
-
-  - includeAll:
-      path: tables
-      relativeToChangelogFile: true
+#
+#  - includeAll:
+#      path: tables
+#      relativeToChangelogFile: true

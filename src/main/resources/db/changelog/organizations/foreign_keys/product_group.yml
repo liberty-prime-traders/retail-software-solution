@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-foreign-key-product-group-product-category'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_product_group_product_category
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product_group
+            baseColumnNames: category_id
+            referencedTableName: product_category
+            referencedColumnNames: id
+            constraintName: fk_product_group_product_category
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product_group
+            constraintName: fk_product_group_product_category

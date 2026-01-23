@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-product-group-name-sync-trigger'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION sync_product_group_name()
+              RETURNS trigger AS $$
+              BEGIN
+                SELECT group_name INTO NEW.product_group_name
+                FROM product_group
+                WHERE id = NEW.product_group_id;
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+              CREATE TRIGGER trigger_sync_product_group_name
+              BEFORE INSERT OR UPDATE OF product_group_id ON product
+              FOR EACH ROW
+              EXECUTE FUNCTION sync_product_group_name();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trigger_sync_product_group_name ON product;
+              DROP FUNCTION IF EXISTS sync_product_group_name();
+
+  - changeSet:
+      id: 'create-product-group-name-update-trigger'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION update_products_on_group_name_change()
+              RETURNS trigger AS $$
+              BEGIN
+                UPDATE product
+                SET product_group_name = NEW.group_name
+                WHERE product_group_id = NEW.id;
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+              CREATE TRIGGER trigger_update_products_on_group_name_change
+              AFTER UPDATE OF group_name ON product_group
+              FOR EACH ROW
+              WHEN (OLD.group_name IS DISTINCT FROM NEW.group_name)
+              EXECUTE FUNCTION update_products_on_group_name_change();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trigger_update_products_on_group_name_change ON product_group;
+              DROP FUNCTION IF EXISTS update_products_on_group_name_change();
+
+  - changeSet:
+      id: 'create-product-search-vector-trigger'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION update_product_search_vector()
+              RETURNS trigger AS $$
+              BEGIN
+                NEW.search_vector := to_tsvector('english',
+                  COALESCE(NEW.name, '') || ' ' ||
+                  COALESCE(NEW.description, '') || ' ' ||
+                  COALESCE(NEW.product_group_name, '')
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+              CREATE TRIGGER trigger_update_product_search_vector
+              BEFORE INSERT OR UPDATE OF name, description, product_group_name ON product
+              FOR EACH ROW
+              EXECUTE FUNCTION update_product_search_vector();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trigger_update_product_search_vector ON product;
+              DROP FUNCTION IF EXISTS update_product_search_vector();

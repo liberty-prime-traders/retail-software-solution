@@ -34,6 +34,10 @@ databaseChangeLog:
       path: indexes
       relativeToChangelogFile: true
 
+  - includeAll:
+      path: triggers
+      relativeToChangelogFile: true
+
   - include:
       file: ../shared/procedures/get_next_sequence_values.yml
       relativeToChangelogFile: true

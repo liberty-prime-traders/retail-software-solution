@@ -1,0 +1,112 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-composite-index-product-status-name'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_status_name_lower
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_status_name_lower ON product (status, LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_status_name_lower
+
+  - changeSet:
+      id: 'create-composite-index-product-group-status-name'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_group_status_name_lower
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_group_status_name_lower ON product (product_group_id, status, LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_group_status_name_lower
+
+  - changeSet:
+      id: 'create-index-product-reference-number-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_reference_number_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_reference_number_pattern ON product (reference_number text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_reference_number_pattern
+
+  - changeSet:
+      id: 'create-gin-index-product-search-vector'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_search_vector
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_search_vector ON product USING gin (search_vector);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_search_vector
+
+  - changeSet:
+      id: 'create-gin-index-product-trigram-search'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_name_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_name_trgm ON product USING gin (LOWER(name) gin_trgm_ops);
+        - sql:
+            sql: CREATE INDEX idx_product_description_trgm ON product USING gin (LOWER(description) gin_trgm_ops);
+        - sql:
+            sql: CREATE INDEX idx_product_group_name_trgm ON product USING gin (LOWER(product_group_name) gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_name_trgm
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_description_trgm
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_group_name_trgm
+
+  - changeSet:
+      id: 'create-unique-index-product-name-lower'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_name_lower_unique
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_product_name_lower_unique ON product (LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_name_lower_unique

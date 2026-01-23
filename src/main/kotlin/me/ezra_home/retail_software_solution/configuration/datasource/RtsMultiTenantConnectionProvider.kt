@@ -22,14 +22,18 @@ class RtsMultiTenantConnectionProvider(private val dataSource: DataSource): Mult
     }
 
     override fun releaseConnection(schemaName: String, connection: Connection) {
-        connection.close()
+        connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.execute("SET SCHEMA '${DataSourceBeanNames.PLATFORM_SCHEMA_NAME}'")
+            }
+        }
     }
 
     override fun releaseAnyConnection(connection: Connection) {
         connection.close()
     }
 
-    override fun supportsAggressiveRelease(): Boolean = true
+    override fun supportsAggressiveRelease(): Boolean = false
     override fun isUnwrappableAs(unwrapType: Class<*>): Boolean = false
     override fun <T: Any?> unwrap(type: Class<T>): T? = null
 }

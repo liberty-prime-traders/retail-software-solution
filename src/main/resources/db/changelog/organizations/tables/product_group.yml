@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-product-group-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: product_group
+      changes:
+        - createTable:
+            tableName: product_group
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: group_name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_group_name_notnull
+
+              - column:
+                  name: description
+                  type: nvarchar2(400)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_group_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: product_group_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: product_group_reference_number_not_null
+
+              - column:
+                  name: category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_group_category_id_notnull

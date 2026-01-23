@@ -23,4 +23,11 @@ interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
         AND pt.endOn IS NULL
     """)
     fun findActiveProductTagsByProductId(@Param("productId") productId: UUID): Collection<ProductTagEntity>
+
+    @Query("""
+        SELECT pt FROM ProductTagEntity pt
+        WHERE pt.productId IN :productIds
+        AND pt.endOn IS NULL
+    """)
+    fun findActiveProductTagsByProductIds(@Param("productIds") productIds: Collection<UUID>): List<ProductTagEntity>
 }
