@@ -27,19 +27,19 @@ class BuilderTest {
   @Test
   fun `text search adds correct clause per mode`() {
     val fulltext = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.FULLTEXT),
+      ProductSearchParameters(searchText = "laptop", searchStrategy = SearchStrategy.FULLTEXT),
       previousName = ""
     )
     val trigram = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "pakaging", searchMode = SearchMode.TRIGRAM),
+      ProductSearchParameters(searchText = "pakaging", searchStrategy = SearchStrategy.TRIGRAM),
       previousName = ""
     )
     val prefix = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "comp", searchMode = SearchMode.PREFIX),
+      ProductSearchParameters(searchText = "comp", searchStrategy = SearchStrategy.PREFIX),
       previousName = ""
     )
     val wildcard = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "tab", searchMode = SearchMode.WILDCARD),
+      ProductSearchParameters(searchText = "tab", searchStrategy = SearchStrategy.WILDCARD),
       previousName = ""
     )
 
@@ -61,11 +61,11 @@ class BuilderTest {
   @Test
   fun `blank or NONE search mode ignored`() {
     val blank = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "   ", searchMode = SearchMode.FULLTEXT),
+      ProductSearchParameters(searchText = "   ", searchStrategy = SearchStrategy.FULLTEXT),
       previousName = ""
     )
     val none = Builder.buildSearchQuery(
-      ProductSearchParameters(searchText = "laptop", searchMode = SearchMode.NONE),
+      ProductSearchParameters(searchText = "laptop", searchStrategy = SearchStrategy.NONE),
       previousName = ""
     )
 
@@ -121,7 +121,7 @@ class BuilderTest {
     val result = Builder.buildSearchQuery(
       ProductSearchParameters(
         searchText = "laptop",
-        searchMode = SearchMode.FULLTEXT,
+        searchStrategy = SearchStrategy.FULLTEXT,
         referenceNumber = "REF",
         categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
         tagsIds = setOf(TestUUIDs.UUID3),

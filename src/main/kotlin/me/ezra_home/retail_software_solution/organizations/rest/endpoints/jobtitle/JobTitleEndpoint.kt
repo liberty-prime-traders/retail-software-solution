@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @CrossOrigin
 @RestController
-@RequestMapping("secured/jobtitle")
+@RequestMapping("secured/job-title")
 class JobTitleEndpoint(
     private val titleService: JobTitleService,
     private val jobTitleService: JobTitleService

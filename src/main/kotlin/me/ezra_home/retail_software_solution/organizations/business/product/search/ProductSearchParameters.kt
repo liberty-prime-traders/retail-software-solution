@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product.sea
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import java.util.UUID
 
-enum class SearchMode {
+enum class SearchStrategy {
     NONE,
     FULLTEXT,
     TRIGRAM,
@@ -17,7 +17,7 @@ data class ProductSearchParameters(
     val categoryIds: Set<UUID> = emptySet(),
     val tagsIds: Set<UUID> = emptySet(),
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
-    val searchMode: SearchMode = SearchMode.NONE
+    val searchStrategy: SearchStrategy = SearchStrategy.NONE
 ) {
     init {
         require(statusList.isNotEmpty()) {

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies
 
-import me.ezra_home.retail_software_solution.organizations.business.product.search.SearchMode
+import me.ezra_home.retail_software_solution.organizations.business.product.search.SearchStrategy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -13,7 +13,7 @@ class QueryBuilderContextTest {
 
     NameFilterStrategy("Product A").apply(context)
     StatusFilterStrategy(setOf("A")).apply(context)
-    TextSearchFilterStrategy("laptop", SearchMode.FULLTEXT).apply(context)
+    TextSearchFilterStrategy("laptop", SearchStrategy.FULLTEXT).apply(context)
 
     assertEquals(3, context.whereClauses.size)
     assertEquals(3, context.params.size)

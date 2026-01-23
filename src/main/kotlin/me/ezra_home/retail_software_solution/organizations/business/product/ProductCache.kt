@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 class ProductCache(private val productRepository: ProductRepository) {
 
     @Cacheable
-    fun findAllProducts(): Collection<ProductEntity> = productRepository.findAllProducts()
+    fun findAllProducts(): List<ProductEntity> = productRepository.findAllProducts()
 
     @Cacheable
     fun countAllProducts(): Long = productRepository.count()

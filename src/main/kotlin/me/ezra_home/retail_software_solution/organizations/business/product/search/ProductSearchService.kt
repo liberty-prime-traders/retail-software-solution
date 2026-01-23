@@ -45,7 +45,7 @@ class ProductSearchService(
       )
     }
 
-    return trySearchStrategies(pageRequest, selectSearchStrategies(searchText))
+    return trySearchStrategies(pageRequest, searchText)
   }
 
   private fun shouldUseClientSideFiltering(): Boolean {
@@ -61,27 +61,19 @@ class ProductSearchService(
     )
   }
 
-  private fun selectSearchStrategies(searchText: String): List<SearchMode> {
-    return when {
-      searchText.length <= 3 -> listOf(SearchMode.PREFIX, SearchMode.TRIGRAM)
-      searchText.length <= 4 -> listOf(SearchMode.PREFIX, SearchMode.TRIGRAM, SearchMode.WILDCARD)
-      searchText.length <= 6 -> listOf(SearchMode.FULLTEXT, SearchMode.TRIGRAM, SearchMode.PREFIX, SearchMode.WILDCARD)
-      else -> listOf(SearchMode.FULLTEXT, SearchMode.TRIGRAM, SearchMode.PREFIX)
-    }
-  }
 
   private fun trySearchStrategies(
     pageRequest: PageRequest<ProductSearchParameters, String>,
-    strategies: List<SearchMode>
+    searchText: String
   ): PageResponse<ProductResponseDto, String> {
 
-    for (mode in strategies) {
+    for (strategy in selectSearchStrategies(searchText)) {
       try {
         val result = executeSingleSearch(
           pageRequest.parameters,
           pageRequest.previousCursor,
           pageRequest.requestedSize,
-          mode == SearchMode.WILDCARD
+          strategy == SearchStrategy.WILDCARD
         )
         if (result.contents.isNotEmpty()) {
           return result
@@ -92,6 +84,15 @@ class ProductSearchService(
     }
 
     return PageResponse(pageRequest.previousCursor, false, emptyList())
+  }
+
+  private fun selectSearchStrategies(searchText: String): List<SearchStrategy> {
+    return when {
+      searchText.length <= 3 -> listOf(SearchStrategy.PREFIX, SearchStrategy.TRIGRAM)
+      searchText.length <= 4 -> listOf(SearchStrategy.PREFIX, SearchStrategy.TRIGRAM, SearchStrategy.WILDCARD)
+      searchText.length <= 6 -> listOf(SearchStrategy.FULLTEXT, SearchStrategy.TRIGRAM, SearchStrategy.PREFIX, SearchStrategy.WILDCARD)
+      else -> listOf(SearchStrategy.FULLTEXT, SearchStrategy.TRIGRAM, SearchStrategy.PREFIX)
+    }
   }
 
   private fun executeSingleSearch(
@@ -105,7 +106,7 @@ class ProductSearchService(
 
     val hasMore = results.size > pageSize
     val pageResults = if (hasMore) results.take(pageSize) else results
-    val dtos: Collection<ProductResponseDto> = pageResults.map { productMapper.toDtoWithoutTags(it) }
+    val dtos: List<ProductResponseDto> = pageResults.map { productMapper.toDtoWithoutTags(it) }
     val contents: Collection<ProductResponseDto> = productTagQualifier.populateTagsForProducts(dtos)
     val currentCursor = contents.lastOrNull()?.productName ?: previousName
 

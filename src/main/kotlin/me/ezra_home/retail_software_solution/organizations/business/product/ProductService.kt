@@ -24,9 +24,8 @@ class ProductService(
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    fun findAllProducts(): Collection<ProductResponseDto> {
-        val products = productCache.findAllProducts()
-        val dtos = products.map { productMapper.toDtoWithoutTags(it) }
+    fun findAllProducts(): List<ProductResponseDto> {
+        val dtos = productCache.findAllProducts().map { productMapper.toDtoWithoutTags(it) }
         return productTagQualifier.populateTagsForProducts(dtos)
     }
 

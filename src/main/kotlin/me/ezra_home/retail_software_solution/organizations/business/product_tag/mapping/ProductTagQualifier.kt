@@ -25,7 +25,7 @@ class ProductTagQualifier(
             .map { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
     }
 
-    fun populateTagsForProducts(products: Collection<ProductResponseDto>): Collection<ProductResponseDto> {
+    fun populateTagsForProducts(products: List<ProductResponseDto>): List<ProductResponseDto> {
         if (products.isEmpty()) return products
 
         val productIds = products.mapNotNull { it.id }

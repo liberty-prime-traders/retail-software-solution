@@ -47,7 +47,7 @@ object Builder {
         NameFilterStrategy(previousName).apply(context)
         StatusFilterStrategy(statusCodes).apply(context)
 
-        TextSearchFilterStrategy(searchParams.searchText, searchParams.searchMode).apply(context)
+        TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy).apply(context)
         ReferenceNumberFilterStrategy(searchParams.referenceNumber).apply(context)
         CategoryFilterStrategy(searchParams.categoryIds).apply(context)
         TagFilterStrategy(searchParams.tagsIds).apply(context)
