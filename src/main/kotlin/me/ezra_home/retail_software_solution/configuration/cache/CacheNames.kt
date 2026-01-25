@@ -4,6 +4,7 @@ class CacheNames {
     companion object {
         const val USER = "User"
         const val ADDRESS = "Address"
+        const val CONTACT = "Contact"
         const val ORGANIZATION = "Organization"
         const val ORGANIZATION_ADMIN = "OrganizationAdmin"
         const val ORGANIZATION_USER = "OrganizationUser"

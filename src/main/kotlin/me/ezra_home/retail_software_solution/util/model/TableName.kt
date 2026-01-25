@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.util.model
 
 enum class TableName(val tableName: String) {
     ADDRESS(TableNames.ADDRESS),
+    CONTACT(TableNames.CONTACT),
     SYS_USER(TableNames.SYS_USER),
     LOCATION(TableNames.LOCATION),
     PRODUCT_CATEGORY(TableNames.PRODUCT_CATEGORY),

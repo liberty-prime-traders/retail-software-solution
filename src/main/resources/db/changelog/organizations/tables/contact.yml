@@ -1,0 +1,88 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-contact-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: contact
+      changes:
+        - createTable:
+            tableName: contact
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: contact_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_contact_type_notnull
+
+              - column:
+                  name: first_name
+                  type: nvarchar2(255)
+
+              - column:
+                  name: last_name
+                  type: nvarchar2(255)
+
+              - column:
+                  name: company_name
+                  type: nvarchar2(255)
+
+              - column:
+                  name: email
+                  type: nvarchar2(255)
+
+              - column:
+                  name: phone
+                  type: nvarchar2(20)
+
+              - column:
+                  name: address
+                  type: text
+
+              - column:
+                  name: credit_limit
+                  type: decimal(15,2)
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  defaultValue: 'A'
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: contact_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: contact_reference_number_not_null
