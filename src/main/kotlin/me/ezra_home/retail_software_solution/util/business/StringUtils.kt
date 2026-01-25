@@ -56,4 +56,11 @@ object StringUtils {
             .trim()
             .replace("\\s+".toRegex(), " ")
     }
+
+    fun normalizeForComparison(str: String): String {
+        return normalize(str)
+            .replace("\\s+".toRegex(), "")
+            .lowercase()
+    }
+
 }

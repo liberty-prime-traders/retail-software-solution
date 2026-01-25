@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.util.model
 
 object TableNames {
     const val ADDRESS = "address"
+    const val CONTACT = "contact"
     const val SYS_USER = "sys_user"
     const val LOCATION = "location"
     const val PRODUCT_CATEGORY = "product_category"
