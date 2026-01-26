@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - includeAll:
+      path: tables
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: foreign_keys
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: indexes
+      relativeToChangelogFile: true

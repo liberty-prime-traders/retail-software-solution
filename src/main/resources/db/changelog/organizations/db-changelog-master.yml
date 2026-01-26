@@ -15,10 +15,6 @@ databaseChangeLog:
       value: current_date
 
   - includeAll:
-      path: extensions
-      relativeToChangelogFile: true
-
-  - includeAll:
       path: tables
       relativeToChangelogFile: true
 
@@ -36,6 +32,10 @@ databaseChangeLog:
 
   - includeAll:
       path: triggers
+      relativeToChangelogFile: true
+
+  - include:
+      file: audit/db-changelog-audit.yml
       relativeToChangelogFile: true
 
   - include:

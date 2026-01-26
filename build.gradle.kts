@@ -32,6 +32,7 @@ dependencies {
 	implementation("com.okta.spring:okta-spring-sdk")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.hibernate.orm:hibernate-envers:6.5.3.Final")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.google.code.gson:gson:2.10.1")

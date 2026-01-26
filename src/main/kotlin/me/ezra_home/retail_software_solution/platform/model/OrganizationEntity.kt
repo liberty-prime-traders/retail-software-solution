@@ -7,15 +7,18 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import org.hibernate.envers.Audited
 
 @Entity
 @Table(name = TableNames.ORGANIZATION)
 @HasReference(tableName = TableName.ORGANIZATION)
 class OrganizationEntity(
 
+    @Audited
     @Column(name = "name")
     var name: String,
 
+    @Audited
     @Column(name = "description")
     var description: String? = null,
 

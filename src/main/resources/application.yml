@@ -40,7 +40,7 @@ spring:
     show-sql: ${SHOW_SQL:false}
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
 
   task:
     scheduling:
@@ -60,3 +60,10 @@ server:
   port: ${PORT:8080}
   error:
     include-message: always
+
+logging:
+  level:
+    org.hibernate:
+      SQL: ${HIBERNATE_SQL_LOGGING:DEBUG}
+      envers: ${HIBERNATE_ENVERS_LOGGING:DEBUG}
+      type: ${HIBERNATE_TYPE_LOGGING:TRACE}

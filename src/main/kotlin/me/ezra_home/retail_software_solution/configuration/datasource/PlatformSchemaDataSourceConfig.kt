@@ -28,11 +28,13 @@ class PlatformSchemaDataSourceConfig {
     fun platformSchemaEntityManagerFactory(
         @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): LocalContainerEntityManagerFactoryBean {
+        val platformProperties = mapOf("hibernate.ddl.auto" to "none")
+
         val em = LocalContainerEntityManagerFactoryBean()
         em.dataSource = dataSource
         em.setPackagesToScan("me.ezra_home.retail_software_solution.platform")
         em.jpaVendorAdapter = HibernateJpaVendorAdapter()
-        em.setJpaPropertyMap(mapOf("hibernate.ddl.auto" to "none"))
+        em.setJpaPropertyMap(platformProperties + HibernateEnversProperties.enversPropertyMap)
         return em
     }
 
