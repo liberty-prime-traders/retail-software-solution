@@ -48,15 +48,7 @@ class PaymentMethodService (
         return paymentMethodMapper.toResponseDto(entityFromDatabase)
     }
 
-    fun deletePaymentMethod(id: UUID?) {
-        id?.let {
-            paymentMethodCache.getAllPaymentMethods().find { it.id == id }?.let { entity ->
-                val usageCount = entity.usageCount
-                if (usageCount > 0L) {
-                    throw RtsGenericException("Payment Method ${entity.name} has $usageCount usage(s) and cannot be deleted")
-                }
-                paymentMethodCache.deletePaymentMethod(id)
-            }
-        }
+    fun deletePaymentMethod(id: UUID) {
+        paymentMethodCache.deletePaymentMethod(id)
     }
 }

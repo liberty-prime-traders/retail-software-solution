@@ -8,7 +8,9 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
+import org.hibernate.envers.Audited
 
+@Audited
 @Entity
 @Table(name = TableNames.PRODUCT_GROUP)
 @HasReference(tableName = TableName.PRODUCT_GROUP)

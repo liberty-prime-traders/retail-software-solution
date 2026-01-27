@@ -49,16 +49,8 @@ class JobTitleService(
             ?.let{ throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
     }
 
-    fun deleteJobTitle(id: UUID?) {
-        id?.let {
-            jobTitleCache.getAllJobTitles().find { it.id == id }?.let { entity ->
-                val usageCount = entity.usageCount
-                if (usageCount > 0L) {
-                    throw RtsGenericException("Job Title ${entity.value} has $usageCount usage(s) and cannot be deleted")
-                }
-                jobTitleCache.deleteJobTitle(id)
-            }
-        }
+    fun deleteJobTitle(id: UUID) {
+        jobTitleCache.deleteJobTitle(id)
     }
 
     companion object {

@@ -40,7 +40,7 @@ class JobTitleEndpoint(
         titleService.getAllJobTitles()
 
     @DeleteMapping("{id}")
-    fun deleteJobTitle(@PathVariable id: UUID?): ResponseEntity<HttpStatusCode> {
+    fun deleteJobTitle(@PathVariable id: UUID): ResponseEntity<HttpStatusCode> {
         jobTitleService.deleteJobTitle(id)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

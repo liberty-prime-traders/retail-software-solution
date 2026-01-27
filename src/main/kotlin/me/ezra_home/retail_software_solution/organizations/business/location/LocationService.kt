@@ -1,11 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -56,16 +55,5 @@ class LocationService(
         }
         locationMapper.partialUpdate(locationUpdateDto, locationEntity)
         return locationMapper.toResponseDto(locationEntity)
-    }
-
-    fun deleteLocation() {
-        val locationId = SessionContextProvider.getLocationId()
-        locationCache.getAllLocations().find { it.id == locationId }?.let { entity ->
-            val usageCount = entity.usageCount
-            if (usageCount > 0L) {
-                throw RtsGenericException("Location ${entity.name} has $usageCount usage(s) and cannot be deleted")
-            }
-            locationCache.deleteLocation(locationId)
-        }
     }
 }

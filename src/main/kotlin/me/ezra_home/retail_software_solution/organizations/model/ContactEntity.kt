@@ -16,7 +16,9 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.math.BigDecimal
+import org.hibernate.envers.Audited
 
+@Audited
 @Entity
 @Table(name = TableNames.CONTACT)
 @HasReference(tableName = TableName.CONTACT)

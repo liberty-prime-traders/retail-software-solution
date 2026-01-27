@@ -4,12 +4,8 @@ import me.ezra_home.retail_software_solution.organizations.business.location.Loc
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -38,10 +34,4 @@ class LocationEndpoint(private val locationService: LocationService) {
     fun updateLocation(@RequestBody locationUpdateDto: LocationUpdateDto): LocationResponseDto =
         locationService.updateLocation(locationUpdateDto)
 
-    @DeleteMapping
-    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    fun deleteLocation(): ResponseEntity<HttpStatusCode> {
-        locationService.deleteLocation()
-        return ResponseEntity(HttpStatus.NO_CONTENT)
-    }
 }

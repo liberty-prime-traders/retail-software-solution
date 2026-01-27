@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-contact-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: contact_aud
+      changes:
+        - createTable:
+            tableName: contact_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_type
+                  type: nvarchar2(5)
+              - column:
+                  name: first_name
+                  type: nvarchar2(255)
+              - column:
+                  name: last_name
+                  type: nvarchar2(255)
+              - column:
+                  name: company_name
+                  type: nvarchar2(255)
+              - column:
+                  name: email
+                  type: nvarchar2(255)
+              - column:
+                  name: phone
+                  type: nvarchar2(20)
+              - column:
+                  name: address
+                  type: text
+              - column:
+                  name: credit_limit
+                  type: decimal(15,2)
+              - column:
+                  name: notes
+                  type: text
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: contact_aud
+            columnNames: id, rev
+            constraintName: pk_contact_aud
+      rollback:
+        - dropTable:
+            tableName: contact_aud

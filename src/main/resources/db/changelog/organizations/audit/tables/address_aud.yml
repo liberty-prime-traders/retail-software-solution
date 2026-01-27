@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-address-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: address_aud
+      changes:
+        - createTable:
+            tableName: address_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: line1
+                  type: nvarchar2(100)
+              - column:
+                  name: line2
+                  type: nvarchar2(50)
+              - column:
+                  name: line3
+                  type: nvarchar2(30)
+              - column:
+                  name: state
+                  type: nvarchar2(100)
+              - column:
+                  name: postal_code
+                  type: nvarchar2(10)
+              - column:
+                  name: country
+                  type: nvarchar2(100)
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: address_aud
+            columnNames: id, rev
+            constraintName: pk_address_aud
+      rollback:
+        - dropTable:
+            tableName: address_aud

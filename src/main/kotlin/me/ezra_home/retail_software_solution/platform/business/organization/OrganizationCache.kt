@@ -12,23 +12,23 @@ import java.util.UUID
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION])
 class OrganizationCache(private val organizationRepository: OrganizationRepository) {
 
-    @Cacheable
-    fun getAllOrganizations(): Collection<OrganizationEntity> {
-        return organizationRepository.findAll()
-    }
+  @Cacheable
+  fun getAllOrganizations(): Collection<OrganizationEntity> {
+    return organizationRepository.findAll()
+  }
 
-    @Cacheable
-    fun getOrganizationByDomain(domain: String): OrganizationEntity? {
-        return organizationRepository.findOneBySubdomain(domain)
-    }
+  @Cacheable
+  fun getOrganizationByDomain(domain: String): OrganizationEntity? {
+    return organizationRepository.findOneBySubdomain(domain)
+  }
 
-    @CacheEvict(allEntries = true)
-    fun upsertOrganization(organizationEntity: OrganizationEntity) {
-        organizationRepository.save(organizationEntity)
-    }
+  @CacheEvict(allEntries = true)
+  fun upsertOrganization(organizationEntity: OrganizationEntity) {
+    organizationRepository.save(organizationEntity)
+  }
 
-    @CacheEvict(allEntries = true)
-    fun deleteOrganization(id: UUID) {
-        organizationRepository.deleteById(id)
-    }
+  @CacheEvict(allEntries = true)
+  fun deleteOrganization(id: UUID) {
+    organizationRepository.deleteById(id)
+  }
 }

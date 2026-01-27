@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-unit-value-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: unit_value_aud
+      changes:
+        - createTable:
+            tableName: unit_value_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+              - column:
+                  name: code
+                  type: nvarchar2(5)
+              - column:
+                  name: description
+                  type: nvarchar2(400)
+              - column:
+                  name: unit_group_id
+                  type: uuid
+              - column:
+                  name: base_unit
+                  type: uuid
+              - column:
+                  name: conversion_factor
+                  type: decimal
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: unit_value_aud
+            columnNames: id, rev
+            constraintName: pk_unit_value_aud
+      rollback:
+        - dropTable:
+            tableName: unit_value_aud

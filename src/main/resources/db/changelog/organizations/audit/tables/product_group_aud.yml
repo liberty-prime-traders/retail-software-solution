@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-product-group-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: product_group_aud
+      changes:
+        - createTable:
+            tableName: product_group_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: group_name
+                  type: nvarchar2(100)
+              - column:
+                  name: description
+                  type: nvarchar2(400)
+              - column:
+                  name: category_id
+                  type: uuid
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: product_group_aud
+            columnNames: id, rev
+            constraintName: pk_product_group_aud
+      rollback:
+        - dropTable:
+            tableName: product_group_aud

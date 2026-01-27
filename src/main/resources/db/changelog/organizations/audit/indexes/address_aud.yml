@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-address-aud-rev
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_address_aud_rev
+      changes:
+        - createIndex:
+            indexName: idx_address_aud_rev
+            tableName: address_aud
+            columns:
+              - column:
+                  name: rev
+      rollback:
+        - dropIndex:
+            indexName: idx_address_aud_rev
+            tableName: address_aud
+
+  - changeSet:
+      id: create-index-address-aud-id-rev-partial
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_address_aud_id_rev_partial
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_address_aud_id_rev_partial ON address_aud (id, rev) WHERE revend IS NULL
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_address_aud_id_rev_partial

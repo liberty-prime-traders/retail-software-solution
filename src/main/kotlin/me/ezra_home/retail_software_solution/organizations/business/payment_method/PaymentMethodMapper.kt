@@ -18,8 +18,6 @@ interface PaymentMethodMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodEntity
 
@@ -28,8 +26,6 @@ interface PaymentMethodMapper {
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "predecessorOfId", ignore = true)
-    @Mapping(target = "usageCount", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     fun partialUpdate(paymentMethodUpdateDto: PaymentMethodUpdateDto, @MappingTarget paymentMethodEntity: PaymentMethodEntity)

@@ -10,7 +10,9 @@ import me.ezra_home.retail_software_solution.util.enums.CategoryTypeConverter
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import org.hibernate.envers.Audited
 
+@Audited
 @Entity
 @Table(name = TableNames.TAG)
 @HasReference(tableName = TableName.TAG)

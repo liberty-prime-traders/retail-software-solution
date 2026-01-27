@@ -8,23 +8,25 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 
+@Audited
 @Entity
 @Table(name = TableNames.ORGANIZATION)
 @HasReference(tableName = TableName.ORGANIZATION)
 class OrganizationEntity(
 
-    @Audited
     @Column(name = "name")
     var name: String,
 
-    @Audited
     @Column(name = "description")
     var description: String? = null,
 
+    @NotAudited
     @Column(name = "subdomain", updatable = false)
     var subdomain: String? = null,
 
+    @NotAudited
     @Column(name = "schema_name", length = 100, nullable = false, updatable = false)
     var schemaName: String? = null
 

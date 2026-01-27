@@ -11,7 +11,6 @@ data class PaymentMethodResponseDto (
     val id: UUID?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val usageCount: Long?,
     val name: String?,
     val description: String?,
     val referenceNumber: String?

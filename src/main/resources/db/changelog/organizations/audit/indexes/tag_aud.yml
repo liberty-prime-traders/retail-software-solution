@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-tag-aud-rev
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_tag_aud_rev
+      changes:
+        - createIndex:
+            indexName: idx_tag_aud_rev
+            tableName: tag_aud
+            columns:
+              - column:
+                  name: rev
+      rollback:
+        - dropIndex:
+            indexName: idx_tag_aud_rev
+            tableName: tag_aud
+
+  - changeSet:
+      id: create-index-tag-aud-id-rev-partial
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_tag_aud_id_rev_partial
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_tag_aud_id_rev_partial ON tag_aud (id, rev) WHERE revend IS NULL
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_tag_aud_id_rev_partial
