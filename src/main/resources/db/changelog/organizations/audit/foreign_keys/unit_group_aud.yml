@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-unit-group-aud-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_unit_group_aud_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: unit_group_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_unit_group_aud_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: unit_group_aud
+            constraintName: fk_unit_group_aud_revinfo
+
+  - changeSet:
+      id: add-foreign-key-unit-group-aud-revend
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_unit_group_aud_revend_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: unit_group_aud
+            baseColumnNames: revend
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_unit_group_aud_revend_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: unit_group_aud
+            constraintName: fk_unit_group_aud_revend_revinfo

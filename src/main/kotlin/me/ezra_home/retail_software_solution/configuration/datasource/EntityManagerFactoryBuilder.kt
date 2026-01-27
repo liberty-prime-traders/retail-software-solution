@@ -15,18 +15,18 @@ object EntityManagerFactoryBuilder {
               tenantIdentifierResolver: CurrentTenantIdentifierResolver<String>
     ): LocalContainerEntityManagerFactoryBean {
 
+        val multiTenancyProperties = mapOf(
+            "hibernate.ddl.auto" to "validate",
+            "hibernate.multiTenancy" to "SCHEMA",
+            "hibernate.tenant_identifier_resolver" to tenantIdentifierResolver,
+            "hibernate.multi_tenant_connection_provider" to connectionProvider
+        )
+
         return LocalContainerEntityManagerFactoryBean().apply {
             this.dataSource = dataSource
             this.setPackagesToScan(packagesToScan)
             this.jpaVendorAdapter = HibernateJpaVendorAdapter()
-            this.setJpaPropertyMap(
-                mapOf(
-                    "hibernate.ddl.auto" to "none",
-                    "hibernate.multiTenancy" to "SCHEMA",
-                    "hibernate.tenant_identifier_resolver" to tenantIdentifierResolver,
-                    "hibernate.multi_tenant_connection_provider" to connectionProvider
-                )
-            )
+            this.setJpaPropertyMap(multiTenancyProperties + HibernateEnversProperties.enversPropertyMap)
         }
     }
 }

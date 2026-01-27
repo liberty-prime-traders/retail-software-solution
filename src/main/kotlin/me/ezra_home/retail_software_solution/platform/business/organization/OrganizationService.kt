@@ -85,8 +85,8 @@ class OrganizationService(
     fun updateOrganization(organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
         organizationValidator.validateNameOnSave(organizationUpdateDto.name, organizationId)
-        val entityFromDatabase = organizationCache.getAllOrganizations().find { it.id == organizationId }
-            ?: throw NotFoundException()
+        val entityFromDatabase = organizationCache.getAllOrganizations()
+            .find { it.id == organizationId } ?: throw NotFoundException()
         organizationMapper.partialUpdate(organizationUpdateDto, entityFromDatabase)
         organizationCache.upsertOrganization(entityFromDatabase)
         return organizationMapper.toResponseDto(entityFromDatabase)

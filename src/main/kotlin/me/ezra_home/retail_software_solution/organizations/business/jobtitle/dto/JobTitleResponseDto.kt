@@ -12,6 +12,5 @@ data class JobTitleResponseDto (
     val value: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val usageCount: Long?,
     val referenceNumber: String?
 ) : Serializable

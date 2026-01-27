@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-job-title-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: job_title_aud
+      changes:
+        - createTable:
+            tableName: job_title_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: nvarchar2(50)
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: job_title_aud
+            columnNames: id, rev
+            constraintName: pk_job_title_aud
+      rollback:
+        - dropTable:
+            tableName: job_title_aud

@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: enable-pg-trgm-extension-public
+      author: ezra
+      comment: Create pg_trgm in public schema for use by all organization schemas
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA public

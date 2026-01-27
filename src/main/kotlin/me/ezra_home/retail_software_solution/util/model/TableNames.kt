@@ -24,4 +24,6 @@ object TableNames {
     const val TABLE_REGISTRY = "table_registry"
     const val ORG_TABLE_REGISTRY = "org_table_registry"
     const val TAG = "tag"
+    const val ORGANIZATION_AUDIT = "organization_aud"
+    const val PRODUCT_AUDIT = "product_aud"
 }

@@ -30,13 +30,6 @@ databaseChangeLog:
                   type: timestamptz
                   defaultValueComputed: ${now}
               - column:
-                  name: predecessor_of_id
-                  type: uuid
-              - column:
-                  name: usage_count
-                  type: BIGINT
-                  defaultValueNumeric: '0'
-              - column:
                   name: name
                   type: nvarchar2(100)
                   constraints:

@@ -36,7 +36,7 @@ class PaymentMethodEndpoint (
         paymentMethodService.updatePaymentMethod(paymentMethodUpdateDto)
 
     @DeleteMapping("{id}")
-    fun deletePaymentMethod(@PathVariable id: UUID?): ResponseEntity<HttpStatus> {
+    fun deletePaymentMethod(@PathVariable id: UUID): ResponseEntity<HttpStatus> {
         paymentMethodService.deletePaymentMethod(id)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

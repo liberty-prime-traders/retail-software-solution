@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tag-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: tag_aud
+      changes:
+        - createTable:
+            tableName: tag_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: nvarchar2(5)
+              - column:
+                  name: tag_name
+                  type: nvarchar2(50)
+              - column:
+                  name: description
+                  type: nvarchar2(255)
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: tag_aud
+            columnNames: id, rev
+            constraintName: pk_tag_aud
+      rollback:
+        - dropTable:
+            tableName: tag_aud
