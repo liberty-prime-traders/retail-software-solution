@@ -37,9 +37,6 @@ databaseChangeLog:
                   name: product_group_id
                   type: uuid
               - column:
-                  name: product_group_name
-                  type: nvarchar2(150)
-              - column:
                   name: base_unit_id
                   type: uuid
               - column:

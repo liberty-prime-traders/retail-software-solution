@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-entry-for-sync-log-in-table-registry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: sync_log
+              - column:
+                  name: default_prefix
+                  value: SYNC
+              - column:
+                  name: minimum_version_id
+                  valueComputed: (SELECT id FROM db_version WHERE version_number = '1.0.0')
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Synchronization Log
+              - column:
+                  name: description
+                  value: Table tracking synchronization operations between organization and location schemas
+              - column:
+                  name: reference_number
+                  value: PTBL38

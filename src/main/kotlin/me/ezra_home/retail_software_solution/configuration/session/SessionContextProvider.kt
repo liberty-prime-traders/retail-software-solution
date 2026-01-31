@@ -10,20 +10,16 @@ import java.util.UUID
 object SessionContextProvider {
     private val sessionContextThreadLocal = ThreadLocal<SessionContext?>()
 
+    fun setSession(sessionContext: SessionContext) {
+        sessionContextThreadLocal.set(sessionContext)
+    }
+
     fun getSession(): SessionContext {
         return sessionContextThreadLocal.get() ?: SessionContext().also { sessionContextThreadLocal.set(it) }
     }
 
     fun getUserId(): UUID  {
         return getSession().systemUserId ?: throw RtsGenericException("User ID not found in session")
-    }
-
-    fun getOrgizationSchemaName(): String {
-        return getSession().organizationSchemaName ?: throw RtsGenericException("Organization schema name not found in session")
-    }
-
-    fun getLocationSchemaName(): String {
-        return getSession().locationSchemaName ?: throw RtsGenericException("Location schema name not found in session")
     }
 
     fun getOrganizationId(): UUID {

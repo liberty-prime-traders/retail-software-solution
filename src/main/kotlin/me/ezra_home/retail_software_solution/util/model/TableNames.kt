@@ -13,7 +13,6 @@ object TableNames {
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
     const val PAYMENT_METHOD = "payment_method"
-    const val VARIATION = "variation"
     const val ORGANIZATION_JOIN_REQUEST = "org_join_request"
     const val ORGANIZATION_USER = "organization_user"
     const val PRODUCT = "product"
@@ -24,6 +23,23 @@ object TableNames {
     const val TABLE_REGISTRY = "table_registry"
     const val ORG_TABLE_REGISTRY = "org_table_registry"
     const val TAG = "tag"
+
+    const val SYNC_LOG = "sync_log"
+    const val LOCATION_PRODUCT = "location_product"
+
+    const val ADDRESS_AUDIT = "address_aud"
+    const val CONTACT_AUDIT = "contact_aud"
+    const val JOB_TITLE_AUDIT = "job_title_aud"
+    const val UNIT_GROUP_AUDIT = "unit_group_aud"
+    const val UNIT_VALUE_AUDIT = "unit_value_aud"
+    const val LOCATION_AUDIT = "location_aud"
+
+    const val PAYMENT_METHOD_AUDIT = "payment_method_aud"
+    const val TAG_AUDIT = "tag_aud"
     const val ORGANIZATION_AUDIT = "organization_aud"
     const val PRODUCT_AUDIT = "product_aud"
+    const val PRODUCT_CATEGORY_AUDIT = "product_category_aud"
+    const val PRODUCT_GROUP_AUDIT = "product_group_aud"
+
+    const val LOCATION_PRODUCT_AUDIT = "location_product_aud"
 }

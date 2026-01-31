@@ -3,4 +3,5 @@
 - yml tabbing should be two spaces. correct any that has deviated from this.
 - use full qualified names only when there is a name conflict. Otherwise, use import statements.
 - avoid star imports.
+- stop commenting all over. Comments should only call out gotchas. not explain what I can see by reading the code
 
