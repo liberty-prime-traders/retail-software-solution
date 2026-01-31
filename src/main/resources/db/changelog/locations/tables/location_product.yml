@@ -44,11 +44,11 @@ databaseChangeLog:
                     notNullConstraintName: location_product_product_group_name_notnull
 
               - column:
-                  name: product_category_id
+                  name: category_id
                   type: uuid
                   constraints:
                     nullable: false
-                    notNullConstraintName: location_product_product_category_id_notnull
+                    notNullConstraintName: location_product_category_id_notnull
 
               - column:
                   name: default_sale_price

@@ -37,7 +37,7 @@ databaseChangeLog:
                   name: product_group_name
                   type: varchar(100)
               - column:
-                  name: product_category_id
+                  name: category_id
                   type: uuid
               - column:
                   name: base_unit_id

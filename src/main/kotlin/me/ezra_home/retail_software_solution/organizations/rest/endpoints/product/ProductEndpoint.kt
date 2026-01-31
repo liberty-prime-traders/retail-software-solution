@@ -4,8 +4,8 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Prod
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
-import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchParameters
-import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchService
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
+import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.ProductSearchService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.PathVariable

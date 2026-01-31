@@ -10,7 +10,7 @@ object LocationProductMapper {
       productId = syncData.productId,
       name = syncData.productName,
       productGroupName = syncData.productGroupName ?: "Unknown",
-      productCategoryId = syncData.categoryId,
+      categoryId = syncData.categoryId,
       baseUnitId = syncData.baseUnitId,
       status = syncData.status,
       lastSyncedAt = OffsetDateTime.now()

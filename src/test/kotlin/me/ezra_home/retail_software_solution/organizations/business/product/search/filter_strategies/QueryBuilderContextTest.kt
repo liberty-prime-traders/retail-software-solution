@@ -1,6 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies
 
-import me.ezra_home.retail_software_solution.organizations.business.product.search.SearchStrategy
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.NameFilterStrategy
+import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.StatusFilterStrategy
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
+import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.filters.TagFilterStrategy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,7 +17,7 @@ class QueryBuilderContextTest {
     val context = QueryBuilderContext()
 
     NameFilterStrategy("Product A").apply(context)
-    StatusFilterStrategy(setOf("A")).apply(context)
+    StatusFilterStrategy(setOf("A"), "p").apply(context)
     TextSearchFilterStrategy("laptop", SearchStrategy.FULLTEXT).apply(context)
 
     assertEquals(3, context.whereClauses.size)

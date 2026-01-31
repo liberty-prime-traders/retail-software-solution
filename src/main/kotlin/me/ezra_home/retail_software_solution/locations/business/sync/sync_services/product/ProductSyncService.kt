@@ -64,7 +64,7 @@ class ProductSyncService(
 
       existing.name = record.productName
       existing.productGroupName = record.productGroupName ?: "Unknown"
-      existing.productCategoryId = record.categoryId
+      existing.categoryId = record.categoryId
       existing.baseUnitId = record.baseUnitId
       existing.status = record.status
       existing.lastSyncedAt = OffsetDateTime.now()
@@ -84,7 +84,7 @@ class ProductSyncService(
   ): Boolean {
     return StringUtils.isEquivalent(existing.name, syncData.productName)
       && StringUtils.isEquivalent(existing.productGroupName, syncData.productGroupName)
-      && existing.productCategoryId == syncData.categoryId
+      && existing.categoryId == syncData.categoryId
       && existing.baseUnitId == syncData.baseUnitId
       && existing.status == syncData.status
   }

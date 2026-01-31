@@ -1,15 +1,8 @@
-package me.ezra_home.retail_software_solution.organizations.business.product.search
+package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import java.util.UUID
-
-enum class SearchStrategy {
-    NONE,
-    FULLTEXT,
-    TRIGRAM,
-    PREFIX,
-    WILDCARD
-}
 
 data class ProductSearchParameters(
     val searchText: String? = null,
@@ -19,9 +12,13 @@ data class ProductSearchParameters(
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
     val searchStrategy: SearchStrategy = SearchStrategy.NONE
 ) {
-    init {
-        require(statusList.isNotEmpty()) {
-            "statusList cannot be empty. It must contain at least one status value."
-        }
+  init {
+    require(statusList.isNotEmpty()) {
+      "statusList cannot be empty. It must contain at least one status value."
     }
+  }
+
+  fun extractStatusCodes(): Set<String> {
+    return statusList.map { it.code }.toSet()
+  }
 }

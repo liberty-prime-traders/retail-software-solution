@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -18,7 +20,7 @@ class ProductSearchValidatorTest {
     )
 
     assertDoesNotThrow {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagsIds)
     }
   }
 
@@ -29,7 +31,7 @@ class ProductSearchValidatorTest {
     )
 
     val exception = assertThrows<IllegalArgumentException> {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagsIds)
     }
     assertEquals(exception.message?.contains("categoryIds exceeds maximum size of 50"), true)
   }
@@ -41,7 +43,7 @@ class ProductSearchValidatorTest {
     )
 
     val exception = assertThrows<IllegalArgumentException> {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagsIds)
     }
     assertEquals(exception.message?.contains("tagIds exceeds maximum size of 50"), true)
   }

@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: rename-product-category-id-to-category-id
+      author: ezra
+      changes:
+        - renameColumn:
+            tableName: location_product
+            oldColumnName: product_category_id
+            newColumnName: category_id
+            columnDataType: uuid
+        - renameColumn:
+            tableName: location_product_aud
+            oldColumnName: product_category_id
+            newColumnName: category_id
+            columnDataType: uuid
+      rollback:
+        - renameColumn:
+            tableName: location_product_aud
+            oldColumnName: category_id
+            newColumnName: product_category_id
+            columnDataType: uuid
+        - renameColumn:
+            tableName: location_product
+            oldColumnName: category_id
+            newColumnName: product_category_id
+            columnDataType: uuid

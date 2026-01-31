@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder
+package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
 object ParameterNames {
   const val PREVIOUS_NAME = "previousName"

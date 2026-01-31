@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies
 
-import me.ezra_home.retail_software_solution.organizations.business.product.search.SearchStrategy
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
+import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -10,7 +12,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `FULLTEXT mode adds tsvector search`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("laptop", SearchStrategy.FULLTEXT).apply(context)
+    TextSearchFilterStrategy("laptop", SearchStrategy.FULLTEXT, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses[0].contains("@@ plainto_tsquery"))
     assertEquals("laptop", context.params["nameOrDescription"])
@@ -19,7 +21,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `TRIGRAM mode adds similarity search with OR for each field`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("phone", SearchStrategy.TRIGRAM).apply(context)
+    TextSearchFilterStrategy("phone", SearchStrategy.TRIGRAM, includeDescription = true).apply(context)
 
     val clause = context.whereClauses[0]
     assertTrue(clause.contains("LOWER(p.name) % LOWER(:nameOrDescription)"))
@@ -31,7 +33,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `PREFIX mode adds LIKE with trailing percent`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("comp", SearchStrategy.PREFIX).apply(context)
+    TextSearchFilterStrategy("comp", SearchStrategy.PREFIX, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses[0].contains("LIKE LOWER(:nameOrDescription)"))
     assertEquals("comp%", context.params["nameOrDescription"])
@@ -40,7 +42,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `WILDCARD mode adds LIKE with surrounding percents`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("tab", SearchStrategy.WILDCARD).apply(context)
+    TextSearchFilterStrategy("tab", SearchStrategy.WILDCARD, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses[0].contains("COALESCE(p.description"))
     assertEquals("%tab%", context.params["nameOrDescription"])
@@ -49,7 +51,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `null text ignored`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy(null, SearchStrategy.FULLTEXT).apply(context)
+    TextSearchFilterStrategy(null, SearchStrategy.FULLTEXT, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses.isEmpty())
   }
@@ -57,7 +59,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `blank text ignored`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("   ", SearchStrategy.FULLTEXT).apply(context)
+    TextSearchFilterStrategy("   ", SearchStrategy.FULLTEXT, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses.isEmpty())
   }
@@ -65,7 +67,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `NONE mode ignores text`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("laptop", SearchStrategy.NONE).apply(context)
+    TextSearchFilterStrategy("laptop", SearchStrategy.NONE, includeDescription = true).apply(context)
 
     assertTrue(context.whereClauses.isEmpty())
   }
@@ -73,7 +75,7 @@ class TextSearchFilterStrategyTest {
   @Test
   fun `preserves special characters`() {
     val context = QueryBuilderContext()
-    TextSearchFilterStrategy("laptop's & tablets", SearchStrategy.FULLTEXT).apply(context)
+    TextSearchFilterStrategy("laptop's & tablets", SearchStrategy.FULLTEXT, includeDescription = true).apply(context)
 
     assertEquals("laptop's & tablets", context.params["nameOrDescription"])
   }

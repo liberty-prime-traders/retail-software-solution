@@ -31,8 +31,8 @@ class LocationProductEntity(
   @Column(name = "product_group_name", nullable = false, length = 100)
   var productGroupName: String,
 
-  @Column(name = "product_category_id", nullable = false)
-  var productCategoryId: UUID,
+  @Column(name = "category_id", nullable = false)
+  var categoryId: UUID,
 
   @Column(name = "base_unit_id", nullable = false)
   var baseUnitId: UUID,

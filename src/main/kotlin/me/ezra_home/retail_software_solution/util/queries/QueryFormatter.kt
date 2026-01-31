@@ -1,16 +1,14 @@
-package me.ezra_home.retail_software_solution.organizations.business.product.search
+package me.ezra_home.retail_software_solution.util.queries
 
-import me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder.ParameterNames
 import java.util.UUID
 
-object ProductSearchQueryFormatter {
+object QueryFormatter {
 
-  fun formatQueryWithParameters(sqlQuery: ProductSearchUtilityTypes.SqlQuery, pageSize: Int): String {
+  fun formatQueryWithParameters(sqlQuery: SqlQuery, pageSize: Int, pageSizeParamName: String = "pageSize"): String {
     var formattedSql = sqlQuery.sql
     val params = sqlQuery.params.toMutableMap()
-    params[ParameterNames.PAGE_SIZE] = pageSize
+    params[pageSizeParamName] = pageSize
 
-    // Sort parameters by length (longest first) to avoid partial replacements
     val sortedParams = params.entries.sortedByDescending { it.key.length }
 
     sortedParams.forEach { (key, value) ->
