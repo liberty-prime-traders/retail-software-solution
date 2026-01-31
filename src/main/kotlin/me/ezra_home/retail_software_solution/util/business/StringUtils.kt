@@ -42,13 +42,9 @@ object StringUtils {
         if (!str1.isNullOrBlank() && str2.isNullOrBlank()) {
             return false
         }
-        val normalizedStr1 = removeAllSpaces(str1!!).lowercase()
-        val normalizedStr2 = removeAllSpaces(str2!!).lowercase()
+        val normalizedStr1 = normalizeForComparison(str1!!)
+        val normalizedStr2 = normalizeForComparison(str2!!)
         return normalizedStr1 == normalizedStr2
-    }
-
-    fun removeAllSpaces(str: String): String {
-        return normalize(str).replace("\\s+".toRegex(), "")
     }
 
     fun normalize(str: String): String {

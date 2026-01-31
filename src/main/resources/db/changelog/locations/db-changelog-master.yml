@@ -13,7 +13,19 @@ databaseChangeLog:
       dbms: postgresql
       name: today
       value: current_date
-#
-#  - includeAll:
-#      path: tables
-#      relativeToChangelogFile: true
+
+  - includeAll:
+      path: tables
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: sequences
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: indexes
+      relativeToChangelogFile: true
+
+  - include:
+      file: audit/db-changelog-audit.yml
+      relativeToChangelogFile: true

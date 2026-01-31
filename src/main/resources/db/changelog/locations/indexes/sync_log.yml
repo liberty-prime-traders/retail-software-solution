@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-unique-index-sync-log-in-progress'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - indexExists:
+              indexName: idx_sync_log_in_progress
+      changes:
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_sync_log_in_progress
+              ON sync_log(table_name)
+              WHERE status = 'I'
+            comment: "Prevents multiple concurrent syncs for same table - database enforced"
+      rollback:
+        - dropIndex:
+            tableName: sync_log
+            indexName: idx_sync_log_in_progress
+
+  - changeSet:
+      id: 'create-index-sync-log-completed'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - indexExists:
+              indexName: idx_sync_log_completed
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX idx_sync_log_completed
+              ON sync_log(table_name, completed_at DESC)
+              WHERE status = 'C' AND last_processed_revision IS NOT NULL
+            comment: "Fast lookup for last successful sync to resume from"
+      rollback:
+        - dropIndex:
+            tableName: sync_log
+            indexName: idx_sync_log_completed
+
+  - changeSet:
+      id: 'create-index-sync-log-failed'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - indexExists:
+              indexName: idx_sync_log_failed
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX idx_sync_log_failed
+              ON sync_log(table_name, completed_at DESC)
+              WHERE status = 'F' AND last_processed_revision IS NOT NULL
+            comment: "Fast lookup for last failed sync to resume from"
+      rollback:
+        - dropIndex:
+            tableName: sync_log
+            indexName: idx_sync_log_failed
+
+  - changeSet:
+      id: 'create-index-sync-log-cancelled'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - indexExists:
+              indexName: idx_sync_log_cancelled
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX idx_sync_log_cancelled
+              ON sync_log(table_name, canceled_at DESC)
+              WHERE status = 'X' AND last_processed_revision IS NOT NULL
+            comment: "Fast lookup for last cancelled sync to resume from"
+      rollback:
+        - dropIndex:
+            tableName: sync_log
+            indexName: idx_sync_log_cancelled

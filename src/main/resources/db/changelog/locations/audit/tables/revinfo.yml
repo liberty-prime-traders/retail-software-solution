@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-revinfo-table
+      author: system
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: revinfo
+      changes:
+        - createTable:
+            tableName: revinfo
+            columns:
+              - column:
+                  name: rev
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: bigint
+              - column:
+                  name: created_by_id
+                  type: uuid
+              - column:
+                  name: correlation_id
+                  type: uuid
+      rollback:
+        - dropTable:
+            tableName: revinfo

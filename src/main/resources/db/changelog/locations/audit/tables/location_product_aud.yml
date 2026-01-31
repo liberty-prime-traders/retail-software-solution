@@ -1,16 +1,16 @@
 databaseChangeLog:
   - changeSet:
-      id: create-product-aud-table
+      id: create-location-product-aud-table
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             tableExists:
-              tableName: product_aud
+              tableName: location_product_aud
       changes:
         - createTable:
-            tableName: product_aud
+            tableName: location_product_aud
             columns:
               - column:
                   name: id
@@ -28,20 +28,29 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: product_id
+                  type: uuid
+              - column:
                   name: name
-                  type: nvarchar2(200)
+                  type: varchar(100)
               - column:
-                  name: description
-                  type: nvarchar2(1500)
+                  name: product_group_name
+                  type: varchar(100)
               - column:
-                  name: product_group_id
+                  name: product_category_id
                   type: uuid
               - column:
                   name: base_unit_id
                   type: uuid
               - column:
+                  name: default_sale_price
+                  type: decimal(15,2)
+              - column:
+                  name: min_stock_level
+                  type: integer
+              - column:
                   name: status
-                  type: nvarchar2(5)
+                  type: varchar(5)
               - column:
                   name: revend
                   type: bigint
@@ -49,9 +58,9 @@ databaseChangeLog:
                   name: revend_tstmp
                   type: timestamp
         - addPrimaryKey:
-            tableName: product_aud
+            tableName: location_product_aud
             columnNames: id, rev
-            constraintName: pk_product_aud
+            constraintName: pk_location_product_aud
       rollback:
         - dropTable:
-            tableName: product_aud
+            tableName: location_product_aud

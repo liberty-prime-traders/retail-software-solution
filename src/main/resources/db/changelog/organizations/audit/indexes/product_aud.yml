@@ -35,3 +35,19 @@ databaseChangeLog:
       rollback:
         - sql:
             sql: DROP INDEX IF EXISTS idx_product_aud_id_rev_partial
+
+  - changeSet:
+      id: create-index-product-aud-rev-latest
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_product_aud_rev_latest
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_aud_rev_latest ON product_aud (rev, id) WHERE revend IS NULL
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_product_aud_rev_latest

@@ -2,15 +2,11 @@ package me.ezra_home.retail_software_solution.util.business.reference_number
 
 import jakarta.persistence.EntityManager
 import jakarta.persistence.EntityManagerFactory
-import jakarta.persistence.PersistenceContext
-import liquibase.executor.jvm.ChangelogJdbcMdcListener.query
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
-import me.ezra_home.retail_software_solution.configuration.datasource.PlatformSchemaDataSourceConfig
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import javax.sql.DataSource
 
 
 @Service
@@ -19,7 +15,10 @@ class SequenceFetcher(
     private final val organizationEntityManagerFactory: EntityManagerFactory,
 
     @param:Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_ENTITY_MANAGER_FACTORY)
-    private final var platformEntityManagerFactory: EntityManagerFactory
+    private final var platformEntityManagerFactory: EntityManagerFactory,
+
+    @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
+    private final var locationEntityManagerFactory: EntityManagerFactory
 ) {
 
     fun getNextSequenceValue(tableName: TableName, schemaLevel: SchemaLevel): String {
@@ -54,8 +53,8 @@ class SequenceFetcher(
     private fun getEntityManager(schemaLevel: SchemaLevel): EntityManager {
         return when (schemaLevel) {
             SchemaLevel.PLATFORM -> platformEntityManagerFactory.createEntityManager()
-            SchemaLevel.ORGANIZATION, SchemaLevel.LOCATION ->
-                organizationEntityManagerFactory.createEntityManager()
+            SchemaLevel.ORGANIZATION  -> organizationEntityManagerFactory.createEntityManager()
+            SchemaLevel.LOCATION -> locationEntityManagerFactory.createEntityManager()
         }
     }
 

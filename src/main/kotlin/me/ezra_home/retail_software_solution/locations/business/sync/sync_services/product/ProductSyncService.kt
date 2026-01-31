@@ -1,0 +1,91 @@
+package me.ezra_home.retail_software_solution.locations.business.sync.sync_services.product
+
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
+import me.ezra_home.retail_software_solution.locations.business.sync.SyncCursor
+import me.ezra_home.retail_software_solution.locations.business.sync.sync_services.SyncService
+import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductRepository
+import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.model.TableName
+import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+
+@Service
+class ProductSyncService(
+  private val productRevisionFetcher: ProductRevisionFetcher,
+  private val locationProductRepository: LocationProductRepository,
+  private val organizationProductRepository: ProductRepository
+) : SyncService<ProductSyncData> {
+
+  override fun getTableName(): TableName = TableName.PRODUCT
+
+  @TransactionalOnOrganizationSchema(readOnly = true)
+  override fun countAllRecords(): Int {
+    return organizationProductRepository.count().toInt()
+  }
+
+  @TransactionalOnOrganizationSchema(readOnly = true)
+  override fun fetchBatch(cursor: SyncCursor?, batchSize: Int): List<ProductSyncData> {
+    return when (cursor) {
+      is SyncCursor.Reference -> {
+        productRevisionFetcher.fetchBatchForFull(cursor.value, batchSize)
+      }
+      is SyncCursor.Revision -> {
+        productRevisionFetcher.fetchBatchForIncremental(cursor.value, batchSize)
+      }
+      null -> {
+        productRevisionFetcher.fetchBatchForFull(null, batchSize)
+      }
+    }
+  }
+
+  override fun extractCursor(record: ProductSyncData): SyncCursor {
+    return if (record.revision != null) {
+      SyncCursor.Revision(record.revision)
+    } else {
+      val referenceNumber = record.referenceNumber
+        ?: throw IllegalStateException("Product ${record.productId} missing reference number")
+      SyncCursor.Reference(referenceNumber)
+    }
+  }
+
+  @TransactionalOnLocationSchema
+  override fun createLocationRecord(record: ProductSyncData): Boolean {
+    val existing = locationProductRepository.findByProductId(record.productId)
+
+    if (existing != null) {
+      val needsUpdate = !fieldsMatch(existing, record)
+
+      if (!needsUpdate) {
+        return false
+      }
+
+      existing.name = record.productName
+      existing.productGroupName = record.productGroupName ?: "Unknown"
+      existing.productCategoryId = record.categoryId
+      existing.baseUnitId = record.baseUnitId
+      existing.status = record.status
+      existing.lastSyncedAt = OffsetDateTime.now()
+
+      locationProductRepository.save(existing)
+      return true
+    }
+
+    val locationProduct = LocationProductMapper.toLocationProduct(record)
+    locationProductRepository.save(locationProduct)
+    return true
+  }
+
+  private fun fieldsMatch(
+    existing: LocationProductEntity,
+    syncData: ProductSyncData
+  ): Boolean {
+    return StringUtils.isEquivalent(existing.name, syncData.productName)
+      && StringUtils.isEquivalent(existing.productGroupName, syncData.productGroupName)
+      && existing.productCategoryId == syncData.categoryId
+      && existing.baseUnitId == syncData.baseUnitId
+      && existing.status == syncData.status
+  }
+}

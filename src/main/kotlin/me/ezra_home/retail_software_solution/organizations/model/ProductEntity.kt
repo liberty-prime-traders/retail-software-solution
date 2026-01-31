@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.util.UUID
 import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 
 @Audited
 @Entity
@@ -28,6 +29,7 @@ class ProductEntity(
     @Column(name = "product_group_id", nullable = false)
     var productGroupId: UUID,
 
+    @NotAudited
     @Column(name = "product_group_name", insertable = false, updatable = false)
     var productGroupName: String? = null,
 

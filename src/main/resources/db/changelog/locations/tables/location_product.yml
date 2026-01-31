@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-location-product-table
+      author: ezra
+      changes:
+        - createTable:
+            tableName: location_product
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_product_id_notnull
+                    unique: true
+                    uniqueConstraintName: location_product_product_id_unique
+
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_name_notnull
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_reference_number_not_null
+
+              - column:
+                  name: product_group_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_product_group_name_notnull
+
+              - column:
+                  name: product_category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_product_category_id_notnull
+
+              - column:
+                  name: default_sale_price
+                  type: decimal(15,2)
+
+              - column:
+                  name: min_stock_level
+                  type: integer
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: A
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_status_notnull
+
+              - column:
+                  name: base_unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_base_unit_id_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_product_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: last_synced_at
+                  type: timestamptz
