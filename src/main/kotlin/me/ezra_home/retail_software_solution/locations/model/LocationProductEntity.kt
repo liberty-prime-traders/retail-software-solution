@@ -13,7 +13,10 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 
+@Audited
 @Entity
 @Table(name = TableNames.LOCATION_PRODUCT)
 @HasReference(tableName = TableName.LOCATION_PRODUCT)
@@ -44,6 +47,7 @@ class LocationProductEntity(
   @Column(name = "status", nullable = false, length = 5)
   var status: ProductStatus = ProductStatus.ACTIVE,
 
+  @NotAudited
   @Column(name = "last_synced_at")
   var lastSyncedAt: OffsetDateTime? = null
 

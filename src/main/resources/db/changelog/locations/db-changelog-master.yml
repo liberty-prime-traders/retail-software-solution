@@ -25,3 +25,7 @@ databaseChangeLog:
   - includeAll:
       path: indexes
       relativeToChangelogFile: true
+
+  - include:
+      file: audit/db-changelog-audit.yml
+      relativeToChangelogFile: true
