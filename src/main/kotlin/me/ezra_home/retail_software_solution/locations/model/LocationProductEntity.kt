@@ -26,7 +26,10 @@ class LocationProductEntity(
   var productId: UUID,
 
   @Column(name = "name", nullable = false, length = 100)
-  var name: String,
+  var productName: String,
+
+  @Column(name = "description", length = 500)
+  var description: String? = null,
 
   @Column(name = "product_group_name", nullable = false, length = 100)
   var productGroupName: String,

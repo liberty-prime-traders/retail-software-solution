@@ -34,6 +34,9 @@ databaseChangeLog:
                   name: name
                   type: varchar(100)
               - column:
+                  name: description
+                  type: nvarchar2(1000)
+              - column:
                   name: product_group_name
                   type: varchar(100)
               - column:

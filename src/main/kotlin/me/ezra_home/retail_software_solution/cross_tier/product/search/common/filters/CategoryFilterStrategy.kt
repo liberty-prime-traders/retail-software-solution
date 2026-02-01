@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters
 
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases.ColumnNames.CrossTierProduct
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames.CATEGORY_IDS
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
@@ -13,7 +13,7 @@ class CategoryFilterStrategy(
 
   override fun apply(context: QueryBuilderContext) {
     if (categoryIds.isNotEmpty()) {
-      context.whereClauses.add("$tableAlias.${Aliases.ColumnNames.ProductGroup.CATEGORY_ID} = ANY(:$CATEGORY_IDS)")
+      context.whereClauses.add("$tableAlias.${CrossTierProduct.CATEGORY_ID} = ANY(:$CATEGORY_IDS)")
       context.params[CATEGORY_IDS] = categoryIds.toTypedArray()
     }
   }

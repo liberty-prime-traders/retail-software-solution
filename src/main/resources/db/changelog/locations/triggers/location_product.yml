@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-location-product-search-vector-trigger'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION update_location_product_search_vector()
+              RETURNS trigger AS $$
+              BEGIN
+                NEW.search_vector := to_tsvector('english',
+                  COALESCE(NEW.name, '') || ' ' ||
+                  COALESCE(NEW.description, '') || ' ' ||
+                  COALESCE(NEW.product_group_name, '')
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+              
+              CREATE TRIGGER trigger_update_location_product_search_vector
+              BEFORE INSERT OR UPDATE OF name, description, product_group_name ON location_product
+              FOR EACH ROW
+              EXECUTE FUNCTION update_location_product_search_vector();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS trigger_update_location_product_search_vector ON location_product;
+              DROP FUNCTION IF EXISTS update_location_product_search_vector();

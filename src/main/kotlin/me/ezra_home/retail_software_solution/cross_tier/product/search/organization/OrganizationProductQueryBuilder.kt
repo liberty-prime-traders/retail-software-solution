@@ -11,12 +11,12 @@ import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.ReferenceNumberFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.StatusFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
-import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.filters.TagFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
 object OrganizationProductQueryBuilder {
 
-  private val P = Aliases.ColumnNames.Product
+  private val P = Aliases.ColumnNames.CrossTierProduct
+  private val ORG_P = Aliases.ColumnNames.OrganizationProduct
   private val PG = Aliases.ColumnNames.ProductGroup
   private val PT = Aliases.ColumnNames.ProductTag
 
@@ -25,7 +25,7 @@ object OrganizationProductQueryBuilder {
     previousName: String
   ): SqlQuery {
     val context = QueryBuilderContext()
-    val hasTagFilter = searchParams.tagsIds.isNotEmpty()
+    val hasTagFilter = searchParams.tagIds.isNotEmpty()
     val hasCategoryFilter = searchParams.categoryIds.isNotEmpty()
 
     context.whereClauses.add("1=1")
@@ -46,12 +46,12 @@ object OrganizationProductQueryBuilder {
     statusCodes: Set<String>
   ) {
     NameFilterStrategy(previousName).apply(context)
-    StatusFilterStrategy(statusCodes, P.TABLE_ALIAS).apply(context)
+    StatusFilterStrategy(statusCodes).apply(context)
 
-    TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy, includeDescription = true).apply(context)
+    TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy).apply(context)
     ReferenceNumberFilterStrategy(searchParams.referenceNumber).apply(context)
     CategoryFilterStrategy(searchParams.categoryIds, PG.TABLE_ALIAS).apply(context)
-    TagFilterStrategy(searchParams.tagsIds).apply(context)
+    TagFilterStrategy(searchParams.tagIds).apply(context)
   }
 
   private fun buildQuery(context: QueryBuilderContext, hasTagFilter: Boolean, hasCategoryFilter: Boolean): String {
@@ -63,7 +63,7 @@ object OrganizationProductQueryBuilder {
 
   private fun buildSimpleQuery(context: QueryBuilderContext, hasCategoryFilter: Boolean): String {
     val joinClause = if (hasCategoryFilter) {
-      "INNER JOIN ${TableNames.PRODUCT_GROUP} ${PG.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${P.PRODUCT_GROUP_ID} = ${PG.TABLE_ALIAS}.${PG.ID}"
+      "INNER JOIN ${TableNames.PRODUCT_GROUP} ${PG.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${ORG_P.PRODUCT_GROUP_ID} = ${PG.TABLE_ALIAS}.${PG.ID}"
     } else {
       ""
     }
@@ -73,7 +73,7 @@ object OrganizationProductQueryBuilder {
       FROM ${TableNames.PRODUCT} ${P.TABLE_ALIAS}
       $joinClause
       WHERE ${context.whereClauses.joinToString(" AND ")}
-      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.NAME})
+      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.PRODUCT_NAME})
       LIMIT :${ParameterNames.PAGE_SIZE}
     """.trimIndent()
   }
@@ -88,7 +88,7 @@ object OrganizationProductQueryBuilder {
     }
 
     val productGroupJoin = if (hasCategoryFilter) {
-      "INNER JOIN ${TableNames.PRODUCT_GROUP} ${PG.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${P.PRODUCT_GROUP_ID} = ${PG.TABLE_ALIAS}.${PG.ID}"
+      "INNER JOIN ${TableNames.PRODUCT_GROUP} ${PG.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${ORG_P.PRODUCT_GROUP_ID} = ${PG.TABLE_ALIAS}.${PG.ID}"
     } else {
       ""
     }
@@ -96,22 +96,22 @@ object OrganizationProductQueryBuilder {
     return """
       SELECT ${P.TABLE_ALIAS}.*
       FROM (
-        SELECT filtered_products.${P.ID}, filtered_products.${P.NAME}
+        SELECT filtered_products.${P.ID}, filtered_products.${P.PRODUCT_NAME}
         FROM (
-          SELECT ${P.TABLE_ALIAS}.${P.ID}, ${P.TABLE_ALIAS}.${P.NAME}
+          SELECT ${P.TABLE_ALIAS}.${P.ID}, ${P.TABLE_ALIAS}.${P.PRODUCT_NAME}
           FROM ${TableNames.PRODUCT} ${P.TABLE_ALIAS}
           $productGroupJoin
           WHERE ${productFilters.joinToString(" AND ")}
         ) filtered_products
         INNER JOIN ${TableNames.PRODUCT_TAG} ${PT.TABLE_ALIAS} ON ${PT.TABLE_ALIAS}.${PT.PRODUCT_ID} = filtered_products.${P.ID}
         WHERE ${tagFilters.joinToString(" AND ")}
-        GROUP BY filtered_products.${P.ID}, filtered_products.${P.NAME}
+        GROUP BY filtered_products.${P.ID}, filtered_products.${P.PRODUCT_NAME}
         $havingClause
-        ORDER BY LOWER(filtered_products.${P.NAME})
+        ORDER BY LOWER(filtered_products.${P.PRODUCT_NAME})
         LIMIT :${ParameterNames.PAGE_SIZE}
       ) final_ids
       INNER JOIN ${TableNames.PRODUCT} ${P.TABLE_ALIAS} ON ${P.TABLE_ALIAS}.${P.ID} = final_ids.${P.ID}
-      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.NAME})
+      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.PRODUCT_NAME})
     """.trimIndent()
   }
 
@@ -144,7 +144,7 @@ object OrganizationProductQueryBuilder {
   ): QueryMetadata {
     return QueryMetadata(
       categoryIdsCount = searchParams.categoryIds.size,
-      tagIdsCount = searchParams.tagsIds.size,
+      tagIdsCount = searchParams.tagIds.size,
       statusListCount = statusCodes.size,
       hasTagFilter = hasTagFilter,
       hasTextSearch = !searchParams.searchText.isNullOrBlank(),

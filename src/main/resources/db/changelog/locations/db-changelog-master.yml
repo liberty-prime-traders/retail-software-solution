@@ -27,7 +27,7 @@ databaseChangeLog:
       relativeToChangelogFile: true
 
   - includeAll:
-      path: migrations
+      path: triggers
       relativeToChangelogFile: true
 
   - include:

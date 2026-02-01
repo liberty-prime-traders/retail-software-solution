@@ -90,7 +90,7 @@ class BuilderTest {
   @Test
   fun `tag filter triggers subquery pattern`() {
     val result = OrganizationProductQueryBuilder.buildSearchQuery(
-      ProductSearchParameters(tagsIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
+      ProductSearchParameters(tagIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
       previousName = ""
     )
 
@@ -108,7 +108,7 @@ class BuilderTest {
   fun `tag filter with category includes product_group join in subquery`() {
     val result = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(
-        tagsIds = setOf(TestUUIDs.UUID1),
+        tagIds = setOf(TestUUIDs.UUID1),
         categoryIds = setOf(TestUUIDs.UUID2)
       ),
       previousName = ""
@@ -126,7 +126,7 @@ class BuilderTest {
         searchStrategy = SearchStrategy.FULLTEXT,
         referenceNumber = "REF",
         categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
-        tagsIds = setOf(TestUUIDs.UUID3),
+        tagIds = setOf(TestUUIDs.UUID3),
         statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
       ),
       previousName = ""

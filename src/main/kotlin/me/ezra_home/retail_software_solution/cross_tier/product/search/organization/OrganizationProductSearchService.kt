@@ -1,26 +1,23 @@
-package me.ezra_home.retail_software_solution.cross_tier.product.search.location
+package me.ezra_home.retail_software_solution.cross_tier.product.search.organization
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductService
-import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategyExecutor
 import org.springframework.stereotype.Service
 
-
 @Service
-class LocationProductSearchService(
-  private val locationProductService: LocationProductService,
-  private val locationProductFetcher: LocationProductFetcher
-) {
+class OrganizationProductSearchService(
+  private val productService: ProductService,
+  private val organizationProductFetcher: OrganizationProductFetcher,
+){
 
-  fun searchWithParameters(
-    pageRequest: PageRequest<ProductSearchParameters, String>
-  ): PageResponse<LocationProductResponseDto, String> {
+  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<ProductResponseDto, String> {
 
     if (shouldUseClientSideFiltering()) {
       return loadAllProductsForClientFiltering()
@@ -28,30 +25,31 @@ class LocationProductSearchService(
 
     ProductSearchValidator.validateArraySizes(
       pageRequest.parameters.categoryIds,
-      pageRequest.parameters.statusList
+      pageRequest.parameters.statusList,
+      pageRequest.parameters.tagIds
     )
     val searchText = pageRequest.parameters.searchText
 
     if (searchText.isNullOrBlank()) {
-      return locationProductFetcher.fetch(pageRequest, false)
+      return organizationProductFetcher.fetch(pageRequest, false)
     }
 
     return SearchStrategyExecutor.executeWithRetry(
       searchText = searchText,
       pageRequest = pageRequest,
-      fetcher = locationProductFetcher
+      fetcher = organizationProductFetcher
     )
   }
 
   private fun shouldUseClientSideFiltering(): Boolean {
-    return locationProductService.countAllLocationProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
+    return productService.countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
   }
 
-  private fun loadAllProductsForClientFiltering(): PageResponse<LocationProductResponseDto, String> {
+  private fun loadAllProductsForClientFiltering(): PageResponse<ProductResponseDto, String> {
     return PageResponse(
       currentCursor = "",
       hasMore = false,
-      contents = locationProductService.findAllLocationProducts(),
+      contents = productService.findAllProducts(),
       requireClientSideFilter = true
     )
   }
@@ -59,12 +57,10 @@ class LocationProductSearchService(
   fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
     ProductSearchValidator.validateArraySizes(
       pageRequest.parameters.categoryIds,
-      pageRequest.parameters.statusList
+      pageRequest.parameters.statusList,
+      pageRequest.parameters.tagIds
     )
-    val sqlQuery = LocationProductSearchQueryBuilder.buildSearchQuery(
-      pageRequest.parameters,
-      pageRequest.previousCursor
-    )
+    val sqlQuery = OrganizationProductQueryBuilder.buildSearchQuery(pageRequest.parameters, pageRequest.previousCursor)
     return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, ParameterNames.PAGE_SIZE)
   }
 }

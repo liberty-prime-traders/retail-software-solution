@@ -51,6 +51,40 @@ databaseChangeLog:
             indexName: idx_product_reference_number_pattern
 
   - changeSet:
+      id: 'create-index-product-name-lower-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_name_lower_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_name_lower_pattern ON product (LOWER(name) text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_name_lower_pattern
+
+  - changeSet:
+      id: 'create-index-product-group-name-lower-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_product_group_name_lower_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_product_group_name_lower_pattern ON product (LOWER(product_group_name) text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: product
+            indexName: idx_product_group_name_lower_pattern
+
+  - changeSet:
       id: 'create-gin-index-product-search-vector'
       author: ezra
       labels: 1.0.0

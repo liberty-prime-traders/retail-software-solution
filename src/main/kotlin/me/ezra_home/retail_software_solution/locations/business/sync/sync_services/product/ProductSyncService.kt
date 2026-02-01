@@ -62,7 +62,8 @@ class ProductSyncService(
         return false
       }
 
-      existing.name = record.productName
+      existing.productName = record.productName
+      existing.description = record.description
       existing.productGroupName = record.productGroupName ?: "Unknown"
       existing.categoryId = record.categoryId
       existing.baseUnitId = record.baseUnitId
@@ -82,7 +83,8 @@ class ProductSyncService(
     existing: LocationProductEntity,
     syncData: ProductSyncData
   ): Boolean {
-    return StringUtils.isEquivalent(existing.name, syncData.productName)
+    return StringUtils.isEquivalent(existing.productName, syncData.productName)
+      && StringUtils.isEquivalent(existing.description, syncData.description)
       && StringUtils.isEquivalent(existing.productGroupName, syncData.productGroupName)
       && existing.categoryId == syncData.categoryId
       && existing.baseUnitId == syncData.baseUnitId

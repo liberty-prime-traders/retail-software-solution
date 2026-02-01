@@ -14,34 +14,25 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 
 object LocationProductSearchQueryBuilder {
 
-  private val P = Aliases.ColumnNames.Product
+  private val P = Aliases.ColumnNames.CrossTierProduct
 
-  fun buildSearchQuery(
-    searchParams: ProductSearchParameters,
-    previousName: String
-  ): SqlQuery {
+  fun buildSearchQuery(searchParams: ProductSearchParameters, previousName: String): SqlQuery {
     val context = QueryBuilderContext()
 
     context.whereClauses.add("1=1")
 
-    val statusCodes = searchParams.extractStatusCodes()
-    applyFilters(context, searchParams, previousName, statusCodes)
+    applyFilters(context, searchParams, previousName)
 
     val sql = buildQuery(context)
-    val metadata = buildMetadata(searchParams, statusCodes)
+    val metadata = buildMetadata(searchParams)
 
     return SqlQuery(sql, context.params, metadata)
   }
 
-  private fun applyFilters(
-      context: QueryBuilderContext,
-      searchParams: ProductSearchParameters,
-      previousName: String,
-      statusCodes: Set<String>
-  ) {
-    NameFilterStrategy(previousName, P.TABLE_ALIAS).apply(context)
-    StatusFilterStrategy(statusCodes, P.TABLE_ALIAS).apply(context)
-    TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy, includeDescription = false).apply(context)
+  private fun applyFilters(context: QueryBuilderContext, searchParams: ProductSearchParameters, previousName: String) {
+    NameFilterStrategy(previousName).apply(context)
+    StatusFilterStrategy(searchParams.extractStatusCodes()).apply(context)
+    TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy).apply(context)
     CategoryFilterStrategy(searchParams.categoryIds, P.TABLE_ALIAS).apply(context)
   }
 
@@ -50,19 +41,16 @@ object LocationProductSearchQueryBuilder {
       SELECT ${P.TABLE_ALIAS}.*
       FROM ${TableNames.LOCATION_PRODUCT} ${P.TABLE_ALIAS}
       WHERE ${context.whereClauses.joinToString(" AND ")}
-      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.NAME})
+      ORDER BY LOWER(${P.TABLE_ALIAS}.${P.PRODUCT_NAME})
       LIMIT :${ParameterNames.PAGE_SIZE}
     """.trimIndent()
   }
 
-  private fun buildMetadata(
-    searchParams: ProductSearchParameters,
-    statusCodes: Set<String>
-  ): QueryMetadata {
+  private fun buildMetadata(searchParams: ProductSearchParameters): QueryMetadata {
     return QueryMetadata(
       queryName = "location_product_search",
       categoryIdsCount = searchParams.categoryIds.size,
-      statusListCount = statusCodes.size,
+      statusListCount = searchParams.extractStatusCodes().size,
       hasTextSearch = !searchParams.searchText.isNullOrBlank()
     )
   }

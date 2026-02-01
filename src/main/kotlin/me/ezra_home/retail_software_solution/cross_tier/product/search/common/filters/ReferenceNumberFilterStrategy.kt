@@ -9,7 +9,7 @@ class ReferenceNumberFilterStrategy(private val referenceNumber: String?) : Filt
 
   override fun apply(context: QueryBuilderContext) {
     referenceNumber?.takeIf { it.isNotBlank() }?.let { ref ->
-      val p = Aliases.ColumnNames.Product
+      val p = Aliases.ColumnNames.CrossTierProduct
       context.whereClauses.add("${p.TABLE_ALIAS}.${p.REFERENCE_NUMBER} LIKE :${ParameterNames.REFERENCE_NUMBER}")
       context.params[ParameterNames.REFERENCE_NUMBER] = "$ref%"
     }

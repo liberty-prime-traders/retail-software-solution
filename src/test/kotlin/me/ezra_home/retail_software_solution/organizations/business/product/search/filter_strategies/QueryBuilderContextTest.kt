@@ -5,8 +5,9 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.fi
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.StatusFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
-import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.filters.TagFilterStrategy
+import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.TagFilterStrategy
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -17,7 +18,7 @@ class QueryBuilderContextTest {
     val context = QueryBuilderContext()
 
     NameFilterStrategy("Product A").apply(context)
-    StatusFilterStrategy(setOf("A"), "p").apply(context)
+    StatusFilterStrategy(setOf("A")).apply(context)
     TextSearchFilterStrategy("laptop", SearchStrategy.FULLTEXT).apply(context)
 
     assertEquals(3, context.whereClauses.size)
@@ -29,7 +30,7 @@ class QueryBuilderContextTest {
     val context = QueryBuilderContext()
 
     NameFilterStrategy("").apply(context)
-    TagFilterStrategy(setOf(java.util.UUID.randomUUID())).apply(context)
+    TagFilterStrategy(setOf(UUID.randomUUID())).apply(context)
 
     assertTrue(context.whereClauses.isNotEmpty())
     assertTrue(context.havingClauses.isNotEmpty())

@@ -29,6 +29,9 @@ class ProductService(
         return productTagQualifier.populateTagsForProducts(dtos)
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun countAllProducts(): Long = productCache.countAllProducts()
+
     fun createProduct(productInsertDto: ProductInsertDto): ProductResponseDto {
         productValidator.validateProductInsert(productInsertDto)
         val productEntity = productMapper.toEntity(productInsertDto)

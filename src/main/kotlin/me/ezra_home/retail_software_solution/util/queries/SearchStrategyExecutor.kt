@@ -1,20 +1,22 @@
-package me.ezra_home.retail_software_solution.cross_tier.product.search.common
+package me.ezra_home.retail_software_solution.util.queries
 
 import jakarta.persistence.QueryTimeoutException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
-import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 
-object SearchStrategyRetryExecutor {
+object SearchStrategyExecutor {
 
-  fun <T> executeWithRetry(
-    searchText: String,
-    pageRequest: PageRequest<ProductSearchParameters, String>,
-    productFetcher: ProductFetcher<T>
-  ): PageResponse<T, String> {
+  fun <PARAMETERS: HasSearchStrategy<PARAMETERS>, RESPONSE_TYPE> executeWithRetry(
+      searchText: String,
+      pageRequest: PageRequest<PARAMETERS, String>,
+      fetcher: FetchesUsingSmartTextStrategy<PARAMETERS, RESPONSE_TYPE>
+  ): PageResponse<RESPONSE_TYPE, String> {
     for (strategy in selectSearchStrategies(searchText)) {
       try {
-        val result = productFetcher.fetchProducts(pageRequest, strategy == SearchStrategy.WILDCARD)
+        val requestForStrategy = pageRequest.copy(
+            parameters = pageRequest.parameters.withSearchStrategy(strategy)
+        )
+        val result = fetcher.fetch(requestForStrategy, strategy == SearchStrategy.WILDCARD)
         if (result.contents.isNotEmpty()) {
           return result
         }

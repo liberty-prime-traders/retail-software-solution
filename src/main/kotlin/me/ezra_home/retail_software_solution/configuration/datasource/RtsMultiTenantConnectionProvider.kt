@@ -12,7 +12,8 @@ class RtsMultiTenantConnectionProvider(private val dataSource: DataSource): Mult
         val connection = getAnyConnection()
         try {
             connection.createStatement().use { statement ->
-                statement.execute("SET SCHEMA '$schemaName'") // PostgreSQL syntax
+                statement.execute("SET SCHEMA '$schemaName'")
+                statement.execute("SET search_path = '$schemaName', public")
             }
         } catch (e: Exception) {
             connection.close()
@@ -25,6 +26,7 @@ class RtsMultiTenantConnectionProvider(private val dataSource: DataSource): Mult
         connection.use { connection ->
             connection.createStatement().use { statement ->
                 statement.execute("SET SCHEMA '${DataSourceBeanNames.PLATFORM_SCHEMA_NAME}'")
+                statement.execute("SET search_path = '${DataSourceBeanNames.PLATFORM_SCHEMA_NAME}', public")
             }
         }
     }
