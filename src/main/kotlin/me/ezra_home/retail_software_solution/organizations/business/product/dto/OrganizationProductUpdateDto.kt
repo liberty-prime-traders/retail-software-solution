@@ -4,10 +4,7 @@ import java.io.Serializable
 import java.util.Optional
 import java.util.UUID
 
-/**
- * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.ProductEntity}
- */
-data class ProductUpdateDto (
+data class OrganizationProductUpdateDto (
     val id: UUID,
     val productName: Optional<String>? = null,
     val description: Optional<String>? = null,

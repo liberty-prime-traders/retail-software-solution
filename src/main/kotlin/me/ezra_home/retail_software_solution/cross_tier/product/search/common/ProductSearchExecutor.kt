@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 import jakarta.persistence.Query
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.organizations.model.ProductEntity
+import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import org.springframework.beans.factory.annotation.Qualifier
@@ -27,8 +27,8 @@ class ProductSearchExecutor(
     sqlQuery: SqlQuery,
     pageSize: Int,
     setTimeout: Boolean
-  ): List<ProductEntity> {
-    return executeQuery(organizationEmf, sqlQuery.sql, sqlQuery.params, sqlQuery.metadata, pageSize, setTimeout, ProductEntity::class.java)
+  ): List<OrganizationProductEntity> {
+    return executeQuery(organizationEmf, sqlQuery.sql, sqlQuery.params, sqlQuery.metadata, pageSize, setTimeout, OrganizationProductEntity::class.java)
   }
 
   fun executeLocationQuery(

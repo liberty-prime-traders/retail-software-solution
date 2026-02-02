@@ -1,17 +1,17 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 
 @Component
-class ProductValidator(
-    private val productRepository: ProductRepository
+class OrganizationProductValidator(
+    private val organizationProductRepository: OrganizationProductRepository
 ) {
 
-    fun validateProductUpdate(productUpdateDto: ProductUpdateDto) {
+    fun validateProductUpdate(productUpdateDto: OrganizationProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
         if(productUpdateDto.baseUnitId?.isPresent != true) {
             throw RtsGenericException("A product must have a base unit.")
@@ -20,16 +20,16 @@ class ProductValidator(
             throw RtsGenericException("If a product group is provided, it cannot be empty.")
         }
 
-        productRepository.findFirstByProductNameIgnoreCase(name)?.let {
+        organizationProductRepository.findFirstByProductNameIgnoreCase(name)?.let {
             if(it.id != productUpdateDto.id) {
                 throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name))
             }
         }
     }
 
-    fun validateProductInsert(productInsertDto: ProductInsertDto) {
+    fun validateProductInsert(productInsertDto: OrganizationProductInsertDto) {
         val name = StringUtils.getValueOrException(productInsertDto.productName, NAME_IS_REQUIRED)
-        productRepository.findFirstByProductNameIgnoreCase(name)
+        organizationProductRepository.findFirstByProductNameIgnoreCase(name)
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
     }
 

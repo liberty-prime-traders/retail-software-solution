@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.product.mapping
+package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
@@ -19,7 +19,7 @@ annotation class ProductCategoryId
 
 @Component
 @TransactionalOnOrganizationSchema
-class ProductCategoryQualifier(
+class OrganizationProductCategoryQualifier(
   private val productGroupCache: ProductGroupCache,
   private val productCategoryCache: ProductCategoryCache
 ) {

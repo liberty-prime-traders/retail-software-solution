@@ -3,8 +3,8 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.organiza
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductService
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
@@ -13,11 +13,13 @@ import org.springframework.stereotype.Service
 
 @Service
 class OrganizationProductSearchService(
-  private val productService: ProductService,
+  private val organizationProductService: OrganizationProductService,
   private val organizationProductFetcher: OrganizationProductFetcher,
 ){
 
-  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<ProductResponseDto, String> {
+  fun searchWithParameters(
+    pageRequest: PageRequest<ProductSearchParameters, String>
+  ): PageResponse<OrganizationProductResponseDto, String> {
 
     if (shouldUseClientSideFiltering()) {
       return loadAllProductsForClientFiltering()
@@ -42,14 +44,14 @@ class OrganizationProductSearchService(
   }
 
   private fun shouldUseClientSideFiltering(): Boolean {
-    return productService.countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
+    return organizationProductService.countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
   }
 
-  private fun loadAllProductsForClientFiltering(): PageResponse<ProductResponseDto, String> {
+  private fun loadAllProductsForClientFiltering(): PageResponse<OrganizationProductResponseDto, String> {
     return PageResponse(
       currentCursor = "",
       hasMore = false,
-      contents = productService.findAllProducts(),
+      contents = organizationProductService.findAllProducts(),
       requireClientSideFilter = true
     )
   }

@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sync.SyncCursor
 import me.ezra_home.retail_software_solution.locations.business.sync.sync_services.SyncService
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductRepository
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
@@ -16,7 +16,7 @@ import java.time.OffsetDateTime
 class ProductSyncService(
   private val productRevisionFetcher: ProductRevisionFetcher,
   private val locationProductRepository: LocationProductRepository,
-  private val organizationProductRepository: ProductRepository
+  private val organizationProductRepository: OrganizationProductRepository
 ) : SyncService<ProductSyncData> {
 
   override fun getTableName(): TableName = TableName.PRODUCT
