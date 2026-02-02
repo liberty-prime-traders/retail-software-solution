@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.sync.sync_servic
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -64,11 +65,13 @@ class ProductSyncService(
 
       existing.productName = record.productName
       existing.description = record.description
-      existing.productGroupName = record.productGroupName ?: "Unknown"
+      existing.productGroupName = record.productGroupName ?: ""
       existing.categoryId = record.categoryId
       existing.baseUnitId = record.baseUnitId
-      existing.status = record.status
       existing.lastSyncedAt = OffsetDateTime.now()
+      if (existing.status == ProductStatus.ACTIVE) {
+        existing.status = record.status
+      }
 
       locationProductRepository.save(existing)
       return true
@@ -79,10 +82,7 @@ class ProductSyncService(
     return true
   }
 
-  private fun fieldsMatch(
-    existing: LocationProductEntity,
-    syncData: ProductSyncData
-  ): Boolean {
+  private fun fieldsMatch(existing: LocationProductEntity, syncData: ProductSyncData): Boolean {
     return StringUtils.isEquivalent(existing.productName, syncData.productName)
       && StringUtils.isEquivalent(existing.description, syncData.description)
       && StringUtils.isEquivalent(existing.productGroupName, syncData.productGroupName)
