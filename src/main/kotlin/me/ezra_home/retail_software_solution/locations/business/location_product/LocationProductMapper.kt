@@ -3,6 +3,8 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitName
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
@@ -11,10 +13,11 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
-@Mapper(config = RtsMapperConfig::class)
+@Mapper(config = RtsMapperConfig::class, uses = [UnitValueQualifier::class])
 interface LocationProductMapper {
 
   @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+  @Mapping(source = "baseUnitId", target = "baseUnit", qualifiedBy = [UnitName::class])
   fun toDto(entity: LocationProductEntity): LocationProductResponseDto
 
   @Mapping(target = "productId", ignore = true)

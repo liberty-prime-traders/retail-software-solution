@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-entry-for-product-category-aud-in-table-registry
-      author: system
+      author: ezra
       changes:
         - insert:
             tableName: table_registry
@@ -29,4 +29,4 @@ databaseChangeLog:
                   value: Audit trail for product category changes
               - column:
                   name: reference_number
-                  value: PTBL34
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

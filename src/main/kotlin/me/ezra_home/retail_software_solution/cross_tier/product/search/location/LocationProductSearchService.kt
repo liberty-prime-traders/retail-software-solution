@@ -1,70 +1,20 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.location
 
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
-import me.ezra_home.retail_software_solution.util.paging.PageRequest
-import me.ezra_home.retail_software_solution.util.paging.PageResponse
-import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
-import me.ezra_home.retail_software_solution.util.queries.SearchStrategyExecutor
 import org.springframework.stereotype.Service
-
 
 @Service
 class LocationProductSearchService(
   private val locationProductService: LocationProductService,
-  private val locationProductFetcher: LocationProductFetcher
+  locationProductFetcher: LocationProductFetcher
+) : ProductSearchService<LocationProductResponseDto>(
+  locationProductFetcher,
+  LocationProductSearchQueryBuilder::buildSearchQuery
 ) {
 
-  fun searchWithParameters(
-    pageRequest: PageRequest<ProductSearchParameters, String>
-  ): PageResponse<LocationProductResponseDto, String> {
+  override fun countAllProducts(): Long = locationProductService.countAllProducts()
 
-    if (shouldUseClientSideFiltering()) {
-      return loadAllProductsForClientFiltering()
-    }
-
-    ProductSearchValidator.validateArraySizes(
-      pageRequest.parameters.categoryIds,
-      pageRequest.parameters.statusList
-    )
-    val searchText = pageRequest.parameters.searchText
-
-    if (searchText.isNullOrBlank()) {
-      return locationProductFetcher.fetch(pageRequest, false)
-    }
-
-    return SearchStrategyExecutor.executeWithRetry(
-      searchText = searchText,
-      pageRequest = pageRequest,
-      fetcher = locationProductFetcher
-    )
-  }
-
-  private fun shouldUseClientSideFiltering(): Boolean {
-    return locationProductService.countAllLocationProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
-  }
-
-  private fun loadAllProductsForClientFiltering(): PageResponse<LocationProductResponseDto, String> {
-    return PageResponse(
-      currentCursor = "",
-      hasMore = false,
-      contents = locationProductService.findAllLocationProducts(),
-      requireClientSideFilter = true
-    )
-  }
-
-  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
-    ProductSearchValidator.validateArraySizes(
-      pageRequest.parameters.categoryIds,
-      pageRequest.parameters.statusList
-    )
-    val sqlQuery = LocationProductSearchQueryBuilder.buildSearchQuery(
-      pageRequest.parameters,
-      pageRequest.previousCursor
-    )
-    return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, ParameterNames.PAGE_SIZE)
-  }
+  override fun findAllProducts(): List<LocationProductResponseDto> = locationProductService.findAllProducts()
 }

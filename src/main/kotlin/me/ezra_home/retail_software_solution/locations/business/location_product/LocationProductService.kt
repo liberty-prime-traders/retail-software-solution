@@ -17,12 +17,12 @@ class LocationProductService(
 ) {
 
   @TransactionalOnLocationSchema(readOnly = true)
-  fun findAllLocationProducts(): List<LocationProductResponseDto> {
+  fun findAllProducts(): List<LocationProductResponseDto> {
     return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it) }
   }
 
   @TransactionalOnLocationSchema(readOnly = true)
-  fun countAllLocationProducts(): Long = locationProductCache.countAllLocationProducts()
+  fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
 
   fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
     val productToUpdate = locationProductRepository.findById(dto.id).orElseThrow {

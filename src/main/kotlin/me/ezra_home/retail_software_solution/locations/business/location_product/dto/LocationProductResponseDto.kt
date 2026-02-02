@@ -8,12 +8,11 @@ import java.util.UUID
 
 data class LocationProductResponseDto(
   val id: UUID?,
-  val productId: UUID?,
   val productName: String?,
   val description: String?,
   val productGroupName: String?,
   val categoryId: UUID?,
-  val baseUnitId: UUID?,
+  val baseUnit: String?,
   val defaultSalePrice: BigDecimal?,
   val minStockLevel: Int?,
   val status: ProductStatus?,

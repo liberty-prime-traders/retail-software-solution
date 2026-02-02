@@ -29,4 +29,4 @@ databaseChangeLog:
                   value: Table containing specific unit measurements
               - column:
                   name: reference_number
-                  value: PTBL18
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

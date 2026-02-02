@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-revinfo-table
-      author: system
+      author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
