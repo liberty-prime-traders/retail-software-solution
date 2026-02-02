@@ -1,0 +1,143 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-composite-index-location-product-status-name'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_status_name_lower
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_status_name_lower ON location_product (status, LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_status_name_lower
+
+  - changeSet:
+      id: 'create-composite-index-location-product-category-status-name'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_category_status_name_lower
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_category_status_name_lower ON location_product (category_id, status, LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_category_status_name_lower
+
+  - changeSet:
+      id: 'create-index-location-product-reference-number-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_reference_number_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_reference_number_pattern ON location_product (reference_number text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_reference_number_pattern
+
+  - changeSet:
+      id: 'create-index-location-product-name-lower-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_name_lower_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_name_lower_pattern ON location_product (LOWER(name) text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_name_lower_pattern
+
+  - changeSet:
+      id: 'create-index-location-product-group-name-lower-pattern'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_group_name_lower_pattern
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_group_name_lower_pattern ON location_product (LOWER(product_group_name) text_pattern_ops);
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_group_name_lower_pattern
+
+  - changeSet:
+      id: 'create-gin-index-location-product-search-vector'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_search_vector
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_search_vector ON location_product USING gin (search_vector);
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_search_vector
+
+  - changeSet:
+      id: 'create-gin-index-location-product-trigram-search'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_name_trgm
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_location_product_name_trgm ON location_product USING gin (LOWER(name) gin_trgm_ops);
+        - sql:
+            sql: CREATE INDEX idx_location_product_group_name_trgm ON location_product USING gin (LOWER(product_group_name) gin_trgm_ops);
+        - sql:
+            sql: CREATE INDEX idx_location_product_description_trgm ON location_product USING gin (LOWER(description) gin_trgm_ops);
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_name_trgm
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_group_name_trgm
+
+  - changeSet:
+      id: 'create-unique-index-location-product-name-lower'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_location_product_name_lower_unique
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_location_product_name_lower_unique ON location_product (LOWER(name));
+      rollback:
+        - dropIndex:
+            tableName: location_product
+            indexName: idx_location_product_name_lower_unique

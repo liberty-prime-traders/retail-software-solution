@@ -8,9 +8,10 @@ object LocationProductMapper {
   fun toLocationProduct(syncData: ProductSyncData): LocationProductEntity {
     return LocationProductEntity(
       productId = syncData.productId,
-      name = syncData.productName,
+      productName = syncData.productName,
+      description = syncData.description,
       productGroupName = syncData.productGroupName ?: "Unknown",
-      productCategoryId = syncData.categoryId,
+      categoryId = syncData.categoryId,
       baseUnitId = syncData.baseUnitId,
       status = syncData.status,
       lastSyncedAt = OffsetDateTime.now()

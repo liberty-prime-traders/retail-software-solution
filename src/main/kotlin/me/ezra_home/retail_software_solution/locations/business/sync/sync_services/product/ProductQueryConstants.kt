@@ -16,6 +16,7 @@ object ProductQueryConstants {
   object Columns {
     const val ID = "id"
     const val NAME = "name"
+    const val DESCRIPTION = "description"
     const val PRODUCT_GROUP_NAME = "product_group_name"
     const val STATUS = "status"
     const val REFERENCE_NUMBER = "reference_number"

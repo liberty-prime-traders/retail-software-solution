@@ -6,8 +6,9 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sync.SyncCursor
 import me.ezra_home.retail_software_solution.locations.business.sync.sync_services.SyncService
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductRepository
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -16,7 +17,7 @@ import java.time.OffsetDateTime
 class ProductSyncService(
   private val productRevisionFetcher: ProductRevisionFetcher,
   private val locationProductRepository: LocationProductRepository,
-  private val organizationProductRepository: ProductRepository
+  private val organizationProductRepository: OrganizationProductRepository
 ) : SyncService<ProductSyncData> {
 
   override fun getTableName(): TableName = TableName.PRODUCT
@@ -62,12 +63,15 @@ class ProductSyncService(
         return false
       }
 
-      existing.name = record.productName
-      existing.productGroupName = record.productGroupName ?: "Unknown"
-      existing.productCategoryId = record.categoryId
+      existing.productName = record.productName
+      existing.description = record.description
+      existing.productGroupName = record.productGroupName ?: ""
+      existing.categoryId = record.categoryId
       existing.baseUnitId = record.baseUnitId
-      existing.status = record.status
       existing.lastSyncedAt = OffsetDateTime.now()
+      if (existing.status == ProductStatus.ACTIVE) {
+        existing.status = record.status
+      }
 
       locationProductRepository.save(existing)
       return true
@@ -78,13 +82,11 @@ class ProductSyncService(
     return true
   }
 
-  private fun fieldsMatch(
-    existing: LocationProductEntity,
-    syncData: ProductSyncData
-  ): Boolean {
-    return StringUtils.isEquivalent(existing.name, syncData.productName)
+  private fun fieldsMatch(existing: LocationProductEntity, syncData: ProductSyncData): Boolean {
+    return StringUtils.isEquivalent(existing.productName, syncData.productName)
+      && StringUtils.isEquivalent(existing.description, syncData.description)
       && StringUtils.isEquivalent(existing.productGroupName, syncData.productGroupName)
-      && existing.productCategoryId == syncData.categoryId
+      && existing.categoryId == syncData.categoryId
       && existing.baseUnitId == syncData.baseUnitId
       && existing.status == syncData.status
   }

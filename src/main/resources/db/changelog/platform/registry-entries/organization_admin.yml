@@ -29,4 +29,4 @@ databaseChangeLog:
                   value: Table containing organization administrators
               - column:
                   name: reference_number
-                  value: PTBL10
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

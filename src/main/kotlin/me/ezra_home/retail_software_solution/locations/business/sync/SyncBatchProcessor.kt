@@ -6,12 +6,10 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class SyncBatchProcessor(
-  private val syncLogFetcher: SyncLogFetcher
-) {
+class SyncBatchProcessor(private val syncLogFetcher: SyncLogFetcher) {
 
   private val logger = LoggerFactory.getLogger(SyncBatchProcessor::class.java)
-  private val batchSize = 100
+  private val batchSize = 10
 
   data class BatchResult(
     val processed: Int,

@@ -5,6 +5,7 @@ import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
 import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
+import me.ezra_home.retail_software_solution.util.enums.UserType
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -41,10 +42,14 @@ class SysUserCache(
         val sysUsers = getSystemUsers()
         if (sysUsers.isEmpty()) return Collections.emptyList()
         val oktaUsers = getUsersFromOkta().associateBy { it.id }
-        return sysUsers.map { sysUser ->
+        val systemEndUsers = sysUsers.filter { it.userType == UserType.END_USER }.map { sysUser ->
             val oktaUser = oktaUsers[sysUser.oktaId]
             sysUserMapper.oktaToSystemUser(oktaUser) {sysUser.id}
         }
+        val serviceAccounts = sysUsers.filter { it.userType == UserType.SERVICE_ACCOUNT }.map { sysUser ->
+            sysUserMapper.sysUserEntityToSysUserDto(sysUser)
+        }
+        return systemEndUsers + serviceAccounts
     }
 
     @CacheEvict(allEntries = true)

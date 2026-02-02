@@ -1,5 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
+import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
+import me.ezra_home.retail_software_solution.util.queries.SqlQuery
+import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
@@ -9,13 +13,13 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `formats string parameters with quotes`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE name = :productName",
       params = mapOf("productName" to "laptop's & tablets"),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
 
     assertFalse(result.contains(":productName"))
     assertTrue(result.contains("'laptop's & tablets'"))
@@ -23,29 +27,29 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `formats UUID parameters with quotes`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE id = :productId",
       params = mapOf("productId" to TestUUIDs.UUID1),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("'${TestUUIDs.UUID1}'"))
   }
 
   @Test
   fun `formats array parameters`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE id = ANY(:ids) AND status = ANY(:statusList)",
       params = mapOf(
         "ids" to arrayOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
         "statusList" to arrayOf("A", "X")
       ),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("ARRAY['${TestUUIDs.UUID1}', '${TestUUIDs.UUID2}']"))
     assertTrue(result.contains("ARRAY['A', 'X']"))
@@ -53,13 +57,13 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `formats number parameters without quotes`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE count = :tagCount AND price > :minPrice",
       params = mapOf("tagCount" to 2, "minPrice" to 12345L),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("12345"))
     assertTrue(result.contains("2"))
@@ -67,13 +71,13 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `adds pageSize parameter`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product LIMIT :pageSize",
       params = emptyMap(),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 25)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 25, ParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("25"))
     assertFalse(result.contains(":pageSize"))
@@ -81,13 +85,13 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `handles parameters with similar names`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE name = :name AND full_name = :fullName",
       params = mapOf("name" to "laptop", "fullName" to "laptop computer"),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("'laptop computer'"))
     assertTrue(result.contains("'laptop'"))
@@ -96,7 +100,7 @@ class ProductSearchQueryFormatterTest {
 
   @Test
   fun `formats complex subquery with all parameter types`() {
-    val sqlQuery = ProductSearchUtilityTypes.SqlQuery(
+    val sqlQuery = SqlQuery(
       sql = """
         SELECT p.*
         FROM (
@@ -115,10 +119,10 @@ class ProductSearchQueryFormatterTest {
         "tagIds" to arrayOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
         "tagIdsCount" to 2
       ),
-      metadata = ProductSearchUtilityTypes.QueryMetadata()
+      metadata = QueryMetadata()
     )
 
-    val result = ProductSearchQueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100, ParameterNames.PAGE_SIZE)
 
     assertFalse(result.contains(":previousName"))
     assertFalse(result.contains(":statusList"))

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductRepository
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -12,7 +12,7 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class ProductTagService(
     private val productTagCache: ProductTagCache,
-    private val productRepository: ProductRepository,
+    private val organizationProductRepository: OrganizationProductRepository,
     private val productTagValidator: ProductTagValidator
 ) {
 
@@ -20,7 +20,7 @@ class ProductTagService(
                           tagsToAdd: Set<UUID> = emptySet(),
                           tagsToRemove: Set<UUID> = emptySet()
     ) {
-        if (!productRepository.existsById(productId)) {
+        if (!organizationProductRepository.existsById(productId)) {
            throw RtsGenericException("Product with ID $productId does not exist")
         }
 

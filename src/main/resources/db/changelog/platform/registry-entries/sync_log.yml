@@ -29,4 +29,4 @@ databaseChangeLog:
                   value: Table tracking synchronization operations between organization and location schemas
               - column:
                   name: reference_number
-                  value: PTBL38
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

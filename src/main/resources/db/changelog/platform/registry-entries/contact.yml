@@ -29,4 +29,4 @@ databaseChangeLog:
                   value: Table containing contacts (customers, vendors, suppliers)
               - column:
                   name: reference_number
-                  value: PTBL22
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

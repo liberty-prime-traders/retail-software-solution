@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -13,12 +15,12 @@ class ProductSearchValidatorTest {
   fun `accepts arrays at max size of 50`() {
     val params = ProductSearchParameters(
       categoryIds = (1..50).map { UUID.randomUUID() }.toSet(),
-      tagsIds = (1..50).map { UUID.randomUUID() }.toSet(),
+      tagIds = (1..50).map { UUID.randomUUID() }.toSet(),
       statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.AWAITING_FINAL_SALE)
     )
 
     assertDoesNotThrow {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagIds)
     }
   }
 
@@ -29,7 +31,7 @@ class ProductSearchValidatorTest {
     )
 
     val exception = assertThrows<IllegalArgumentException> {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagIds)
     }
     assertEquals(exception.message?.contains("categoryIds exceeds maximum size of 50"), true)
   }
@@ -37,11 +39,11 @@ class ProductSearchValidatorTest {
   @Test
   fun `rejects tagIds exceeding 50`() {
     val params = ProductSearchParameters(
-      tagsIds = (1..51).map { UUID.randomUUID() }.toSet()
+      tagIds = (1..51).map { UUID.randomUUID() }.toSet()
     )
 
     val exception = assertThrows<IllegalArgumentException> {
-      ProductSearchValidator.validateArraySizes(params)
+      ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagIds)
     }
     assertEquals(exception.message?.contains("tagIds exceeds maximum size of 50"), true)
   }

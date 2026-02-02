@@ -6,6 +6,7 @@ import java.util.UUID
 data class ProductSyncData(
   val productId: UUID,
   val productName: String,
+  val description: String?,
   val productGroupName: String?,
   val status: ProductStatus,
   val referenceNumber: String?,

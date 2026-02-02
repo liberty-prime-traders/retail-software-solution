@@ -33,3 +33,33 @@ databaseChangeLog:
                     uniqueConstraintName: sys_user_reference_number_unique
                     nullable: false
                     notNullConstraintName: sys_user_reference_number_not_null
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: local_first_name
+                  type: nvarchar2(100)
+
+              - column:
+                  name: local_last_name
+                  type: nvarchar2(100)
+
+              - column:
+                  name: user_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sys_user_user_type_notnull
+
+        - sql:
+            sql: |
+              ALTER TABLE sys_user
+              ADD CONSTRAINT sys_user_created_by_required_for_end_users
+              CHECK (user_type = 'S' OR created_by_id IS NOT NULL)

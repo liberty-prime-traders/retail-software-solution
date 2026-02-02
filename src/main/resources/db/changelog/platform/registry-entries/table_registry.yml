@@ -26,7 +26,7 @@ databaseChangeLog:
                   value: Table Registry
               - column:
                   name: description
-                  value: Registry of all tables in the system
+                  value: Registry of all tables in the ezra
               - column:
                   name: reference_number
-                  value: PTBL01
+                  valueComputed: "'PTBL' || LPAD(nextval('seq_table_registry_reference_number')::text, 2, '0')"

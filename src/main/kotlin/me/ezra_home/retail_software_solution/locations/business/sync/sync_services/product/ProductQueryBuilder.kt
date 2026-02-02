@@ -16,6 +16,7 @@ object ProductQueryBuilder {
       SELECT
         $p.${ProductQueryConstants.Columns.ID},
         $p.${ProductQueryConstants.Columns.NAME},
+        $p.${ProductQueryConstants.Columns.DESCRIPTION},
         $p.${ProductQueryConstants.Columns.PRODUCT_GROUP_NAME},
         $p.${ProductQueryConstants.Columns.STATUS},
         $p.${ProductQueryConstants.Columns.REFERENCE_NUMBER},
@@ -38,6 +39,7 @@ object ProductQueryBuilder {
       SELECT
         $p.${ProductQueryConstants.Columns.ID},
         $p.${ProductQueryConstants.Columns.NAME},
+        $p.${ProductQueryConstants.Columns.DESCRIPTION},
         $p.${ProductQueryConstants.Columns.PRODUCT_GROUP_NAME},
         $p.${ProductQueryConstants.Columns.STATUS},
         $p.${ProductQueryConstants.Columns.REFERENCE_NUMBER},

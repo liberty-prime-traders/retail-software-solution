@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints.product
 
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductService
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.ProductUpdateDto
-import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchParameters
-import me.ezra_home.retail_software_solution.organizations.business.product.search.ProductSearchService
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductUpdateDto
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
+import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.OrganizationProductSearchService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,32 +19,32 @@ import java.util.UUID
 @RestController
 @RequestMapping("secured/products")
 class ProductEndpoint(
-    private val productService: ProductService,
-    private val productSearchService: ProductSearchService
+    private val organizationProductService: OrganizationProductService,
+    private val organizationProductSearchService: OrganizationProductSearchService
 ) {
 
     @PostMapping
-    fun createProduct(@RequestBody productInsertDto: ProductInsertDto): ProductResponseDto =
-        productService.createProduct(productInsertDto)
+    fun createProduct(@RequestBody productInsertDto: OrganizationProductInsertDto): OrganizationProductResponseDto =
+        organizationProductService.createProduct(productInsertDto)
 
     @PostMapping("search")
-    fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<ProductResponseDto, String> =
-        productSearchService.searchWithParameters(pageRequest)
+    fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<OrganizationProductResponseDto, String> =
+        organizationProductSearchService.searchWithParameters(pageRequest)
 
     @PostMapping("search/debug-query")
     fun debugSearchQuery(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): String =
-        productSearchService.generateFormattedQuery(pageRequest)
+        organizationProductSearchService.generateFormattedQuery(pageRequest)
 
     @PutMapping
-    fun updateProduct(@RequestBody productDto: ProductUpdateDto): ProductResponseDto =
-        productService.updateProduct(productDto)
+    fun updateProduct(@RequestBody productDto: OrganizationProductUpdateDto): OrganizationProductResponseDto =
+        organizationProductService.updateProduct(productDto)
 
     @PutMapping("{productId}/deactivate")
-    fun deactivateProduct(@PathVariable productId: UUID): ProductResponseDto =
-        productService.deactivateProduct(productId)
+    fun deactivateProduct(@PathVariable productId: UUID): OrganizationProductResponseDto =
+        organizationProductService.deactivateProduct(productId)
 
     @PutMapping("{productId}/reactivate")
-    fun reactivateProduct(@PathVariable productId: UUID): ProductResponseDto =
-        productService.reactivateProduct(productId)
+    fun reactivateProduct(@PathVariable productId: UUID): OrganizationProductResponseDto =
+        organizationProductService.reactivateProduct(productId)
 
 }

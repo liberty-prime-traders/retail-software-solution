@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
+import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.OrganizationProductQueryBuilder
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
-import me.ezra_home.retail_software_solution.organizations.business.product.search.query_builder.Builder
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -13,7 +15,7 @@ class BuilderTest {
   @Test
   fun `minimal query with name and status`() {
     val params = ProductSearchParameters(statusList = setOf(ProductStatus.ACTIVE))
-    val result = Builder.buildSearchQuery(params, previousName = "Product A")
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(params, previousName = "Product A")
 
     assertTrue(result.sql.contains("SELECT p.*"))
     assertTrue(result.sql.contains("FROM product p"))
@@ -26,19 +28,19 @@ class BuilderTest {
 
   @Test
   fun `text search adds correct clause per mode`() {
-    val fulltext = Builder.buildSearchQuery(
+    val fulltext = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "laptop", searchStrategy = SearchStrategy.FULLTEXT),
       previousName = ""
     )
-    val trigram = Builder.buildSearchQuery(
+    val trigram = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "pakaging", searchStrategy = SearchStrategy.TRIGRAM),
       previousName = ""
     )
-    val prefix = Builder.buildSearchQuery(
+    val prefix = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "comp", searchStrategy = SearchStrategy.PREFIX),
       previousName = ""
     )
-    val wildcard = Builder.buildSearchQuery(
+    val wildcard = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "tab", searchStrategy = SearchStrategy.WILDCARD),
       previousName = ""
     )
@@ -60,11 +62,11 @@ class BuilderTest {
 
   @Test
   fun `blank or NONE search mode ignored`() {
-    val blank = Builder.buildSearchQuery(
+    val blank = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "   ", searchStrategy = SearchStrategy.FULLTEXT),
       previousName = ""
     )
-    val none = Builder.buildSearchQuery(
+    val none = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(searchText = "laptop", searchStrategy = SearchStrategy.NONE),
       previousName = ""
     )
@@ -75,7 +77,7 @@ class BuilderTest {
 
   @Test
   fun `category filter adds product_group join`() {
-    val result = Builder.buildSearchQuery(
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
       previousName = ""
     )
@@ -87,8 +89,8 @@ class BuilderTest {
 
   @Test
   fun `tag filter triggers subquery pattern`() {
-    val result = Builder.buildSearchQuery(
-      ProductSearchParameters(tagsIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(
+      ProductSearchParameters(tagIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2)),
       previousName = ""
     )
 
@@ -104,9 +106,9 @@ class BuilderTest {
 
   @Test
   fun `tag filter with category includes product_group join in subquery`() {
-    val result = Builder.buildSearchQuery(
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(
-        tagsIds = setOf(TestUUIDs.UUID1),
+        tagIds = setOf(TestUUIDs.UUID1),
         categoryIds = setOf(TestUUIDs.UUID2)
       ),
       previousName = ""
@@ -118,13 +120,13 @@ class BuilderTest {
 
   @Test
   fun `combined filters produce correct metadata`() {
-    val result = Builder.buildSearchQuery(
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(
         searchText = "laptop",
         searchStrategy = SearchStrategy.FULLTEXT,
         referenceNumber = "REF",
         categoryIds = setOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
-        tagsIds = setOf(TestUUIDs.UUID3),
+        tagIds = setOf(TestUUIDs.UUID3),
         statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
       ),
       previousName = ""
@@ -134,13 +136,13 @@ class BuilderTest {
     assertEquals(1, result.metadata.tagIdsCount)
     assertEquals(2, result.metadata.statusListCount)
     assertTrue(result.metadata.hasTextSearch)
-    assertTrue(result.metadata.hasReferenceNumberSearch)
-    assertTrue(result.metadata.hasTagFilter)
+    assertTrue(result.metadata.hasReferenceNumberSearch!!)
+    assertTrue(result.metadata.hasTagFilter!!)
   }
 
   @Test
   fun `multiple status codes formatted correctly`() {
-    val result = Builder.buildSearchQuery(
+    val result = OrganizationProductQueryBuilder.buildSearchQuery(
       ProductSearchParameters(
         statusList = setOf(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.AWAITING_FINAL_SALE)
       ),

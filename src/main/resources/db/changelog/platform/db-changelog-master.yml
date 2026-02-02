@@ -26,6 +26,10 @@ databaseChangeLog:
       path: sequences
       relativeToChangelogFile: true
 
+  - includeAll:
+      path: service-accounts
+      relativeToChangelogFile: true
+
   - include:
       file: audit/db-changelog-audit.yml
       relativeToChangelogFile: true
