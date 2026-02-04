@@ -1,0 +1,65 @@
+services:
+  rtss-kafka-dev:
+    image: confluentinc/cp-kafka:${KAFKA_VERSION}
+    container_name: rtss-kafka-dev
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT}:9092"
+    environment:
+      KAFKA_KRAFT_MODE: 'true'
+
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@rtss-kafka-dev:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_HOST}:${KAFKA_PORT}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+
+    volumes:
+      - rtss-kafka-dev-data:/var/lib/kafka/data
+
+    networks:
+      - rtss_dev_internal
+
+  rtss-kafka-dev-ui:
+    image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}
+    container_name: rtss-kafka-dev-ui
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: dev
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: rtss-kafka-dev:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+      AUTH_TYPE: OAUTH2
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_SCOPE: openid,profile,email
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_REDIRECT_URI: https://kafka-dev.${OKTA_DOMAIN}.com/login/oauth2/code/okta
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_AUTHORIZATION_GRANT_TYPE: authorization_code
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OKTA_ISSUER_URI: https://${OKTA_DOMAIN}/oauth2/default
+
+    networks:
+      - ezra-home
+      - rtss_dev_internal
+    depends_on:
+      - rtss-kafka-dev
+
+networks:
+  ezra-home:
+      external: true
+  rtss_dev_internal:
+    external: true
+
+volumes:
+  rtss-kafka-dev-data:
+    driver: local
