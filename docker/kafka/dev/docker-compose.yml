@@ -1,6 +1,6 @@
 services:
   rtss-kafka-dev:
-    image: confluentinc/cp-kafka:${KAFKA_VERSION}
+    image: apache/kafka:${KAFKA_VERSION}
     container_name: rtss-kafka-dev
     restart: unless-stopped
     ports:
