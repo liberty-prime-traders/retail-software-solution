@@ -1,0 +1,17 @@
+services:
+  postgres-rtss:
+    image: postgres:${POSTGRES_VERSION}
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}"
+
+volumes:
+  db-data:
+    driver: local
+
