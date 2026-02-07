@@ -39,9 +39,16 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_SCOPE: openid,profile,email
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_REDIRECT_URI: https://rtss-kafka-${ENV}.${APP_DOMAIN}/login/oauth2/code/okta
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_REDIRECT_URI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/okta
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OKTA_AUTHORIZATION_GRANT_TYPE: authorization_code
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OKTA_ISSUER_URI: https://${OKTA_DOMAIN}/oauth2/default
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.rule=Host(`rtss-kafka-${ENV}.ezra-home.me`)"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.entrypoints=websecure"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls=true"
+      - "traefik.http.services.rtss-kafka-ui-${ENV}.loadbalancer.server.port=8080"
 
     networks:
       - ezra-home
