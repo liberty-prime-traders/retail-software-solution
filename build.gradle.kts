@@ -33,6 +33,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.hibernate.orm:hibernate-envers:6.5.3.Final")
+	implementation("org.springframework.kafka:spring-kafka")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.google.code.gson:gson:2.10.1")
