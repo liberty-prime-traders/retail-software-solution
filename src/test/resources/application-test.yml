@@ -1,0 +1,28 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    platform: &h2-config
+      jdbc-url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        auto-commit: false
+
+    location: *h2-config
+    organization: *h2-config
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+  liquibase:
+    enabled: false

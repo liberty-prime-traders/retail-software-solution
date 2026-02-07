@@ -4,8 +4,8 @@ import jakarta.persistence.Query
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
-import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
