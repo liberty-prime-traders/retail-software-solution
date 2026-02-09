@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
+import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
@@ -64,7 +65,7 @@ class OrganizationService(
     }
 
     private fun createOrganizationSchema(subdomain: String): String {
-        val schemaName = "org_${subdomain.lowercase().replace("-", "_")}"
+        val schemaName = SchemaNameGenerator.convertTrustedSubdomainToSchema(subdomain, "org")
         organizationSchemaService.createSchema(schemaName)
         return schemaName
     }

@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -41,7 +42,7 @@ class LocationService(
     }
 
     private fun createLocationSchema(locationName: String): String {
-        val schemaName = "loc_${locationName.lowercase().replace(" ", "_")}"
+        val schemaName = SchemaNameGenerator.generateSchemaName(locationName, "loc")
         locationSchemaService.createSchema(schemaName)
         return schemaName
     }

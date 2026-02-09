@@ -15,4 +15,8 @@ object ServiceAccountContext {
             sessionContext.systemUserId = previousUserId
         }
     }
+
+    fun runWithServiceAccount(serviceAccount: ServiceAccount, block: () -> Unit) {
+        runWithServiceAccount<Unit>(serviceAccount) { block() }
+    }
 }
