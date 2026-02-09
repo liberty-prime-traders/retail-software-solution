@@ -15,7 +15,7 @@ class SyncInitiator(
   private val validator: SyncValidator,
   private val syncLogUpdater: SyncLogUpdater,
   private val strategyRegistry: SyncStrategyRegistry,
-  private val serviceRegistry: SyncServiceRegistry,
+  private val syncServiceRegistry: SyncServiceRegistry,
   private val syncOrchestrator: SyncOrchestrator,
   private val asyncExecutor: AsyncExecutor,
   private val syncLogMapper: SyncLogMapper
@@ -24,7 +24,7 @@ class SyncInitiator(
   fun initiate(tableName: TableName, syncMode: SyncMode): SyncLogResponseDto {
     validator.validateCanSync(tableName)
     val syncStrategy = strategyRegistry.getStrategy(syncMode)
-    val syncService = serviceRegistry.getService(tableName)
+    val syncService = syncServiceRegistry.getService(tableName)
 
     val totalRecords = if (syncStrategy.shouldCalculateTotal()) {
       syncService.countAllRecords()

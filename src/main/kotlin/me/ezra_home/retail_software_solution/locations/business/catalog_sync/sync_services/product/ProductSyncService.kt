@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
+import java.util.UUID
 
 @Service
 class ProductSyncService(
@@ -20,7 +21,7 @@ class ProductSyncService(
   private val organizationProductRepository: OrganizationProductRepository
 ) : SyncService<ProductSyncData> {
 
-  override fun getTableName(): TableName = TableName.PRODUCT
+  override val tableName = TableName.PRODUCT
 
   @TransactionalOnOrganizationSchema(readOnly = true)
   override fun countAllRecords(): Int {
@@ -89,5 +90,11 @@ class ProductSyncService(
       && existing.categoryId == syncData.categoryId
       && existing.baseUnitId == syncData.baseUnitId
       && existing.status == syncData.status
+  }
+
+  @TransactionalOnOrganizationSchema(readOnly = true)
+  override fun syncSingle(entityId: UUID) {
+    val productSyncData = productRevisionFetcher.fetchByProductId(entityId) ?: return
+    createLocationRecord(productSyncData)
   }
 }

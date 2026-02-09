@@ -54,4 +54,28 @@ object ProductQueryBuilder {
       ORDER BY $a.${SyncQueryConstants.AuditColumns.REV} ASC, $p.${ProductQueryConstants.Columns.ID} ASC
     """.trimIndent()
   }
+
+  fun buildFetchQueryByProductId(): String {
+    val p = ProductQueryConstants.Aliases.PRODUCT_TABLE
+    val a = ProductQueryConstants.Aliases.PRODUCT_AUDIT_TABLE
+    val pg = ProductQueryConstants.Aliases.PRODUCT_GROUP_TABLE
+
+    return """
+      SELECT
+        $p.${ProductQueryConstants.Columns.ID},
+        $p.${ProductQueryConstants.Columns.NAME},
+        $p.${ProductQueryConstants.Columns.DESCRIPTION},
+        $p.${ProductQueryConstants.Columns.PRODUCT_GROUP_NAME},
+        $p.${ProductQueryConstants.Columns.STATUS},
+        $p.${ProductQueryConstants.Columns.REFERENCE_NUMBER},
+        $p.${ProductQueryConstants.Columns.BASE_UNIT_ID},
+        $pg.${ProductQueryConstants.Columns.CATEGORY_ID},
+        $a.${SyncQueryConstants.AuditColumns.REV} AS ${ProductQueryConstants.Columns.REVISION}
+      FROM ${ProductQueryConstants.Tables.MAIN} $p
+      JOIN ${ProductQueryConstants.Tables.AUDIT} $a ON $p.${ProductQueryConstants.Columns.ID} = $a.${ProductQueryConstants.Columns.ID}
+      LEFT JOIN ${ProductQueryConstants.Tables.GROUP} $pg ON $p.${ProductQueryConstants.Columns.PRODUCT_GROUP_ID} = $pg.${ProductQueryConstants.Columns.ID}
+      WHERE $a.${SyncQueryConstants.AuditColumns.REVEND} IS NULL
+        AND $p.${ProductQueryConstants.Columns.ID} = :productId
+    """.trimIndent()
+  }
 }

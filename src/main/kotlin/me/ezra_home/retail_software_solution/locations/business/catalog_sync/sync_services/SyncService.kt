@@ -2,12 +2,13 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sy
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
 import me.ezra_home.retail_software_solution.util.model.TableName
+import java.util.UUID
 
 interface SyncService<T> {
 
-  fun getTableName(): TableName
+  val tableName: TableName
 
-  fun supports(tableName: TableName): Boolean = getTableName() == tableName
+  fun supports(requestedTableName: TableName): Boolean = tableName == requestedTableName
 
   fun countAllRecords(): Int
 
@@ -16,4 +17,6 @@ interface SyncService<T> {
   fun createLocationRecord(record: T): Boolean
 
   fun extractCursor(record: T): SyncCursor
+
+  fun syncSingle(entityId: UUID)
 }

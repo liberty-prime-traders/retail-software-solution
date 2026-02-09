@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.configuration.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -13,7 +14,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @EnableWebSecurity
 @Configuration
-class OktaOAuth2WebSecurityConfiguration {
+class OktaOAuth2WebSecurityConfiguration(
+    private val environment: Environment
+) {
 
     @Bean
     @Throws(Exception::class)
@@ -32,7 +35,7 @@ class OktaOAuth2WebSecurityConfiguration {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val originPatterns = System.getenv("CORS_PATTERNS")?.split(",") ?: listOf()
+        val originPatterns = environment.getProperty("CORS_PATTERNS")?.split(",") ?: listOf()
         val configuration = CorsConfiguration().apply {
             this.allowedOriginPatterns = originPatterns
             this.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
