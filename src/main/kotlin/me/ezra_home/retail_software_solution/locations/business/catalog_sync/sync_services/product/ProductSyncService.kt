@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -18,6 +19,7 @@ import java.util.UUID
 class ProductSyncService(
   private val productRevisionFetcher: ProductRevisionFetcher,
   private val locationProductRepository: LocationProductRepository,
+  private val locationProductCache: LocationProductCache,
   private val organizationProductRepository: OrganizationProductRepository
 ) : SyncService<ProductSyncData> {
 
@@ -74,12 +76,12 @@ class ProductSyncService(
         existing.status = record.status
       }
 
-      locationProductRepository.save(existing)
+      locationProductCache.upsertLocationProduct(existing)
       return true
     }
 
     val locationProduct = LocationProductMapper.toLocationProduct(record)
-    locationProductRepository.save(locationProduct)
+    locationProductCache.upsertLocationProduct(locationProduct)
     return true
   }
 

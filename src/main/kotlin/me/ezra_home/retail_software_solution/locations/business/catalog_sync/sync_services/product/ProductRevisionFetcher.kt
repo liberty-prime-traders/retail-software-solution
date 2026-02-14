@@ -46,7 +46,7 @@ class ProductRevisionFetcher(
     organizationEmf.createEntityManager().use { em ->
       val sql = ProductQueryBuilder.buildFetchQueryByProductId()
       val query = em.createNativeQuery(sql, Tuple::class.java)
-      query.setParameter("productId", productId)
+      query.setParameter(ProductQueryConstants.Parameters.PRODUCT_ID, productId)
 
       @Suppress("UNCHECKED_CAST")
       val results = query.resultList as List<Tuple>

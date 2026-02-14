@@ -25,4 +25,8 @@ object ProductQueryConstants {
     const val CATEGORY_ID = "category_id"
     const val REVISION = "revision"
   }
+
+  object Parameters {
+    const val PRODUCT_ID = "productId"
+  }
 }
