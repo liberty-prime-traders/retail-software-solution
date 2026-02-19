@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-purchase-line-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: purchase_line_aud
+      changes:
+        - createTable:
+            tableName: purchase_line_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: purchase_id
+                  type: uuid
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+
+              - column:
+                  name: quantity_ordered
+                  type: decimal(15,3)
+
+              - column:
+                  name: unit_cost
+                  type: decimal(15,2)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: purchase_line_aud
+            columnNames: id, rev
+            constraintName: pk_purchase_line_aud
+
+      rollback:
+        - dropTable:
+            tableName: purchase_line_aud

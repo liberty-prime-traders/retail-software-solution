@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-entry-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_entry
+      changes:
+        - createTable:
+            tableName: stock_entry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: stock_entry_reference_number_unique
+
+              - column:
+                  name: purchase_delivery_line_id
+                  type: uuid
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_location_product_id_notnull
+
+              - column:
+                  name: source_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_source_type_id_notnull
+
+              - column:
+                  name: source_id
+                  type: uuid
+
+              - column:
+                  name: batch_size
+                  type: decimal(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_batch_size_notnull
+
+              - column:
+                  name: quantity_remaining
+                  type: decimal(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_quantity_remaining_notnull
+
+              - column:
+                  name: priority
+                  type: integer
+
+              - column:
+                  name: unit_cost
+                  type: decimal(15,2)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

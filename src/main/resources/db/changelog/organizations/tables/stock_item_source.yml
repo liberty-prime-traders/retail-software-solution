@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-item-source-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_item_source
+      changes:
+        - createTable:
+            tableName: stock_item_source
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_item_source_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: stock_item_source_reference_number_unique
+
+              - column:
+                  name: code
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_item_source_code_notnull
+                    unique: true
+                    uniqueConstraintName: stock_item_source_code_unique
+
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_item_source_name_notnull
+
+              - column:
+                  name: description
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_item_source_created_by_id_notnull
+
+              - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_item_source_system_defined_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

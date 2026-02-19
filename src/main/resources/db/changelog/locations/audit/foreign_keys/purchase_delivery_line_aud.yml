@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-purchase-delivery-line-aud-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_purchase_delivery_line_aud_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_delivery_line_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_purchase_delivery_line_aud_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_delivery_line_aud
+            constraintName: fk_purchase_delivery_line_aud_revinfo
+
+  - changeSet:
+      id: add-foreign-key-purchase-delivery-line-aud-revend-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_purchase_delivery_line_aud_revend_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_delivery_line_aud
+            baseColumnNames: revend
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_purchase_delivery_line_aud_revend_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_delivery_line_aud
+            constraintName: fk_purchase_delivery_line_aud_revend_revinfo

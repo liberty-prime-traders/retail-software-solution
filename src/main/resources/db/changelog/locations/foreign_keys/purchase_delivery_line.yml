@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-purchase-delivery-line-purchase-delivery
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_purchase_delivery_line_purchase_delivery
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_delivery_line
+            baseColumnNames: purchase_delivery_id
+            referencedTableName: purchase_delivery
+            referencedColumnNames: id
+            constraintName: fk_purchase_delivery_line_purchase_delivery
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_delivery_line
+            constraintName: fk_purchase_delivery_line_purchase_delivery
+
+  - changeSet:
+      id: add-foreign-key-purchase-delivery-line-purchase-line
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_purchase_delivery_line_purchase_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_delivery_line
+            baseColumnNames: purchase_line_id
+            referencedTableName: purchase_line
+            referencedColumnNames: id
+            constraintName: fk_purchase_delivery_line_purchase_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_delivery_line
+            constraintName: fk_purchase_delivery_line_purchase_line

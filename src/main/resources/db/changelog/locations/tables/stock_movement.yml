@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-movement-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_movement
+      changes:
+        - createTable:
+            tableName: stock_movement
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: stock_movement_reference_number_unique
+
+              - column:
+                  name: stock_entry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_stock_entry_id_notnull
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_location_product_id_notnull
+
+              - column:
+                  name: movement_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_movement_type_notnull
+
+              - column:
+                  name: reason_id
+                  type: uuid
+
+              - column:
+                  name: moved_quantity
+                  type: decimal(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_moved_quantity_notnull
+
+              - column:
+                  name: remaining_quantity
+                  type: decimal(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_remaining_quantity_notnull
+
+              - column:
+                  name: reference_id
+                  type: uuid
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

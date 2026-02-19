@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-purchase-supplier-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_supplier_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_supplier_id
+            tableName: purchase
+            columns:
+              - column:
+                  name: supplier_id
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_supplier_id
+            tableName: purchase
+
+  - changeSet:
+      id: create-index-purchase-status
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_status
+      changes:
+        - createIndex:
+            indexName: idx_purchase_status
+            tableName: purchase
+            columns:
+              - column:
+                  name: status
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_status
+            tableName: purchase

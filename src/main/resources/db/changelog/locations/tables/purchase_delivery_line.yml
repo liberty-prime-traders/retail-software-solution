@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-purchase-delivery-line-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: purchase_delivery_line
+      changes:
+        - createTable:
+            tableName: purchase_delivery_line
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: purchase_delivery_line_reference_number_unique
+
+              - column:
+                  name: purchase_delivery_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_purchase_delivery_id_notnull
+
+              - column:
+                  name: purchase_line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_purchase_line_id_notnull
+
+              - column:
+                  name: quantity_delivered
+                  type: decimal(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_quantity_delivered_notnull
+
+              - column:
+                  name: unit_cost
+                  type: decimal(15,2)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_unit_cost_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-purchase-line-purchase
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_purchase_line_purchase
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_line
+            baseColumnNames: purchase_id
+            referencedTableName: purchase
+            referencedColumnNames: id
+            constraintName: fk_purchase_line_purchase
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_line
+            constraintName: fk_purchase_line_purchase
+
+  - changeSet:
+      id: add-foreign-key-purchase-line-location-product
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_purchase_line_location_product
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_line
+            baseColumnNames: location_product_id
+            referencedTableName: location_product
+            referencedColumnNames: id
+            constraintName: fk_purchase_line_location_product
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_line
+            constraintName: fk_purchase_line_location_product

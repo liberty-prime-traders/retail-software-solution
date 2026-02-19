@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-supplier-return-supplier-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_return_supplier_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_return_supplier_id
+            tableName: supplier_return
+            columns:
+              - column:
+                  name: supplier_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_return_supplier_id
+            tableName: supplier_return
+
+  - changeSet:
+      id: create-index-supplier-return-purchase-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_return_purchase_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_return_purchase_id
+            tableName: supplier_return
+            columns:
+              - column:
+                  name: purchase_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_return_purchase_id
+            tableName: supplier_return
+
+  - changeSet:
+      id: create-index-supplier-return-purchase-delivery-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_return_purchase_delivery_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_return_purchase_delivery_id
+            tableName: supplier_return
+            columns:
+              - column:
+                  name: purchase_delivery_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_return_purchase_delivery_id
+            tableName: supplier_return
