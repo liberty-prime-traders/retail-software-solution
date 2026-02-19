@@ -25,8 +25,8 @@ class TextSearchFilterStrategyTest {
 
     val clause = context.whereClauses[0]
     assertTrue(clause.contains("LOWER(p.name) % LOWER(:nameOrDescription)"))
-    assertTrue(clause.contains("OR LOWER(COALESCE(p.description, '')) % LOWER(:nameOrDescription)"))
-    assertTrue(clause.contains("OR LOWER(COALESCE(p.product_group_name, '')) % LOWER(:nameOrDescription)"))
+    assertTrue(clause.contains("OR LOWER(p.product_group_name) % LOWER(:nameOrDescription)"))
+    assertTrue(clause.contains("OR LOWER(p.description) % LOWER(:nameOrDescription)"))
     assertEquals("phone", context.params["nameOrDescription"])
   }
 
@@ -44,7 +44,10 @@ class TextSearchFilterStrategyTest {
     val context = QueryBuilderContext()
     TextSearchFilterStrategy("tab", SearchStrategy.WILDCARD).apply(context)
 
-    assertTrue(context.whereClauses[0].contains("COALESCE(p.description"))
+    val clause = context.whereClauses[0]
+    assertTrue(clause.contains("LOWER(p.name) LIKE LOWER(:nameOrDescription)"))
+    assertTrue(clause.contains("OR LOWER(p.product_group_name) LIKE LOWER(:nameOrDescription)"))
+    assertTrue(clause.contains("OR LOWER(p.description) LIKE LOWER(:nameOrDescription)"))
     assertEquals("%tab%", context.params["nameOrDescription"])
   }
 

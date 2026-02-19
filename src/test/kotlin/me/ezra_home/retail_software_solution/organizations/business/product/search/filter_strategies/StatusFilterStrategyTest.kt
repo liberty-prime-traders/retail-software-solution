@@ -11,7 +11,7 @@ class StatusFilterStrategyTest {
   @Test
   fun `applies single status code`() {
     val context = QueryBuilderContext()
-    StatusFilterStrategy(setOf("A"), "p").apply(context)
+    StatusFilterStrategy(setOf("A")).apply(context)
 
     assertTrue(context.whereClauses[0].contains("p.status = ANY(:statusList)"))
     assertTrue((context.params["statusList"] as Array<*>).contentEquals(arrayOf("A")))
@@ -20,7 +20,7 @@ class StatusFilterStrategyTest {
   @Test
   fun `applies multiple status codes`() {
     val context = QueryBuilderContext()
-    StatusFilterStrategy(setOf("A", "X", "AFS"), "p").apply(context)
+    StatusFilterStrategy(setOf("A", "X", "AFS")).apply(context)
 
     val statusArray = context.params["statusList"] as Array<*>
     assertEquals(3, statusArray.size)
@@ -32,7 +32,7 @@ class StatusFilterStrategyTest {
   @Test
   fun `empty status set adds no filter`() {
     val context = QueryBuilderContext()
-    StatusFilterStrategy(emptySet(), "p").apply(context)
+    StatusFilterStrategy(emptySet()).apply(context)
 
     assertTrue(context.whereClauses.isEmpty())
   }

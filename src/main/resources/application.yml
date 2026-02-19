@@ -1,4 +1,5 @@
 spring:
+  config.import: optional:file:docker/dev.env[.properties]
   application:
     name: retail-software-solution
 
@@ -46,6 +47,18 @@ spring:
     scheduling:
       pool:
         size: 5
+
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: me.ezra_home.retail_software_solution.messaging.kafka.*
 
 okta:
   oauth2:

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.messaging.kafka.catalog.CatalogEventHandler
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductUpdateDto
@@ -9,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product_tag.
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -20,7 +22,8 @@ class OrganizationProductService(
     private val organizationProductRepository: OrganizationProductRepository,
     private val organizationProductValidator: OrganizationProductValidator,
     private val productTagService: ProductTagService,
-    private val productTagQualifier: ProductTagQualifier
+    private val productTagQualifier: ProductTagQualifier,
+    private val catalogEventHandler: CatalogEventHandler
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -43,6 +46,7 @@ class OrganizationProductService(
                 tagsToAdd = productInsertDto.tagsToAdd
             )
         }
+        catalogEventHandler.publish(TableName.PRODUCT, productEntity.id!!)
         return organizationProductMapper.toDto(productEntity)
     }
 
@@ -58,6 +62,7 @@ class OrganizationProductService(
             tagsToAdd = productDto.tagsToAdd,
             tagsToRemove = productDto.tagsToRemove
         )
+        catalogEventHandler.publish(TableName.PRODUCT, productToUpdate.id!!)
         return organizationProductMapper.toDto(productToUpdate)
     }
 
@@ -78,6 +83,7 @@ class OrganizationProductService(
     private fun updateStatus(product: OrganizationProductEntity, status: ProductStatus): OrganizationProductResponseDto {
         product.status = status
         organizationProductCache.upsertProduct(product)
+        catalogEventHandler.publish(TableName.PRODUCT, product.id!!)
         return organizationProductMapper.toDto(product)
     }
 

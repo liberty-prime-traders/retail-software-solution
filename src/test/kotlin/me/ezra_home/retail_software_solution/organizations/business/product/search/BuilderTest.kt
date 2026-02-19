@@ -49,14 +49,16 @@ class BuilderTest {
     assertEquals("laptop", fulltext.params["nameOrDescription"])
 
     assertTrue(trigram.sql.contains("LOWER(p.name) % LOWER(:nameOrDescription)"))
-    assertTrue(trigram.sql.contains("OR LOWER(COALESCE(p.description, '')) % LOWER(:nameOrDescription)"))
-    assertTrue(trigram.sql.contains("OR LOWER(COALESCE(p.product_group_name, '')) % LOWER(:nameOrDescription)"))
+    assertTrue(trigram.sql.contains("OR LOWER(p.product_group_name) % LOWER(:nameOrDescription)"))
+    assertTrue(trigram.sql.contains("OR LOWER(p.description) % LOWER(:nameOrDescription)"))
     assertEquals("pakaging", trigram.params["nameOrDescription"])
 
     assertTrue(prefix.sql.contains("LOWER(p.name) LIKE LOWER(:nameOrDescription)"))
     assertEquals("comp%", prefix.params["nameOrDescription"])
 
-    assertTrue(wildcard.sql.contains("LOWER(COALESCE(p.description, ''))"))
+    assertTrue(wildcard.sql.contains("LOWER(p.name) LIKE LOWER(:nameOrDescription)"))
+    assertTrue(wildcard.sql.contains("OR LOWER(p.product_group_name) LIKE LOWER(:nameOrDescription)"))
+    assertTrue(wildcard.sql.contains("OR LOWER(p.description) LIKE LOWER(:nameOrDescription)"))
     assertEquals("%tab%", wildcard.params["nameOrDescription"])
   }
 

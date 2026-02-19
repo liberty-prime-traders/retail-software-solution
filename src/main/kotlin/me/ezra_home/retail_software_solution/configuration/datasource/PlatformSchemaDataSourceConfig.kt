@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
@@ -18,7 +19,7 @@ import javax.sql.DataSource
     entityManagerFactoryRef = DataSourceBeanNames.PLATFORM_SCHEMA_ENTITY_MANAGER_FACTORY,
     transactionManagerRef = DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER
 )
-class PlatformSchemaDataSourceConfig {
+class PlatformSchemaDataSourceConfig(private val environment: Environment) {
 
     @Bean(name = [DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE])
     @ConfigurationProperties(prefix = "spring.datasource.platform")
@@ -49,11 +50,12 @@ class PlatformSchemaDataSourceConfig {
     fun platformSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
+        val isTestProfile = environment.activeProfiles.contains("test")
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
             defaultSchema = DataSourceBeanNames.PLATFORM_SCHEMA_NAME
-            setShouldRun(true)
+            setShouldRun(!isTestProfile)
         }
     }
 }

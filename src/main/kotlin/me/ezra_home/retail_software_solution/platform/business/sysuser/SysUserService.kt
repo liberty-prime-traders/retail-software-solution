@@ -28,7 +28,7 @@ class SysUserService(private val sysUserCache: SysUserCache, private val sysUser
     fun getAllUsers(): Collection<SysUserDto> = sysUserCache.getAllUsers()
 
     private fun addSystemUser(oktaId: String?): SysUserEntity {
-        return ServiceAccountContext.runWithServiceAccount(ServiceAccount.RECORD_INITIALIZER) {
+        return ServiceAccountContext.runWithServiceAccount<SysUserEntity>(ServiceAccount.RECORD_INITIALIZER) {
             sysUserCache.addSystemUser(SysUserEntity(oktaId = oktaId, userType = UserType.END_USER))
         }
     }

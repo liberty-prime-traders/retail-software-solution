@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.configuration.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
+import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
@@ -37,5 +38,10 @@ object SessionContextProvider {
     fun initOrganization(organization: OrganizationEntity) {
         getSession().organizationId = organization.id
         getSession().organizationSchemaName = organization.schemaName
+    }
+
+    fun initLocation(location: LocationEntity) {
+        getSession().locationId = location.id
+        getSession().locationSchemaName = location.schemaName
     }
 }

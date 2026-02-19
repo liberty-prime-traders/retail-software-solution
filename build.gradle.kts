@@ -33,6 +33,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.hibernate.orm:hibernate-envers:6.5.3.Final")
+	implementation("org.springframework.kafka:spring-kafka")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.google.code.gson:gson:2.10.1")
@@ -53,6 +54,7 @@ dependencies {
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("com.h2database:h2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

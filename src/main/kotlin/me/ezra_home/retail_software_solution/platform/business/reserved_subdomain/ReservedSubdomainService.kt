@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.reserved_subdoma
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
+import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -26,7 +27,7 @@ class ReservedSubdomainService(
         if (!StringUtils.hasValue(suggestedSubdomain)) {
             throw RtsGenericException("An empty subdomain cannot be verified")
         }
-        val subdomain = SubdomainGenerator.generateSubdomain(suggestedSubdomain!!)
+        val subdomain = SchemaNameGenerator.generateSubDomain(suggestedSubdomain!!)
         val userId = SessionContextProvider.getUserId()
         subdomainRepository.findByStatusNotAndSubdomain(ReservedDomainStatus.ABANDONED, subdomain)
             .find { it.status == ReservedDomainStatus.USED || it.createdById != userId }

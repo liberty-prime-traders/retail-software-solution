@@ -1,0 +1,68 @@
+services:
+  rtss-kafka:
+    image: confluentinc/cp-kafka:${KAFKA_VERSION}
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT}:9094"
+    environment:
+      KAFKA_KRAFT_MODE: 'true'
+
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@rtss-kafka:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://rtss-kafka:9092,EXTERNAL://${KAFKA_HOST}:${KAFKA_PORT}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+
+    volumes:
+      - rtss-kafka-data:/var/lib/kafka/data
+
+  rtss-kafka-ui:
+    image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${ENV}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: rtss-kafka:9092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+      AUTH_TYPE: OAUTH2
+      AUTH_OAUTH2_CLIENT_OKTA_CLIENTID: ${OKTA_CLIENT_ID}
+      AUTH_OAUTH2_CLIENT_OKTA_CLIENTSECRET: ${OKTA_CLIENT_SECRET}
+      AUTH_OAUTH2_CLIENT_OKTA_SCOPE: openid,profile,email
+      AUTH_OAUTH2_CLIENT_OKTA_CLIENTNAME: Okta
+      AUTH_OAUTH2_CLIENT_OKTA_PROVIDER: okta
+      AUTH_OAUTH2_CLIENT_OKTA_REDIRECTURI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/okta
+      AUTH_OAUTH2_CLIENT_OKTA_ISSUERURI: https://${OKTA_DOMAIN}/oauth2/default
+      AUTH_OAUTH2_CLIENT_OKTA_CUSTOMPARAMS_TYPE: oauth
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.rule=Host(`rtss-kafka-${ENV}.ezra-home.me`)"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.entrypoints=websecure"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls=true"
+      - "traefik.http.services.rtss-kafka-ui-${ENV}.loadbalancer.server.port=8080"
+
+    networks:
+      - ezra-home
+      - default
+
+    depends_on:
+      - rtss-kafka
+
+networks:
+  ezra-home:
+      external: true
+
+volumes:
+  rtss-kafka-data:
+    driver: local
