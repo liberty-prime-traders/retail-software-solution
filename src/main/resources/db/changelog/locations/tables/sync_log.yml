@@ -89,6 +89,13 @@ databaseChangeLog:
                   type: text
 
               - column:
+                  name: initiate_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sync_log_initiate_type_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

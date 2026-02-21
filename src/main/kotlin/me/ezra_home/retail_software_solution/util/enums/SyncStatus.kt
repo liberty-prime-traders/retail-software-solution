@@ -4,5 +4,6 @@ enum class SyncStatus(override val code: String) : HasCode {
   IN_PROGRESS("I"),
   COMPLETED("C"),
   FAILED("F"),
+  CANCELLATION_REQUESTED("XR"),
   CANCELLED("X")
 }

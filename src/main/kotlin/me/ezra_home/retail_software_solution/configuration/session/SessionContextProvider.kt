@@ -44,4 +44,8 @@ object SessionContextProvider {
         getSession().locationId = location.id
         getSession().locationSchemaName = location.schemaName
     }
+
+    fun initSystemUser(userId: UUID) {
+        getSession().systemUserId = userId
+    }
 }

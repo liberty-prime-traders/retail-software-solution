@@ -49,7 +49,7 @@ class SyncLogUpdater(
     if (syncLog.canceledAt == null) {
       syncLog.canceledAt = OffsetDateTime.now()
     }
-    syncLog.status = SyncStatus.CANCELLED
+    syncLog.status = SyncStatus.CANCELLATION_REQUESTED
     syncLogRepository.save(syncLog)
   }
 }
