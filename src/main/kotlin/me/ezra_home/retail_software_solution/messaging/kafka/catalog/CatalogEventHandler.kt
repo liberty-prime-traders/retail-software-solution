@@ -21,20 +21,16 @@ class CatalogEventHandler(
 ) {
 
     fun consume(event: CatalogChangedEvent) {
-        try {
-            ServiceAccountContext.runWithServiceAccount(ServiceAccount.CATALOG_SYNC) {
-                val organization = organizationCache.getAllOrganizations()
-                    .find { it.schemaName == event.sourceSchema }
-                    ?: throw RtsGenericException("Organization with schema ${event.sourceSchema} not found")
-                SessionContextProvider.initOrganization(organization)
+        ServiceAccountContext.runWithServiceAccount(ServiceAccount.CATALOG_SYNC) {
+            val organization = organizationCache.getAllOrganizations()
+                .find { it.schemaName == event.sourceSchema }
+                ?: throw RtsGenericException("Organization with schema ${event.sourceSchema} not found")
+            SessionContextProvider.initOrganization(organization)
 
-                locationCache.getAllLocations().forEach { location ->
-                    SessionContextProvider.initLocation(location)
-                    syncServiceRegistry.getService(event.tableName).syncSingle(event.entityId)
-                }
+            locationCache.getAllLocations().forEach { location ->
+                SessionContextProvider.initLocation(location)
+                syncServiceRegistry.getService(event.tableName).syncSingle(event.entityId)
             }
-        } finally {
-            SessionContextProvider.clear()
         }
     }
 

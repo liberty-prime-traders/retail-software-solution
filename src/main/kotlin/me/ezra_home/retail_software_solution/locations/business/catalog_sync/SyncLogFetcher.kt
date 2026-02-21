@@ -52,4 +52,8 @@ class SyncLogFetcher(
     fun isSyncCancelled(syncLogId: UUID): Boolean {
         return syncLogRepository.isCancelled(syncLogId)
     }
+
+    fun findTopN(limit: Int): List<SyncLogResponseDto> {
+        return syncLogRepository.findTopN(limit).map { syncLogMapper.toDto(it) }
+    }
 }

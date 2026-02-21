@@ -5,6 +5,8 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.enums.SyncInitiateType
+import me.ezra_home.retail_software_solution.util.enums.SyncInitiateTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SyncMode
 import me.ezra_home.retail_software_solution.util.enums.SyncModeConverter
 import me.ezra_home.retail_software_solution.util.enums.SyncStatus
@@ -27,6 +29,10 @@ class SyncLogEntity(
   @Convert(converter = SyncModeConverter::class)
   @Column(name = "sync_mode", nullable = false, length = 5)
   var syncMode: SyncMode,
+
+  @Convert(converter = SyncInitiateTypeConverter::class)
+  @Column(name = "initiate_type", nullable = false, length = 5)
+  var initiateType: SyncInitiateType,
 
   @Column(name = "total_records", nullable = true)
   var totalRecords: Int?,
