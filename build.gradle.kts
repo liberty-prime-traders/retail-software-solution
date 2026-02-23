@@ -55,6 +55,17 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
+	testImplementation("io.cucumber:cucumber-java:7.18.1")
+	testImplementation("io.cucumber:cucumber-spring:7.18.1")
+	testImplementation("io.cucumber:cucumber-junit-platform-engine:7.18.1")
+	testImplementation("io.rest-assured:rest-assured:5.4.0")
+	testImplementation("io.rest-assured:kotlin-extensions:5.4.0")
+	testImplementation("org.testcontainers:testcontainers:1.19.8")
+	testImplementation("org.testcontainers:postgresql:1.19.8")
+	testImplementation("org.testcontainers:kafka:1.19.8")
+	testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+	testImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
+	testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -62,6 +73,10 @@ kotlin {
 	compilerOptions {
 		freeCompilerArgs.addAll("-Xjsr305=strict")
 	}
+}
+
+kapt {
+	correctErrorTypes = true
 }
 
 allOpen {
@@ -72,5 +87,10 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	systemProperty("cucumber.junit-platform.naming-strategy", "long")
+}
+
+tasks.matching { it.name == "kaptTestKotlin" }.configureEach {
+	enabled = false
 }
 
