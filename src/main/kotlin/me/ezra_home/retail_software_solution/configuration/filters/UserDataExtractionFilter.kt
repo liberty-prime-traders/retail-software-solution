@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.hibernate.annotations.Filter
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Profile
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
@@ -18,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 
 @Component
+@Profile("!test")
 @Filter(name = "UserDataExtractionFilter")
 class UserDataExtractionFilter(
     private val sysUserCache: SysUserCache,

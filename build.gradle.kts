@@ -52,7 +52,14 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 	kapt("org.projectlombok:lombok")
 
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-test") {
+		exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
+	}
+	testImplementation("com.okta.spring:okta-spring-sdk:3.0.7")
+	testImplementation("org.springframework.security:spring-security-config")
+	testImplementation("org.springframework.security:spring-security-web")
+	testImplementation("org.springframework.security:spring-security-oauth2-resource-server")
+	testImplementation("org.springframework.security:spring-security-oauth2-jose")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
 	testImplementation("io.cucumber:cucumber-java:7.18.1")
@@ -67,6 +74,10 @@ dependencies {
 	testImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+configurations.testRuntimeClasspath {
+	exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
 }
 
 kotlin {
@@ -88,6 +99,8 @@ allOpen {
 tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("cucumber.junit-platform.naming-strategy", "long")
+	systemProperty("okta.oauth2.enabled", "false")
+	systemProperty("okta.client.enabled", "false")
 }
 
 tasks.matching { it.name == "kaptTestKotlin" }.configureEach {

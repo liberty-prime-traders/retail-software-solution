@@ -14,7 +14,11 @@ class CommonSteps {
 
   @Then("the response status should be {int}")
   fun verifyStatus(expectedStatus: Int) {
-    assertEquals(expectedStatus, context.lastResponse?.statusCode)
+    val actualStatus = context.lastResponse?.statusCode
+    if (actualStatus != expectedStatus) {
+      println("Response body: ${context.lastResponse?.asString()}")
+    }
+    assertEquals(expectedStatus, actualStatus, "Expected status $expectedStatus but got $actualStatus. Response: ${context.lastResponse?.asString()}")
   }
 
   @Then("the response should contain field {string}")

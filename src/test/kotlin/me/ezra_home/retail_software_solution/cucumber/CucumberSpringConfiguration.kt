@@ -1,41 +1,34 @@
 package me.ezra_home.retail_software_solution.cucumber
 
 import io.cucumber.spring.CucumberContextConfiguration
+import me.ezra_home.retail_software_solution.cucumber.config.TestSecurityConfiguration
+import org.mockito.Mockito.mock
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.KafkaContainer
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.utility.DockerImageName
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.test.context.ActiveProfiles
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+@Import(CucumberSpringConfiguration.TestConfig::class, TestSecurityConfiguration::class)
 class CucumberSpringConfiguration {
 
   @LocalServerPort
   var port: Int = 0
 
-  companion object {
-    private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:15-alpine"))
-      .withDatabaseName("rtss_test")
-      .withUsername("test_user")
-      .withPassword("test_pass")
-
-    private val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.5.0"))
-
-    init {
-      postgres.start()
-      kafka.start()
-    }
-
-    @JvmStatic
-    @DynamicPropertySource
-    fun configureProperties(registry: DynamicPropertyRegistry) {
-      registry.add("spring.datasource.url", postgres::getJdbcUrl)
-      registry.add("spring.datasource.username", postgres::getUsername)
-      registry.add("spring.datasource.password", postgres::getPassword)
-      registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers)
-    }
+  @TestConfiguration
+  class TestConfig {
+    @Bean
+    @Primary
+    fun jwtDecoder(): JwtDecoder = mock()
+    
+    @Bean
+    @Primary
+    fun oktaClient(): com.okta.sdk.client.Client = mock()
   }
 }
