@@ -43,11 +43,6 @@ databaseChangeLog:
                     notNullConstraintName: smrt_movement_type_notnull
 
               - column:
-                  name: start_on
-                  type: timestamptz
-                  defaultValueDate: ${now}
-
-              - column:
                   name: end_on
                   type: timestamptz
 

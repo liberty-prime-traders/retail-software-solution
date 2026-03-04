@@ -20,6 +20,7 @@ data class ContactResponseDto(
     val firstName: String? = null,
     val lastName: String? = null,
     val companyName: String? = null,
+    val fullName: String? = null,
     val email: String? = null,
     val phone: String? = null,
     val address: String? = null,

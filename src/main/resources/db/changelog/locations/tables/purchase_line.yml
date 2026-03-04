@@ -57,6 +57,22 @@ databaseChangeLog:
                     notNullConstraintName: purchase_line_unit_cost_notnull
 
               - column:
+                  name: quantity_delivered
+                  type: decimal(15,3)
+                  defaultValueNumeric: '0'
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_line_quantity_delivered_notnull
+
+              - column:
+                  name: quantity_canceled
+                  type: decimal(15,3)
+                  defaultValueNumeric: '0'
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_line_quantity_canceled_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

@@ -27,6 +27,12 @@ class PurchaseLineEntity(
   var quantityOrdered: BigDecimal,
 
   @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
-  var unitCost: BigDecimal
+  var unitCost: BigDecimal,
+
+  @Column(name = "quantity_delivered", nullable = false, precision = 15, scale = 3)
+  var quantityDelivered: BigDecimal = BigDecimal.ZERO,
+
+  @Column(name = "quantity_canceled", nullable = false, precision = 15, scale = 3)
+  var quantityCanceled: BigDecimal = BigDecimal.ZERO
 
 ) : HasReferenceEntity()
