@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface PurchaseLineRepository : JpaRepository<PurchaseLineEntity, UUID>
+interface PurchaseLineRepository : JpaRepository<PurchaseLineEntity, UUID> {
+  fun findByPurchaseIdIn(purchaseIds: Collection<UUID>): List<PurchaseLineEntity>
+}

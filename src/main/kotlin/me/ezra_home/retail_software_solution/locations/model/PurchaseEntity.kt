@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Audited
@@ -27,6 +28,12 @@ class PurchaseEntity(
   var status: PurchaseStatus = PurchaseStatus.DRAFT,
 
   @Column(name = "notes")
-  var notes: String? = null
+  var notes: String? = null,
+
+  @Column(name = "date_ordered")
+  var dateOrdered: OffsetDateTime? = null,
+
+  @Column(name = "ordered_by")
+  var orderedById: UUID? = null
 
 ) : HasReferenceEntity()

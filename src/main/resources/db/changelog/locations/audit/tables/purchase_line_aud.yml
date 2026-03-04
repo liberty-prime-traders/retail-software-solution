@@ -47,6 +47,14 @@ databaseChangeLog:
                   type: decimal(15,2)
 
               - column:
+                  name: quantity_delivered
+                  type: decimal(15,3)
+
+              - column:
+                  name: quantity_canceled
+                  type: decimal(15,3)
+
+              - column:
                   name: revend
                   type: bigint
 

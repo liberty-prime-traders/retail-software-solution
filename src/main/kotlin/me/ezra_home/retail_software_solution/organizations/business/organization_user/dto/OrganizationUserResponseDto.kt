@@ -14,7 +14,7 @@ data class OrganizationUserResponseDto(
     val joinRequestId: UUID?,
     val user: String?,
     @JsonSerialize(using = DatesToMillis::class)
-    val startOn: OffsetDateTime?,
+    val createdOn: OffsetDateTime?,
     @JsonSerialize(using = DatesToMillis::class)
     val endOn: OffsetDateTime?,
     val referenceNumber: String?

@@ -34,11 +34,6 @@ databaseChangeLog:
                     notNullConstraintName: product_tag_tag_id_notnull
 
               - column:
-                  name: start_on
-                  type: timestamptz
-                  defaultValueDate: ${now}
-
-              - column:
                   name: end_on
                   type: timestamptz
 

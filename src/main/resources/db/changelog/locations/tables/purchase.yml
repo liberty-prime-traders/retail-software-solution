@@ -48,6 +48,14 @@ databaseChangeLog:
                   type: text
 
               - column:
+                  name: date_ordered
+                  type: timestamptz
+
+              - column:
+                  name: ordered_by
+                  type: uuid
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

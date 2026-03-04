@@ -1,9 +1,14 @@
-package me.ezra_home.retail_software_solution.organizations.business.contact.mapping
+package me.ezra_home.retail_software_solution.organizations.business.contact.dto
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
-import me.ezra_home.retail_software_solution.organizations.business.contact.dto.IdentityType
 import me.ezra_home.retail_software_solution.organizations.model.ContactEntity
+import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class ToIdentityType
 
 @Component
 object ContactQualifier {
