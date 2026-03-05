@@ -7,5 +7,6 @@ import java.util.UUID
 
 @Repository
 interface PurchaseLineRepository : JpaRepository<PurchaseLineEntity, UUID> {
+  fun findByPurchaseId(purchaseId: UUID): List<PurchaseLineEntity>
   fun findByPurchaseIdIn(purchaseIds: Collection<UUID>): List<PurchaseLineEntity>
 }

@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: seed-stock-movement-reason-COUNT_CORRECTION
+      id: seed-stock-movement-reason-COUNT-CORRECTION
       author: ezra
       labels: 1.0.0
       changes:
@@ -15,7 +15,7 @@ databaseChangeLog:
                   valueComputed: "'SMRSN' || LPAD(nextval('seq_stock_movement_reason_reference_number')::text, 2, '0')"
               - column:
                   name: code
-                  value: COUNT_CORRECTION
+                  value: CCR
               - column:
                   name: name
                   value: Count Correction

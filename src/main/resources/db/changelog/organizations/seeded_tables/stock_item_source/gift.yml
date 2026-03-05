@@ -15,7 +15,7 @@ databaseChangeLog:
                   valueComputed: "'SIS' || LPAD(nextval('seq_stock_item_source_reference_number')::text, 2, '0')"
               - column:
                   name: code
-                  value: GIFT
+                  value: GFT
               - column:
                   name: name
                   value: Gift

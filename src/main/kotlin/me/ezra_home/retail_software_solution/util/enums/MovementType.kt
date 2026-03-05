@@ -5,7 +5,8 @@ enum class MovementType(override val code: String) : HasCode {
     CUSTOMER_RETURN("CR"),
     SUPPLIER_RETURN("SR"),
     ADJUSTMENT("ADJ"),
-    TRANSFER_IN("TIN"),
-    TRANSFER_OUT("TOUT"),
-    WRITE_OFF("WO")
+    TRANSFER_IN("TI"),
+    TRANSFER_OUT("TO"),
+    WRITE_OFF("WO"),
+    PURCHASE_RECEIVED("PR")
 }

@@ -64,7 +64,15 @@ class PurchaseService(
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(id))
     val linesByProduct = existingLines.associateBy { it.locationProductId }
     val toSave = lines.mapNotNull { cancel ->
-      linesByProduct[cancel.locationProductId]?.also { it.quantityCanceled = cancel.quantityCanceled }
+      linesByProduct[cancel.locationProductId]?.also { line ->
+        val maxCancelable = line.quantityOrdered - line.quantityDelivered
+        if (cancel.quantityCanceled > maxCancelable)
+          throw RtsGenericException(
+            "Cannot cancel ${cancel.quantityCanceled} items of product ${cancel.locationProductId}. " +
+              "Ordered: ${line.quantityOrdered}, Delivered: ${line.quantityDelivered}, Max cancelable: $maxCancelable"
+          )
+        line.quantityCanceled = cancel.quantityCanceled
+      }
     }
     purchaseLineRepository.saveAll(toSave)
     return purchaseAssembler.buildResponse(purchase, existingLines)

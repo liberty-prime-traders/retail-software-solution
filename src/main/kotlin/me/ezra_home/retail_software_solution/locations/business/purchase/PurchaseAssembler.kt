@@ -1,13 +1,14 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
+import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineProductDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -18,7 +19,7 @@ class PurchaseAssembler(
   private val locationProductRepository: LocationProductRepository,
   private val purchaseLineRepository: PurchaseLineRepository,
   private val contactCache: ContactCache,
-  private val locationProductMapper: LocationProductMapper,
+  private val unitValueQualifier: UnitValueQualifier,
   private val userQualifier: UserQualifier
 ) {
 
@@ -65,15 +66,23 @@ class PurchaseAssembler(
 
   private fun toLinesDto(lines: List<PurchaseLineEntity>, productMap: Map<UUID?, LocationProductEntity>): List<PurchaseLineResponseDto> {
     return lines.map { line ->
+      val product = productMap[line.locationProductId]!!
       val quantityExpected = line.quantityOrdered.subtract(line.quantityDelivered).subtract(line.quantityCanceled)
-      val lineTotal = quantityExpected.multiply(line.unitCost)
       PurchaseLineResponseDto(
         id = line.id,
         referenceNumber = line.referenceNumber,
-        locationProduct = productMap[line.locationProductId]?.let { locationProductMapper.toDto(it) },
+        locationProduct = product.let {
+          PurchaseLineProductDto(
+            locationProductId = it.id!!,
+            productName = it.productName,
+            description = it.description,
+            productGroupName = it.productGroupName,
+            baseUnit = unitValueQualifier.getUnitName(it.baseUnitId)
+          )
+        },
         quantityOrdered = line.quantityOrdered,
         unitCost = line.unitCost,
-        lineTotal = lineTotal,
+        lineTotal = quantityExpected.multiply(line.unitCost),
         quantityDelivered = line.quantityDelivered,
         quantityCanceled = line.quantityCanceled,
         quantityExpected = quantityExpected

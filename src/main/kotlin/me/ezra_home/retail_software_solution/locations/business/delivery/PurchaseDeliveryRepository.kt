@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase
+package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
 import org.springframework.data.jpa.repository.JpaRepository

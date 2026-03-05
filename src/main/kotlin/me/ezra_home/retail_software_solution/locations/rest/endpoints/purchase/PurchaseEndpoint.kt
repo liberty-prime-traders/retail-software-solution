@@ -5,9 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCancelDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseSortField
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.search.PurchaseSearchRequest
 import me.ezra_home.retail_software_solution.locations.business.purchase.search.PurchaseSearchService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -54,10 +52,10 @@ class PurchaseEndpoint(
   }
 
   @GetMapping
-  fun fetchTop(@RequestParam n: Int?, @RequestParam sortBy: PurchaseSortField?): List<PurchaseResponseDto> =
-    purchaseSearchService.fetchTop(n, sortBy)
+  fun fetchTop(@RequestParam n: Int?): List<PurchaseResponseDto> =
+    purchaseSearchService.fetchTop(n)
 
-  @PostMapping("search")
-  fun search(@RequestBody request: PurchaseSearchRequest): List<PurchaseResponseDto> =
-    purchaseSearchService.search(request)
+//  @PostMapping("search")
+//  fun search(@RequestBody request: PurchaseSearchRequest): List<PurchaseResponseDto> =
+//    purchaseSearchService.search(request)
 }
