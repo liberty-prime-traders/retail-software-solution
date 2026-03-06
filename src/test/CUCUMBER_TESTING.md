@@ -30,6 +30,8 @@ cd docker && ./test.sh down
 - `@smoke`: critical-path checks only (small, fast subset)
 - `@negative`: authorization/validation failure paths
 - Domain tags: `@products`, `@organizations`
+- Integration tags: `@kafka`
+- `@kafka-consumer`: validates listener-side consumption and sync side effects
 
 ## Auth Model In Tests
 - `mock-platform-admin-token` -> platform admin roles
@@ -39,3 +41,4 @@ cd docker && ./test.sh down
 ## Notes
 - `@Before` hook truncates test tables (excluding `platform` schema and Liquibase tables).
 - Product test FK values are seeded from fixtures, not random UUIDs.
+- `@kafka-consumer` step resets `catalog-sync-group` offsets to latest, then starts listeners.
