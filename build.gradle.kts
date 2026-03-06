@@ -67,10 +67,6 @@ dependencies {
 	testImplementation("io.cucumber:cucumber-junit-platform-engine:7.18.1")
 	testImplementation("io.rest-assured:rest-assured:5.4.0")
 	testImplementation("io.rest-assured:kotlin-extensions:5.4.0")
-	testImplementation("org.testcontainers:testcontainers:1.19.8")
-	testImplementation("org.testcontainers:postgresql:1.19.8")
-	testImplementation("org.testcontainers:kafka:1.19.8")
-	testImplementation("org.testcontainers:junit-jupiter:1.19.8")
 	testImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -106,4 +102,3 @@ tasks.withType<Test> {
 tasks.matching { it.name == "kaptTestKotlin" }.configureEach {
 	enabled = false
 }
-

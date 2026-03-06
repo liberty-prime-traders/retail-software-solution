@@ -2,8 +2,7 @@ package me.ezra_home.retail_software_solution.cucumber.steps
 
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
-import io.restassured.RestAssured.given
-import io.restassured.http.ContentType
+import me.ezra_home.retail_software_solution.cucumber.config.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.config.TestContext
 import me.ezra_home.retail_software_solution.cucumber.config.TestDataManager
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,12 +16,12 @@ class OrganizationCrudSteps {
   @Autowired
   private lateinit var dataManager: TestDataManager
 
+  @Autowired
+  private lateinit var requestFactory: AuthenticatedRequestFactory
+
   @When("I get all organizations")
   fun getAllOrganizations() {
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .get("/secured/organizations")
   }
 
@@ -33,10 +32,7 @@ class OrganizationCrudSteps {
       "subdomain" to subdomain
     )
 
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .body(orgData)
       .post("/secured/organizations")
 
@@ -55,29 +51,20 @@ class OrganizationCrudSteps {
       "name" to name
     )
 
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .body(orgData)
       .put("/secured/organizations")
   }
 
   @When("I delete the current organization")
   fun deleteOrganization() {
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .delete("/secured/organizations")
   }
 
   @When("I launch organization with domain {string}")
   fun launchOrganization(domain: String) {
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .post("/secured/organizations/launch/$domain")
   }
 
@@ -88,10 +75,7 @@ class OrganizationCrudSteps {
 
   @When("I get locations for organization {string}")
   fun getOrganizationLocations(orgId: String) {
-    context.lastResponse = given()
-      .baseUri(context.baseUrl)
-      .contentType(ContentType.JSON)
-      .header("Authorization", "Bearer ${context.authToken}")
+    context.lastResponse = requestFactory.jsonRequest()
       .get("/secured/organizations/$orgId/locations")
   }
 }

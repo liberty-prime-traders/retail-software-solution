@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:docker/test.properties
+
   main:
     allow-bean-definition-overriding: true
   
@@ -11,22 +14,22 @@ spring:
 
   datasource:
     location:
-      jdbc-url: jdbc:postgresql://localhost:5434/rtss_test
-      username: rtss_user
-      password: rtss_password
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
+      username: ${TEST_DB_USERNAME:rtss_test_user}
+      password: ${TEST_DB_PASSWORD:rtss_test_password}
       
     platform:
-      jdbc-url: jdbc:postgresql://localhost:5434/rtss_test
-      username: rtss_user
-      password: rtss_password
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
+      username: ${TEST_DB_USERNAME:rtss_test_user}
+      password: ${TEST_DB_PASSWORD:rtss_test_password}
       
     organization:
-      jdbc-url: jdbc:postgresql://localhost:5434/rtss_test
-      username: rtss_user
-      password: rtss_password
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
+      username: ${TEST_DB_USERNAME:rtss_test_user}
+      password: ${TEST_DB_PASSWORD:rtss_test_password}
 
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: ${TEST_KAFKA_BOOTSTRAP_SERVERS:localhost:9095}
 
   jpa:
     show-sql: false

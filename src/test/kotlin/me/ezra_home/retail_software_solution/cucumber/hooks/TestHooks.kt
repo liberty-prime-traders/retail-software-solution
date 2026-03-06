@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.cucumber.hooks
 import io.cucumber.java.Before
 import io.cucumber.java.After
 import me.ezra_home.retail_software_solution.cucumber.config.TestContext
+import me.ezra_home.retail_software_solution.cucumber.config.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.cucumber.config.TestDataManager
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -14,8 +15,12 @@ class TestHooks {
   @Autowired
   private lateinit var testDataManager: TestDataManager
 
+  @Autowired
+  private lateinit var testDatabaseCleaner: TestDatabaseCleaner
+
   @Before
   fun beforeScenario() {
+    testDatabaseCleaner.clean()
     testContext.reset()
   }
 

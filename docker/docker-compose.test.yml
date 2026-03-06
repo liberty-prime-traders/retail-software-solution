@@ -1,0 +1,50 @@
+services:
+  postgres-rtss-test:
+    image: postgres:${TEST_POSTGRES_VERSION}
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${TEST_DB_USERNAME}
+      - POSTGRES_PASSWORD=${TEST_DB_PASSWORD}
+      - POSTGRES_DB=${TEST_DB_NAME}
+    ports:
+      - "${TEST_DB_PORT}:${TEST_DB_INTERNAL_PORT}"
+    volumes:
+      - rtss-test-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TEST_DB_USERNAME} -d ${TEST_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rtss-kafka-test:
+    image: confluentinc/cp-kafka:${TEST_KAFKA_VERSION}
+    restart: unless-stopped
+    ports:
+      - "${TEST_KAFKA_PORT}:9094"
+    environment:
+      KAFKA_KRAFT_MODE: "true"
+      CLUSTER_ID: ${TEST_KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@rtss-kafka-test:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://rtss-kafka-test:9092,EXTERNAL://${TEST_KAFKA_HOST}:${TEST_KAFKA_PORT}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+    volumes:
+      - rtss-test-kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  rtss-test-db-data:
+    driver: local
+  rtss-test-kafka-data:
+    driver: local

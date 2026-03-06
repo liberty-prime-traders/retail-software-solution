@@ -8,3 +8,9 @@ Feature: Get All Organizations
     Given I am authenticated as an organization user
     When I get all organizations
     Then the response status should be 403
+
+  @smoke
+  Scenario: Retrieve organizations without authentication
+    Given I am not authenticated
+    When I get all organizations
+    Then the response status should be 403
