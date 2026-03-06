@@ -1,8 +1,12 @@
 package me.ezra_home.retail_software_solution.cucumber
 
 import io.cucumber.spring.CucumberContextConfiguration
+import com.okta.sdk.client.Client
+import com.okta.sdk.resource.user.User
+import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.cucumber.config.TestSecurityConfiguration
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -29,6 +33,12 @@ class CucumberSpringConfiguration {
     
     @Bean
     @Primary
-    fun oktaClient(): com.okta.sdk.client.Client = mock()
+    fun oktaClient(): Client {
+      val client = mock<Client>()
+      val users = mock<UserList>()
+      `when`(users.iterator()).thenReturn(mutableListOf<User>().iterator())
+      `when`(client.listUsers()).thenReturn(users)
+      return client
+    }
   }
 }

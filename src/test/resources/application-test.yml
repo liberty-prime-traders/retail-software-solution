@@ -19,7 +19,7 @@ spring:
       password: ${TEST_DB_PASSWORD:rtss_test_password}
       
     platform:
-      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}?currentSchema=platform
       username: ${TEST_DB_USERNAME:rtss_test_user}
       password: ${TEST_DB_PASSWORD:rtss_test_password}
       
@@ -30,6 +30,8 @@ spring:
 
   kafka:
     bootstrap-servers: ${TEST_KAFKA_BOOTSTRAP_SERVERS:localhost:9095}
+    listener:
+      auto-startup: false
 
   jpa:
     show-sql: false
@@ -53,3 +55,9 @@ okta:
 logging:
   level:
     org.hibernate.SQL: DEBUG
+
+app:
+  liquibase:
+    platform-enabled: true
+    organization-enabled: true
+    location-enabled: false

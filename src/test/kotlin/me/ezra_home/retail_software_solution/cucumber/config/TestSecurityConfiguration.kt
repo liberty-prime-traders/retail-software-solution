@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.core.Ordered
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.SecurityFilterChain
@@ -40,16 +41,40 @@ class TestSecurityConfiguration {
 
   @Bean
   @Primary
-  fun testSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+  fun testSecurityFilterChain(
+    http: HttpSecurity,
+    testAuthenticationFilter: OncePerRequestFilter
+  ): SecurityFilterChain {
     return http
       .authorizeHttpRequests {
         it.requestMatchers("/secured/**").authenticated()
           .anyRequest().permitAll()
       }
+      .addFilterBefore(testAuthenticationFilter, AnonymousAuthenticationFilter::class.java)
       .anonymous { it.disable() }
       .csrf { it.disable() }
       .cors { it.disable() }
       .build()
+  }
+
+  @Bean
+  fun testAuthenticationFilter(): OncePerRequestFilter {
+    return object : OncePerRequestFilter() {
+      override fun doFilterInternal(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+      ) {
+        val token = request.getHeader("Authorization")
+          ?.removePrefix("Bearer ")
+          ?.trim()
+        val principal = mapTokenToPrincipal(token)
+        if (principal != null) {
+          SecurityContextHolder.getContext().authentication = mapPrincipalToAuthentication(principal)
+        }
+        filterChain.doFilter(request, response)
+      }
+    }
   }
 
   @Bean
@@ -75,10 +100,6 @@ class TestSecurityConfiguration {
           tenantFilterIsComplete = true
         }
         SessionContextProvider.setSession(sessionContext)
-        SecurityContextHolder.clearContext()
-        principal?.let { mapPrincipalToAuthentication(it) }?.let { authentication ->
-          SecurityContextHolder.getContext().authentication = authentication
-        }
         try {
           chain.doFilter(request, response)
         } finally {
@@ -86,42 +107,42 @@ class TestSecurityConfiguration {
           SessionContextProvider.clear()
         }
       }
-
-      private fun mapTokenToPrincipal(token: String?): TestPrincipal? {
-        if (token.isNullOrBlank() || token == "null") return null
-
-        return when (token) {
-          "mock-platform-admin-token" -> TestPrincipal(
-            token = token,
-            oktaId = "okta-platform-admin",
-            systemUserId = DEFAULT_USER_ID,
-            roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
-          )
-          "mock-org-admin-token" -> TestPrincipal(
-            token = token,
-            oktaId = "okta-org-admin",
-            systemUserId = DEFAULT_USER_ID,
-            roles = listOf(RtsRoles.ROLE_CREATE_ORGANIZATION)
-          )
-          "mock-user-token" -> TestPrincipal(
-            token = token,
-            oktaId = "okta-org-user",
-            systemUserId = DEFAULT_USER_ID,
-            roles = emptyList()
-          )
-          else -> null
-        }
-      }
-
-      private fun mapPrincipalToAuthentication(principal: TestPrincipal): UsernamePasswordAuthenticationToken {
-        val authorities = principal.roles.map { role -> SimpleGrantedAuthority("ROLE_$role") }
-        return UsernamePasswordAuthenticationToken(principal.oktaId, principal.token, authorities)
-      }
     }
 
     val registration = FilterRegistrationBean(filter)
     registration.order = Ordered.HIGHEST_PRECEDENCE
     registration.addUrlPatterns("/*")
     return registration
+  }
+
+  private fun mapTokenToPrincipal(token: String?): TestPrincipal? {
+    if (token.isNullOrBlank() || token == "null") return null
+
+    return when (token) {
+      "mock-platform-admin-token" -> TestPrincipal(
+        token = token,
+        oktaId = "okta-platform-admin",
+        systemUserId = DEFAULT_USER_ID,
+        roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
+      )
+      "mock-org-admin-token" -> TestPrincipal(
+        token = token,
+        oktaId = "okta-org-admin",
+        systemUserId = DEFAULT_USER_ID,
+        roles = listOf(RtsRoles.ROLE_CREATE_ORGANIZATION)
+      )
+      "mock-user-token" -> TestPrincipal(
+        token = token,
+        oktaId = "okta-org-user",
+        systemUserId = DEFAULT_USER_ID,
+        roles = emptyList()
+      )
+      else -> null
+    }
+  }
+
+  private fun mapPrincipalToAuthentication(principal: TestPrincipal): UsernamePasswordAuthenticationToken {
+    val authorities = principal.roles.map { role -> SimpleGrantedAuthority("ROLE_$role") }
+    return UsernamePasswordAuthenticationToken(principal.oktaId, principal.token, authorities)
   }
 }

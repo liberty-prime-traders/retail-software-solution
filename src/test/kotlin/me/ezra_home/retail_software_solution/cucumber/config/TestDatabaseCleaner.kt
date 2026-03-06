@@ -14,6 +14,8 @@ class TestDatabaseCleaner(
   private val jdbcTemplate = JdbcTemplate(dataSource)
 
   fun clean() {
+    jdbcTemplate.execute("UPDATE table_registry SET validated = true WHERE validated = false")
+
     val tables = jdbcTemplate.query(
       """
         SELECT table_schema, table_name

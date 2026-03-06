@@ -54,7 +54,7 @@ class TestFixtureBuilder(
         UnitValueEntity(
           name = "Piece-$seed",
           description = "Fixture base unit $seed",
-          code = "PC$seed",
+          code = "P${seed.takeLast(4)}",
           unitGroupId = unitGroup.id!!,
           baseUnit = null,
           conversionFactor = null

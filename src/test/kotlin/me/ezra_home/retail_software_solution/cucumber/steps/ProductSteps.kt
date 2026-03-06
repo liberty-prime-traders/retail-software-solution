@@ -42,7 +42,7 @@ class ProductSteps {
         .body(productData)
         .post("/secured/products")
 
-      if (response.statusCode == 201) {
+      if (response.statusCode in 200..299) {
         dataManager.track("product", UUID.fromString(response.jsonPath().getString("id")))
       }
     }
