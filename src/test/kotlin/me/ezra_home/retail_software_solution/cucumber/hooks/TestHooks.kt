@@ -2,12 +2,12 @@ package me.ezra_home.retail_software_solution.cucumber.hooks
 
 import io.cucumber.java.Before
 import io.cucumber.java.After
+import me.ezra_home.retail_software_solution.cucumber.config.KafkaConsumerTestSupport
 import me.ezra_home.retail_software_solution.cucumber.config.TestContext
 import me.ezra_home.retail_software_solution.cucumber.config.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.cucumber.config.TestDataManager
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 
 class TestHooks {
 
@@ -21,7 +21,7 @@ class TestHooks {
   private lateinit var testDatabaseCleaner: TestDatabaseCleaner
 
   @Autowired
-  private lateinit var kafkaListenerRegistry: KafkaListenerEndpointRegistry
+  private lateinit var kafkaConsumerTestSupport: KafkaConsumerTestSupport
 
   @Before
   fun beforeScenario() {
@@ -36,12 +36,13 @@ class TestHooks {
     testDataManager.clear()
   }
 
+  @Before("@kafka-consumer")
+  fun beforeKafkaConsumerScenario() {
+    kafkaConsumerTestSupport.prepareConsumerScenario()
+  }
+
   @After("@kafka-consumer")
   fun stopKafkaListenersForConsumerScenarios() {
-    kafkaListenerRegistry.listenerContainers.forEach { container ->
-      if (container.isRunning) {
-        container.stop()
-      }
-    }
+    kafkaConsumerTestSupport.stopKafkaListeners()
   }
 }

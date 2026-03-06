@@ -95,9 +95,49 @@ allOpen {
 tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("cucumber.junit-platform.naming-strategy", "long")
+	systemProperty("cucumber.filter.tags", System.getProperty("cucumber.filter.tags") ?: "not @ignore")
 	systemProperty("okta.oauth2.enabled", "false")
 	systemProperty("okta.client.enabled", "false")
 }
+
+fun registerCucumberLaneTask(taskName: String, tagExpression: String, descriptionText: String) {
+	tasks.register<Test>(taskName) {
+		group = "verification"
+		description = descriptionText
+		useJUnitPlatform()
+		filter {
+			includeTestsMatching("me.ezra_home.retail_software_solution.cucumber.RunCucumberTest")
+		}
+		systemProperty("cucumber.filter.tags", tagExpression)
+		systemProperty("cucumber.junit-platform.naming-strategy", "long")
+		systemProperty("okta.oauth2.enabled", "false")
+		systemProperty("okta.client.enabled", "false")
+	}
+}
+
+registerCucumberLaneTask(
+	"cucumberSmokeTest",
+	"@smoke and not @ignore",
+	"Runs only cucumber smoke scenarios."
+)
+
+registerCucumberLaneTask(
+	"cucumberKafkaTest",
+	"@kafka and not @kafka-consumer and not @ignore",
+	"Runs cucumber kafka producer scenarios."
+)
+
+registerCucumberLaneTask(
+	"cucumberKafkaConsumerTest",
+	"@kafka-consumer and not @ignore",
+	"Runs cucumber kafka consumer scenarios."
+)
+
+registerCucumberLaneTask(
+	"cucumberRegressionTest",
+	"not @ignore",
+	"Runs the full cucumber regression suite."
+)
 
 tasks.matching { it.name == "kaptTestKotlin" }.configureEach {
 	enabled = false

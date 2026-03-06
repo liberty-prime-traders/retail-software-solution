@@ -17,8 +17,4 @@ import org.junit.platform.suite.api.Suite
   key = Constants.PLUGIN_PROPERTY_NAME,
   value = "pretty, html:build/reports/cucumber.html, json:build/reports/cucumber.json"
 )
-@ConfigurationParameter(
-  key = Constants.FILTER_TAGS_PROPERTY_NAME,
-  value = "not @ignore"
-)
 class RunCucumberTest

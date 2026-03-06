@@ -11,19 +11,12 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationRepository
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationRepository
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.admin.AdminClient
-import org.apache.kafka.clients.admin.AdminClientConfig
-import org.apache.kafka.clients.admin.OffsetSpec
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 import java.time.Duration
 import java.util.Properties
 import java.util.UUID
@@ -48,26 +41,16 @@ class KafkaSteps {
   private lateinit var requestFactory: AuthenticatedRequestFactory
 
   @Autowired
-  private lateinit var organizationRepository: OrganizationRepository
-
-  @Autowired
   private lateinit var locationRepository: LocationRepository
 
   @Autowired
   private lateinit var locationProductRepository: LocationProductRepository
-
-  @Autowired
-  private lateinit var kafkaListenerRegistry: KafkaListenerEndpointRegistry
 
   @Value("\${spring.kafka.bootstrap-servers}")
   private lateinit var bootstrapServers: String
 
   @Given("a location exists for catalog sync")
   fun createLocationForCatalogSync() {
-    resetCatalogSyncConsumerOffsetsToLatest()
-    startKafkaListeners()
-    ensurePublicSchemaOrganizationExists()
-
     val response = requestFactory.jsonRequest()
       .body(
         mapOf(
@@ -90,53 +73,6 @@ class KafkaSteps {
     val locationId = context.get(CATALOG_SYNC_LOCATION_ID_KEY, UUID::class.java)
     assertNotNull(locationId, "Catalog sync location id was not set in test context")
     context.currentLocationId = locationId
-  }
-
-  private fun startKafkaListeners() {
-    kafkaListenerRegistry.listenerContainers.forEach { container ->
-      if (!container.isRunning) {
-        container.start()
-      }
-    }
-  }
-
-  private fun resetCatalogSyncConsumerOffsetsToLatest() {
-    val topic = KafkaConstants.Topics.CATALOG_EVENTS
-    val properties = Properties().apply {
-      put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-    }
-
-    AdminClient.create(properties).use { admin ->
-      val topicDescription = admin.describeTopics(listOf(topic)).allTopicNames().get()[topic]
-        ?: return
-      val partitions = topicDescription.partitions().map { TopicPartition(topic, it.partition()) }
-      val latestOffsetSpecs = partitions.associateWith { OffsetSpec.latest() }
-      val latestOffsets = admin.listOffsets(latestOffsetSpecs).all().get()
-      val groupOffsets = latestOffsets.mapValues { (_, offsetResult) ->
-        OffsetAndMetadata(offsetResult.offset())
-      }
-
-      admin.alterConsumerGroupOffsets(
-        KafkaConstants.ConsumerGroups.CATALOG_SYNC,
-        groupOffsets
-      ).all().get()
-    }
-  }
-
-  private fun ensurePublicSchemaOrganizationExists() {
-    val publicSchemaExists = organizationRepository.findAll().any { it.schemaName == "public" }
-    if (publicSchemaExists) return
-
-    organizationRepository.save(
-      OrganizationEntity(
-        name = "Public Schema Test Organization",
-        description = "Seeded for kafka consumer cucumber tests",
-        subdomain = "public-test",
-        schemaName = "public"
-      ).apply {
-        createdById = DEFAULT_USER_ID
-      }
-    )
   }
 
   @Given("I am subscribed to the catalog events topic")

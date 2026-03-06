@@ -13,9 +13,31 @@ Run HTTP-level E2E tests with real Postgres and Kafka, isolated from dev/prod.
 ## Run
 ```bash
 cd docker && ./test.sh up
-cd .. && ./gradlew test --tests "me.ezra_home.retail_software_solution.cucumber.RunCucumberTest"
+cd .. && ./gradlew cucumberRegressionTest
 cd docker && ./test.sh down
 ```
+
+## Lane Runner Script
+```bash
+cd docker && ./test-lanes.sh smoke
+cd docker && ./test-lanes.sh kafka
+cd docker && ./test-lanes.sh kafka-consumer
+cd docker && ./test-lanes.sh regression
+```
+
+## Lanes
+- `./gradlew cucumberSmokeTest`
+- `./gradlew cucumberKafkaTest`
+- `./gradlew cucumberKafkaConsumerTest`
+- `./gradlew cucumberRegressionTest`
+
+## HTML Reports
+- General test report: `build/reports/tests/test/index.html`
+- Smoke lane: `build/reports/tests/cucumberSmokeTest/index.html`
+- Kafka producer lane: `build/reports/tests/cucumberKafkaTest/index.html`
+- Kafka consumer lane: `build/reports/tests/cucumberKafkaConsumerTest/index.html`
+- Regression lane: `build/reports/tests/cucumberRegressionTest/index.html`
+- Cucumber plugin report: `build/reports/cucumber.html`
 
 ## Test Structure
 - Runner: `src/test/kotlin/.../cucumber/RunCucumberTest.kt`
@@ -41,4 +63,4 @@ cd docker && ./test.sh down
 ## Notes
 - `@Before` hook truncates test tables (excluding `platform` schema and Liquibase tables).
 - Product test FK values are seeded from fixtures, not random UUIDs.
-- `@kafka-consumer` step resets `catalog-sync-group` offsets to latest, then starts listeners.
+- `@kafka-consumer` hook resets `catalog-sync-group` offsets to latest and starts listeners.

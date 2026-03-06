@@ -12,9 +12,31 @@ class TestDatabaseCleaner(
   dataSource: DataSource
 ) {
   private val jdbcTemplate = JdbcTemplate(dataSource)
+  private var cachedTableCount: Int? = null
+  private var cachedTruncateSql: String? = null
 
   fun clean() {
     jdbcTemplate.execute("UPDATE table_registry SET validated = true WHERE validated = false")
+    val truncateSql = getOrBuildTruncateSql() ?: return
+    jdbcTemplate.execute(truncateSql)
+  }
+
+  private fun getOrBuildTruncateSql(): String? {
+    val currentTableCount = jdbcTemplate.queryForObject(
+      """
+        SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_type = 'BASE TABLE'
+          AND table_schema NOT IN ('pg_catalog', 'information_schema')
+          AND table_schema <> 'platform'
+          AND table_name NOT IN ('databasechangelog', 'databasechangeloglock')
+      """.trimIndent(),
+      Int::class.java
+    ) ?: 0
+
+    if (cachedTruncateSql != null && cachedTableCount == currentTableCount) {
+      return cachedTruncateSql
+    }
 
     val tables = jdbcTemplate.query(
       """
@@ -29,10 +51,10 @@ class TestDatabaseCleaner(
       "${quoteIdentifier(rs.getString("table_schema"))}.${quoteIdentifier(rs.getString("table_name"))}"
     }
 
-    if (tables.isEmpty()) return
-
-    val truncateSql = "TRUNCATE TABLE ${tables.joinToString(", ")} RESTART IDENTITY CASCADE"
-    jdbcTemplate.execute(truncateSql)
+    cachedTableCount = currentTableCount
+    cachedTruncateSql = if (tables.isEmpty()) null
+    else "TRUNCATE TABLE ${tables.joinToString(", ")} RESTART IDENTITY CASCADE"
+    return cachedTruncateSql
   }
 
   private fun quoteIdentifier(identifier: String): String = "\"${identifier.replace("\"", "\"\"")}\""
