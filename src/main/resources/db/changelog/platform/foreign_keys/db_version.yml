@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-db-version-prev-version-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: db_version_prev_version_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: db_version
+            baseColumnNames: prev_version_id
+            referencedTableName: db_version
+            referencedColumnNames: id
+            constraintName: db_version_prev_version_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: db_version
+            constraintName: db_version_prev_version_id_fk

@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-org-join-request-organization-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: org_join_request_organization_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_join_request
+            baseColumnNames: organization_id
+            referencedTableName: organization
+            referencedColumnNames: id
+            constraintName: org_join_request_organization_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_join_request
+            constraintName: org_join_request_organization_id_fk
+
+  - changeSet:
+      id: add-fk-org-join-request-created-by-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: org_join_request_created_by_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_join_request
+            baseColumnNames: created_by_id
+            referencedTableName: sys_user
+            referencedColumnNames: id
+            constraintName: org_join_request_created_by_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_join_request
+            constraintName: org_join_request_created_by_id_fk

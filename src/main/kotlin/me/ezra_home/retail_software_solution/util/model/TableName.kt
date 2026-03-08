@@ -11,6 +11,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   DB_VERSION(TableNames.DB_VERSION, SchemaLevel.PLATFORM),
   DB_MIGRATION(TableNames.DB_MIGRATION, SchemaLevel.PLATFORM),
   TABLE_REGISTRY(TableNames.TABLE_REGISTRY, SchemaLevel.PLATFORM),
+  AUTHORIZATION_PASS(TableNames.AUTHORIZATION_PASS, SchemaLevel.PLATFORM),
 
   PRODUCT(TableNames.PRODUCT, SchemaLevel.ORGANIZATION),
   PRODUCT_GROUP(TableNames.PRODUCT_GROUP, SchemaLevel.ORGANIZATION),
@@ -43,6 +44,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_RETURN(TableNames.SUPPLIER_RETURN, SchemaLevel.LOCATION),
 
   ORGANIZATION_AUDIT(TableNames.ORGANIZATION_AUDIT, SchemaLevel.PLATFORM),
+  AUTHORIZATION_PASS_AUDIT(TableNames.AUTHORIZATION_PASS_AUDIT, SchemaLevel.PLATFORM),
 
   PRODUCT_AUDIT(TableNames.PRODUCT_AUDIT, SchemaLevel.ORGANIZATION),
   ADDRESS_AUDIT(TableNames.ADDRESS_AUDIT, SchemaLevel.ORGANIZATION),
