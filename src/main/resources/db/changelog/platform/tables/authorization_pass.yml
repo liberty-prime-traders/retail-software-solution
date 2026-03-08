@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-authorization-pass-table'
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_pass
+      changes:
+        - createTable:
+            tableName: authorization_pass
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_code_notnull
+                    unique: true
+                    uniqueConstraintName: authorization_pass_code_unique
+
+              - column:
+                  name: pass_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_pass_type_notnull
+
+              - column:
+                  name: max_use_count
+                  type: int
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_max_use_count_notnull
+
+              - column:
+                  name: used_count
+                  type: int
+                  defaultValueNumeric: '0'
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_used_count_notnull
+
+              - column:
+                  name: assigned_to_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_assigned_to_id_notnull
+
+              - column:
+                  name: pass_status
+                  type: nvarchar2(5)
+                  defaultValue: A
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_pass_status_notnull
+
+              - column:
+                  name: expires_on
+                  type: timestamptz
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: authorization_pass_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: authorization_pass_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: authorization_pass_reference_number_notnull

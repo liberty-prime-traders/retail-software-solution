@@ -27,7 +27,11 @@ databaseChangeLog:
       relativeToChangelogFile: true
 
   - includeAll:
-      path: service-accounts
+      path: foreign_keys
+      relativeToChangelogFile: true
+
+  - include:
+      file: seeded_tables/db-changelog-seeded-tables.yml
       relativeToChangelogFile: true
 
   - include:
@@ -38,10 +42,3 @@ databaseChangeLog:
       file: ../shared/procedures/get_next_sequence_values.yml
       relativeToChangelogFile: true
 
-  - includeAll:
-      path: version-entries
-      relativeToChangelogFile: true
-
-  - includeAll:
-      path: registry-entries
-      relativeToChangelogFile: true
