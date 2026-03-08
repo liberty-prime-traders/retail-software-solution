@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-product-aud-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: product_aud
+              - column:
+                  name: default_prefix
+                  value: PRAUD
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Product Audit
+              - column:
+                  name: description
+                  value: Audit trail for product changes
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

@@ -8,6 +8,7 @@ object TableNames {
     const val DB_VERSION = "db_version"
     const val DB_MIGRATION = "db_migration"
     const val TABLE_REGISTRY = "table_registry"
+    const val AUTHORIZATION_PASS = "authorization_pass"
 
     const val ADDRESS = "address"
     const val CONTACT = "contact"
@@ -39,6 +40,7 @@ object TableNames {
     const val SUPPLIER_RETURN = "supplier_return"
 
     const val ORGANIZATION_AUDIT = "organization_aud"
+    const val AUTHORIZATION_PASS_AUDIT = "authorization_pass_aud"
 
     const val ADDRESS_AUDIT = "address_aud"
     const val CONTACT_AUDIT = "contact_aud"

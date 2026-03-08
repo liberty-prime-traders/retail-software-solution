@@ -1,0 +1,10 @@
+package me.ezra_home.retail_software_solution.platform.business.organization.dto
+
+import java.io.Serializable
+import java.util.Optional
+
+data class OrganizationUpdateDto(
+    val name: Optional<String>? = null,
+    val description: Optional<String>? = null,
+    val hidden: Optional<Boolean>? = null
+) : Serializable
