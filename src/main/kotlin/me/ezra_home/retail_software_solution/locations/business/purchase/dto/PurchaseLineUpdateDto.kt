@@ -5,7 +5,8 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PurchaseLineUpdateDto(
-  val locationProductId: UUID,
+  val id: UUID?,
+  val locationProductId: UUID?,
   val quantityOrdered: BigDecimal,
   val unitCost: BigDecimal
 ) : Serializable

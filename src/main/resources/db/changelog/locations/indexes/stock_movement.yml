@@ -82,3 +82,26 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_stock_movement_reference_id
             tableName: stock_movement
+
+  - changeSet:
+      id: create-idx-stock-movement-location-product-id-created-on
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_movement_location_product_id_created_on
+      changes:
+        - createIndex:
+            indexName: idx_stock_movement_location_product_id_created_on
+            tableName: stock_movement
+            columns:
+              - column:
+                  name: location_product_id
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_movement_location_product_id_created_on
+            tableName: stock_movement

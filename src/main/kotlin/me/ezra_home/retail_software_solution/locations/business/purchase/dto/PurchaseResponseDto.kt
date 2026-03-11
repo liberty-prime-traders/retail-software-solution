@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.dto
 
+import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
 import java.io.Serializable
 import java.math.BigDecimal
@@ -19,5 +20,6 @@ data class PurchaseResponseDto(
   val createdBy: String?,
   val createdOn: OffsetDateTime?,
   val lines: List<PurchaseLineResponseDto>,
-  val orderTotal: BigDecimal
+  val orderTotal: BigDecimal,
+  val deliveries: List<PurchaseDeliveryResponseDto>
 ) : Serializable

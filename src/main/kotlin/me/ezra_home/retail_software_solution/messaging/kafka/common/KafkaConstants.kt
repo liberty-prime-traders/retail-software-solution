@@ -7,6 +7,13 @@ object KafkaConstants {
     }
 
     object ConsumerGroups {
-        const val CATALOG_SYNC = "catalog-sync-group"
+        object Catalog {
+            const val SYNC = "catalog-sync-group"
+        }
+
+        object Transaction {
+            const val INVENTORY = "inventory-group"
+            const val ACCOUNTING = "accounting-group"
+        }
     }
 }

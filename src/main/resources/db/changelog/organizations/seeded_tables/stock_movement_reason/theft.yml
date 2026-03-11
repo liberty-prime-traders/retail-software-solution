@@ -15,7 +15,7 @@ databaseChangeLog:
                   valueComputed: "'SMRSN' || LPAD(nextval('seq_stock_movement_reason_reference_number')::text, 2, '0')"
               - column:
                   name: code
-                  value: THEFT
+                  value: TF
               - column:
                   name: name
                   value: Theft

@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.enums.ProductStatusConverter
@@ -57,4 +58,8 @@ class LocationProductEntity(
   @Column(name = "last_synced_at")
   var lastSyncedAt: OffsetDateTime? = null
 
-) : HasReferenceEntity()
+) : HasReferenceEntity() {
+
+  @Transient
+  var stockBalance: BigDecimal? = null
+}

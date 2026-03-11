@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -22,6 +21,7 @@ class PurchaseService(
 ) {
 
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
+    PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
@@ -30,15 +30,17 @@ class PurchaseService(
 
   fun updateDraft(dto: PurchaseUpdateDto): PurchaseResponseDto {
     val purchase = purchaseRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
-    if (purchase.status != PurchaseStatus.DRAFT)
-      throw RtsGenericException("Purchase is not in draft status anymore. The requested updates cannot be applied.")
+    PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.applyDraftUpdate(purchase, dto)
     purchaseRepository.save(purchase)
-    return purchaseAssembler.buildResponse(purchase, applyLineUpdates(purchase.id!!, dto))
+    val lines = applyLineUpdates(purchase.id!!, dto)
+    PurchaseValidator.guardNoDuplicateProducts(lines)
+    return purchaseAssembler.buildResponse(purchase, lines)
   }
 
   fun createOrder(dto: PurchaseCreateDto): PurchaseResponseDto {
-    if (dto.lines.isEmpty()) throw RtsGenericException("An order must have at least one item.")
+    PurchaseValidator.guardHasLines(dto.lines)
+    PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toOrderEntity(dto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
@@ -47,67 +49,80 @@ class PurchaseService(
 
   fun convertDraftToOrder(dto: PurchaseUpdateDto): PurchaseResponseDto {
     val purchase = purchaseRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
-    if (purchase.status != PurchaseStatus.DRAFT)
-      throw RtsGenericException("Purchase is not in draft status anymore. The requested updates cannot be applied.")
+    PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.convertDraftToOrder(purchase, dto)
     purchaseRepository.save(purchase)
     val lines = applyLineUpdates(purchase.id!!, dto)
-    if (lines.isEmpty()) throw RtsGenericException("An order must have at least one item.")
+    PurchaseValidator.guardHasLines(lines)
+    PurchaseValidator.guardNoDuplicateProducts(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
 
   fun updateCancelQuantities(id: UUID, lines: List<PurchaseLineCancelDto>): PurchaseResponseDto {
     val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
-    if (purchase.status !in listOf(PurchaseStatus.ORDERED, PurchaseStatus.PARTIALLY_DELIVERED)) {
-      throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.status}")
-    }
+    PurchaseValidator.guardCanCancelLines(purchase)
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(id))
-    val linesByProduct = existingLines.associateBy { it.locationProductId }
-    val toSave = lines.mapNotNull { cancel ->
-      linesByProduct[cancel.locationProductId]?.also { it.quantityCanceled = cancel.quantityCanceled }
-    }
-    purchaseLineRepository.saveAll(toSave)
+    applyCancelUpdates(existingLines, lines)
+    purchase.status = resolveStatusAfterCancellation(existingLines) ?: purchase.status
+    purchaseRepository.save(purchase)
     return purchaseAssembler.buildResponse(purchase, existingLines)
   }
 
   fun updateNotes(id: UUID, notes: String?) {
-    val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
-    purchase.notes = notes
-    purchaseRepository.save(purchase)
+    notes?.let {
+      val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
+      purchase.notes = notes
+      purchaseRepository.save(purchase)
+    }
+  }
+
+  private fun applyCancelUpdates(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseLineCancelDto>) {
+    val linesById = existingLines.associateBy { it.id!! }
+    val toSave = cancels.mapNotNull { cancel ->
+      linesById[cancel.purchaseLineId]?.also { line ->
+        PurchaseValidator.guardCancelQuantity(line, cancel)
+        line.quantityCanceled = cancel.quantityCanceled
+      }
+    }
+    purchaseLineRepository.saveAll(toSave)
+  }
+
+  private fun resolveStatusAfterCancellation(lines: List<PurchaseLineEntity>): PurchaseStatus? {
+    val allAccountedFor = lines.all { it.quantityDelivered + it.quantityCanceled == it.quantityOrdered }
+    val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }
+    return when {
+      allAccountedFor -> PurchaseStatus.FULLY_DELIVERED
+      anyDelivered -> PurchaseStatus.PARTIALLY_DELIVERED
+      else -> null
+    }
   }
 
   private fun applyLineUpdates(purchaseId: UUID, dto: PurchaseUpdateDto): List<PurchaseLineEntity> {
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(purchaseId))
-    val linesByProduct = existingLines.associateBy { it.locationProductId }
+    val linesById = existingLines.associateBy { it.id }
     val toDelete = mutableListOf<PurchaseLineEntity>()
     val toSave = mutableListOf<PurchaseLineEntity>()
+    val toCreate = mutableListOf<PurchaseLineEntity>()
 
     for (lineDto in dto.lines) {
-      val existing = linesByProduct[lineDto.locationProductId]
-      if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
-        existing?.let { toDelete.add(it) }
+      val existing = lineDto.id?.let { linesById[it] }
+      if (existing == null) {
+        PurchaseValidator.guardNewLineHasProduct(lineDto)
+        toCreate.add(PurchaseMapper.toNewLineEntity(purchaseId, lineDto))
+      } else if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
+        toDelete.add(existing)
       } else {
-        if (existing != null) {
-          existing.quantityOrdered = lineDto.quantityOrdered
-          existing.unitCost = lineDto.unitCost
-          toSave.add(existing)
-        } else {
-          toSave.add(
-            PurchaseLineEntity(
-              purchaseId = purchaseId,
-              locationProductId = lineDto.locationProductId,
-              quantityOrdered = lineDto.quantityOrdered,
-              unitCost = lineDto.unitCost
-            )
-          )
-        }
+        existing.quantityOrdered = lineDto.quantityOrdered
+        existing.unitCost = lineDto.unitCost
+        toSave.add(existing)
       }
     }
 
     purchaseLineRepository.deleteAll(toDelete)
     purchaseLineRepository.saveAll(toSave)
+    purchaseLineRepository.saveAll(toCreate)
     val deletedIds = toDelete.mapTo(HashSet()) { it.id }
     val savedIds = toSave.mapTo(HashSet()) { it.id }
-    return existingLines.filter { it.id !in deletedIds && it.id !in savedIds } + toSave
+    return existingLines.filter { it.id !in deletedIds && it.id !in savedIds } + toSave + toCreate
   }
 }
