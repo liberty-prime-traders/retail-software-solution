@@ -13,7 +13,7 @@ object PurchaseDeliveryValidator {
       throw RtsGenericException("Delivery must have at least one line.")
 
     val lineIds = dto.lines.map { it.purchaseLineId }
-    if (lineIds.size != lineIds.distinct().size)
+    if (lineIds.size != lineIds.toSet().size)
       throw RtsGenericException("Duplicate purchase line IDs in delivery request.")
 
     dto.lines.forEach { lineDto ->

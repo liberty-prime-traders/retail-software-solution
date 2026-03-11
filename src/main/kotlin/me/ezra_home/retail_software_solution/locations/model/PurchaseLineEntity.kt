@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.model
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.purchase.HasLocationProduct
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -21,7 +22,7 @@ class PurchaseLineEntity(
   var purchaseId: UUID,
 
   @Column(name = "location_product_id", nullable = false)
-  var locationProductId: UUID,
+  override var locationProductId: UUID,
 
   @Column(name = "quantity_ordered", nullable = false, precision = 15, scale = 3)
   var quantityOrdered: BigDecimal,
@@ -35,4 +36,4 @@ class PurchaseLineEntity(
   @Column(name = "quantity_canceled", nullable = false, precision = 15, scale = 3)
   var quantityCanceled: BigDecimal = BigDecimal.ZERO
 
-) : HasReferenceEntity()
+) : HasLocationProduct, HasReferenceEntity()

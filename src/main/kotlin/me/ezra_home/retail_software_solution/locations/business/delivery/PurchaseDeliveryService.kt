@@ -7,8 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryLineEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
@@ -38,14 +36,14 @@ class PurchaseDeliveryService(
     val purchaseLineById = purchaseLines.associateBy { it.id!! }
     PurchaseDeliveryValidator.validate(dto, purchaseLineById)
 
-    persistDeliveredQuantities(dto, purchaseLineById)
-    val (delivery, deliveryLines) = persistDelivery(dto)
-    purchase.status = resolveDeliveryStatus(purchaseLines)
+    val updatedLines = updateDeliveredQuantities(dto, purchaseLineById)
+    val deliveryRecord = persistDelivery(dto)
+    purchase.status = resolveDeliveryStatus(updatedLines)
     purchaseRepository.save(purchase)
 
-    publishDeliveryEvent(purchase, delivery, deliveryLines, purchaseLineById)
+    publishDeliveryEvent(purchase, deliveryRecord, purchaseLineById)
 
-    return purchaseAssembler.buildResponse(purchase, purchaseLines)
+    return purchaseAssembler.buildResponse(purchase, updatedLines)
   }
 
   private fun guardDeliveryStatus(purchase: PurchaseEntity) {
@@ -55,20 +53,24 @@ class PurchaseDeliveryService(
       throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
   }
 
-  private fun persistDeliveredQuantities(dto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineEntity>) {
+  private fun updateDeliveredQuantities(
+    dto: PurchaseDeliveryCreateDto,
+    purchaseLineById: Map<UUID, PurchaseLineEntity>
+  ): List<PurchaseLineEntity> {
     val toSave = dto.lines.map { lineDto ->
       purchaseLineById[lineDto.purchaseLineId]!!.also {
         it.quantityDelivered = it.quantityDelivered.add(lineDto.quantityDelivered)
       }
     }
     purchaseLineRepository.saveAll(toSave)
+    return purchaseLineById.values.toList()
   }
 
-  private fun persistDelivery(dto: PurchaseDeliveryCreateDto): Pair<PurchaseDeliveryEntity, List<PurchaseDeliveryLineEntity>> {
+  private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {
     val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(dto))
-    val deliveryLines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
-    deliveryLineRepository.saveAll(deliveryLines)
-    return delivery to deliveryLines
+    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
+    deliveryLineRepository.saveAll(lines)
+    return DeliveryRecord(delivery, lines)
   }
 
   private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
@@ -80,14 +82,12 @@ class PurchaseDeliveryService(
 
   private fun publishDeliveryEvent(
     purchase: PurchaseEntity,
-    delivery: PurchaseDeliveryEntity,
-    deliveryLines: List<PurchaseDeliveryLineEntity>,
+    deliveryRecord: DeliveryRecord,
     purchaseLineById: Map<UUID, PurchaseLineEntity>
   ) {
-    val sourceSchema = SessionContextProvider.getSession().locationSchemaName
-      ?: throw RtsGenericException("Location schema not found in session.")
+    val sourceSchema = SessionContextProvider.getLocationSchema()
     eventPublisher.publishEvent(
-      PurchaseDeliveryMapper.toEvent(purchase, delivery, deliveryLines, purchaseLineById, sourceSchema)
+      PurchaseDeliveryMapper.toEvent(purchase, deliveryRecord, purchaseLineById, sourceSchema)
     )
   }
 }

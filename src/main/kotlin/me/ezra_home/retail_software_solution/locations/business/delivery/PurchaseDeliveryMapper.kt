@@ -30,8 +30,7 @@ object PurchaseDeliveryMapper {
 
   fun toEvent(
     purchase: PurchaseEntity,
-    delivery: PurchaseDeliveryEntity,
-    deliveryLines: List<PurchaseDeliveryLineEntity>,
+    deliveryRecord: DeliveryRecord,
     purchaseLineById: Map<UUID, PurchaseLineEntity>,
     sourceSchema: String
   ) = PurchaseDeliveredEvent(
@@ -40,9 +39,9 @@ object PurchaseDeliveryMapper {
     timestamp = Instant.now(),
     correlationId = null,
     purchaseId = purchase.id!!,
-    deliveryId = delivery.id!!,
+    deliveryId = deliveryRecord.delivery.id!!,
     supplierId = purchase.supplierId,
-    lines = deliveryLines.map { dl ->
+    lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
         deliveryLineId = dl.id!!,

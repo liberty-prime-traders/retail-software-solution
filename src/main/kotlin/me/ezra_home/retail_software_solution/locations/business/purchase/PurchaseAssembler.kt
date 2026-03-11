@@ -38,31 +38,20 @@ class PurchaseAssembler(
     return purchases.map { purchase ->
       val lines = linesByPurchaseId[purchase.id] ?: emptyList()
       val deliveries = deliveriesByPurchaseId[purchase.id] ?: emptyList()
-      buildResponse(purchase, lines, productMap, deliveries, allLines)
+      buildResponse(purchase, lines, productMap, deliveries)
     }
-  }
-
-  private fun loadProductMap(ids: List<UUID>): Map<UUID?, LocationProductEntity> {
-    return locationProductRepository.findAllById(ids).associateBy { it.id }
   }
 
   fun buildResponse(purchase: PurchaseEntity, lines: List<PurchaseLineEntity>): PurchaseResponseDto {
     val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchase.id!!))
-    return buildResponse(
-      purchase,
-      lines,
-      loadProductMap(lines.map { it.locationProductId }),
-      deliveries,
-      lines
-    )
+    return buildResponse(purchase, lines, loadProductMap(lines.map { it.locationProductId }), deliveries)
   }
 
-  fun buildResponse(
+  private fun buildResponse(
     purchase: PurchaseEntity,
     lines: List<PurchaseLineEntity>,
     productMap: Map<UUID?, LocationProductEntity>,
-    deliveries: List<PurchaseDeliveryEntity>,
-    allPurchaseLines: List<PurchaseLineEntity>
+    deliveries: List<PurchaseDeliveryEntity>
   ): PurchaseResponseDto {
     val supplierNameMap = contactCache.getAllContacts().associateBy({ it.id }, { it.identity.displayName })
     val lineDtos = toLinesDto(lines, productMap)
@@ -82,8 +71,12 @@ class PurchaseAssembler(
       createdOn = purchase.createdOn,
       lines = lineDtos,
       orderTotal = orderTotal,
-      deliveries = purchaseDeliveryAssembler.buildResponses(deliveries, allPurchaseLines)
+      deliveries = purchaseDeliveryAssembler.buildResponses(deliveries, lines, productMap)
     )
+  }
+
+  private fun loadProductMap(ids: List<UUID>): Map<UUID?, LocationProductEntity> {
+    return locationProductRepository.findAllById(ids).associateBy { it.id }
   }
 
   private fun toLinesDto(lines: List<PurchaseLineEntity>, productMap: Map<UUID?, LocationProductEntity>): List<PurchaseLineResponseDto> {
@@ -93,14 +86,12 @@ class PurchaseAssembler(
       PurchaseLineResponseDto(
         id = line.id,
         referenceNumber = line.referenceNumber,
-        locationProduct = product.let {
-          PurchaseLineProductDto(
-            referenceNumber = it.referenceNumber,
-            productName = it.productName,
-            productGroupName = it.productGroupName,
-            baseUnit = unitValueQualifier.getUnitName(it.baseUnitId)
-          )
-        },
+        locationProduct = PurchaseLineProductDto(
+          referenceNumber = product.referenceNumber,
+          productName = product.productName,
+          productGroupName = product.productGroupName,
+          baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)
+        ),
         quantityOrdered = line.quantityOrdered,
         unitCost = line.unitCost,
         lineTotal = quantityExpected.multiply(line.unitCost),

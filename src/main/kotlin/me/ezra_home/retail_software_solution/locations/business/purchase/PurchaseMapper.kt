@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.purchase
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
@@ -41,6 +42,13 @@ object PurchaseMapper {
     purchase.orderedById = dto.orderedById?.orElseGet { SessionContextProvider.getUserId() } ?: SessionContextProvider.getUserId()
     purchase.status = PurchaseStatus.ORDERED
   }
+
+  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineUpdateDto) = PurchaseLineEntity(
+    purchaseId = purchaseId,
+    locationProductId = dto.locationProductId!!,
+    quantityOrdered = dto.quantityOrdered,
+    unitCost = dto.unitCost
+  )
 
   fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>) = lines.map {
     PurchaseLineEntity(
