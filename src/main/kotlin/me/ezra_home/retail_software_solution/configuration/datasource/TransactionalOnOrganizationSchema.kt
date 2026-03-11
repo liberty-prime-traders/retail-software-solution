@@ -10,8 +10,8 @@ import kotlin.reflect.KClass
 @Transactional(transactionManager = DataSourceBeanNames.ORGANIZATION_SCHEMA_TRANSACTION_MANAGER)
 annotation class TransactionalOnOrganizationSchema(
 
-    @get:AliasFor(annotation = Transactional::class, attribute = "r")
-    val rollbackOn: Array<KClass<out Throwable>> = [Exception::class],
+    @get:AliasFor(annotation = Transactional::class, attribute = "rollbackFor")
+    val rollbackFor: Array<KClass<out Throwable>> = [Exception::class],
 
     @get:AliasFor(annotation = Transactional::class, attribute = "propagation")
     val propagation: Propagation = Propagation.REQUIRED,

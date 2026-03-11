@@ -19,6 +19,7 @@ object PurchaseDeliveryValidator {
     dto.lines.forEach { lineDto ->
       if (lineDto.quantityDelivered <= BigDecimal.ZERO)
         throw RtsGenericException("Quantity delivered must be greater than zero for line ${lineDto.purchaseLineId}.")
+
       if (lineDto.unitCost <= BigDecimal.ZERO)
         throw RtsGenericException("Unit cost must be greater than zero for line ${lineDto.purchaseLineId}.")
 

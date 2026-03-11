@@ -62,53 +62,60 @@ class PurchaseService(
       throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.status}")
     }
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(id))
-    val linesByProduct = existingLines.associateBy { it.locationProductId }
-    val toSave = lines.mapNotNull { cancel ->
-      linesByProduct[cancel.locationProductId]?.also { line ->
+    applyCancelUpdates(existingLines, lines)
+    purchase.status = resolveStatusAfterCancellation(existingLines) ?: purchase.status
+    purchaseRepository.save(purchase)
+    return purchaseAssembler.buildResponse(purchase, existingLines)
+  }
+
+  fun updateNotes(id: UUID, notes: String?) {
+    notes?.let {
+      val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
+      purchase.notes = notes
+      purchaseRepository.save(purchase)
+    }
+  }
+
+  private fun applyCancelUpdates(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseLineCancelDto>) {
+    val linesById = existingLines.associateBy { it.id!! }
+    val toSave = cancels.mapNotNull { cancel ->
+      linesById[cancel.purchaseLineId]?.also { line ->
         val maxCancelable = line.quantityOrdered - line.quantityDelivered
         if (cancel.quantityCanceled > maxCancelable)
           throw RtsGenericException(
-            "Cannot cancel ${cancel.quantityCanceled} items of product ${cancel.locationProductId}. " +
+            "Cannot cancel ${cancel.quantityCanceled} items of line ${cancel.purchaseLineId}. " +
               "Ordered: ${line.quantityOrdered}, Delivered: ${line.quantityDelivered}, Max cancelable: $maxCancelable"
           )
         line.quantityCanceled = cancel.quantityCanceled
       }
     }
     purchaseLineRepository.saveAll(toSave)
-    return purchaseAssembler.buildResponse(purchase, existingLines)
   }
 
-  fun updateNotes(id: UUID, notes: String?) {
-    val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
-    purchase.notes = notes
-    purchaseRepository.save(purchase)
+  private fun resolveStatusAfterCancellation(lines: List<PurchaseLineEntity>): PurchaseStatus? {
+    val allAccountedFor = lines.all { it.quantityDelivered + it.quantityCanceled == it.quantityOrdered }
+    val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }
+    return when {
+      allAccountedFor -> PurchaseStatus.FULLY_DELIVERED
+      anyDelivered -> PurchaseStatus.PARTIALLY_DELIVERED
+      else -> null
+    }
   }
 
   private fun applyLineUpdates(purchaseId: UUID, dto: PurchaseUpdateDto): List<PurchaseLineEntity> {
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(purchaseId))
-    val linesByProduct = existingLines.associateBy { it.locationProductId }
+    val linesById = existingLines.associateBy { it.id }
     val toDelete = mutableListOf<PurchaseLineEntity>()
     val toSave = mutableListOf<PurchaseLineEntity>()
 
     for (lineDto in dto.lines) {
-      val existing = linesByProduct[lineDto.locationProductId]
+      val existing = linesById[lineDto.id] ?: continue
       if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
-        existing?.let { toDelete.add(it) }
+        toDelete.add(existing)
       } else {
-        if (existing != null) {
-          existing.quantityOrdered = lineDto.quantityOrdered
-          existing.unitCost = lineDto.unitCost
-          toSave.add(existing)
-        } else {
-          toSave.add(
-            PurchaseLineEntity(
-              purchaseId = purchaseId,
-              locationProductId = lineDto.locationProductId,
-              quantityOrdered = lineDto.quantityOrdered,
-              unitCost = lineDto.unitCost
-            )
-          )
-        }
+        existing.quantityOrdered = lineDto.quantityOrdered
+        existing.unitCost = lineDto.unitCost
+        toSave.add(existing)
       }
     }
 

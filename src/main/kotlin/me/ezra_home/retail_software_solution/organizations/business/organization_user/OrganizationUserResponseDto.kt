@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.organization_user.dto
+package me.ezra_home.retail_software_solution.organizations.business.organization_user
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import me.ezra_home.retail_software_solution.configuration.serializer.DatesToMillis
@@ -13,8 +13,9 @@ data class OrganizationUserResponseDto(
     val id: UUID?,
     val joinRequestId: UUID?,
     val user: String?,
+    val userId: UUID,
     @JsonSerialize(using = DatesToMillis::class)
-    val createdOn: OffsetDateTime?,
+    val startOn: OffsetDateTime?,
     @JsonSerialize(using = DatesToMillis::class)
     val endOn: OffsetDateTime?,
     val referenceNumber: String?

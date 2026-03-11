@@ -1,24 +1,26 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.locations.model.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.model.StockMovementEntity
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
-import me.ezra_home.retail_software_solution.organizations.business.inventory.StockItemSourceRepository
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.StockItemSourceService
 import me.ezra_home.retail_software_solution.util.enums.MovementType
 import me.ezra_home.retail_software_solution.util.enums.PurchaseDeliveryStatus
 import me.ezra_home.retail_software_solution.util.enums.StockItemSource
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
+import java.math.BigDecimal
 import java.util.UUID
 
 @Service
 class PurchaseDeliveryInventoryProcessor(
-  private val stockItemSourceRepository: StockItemSourceRepository,
+  private val stockItemSourceService: StockItemSourceService,
+  private val locationProductRepository: LocationProductRepository,
   private val stockEntryRepository: StockEntryRepository,
   private val stockMovementRepository: StockMovementRepository,
   private val deliveryRepository: PurchaseDeliveryRepository
@@ -26,9 +28,7 @@ class PurchaseDeliveryInventoryProcessor(
 
   @TransactionalOnLocationSchema
   fun processDelivery(event: PurchaseDeliveredEvent) {
-    val sourceTypeId = stockItemSourceRepository.findByCode(StockItemSource.PURCHASE)?.id
-      ?: throw RtsGenericException("Stock item source 'PURCHASE' not found.")
-
+    val sourceTypeId = stockItemSourceService.findSourceId(StockItemSource.PURCHASE)
     val entriesByLineId = event.lines.associate { line ->
       line.deliveryLineId to StockEntryEntity(
         purchaseDeliveryLineId = line.deliveryLineId,
@@ -42,19 +42,28 @@ class PurchaseDeliveryInventoryProcessor(
     }
     stockEntryRepository.saveAll(entriesByLineId.values)
 
+    val productIds = event.lines.map { it.locationProductId }
+    val previousBalances = stockMovementRepository.findLatestBalances(productIds)
+      .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+
     val movements = event.lines.map { line ->
       val entry = entriesByLineId[line.deliveryLineId]!!
-      val totalRemaining = stockEntryRepository.sumQuantityRemainingByLocationProductId(line.locationProductId)
+      val newBalance = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + line.quantityDelivered
       StockMovementEntity(
         stockEntryId = entry.id!!,
         locationProductId = line.locationProductId,
         movementType = MovementType.PURCHASE_RECEIVED,
         movedQuantity = line.quantityDelivered,
-        remainingQuantity = totalRemaining,
+        remainingQuantity = newBalance,
         referenceId = line.deliveryLineId
       )
     }
     stockMovementRepository.saveAll(movements)
+
+    val unitCostByProductId = event.lines.associate { it.locationProductId to it.unitCost }
+    val products = locationProductRepository.findAllById(unitCostByProductId.keys)
+    products.forEach { it.lastPurchasePrice = unitCostByProductId[it.id] }
+    locationProductRepository.saveAll(products)
 
     val delivery = deliveryRepository.findById(event.deliveryId).orElseThrow { UpdatingNonExistingRecordException() }
     delivery.status = PurchaseDeliveryStatus.RECEIVED

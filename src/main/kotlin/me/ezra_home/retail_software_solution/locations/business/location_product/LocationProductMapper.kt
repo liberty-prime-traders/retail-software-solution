@@ -32,6 +32,7 @@ interface LocationProductMapper {
   @Mapping(target = "createdOn", ignore = true)
   @Mapping(target = "lastSyncedAt", ignore = true)
   @Mapping(target = "lastPurchasePrice", ignore = true)
+  @Mapping(target = "stockBalance", ignore = true)
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   fun partialUpdate(dto: LocationProductUpdateDto, @MappingTarget entity: LocationProductEntity)
 }

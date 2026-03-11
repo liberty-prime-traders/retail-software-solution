@@ -12,6 +12,7 @@ data class PurchaseLineResponseDto(
   val unitCost: BigDecimal,
   val lineTotal: BigDecimal,
   val quantityDelivered: BigDecimal,
+  val quantityYetToBeDelivered: BigDecimal,
   val quantityCanceled: BigDecimal,
   val quantityExpected: BigDecimal
 ) : Serializable

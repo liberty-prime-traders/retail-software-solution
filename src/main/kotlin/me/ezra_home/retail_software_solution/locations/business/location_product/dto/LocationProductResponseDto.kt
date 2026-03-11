@@ -20,5 +20,6 @@ data class LocationProductResponseDto(
   val createdBy: String?,
   val createdOn: OffsetDateTime?,
   val lastSyncedAt: OffsetDateTime?,
-  val lastPurchasePrice: BigDecimal?
+  val lastPurchasePrice: BigDecimal?,
+  val stockBalance: BigDecimal?
 ) : Serializable

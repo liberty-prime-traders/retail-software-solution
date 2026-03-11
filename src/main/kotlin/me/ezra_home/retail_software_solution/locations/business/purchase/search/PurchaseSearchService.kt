@@ -40,7 +40,7 @@ class PurchaseSearchService(
   fun fetchTop(n: Int?): List<PurchaseResponseDto> {
     val recordCount = n ?: 10
     if (recordCount > 1000) throw RtsGenericException("Limit exceeds maximum of 1000")
-    val sort = Sort.by(Sort.Direction.DESC, "created_on")
+    val sort = Sort.by(Sort.Direction.DESC, "createdOn")
     return purchaseAssembler.buildResponses(purchaseRepository.findTopN(PageRequest.of(0, recordCount, sort)))
   }
 

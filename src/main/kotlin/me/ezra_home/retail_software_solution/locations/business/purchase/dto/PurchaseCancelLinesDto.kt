@@ -5,6 +5,6 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PurchaseLineCancelDto(
-  val locationProductId: UUID,
+  val purchaseLineId: UUID,
   val quantityCanceled: BigDecimal
 ) : Serializable

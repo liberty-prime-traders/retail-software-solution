@@ -7,7 +7,7 @@ import java.util.UUID
 data class PurchaseDeliveryLineResponseDto(
   val id: UUID,
   val referenceNumber: String,
-  val locationProductId: UUID,
+  val purchaseLineId: UUID,
   val locationProduct: PurchaseLineProductDto,
   val quantityDelivered: BigDecimal,
   val unitCost: BigDecimal
