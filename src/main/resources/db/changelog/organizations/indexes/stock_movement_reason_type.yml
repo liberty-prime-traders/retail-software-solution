@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-smrt-stock-movement-reason-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_smrt_stock_movement_reason_id
+      changes:
+        - createIndex:
+            indexName: idx_smrt_stock_movement_reason_id
+            tableName: stock_movement_reason_type
+            columns:
+              - column:
+                  name: stock_movement_reason_id
+      rollback:
+        - dropIndex:
+            indexName: idx_smrt_stock_movement_reason_id
+            tableName: stock_movement_reason_type
+
+  - changeSet:
+      id: create-unique-index-smrt-active
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_smrt_active_unique
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_smrt_active_unique ON stock_movement_reason_type (stock_movement_reason_id, movement_type) WHERE end_on IS NULL
+      rollback:
+        - dropIndex:
+            indexName: idx_smrt_active_unique
+            tableName: stock_movement_reason_type

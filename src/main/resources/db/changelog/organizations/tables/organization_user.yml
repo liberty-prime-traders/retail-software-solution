@@ -27,17 +27,20 @@ databaseChangeLog:
                     notNullConstraintName: organization_user_user_id_notnull
 
               - column:
-                  name: start_on
-                  type: timestamptz
-                  defaultValueDate: ${now}
-
-              - column:
                   name: end_on
                   type: timestamptz
 
               - column:
                   name: join_request_id
                   type: uuid
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_user_created_on_not_null
 
               - column:
                   name: created_by_id

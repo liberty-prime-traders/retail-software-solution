@@ -11,18 +11,24 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
-@TransactionalOnPlatformSchema
+@TransactionalOnPlatformSchema(readOnly = true)
 class DbVersionService(
     private val dbVersionCache: DbVersionCache,
     private val dbVersionMapper: DbVersionMapper
 ) {
 
-    @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllDbVersions(): Collection<DbVersionResponseDto> {
         return dbVersionCache.getAllDbVersions()
             .map { dbVersionMapper.toResponseDto(it) }
     }
 
+    fun getVersionNumber(versionId: UUID?): String? {
+        return versionId?.let {
+            dbVersionCache.getAllDbVersions().find { it.id == versionId }?.versionNumber
+        }
+    }
+
+    @TransactionalOnPlatformSchema
     fun activateDbVersion(versionId: UUID): DbVersionResponseDto {
         val allDbVersions = dbVersionCache.getAllDbVersions()
         val dbVersionToActivate = allDbVersions.find { it.id == versionId} ?: throw UpdatingNonExistingRecordException()
@@ -37,7 +43,7 @@ class DbVersionService(
     }
 
     private fun verifyDbVersionForActivation(dbVersion: DbVersionEntity, allDbVersions: Collection<DbVersionEntity>) {
-          dbVersion.prevVersionId?.let { prevVersionId ->
+        dbVersion.prevVersionId?.let { prevVersionId ->
             if (prevVersionId == dbVersion.id) {
                 throw RtsGenericException("A DB version cannot point to itself as previous version.")
             }

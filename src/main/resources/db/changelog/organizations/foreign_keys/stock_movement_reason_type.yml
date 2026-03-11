@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-stock-movement-reason-type-reason
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_smrt_stock_movement_reason
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_movement_reason_type
+            baseColumnNames: stock_movement_reason_id
+            referencedTableName: stock_movement_reason
+            referencedColumnNames: id
+            constraintName: fk_smrt_stock_movement_reason
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_movement_reason_type
+            constraintName: fk_smrt_stock_movement_reason

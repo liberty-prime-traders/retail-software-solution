@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-organization-current-db-version-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: organization_current_db_version_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: organization
+            baseColumnNames: current_db_version_id
+            referencedTableName: db_version
+            referencedColumnNames: id
+            constraintName: organization_current_db_version_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: organization
+            constraintName: organization_current_db_version_id_fk
+
+  - changeSet:
+      id: add-fk-organization-creation-pass-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: organization_creation_pass_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: organization
+            baseColumnNames: creation_pass_id
+            referencedTableName: authorization_pass
+            referencedColumnNames: id
+            constraintName: organization_creation_pass_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: organization
+            constraintName: organization_creation_pass_id_fk
+
+  - changeSet:
+      id: add-fk-organization-created-by-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: organization_created_by_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: organization
+            baseColumnNames: created_by_id
+            referencedTableName: sys_user
+            referencedColumnNames: id
+            constraintName: organization_created_by_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: organization
+            constraintName: organization_created_by_id_fk

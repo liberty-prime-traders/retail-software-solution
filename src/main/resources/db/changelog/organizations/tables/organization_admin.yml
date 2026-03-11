@@ -27,11 +27,6 @@ databaseChangeLog:
                     notNullConstraintName: organization_admin_user_id_notnull
 
               - column:
-                  name: start_on
-                  type: timestamptz
-                  defaultValueDate: ${now}
-
-              - column:
                   name: end_on
                   type: timestamptz
 

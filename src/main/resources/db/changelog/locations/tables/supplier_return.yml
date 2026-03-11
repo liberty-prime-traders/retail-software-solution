@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-supplier-return-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: supplier_return
+      changes:
+        - createTable:
+            tableName: supplier_return
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_return_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: supplier_return_reference_number_unique
+
+              - column:
+                  name: supplier_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_return_supplier_id_notnull
+
+              - column:
+                  name: purchase_id
+                  type: uuid
+
+              - column:
+                  name: purchase_delivery_id
+                  type: uuid
+
+              - column:
+                  name: return_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_return_return_date_notnull
+
+              - column:
+                  name: reason
+                  type: text
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_return_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

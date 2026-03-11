@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - property:
+      dbms: postgresql
+      name: table_registry_ref
+      value: "(SELECT 'PTBL' || lpad(val::text, greatest(6, length(val::text)), '0') FROM (VALUES (nextval('seq_table_registry_reference_number'))) t(val))"
+
+  - property:
+      dbms: postgresql
+      name: version_1_id
+      value: (SELECT id FROM db_version WHERE version_number = '1.0.0')
+
+  - includeAll:
+      path: version_entries
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: service_accounts
+      relativeToChangelogFile: true
+
+  - includeAll:
+      path: registry_entries
+      relativeToChangelogFile: true

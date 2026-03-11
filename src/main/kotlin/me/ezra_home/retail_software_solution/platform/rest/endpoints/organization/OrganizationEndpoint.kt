@@ -3,8 +3,9 @@ package me.ezra_home.retail_software_solution.platform.rest.endpoints.organizati
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationService
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -31,13 +32,13 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
 
     @PostMapping
     @PreAuthorize("hasRole('${RtsRoles.ROLE_CREATE_ORGANIZATION}')")
-    fun createOrganization(@RequestBody organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto =
-        organizationService.createOrganization(organizationInsertDto)
+    fun createOrganization(@RequestBody dto: OrganizationInsertDto): OrganizationResponseDto =
+        organizationService.createOrganization(dto)
 
     @PutMapping
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    fun updateOrganization(@RequestBody organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto =
-        organizationService.updateOrganization(organizationUpdateDto)
+    fun updateOrganization(@RequestBody dto: OrganizationUpdateDto): OrganizationResponseDto =
+        organizationService.updateOrganization(dto)
 
     @DeleteMapping
     @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")

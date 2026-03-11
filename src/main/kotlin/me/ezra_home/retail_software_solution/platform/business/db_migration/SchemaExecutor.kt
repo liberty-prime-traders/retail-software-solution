@@ -22,21 +22,23 @@ class SchemaExecutor(
     private val locationChangeLog: String
 ) {
 
-  fun executeOrganizationSchema(schemaName: String, versionLabel: String) {
+  fun executeOrganizationSchema(schemaName: String, versionLabel: String, previousVersionLabel: String? = null) {
     SchemaCreator.runMigration(
-      schemaName = schemaName,
-      dataSource = organizationDataSource,
-      changeLog = organizationChangeLog,
-      liquibaseLabel = versionLabel
+        schemaName = schemaName,
+        dataSource = organizationDataSource,
+        changeLog = organizationChangeLog,
+        targetVersion = versionLabel,
+        previousVersion = previousVersionLabel
     )
   }
 
-  fun executeLocationSchema(schemaName: String, versionLabel: String) {
+  fun executeLocationSchema(schemaName: String, versionLabel: String, previousVersionLabel: String? = null) {
     SchemaCreator.runMigration(
-      schemaName = schemaName,
-      dataSource = locationDataSource,
-      changeLog = locationChangeLog,
-      liquibaseLabel = versionLabel
+        schemaName = schemaName,
+        dataSource = locationDataSource,
+        changeLog = locationChangeLog,
+        targetVersion = versionLabel,
+        previousVersion = previousVersionLabel
     )
   }
 }

@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-entry-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_entry_aud
+      changes:
+        - createTable:
+            tableName: stock_entry_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: purchase_delivery_line_id
+                  type: uuid
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+
+              - column:
+                  name: source_type_id
+                  type: uuid
+
+              - column:
+                  name: source_id
+                  type: uuid
+
+              - column:
+                  name: batch_size
+                  type: decimal(15,3)
+
+              - column:
+                  name: quantity_remaining
+                  type: decimal(15,3)
+
+              - column:
+                  name: priority
+                  type: integer
+
+              - column:
+                  name: unit_cost
+                  type: decimal(15,2)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: stock_entry_aud
+            columnNames: id, rev
+            constraintName: pk_stock_entry_aud
+
+      rollback:
+        - dropTable:
+            tableName: stock_entry_aud

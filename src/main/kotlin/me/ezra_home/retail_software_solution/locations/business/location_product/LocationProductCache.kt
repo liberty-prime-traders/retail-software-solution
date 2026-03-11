@@ -9,6 +9,11 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 
+/**
+ * This should not always be used unless the count has been called and
+ * determined that the number of location products is small enough to be cached in memory.
+ * This is to avoid caching a large number of location products in memory which can lead to performance issues.
+ */
 @Service
 @CacheSchemaLevel(SchemaLevel.LOCATION)
 @CacheConfig(cacheNames = [CacheNames.LOCATION_PRODUCT])

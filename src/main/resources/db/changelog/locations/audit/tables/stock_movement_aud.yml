@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-movement-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_movement_aud
+      changes:
+        - createTable:
+            tableName: stock_movement_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: stock_entry_id
+                  type: uuid
+
+              - column:
+                  name: movement_type
+                  type: varchar(5)
+
+              - column:
+                  name: reason_id
+                  type: uuid
+
+              - column:
+                  name: moved_quantity
+                  type: decimal(15,3)
+
+              - column:
+                  name: remaining_quantity
+                  type: decimal(15,3)
+
+              - column:
+                  name: reference_id
+                  type: uuid
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: stock_movement_aud
+            columnNames: id, rev
+            constraintName: pk_stock_movement_aud
+
+      rollback:
+        - dropTable:
+            tableName: stock_movement_aud

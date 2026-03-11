@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints.organization_user
 
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.dto.OrganizationUserResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserResponseDto
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping

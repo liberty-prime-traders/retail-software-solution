@@ -6,9 +6,6 @@ import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/**
- * DTO for {@link me.ezra_home.retail_software_solution.platform.model.OrganizationEntity}
- */
 data class OrganizationResponseDto(
     val id: UUID?,
     val createdBy: String?,
@@ -16,6 +13,9 @@ data class OrganizationResponseDto(
     val createdOn: OffsetDateTime?,
     val name: String?,
     val description: String?,
+    val hidden: Boolean,
+    val currentDbVersion: String?,
+    val creationPassReferenceNumber: String?,
     val subdomain: String?,
     val referenceNumber: String?
 ) : Serializable

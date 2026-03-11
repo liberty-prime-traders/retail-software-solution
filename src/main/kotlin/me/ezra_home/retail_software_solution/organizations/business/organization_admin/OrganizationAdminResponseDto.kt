@@ -10,6 +10,7 @@ import java.util.UUID
 data class OrganizationAdminResponseDto(
     val id: UUID?,
     val user: String?,
+    val userId: UUID,
     val startOn: OffsetDateTime?,
     val endOn: OffsetDateTime?,
     val referenceNumber: String?

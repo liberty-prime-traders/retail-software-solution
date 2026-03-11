@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-purchase-delivery-line-purchase-delivery-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_delivery_line_purchase_delivery_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_delivery_line_purchase_delivery_id
+            tableName: purchase_delivery_line
+            columns:
+              - column:
+                  name: purchase_delivery_id
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_delivery_line_purchase_delivery_id
+            tableName: purchase_delivery_line
+
+  - changeSet:
+      id: create-index-purchase-delivery-line-purchase-line-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_delivery_line_purchase_line_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_delivery_line_purchase_line_id
+            tableName: purchase_delivery_line
+            columns:
+              - column:
+                  name: purchase_line_id
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_delivery_line_purchase_line_id
+            tableName: purchase_delivery_line
