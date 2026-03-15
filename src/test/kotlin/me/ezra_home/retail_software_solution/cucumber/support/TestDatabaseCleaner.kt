@@ -1,6 +1,7 @@
-package me.ezra_home.retail_software_solution.cucumber.config
+package me.ezra_home.retail_software_solution.cucumber.support
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import org.intellij.lang.annotations.Language
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
@@ -15,6 +16,16 @@ class TestDatabaseCleaner(
   private var cachedTableCount: Int? = null
   private var cachedTruncateSql: String? = null
 
+  companion object {
+    @Language("SQL")
+    private const val TABLE_SCOPE = """
+      WHERE table_type = 'BASE TABLE'
+        AND table_schema NOT IN ('pg_catalog', 'information_schema')
+        AND table_schema <> 'platform'
+        AND table_name NOT IN ('databasechangelog', 'databasechangeloglock')
+    """
+  }
+
   fun clean() {
     jdbcTemplate.execute("UPDATE table_registry SET validated = true WHERE validated = false")
     val truncateSql = getOrBuildTruncateSql() ?: return
@@ -23,14 +34,7 @@ class TestDatabaseCleaner(
 
   private fun getOrBuildTruncateSql(): String? {
     val currentTableCount = jdbcTemplate.queryForObject(
-      """
-        SELECT COUNT(*)
-        FROM information_schema.tables
-        WHERE table_type = 'BASE TABLE'
-          AND table_schema NOT IN ('pg_catalog', 'information_schema')
-          AND table_schema <> 'platform'
-          AND table_name NOT IN ('databasechangelog', 'databasechangeloglock')
-      """.trimIndent(),
+      "SELECT COUNT(*) FROM information_schema.tables $TABLE_SCOPE".trimIndent(),
       Int::class.java
     ) ?: 0
 
@@ -39,14 +43,7 @@ class TestDatabaseCleaner(
     }
 
     val tables = jdbcTemplate.query(
-      """
-        SELECT table_schema, table_name
-        FROM information_schema.tables
-        WHERE table_type = 'BASE TABLE'
-          AND table_schema NOT IN ('pg_catalog', 'information_schema')
-          AND table_schema <> 'platform'
-          AND table_name NOT IN ('databasechangelog', 'databasechangeloglock')
-      """.trimIndent()
+      "SELECT table_schema, table_name FROM information_schema.tables $TABLE_SCOPE".trimIndent()
     ) { rs, _ ->
       "${quoteIdentifier(rs.getString("table_schema"))}.${quoteIdentifier(rs.getString("table_name"))}"
     }

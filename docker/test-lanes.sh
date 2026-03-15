@@ -9,8 +9,8 @@ case "$LANE" in
   smoke)
     GRADLE_TASK="cucumberSmokeTest"
     ;;
-  kafka)
-    GRADLE_TASK="cucumberKafkaTest"
+  kafka-producer)
+    GRADLE_TASK="cucumberKafkaProducerTest"
     ;;
   kafka-consumer)
     GRADLE_TASK="cucumberKafkaConsumerTest"
@@ -20,14 +20,14 @@ case "$LANE" in
     ;;
   *)
     echo "Invalid lane: $LANE"
-    echo "Usage: ./test-lanes.sh [smoke|kafka|kafka-consumer|regression]"
+    echo "Usage: ./test-lanes.sh [smoke|kafka-producer|kafka-consumer|regression]"
     exit 1
     ;;
 esac
 
 cleanup() {
   cd "$DOCKER_DIR"
-  ./test.sh down >/dev/null 2>&1 || true
+  ./test.sh down || echo "Warning: test infrastructure teardown failed" >&2
 }
 trap cleanup EXIT
 

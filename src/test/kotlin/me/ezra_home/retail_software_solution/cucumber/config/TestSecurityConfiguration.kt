@@ -7,6 +7,10 @@ import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_ID
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_LOCATION_SCHEMA
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_ORG_SCHEMA
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
@@ -31,20 +35,9 @@ class TestSecurityConfiguration {
     val roles: List<String>
   )
 
-  companion object {
-    private val DEFAULT_USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val DEFAULT_ORG_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val DEFAULT_LOCATION_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private const val DEFAULT_ORG_SCHEMA = "public"
-    private const val DEFAULT_LOCATION_SCHEMA = "public"
-  }
-
   @Bean
   @Primary
-  fun testSecurityFilterChain(
-    http: HttpSecurity,
-    testAuthenticationFilter: OncePerRequestFilter
-  ): SecurityFilterChain {
+  fun testSecurityFilterChain(http: HttpSecurity, testAuthenticationFilter: OncePerRequestFilter): SecurityFilterChain {
     return http
       .authorizeHttpRequests {
         it.requestMatchers("/secured/**").authenticated()
@@ -93,9 +86,9 @@ class TestSecurityConfiguration {
         val sessionContext = SessionContext().apply {
           systemUserId = principal?.systemUserId
           oktaId = principal?.oktaId
-          organizationId = request.getHeader(RtsHeaders.ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ORG_ID
+          organizationId = request.getHeader(RtsHeaders.ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID
           organizationSchemaName = DEFAULT_ORG_SCHEMA
-          locationId = request.getHeader(RtsHeaders.LOCATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_LOCATION_ID
+          locationId = request.getHeader(RtsHeaders.LOCATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID
           locationSchemaName = DEFAULT_LOCATION_SCHEMA
           tenantFilterIsComplete = true
         }
@@ -119,22 +112,22 @@ class TestSecurityConfiguration {
     if (token.isNullOrBlank() || token == "null") return null
 
     return when (token) {
-      "mock-platform-admin-token" -> TestPrincipal(
+      TestConstants.Tokens.PLATFORM_ADMIN -> TestPrincipal(
         token = token,
         oktaId = "okta-platform-admin",
-        systemUserId = DEFAULT_USER_ID,
+        systemUserId = DEFAULT_ID,
         roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
       )
-      "mock-org-admin-token" -> TestPrincipal(
+      TestConstants.Tokens.ORG_ADMIN -> TestPrincipal(
         token = token,
         oktaId = "okta-org-admin",
-        systemUserId = DEFAULT_USER_ID,
+        systemUserId = DEFAULT_ID,
         roles = listOf(RtsRoles.ROLE_CREATE_ORGANIZATION)
       )
-      "mock-user-token" -> TestPrincipal(
+      TestConstants.Tokens.ORG_USER -> TestPrincipal(
         token = token,
         oktaId = "okta-org-user",
-        systemUserId = DEFAULT_USER_ID,
+        systemUserId = DEFAULT_ID,
         roles = emptyList()
       )
       else -> null

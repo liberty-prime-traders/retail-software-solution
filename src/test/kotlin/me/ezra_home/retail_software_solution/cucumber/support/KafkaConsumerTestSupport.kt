@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.config
+package me.ezra_home.retail_software_solution.cucumber.support
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationRepository
@@ -12,19 +12,14 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 import org.springframework.stereotype.Component
 import java.util.Properties
-import java.util.UUID
 
 @Component
 class KafkaConsumerTestSupport(
-  private val organizationRepository: OrganizationRepository,
-  private val kafkaListenerRegistry: KafkaListenerEndpointRegistry,
-  @Value("\${spring.kafka.bootstrap-servers}")
+    private val organizationRepository: OrganizationRepository,
+    private val kafkaListenerRegistry: KafkaListenerEndpointRegistry,
+    @param:Value("\${spring.kafka.bootstrap-servers}")
   private val bootstrapServers: String
 ) {
-
-  companion object {
-    private val DEFAULT_USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-  }
 
   fun prepareConsumerScenario() {
     resetCatalogSyncConsumerOffsetsToLatest()
@@ -77,7 +72,7 @@ class KafkaConsumerTestSupport(
         subdomain = "public-test",
         schemaName = "public"
       ).apply {
-        createdById = DEFAULT_USER_ID
+        createdById = TestConstants.DEFAULT_ID
       }
     )
   }

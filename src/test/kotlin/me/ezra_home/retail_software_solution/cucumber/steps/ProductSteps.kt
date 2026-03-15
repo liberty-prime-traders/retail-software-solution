@@ -3,84 +3,58 @@ package me.ezra_home.retail_software_solution.cucumber.steps
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
-import me.ezra_home.retail_software_solution.cucumber.config.AuthenticatedRequestFactory
-import me.ezra_home.retail_software_solution.cucumber.config.ProductFixture
-import me.ezra_home.retail_software_solution.cucumber.config.TestContext
-import me.ezra_home.retail_software_solution.cucumber.config.TestDataManager
-import me.ezra_home.retail_software_solution.cucumber.config.TestFixtureBuilder
-import org.springframework.beans.factory.annotation.Autowired
-import java.util.UUID
+import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
+import me.ezra_home.retail_software_solution.cucumber.support.DtoConverter
+import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductContext
+import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixture
+import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
+import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 
-class ProductSteps {
+class ProductSteps(
+  private val responseContext: ResponseContext,
+  private val requestFactory: AuthenticatedRequestFactory,
+  private val fixtureBuilder: ProductFixtureBuilder,
+  private val dtoConverter: DtoConverter,
+  private val injectContext: InjectContext
+) {
 
-  @Autowired
-  private lateinit var context: TestContext
-
-  @Autowired
-  private lateinit var dataManager: TestDataManager
-
-  @Autowired
-  private lateinit var requestFactory: AuthenticatedRequestFactory
-
-  @Autowired
-  private lateinit var fixtureBuilder: TestFixtureBuilder
+  private var productFixture: ProductFixture? = null
 
   @Given("the following products exist:")
   fun createProducts(dataTable: DataTable) {
     val fixture = getOrCreateProductFixture()
 
-    dataTable.asMaps().forEach { row ->
-      val productData = mapOf(
-        "productName" to row["name"],
-        "description" to row["description"],
-        "productGroupId" to fixture.productGroupId.toString(),
-        "baseUnitId" to fixture.baseUnitId.toString(),
-        "status" to (row["status"] ?: "ACTIVE")
-      )
-
-      val response = requestFactory.jsonRequest()
-        .body(productData)
-        .post("/secured/products")
-
-      if (response.statusCode in 200..299) {
-        dataManager.track("product", UUID.fromString(response.jsonPath().getString("id")))
+    dtoConverter.fromTable(dataTable, OrganizationProductInsertDto::class.java)
+      .map { it.copy(productGroupId = fixture.productGroupId, baseUnitId = fixture.baseUnitId) }
+      .forEach { dto ->
+        val response = requestFactory.jsonRequest().body(dto).post("/secured/products")
+        response.jsonPath().getString("id")?.let { injectContext.store(ProductContext.ID, it) }
       }
-    }
   }
 
   @When("I create a product with name {string} and description {string}")
   fun createProduct(name: String, description: String) {
     val fixture = getOrCreateProductFixture()
-
-    val productData = mapOf(
-      "productName" to name,
-      "description" to description,
-      "productGroupId" to fixture.productGroupId.toString(),
-      "baseUnitId" to fixture.baseUnitId.toString()
+    val dto = OrganizationProductInsertDto(
+      productName = name,
+      description = description,
+      productGroupId = fixture.productGroupId,
+      baseUnitId = fixture.baseUnitId
     )
-
-    context.lastResponse = requestFactory.jsonRequest()
-      .body(productData)
-      .post("/secured/products")
+    responseContext.lastResponse = requestFactory.jsonRequest().body(dto).post("/secured/products")
+    responseContext.lastResponse?.jsonPath()?.getString("id")?.let { injectContext.store(ProductContext.ID, it) }
   }
 
   @When("I search for products with text {string}")
   fun searchProducts(searchText: String) {
-    val searchParams = mapOf(
-      "searchText" to searchText,
-      "searchStrategy" to "FULLTEXT"
-    )
-
-    context.lastResponse = requestFactory.jsonRequest()
-      .body(searchParams)
+    responseContext.lastResponse = requestFactory.jsonRequest()
+      .body(mapOf("searchText" to searchText, "searchStrategy" to "FULLTEXT"))
       .post("/secured/products/search")
   }
 
   private fun getOrCreateProductFixture(): ProductFixture {
-    context.get("productFixture", ProductFixture::class.java)?.let { return it }
-
-    val fixture = fixtureBuilder.createProductFixture()
-    context.store("productFixture", fixture)
-    return fixture
+    return productFixture ?: fixtureBuilder.create().also { productFixture = it }
   }
 }

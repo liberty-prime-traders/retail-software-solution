@@ -3,13 +3,13 @@ Feature: Get All Organizations
   I want to retrieve all organizations
   So that I can view all tenants in the system
 
-  @organizations @auth @negative
+  @smoke
   Scenario: Regular organization user cannot retrieve all organizations (403)
     Given I am authenticated as an organization user
     When I get all organizations
     Then the response status should be 403
 
-  @smoke @organizations @auth @negative
+  @smoke
   Scenario: Unauthenticated user cannot retrieve all organizations (403)
     Given I am not authenticated
     When I get all organizations
