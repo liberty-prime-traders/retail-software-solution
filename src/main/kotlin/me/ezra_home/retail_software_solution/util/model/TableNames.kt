@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.util.model
 
 object TableNames {
+    // Platform tables
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
@@ -9,7 +10,12 @@ object TableNames {
     const val DB_MIGRATION = "db_migration"
     const val TABLE_REGISTRY = "table_registry"
     const val AUTHORIZATION_PASS = "authorization_pass"
+    const val JURISDICTION_TYPE = "jurisdiction_type"
+    const val TAX_TYPE = "tax_type"
+    const val JURISDICTION = "jurisdiction"
+    const val JURISDICTION_TAX_TYPE = "jurisdiction_tax_type"
 
+    // Organization tables
     const val ADDRESS = "address"
     const val CONTACT = "contact"
     const val SYS_USER = "sys_user"
@@ -29,6 +35,7 @@ object TableNames {
     const val STOCK_MOVEMENT_REASON_TYPE = "stock_movement_reason_type"
     const val STOCK_ITEM_SOURCE = "stock_item_source"
 
+    // Location tables
     const val SYNC_LOG = "sync_log"
     const val LOCATION_PRODUCT = "location_product"
     const val PURCHASE = "purchase"
@@ -39,9 +46,15 @@ object TableNames {
     const val STOCK_MOVEMENT = "stock_movement"
     const val SUPPLIER_RETURN = "supplier_return"
 
+    // Platform audit tables
     const val ORGANIZATION_AUDIT = "organization_aud"
     const val AUTHORIZATION_PASS_AUDIT = "authorization_pass_aud"
+    const val JURISDICTION_TYPE_AUDIT = "jurisdiction_type_aud"
+    const val TAX_TYPE_AUDIT = "tax_type_aud"
+    const val JURISDICTION_AUDIT = "jurisdiction_aud"
+    const val JURISDICTION_TAX_TYPE_AUDIT = "jurisdiction_tax_type_aud"
 
+    // Organization audit tables
     const val ADDRESS_AUDIT = "address_aud"
     const val CONTACT_AUDIT = "contact_aud"
     const val JOB_TITLE_AUDIT = "job_title_aud"
@@ -54,6 +67,7 @@ object TableNames {
     const val PRODUCT_CATEGORY_AUDIT = "product_category_aud"
     const val PRODUCT_GROUP_AUDIT = "product_group_aud"
 
+    // Location audit tables
     const val LOCATION_PRODUCT_AUDIT = "location_product_aud"
     const val PURCHASE_AUDIT = "purchase_aud"
     const val PURCHASE_LINE_AUDIT = "purchase_line_aud"

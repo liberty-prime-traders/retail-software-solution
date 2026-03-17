@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-jurisdiction-tax-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: jurisdiction_tax_type
+      changes:
+        - createTable:
+            tableName: jurisdiction_tax_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: tax_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_tax_type_tax_type_id_notnull
+
+              - column:
+                  name: jurisdiction_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_tax_type_jurisdiction_id_notnull
+
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_tax_type_active_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_tax_type_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+        - addUniqueConstraint:
+            tableName: jurisdiction_tax_type
+            columnNames: tax_type_id, jurisdiction_id
+            constraintName: jurisdiction_tax_type_tax_type_id_jurisdiction_id_unique
+      rollback:
+        - dropTable:
+            tableName: jurisdiction_tax_type

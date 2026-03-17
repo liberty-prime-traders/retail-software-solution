@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 
 enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : HasCode {
 
+  // Platform-level tables
   SYS_USER(TableNames.SYS_USER, SchemaLevel.PLATFORM),
   ORGANIZATION(TableNames.ORGANIZATION, SchemaLevel.PLATFORM),
   RESERVED_SUBDOMAIN(TableNames.RESERVED_SUBDOMAIN, SchemaLevel.PLATFORM),
@@ -12,7 +13,12 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   DB_MIGRATION(TableNames.DB_MIGRATION, SchemaLevel.PLATFORM),
   TABLE_REGISTRY(TableNames.TABLE_REGISTRY, SchemaLevel.PLATFORM),
   AUTHORIZATION_PASS(TableNames.AUTHORIZATION_PASS, SchemaLevel.PLATFORM),
+  JURISDICTION_TYPE(TableNames.JURISDICTION_TYPE, SchemaLevel.PLATFORM),
+  TAX_TYPE(TableNames.TAX_TYPE, SchemaLevel.PLATFORM),
+  JURISDICTION(TableNames.JURISDICTION, SchemaLevel.PLATFORM),
+  JURISDICTION_TAX_TYPE(TableNames.JURISDICTION_TAX_TYPE, SchemaLevel.PLATFORM),
 
+  // Organization-level tables
   PRODUCT(TableNames.PRODUCT, SchemaLevel.ORGANIZATION),
   PRODUCT_GROUP(TableNames.PRODUCT_GROUP, SchemaLevel.ORGANIZATION),
   PRODUCT_CATEGORY(TableNames.PRODUCT_CATEGORY, SchemaLevel.ORGANIZATION),
@@ -33,6 +39,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PRODUCT_TAG(TableNames.PRODUCT_TAG, SchemaLevel.ORGANIZATION),
   ORG_TABLE_REGISTRY(TableNames.ORG_TABLE_REGISTRY, SchemaLevel.ORGANIZATION),
 
+  // Location-level tables
   LOCATION_PRODUCT(TableNames.LOCATION_PRODUCT, SchemaLevel.LOCATION),
   SYNC_LOG(TableNames.SYNC_LOG, SchemaLevel.LOCATION),
   PURCHASE(TableNames.PURCHASE, SchemaLevel.LOCATION),
@@ -43,9 +50,15 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   STOCK_MOVEMENT(TableNames.STOCK_MOVEMENT, SchemaLevel.LOCATION),
   SUPPLIER_RETURN(TableNames.SUPPLIER_RETURN, SchemaLevel.LOCATION),
 
+  // Platform-level audit tables
   ORGANIZATION_AUDIT(TableNames.ORGANIZATION_AUDIT, SchemaLevel.PLATFORM),
   AUTHORIZATION_PASS_AUDIT(TableNames.AUTHORIZATION_PASS_AUDIT, SchemaLevel.PLATFORM),
+  JURISDICTION_TYPE_AUDIT(TableNames.JURISDICTION_TYPE_AUDIT, SchemaLevel.PLATFORM),
+  TAX_TYPE_AUDIT(TableNames.TAX_TYPE_AUDIT, SchemaLevel.PLATFORM),
+  JURISDICTION_AUDIT(TableNames.JURISDICTION_AUDIT, SchemaLevel.PLATFORM),
+  JURISDICTION_TAX_TYPE_AUDIT(TableNames.JURISDICTION_TAX_TYPE_AUDIT, SchemaLevel.PLATFORM),
 
+  // Organization-level audit tables
   PRODUCT_AUDIT(TableNames.PRODUCT_AUDIT, SchemaLevel.ORGANIZATION),
   ADDRESS_AUDIT(TableNames.ADDRESS_AUDIT, SchemaLevel.ORGANIZATION),
   CONTACT_AUDIT(TableNames.CONTACT_AUDIT, SchemaLevel.ORGANIZATION),
@@ -58,6 +71,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PRODUCT_CATEGORY_AUDIT(TableNames.PRODUCT_CATEGORY_AUDIT, SchemaLevel.ORGANIZATION),
   PRODUCT_GROUP_AUDIT(TableNames.PRODUCT_GROUP_AUDIT, SchemaLevel.ORGANIZATION),
 
+  // Location-level audit tables
   LOCATION_PRODUCT_AUDIT(TableNames.LOCATION_PRODUCT_AUDIT, SchemaLevel.LOCATION),
   PURCHASE_AUDIT(TableNames.PURCHASE_AUDIT, SchemaLevel.LOCATION),
   PURCHASE_LINE_AUDIT(TableNames.PURCHASE_LINE_AUDIT, SchemaLevel.LOCATION),
