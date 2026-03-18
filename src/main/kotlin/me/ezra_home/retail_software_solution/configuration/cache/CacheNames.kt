@@ -28,5 +28,6 @@ class CacheNames {
         const val JURISDICTION = "Jurisdiction"
         const val TAX_TYPE = "TaxType"
         const val JURISDICTION_TAX_TYPE = "JurisdictionTaxType"
+        const val ORG_JURISDICTION_TAX_TYPE = "OrgJurisdictionTaxType"
     }
 }
