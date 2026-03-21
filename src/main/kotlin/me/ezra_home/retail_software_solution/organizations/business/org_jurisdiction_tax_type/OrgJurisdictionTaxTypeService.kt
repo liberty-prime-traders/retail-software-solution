@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeInsertDto
 import me.ezra_home.retail_software_solution.organizations.model.OrgJurisdictionTaxTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeLabeler
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -17,6 +18,7 @@ class OrgJurisdictionTaxTypeService(
     private val orgJurisdictionTaxTypeMapper: OrgJurisdictionTaxTypeMapper,
     private val orgJurisdictionTaxTypeRepository: OrgJurisdictionTaxTypeRepository,
     private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
+    private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
     private val labeler: JurisdictionTaxTypeLabeler
 ) {
 
@@ -34,10 +36,11 @@ class OrgJurisdictionTaxTypeService(
 
     fun createAll(dtos: List<OrgJurisdictionTaxTypeInsertDto>): List<OrgJurisdictionTaxTypeResponseDto> {
         val labelIndex = labeler.buildLabelIndex()
+        val activeIds = jurisdictionTaxTypeCache.getActive().mapNotNull { it.id }.toHashSet()
         val openIds = getAssignedJurisdictionTaxTypeIds()
         dtos.forEach { dto ->
-            if (dto.jurisdictionTaxTypeId !in labelIndex)
-                throw RtsGenericException("Jurisdiction tax type not found: ${dto.jurisdictionTaxTypeId}")
+            if (dto.jurisdictionTaxTypeId !in activeIds)
+                throw RtsGenericException("Jurisdiction tax type not found or stopped: ${dto.jurisdictionTaxTypeId}")
             if (dto.jurisdictionTaxTypeId in openIds)
                 throw RtsGenericException("An open assignment already exists for: ${dto.jurisdictionTaxTypeId}")
         }

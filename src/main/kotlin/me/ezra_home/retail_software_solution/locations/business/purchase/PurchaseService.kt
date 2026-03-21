@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal

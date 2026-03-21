@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import me.ezra_home.retail_software_solution.configuration.serializer.DatesToMillis
-import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.JoinRequestStatus
 import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID

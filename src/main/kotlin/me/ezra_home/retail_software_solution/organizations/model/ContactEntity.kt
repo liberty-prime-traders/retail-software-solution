@@ -8,10 +8,10 @@ import jakarta.persistence.Transient
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.enums.ContactStatus
-import me.ezra_home.retail_software_solution.util.enums.ContactStatusConverter
-import me.ezra_home.retail_software_solution.util.enums.ContactType
-import me.ezra_home.retail_software_solution.util.enums.ContactTypeConverter
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactStatus
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactStatusConverter
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactType
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactTypeConverter
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames

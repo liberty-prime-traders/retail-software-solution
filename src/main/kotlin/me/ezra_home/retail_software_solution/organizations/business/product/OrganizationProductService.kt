@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagService
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service

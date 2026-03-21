@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
-import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.stereotype.Service
 import java.util.Collections
 import java.util.UUID

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.dto
 
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
 import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime

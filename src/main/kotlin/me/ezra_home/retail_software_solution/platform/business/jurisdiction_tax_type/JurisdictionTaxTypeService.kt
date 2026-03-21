@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.platform.business.jurisdiction.Juri
 import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
 import me.ezra_home.retail_software_solution.platform.model.JurisdictionEntity
 import me.ezra_home.retail_software_solution.platform.model.JurisdictionTaxTypeEntity
-import me.ezra_home.retail_software_solution.util.enums.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.CalculationMethod
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
 import org.springframework.stereotype.Service
@@ -70,25 +70,26 @@ class JurisdictionTaxTypeService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAvailableTaxTypes(): List<TreeNode<UUID>> {
-        val excludedIds = orgJurisdictionTaxTypeService.getAssignedJurisdictionTaxTypeIds()
+        val assignedIds = orgJurisdictionTaxTypeService.getAssignedJurisdictionTaxTypeIds()
         val taxTypeIndex = taxTypeCache.getAll().associateBy { it.id }
-        val linksByJurisdiction = jurisdictionTaxTypeCache.getAll()
-            .filterNot { it.id in excludedIds }
+        val linksByJurisdiction = jurisdictionTaxTypeCache.getActive()
+            .filterNot { it.id in assignedIds }
             .groupBy { it.jurisdictionId }
         val childJurisdictions = jurisdictionCache.getAll().groupBy { it.parentJurisdictionId }
 
-        fun buildJurisdictionNode(jurisdiction: JurisdictionEntity): TreeNode<UUID> {
+        fun buildJurisdictionNode(jurisdiction: JurisdictionEntity): TreeNode<UUID>? {
             val taxTypeNodes = linksByJurisdiction[jurisdiction.id].orEmpty().map { link ->
                 val taxTypeLabel = "${jurisdiction.name} - ${taxTypeIndex[link.taxTypeId]?.name}"
                 TreeNode(link.id!!, taxTypeLabel, selectable = true)
             }
-            val childNodes = childJurisdictions[jurisdiction.id].orEmpty().map { buildJurisdictionNode(it) }
+            val childNodes = childJurisdictions[jurisdiction.id].orEmpty().mapNotNull { buildJurisdictionNode(it) }
+            if (taxTypeNodes.isEmpty() && childNodes.isEmpty()) return null
             return TreeNode(jurisdiction.id!!, jurisdiction.name, selectable = false, children = taxTypeNodes + childNodes)
         }
 
         return jurisdictionCache.getAll()
             .filter { it.parentJurisdictionId == null }
-            .map { buildJurisdictionNode(it) }
+            .mapNotNull { buildJurisdictionNode(it) }
     }
 
     fun stopByTaxTypeIds(jurisdictionId: UUID, taxTypeIds: List<UUID>) {

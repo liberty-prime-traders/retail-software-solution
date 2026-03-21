@@ -19,6 +19,9 @@ class JurisdictionTaxTypeCache(
     @Cacheable
     fun getAll(): Collection<JurisdictionTaxTypeEntity> = jurisdictionTaxTypeRepository.findAll()
 
+    @Cacheable
+    fun getActive(): Collection<JurisdictionTaxTypeEntity> = getAll().filter { it.active }
+
     @CacheEvict(allEntries = true)
     fun upsertAll(entities: Collection<JurisdictionTaxTypeEntity>) {
         jurisdictionTaxTypeRepository.saveAll(entities)

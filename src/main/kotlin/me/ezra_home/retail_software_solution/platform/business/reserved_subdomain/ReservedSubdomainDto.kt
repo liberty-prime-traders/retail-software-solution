@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
-import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import java.io.Serializable
 import java.util.UUID
 

@@ -4,8 +4,6 @@ import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
-import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
-import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.stereotype.Component
 import java.util.UUID

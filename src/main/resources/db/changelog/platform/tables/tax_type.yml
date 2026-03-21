@@ -1,0 +1,103 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tax_type
+      changes:
+        - createTable:
+            tableName: tax_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_name_notnull
+                    unique: true
+                    uniqueConstraintName: tax_type_name_unique
+
+              - column:
+                  name: description
+                  type: nvarchar2(500)
+
+              - column:
+                  name: calculation_method
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_calculation_method_notnull
+
+              - column:
+                  name: tax_recovery_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_tax_recovery_type_notnull
+
+              - column:
+                  name: tax_application_level
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_tax_application_level_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: tax_type_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: tax_type_reference_number_notnull
+      rollback:
+        - dropTable:
+            tableName: tax_type
+
+  - changeSet:
+      id: add-tax-triggers-to-tax-type
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: tax_type
+                columnName: tax_triggers
+      changes:
+        - addColumn:
+            tableName: tax_type
+            columns:
+              - column:
+                  name: tax_triggers
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_tax_triggers_notnull
+      rollback:
+        - dropColumn:
+            tableName: tax_type
+            columnName: tax_triggers

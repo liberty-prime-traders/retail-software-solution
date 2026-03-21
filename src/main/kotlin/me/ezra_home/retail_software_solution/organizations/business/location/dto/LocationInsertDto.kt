@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.location.dto
 
-import me.ezra_home.retail_software_solution.util.enums.LocationType
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
 import java.io.Serializable
 
 /**

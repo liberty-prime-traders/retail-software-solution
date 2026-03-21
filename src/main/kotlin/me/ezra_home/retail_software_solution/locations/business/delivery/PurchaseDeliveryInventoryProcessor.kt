@@ -8,9 +8,9 @@ import me.ezra_home.retail_software_solution.locations.model.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.model.StockMovementEntity
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.StockItemSourceService
-import me.ezra_home.retail_software_solution.util.enums.MovementType
-import me.ezra_home.retail_software_solution.util.enums.PurchaseDeliveryStatus
-import me.ezra_home.retail_software_solution.util.enums.StockItemSource
+import me.ezra_home.retail_software_solution.locations.business.stock.MovementType
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseDeliveryStatus
+import me.ezra_home.retail_software_solution.organizations.business.inventory.StockItemSource
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation

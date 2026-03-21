@@ -23,6 +23,7 @@ class TaxTypeService(
 
     fun create(dto: TaxTypeInsertDto): TaxTypeResponseDto {
         StringUtils.getValueOrException(dto.name, "Name must not be blank")
+        if (dto.taxTriggers.isEmpty()) throw RtsGenericException("At least one tax trigger is required")
         if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A tax type named '${dto.name}' already exists")
         val entity = taxTypeMapper.toEntity(dto)
@@ -35,6 +36,7 @@ class TaxTypeService(
             ?: throw UpdatingNonExistingRecordException()
         taxTypeMapper.partialUpdate(dto, entity)
         StringUtils.getValueOrException(entity.name, "Name must not be blank")
+        if (entity.taxTriggers.isEmpty()) throw RtsGenericException("At least one tax trigger is required")
         if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, entity.name) && it.id != entity.id })
             throw RtsGenericException("A tax type named '${entity.name}' already exists")
         taxTypeCache.upsert(entity)

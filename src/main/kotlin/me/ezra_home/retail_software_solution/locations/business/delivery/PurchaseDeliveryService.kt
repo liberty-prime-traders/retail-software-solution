@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.context.ApplicationEventPublisher

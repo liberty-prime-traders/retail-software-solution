@@ -21,8 +21,8 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.AuthorizationPassService
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
-import me.ezra_home.retail_software_solution.util.enums.PassType
-import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassType
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
