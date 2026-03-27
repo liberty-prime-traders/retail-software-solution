@@ -14,22 +14,24 @@ spring:
 
   datasource:
     location:
-      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
-      username: ${TEST_DB_USERNAME:rtss_test_user}
-      password: ${TEST_DB_PASSWORD:rtss_test_password}
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST}:${TEST_DB_PORT}/${TEST_DB_NAME}
+      username: ${TEST_DB_USERNAME}
+      password: ${TEST_DB_PASSWORD}
+      changelog: db/changelog/locations/db-changelog-master.yml
       
     platform:
-      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}?currentSchema=platform
-      username: ${TEST_DB_USERNAME:rtss_test_user}
-      password: ${TEST_DB_PASSWORD:rtss_test_password}
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST}:${TEST_DB_PORT}/${TEST_DB_NAME}?currentSchema=platform
+      username: ${TEST_DB_USERNAME}
+      password: ${TEST_DB_PASSWORD}
       
     organization:
-      jdbc-url: jdbc:postgresql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:5435}/${TEST_DB_NAME:rtss_e2e_test}
-      username: ${TEST_DB_USERNAME:rtss_test_user}
-      password: ${TEST_DB_PASSWORD:rtss_test_password}
+      jdbc-url: jdbc:postgresql://${TEST_DB_HOST}:${TEST_DB_PORT}/${TEST_DB_NAME}
+      username: ${TEST_DB_USERNAME}
+      password: ${TEST_DB_PASSWORD}
+      changelog: db/changelog/organizations/db-changelog-master.yml
 
   kafka:
-    bootstrap-servers: ${TEST_KAFKA_BOOTSTRAP_SERVERS:localhost:9095}
+    bootstrap-servers: ${TEST_KAFKA_BOOTSTRAP_SERVERS}
     listener:
       auto-startup: false
 
@@ -43,14 +45,14 @@ spring:
 
 okta:
   oauth2:
-    issuer: http://localhost:8080
-    client-id: test-client-id
-    client-secret: test-client-secret
+    issuer: ${TEST_OKTA_ISSUER}
+    client-id: ${TEST_OKTA_CLIENT_ID}
+    client-secret: ${TEST_OKTA_CLIENT_SECRET}
     discovery:
       enabled: false
   client:
-    org-url: http://localhost:8080
-    token: test-token
+    org-url: ${TEST_OKTA_ORG_URL}
+    token: ${TEST_OKTA_TOKEN}
 
 logging:
   level:

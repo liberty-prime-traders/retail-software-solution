@@ -112,6 +112,7 @@ fun registerCucumberLaneTask(taskName: String, tagExpression: String, descriptio
 		systemProperty("cucumber.junit-platform.naming-strategy", "long")
 		systemProperty("okta.oauth2.enabled", "false")
 		systemProperty("okta.client.enabled", "false")
+		systemProperty("spring.profiles.active", "test")
 	}
 }
 

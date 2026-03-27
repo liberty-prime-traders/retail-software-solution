@@ -5,6 +5,34 @@ HTTP-level E2E tests against a real Postgres and Kafka stack, isolated from dev/
 
 ---
 
+## Configuration
+
+Test configuration is externalized in `docker/test.properties`. This file contains all environment-specific values used by `application-test.yml`.
+
+**Required properties:**
+```properties
+# Database
+TEST_DB_HOST=localhost
+TEST_DB_PORT=5435
+TEST_DB_NAME=rtss_e2e_test
+TEST_DB_USERNAME=rtss_test_user
+TEST_DB_PASSWORD=rtss_test_password
+
+# Kafka
+TEST_KAFKA_BOOTSTRAP_SERVERS=localhost:9095
+
+# Okta (mock values for tests)
+TEST_OKTA_ISSUER=http://localhost:8080
+TEST_OKTA_CLIENT_ID=test-client-id
+TEST_OKTA_CLIENT_SECRET=test-client-secret
+TEST_OKTA_ORG_URL=http://localhost:8080
+TEST_OKTA_TOKEN=test-token
+```
+
+The `application-test.yml` references these properties using `${TEST_*}` placeholders. This keeps test configuration separate from the test code and makes it easy to adjust for different environments.
+
+---
+
 ## Running Tests
 
 ```bash

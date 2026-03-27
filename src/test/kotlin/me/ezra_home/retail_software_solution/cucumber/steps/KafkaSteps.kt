@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationRepository
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
+import me.ezra_home.retail_software_solution.util.enums.LocationType
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
@@ -57,6 +58,7 @@ class KafkaSteps(
   fun createLocationForCatalogSync() {
     val locationId = locationFixtureBuilder.create(
       LocationInsertDto(
+        locationType = LocationType.SHOP,
         name = "Catalog Sync Location",
         description = "Location used in cucumber kafka consumer flow"
       )
