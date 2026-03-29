@@ -13,6 +13,10 @@ object StringUtils {
         }
     }
 
+    fun requireHasValue(str: String?, exceptionMessage: String) {
+        getValueOrException(str, exceptionMessage)
+    }
+
     fun getValueOrException(str: String?, exceptionMessage: String): String {
         return getValueOrException(Optional.ofNullable(str), exceptionMessage)
     }

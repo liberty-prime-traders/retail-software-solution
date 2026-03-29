@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrganizationAdminJoinRequestResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val fullName: String,
     val createdById: UUID,
     @JsonSerialize(using = DatesToMillis::class)

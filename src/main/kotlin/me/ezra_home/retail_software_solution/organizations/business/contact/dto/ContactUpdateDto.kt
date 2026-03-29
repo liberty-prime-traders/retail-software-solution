@@ -11,7 +11,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.ContactEntity}
  */
 data class ContactUpdateDto(
-    val id: UUID?,
+    val id: UUID,
     val contactType: Optional<ContactType>? = null,
     val identityType: Optional<IdentityType>? = null,
     val firstName: Optional<String>? = null,

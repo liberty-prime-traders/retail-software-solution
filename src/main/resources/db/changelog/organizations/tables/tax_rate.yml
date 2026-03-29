@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax-rate-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tax_rate
+      changes:
+        - createTable:
+            tableName: tax_rate
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: org_jurisdiction_tax_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_org_jurisdiction_tax_type_id_notnull
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_name_notnull
+
+              - column:
+                  name: rate_percentage
+                  type: decimal(5,2)
+
+              - column:
+                  name: rate_flat_amount
+                  type: decimal(15,4)
+
+              - column:
+                  name: start_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_start_date_notnull
+
+              - column:
+                  name: end_date
+                  type: date
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: tax_rate_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: tax_rate_reference_number_notnull
+      rollback:
+        - dropTable:
+            tableName: tax_rate

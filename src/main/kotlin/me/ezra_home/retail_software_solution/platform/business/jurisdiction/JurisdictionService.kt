@@ -30,7 +30,7 @@ class JurisdictionService(
         val entity = jurisdictionMapper.toEntity(dto)
         jurisdictionCache.upsert(entity)
         dto.taxTypesToAddOrReactivate
-            ?.map { JurisdictionTaxTypeInsertDto(it, entity.id!!) }
+            ?.map { JurisdictionTaxTypeInsertDto(it, entity.getNullSafeId()) }
             ?.let { jurisdictionTaxTypeService.createAll(it) }
         return jurisdictionMapper.toResponseDto(entity)
     }

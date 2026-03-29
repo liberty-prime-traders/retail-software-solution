@@ -54,6 +54,13 @@ databaseChangeLog:
                     notNullConstraintName: tax_type_tax_application_level_notnull
 
               - column:
+                  name: tax_triggers
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_type_tax_triggers_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
@@ -76,28 +83,3 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: tax_type
-
-  - changeSet:
-      id: add-tax-triggers-to-tax-type
-      author: ezra
-      labels: 1.0.0
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - columnExists:
-                tableName: tax_type
-                columnName: tax_triggers
-      changes:
-        - addColumn:
-            tableName: tax_type
-            columns:
-              - column:
-                  name: tax_triggers
-                  type: nvarchar2(100)
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: tax_type_tax_triggers_notnull
-      rollback:
-        - dropColumn:
-            tableName: tax_type
-            columnName: tax_triggers

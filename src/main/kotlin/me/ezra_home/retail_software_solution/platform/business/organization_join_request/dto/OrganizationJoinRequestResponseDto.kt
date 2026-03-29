@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrganizationJoinRequestResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val domain: String,
     val status: JoinRequestStatus,
 

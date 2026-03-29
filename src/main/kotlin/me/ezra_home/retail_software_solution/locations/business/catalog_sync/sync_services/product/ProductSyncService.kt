@@ -50,7 +50,6 @@ class ProductSyncService(
       SyncCursor.Revision(record.revision)
     } else {
       val referenceNumber = record.referenceNumber
-        ?: throw IllegalStateException("Product ${record.productId} missing reference number")
       SyncCursor.Reference(referenceNumber)
     }
   }

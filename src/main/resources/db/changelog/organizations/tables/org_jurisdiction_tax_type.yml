@@ -27,15 +27,11 @@ databaseChangeLog:
                     notNullConstraintName: org_jurisdiction_tax_type_jurisdiction_tax_type_id_notnull
 
               - column:
-                  name: start_date
-                  type: date
+                  name: status
+                  type: nvarchar2(5)
                   constraints:
                     nullable: false
-                    notNullConstraintName: org_jurisdiction_tax_type_start_date_notnull
-
-              - column:
-                  name: end_date
-                  type: date
+                    notNullConstraintName: org_jurisdiction_tax_type_status_notnull
 
               - column:
                   name: created_by_id

@@ -20,7 +20,7 @@ class JurisdictionTaxTypeCache(
     fun getAll(): Collection<JurisdictionTaxTypeEntity> = jurisdictionTaxTypeRepository.findAll()
 
     @Cacheable
-    fun getActive(): Collection<JurisdictionTaxTypeEntity> = getAll().filter { it.active }
+    fun getActive(): Collection<JurisdictionTaxTypeEntity> = jurisdictionTaxTypeRepository.findAll().filter { it.active }
 
     @CacheEvict(allEntries = true)
     fun upsertAll(entities: Collection<JurisdictionTaxTypeEntity>) {

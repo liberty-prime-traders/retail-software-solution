@@ -34,6 +34,9 @@ object TableNames {
     const val STOCK_MOVEMENT_REASON = "stock_movement_reason"
     const val STOCK_MOVEMENT_REASON_TYPE = "stock_movement_reason_type"
     const val STOCK_ITEM_SOURCE = "stock_item_source"
+    const val TAX_RATE = "tax_rate"
+    const val PRODUCT_TAX_ASSIGNMENT = "product_tax_assignment"
+    const val ORG_JURISDICTION_TAX_TYPE = "org_jurisdiction_tax_type"
 
     // Location tables
     const val SYNC_LOG = "sync_log"
@@ -66,6 +69,9 @@ object TableNames {
     const val PRODUCT_AUDIT = "product_aud"
     const val PRODUCT_CATEGORY_AUDIT = "product_category_aud"
     const val PRODUCT_GROUP_AUDIT = "product_group_aud"
+    const val TAX_RATE_AUDIT = "tax_rate_aud"
+    const val PRODUCT_TAX_ASSIGNMENT_AUDIT = "product_tax_assignment_aud"
+    const val ORG_JURISDICTION_TAX_TYPE_AUDIT = "org_jurisdiction_tax_type_aud"
 
     // Location audit tables
     const val LOCATION_PRODUCT_AUDIT = "location_product_aud"

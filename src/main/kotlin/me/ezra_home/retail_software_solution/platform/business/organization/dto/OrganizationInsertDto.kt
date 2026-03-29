@@ -8,5 +8,6 @@ data class OrganizationInsertDto(
     val subdomain: String,
     val passCode: UUID,
     val description: String? = null,
-    val hidden: Boolean = false
+    val hidden: Boolean = false,
+    val timezone: String? = null
 ) : Serializable

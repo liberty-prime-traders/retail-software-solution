@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeC
 import me.ezra_home.retail_software_solution.platform.model.JurisdictionEntity
 import me.ezra_home.retail_software_solution.platform.model.JurisdictionTaxTypeEntity
 import me.ezra_home.retail_software_solution.platform.business.tax_type.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
 import org.springframework.stereotype.Service
@@ -27,6 +28,14 @@ class JurisdictionTaxTypeService(
         val link = jurisdictionTaxTypeCache.getAll().find { it.id == jurisdictionTaxTypeId }
             ?: throw RtsGenericException("Jurisdiction tax type not found")
         return taxTypeCache.getAll().find { it.id == link.taxTypeId }?.calculationMethod
+            ?: throw RtsGenericException("Tax type not found for jurisdiction link")
+    }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getTaxApplicationLevel(jurisdictionTaxTypeId: UUID): TaxApplicationLevel {
+        val link = jurisdictionTaxTypeCache.getAll().find { it.id == jurisdictionTaxTypeId }
+            ?: throw RtsGenericException("Jurisdiction tax type not found")
+        return taxTypeCache.getAll().find { it.id == link.taxTypeId }?.taxApplicationLevel
             ?: throw RtsGenericException("Tax type not found for jurisdiction link")
     }
 
@@ -70,7 +79,7 @@ class JurisdictionTaxTypeService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAvailableTaxTypes(): List<TreeNode<UUID>> {
-        val assignedIds = orgJurisdictionTaxTypeService.getAssignedJurisdictionTaxTypeIds()
+        val assignedIds = orgJurisdictionTaxTypeService.getActivelyAssignedJurisdictionTaxTypeIds()
         val taxTypeIndex = taxTypeCache.getAll().associateBy { it.id }
         val linksByJurisdiction = jurisdictionTaxTypeCache.getActive()
             .filterNot { it.id in assignedIds }
@@ -80,11 +89,11 @@ class JurisdictionTaxTypeService(
         fun buildJurisdictionNode(jurisdiction: JurisdictionEntity): TreeNode<UUID>? {
             val taxTypeNodes = linksByJurisdiction[jurisdiction.id].orEmpty().map { link ->
                 val taxTypeLabel = "${jurisdiction.name} - ${taxTypeIndex[link.taxTypeId]?.name}"
-                TreeNode(link.id!!, taxTypeLabel, selectable = true)
+                TreeNode(link.getNullSafeId(), taxTypeLabel, selectable = true)
             }
             val childNodes = childJurisdictions[jurisdiction.id].orEmpty().mapNotNull { buildJurisdictionNode(it) }
             if (taxTypeNodes.isEmpty() && childNodes.isEmpty()) return null
-            return TreeNode(jurisdiction.id!!, jurisdiction.name, selectable = false, children = taxTypeNodes + childNodes)
+            return TreeNode(jurisdiction.getNullSafeId(), jurisdiction.name, selectable = false, children = taxTypeNodes + childNodes)
         }
 
         return jurisdictionCache.getAll()

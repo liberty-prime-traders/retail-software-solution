@@ -10,7 +10,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity}
  */
 data class OrganizationUserResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val joinRequestId: UUID?,
     val user: String?,
     val userId: UUID,

@@ -8,7 +8,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity}
  */
 data class OrganizationAdminResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val user: String?,
     val userId: UUID,
     val startOn: OffsetDateTime?,

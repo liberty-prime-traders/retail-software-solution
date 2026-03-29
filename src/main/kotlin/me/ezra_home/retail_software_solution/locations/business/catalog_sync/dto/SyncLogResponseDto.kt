@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SyncLogResponseDto(
-  val id: UUID?,
+  val id: UUID,
   val tableName: TableName,
   val syncMode: SyncMode,
   val initiateType: SyncInitiateType,

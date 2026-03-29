@@ -28,9 +28,9 @@ class PurchaseDeliveryAssembler(
     productMap: Map<UUID?, LocationProductEntity>
   ): List<PurchaseDeliveryResponseDto> {
     if (deliveries.isEmpty()) return emptyList()
-    val deliveryIds = deliveries.map { it.id!! }
+    val deliveryIds = deliveries.map { it.getNullSafeId() }
     val allDeliveryLines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveryIds)
-    val context = LineResolutionContext(purchaseLines.associateBy { it.id!! }, productMap)
+    val context = LineResolutionContext(purchaseLines.associateBy { it.getNullSafeId() }, productMap)
     val deliveryLinesByDeliveryId = allDeliveryLines.groupBy { it.purchaseDeliveryId }
     return deliveries.map { delivery ->
       val deliveryLines = deliveryLinesByDeliveryId[delivery.id] ?: emptyList()
@@ -44,8 +44,8 @@ class PurchaseDeliveryAssembler(
     context: LineResolutionContext
   ): PurchaseDeliveryResponseDto {
     return PurchaseDeliveryResponseDto(
-      id = delivery.id!!,
-      referenceNumber = delivery.referenceNumber!!,
+      id = delivery.getNullSafeId(),
+      referenceNumber = delivery.getNullSafeReferenceNumber(),
       purchaseId = delivery.purchaseId,
       status = delivery.status,
       deliveredAt = delivery.deliveredAt,
@@ -54,13 +54,13 @@ class PurchaseDeliveryAssembler(
         val purchaseLine = context.purchaseLineById[dl.purchaseLineId]!!
         val product = context.productMap[purchaseLine.locationProductId]!!
         PurchaseDeliveryLineResponseDto(
-          id = dl.id!!,
-          referenceNumber = dl.referenceNumber!!,
+          id = dl.getNullSafeId(),
+          referenceNumber = dl.getNullSafeReferenceNumber(),
           quantityDelivered = dl.quantityDelivered,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
           locationProduct = PurchaseLineProductDto(
-            referenceNumber = product.referenceNumber,
+            referenceNumber = product.getNullSafeReferenceNumber(),
             productName = product.productName,
             productGroupName = product.productGroupName,
             baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)

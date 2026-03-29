@@ -4,7 +4,7 @@ import java.io.Serializable
 import java.util.UUID
 
 data class OrgTableRegistryResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val registryId: UUID?,
     val tableName: String?,
     val defaultPrefix: String?,

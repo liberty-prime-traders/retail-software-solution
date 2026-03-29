@@ -57,7 +57,7 @@ class OrganizationMigrationHandler(
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = migration.id!!,
+        parentMigrationId = migration.getNullSafeId(),
         locationIds = locationIds
       )
 

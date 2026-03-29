@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
+import net.minidev.json.annotate.JsonIgnore
 import java.util.UUID
 
 @MappedSuperclass
@@ -13,4 +14,9 @@ abstract class BaseEntity(
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
     var id: UUID? = null
-)
+) {
+    @JsonIgnore
+    fun getNullSafeId(): UUID {
+        return id ?: throw IllegalStateException("ID is not set")
+    }
+}

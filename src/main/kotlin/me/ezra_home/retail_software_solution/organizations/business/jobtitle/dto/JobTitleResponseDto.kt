@@ -8,7 +8,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.JobTitleEntity}
  */
 data class JobTitleResponseDto (
-    val id: UUID?,
+    val id: UUID,
     val value: String?,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,

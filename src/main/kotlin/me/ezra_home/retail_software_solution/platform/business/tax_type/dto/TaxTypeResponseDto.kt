@@ -9,8 +9,8 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class TaxTypeResponseDto(
-    val id: UUID?,
-    val referenceNumber: String?,
+    val id: UUID,
+    val referenceNumber: String,
     val createdOn: OffsetDateTime?,
     val name: String,
     val description: String?,

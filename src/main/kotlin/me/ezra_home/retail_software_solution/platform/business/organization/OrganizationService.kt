@@ -23,6 +23,7 @@ import me.ezra_home.retail_software_solution.platform.business.reserved_subdomai
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassType
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedDomainStatus
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
@@ -55,6 +56,7 @@ class OrganizationService(
     fun createOrganization(dto: OrganizationInsertDto): OrganizationResponseDto {
         val pass = authorizationPassService.redeem(dto.passCode, PassType.CREATE_ORGANIZATION)
         organizationValidator.validateNameOnSave(dto.name)
+        DateTimes.validateTimezone(dto.timezone)
         markSubdomainAsUsed(dto.subdomain)
         val schemaName = createOrganizationSchema(dto.subdomain)
         try {
@@ -89,6 +91,7 @@ class OrganizationService(
     fun updateOrganization(dto: OrganizationUpdateDto): OrganizationResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
         organizationValidator.validateNameOnSave(dto.name, organizationId)
+        DateTimes.validateTimezone(dto.timezone)
         val entity = organizationCache.getAllOrganizations()
             .find { it.id == organizationId } ?: throw NotFoundException()
         organizationMapper.partialUpdate(dto, entity)

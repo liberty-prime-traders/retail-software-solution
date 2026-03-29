@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto
 
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeStatus
 import java.io.Serializable
-import java.time.LocalDate
 import java.util.UUID
 
 data class OrgJurisdictionTaxTypeUpdateDto(
     val id: UUID,
-    val endDate: LocalDate
+    val status: OrgJurisdictionTaxTypeStatus
 ) : Serializable

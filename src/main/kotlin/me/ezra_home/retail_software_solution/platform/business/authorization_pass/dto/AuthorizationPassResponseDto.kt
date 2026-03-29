@@ -7,8 +7,8 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class AuthorizationPassResponseDto(
-    val id: UUID?,
-    val referenceNumber: String?,
+    val id: UUID,
+    val referenceNumber: String,
     val passType: PassType,
     val maxUseCount: Int,
     val usedCount: Int,

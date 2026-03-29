@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class LocationProductResponseDto(
-  val id: UUID?,
+  val id: UUID,
   val productName: String?,
   val description: String?,
   val productGroupName: String?,
@@ -16,7 +16,7 @@ data class LocationProductResponseDto(
   val defaultSalePrice: BigDecimal?,
   val minStockLevel: Int?,
   val status: ProductStatus?,
-  val referenceNumber: String?,
+  val referenceNumber: String,
   val createdBy: String?,
   val createdOn: OffsetDateTime?,
   val lastSyncedAt: OffsetDateTime?,

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("secured/org-jurisdiction-tax-types")
+@RequestMapping("secured/org-tax-types")
 @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
 class OrgJurisdictionTaxTypeEndpoint(
     private val orgJurisdictionTaxTypeService: OrgJurisdictionTaxTypeService,

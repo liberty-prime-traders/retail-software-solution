@@ -50,7 +50,7 @@ class PurchaseDeliveryInventoryProcessor(
       val entry = entriesByLineId[line.deliveryLineId]!!
       val newBalance = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + line.quantityDelivered
       StockMovementEntity(
-        stockEntryId = entry.id!!,
+        stockEntryId = entry.getNullSafeId(),
         locationProductId = line.locationProductId,
         movementType = MovementType.PURCHASE_RECEIVED,
         movedQuantity = line.quantityDelivered,

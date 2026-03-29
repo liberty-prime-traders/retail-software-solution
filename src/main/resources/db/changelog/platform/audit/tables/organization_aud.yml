@@ -43,6 +43,10 @@ databaseChangeLog:
                   type: uuid
 
               - column:
+                  name: timezone
+                  type: nvarchar2(50)
+
+              - column:
                   name: revend
                   type: bigint
               - column:

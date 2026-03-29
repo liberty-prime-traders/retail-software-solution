@@ -8,8 +8,8 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class PurchaseResponseDto(
-  val id: UUID?,
-  val referenceNumber: String?,
+  val id: UUID,
+  val referenceNumber: String,
   val supplierId: UUID,
   val supplierName: String?,
   val status: PurchaseStatus,

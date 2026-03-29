@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-tax-rate-org-jurisdiction-tax-type-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: tax_rate_org_jurisdiction_tax_type_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: tax_rate
+            baseColumnNames: org_jurisdiction_tax_type_id
+            referencedTableName: org_jurisdiction_tax_type
+            referencedColumnNames: id
+            constraintName: tax_rate_org_jurisdiction_tax_type_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: tax_rate
+            constraintName: tax_rate_org_jurisdiction_tax_type_id_fk

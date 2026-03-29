@@ -18,7 +18,7 @@ object ProductSyncDataMapper {
       description = tuple.getOptional(ProductQueryConstants.Columns.DESCRIPTION, String::class.java),
       productGroupName = tuple.getOptional(ProductQueryConstants.Columns.PRODUCT_GROUP_NAME, String::class.java),
       status = status,
-      referenceNumber = tuple.getOptional(ProductQueryConstants.Columns.REFERENCE_NUMBER, String::class.java),
+      referenceNumber = tuple.getRequired(ProductQueryConstants.Columns.REFERENCE_NUMBER, String::class.java),
       baseUnitId = tuple.getRequired(ProductQueryConstants.Columns.BASE_UNIT_ID, UUID::class.java),
       categoryId = tuple.getRequired(ProductQueryConstants.Columns.CATEGORY_ID, UUID::class.java),
       revision = tuple.getOptional(ProductQueryConstants.Columns.REVISION, Number::class.java)?.toLong()

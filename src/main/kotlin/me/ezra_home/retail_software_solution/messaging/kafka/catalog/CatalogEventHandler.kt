@@ -35,7 +35,7 @@ class CatalogEventHandler(
     }
 
     fun publish(tableName: TableName, entityId: UUID) {
-        val sourceSchema = SessionContextProvider.getSession().organizationSchemaName
+        val sourceSchema = SessionContextProvider.getSession().organization?.schemaName
             ?: throw RtsGenericException("Organization schema name not found in session")
 
         catalogEventProducer.publish(

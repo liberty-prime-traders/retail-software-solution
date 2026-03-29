@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PurchaseLineUpdateDto(
-  val id: UUID?,
+  val id: UUID,
   val locationProductId: UUID?,
   val quantityOrdered: BigDecimal,
   val unitCost: BigDecimal

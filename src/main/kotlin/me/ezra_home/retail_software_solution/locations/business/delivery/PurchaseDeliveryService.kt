@@ -33,7 +33,7 @@ class PurchaseDeliveryService(
     guardDeliveryStatus(purchase)
 
     val purchaseLines = purchaseLineRepository.findByPurchaseId(dto.purchaseId)
-    val purchaseLineById = purchaseLines.associateBy { it.id!! }
+    val purchaseLineById = purchaseLines.associateBy { it.getNullSafeId() }
     PurchaseDeliveryValidator.validate(dto, purchaseLineById)
 
     val updatedLines = updateDeliveredQuantities(dto, purchaseLineById)
@@ -68,7 +68,7 @@ class PurchaseDeliveryService(
 
   private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {
     val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(dto))
-    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
+    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.getNullSafeId(), dto)
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
   }

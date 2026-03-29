@@ -18,8 +18,8 @@ class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
     message: String
   ): DbMigrationEntity {
     return DbMigrationEntity(
-      dbVersionId = targetDbVersion.id!!,
-      schemaOwnerId = organization.id!!,
+      dbVersionId = targetDbVersion.getNullSafeId(),
+      schemaOwnerId = organization.getNullSafeId(),
       schemaOwnerType = SchemaOwnerType.ORGANIZATION,
       status = MigrationStatus.INITIATED,
       migrationType = migrationType,
@@ -33,8 +33,8 @@ class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
     parentMigrationId: UUID
   ): DbMigrationEntity {
     return DbMigrationEntity(
-      dbVersionId = targetDbVersion.id!!,
-      schemaOwnerId = location.id!!,
+      dbVersionId = targetDbVersion.getNullSafeId(),
+      schemaOwnerId = location.getNullSafeId(),
       schemaOwnerType = SchemaOwnerType.LOCATION,
       status = MigrationStatus.INITIATED,
       migrationType = null,
@@ -48,12 +48,12 @@ class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
     targetDbVersion: DbVersionEntity
   ): DbMigrationEntity {
     return DbMigrationEntity(
-      dbVersionId = targetDbVersion.id!!,
+      dbVersionId = targetDbVersion.getNullSafeId(),
       schemaOwnerId = originalMigration.schemaOwnerId,
       schemaOwnerType = SchemaOwnerType.ORGANIZATION,
       status = MigrationStatus.INITIATED,
       message = "Retry of failed locations from migration ${originalMigration.id}",
-      migrationParentId = originalMigration.id!!,
+      migrationParentId = originalMigration.getNullSafeId(),
       migrationType = MigrationType.LOCATIONS_ONLY
     ).also { dbMigrationCache.upsertDbMigration(it) }
   }

@@ -6,7 +6,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrganizationProductResponseDto (
-    val id: UUID?,
+    val id: UUID,
     val productName: String?,
     val description: String?,
     val categoryName: String?,

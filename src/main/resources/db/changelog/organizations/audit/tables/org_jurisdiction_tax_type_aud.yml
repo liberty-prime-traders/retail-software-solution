@@ -35,12 +35,8 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: start_date
-                  type: date
-
-              - column:
-                  name: end_date
-                  type: date
+                  name: status
+                  type: nvarchar2(5)
 
               - column:
                   name: revend

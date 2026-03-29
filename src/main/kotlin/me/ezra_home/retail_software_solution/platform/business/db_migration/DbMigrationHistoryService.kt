@@ -21,12 +21,16 @@ class DbMigrationHistoryService(
         val organizationsWithLocations = organizationService.getAllOrganizationsWithLocations()
 
         val orgIdToName: Map<UUID, String?> = buildMap {
-            organizationsWithLocations.map { put(it.organization.id!!, it.organization.name) }
+            organizationsWithLocations.forEach {
+                put(it.organization.getNullSafeId(), it.organization.name)
+            }
         }
 
         val locIdToName: Map<UUID, String?> = buildMap {
-            organizationsWithLocations.map {
-                org -> org.locations.map { put(it.id!!, it.name) }
+            organizationsWithLocations.forEach {
+                org -> org.locations.forEach {
+                    put(it.getNullSafeId(), it.name)
+                }
             }
         }
 
@@ -44,7 +48,7 @@ class DbMigrationHistoryService(
                     val organizationName = orgIdToName[organizationId]
                     topLevelOrgMigrations.add(
                         OrganizationMigrationResponseDto(
-                            id = migration.id!!,
+                            id = migration.getNullSafeId(),
                             organizationName = organizationName!!,
                             versionNumber = versionNumber!!,
                             startOn = migration.startOn,

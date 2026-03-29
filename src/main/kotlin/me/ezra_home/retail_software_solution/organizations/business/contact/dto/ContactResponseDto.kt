@@ -11,10 +11,10 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.ContactEntity}
  */
 data class ContactResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
-    val referenceNumber: String?,
+    val referenceNumber: String,
     val contactType: ContactType,
     val identityType: IdentityType,
     val firstName: String? = null,
