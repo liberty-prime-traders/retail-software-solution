@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class DbVersionResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val versionNumber: String?,
     val sequenceNumber: Long?,
     val prevVersion: String?,

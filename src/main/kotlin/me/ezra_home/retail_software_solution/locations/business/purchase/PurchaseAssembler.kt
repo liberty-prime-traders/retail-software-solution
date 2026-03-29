@@ -29,7 +29,7 @@ class PurchaseAssembler(
 ) {
 
   fun buildResponses(purchases: List<PurchaseEntity>): List<PurchaseResponseDto> {
-    val purchaseIds = purchases.map { it.id!! }
+    val purchaseIds = purchases.map { it.getNullSafeId() }
     val allLines = purchaseLineRepository.findByPurchaseIdIn(purchaseIds)
     val productMap = loadProductMap(allLines.map { it.locationProductId })
     val linesByPurchaseId = allLines.groupBy { it.purchaseId }
@@ -43,7 +43,7 @@ class PurchaseAssembler(
   }
 
   fun buildResponse(purchase: PurchaseEntity, lines: List<PurchaseLineEntity>): PurchaseResponseDto {
-    val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchase.id!!))
+    val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchase.getNullSafeId()))
     return buildResponse(purchase, lines, loadProductMap(lines.map { it.locationProductId }), deliveries)
   }
 
@@ -58,8 +58,8 @@ class PurchaseAssembler(
     val orderTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) }
 
     return PurchaseResponseDto(
-      id = purchase.id,
-      referenceNumber = purchase.referenceNumber,
+      id = purchase.getNullSafeId(),
+      referenceNumber = purchase.getNullSafeReferenceNumber(),
       supplierId = purchase.supplierId,
       supplierName = supplierNameMap[purchase.supplierId],
       status = purchase.status,
@@ -84,10 +84,10 @@ class PurchaseAssembler(
       val product = productMap[line.locationProductId]!!
       val quantityExpected = line.quantityOrdered.subtract(line.quantityCanceled)
       PurchaseLineResponseDto(
-        id = line.id,
-        referenceNumber = line.referenceNumber,
+        id = line.getNullSafeId(),
+        referenceNumber = line.getNullSafeReferenceNumber(),
         locationProduct = PurchaseLineProductDto(
-          referenceNumber = product.referenceNumber,
+          referenceNumber = product.getNullSafeReferenceNumber(),
           productName = product.productName,
           productGroupName = product.productGroupName,
           baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)

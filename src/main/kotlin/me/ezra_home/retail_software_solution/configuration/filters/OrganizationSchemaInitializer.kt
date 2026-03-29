@@ -31,12 +31,8 @@ class OrganizationSchemaInitializer(
     private fun doInitialize(httpServletRequest: HttpServletRequest) {
         httpServletRequest.getHeader(ORGANIZATION_ID_HEADER)
             ?.takeIf { StringUtils.hasValue(it) }
-            ?.let {
-                val organizationId = UUID.fromString(it)
-                SessionContextProvider.getSession().organizationId = organizationId
-                organizationId
-            }
-            ?.let { organizationId -> organizationCache.getAllOrganizations().find { it.id == organizationId }?.schemaName }
-            ?.let { SessionContextProvider.getSession().organizationSchemaName = it }
+            ?.let { UUID.fromString(it) }
+            ?.let { organizationId -> organizationCache.getAllOrganizations().find { it.id == organizationId } }
+            ?.let { SessionContextProvider.initOrganization(it) }
     }
 }

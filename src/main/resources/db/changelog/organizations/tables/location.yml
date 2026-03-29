@@ -48,6 +48,10 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
+                  name: timezone
+                  type: nvarchar2(50)
+
+              - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:

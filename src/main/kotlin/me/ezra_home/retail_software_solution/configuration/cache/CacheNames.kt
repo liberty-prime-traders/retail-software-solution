@@ -24,5 +24,11 @@ class CacheNames {
         const val TABLE_REGISTRY = "TableRegistry"
         const val ORG_TABLE_REGISTRY = "OrgTableRegistry"
         const val TAG = "Tag"
+        const val JURISDICTION_TYPE = "JurisdictionType"
+        const val JURISDICTION = "Jurisdiction"
+        const val TAX_TYPE = "TaxType"
+        const val JURISDICTION_TAX_TYPE = "JurisdictionTaxType"
+        const val ORG_JURISDICTION_TAX_TYPE = "OrgJurisdictionTaxType"
+        const val TAX_RATE = "TaxRate"
     }
 }

@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.location
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -22,6 +23,7 @@ class LocationValidator(private val locationCache: LocationCache) {
         locationCache.getAllLocations()
             .find { StringUtils.isEquivalent(it.name, locationInsertDto.name) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        DateTimes.validateTimezone(locationInsertDto.timezone)
     }
 
     fun validateLocationUpdate(locationUpdateDto: LocationUpdateDto) {
@@ -30,5 +32,7 @@ class LocationValidator(private val locationCache: LocationCache) {
         locationCache.getAllLocations()
             .find { StringUtils.isEquivalent(it.name, name) && !Objects.equals(it.id, locationId) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        DateTimes.validateTimezone(locationUpdateDto.timezone)
     }
+
 }

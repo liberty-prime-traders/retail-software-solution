@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -58,7 +57,7 @@ class OrganizationMigrationHandler(
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = migration.id!!,
+        parentMigrationId = migration.getNullSafeId(),
         locationIds = locationIds
       )
 

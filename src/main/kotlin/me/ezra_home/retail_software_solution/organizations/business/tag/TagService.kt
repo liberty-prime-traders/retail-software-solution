@@ -14,7 +14,7 @@ import java.util.UUID
 
 @Service
 @TransactionalOnOrganizationSchema
-class TagService(
+class TagService (
     private val tagMapper: TagMapper,
     private val tagCache: TagCache,
     private val tagRepository: TagRepository,

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-jurisdiction-tax-type-tax-type-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: jurisdiction_tax_type_tax_type_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: jurisdiction_tax_type
+            baseColumnNames: tax_type_id
+            referencedTableName: tax_type
+            referencedColumnNames: id
+            constraintName: jurisdiction_tax_type_tax_type_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: jurisdiction_tax_type
+            constraintName: jurisdiction_tax_type_tax_type_id_fk
+
+  - changeSet:
+      id: add-fk-jurisdiction-tax-type-jurisdiction-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: jurisdiction_tax_type_jurisdiction_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: jurisdiction_tax_type
+            baseColumnNames: jurisdiction_id
+            referencedTableName: jurisdiction
+            referencedColumnNames: id
+            constraintName: jurisdiction_tax_type_jurisdiction_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: jurisdiction_tax_type
+            constraintName: jurisdiction_tax_type_jurisdiction_id_fk

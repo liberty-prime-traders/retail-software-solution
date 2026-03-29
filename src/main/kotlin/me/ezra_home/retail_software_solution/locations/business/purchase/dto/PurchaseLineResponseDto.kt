@@ -5,8 +5,8 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PurchaseLineResponseDto(
-  val id: UUID?,
-  val referenceNumber: String?,
+  val id: UUID,
+  val referenceNumber: String,
   val locationProduct: PurchaseLineProductDto,
   val quantityOrdered: BigDecimal,
   val unitCost: BigDecimal,

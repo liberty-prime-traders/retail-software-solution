@@ -37,7 +37,7 @@ class TableRegistryService(
     }
 
      fun update(dto: TableRegistryUpdateDto): TableRegistryResponseDto {
-         val id = dto.id ?: throw RtsGenericException("Table Registry id is required for update")
+         val id = dto.id
          val allTables = tableRegistryCache.getAllTables()
          val entity = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
          tableRegistryMapper.patchEntity(dto, entity)
@@ -55,7 +55,13 @@ class TableRegistryService(
         StringUtils.getValueOrException(entity.displayName, "Display name is required")
     }
 
-    private fun validateUniqueness(tableName: String?, defaultPrefix: String?, displayName: String?, tableId: UUID?, allTables: Collection<TableRegistryEntity>) {
+    private fun validateUniqueness(
+        tableName: String?,
+        defaultPrefix: String?,
+        displayName: String?,
+        tableId: UUID?,
+        allTables: Collection<TableRegistryEntity>
+    ) {
         if (!tableName.isNullOrBlank()) {
             allTables
                 .find { StringUtils.isEquivalent(it.tableName, tableName) && it.id != tableId }

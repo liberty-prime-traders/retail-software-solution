@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.platform.model.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.util.business.StringUtils
-import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component

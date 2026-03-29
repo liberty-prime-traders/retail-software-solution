@@ -8,7 +8,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.locations.model.entity.AddressEntity}
  */
 data class AddressResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val line1: String?,
     val line2: String?,
     val line3: String?,

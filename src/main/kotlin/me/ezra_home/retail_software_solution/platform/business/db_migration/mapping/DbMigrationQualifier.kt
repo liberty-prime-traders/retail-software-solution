@@ -4,7 +4,14 @@ import me.ezra_home.retail_software_solution.organizations.business.location.Loc
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
+import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class SchemaOwnerName
+
 
 @Component
 class DbMigrationQualifier(

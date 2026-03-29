@@ -5,7 +5,6 @@ import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
 import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
-import me.ezra_home.retail_software_solution.util.enums.UserType
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable

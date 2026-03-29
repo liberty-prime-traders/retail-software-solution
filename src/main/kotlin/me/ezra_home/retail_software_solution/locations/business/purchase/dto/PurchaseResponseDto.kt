@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.dto
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryResponseDto
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseStatus
 import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
 data class PurchaseResponseDto(
-  val id: UUID?,
-  val referenceNumber: String?,
+  val id: UUID,
+  val referenceNumber: String,
   val supplierId: UUID,
   val supplierName: String?,
   val status: PurchaseStatus,

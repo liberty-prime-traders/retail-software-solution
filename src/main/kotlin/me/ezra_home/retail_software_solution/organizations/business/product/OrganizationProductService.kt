@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagService
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
@@ -42,11 +41,11 @@ class OrganizationProductService(
         organizationProductCache.upsertProduct(productEntity)
         if (productEntity.id != null) {
             productTagService.manageProductTags(
-                productId = productEntity.id!!,
+                productId = productEntity.getNullSafeId(),
                 tagsToAdd = productInsertDto.tagsToAdd
             )
         }
-        catalogEventHandler.publish(TableName.PRODUCT, productEntity.id!!)
+        catalogEventHandler.publish(TableName.PRODUCT, productEntity.getNullSafeId())
         return organizationProductMapper.toDto(productEntity)
     }
 
@@ -62,7 +61,7 @@ class OrganizationProductService(
             tagsToAdd = productDto.tagsToAdd,
             tagsToRemove = productDto.tagsToRemove
         )
-        catalogEventHandler.publish(TableName.PRODUCT, productToUpdate.id!!)
+        catalogEventHandler.publish(TableName.PRODUCT, productToUpdate.getNullSafeId())
         return organizationProductMapper.toDto(productToUpdate)
     }
 
@@ -83,7 +82,7 @@ class OrganizationProductService(
     private fun updateStatus(product: OrganizationProductEntity, status: ProductStatus): OrganizationProductResponseDto {
         product.status = status
         organizationProductCache.upsertProduct(product)
-        catalogEventHandler.publish(TableName.PRODUCT, product.id!!)
+        catalogEventHandler.publish(TableName.PRODUCT, product.getNullSafeId())
         return organizationProductMapper.toDto(product)
     }
 

@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.AuthorizationPassQualifier
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.PassReferenceNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionNumber
+import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionQualifier
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
@@ -14,7 +16,10 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
-@Mapper(config = RtsMapperConfig::class)
+@Mapper(
+    config = RtsMapperConfig::class,
+    uses = [AuthorizationPassQualifier::class, DbVersionQualifier::class]
+)
 interface OrganizationMapper {
 
     @Mapping(target = "id", ignore = true)

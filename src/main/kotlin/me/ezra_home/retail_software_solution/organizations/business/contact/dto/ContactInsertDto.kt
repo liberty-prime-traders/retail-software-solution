@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.dto
 
-import me.ezra_home.retail_software_solution.util.enums.ContactStatus
-import me.ezra_home.retail_software_solution.util.enums.ContactType
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactStatus
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactType
 import java.io.Serializable
 import java.math.BigDecimal
 

@@ -1,5 +1,6 @@
 spring:
-  config.import: optional:file:docker/dev.env[.properties]
+  config:
+    import: optional:file:docker/dev.env[.properties]
   application:
     name: retail-software-solution
 

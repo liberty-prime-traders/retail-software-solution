@@ -39,6 +39,9 @@ class OrganizationEntity(
 
     @NotAudited
     @Column(name = "schema_name", length = 100, nullable = false, updatable = false)
-    var schemaName: String? = null
+    var schemaName: String? = null,
+
+    @Column(name = "timezone", length = 50)
+    var timezone: String? = null
 
 ): HasReferenceEntity()

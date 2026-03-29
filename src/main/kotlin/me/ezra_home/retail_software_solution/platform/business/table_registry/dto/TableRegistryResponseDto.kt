@@ -8,7 +8,7 @@ import java.util.UUID
  * DTO for responding with TableRegistryEntity
  */
 data class TableRegistryResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val tableName: String?,
     val defaultPrefix: String?,
     val minimumVersion: String?,

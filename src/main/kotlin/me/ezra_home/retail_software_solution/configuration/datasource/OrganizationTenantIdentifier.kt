@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 class OrganizationTenantIdentifier: CurrentTenantIdentifierResolver<String> {
 
     override fun resolveCurrentTenantIdentifier(): String {
-        val schemaName = SessionContextProvider.getSession().organizationSchemaName
+        val schemaName = SessionContextProvider.getSession().organization?.schemaName
         if (schemaName.isNullOrBlank() && SessionContextProvider.getSession().tenantFilterIsComplete) {
             throw RtsGenericException("Organization schema name is not set in the session context")
         }

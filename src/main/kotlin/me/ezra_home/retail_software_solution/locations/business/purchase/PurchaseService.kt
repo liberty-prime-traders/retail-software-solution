@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -23,7 +22,7 @@ class PurchaseService(
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.save(it) }
-    val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
+    val lines = PurchaseMapper.toLineEntities(purchase.getNullSafeId(), dto.lines)
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -33,7 +32,7 @@ class PurchaseService(
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.applyDraftUpdate(purchase, dto)
     purchaseRepository.save(purchase)
-    val lines = applyLineUpdates(purchase.id!!, dto)
+    val lines = applyLineUpdates(purchase.getNullSafeId(), dto)
     PurchaseValidator.guardNoDuplicateProducts(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -42,7 +41,7 @@ class PurchaseService(
     PurchaseValidator.guardHasLines(dto.lines)
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toOrderEntity(dto).also { purchaseRepository.save(it) }
-    val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
+    val lines = PurchaseMapper.toLineEntities(purchase.getNullSafeId(), dto.lines)
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -52,7 +51,7 @@ class PurchaseService(
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.convertDraftToOrder(purchase, dto)
     purchaseRepository.save(purchase)
-    val lines = applyLineUpdates(purchase.id!!, dto)
+    val lines = applyLineUpdates(purchase.getNullSafeId(), dto)
     PurchaseValidator.guardHasLines(lines)
     PurchaseValidator.guardNoDuplicateProducts(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
@@ -77,7 +76,7 @@ class PurchaseService(
   }
 
   private fun applyCancelUpdates(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseLineCancelDto>) {
-    val linesById = existingLines.associateBy { it.id!! }
+    val linesById = existingLines.associateBy { it.getNullSafeId() }
     val toSave = cancels.mapNotNull { cancel ->
       linesById[cancel.purchaseLineId]?.also { line ->
         PurchaseValidator.guardCancelQuantity(line, cancel)
@@ -105,7 +104,7 @@ class PurchaseService(
     val toCreate = mutableListOf<PurchaseLineEntity>()
 
     for (lineDto in dto.lines) {
-      val existing = lineDto.id?.let { linesById[it] }
+      val existing = lineDto.id.let { linesById[it] }
       if (existing == null) {
         PurchaseValidator.guardNewLineHasProduct(lineDto)
         toCreate.add(PurchaseMapper.toNewLineEntity(purchaseId, lineDto))

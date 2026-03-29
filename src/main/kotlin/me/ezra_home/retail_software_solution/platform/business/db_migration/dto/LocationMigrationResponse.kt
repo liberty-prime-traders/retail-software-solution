@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration.dto
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import me.ezra_home.retail_software_solution.configuration.serializer.DatesToMillis
-import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationStatus
 import java.io.Serializable
 import java.time.OffsetDateTime
 import java.util.UUID

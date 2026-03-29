@@ -37,7 +37,7 @@ class LocationProductFetcher(
         val hasMore = results.size > pageRequest.requestedSize
         val pageResults = if (hasMore) results.take(pageRequest.requestedSize) else results
 
-        val balances = stockMovementRepository.findLatestBalances(pageResults.map { it.id!! })
+        val balances = stockMovementRepository.findLatestBalances(pageResults.map { it.getNullSafeId() })
             .associate { it.getLocationProductId() to it.getRemainingQuantity() }
         pageResults.forEach { it.stockBalance = balances[it.id] }
 

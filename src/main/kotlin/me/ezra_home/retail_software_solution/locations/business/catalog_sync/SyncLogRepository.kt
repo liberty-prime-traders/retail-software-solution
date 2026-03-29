@@ -14,7 +14,7 @@ interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
     SELECT s.lastProcessedRevision
     FROM SyncLogEntity s
     WHERE s.tableName = :tableName
-    AND s.status = me.ezra_home.retail_software_solution.util.enums.SyncStatus.COMPLETED
+    AND s.status = me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.COMPLETED
     AND s.lastProcessedRevision IS NOT NULL
     ORDER BY s.completedAt DESC
     LIMIT 1
@@ -26,8 +26,8 @@ interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
     FROM SyncLogEntity s
     WHERE s.tableName = :tableName
     AND s.status IN (
-      me.ezra_home.retail_software_solution.util.enums.SyncStatus.IN_PROGRESS,
-      me.ezra_home.retail_software_solution.util.enums.SyncStatus.CANCELLATION_REQUESTED
+      me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.IN_PROGRESS,
+      me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.CANCELLATION_REQUESTED
     )
     ORDER BY s.createdOn DESC
     LIMIT 1
@@ -39,8 +39,8 @@ interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
     FROM SyncLogEntity s
     WHERE s.tableName = :tableName
     AND s.status IN (
-      me.ezra_home.retail_software_solution.util.enums.SyncStatus.IN_PROGRESS,
-      me.ezra_home.retail_software_solution.util.enums.SyncStatus.CANCELLATION_REQUESTED
+      me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.IN_PROGRESS,
+      me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.CANCELLATION_REQUESTED
     )
   """)
   fun existsInProgressSync(tableName: TableName): Boolean
@@ -49,7 +49,7 @@ interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
     SELECT s.lastProcessedRevision
     FROM SyncLogEntity s
     WHERE s.tableName = :tableName
-    AND s.status = me.ezra_home.retail_software_solution.util.enums.SyncStatus.FAILED
+    AND s.status = me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.FAILED
     AND s.lastProcessedRevision IS NOT NULL
     ORDER BY s.completedAt DESC
     LIMIT 1
@@ -60,7 +60,7 @@ interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
     SELECT s.lastProcessedRevision
     FROM SyncLogEntity s
     WHERE s.tableName = :tableName
-    AND s.status = me.ezra_home.retail_software_solution.util.enums.SyncStatus.CANCELLED
+    AND s.status = me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncStatus.CANCELLED
     AND s.lastProcessedRevision IS NOT NULL
     ORDER BY s.canceledAt DESC
     LIMIT 1

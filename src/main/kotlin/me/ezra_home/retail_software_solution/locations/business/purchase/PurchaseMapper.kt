@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
 import java.time.OffsetDateTime
 import java.util.UUID
 

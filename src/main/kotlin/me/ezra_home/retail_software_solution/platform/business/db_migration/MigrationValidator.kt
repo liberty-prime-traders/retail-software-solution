@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.dto.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object PurchaseValidator {

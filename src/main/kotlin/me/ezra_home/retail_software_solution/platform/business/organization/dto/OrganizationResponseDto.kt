@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrganizationResponseDto(
-    val id: UUID?,
+    val id: UUID,
     val createdBy: String?,
     @field:JsonSerialize(using = DatesToMillis::class)
     val createdOn: OffsetDateTime?,

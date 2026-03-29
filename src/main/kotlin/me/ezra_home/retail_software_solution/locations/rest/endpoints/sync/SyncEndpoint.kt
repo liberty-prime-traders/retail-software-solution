@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.catalog_sync.Syn
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogUpdater
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.dto.SyncLogResponseDto
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.dto.SyncRequestDto
-import me.ezra_home.retail_software_solution.util.enums.SyncInitiateType
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncInitiateType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
