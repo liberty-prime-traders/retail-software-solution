@@ -70,6 +70,8 @@ dependencies {
 	testImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testImplementation("org.testcontainers:postgresql")
+	testImplementation("org.testcontainers:kafka")
 }
 
 configurations.testRuntimeClasspath {

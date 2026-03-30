@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
 import java.util.UUID
 
 class OrganizationCrudSteps(
-  private val authContext: AuthContext,
   private val responseContext: ResponseContext,
   private val requestFactory: AuthenticatedRequestFactory
 ) {
@@ -27,7 +26,7 @@ class OrganizationCrudSteps(
     if (responseContext.lastResponse?.statusCode == 201) {
       val orgId = responseContext.lastResponse?.jsonPath()?.getString("id")
       orgId?.let {
-        authContext.currentOrganizationId = UUID.fromString(it)
+        AuthContext.currentOrganizationId = UUID.fromString(it)
       }
     }
   }
@@ -52,7 +51,7 @@ class OrganizationCrudSteps(
 
   @Given("an organization exists with id {string}")
   fun organizationExists(orgId: String) {
-    authContext.currentOrganizationId = UUID.fromString(orgId)
+    AuthContext.currentOrganizationId = UUID.fromString(orgId)
   }
 
   @When("I get locations for organization {string}")

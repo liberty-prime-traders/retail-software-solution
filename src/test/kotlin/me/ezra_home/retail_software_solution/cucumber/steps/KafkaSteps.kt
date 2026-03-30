@@ -30,7 +30,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 class KafkaSteps(
-    private val authContext: AuthContext,
     private val responseContext: ResponseContext,
     private val locationFixtureBuilder: LocationFixtureBuilder,
     private val locationRepository: LocationRepository,
@@ -64,13 +63,13 @@ class KafkaSteps(
       )
     )
     catalogSyncLocationId = locationId
-    authContext.currentLocationId = locationId
+    AuthContext.currentLocationId = locationId
   }
 
   @Given("I use the catalog sync location context")
   fun useCatalogSyncLocationContext() {
     assertNotNull(catalogSyncLocationId, "Catalog sync location id was not set")
-    authContext.currentLocationId = catalogSyncLocationId
+    AuthContext.currentLocationId = catalogSyncLocationId
   }
 
   @Given("I am subscribed to the catalog events topic")

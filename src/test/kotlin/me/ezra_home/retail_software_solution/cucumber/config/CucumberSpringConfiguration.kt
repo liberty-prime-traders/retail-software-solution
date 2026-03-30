@@ -6,11 +6,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Import(TestMockBeansConfiguration::class, TestSecurityConfiguration::class)
+@ContextConfiguration(initializers = [ContainerInitializer::class])
 class CucumberSpringConfiguration {
 
   @LocalServerPort

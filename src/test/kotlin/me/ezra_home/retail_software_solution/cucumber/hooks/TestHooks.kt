@@ -9,7 +9,6 @@ import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.TestDatabaseCleaner
 
 class TestHooks(
-  private val authContext: AuthContext,
   private val responseContext: ResponseContext,
   private val testDatabaseCleaner: TestDatabaseCleaner,
   private val kafkaConsumerTestSupport: KafkaConsumerTestSupport,
@@ -19,7 +18,7 @@ class TestHooks(
   @Before
   fun beforeScenario() {
     testDatabaseCleaner.clean()
-    authContext.reset()
+    AuthContext.reset()
     responseContext.reset()
     injectContext.clear()
   }

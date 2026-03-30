@@ -1,10 +1,8 @@
 package me.ezra_home.retail_software_solution.cucumber.support
 
-import org.springframework.stereotype.Component
 import java.util.UUID
 
-@Component
-class AuthContext {
+object AuthContext {
 
   var authToken: String? = null
   var currentOrganizationId: UUID? = null

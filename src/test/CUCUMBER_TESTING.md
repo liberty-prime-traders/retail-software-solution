@@ -5,50 +5,18 @@ HTTP-level E2E tests against a real Postgres and Kafka stack, isolated from dev/
 
 ---
 
-## Configuration
-
-Test configuration is externalized in `docker/test.properties`. This file contains all environment-specific values used by `application-test.yml`.
-
-**Required properties:**
-```properties
-# Database
-TEST_DB_HOST=localhost
-TEST_DB_PORT=5435
-TEST_DB_NAME=rtss_e2e_test
-TEST_DB_USERNAME=rtss_test_user
-TEST_DB_PASSWORD=rtss_test_password
-
-# Kafka
-TEST_KAFKA_BOOTSTRAP_SERVERS=localhost:9095
-
-# Okta (mock values for tests)
-TEST_OKTA_ISSUER=http://localhost:8080
-TEST_OKTA_CLIENT_ID=test-client-id
-TEST_OKTA_CLIENT_SECRET=test-client-secret
-TEST_OKTA_ORG_URL=http://localhost:8080
-TEST_OKTA_TOKEN=test-token
-```
-
-The `application-test.yml` references these properties using `${TEST_*}` placeholders. This keeps test configuration separate from the test code and makes it easy to adjust for different environments.
-
----
-
 ## Running Tests
 
-```bash
-# Start infrastructure, run a lane, tear down
-cd docker && ./test-lanes.sh smoke
-cd docker && ./test-lanes.sh kafka-producer
-cd docker && ./test-lanes.sh kafka-consumer
-cd docker && ./test-lanes.sh regression
+Postgres and Kafka are managed automatically by Testcontainers. Docker Desktop must be running before starting any tests.
 
-# Or manually
-cd docker && ./test.sh up
-./gradlew cucumberRegressionTest
-cd docker && ./test.sh down
+```bash
+./cucumber.sh              # all tests (regression lane)
+./cucumber.sh smoke
+./cucumber.sh kafka-producer
+./cucumber.sh kafka-consumer
 ```
 
-Infrastructure: Postgres `localhost:5435` (`rtss_e2e_test`), Kafka `localhost:9095`.
+Individual scenarios can also be run directly from the IDE by clicking the run button next to a scenario in any feature file.
 
 Reports land in `build/reports/tests/{lane}/index.html` and `build/reports/cucumber.html`.
 
@@ -58,12 +26,12 @@ Reports land in `build/reports/tests/{lane}/index.html` and `build/reports/cucum
 
 Each lane is a Gradle task that filters by tag. Tag scenarios to control which lanes they appear in.
 
-| Lane | Gradle Task | Run when |
-|---|---|---|
-| `smoke` | `cucumberSmokeTest` | `@smoke` |
+| Lane             | Gradle Task                 | Run when                                       |
+|------------------|-----------------------------|------------------------------------------------|
+| `smoke`          | `cucumberSmokeTest`         | `@smoke`                                       |
 | `kafka-producer` | `cucumberKafkaProducerTest` | `@kafka-producer` (excludes `@kafka-consumer`) |
-| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@kafka-consumer` |
-| `regression` | `cucumberRegressionTest` | everything except `@ignore` |
+| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@kafka-consumer`                              |
+| `regression`     | `cucumberRegressionTest`    | everything except `@ignore`                    |
 
 **`@kafka-producer`** — tests that an action publishes the right event to the topic. The step manually creates a Kafka consumer, polls the topic, and asserts the message shape. The application's own listeners are not running.
 
@@ -92,6 +60,8 @@ Given I am not authenticated                        # expects 403
 
 All authenticated steps also seed `currentOrganizationId` and `currentLocationId` with a default UUID so request headers are always present.
 
+An auth step must appear before any step that creates fixture data. Fixture creation calls the real API and will fail with a 401 if no token is set.
+
 ---
 
 ## Fixtures
@@ -114,6 +84,7 @@ val fixture = productFixtureBuilder.create()
 
 When a step needs a product to exist, it calls the fixture and stamps those IDs onto every row:
 ```gherkin
+Given I am authenticated as an organization user
 Given the following products exist:
   | productName | description  |
   | Widget A    | First widget |
