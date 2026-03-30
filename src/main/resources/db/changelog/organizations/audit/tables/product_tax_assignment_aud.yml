@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-product-tax-assignment-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: product_tax_assignment_aud
+      changes:
+        - createTable:
+            tableName: product_tax_assignment_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: product_id
+                  type: uuid
+
+              - column:
+                  name: tax_rate_id
+                  type: uuid
+
+              - column:
+                  name: start_date
+                  type: date
+
+              - column:
+                  name: end_date
+                  type: date
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: product_tax_assignment_aud
+            columnNames: id, rev
+            constraintName: pk_product_tax_assignment_aud
+      rollback:
+        - dropTable:
+            tableName: product_tax_assignment_aud

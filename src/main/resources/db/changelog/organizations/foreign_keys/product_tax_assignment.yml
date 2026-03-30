@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-product-tax-assignment-product-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: product_tax_assignment_product_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product_tax_assignment
+            baseColumnNames: product_id
+            referencedTableName: product
+            referencedColumnNames: id
+            constraintName: product_tax_assignment_product_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product_tax_assignment
+            constraintName: product_tax_assignment_product_id_fk
+
+  - changeSet:
+      id: add-fk-product-tax-assignment-tax-rate-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: product_tax_assignment_tax_rate_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product_tax_assignment
+            baseColumnNames: tax_rate_id
+            referencedTableName: tax_rate
+            referencedColumnNames: id
+            constraintName: product_tax_assignment_tax_rate_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product_tax_assignment
+            constraintName: product_tax_assignment_tax_rate_id_fk

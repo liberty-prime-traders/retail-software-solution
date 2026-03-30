@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-product-tax-assignment-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: product_tax_assignment
+      changes:
+        - createTable:
+            tableName: product_tax_assignment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tax_assignment_product_id_notnull
+
+              - column:
+                  name: tax_rate_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tax_assignment_tax_rate_id_notnull
+
+              - column:
+                  name: start_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tax_assignment_start_date_notnull
+
+              - column:
+                  name: end_date
+                  type: date
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: product_tax_assignment_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: product_tax_assignment_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: product_tax_assignment_reference_number_notnull
+      rollback:
+        - dropTable:
+            tableName: product_tax_assignment

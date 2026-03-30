@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-product-tax-assignment-in-table-registry
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: product_tax_assignment
+              - column:
+                  name: default_prefix
+                  value: PRTAX
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Product Tax Assignment
+              - column:
+                  name: description
+                  value: Table recording which tax rate applies to a product and when
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}
