@@ -1,27 +1,38 @@
 package me.ezra_home.retail_software_solution.cucumber.fixtures
 
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
+import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
 import java.util.UUID
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
-abstract class FixtureBuilder<INSERT_DTO>(protected val requestFactory: AuthenticatedRequestFactory) {
+abstract class FixtureBuilder<INSERT_DTO>(
+  protected val requestFactory: AuthenticatedRequestFactory,
+  protected val injectContext: InjectContext
+) {
 
   protected abstract val endpoint: String
   protected abstract fun defaultDto(): INSERT_DTO
 
-  fun create(dto: INSERT_DTO = defaultDto()): UUID {
+  protected open fun fromRow(row: Map<String, String>): INSERT_DTO = defaultDto()
+
+  fun create(dto: INSERT_DTO = defaultDto()): String {
     val response = requestFactory.jsonRequest().body(dto).post(endpoint)
-    assertEquals(200, response.statusCode, "Failed to create fixture at $endpoint. Response: ${response.asString()}")
-    val id = response.jsonPath().getString("id")
-    assertNotNull(id, "Fixture response missing id")
-    return UUID.fromString(id)
+    assertEquals(
+      200,
+      response.statusCode,
+      "Failed to create fixture at $endpoint. Response: ${response.asString()}"
+    )
+    return response.getResponseId()
   }
+
+  fun createFromRow(row: Map<String, String>): String = create(fromRow(row))
 
   fun delete(id: UUID) {
     val response = requestFactory.jsonRequest().delete("$endpoint/$id")
     assertEquals(
-      204, response.statusCode,
+      204,
+      response.statusCode,
       "Failed to delete fixture at $endpoint/$id. Response: ${response.asString()}"
     )
   }

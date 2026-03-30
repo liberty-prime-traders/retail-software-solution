@@ -7,6 +7,7 @@ spring:
       - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
       - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
       - com.okta.spring.boot.oauth.OktaOAuth2AutoConfig
+      - com.okta.spring.boot.oauth.OktaOAuth2ResourceServerAutoConfig
       - com.okta.spring.boot.sdk.config.OktaClientPropertiesConfiguration
 
   datasource:
@@ -29,13 +30,13 @@ spring:
 
 okta:
   oauth2:
-    issuer: http://localhost:8080
+    issuer: https://localhost:8080
     client-id: test-client-id
     client-secret: test-client-secret
     discovery:
       enabled: false
   client:
-    org-url: http://localhost:8080
+    org-url: https://localhost:8080
     token: test-token
 
 logging:

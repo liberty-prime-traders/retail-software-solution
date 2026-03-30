@@ -13,7 +13,7 @@ class TestDatabaseCleaner(
   dataSource: DataSource
 ) {
   private val jdbcTemplate = JdbcTemplate(dataSource)
-  private var cachedTableCount: Int? = null
+  private var cachedTableKey: String? = null
   private var cachedTruncateSql: String? = null
 
   companion object {
@@ -27,28 +27,21 @@ class TestDatabaseCleaner(
   }
 
   fun clean() {
-    jdbcTemplate.execute("UPDATE table_registry SET validated = true WHERE validated = false")
     val truncateSql = getOrBuildTruncateSql() ?: return
     jdbcTemplate.execute(truncateSql)
   }
 
   private fun getOrBuildTruncateSql(): String? {
-    val currentTableCount = jdbcTemplate.queryForObject(
-      "SELECT COUNT(*) FROM information_schema.tables $TABLE_SCOPE".trimIndent(),
-      Int::class.java
-    ) ?: 0
-
-    if (cachedTruncateSql != null && cachedTableCount == currentTableCount) {
-      return cachedTruncateSql
-    }
-
     val tables = jdbcTemplate.query(
-      "SELECT table_schema, table_name FROM information_schema.tables $TABLE_SCOPE".trimIndent()
+      "SELECT table_schema, table_name FROM information_schema.tables $TABLE_SCOPE ORDER BY table_schema, table_name".trimIndent()
     ) { rs, _ ->
       "${quoteIdentifier(rs.getString("table_schema"))}.${quoteIdentifier(rs.getString("table_name"))}"
     }
 
-    cachedTableCount = currentTableCount
+    val tableKey = tables.joinToString(",")
+    if (tableKey == cachedTableKey) return cachedTruncateSql
+
+    cachedTableKey = tableKey
     cachedTruncateSql = if (tables.isEmpty()) null
     else "TRUNCATE TABLE ${tables.joinToString(", ")} RESTART IDENTITY CASCADE"
     return cachedTruncateSql

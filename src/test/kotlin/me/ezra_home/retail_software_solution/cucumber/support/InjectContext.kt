@@ -1,19 +1,22 @@
 package me.ezra_home.retail_software_solution.cucumber.support
 
-import com.google.common.collect.ArrayListMultimap
 import org.springframework.stereotype.Component
 import java.util.regex.Pattern
 
 @Component
 class InjectContext {
 
-  private val store = ArrayListMultimap.create<String, String>()
+  private val store = mutableMapOf<String, MutableList<String>>()
 
   fun store(key: String, value: String) {
-    store.put(key, value)
+    store.getOrPut(key) { mutableListOf() }.add(value)
   }
 
-  fun resolve(key: String, index: Int = 0): String? = store[key].getOrNull(index)
+  fun find(key: String, index: Int? = null): String? =
+    store[key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
+
+  fun get(key: String, index: Int? = null): String =
+    checkNotNull(find(key, index)) { "No value found in context for key '$key'" }
 
   fun inject(text: String): String {
     val matcher = PLACEHOLDER_PATTERN.matcher(text)
@@ -22,8 +25,8 @@ class InjectContext {
       val placeholder = matcher.group(1)
       val parts = placeholder.split("->")
       val key = parts[0]
-      val index = parts.getOrNull(1)?.toIntOrNull() ?: 0
-      val resolved = resolve(key, index) ?: matcher.group()
+      val index = parts.getOrNull(1)?.toIntOrNull()
+      val resolved = find(key, index) ?: matcher.group()
       matcher.appendReplacement(sb, Regex.escapeReplacement(resolved))
     }
     matcher.appendTail(sb)
@@ -33,7 +36,6 @@ class InjectContext {
   fun clear() = store.clear()
 
   companion object {
-    // matches #key or #key->index
     private val PLACEHOLDER_PATTERN = Pattern.compile("#([^\"\\s.!?,:;()\\[\\]{}/_]+)")
   }
 }

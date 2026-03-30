@@ -1,8 +1,6 @@
 package me.ezra_home.retail_software_solution.cucumber.support
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationRepository
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.OffsetSpec
@@ -15,7 +13,6 @@ import java.util.Properties
 
 @Component
 class KafkaConsumerTestSupport(
-    private val organizationRepository: OrganizationRepository,
     private val kafkaListenerRegistry: KafkaListenerEndpointRegistry,
     @param:Value("\${spring.kafka.bootstrap-servers}")
   private val bootstrapServers: String
@@ -23,7 +20,6 @@ class KafkaConsumerTestSupport(
 
   fun prepareConsumerScenario() {
     resetCatalogSyncConsumerOffsetsToLatest()
-    ensurePublicSchemaOrganizationExists()
     startKafkaListeners()
   }
 
@@ -59,21 +55,5 @@ class KafkaConsumerTestSupport(
       }
       admin.alterConsumerGroupOffsets(KafkaConstants.ConsumerGroups.CATALOG_SYNC, groupOffsets).all().get()
     }
-  }
-
-  private fun ensurePublicSchemaOrganizationExists() {
-    val publicSchemaExists = organizationRepository.findAll().any { it.schemaName == "public" }
-    if (publicSchemaExists) return
-
-    organizationRepository.save(
-      OrganizationEntity(
-        name = "Public Schema Test Organization",
-        description = "Seeded for kafka consumer cucumber tests",
-        subdomain = "public-test",
-        schemaName = "public"
-      ).apply {
-        createdById = TestConstants.DEFAULT_ID
-      }
-    )
   }
 }

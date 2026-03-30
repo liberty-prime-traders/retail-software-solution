@@ -3,26 +3,28 @@ package me.ezra_home.retail_software_solution.cucumber.config
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.test.context.support.TestPropertySourceUtils
-import org.testcontainers.containers.KafkaContainer
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.kafka.ConfluentKafkaContainer
 
 class ContainerInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
 
   companion object {
-    private val postgres = PostgreSQLContainer<Nothing>("postgres:16").apply {
-      withDatabaseName("rtss_e2e_test")
-      withUsername("rtss_test_user")
-      withPassword("rtss_test_password")
-      start()
+    private val postgres by lazy {
+      PostgreSQLContainer<Nothing>("postgres:16").apply {
+        withDatabaseName("rtss_e2e_test")
+        withUsername("rtss_test_user")
+        withPassword("rtss_test_password")
+        start()
+      }
     }
 
-    private val kafka = KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0")).apply {
-      start()
+    private val kafka by lazy {
+      ConfluentKafkaContainer("confluentinc/cp-kafka:7.6.0").apply { start() }
     }
   }
 
   override fun initialize(context: ConfigurableApplicationContext) {
+    System.setProperty("api.version", "1.40")
     val jdbcUrl = "jdbc:postgresql://${postgres.host}:${postgres.getMappedPort(5432)}/${postgres.databaseName}"
     TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
       context,

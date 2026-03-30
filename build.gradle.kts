@@ -7,6 +7,8 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
+ext["testcontainers.version"] = "1.20.6"
+
 group = "me.ezra-home"
 version = "0.0.1-SNAPSHOT"
 
@@ -72,6 +74,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.testcontainers:postgresql")
 	testImplementation("org.testcontainers:kafka")
+
 }
 
 configurations.testRuntimeClasspath {

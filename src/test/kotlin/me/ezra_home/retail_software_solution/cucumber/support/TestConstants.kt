@@ -15,13 +15,6 @@ object TestConstants {
     const val ORG_USER = "mock-user-token"
   }
 
-  object ContextKeys {
-    const val KAFKA_CONSUMER = "kafka.consumer"
-    const val LAST_CATALOG_EVENT = "kafka.lastCatalogEvent"
-    const val CATALOG_SYNC_LOCATION_ID = "kafka.catalogSyncLocationId"
-    const val PRODUCT_FIXTURE = "productFixture"
-  }
-
   object Timeouts {
     const val KAFKA_EVENT_MS = 15_000L
     const val KAFKA_SYNC_MS = 20_000L

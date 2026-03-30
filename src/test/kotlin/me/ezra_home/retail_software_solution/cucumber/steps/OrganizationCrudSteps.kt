@@ -2,14 +2,19 @@ package me.ezra_home.retail_software_solution.cucumber.steps
 
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
+import me.ezra_home.retail_software_solution.cucumber.context.organizations.OrgContext
 import me.ezra_home.retail_software_solution.cucumber.support.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
+import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import java.util.Optional
 import java.util.UUID
 
 class OrganizationCrudSteps(
   private val responseContext: ResponseContext,
-  private val requestFactory: AuthenticatedRequestFactory
+  private val requestFactory: AuthenticatedRequestFactory,
+  private val injectContext: InjectContext
 ) {
 
   @When("I get all organizations")
@@ -19,16 +24,14 @@ class OrganizationCrudSteps(
 
   @When("I create an organization with name {string} and subdomain {string}")
   fun createOrganization(name: String, subdomain: String) {
+    val organizationCreateDto = OrganizationUpsertDto(
+      name = Optional.of(name),
+      subdomain = subdomain
+    )
     responseContext.lastResponse = requestFactory.jsonRequest()
-      .body(mapOf("name" to name, "subdomain" to subdomain))
+      .body(organizationCreateDto)
       .post("/secured/organizations")
-
-    if (responseContext.lastResponse?.statusCode == 201) {
-      val orgId = responseContext.lastResponse?.jsonPath()?.getString("id")
-      orgId?.let {
-        AuthContext.currentOrganizationId = UUID.fromString(it)
-      }
-    }
+    responseContext.lastResponse?.jsonPath()?.getString("id")?.let { injectContext.store(OrgContext.ID, it) }
   }
 
   @When("I update the current organization with name {string}")
