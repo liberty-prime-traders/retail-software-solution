@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
+import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
@@ -30,6 +31,19 @@ class ResponseSteps(
   @Then("the response field {string} should be {string}")
   fun verifyFieldValue(fieldName: String, expectedValue: String) {
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
+  }
+
+  @Then("the response should contain:")
+  fun verifyFields(table: DataTable) {
+    table.asMaps().forEach { row ->
+      val field = row["field"]!!
+      val expected = injectContext.inject(row["value"]!!)
+      assertEquals(
+        expected,
+        responseContext.lastResponse?.jsonPath()?.getString(field),
+        "Response field '$field' mismatch"
+      )
+    }
   }
 
   @Then("the response should contain {int} items")

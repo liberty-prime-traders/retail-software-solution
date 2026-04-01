@@ -3,19 +3,20 @@ package me.ezra_home.retail_software_solution.cucumber.steps
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductContext
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductGroupContext
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.UnitContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
-import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
+import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import java.util.UUID
 
 class ProductSteps(
-  private val responseContext: ResponseContext,
-  private val requestFactory: AuthenticatedRequestFactory,
+  private val apiClient: ApiClient,
   private val injectContext: InjectContext,
   private val productFixtureBuilder: ProductFixtureBuilder
 ) {
@@ -30,24 +31,27 @@ class ProductSteps(
 
   @When("I create a product with name {string} and description {string}")
   fun createProduct(name: String, description: String) {
-    val dto = OrganizationProductInsertDto(
-      productName = name,
-      description = description,
-      productGroupId = resolveProductGroupId(),
-      baseUnitId = resolveBaseUnitId()
+    val response = apiClient.post(
+      "/secured/products",
+      OrganizationProductInsertDto(
+        productName = name,
+        description = description,
+        productGroupId = UUID.fromString(injectContext.get(ProductGroupContext.ID)),
+        baseUnitId = UUID.fromString(injectContext.get(UnitContext.VALUE_ID))
+      )
     )
-    responseContext.lastResponse = requestFactory.jsonRequest().body(dto).post("/secured/products")
-    responseContext.lastResponse?.jsonPath()?.getString("id")?.let { injectContext.store(ProductContext.ID, it) }
+    response.jsonPath().getString("id")?.let { injectContext.store(ProductContext.ID, it) }
   }
 
   @When("I search for products with text {string}")
   fun searchProducts(searchText: String) {
-    responseContext.lastResponse = requestFactory.jsonRequest()
-      .body(mapOf("searchText" to searchText, "searchStrategy" to "FULLTEXT"))
-      .post("/secured/products/search")
+    apiClient.post(
+      "/secured/products/search",
+      PageRequest(
+        previousCursor = null,
+        requestedSize = 50,
+        parameters = ProductSearchParameters(searchText = searchText, searchStrategy = SearchStrategy.FULLTEXT)
+      )
+    )
   }
-
-  private fun resolveProductGroupId(): UUID = UUID.fromString(injectContext.get(ProductGroupContext.ID))
-
-  private fun resolveBaseUnitId(): UUID = UUID.fromString(injectContext.get(UnitContext.VALUE_ID))
 }

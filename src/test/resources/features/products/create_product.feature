@@ -7,6 +7,7 @@ Feature: Create Product
     Given I am authenticated as an organization user
     And a category exists
     And a product group exists
+    And a unit group exists
     And a unit exists
 
   @smoke

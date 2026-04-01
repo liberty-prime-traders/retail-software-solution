@@ -20,7 +20,8 @@ import kotlin.test.fail
 class CatalogSyncSteps(
   private val requestFactory: AuthenticatedRequestFactory,
   private val locationFixtureBuilder: LocationFixtureBuilder,
-  private val injectContext: InjectContext
+  private val injectContext: InjectContext,
+  private val authContext: AuthContext
 ) {
 
   @Given("a location exists for catalog sync")
@@ -33,12 +34,11 @@ class CatalogSyncSteps(
       )
     )
     injectContext.store(LocationContext.ID, locationId)
-    AuthContext.currentLocationId = UUID.fromString(locationId)
   }
 
   @Given("I use the catalog sync location context")
   fun useCatalogSyncLocationContext() {
-    AuthContext.currentLocationId = UUID.fromString(injectContext.get(LocationContext.ID))
+    authContext.currentLocationId = UUID.fromString(injectContext.get(LocationContext.ID))
   }
 
   @Then("the location catalog should contain product {string}")

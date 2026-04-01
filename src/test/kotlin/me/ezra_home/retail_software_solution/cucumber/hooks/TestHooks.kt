@@ -12,13 +12,14 @@ class TestHooks(
   private val responseContext: ResponseContext,
   private val testDatabaseCleaner: TestDatabaseCleaner,
   private val kafkaConsumerTestSupport: KafkaConsumerTestSupport,
-  private val injectContext: InjectContext
+  private val injectContext: InjectContext,
+  private val authContext: AuthContext
 ) {
 
   @Before
   fun beforeScenario() {
     testDatabaseCleaner.clean()
-    AuthContext.reset()
+    authContext.reset()
     responseContext.reset()
     injectContext.clear()
   }

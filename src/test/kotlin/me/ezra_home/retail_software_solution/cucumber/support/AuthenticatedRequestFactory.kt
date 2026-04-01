@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class AuthenticatedRequestFactory(
   @param:Value("\${local.server.port}")
-  private val port: Int
+  private val port: Int,
+  private val authContext: AuthContext
 ) {
 
   fun jsonRequest(): RequestSpecification {
@@ -18,9 +19,9 @@ class AuthenticatedRequestFactory(
       .baseUri("http://localhost:$port")
       .contentType(ContentType.JSON)
 
-    AuthContext.authToken?.let { request.header("Authorization", "Bearer $it") }
-    AuthContext.currentOrganizationId?.let { request.header(RtsHeaders.ORGANIZATION_ID_HEADER, it.toString()) }
-    AuthContext.currentLocationId?.let { request.header(RtsHeaders.LOCATION_ID_HEADER, it.toString()) }
+    authContext.authToken?.let { request.header("Authorization", "Bearer $it") }
+    authContext.currentOrganizationId?.let { request.header(RtsHeaders.ORGANIZATION_ID_HEADER, it.toString()) }
+    authContext.currentLocationId?.let { request.header(RtsHeaders.LOCATION_ID_HEADER, it.toString()) }
     return request
   }
 }

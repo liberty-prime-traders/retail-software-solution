@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.cucumber.fixtures
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
-import java.util.UUID
 import kotlin.test.assertEquals
 
 abstract class FixtureBuilder<INSERT_DTO>(
@@ -27,13 +26,4 @@ abstract class FixtureBuilder<INSERT_DTO>(
   }
 
   fun createFromRow(row: Map<String, String>): String = create(fromRow(row))
-
-  fun delete(id: UUID) {
-    val response = requestFactory.jsonRequest().delete("$endpoint/$id")
-    assertEquals(
-      204,
-      response.statusCode,
-      "Failed to delete fixture at $endpoint/$id. Response: ${response.asString()}"
-    )
-  }
 }

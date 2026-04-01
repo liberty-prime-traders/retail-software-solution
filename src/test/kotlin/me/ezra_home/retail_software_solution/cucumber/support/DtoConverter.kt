@@ -13,6 +13,13 @@ class DtoConverter(
   fun <T> fromRow(row: Map<String, String>, clazz: Class<T>): T =
     mapper.convertValue(row.injectAndNullify(), clazz)
 
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> fromRow(row: Map<String, String>, defaults: T, clazz: Class<T>): T {
+    val defaultsMap = mapper.convertValue(defaults, Map::class.java) as Map<String, Any?>
+    val rowOverrides = row.injectAndNullify().filterValues { it != null }
+    return mapper.convertValue(defaultsMap + rowOverrides, clazz)
+  }
+
   fun <T> fromTable(dataTable: DataTable, clazz: Class<T>): List<T> =
     dataTable.asMaps().map { fromRow(it, clazz) }
 
