@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 
 class RequestSteps(
   private val apiClient: ApiClient,

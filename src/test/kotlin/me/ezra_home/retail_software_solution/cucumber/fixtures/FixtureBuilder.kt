@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.fixtures
 
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
 import kotlin.test.assertEquals
 

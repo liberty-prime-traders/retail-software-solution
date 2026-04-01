@@ -1,7 +1,7 @@
-package me.ezra_home.retail_software_solution.cucumber.steps
+package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import io.cucumber.java.en.Given
-import me.ezra_home.retail_software_solution.cucumber.support.AuthContext
+import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_ID
 

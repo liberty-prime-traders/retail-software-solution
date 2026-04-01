@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.support
+package me.ezra_home.retail_software_solution.cucumber.context
 
 import io.restassured.response.Response
 import org.springframework.stereotype.Component

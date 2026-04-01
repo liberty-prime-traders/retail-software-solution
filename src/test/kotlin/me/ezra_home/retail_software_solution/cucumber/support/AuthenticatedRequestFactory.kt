@@ -4,17 +4,19 @@ import io.restassured.RestAssured.given
 import io.restassured.http.ContentType
 import io.restassured.specification.RequestSpecification
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
-import org.springframework.beans.factory.annotation.Value
+import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
+import org.springframework.core.env.Environment
+import org.springframework.core.env.getRequiredProperty
 import org.springframework.stereotype.Component
 
 @Component
 class AuthenticatedRequestFactory(
-  @param:Value("\${local.server.port}")
-  private val port: Int,
+  private val environment: Environment,
   private val authContext: AuthContext
 ) {
 
   fun jsonRequest(): RequestSpecification {
+    val port = environment.getRequiredProperty<Int>("local.server.port")
     val request = given()
       .baseUri("http://localhost:$port")
       .contentType(ContentType.JSON)

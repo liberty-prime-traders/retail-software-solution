@@ -1,11 +1,11 @@
-package me.ezra_home.retail_software_solution.cucumber.steps
+package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.OrgContext
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.support.AuthContext
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
 import java.util.Optional
 import java.util.UUID

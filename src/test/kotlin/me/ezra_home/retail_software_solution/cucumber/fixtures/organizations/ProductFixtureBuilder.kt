@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cucumber.context.organizations.Unit
 import me.ezra_home.retail_software_solution.cucumber.fixtures.FixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.support.DtoConverter
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import org.springframework.stereotype.Component
 import java.util.UUID

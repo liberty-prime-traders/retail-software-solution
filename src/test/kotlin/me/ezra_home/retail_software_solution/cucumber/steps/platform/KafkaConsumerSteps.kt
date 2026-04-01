@@ -1,11 +1,11 @@
-package me.ezra_home.retail_software_solution.cucumber.steps
+package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.cucumber.java.After
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
-import me.ezra_home.retail_software_solution.cucumber.support.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationRepository

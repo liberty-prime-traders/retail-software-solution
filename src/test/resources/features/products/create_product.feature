@@ -28,6 +28,7 @@ Feature: Create Product
   @kafka-producer @kafka-consumer
   Scenario: Product creation is consumed and synced to location catalog
     Given a public schema organization exists
+    And I am authenticated as an organization admin
     And a location exists for catalog sync
     And I am authenticated as an organization user
     And I use the catalog sync location context

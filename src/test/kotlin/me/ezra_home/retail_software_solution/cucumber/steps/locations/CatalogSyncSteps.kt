@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.steps
+package me.ezra_home.retail_software_solution.cucumber.steps.locations
 
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -6,9 +6,9 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Pr
 import me.ezra_home.retail_software_solution.cucumber.context.locations.LocationContext
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.locations.LocationFixtureBuilder
-import me.ezra_home.retail_software_solution.cucumber.support.AuthContext
+import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
@@ -33,12 +33,12 @@ class CatalogSyncSteps(
         description = "Location used in cucumber kafka consumer flow"
       )
     )
-    injectContext.store(LocationContext.ID, locationId)
+    injectContext.store(LocationContext.CATALOG_SYNC_LOCATION_ID, locationId)
   }
 
   @Given("I use the catalog sync location context")
   fun useCatalogSyncLocationContext() {
-    authContext.currentLocationId = UUID.fromString(injectContext.get(LocationContext.ID))
+    authContext.currentLocationId = UUID.fromString(injectContext.get(LocationContext.CATALOG_SYNC_LOCATION_ID))
   }
 
   @Then("the location catalog should contain product {string}")

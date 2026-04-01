@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.steps
+package me.ezra_home.retail_software_solution.cucumber.steps.organizations
 
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.cucumber.context.organizations.Prod
 import me.ezra_home.retail_software_solution.cucumber.context.organizations.UnitContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.support.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
