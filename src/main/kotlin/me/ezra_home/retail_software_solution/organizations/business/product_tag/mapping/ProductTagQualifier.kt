@@ -22,13 +22,13 @@ class ProductTagQualifier(
 
         return tagCache.getAllTags()
             .filter { activeProductTagIds.contains(it.id) }
-            .map { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
+            .map { tag -> TagSummaryDto(id = tag.getNullSafeId(), tagName = tag.tagName) }
     }
 
     fun populateTagsForProducts(products: List<OrganizationProductResponseDto>): List<OrganizationProductResponseDto> {
         if (products.isEmpty()) return products
 
-        val productIds = products.mapNotNull { it.id }
+        val productIds = products.map { it.id }
         if (productIds.isEmpty()) return products
 
         val productTags = productTagCache.findActiveProductTagsByProductIds(productIds)
@@ -39,7 +39,7 @@ class ProductTagQualifier(
         return products.map { product ->
             val tagIds = tagIdsByProductId[product.id] ?: emptyList()
             val tags = tagIds.mapNotNull { tagId ->
-                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
+                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.getNullSafeId(), tagName = tag.tagName) }
             }
             product.copy(activeTags = tags)
         }

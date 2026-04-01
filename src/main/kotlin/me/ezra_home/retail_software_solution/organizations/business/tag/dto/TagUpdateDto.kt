@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.tag.dto
 
-import me.ezra_home.retail_software_solution.util.enums.CategoryType
+import me.ezra_home.retail_software_solution.organizations.business.tag.CategoryType
 import java.io.Serializable
 import java.util.Optional
 import java.util.UUID

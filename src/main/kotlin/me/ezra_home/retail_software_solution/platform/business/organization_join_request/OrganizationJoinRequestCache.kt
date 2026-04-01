@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
-import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable

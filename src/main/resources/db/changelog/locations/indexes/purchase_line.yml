@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-purchase-line-purchase-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_line_purchase_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_line_purchase_id
+            tableName: purchase_line
+            columns:
+              - column:
+                  name: purchase_id
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_line_purchase_id
+            tableName: purchase_line
+
+  - changeSet:
+      id: create-index-purchase-line-location-product-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_line_location_product_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_line_location_product_id
+            tableName: purchase_line
+            columns:
+              - column:
+                  name: location_product_id
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_line_location_product_id
+            tableName: purchase_line

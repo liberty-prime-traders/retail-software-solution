@@ -7,17 +7,23 @@ import me.ezra_home.retail_software_solution.organizations.business.location.Loc
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
+import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationWithLocations
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.AuthorizationPassService
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainService
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
-import me.ezra_home.retail_software_solution.util.enums.ReservedDomainStatus
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassType
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedDomainStatus
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
 import org.springframework.stereotype.Service
@@ -37,7 +43,9 @@ class OrganizationService(
     private val organizationUserService: OrganizationUserService,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
     private val organizationAdminService: OrganizationAdminService,
-    private val locationMapper: LocationMapper
+    private val organizationUserCache: OrganizationUserCache,
+    private val locationMapper: LocationMapper,
+    private val authorizationPassService: AuthorizationPassService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -45,23 +53,26 @@ class OrganizationService(
         return organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
     }
 
-    fun createOrganization(organizationInsertDto: OrganizationUpsertDto): OrganizationResponseDto {
-        organizationValidator.validateNameOnSave(organizationInsertDto.name)
-        markSubdomainAsUsed(organizationInsertDto)
-        val schemaName = createOrganizationSchema(organizationInsertDto.subdomain!!)
+    fun createOrganization(dto: OrganizationInsertDto): OrganizationResponseDto {
+        val pass = authorizationPassService.redeem(dto.passCode, PassType.CREATE_ORGANIZATION)
+        organizationValidator.validateNameOnSave(dto.name)
+        DateTimes.validateTimezone(dto.timezone)
+        markSubdomainAsUsed(dto.subdomain)
+        val schemaName = createOrganizationSchema(dto.subdomain)
         try {
-            SessionContextProvider.getSession().organizationSchemaName = schemaName
-            val entity = organizationMapper.toEntity(organizationInsertDto).apply {
+            val entity = organizationMapper.toEntity(dto).apply {
                 this.schemaName = schemaName
+                this.creationPassId = pass.id
             }
             organizationCache.upsertOrganization(entity)
+            SessionContextProvider.initOrganization(entity)
             organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminEntity(entity.createdById!!))
+            organizationUserCache.upsertOrganizationUser(OrganizationUserEntity().apply { userId = entity.createdById!! })
             return organizationMapper.toResponseDto(entity)
         } catch (e: Exception) {
             organizationSchemaService.dropSchema(schemaName)
             throw e
         }
-
     }
 
     private fun createOrganizationSchema(subdomain: String): String {
@@ -70,27 +81,22 @@ class OrganizationService(
         return schemaName
     }
 
-    private fun markSubdomainAsUsed(organizationInsertDto: OrganizationUpsertDto) {
-        val intendedSubdomain = organizationInsertDto.subdomain
-        if (intendedSubdomain.isNullOrBlank()) {
-            throw RtsGenericException("An Organization must have a subdomain")
-        }
+    private fun markSubdomainAsUsed(subdomain: String) {
         val reservedSubdomain = reservedSubdomainService.getReservedSubdomains()
-            .find { it.subdomain == intendedSubdomain && it.status == ReservedDomainStatus.UNUSED }
-        if (reservedSubdomain == null) {
-            throw RtsGenericException("Subdomain '$intendedSubdomain' was not reserved")
-        }
+            .find { it.subdomain == subdomain && it.status == ReservedDomainStatus.UNUSED }
+            ?: throw RtsGenericException("Subdomain '$subdomain' was not reserved")
         reservedSubdomainService.markSubdomainAsUsed(reservedSubdomain.id)
     }
 
-    fun updateOrganization(organizationUpdateDto: OrganizationUpsertDto): OrganizationResponseDto {
+    fun updateOrganization(dto: OrganizationUpdateDto): OrganizationResponseDto {
         val organizationId = SessionContextProvider.getOrganizationId()
-        organizationValidator.validateNameOnSave(organizationUpdateDto.name, organizationId)
-        val entityFromDatabase = organizationCache.getAllOrganizations()
+        organizationValidator.validateNameOnSave(dto.name, organizationId)
+        DateTimes.validateTimezone(dto.timezone)
+        val entity = organizationCache.getAllOrganizations()
             .find { it.id == organizationId } ?: throw NotFoundException()
-        organizationMapper.partialUpdate(organizationUpdateDto, entityFromDatabase)
-        organizationCache.upsertOrganization(entityFromDatabase)
-        return organizationMapper.toResponseDto(entityFromDatabase)
+        organizationMapper.partialUpdate(dto, entity)
+        organizationCache.upsertOrganization(entity)
+        return organizationMapper.toResponseDto(entity)
     }
 
     fun deleteOrganization() {

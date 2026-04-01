@@ -3,8 +3,6 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy.SyncStrategyRegistry
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncServiceRegistry
 import me.ezra_home.retail_software_solution.locations.model.SyncLogEntity
-import me.ezra_home.retail_software_solution.util.enums.SyncMode
-import me.ezra_home.retail_software_solution.util.enums.SyncStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 

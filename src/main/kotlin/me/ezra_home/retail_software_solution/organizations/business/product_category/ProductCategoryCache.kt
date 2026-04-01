@@ -20,7 +20,7 @@ class ProductCategoryCache(private val productCategoryRepository: ProductCategor
 
     @Cacheable
     fun getCategoriesById(): Map<UUID, ProductCategoryEntity> {
-        return getAllCategories().associateBy { it.id!! }
+        return getAllCategories().associateBy { it.getNullSafeId() }
     }
 
     @CacheEvict(allEntries = true)

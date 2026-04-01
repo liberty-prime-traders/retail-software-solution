@@ -5,10 +5,10 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.enums.MigrationStatus
-import me.ezra_home.retail_software_solution.util.enums.MigrationStatusConverter
-import me.ezra_home.retail_software_solution.util.enums.MigrationType
-import me.ezra_home.retail_software_solution.util.enums.MigrationTypeConverter
+import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationStatusConverter
+import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationType
+import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationTypeConverter
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerTypeConverter
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity

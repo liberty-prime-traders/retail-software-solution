@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-purchase-delivery-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: purchase_delivery
+      changes:
+        - createTable:
+            tableName: purchase_delivery
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: purchase_delivery_reference_number_unique
+
+              - column:
+                  name: purchase_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_purchase_id_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: PRC
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_status_notnull
+
+              - column:
+                  name: delivered_at
+                  type: timestamptz
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

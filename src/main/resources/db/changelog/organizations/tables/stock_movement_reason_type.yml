@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-movement-reason-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_movement_reason_type
+      changes:
+        - createTable:
+            tableName: stock_movement_reason_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: smrt_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: smrt_reference_number_unique
+
+              - column:
+                  name: stock_movement_reason_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: smrt_stock_movement_reason_id_notnull
+
+              - column:
+                  name: movement_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: smrt_movement_type_notnull
+
+              - column:
+                  name: end_on
+                  type: timestamptz
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: smrt_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_movement_reason_type

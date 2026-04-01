@@ -11,11 +11,12 @@ class SchemaMigrator(
 ) {
   fun migrateOrganizationSchema(
     schemaName: String,
+    entityName: String,
     versionLabel: String,
-    entityName: String
+    previousVersionLabel: String? = null
   ) {
     try {
-      schemaExecutor.executeOrganizationSchema(schemaName, versionLabel)
+      schemaExecutor.executeOrganizationSchema(schemaName, versionLabel, previousVersionLabel)
     } catch (e: Exception) {
       throw RtsGenericException("$entityName schema migration failed: ${e.message}")
     }
@@ -23,12 +24,13 @@ class SchemaMigrator(
 
   fun migrateLocationSchema(
     schemaName: String,
-    versionLabel: String,
     migration: DbMigrationEntity,
-    entityName: String
+    entityName: String,
+    versionLabel: String,
+    previousVersionLabel: String? = null
   ) {
     try {
-      schemaExecutor.executeLocationSchema(schemaName, versionLabel)
+      schemaExecutor.executeLocationSchema(schemaName, versionLabel, previousVersionLabel)
       migrationStatusUpdater.markSuccess(migration, "Successfully migrated")
     } catch (e: Exception) {
       migrationStatusUpdater.markFailure(migration, e)

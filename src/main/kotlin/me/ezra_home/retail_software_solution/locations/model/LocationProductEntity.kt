@@ -4,9 +4,10 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
-import me.ezra_home.retail_software_solution.util.enums.ProductStatusConverter
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatusConverter
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -46,6 +47,9 @@ class LocationProductEntity(
   @Column(name = "min_stock_level")
   var minStockLevel: Int? = null,
 
+  @Column(name = "last_purchase_price", precision = 15, scale = 2)
+  var lastPurchasePrice: BigDecimal? = null,
+
   @Convert(converter = ProductStatusConverter::class)
   @Column(name = "status", nullable = false, length = 5)
   var status: ProductStatus = ProductStatus.ACTIVE,
@@ -54,4 +58,8 @@ class LocationProductEntity(
   @Column(name = "last_synced_at")
   var lastSyncedAt: OffsetDateTime? = null
 
-) : HasReferenceEntity()
+) : HasReferenceEntity() {
+
+  @Transient
+  var stockBalance: BigDecimal? = null
+}

@@ -45,8 +45,8 @@ class RtsCacheConfig : CachingConfigurer {
         }
         val schemaName = when (schemaLevel) {
             SchemaLevel.PLATFORM -> default
-            SchemaLevel.ORGANIZATION -> SessionContextProvider.getSession().organizationSchemaName
-            SchemaLevel.LOCATION -> SessionContextProvider.getSession().locationSchemaName
+            SchemaLevel.ORGANIZATION -> SessionContextProvider.getSession().organization?.schemaName
+            SchemaLevel.LOCATION -> SessionContextProvider.getSession().location?.schemaName
         }
         return schemaName ?: default
     }

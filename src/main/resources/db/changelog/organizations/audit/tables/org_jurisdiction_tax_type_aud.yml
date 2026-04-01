@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-org-jurisdiction-tax-type-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: org_jurisdiction_tax_type_aud
+      changes:
+        - createTable:
+            tableName: org_jurisdiction_tax_type_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: jurisdiction_tax_type_id
+                  type: uuid
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: org_jurisdiction_tax_type_aud
+            columnNames: id, rev
+            constraintName: pk_org_jurisdiction_tax_type_aud
+      rollback:
+        - dropTable:
+            tableName: org_jurisdiction_tax_type_aud

@@ -19,7 +19,7 @@ class MigrationFinalizer(
         includesLocations -> "Organization migrated, but some locations failed"
         else -> "Organization migrated successfully"
       }
-      migrationStatusUpdater.markPartial(migration, "$prefix: ${locationResults.failed.joinToString("; ")}")
+      migrationStatusUpdater.markPartial(migration, "$prefix: ${locationResults.getFailedMessages()}")
     } else {
       val message = when {
         isRetry -> "All specified locations successfully retried"

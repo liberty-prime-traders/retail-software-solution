@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser
 
 import com.okta.sdk.resource.user.UserStatus
-import me.ezra_home.retail_software_solution.util.enums.UserType
 import java.io.Serializable
 import java.util.UUID
 

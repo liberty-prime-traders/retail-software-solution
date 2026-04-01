@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-jurisdiction-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: jurisdiction_type
+      changes:
+        - createTable:
+            tableName: jurisdiction_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_type_name_notnull
+                    unique: true
+                    uniqueConstraintName: jurisdiction_type_name_unique
+
+              - column:
+                  name: description
+                  type: nvarchar2(500)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: jurisdiction_type_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: jurisdiction_type_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: jurisdiction_type_reference_number_notnull
+      rollback:
+        - dropTable:
+            tableName: jurisdiction_type

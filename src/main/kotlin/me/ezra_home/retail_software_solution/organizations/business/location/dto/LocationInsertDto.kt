@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.location.dto
 
-import me.ezra_home.retail_software_solution.util.enums.LocationType
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
 import java.io.Serializable
 
 /**
@@ -9,5 +9,6 @@ import java.io.Serializable
 data class LocationInsertDto(
     val locationType: LocationType? = null,
     val name: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val timezone: String? = null
 ) : Serializable

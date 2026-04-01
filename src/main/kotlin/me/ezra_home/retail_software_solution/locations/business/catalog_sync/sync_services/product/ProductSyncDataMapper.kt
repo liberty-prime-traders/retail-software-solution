@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.product
 
 import jakarta.persistence.Tuple
-import me.ezra_home.retail_software_solution.util.enums.ProductStatusConverter
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatusConverter
 import java.util.UUID
 
 object ProductSyncDataMapper {
@@ -18,7 +18,7 @@ object ProductSyncDataMapper {
       description = tuple.getOptional(ProductQueryConstants.Columns.DESCRIPTION, String::class.java),
       productGroupName = tuple.getOptional(ProductQueryConstants.Columns.PRODUCT_GROUP_NAME, String::class.java),
       status = status,
-      referenceNumber = tuple.getOptional(ProductQueryConstants.Columns.REFERENCE_NUMBER, String::class.java),
+      referenceNumber = tuple.getRequired(ProductQueryConstants.Columns.REFERENCE_NUMBER, String::class.java),
       baseUnitId = tuple.getRequired(ProductQueryConstants.Columns.BASE_UNIT_ID, UUID::class.java),
       categoryId = tuple.getRequired(ProductQueryConstants.Columns.CATEGORY_ID, UUID::class.java),
       revision = tuple.getOptional(ProductQueryConstants.Columns.REVISION, Number::class.java)?.toLong()

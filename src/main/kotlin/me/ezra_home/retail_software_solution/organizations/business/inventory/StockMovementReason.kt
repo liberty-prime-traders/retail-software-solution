@@ -1,0 +1,11 @@
+package me.ezra_home.retail_software_solution.organizations.business.inventory
+
+import me.ezra_home.retail_software_solution.util.enums.HasCode
+
+enum class StockMovementReason(override val code: String) : HasCode {
+    COUNT_CORRECTION("CCR"),
+    DAMAGE("DM"),
+    EXPIRY("EX"),
+    PROMOTIONAL_GIVEAWAY("GA"),
+    THEFT("TF")
+}

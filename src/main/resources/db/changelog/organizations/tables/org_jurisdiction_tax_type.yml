@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-org-jurisdiction-tax-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: org_jurisdiction_tax_type
+      changes:
+        - createTable:
+            tableName: org_jurisdiction_tax_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: jurisdiction_tax_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_jurisdiction_tax_type_jurisdiction_tax_type_id_notnull
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_jurisdiction_tax_type_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_jurisdiction_tax_type_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: org_jurisdiction_tax_type_reference_number_unique
+                    nullable: false
+                    notNullConstraintName: org_jurisdiction_tax_type_reference_number_notnull
+      rollback:
+        - dropTable:
+            tableName: org_jurisdiction_tax_type

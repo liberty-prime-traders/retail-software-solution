@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
-import me.ezra_home.retail_software_solution.util.enums.JoinRequestStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 

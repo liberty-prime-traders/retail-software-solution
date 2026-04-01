@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-supplier-return-aud-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_supplier_return_aud_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: supplier_return_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_supplier_return_aud_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: supplier_return_aud
+            constraintName: fk_supplier_return_aud_revinfo
+
+  - changeSet:
+      id: add-foreign-key-supplier-return-aud-revend-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_supplier_return_aud_revend_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: supplier_return_aud
+            baseColumnNames: revend
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_supplier_return_aud_revend_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: supplier_return_aud
+            constraintName: fk_supplier_return_aud_revend_revinfo

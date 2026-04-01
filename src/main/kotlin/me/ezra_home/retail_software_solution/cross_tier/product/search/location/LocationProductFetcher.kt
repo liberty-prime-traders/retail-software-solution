@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Pr
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Service
 @TransactionalOnLocationSchema(readOnly = true)
 class LocationProductFetcher(
     private val executor: ProductSearchExecutor,
-    private val locationProductMapper: LocationProductMapper
+    private val locationProductMapper: LocationProductMapper,
+    private val stockMovementRepository: StockMovementRepository
 ) : FetchesUsingSmartTextStrategy<ProductSearchParameters, LocationProductResponseDto>  {
 
     override fun fetch(
@@ -34,6 +36,11 @@ class LocationProductFetcher(
 
         val hasMore = results.size > pageRequest.requestedSize
         val pageResults = if (hasMore) results.take(pageRequest.requestedSize) else results
+
+        val balances = stockMovementRepository.findLatestBalances(pageResults.map { it.getNullSafeId() })
+            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+        pageResults.forEach { it.stockBalance = balances[it.id] }
+
         val dtos: List<LocationProductResponseDto> = pageResults.map { locationProductMapper.toDto(it) }
         val currentCursor = dtos.lastOrNull()?.productName ?: pageRequest.previousCursor
 

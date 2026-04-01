@@ -38,7 +38,7 @@ class ContactValidator(
             }
 
         if (existingContact != null) {
-            throw RtsGenericException("A Contact with ${identity.displayName()} already exists")
+            throw RtsGenericException("A Contact with ${identity.description()} already exists")
         }
     }
 }

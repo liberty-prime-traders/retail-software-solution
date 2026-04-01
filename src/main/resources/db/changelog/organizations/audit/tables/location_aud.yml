@@ -40,6 +40,9 @@ databaseChangeLog:
                   name: schema_name
                   type: nvarchar2(100)
               - column:
+                  name: timezone
+                  type: nvarchar2(50)
+              - column:
                   name: revend
                   type: bigint
               - column:

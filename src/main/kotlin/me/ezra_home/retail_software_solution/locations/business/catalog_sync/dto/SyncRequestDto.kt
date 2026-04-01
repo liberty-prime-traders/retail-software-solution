@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.dto
 
-import me.ezra_home.retail_software_solution.util.enums.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncMode
 import me.ezra_home.retail_software_solution.util.model.TableName
 import java.io.Serializable
 

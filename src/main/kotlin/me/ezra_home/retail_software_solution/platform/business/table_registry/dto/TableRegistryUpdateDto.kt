@@ -7,7 +7,7 @@ import java.util.UUID
  * DTO for updating TableRegistryEntity
  */
 data class TableRegistryUpdateDto(
-    val id: UUID?,
+    val id: UUID,
     val defaultPrefix: Optional<String>?,
     val displayName: Optional<String>?,
     val description: Optional<String>?,

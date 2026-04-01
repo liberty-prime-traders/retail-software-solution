@@ -41,6 +41,14 @@ databaseChangeLog:
                   type: nvarchar2(1000)
 
               - column:
+                  name: private
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_private_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
@@ -53,6 +61,14 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
+                  name: current_db_version_id
+                  type: uuid
+
+              - column:
+                  name: creation_pass_id
+                  type: uuid
+
+              - column:
                   name: schema_name
                   type: nvarchar2(100)
                   constraints:
@@ -60,6 +76,10 @@ databaseChangeLog:
                     uniqueConstraintName: organization_schema_name_unique
                     nullable: false
                     notNullConstraintName: organization_schema_name_notnull
+
+              - column:
+                  name: timezone
+                  type: nvarchar2(50)
 
               - column:
                   name: reference_number

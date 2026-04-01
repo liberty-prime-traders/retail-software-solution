@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sequence-org-jurisdiction-tax-type-reference-number
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sequenceExists:
+                sequenceName: seq_org_jurisdiction_tax_type_reference_number
+      changes:
+        - createSequence:
+            sequenceName: seq_org_jurisdiction_tax_type_reference_number
+            startValue: 1
+            incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: seq_org_jurisdiction_tax_type_reference_number

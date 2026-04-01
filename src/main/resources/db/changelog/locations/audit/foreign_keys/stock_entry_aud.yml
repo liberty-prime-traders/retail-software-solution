@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-stock-entry-aud-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_stock_entry_aud_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_entry_aud
+            baseColumnNames: rev
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_stock_entry_aud_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_entry_aud
+            constraintName: fk_stock_entry_aud_revinfo
+
+  - changeSet:
+      id: add-foreign-key-stock-entry-aud-revend-revinfo
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: fk_stock_entry_aud_revend_revinfo
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_entry_aud
+            baseColumnNames: revend
+            referencedTableName: revinfo
+            referencedColumnNames: rev
+            constraintName: fk_stock_entry_aud_revend_revinfo
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_entry_aud
+            constraintName: fk_stock_entry_aud_revend_revinfo

@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-supplier-return-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: supplier_return_aud
+      changes:
+        - createTable:
+            tableName: supplier_return_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: supplier_id
+                  type: uuid
+
+              - column:
+                  name: purchase_id
+                  type: uuid
+
+              - column:
+                  name: purchase_delivery_id
+                  type: uuid
+
+              - column:
+                  name: return_date
+                  type: date
+
+              - column:
+                  name: reason
+                  type: text
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: supplier_return_aud
+            columnNames: id, rev
+            constraintName: pk_supplier_return_aud
+
+      rollback:
+        - dropTable:
+            tableName: supplier_return_aud

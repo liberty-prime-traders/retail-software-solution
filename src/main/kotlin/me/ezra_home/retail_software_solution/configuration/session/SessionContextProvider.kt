@@ -19,16 +19,24 @@ object SessionContextProvider {
         return sessionContextThreadLocal.get() ?: SessionContext().also { sessionContextThreadLocal.set(it) }
     }
 
-    fun getUserId(): UUID  {
+    fun getUserId(): UUID {
         return getSession().systemUserId ?: throw RtsGenericException("User ID not found in session")
     }
 
     fun getOrganizationId(): UUID {
-        return getSession().organizationId ?: throw RtsMissingHeaderException(RtsHeaders.ORGANIZATION_ID_HEADER)
+        return getSession().organization?.id ?: throw RtsMissingHeaderException(RtsHeaders.ORGANIZATION_ID_HEADER)
     }
 
     fun getLocationId(): UUID {
-        return getSession().locationId ?: throw RtsMissingHeaderException(RtsHeaders.LOCATION_ID_HEADER)
+        return getSession().location?.id ?: throw RtsMissingHeaderException(RtsHeaders.LOCATION_ID_HEADER)
+    }
+
+    fun getLocationSchema(): String {
+        return getSession().location?.schemaName ?: throw RtsGenericException("Location schema not found in session.")
+    }
+
+    fun getOrgTimezone(): String {
+        return getSession().organization?.timezone ?: throw RtsGenericException("Organization timezone not found in session.")
     }
 
     fun clear() {
@@ -36,12 +44,22 @@ object SessionContextProvider {
     }
 
     fun initOrganization(organization: OrganizationEntity) {
-        getSession().organizationId = organization.id
-        getSession().organizationSchemaName = organization.schemaName
+        getSession().organization = OrgSession(
+            id = organization.getNullSafeId(),
+            schemaName = organization.schemaName!!,
+            timezone = organization.timezone
+        )
     }
 
     fun initLocation(location: LocationEntity) {
-        getSession().locationId = location.id
-        getSession().locationSchemaName = location.schemaName
+        getSession().location = LocationSession(
+            id = location.getNullSafeId(),
+            schemaName = location.schemaName!!,
+            timezone = location.timezone
+        )
+    }
+
+    fun initSystemUser(userId: UUID) {
+        getSession().systemUserId = userId
     }
 }

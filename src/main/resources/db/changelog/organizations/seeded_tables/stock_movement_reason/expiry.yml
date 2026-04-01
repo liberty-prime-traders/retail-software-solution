@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-stock-movement-reason-EXPIRY
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - insert:
+            tableName: stock_movement_reason
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: reference_number
+                  valueComputed: "'SMRSN' || LPAD(nextval('seq_stock_movement_reason_reference_number')::text, 2, '0')"
+              - column:
+                  name: code
+                  value: EX
+              - column:
+                  name: name
+                  value: Expiry
+              - column:
+                  name: description
+                  value: Stock removed because it has passed its expiry date
+              - column:
+                  name: system_defined
+                  valueBoolean: 'true'
+              - column:
+                  name: created_by_id
+                  value: '22222222-2222-2222-2222-222222222222'

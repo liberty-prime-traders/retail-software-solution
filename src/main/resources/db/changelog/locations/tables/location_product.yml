@@ -94,5 +94,9 @@ databaseChangeLog:
                   type: timestamptz
 
               - column:
+                  name: last_purchase_price
+                  type: decimal(15,2)
+
+              - column:
                   name: search_vector
                   type: tsvector

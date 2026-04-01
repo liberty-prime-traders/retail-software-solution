@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-purchase-delivery-purchase
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_purchase_delivery_purchase
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: purchase_delivery
+            baseColumnNames: purchase_id
+            referencedTableName: purchase
+            referencedColumnNames: id
+            constraintName: fk_purchase_delivery_purchase
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: purchase_delivery
+            constraintName: fk_purchase_delivery_purchase

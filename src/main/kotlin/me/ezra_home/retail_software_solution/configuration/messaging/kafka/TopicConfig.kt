@@ -16,12 +16,12 @@ class TopicConfig {
             .replicas(1)
             .build()
     }
-//
-//    @Bean
-//    fun transactionEventsTopic(): NewTopic {
-//        return TopicBuilder.name(KafkaConstants.Topics.TRANSACTION_EVENTS)
-//            .partitions(6)
-//            .replicas(1)
-//            .build()
-//    }
+
+    @Bean
+    fun transactionEventsTopic(): NewTopic {
+        return TopicBuilder.name(KafkaConstants.Topics.TRANSACTION_EVENTS)
+            .partitions(6)
+            .replicas(1)
+            .build()
+    }
 }

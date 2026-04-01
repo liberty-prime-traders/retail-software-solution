@@ -19,10 +19,7 @@ class LocationSchemaInitializer(
     private val organizationTransactionManager: JpaTransactionManager
 ) {
     fun initialize(httpServletRequest: HttpServletRequest) {
-        if (!StringUtils.hasValue(SessionContextProvider.getSession().organizationSchemaName)) {
-            // If the organization schema name is not set, skip initialization
-            return
-        }
+        if (SessionContextProvider.getSession().organization == null) return
         val organizationStatus = organizationTransactionManager.getTransaction(DefaultTransactionDefinition())
         try {
             doInitialize(httpServletRequest)
@@ -34,12 +31,8 @@ class LocationSchemaInitializer(
     private fun doInitialize(httpServletRequest: HttpServletRequest) {
         httpServletRequest.getHeader(LOCATION_ID_HEADER)
             ?.takeIf { StringUtils.hasValue(it) }
-            ?.let {
-                val locationId = UUID.fromString(it)
-                SessionContextProvider.getSession().locationId = locationId
-                locationId
-            }
-            ?.let { locationId -> locationCache.getAllLocations().find { it.id == locationId }?.schemaName }
-            ?.let { SessionContextProvider.getSession().locationSchemaName = it }
+            ?.let { UUID.fromString(it) }
+            ?.let { locationId -> locationCache.getAllLocations().find { it.id == locationId } }
+            ?.let { SessionContextProvider.initLocation(it) }
     }
 }

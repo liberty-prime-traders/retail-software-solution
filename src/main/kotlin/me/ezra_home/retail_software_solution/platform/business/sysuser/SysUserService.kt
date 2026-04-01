@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.S
 import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
-import me.ezra_home.retail_software_solution.util.enums.UserType
 import org.springframework.stereotype.Service
 import java.util.Objects
 

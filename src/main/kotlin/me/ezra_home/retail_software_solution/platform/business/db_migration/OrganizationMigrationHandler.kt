@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.util.enums.MigrationType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -11,6 +11,7 @@ import java.util.UUID
 @Component
 class OrganizationMigrationHandler(
   private val organizationCache: OrganizationCache,
+  private val dbVersionService: DbVersionService,
   private val schemaMigrator: SchemaMigrator,
   private val migrationInitializer: MigrationInitializer,
   private val migrationStatusUpdater: MigrationStatusUpdater,
@@ -45,14 +46,18 @@ class OrganizationMigrationHandler(
     return try {
       schemaMigrator.migrateOrganizationSchema(
         schemaName = schemaName,
+        entityName = "Organization ${organization.name}",
         versionLabel = targetDbVersion.versionNumber,
-        entityName = "Organization ${organization.name}"
+        previousVersionLabel = dbVersionService.getVersionNumber(targetDbVersion.prevVersionId)
       )
+
+      organization.currentDbVersionId = targetDbVersion.id
+      organizationCache.upsertOrganization(organization)
 
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = migration.id!!,
+        parentMigrationId = migration.getNullSafeId(),
         locationIds = locationIds
       )
 
@@ -63,7 +68,7 @@ class OrganizationMigrationHandler(
         isRetry = false
       )
 
-      OrganizationLocationsMigration(migration, locationResults.successful)
+      OrganizationLocationsMigration(migration, locationResults.getAllResults())
     } catch (e: Exception) {
       migrationStatusUpdater.markFailure(migration, e)
       throw RtsGenericException("Organization migration failed: ${e.message}")

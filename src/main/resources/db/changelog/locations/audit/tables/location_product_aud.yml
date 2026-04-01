@@ -60,6 +60,9 @@ databaseChangeLog:
               - column:
                   name: revend_tstmp
                   type: timestamp
+              - column:
+                  name: last_purchase_price
+                  type: decimal(15,2)
         - addPrimaryKey:
             tableName: location_product_aud
             columnNames: id, rev

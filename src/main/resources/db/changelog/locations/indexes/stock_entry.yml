@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-stock-entry-purchase-delivery-line-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_entry_purchase_delivery_line_id
+      changes:
+        - createIndex:
+            indexName: idx_stock_entry_purchase_delivery_line_id
+            tableName: stock_entry
+            columns:
+              - column:
+                  name: purchase_delivery_line_id
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_entry_purchase_delivery_line_id
+            tableName: stock_entry
+
+  - changeSet:
+      id: create-index-stock-entry-location-product-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_entry_location_product_id
+      changes:
+        - createIndex:
+            indexName: idx_stock_entry_location_product_id
+            tableName: stock_entry
+            columns:
+              - column:
+                  name: location_product_id
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_entry_location_product_id
+            tableName: stock_entry
+
+  - changeSet:
+      id: create-index-stock-entry-location-product-id-available
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_entry_location_product_id_available
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_stock_entry_location_product_id_available ON stock_entry (location_product_id, priority, created_on) WHERE quantity_remaining > 0
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_entry_location_product_id_available
+            tableName: stock_entry

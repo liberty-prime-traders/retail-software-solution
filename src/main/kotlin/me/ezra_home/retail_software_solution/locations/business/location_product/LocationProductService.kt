@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service

@@ -8,7 +8,7 @@ import java.util.UUID
  * DTO for {@link me.ezra_home.retail_software_solution.organizations.model.entity.PaymentMethodEntity}
  */
 data class PaymentMethodResponseDto (
-    val id: UUID?,
+    val id: UUID,
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val name: String?,

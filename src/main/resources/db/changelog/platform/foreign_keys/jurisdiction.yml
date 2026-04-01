@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-jurisdiction-jurisdiction-type-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: jurisdiction_jurisdiction_type_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: jurisdiction
+            baseColumnNames: jurisdiction_type_id
+            referencedTableName: jurisdiction_type
+            referencedColumnNames: id
+            constraintName: jurisdiction_jurisdiction_type_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: jurisdiction
+            constraintName: jurisdiction_jurisdiction_type_id_fk
+
+  - changeSet:
+      id: add-fk-jurisdiction-parent-jurisdiction-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: jurisdiction_parent_jurisdiction_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: jurisdiction
+            baseColumnNames: parent_jurisdiction_id
+            referencedTableName: jurisdiction
+            referencedColumnNames: id
+            constraintName: jurisdiction_parent_jurisdiction_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: jurisdiction
+            constraintName: jurisdiction_parent_jurisdiction_id_fk

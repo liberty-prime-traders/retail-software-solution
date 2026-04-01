@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.dto.
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.IdentityType
 import me.ezra_home.retail_software_solution.organizations.model.ContactEntity
-import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -53,7 +52,7 @@ class ContactService(
     }
 
     fun updateContact(contactUpdateDto: ContactUpdateDto): ContactResponseDto {
-        val id = contactUpdateDto.id ?: throw QueriedByEmptyIdException()
+        val id = contactUpdateDto.id
         val entityFromDatabase = contactCache.getAllContacts().find { it.id == id }
             ?: throw UpdatingNonExistingRecordException()
 

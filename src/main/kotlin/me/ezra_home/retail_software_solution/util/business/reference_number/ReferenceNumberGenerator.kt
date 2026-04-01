@@ -30,7 +30,11 @@ class ReferenceNumberGenerator(
             sequenceFetcher.getBulkSequenceValues(tableName, schemaLevel, count)
         }
         val prefix = getPrefix(tableName, schemaLevel)
-        return sequenceNumbers.map { prefix.padEnd(REFERENCE_NUMBER_MIN_LENGTH, '0') + it }
+        return sequenceNumbers.map { makeReferenceNumber(prefix, it) }
+    }
+
+    private fun makeReferenceNumber(prefix: String, sequenceNumber: String): String {
+        return prefix + sequenceNumber.padStart(REFERENCE_NUMBER_MIN_LENGTH - prefix.length, '0')
     }
 
     private fun getSchemaLevel(tableName: TableName): SchemaLevel {
