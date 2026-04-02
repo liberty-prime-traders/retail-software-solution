@@ -4,14 +4,12 @@ import io.cucumber.java.After
 import io.cucumber.java.Before
 import jakarta.annotation.PostConstruct
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.cucumber.config.TestSchemaSeeder
 import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
 import me.ezra_home.retail_software_solution.cucumber.support.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import org.springframework.beans.factory.getBeanNamesForAnnotation
 import org.springframework.beans.factory.getBeansWithAnnotation
 import org.springframework.util.ClassUtils
 import org.springframework.cache.CacheManager
@@ -25,8 +23,7 @@ class TestHooks(
   private val injectContext: InjectContext,
   private val authContext: AuthContext,
   private val cacheManager: CacheManager,
-  private val applicationContext: ApplicationContext,
-  private val seeder: TestSchemaSeeder
+  private val applicationContext: ApplicationContext
 ) {
 
   private lateinit var transientCacheNames: Set<String>
@@ -49,7 +46,6 @@ class TestHooks(
   fun beforeScenario() {
     testDatabaseCleaner.clean()
     injectContext.clear()
-    seeder.seedLocation()
     transientCacheNames.forEach { cacheManager.getCache(it)?.clear() }
     authContext.reset()
     responseContext.reset()

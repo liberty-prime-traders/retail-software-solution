@@ -5,6 +5,7 @@ import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
 import me.ezra_home.retail_software_solution.cucumber.fixtures.locations.LocationFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
@@ -31,17 +32,17 @@ class CatalogSyncSteps(
         description = "Location used in cucumber kafka consumer flow"
       )
     )
-    injectContext.store(TestConstants.InjectionKeys.CATALOG_SYNC_LOCATION, locationId)
+    injectContext.store(InjectionKeys.CATALOG_SYNC_LOCATION, locationId)
   }
 
   @Given("I use the catalog sync location context")
   fun useCatalogSyncLocationContext() {
-    authContext.currentLocationId = injectContext.get(TestConstants.InjectionKeys.CATALOG_SYNC_LOCATION)
+    authContext.currentLocationId = injectContext.get(InjectionKeys.CATALOG_SYNC_LOCATION)
   }
 
   @Then("the location catalog should contain product {string}")
   fun verifyLocationCatalogContainsProduct(productName: String) {
-    val productId = injectContext.get(TestConstants.InjectionKeys.PRODUCT)
+    val productId = injectContext.get(InjectionKeys.PRODUCT)
 
     val searchBody = PageRequest(
       previousCursor = null,

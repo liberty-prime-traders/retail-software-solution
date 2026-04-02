@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.cucumber.context
 
 import org.springframework.stereotype.Component
 import java.util.UUID
-import java.util.regex.Pattern
 
 @Component
 class InjectContext {
@@ -40,24 +39,17 @@ class InjectContext {
   fun getString(key: String, index: Int? = null): String =
     checkNotNull(findString(key, index)) { "No value found in context for key '$key'" }
 
-  fun inject(text: String): String {
-    val matcher = PLACEHOLDER_PATTERN.matcher(text)
-    val sb = StringBuffer()
-    while (matcher.find()) {
-      val placeholder = matcher.group(1)
-      val parts = placeholder.split("->")
+  fun inject(text: String): String =
+    PLACEHOLDER_PATTERN.replace(text) { match ->
+      val parts = match.groupValues[1].split("->")
       val key = parts[0]
       val index = parts.getOrNull(1)?.toIntOrNull()
-      val resolved = findString(key, index) ?: matcher.group()
-      matcher.appendReplacement(sb, Regex.escapeReplacement(resolved))
+      findString(key, index) ?: match.value
     }
-    matcher.appendTail(sb)
-    return sb.toString()
-  }
 
   fun clear() = multiStore.clear()
 
   companion object {
-    private val PLACEHOLDER_PATTERN = Pattern.compile("#([^\"\\s.!?,:;()\\[\\]{}/_]+)")
+    private val PLACEHOLDER_PATTERN = Regex("#([^\"\\s.!?,:;()\\[\\]{}/_]+)")
   }
 }

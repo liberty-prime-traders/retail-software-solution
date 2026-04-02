@@ -5,9 +5,9 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
@@ -23,7 +23,7 @@ class ProductSteps(
   fun createProducts(dataTable: DataTable) {
     dataTable.asMaps().forEach { row ->
       val id = productFixtureBuilder.createFromRow(row)
-      injectContext.store(TestConstants.InjectionKeys.PRODUCT, id)
+      injectContext.store(InjectionKeys.PRODUCT, id)
     }
   }
 
@@ -34,11 +34,11 @@ class ProductSteps(
       OrganizationProductInsertDto(
         productName = name,
         description = description,
-        productGroupId = injectContext.get(TestConstants.InjectionKeys.PRODUCT_GROUP),
-        baseUnitId = injectContext.get(TestConstants.InjectionKeys.UNIT_VALUE)
+        productGroupId = injectContext.get(InjectionKeys.PRODUCT_GROUP),
+        baseUnitId = injectContext.get(InjectionKeys.UNIT_VALUE)
       )
     )
-    injectContext.store(TestConstants.InjectionKeys.PRODUCT, response.getResponseId())
+    injectContext.store(InjectionKeys.PRODUCT, response.getResponseId())
   }
 
   @When("I search for products with text {string}")

@@ -26,7 +26,7 @@ class TestMockBeansConfiguration {
     `when`(user.profile).thenReturn(profile)
     `when`(profile.firstName).thenReturn("Test")
     `when`(profile.lastName).thenReturn("User")
-    `when`(users.iterator()).thenReturn(mutableListOf(user).iterator())
+    `when`(users.iterator()).thenAnswer { mutableListOf(user).iterator() }
     `when`(client.listUsers()).thenReturn(users)
     return client
   }

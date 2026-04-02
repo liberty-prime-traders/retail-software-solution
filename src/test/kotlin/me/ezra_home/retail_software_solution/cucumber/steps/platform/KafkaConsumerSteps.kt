@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.cucumber.java.After
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -22,16 +22,13 @@ import kotlin.test.assertEquals
 
 class KafkaConsumerSteps(
   private val responseContext: ResponseContext,
+  private val objectMapper: ObjectMapper,
   @param:Value("\${spring.kafka.bootstrap-servers}")
   private val bootstrapServers: String
 ) {
 
   private var kafkaConsumer: KafkaConsumer<String, String>? = null
   private var lastCatalogEvent: JsonNode? = null
-
-  companion object {
-    private val OBJECT_MAPPER = jacksonObjectMapper()
-  }
 
   @After("@kafka-producer")
   fun closeKafkaConsumer() {
@@ -74,7 +71,7 @@ class KafkaConsumerSteps(
       .until {
         val records = consumer.poll(Duration.ofMillis(TestConstants.Timeouts.KAFKA_POLL_INTERVAL_MS))
         for (record in records) {
-          val payload = OBJECT_MAPPER.readTree(record.value())
+          val payload = objectMapper.readTree(record.value())
           if (payload.path("tableName").asText() == tableName) {
             matchedEvent = payload
             return@until true

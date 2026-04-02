@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.configuration.session.withSession
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationRepository
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
@@ -52,56 +53,40 @@ class TestSchemaSeeder(
   fun initialize() {
     SchemaCreator.createSchema(TestConstants.Seed.ORG_SCHEMA, orgDataSource, orgChangelog)
     SchemaCreator.createSchema(TestConstants.Seed.LOCATION_SCHEMA, locationDataSource, locationChangelog)
-    val userId = seedPlatformUser()
-    seedOrganization(userId)
+    seedPlatformUser()
+    seedOrganization()
+    seedLocation()
   }
 
-  private fun seedPlatformUser(): UUID {
-    return withSession(SessionContext(oktaId = TestConstants.Seed.PLATFORM_USER_OKTA_ID)) {
+  private fun seedPlatformUser() {
+    withSession(SessionContext(oktaId = TestConstants.Seed.PLATFORM_USER_OKTA_ID)) {
       val sysUser = sysUserService.addSystemUser()
-      injectContext.persist(TestConstants.InjectionKeys.SYSTEM_USER_ID, sysUser.id)
-      sysUser.id
+      injectContext.persist(InjectionKeys.SYSTEM_USER_ID, sysUser.id)
+      SessionContextProvider.initSystemUser(sysUser.id)
     }
   }
 
-  private fun seedOrganization(userId: UUID) {
-    val organization = organizationRepository.findAll().firstOrNull { it.schemaName == TestConstants.Seed.ORG_SCHEMA }
-      ?: withSession(SessionContext(systemUserId = userId)) {
-        organizationRepository.save(
-          OrganizationEntity(
-            name = "Test Organization",
-            subdomain = "test",
-            schemaName = TestConstants.Seed.ORG_SCHEMA
-          )
-        )
-      }
-    injectContext.persist(TestConstants.InjectionKeys.ORGANIZATION, organization.getNullSafeId())
-  }
-
-  fun seedLocation() {
-    val location = withSession(testSession()) {
-      locationRepository.save(
-        LocationEntity(
-          locationType = LocationType.SHOP,
-          name = "Test Location",
-          schemaName = TestConstants.Seed.LOCATION_SCHEMA
-        )
+  private fun seedOrganization() {
+    val organization = organizationRepository.save(
+      OrganizationEntity(
+        name = "Test Organization",
+        subdomain = "test",
+        schemaName = TestConstants.Seed.ORG_SCHEMA
       )
-    }
+    )
+    injectContext.persist(InjectionKeys.ORGANIZATION, organization.getNullSafeId())
+    SessionContextProvider.initOrganization(organization)
+  }
+
+  private fun seedLocation() {
+    val location = locationRepository.save(
+      LocationEntity(
+        locationType = LocationType.SHOP,
+        name = "Test Location",
+        schemaName = TestConstants.Seed.LOCATION_SCHEMA
+      )
+    )
+    injectContext.persist(InjectionKeys.LOCATION, location.getNullSafeId())
     SessionContextProvider.initLocation(location)
-    injectContext.store(TestConstants.InjectionKeys.LOCATION, location.getNullSafeId())
-  }
-
-  private fun testSession(): SessionContext {
-    val sysUserId = injectContext.get(TestConstants.InjectionKeys.SYSTEM_USER_ID)
-    val orgId = injectContext.get(TestConstants.InjectionKeys.ORGANIZATION)
-    return SessionContext(systemUserId = sysUserId).apply {
-      organization = OrgSession(
-        id = orgId,
-        schemaName = TestConstants.Seed.ORG_SCHEMA,
-        timezone = "UTC"
-      )
-      tenantFilterIsComplete = true
-    }
   }
 }

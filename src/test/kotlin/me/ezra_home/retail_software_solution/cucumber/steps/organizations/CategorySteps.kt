@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.organizations
 
 import io.cucumber.java.en.Given
-import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.CategoryFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
+import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.CategoryFixtureBuilder
 
 class CategorySteps(
   private val categoryFixtureBuilder: CategoryFixtureBuilder,
@@ -12,6 +12,6 @@ class CategorySteps(
 
   @Given("a category exists")
   fun createCategory() {
-    injectContext.store(TestConstants.InjectionKeys.CATEGORY, categoryFixtureBuilder.create())
+    injectContext.store(InjectionKeys.CATEGORY, categoryFixtureBuilder.create())
   }
 }

@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.cucumber.fixtures.organizations
 
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
 import me.ezra_home.retail_software_solution.cucumber.fixtures.FixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueInsertDto
 import org.springframework.stereotype.Component
 
@@ -16,6 +16,6 @@ class UnitValueFixtureBuilder(requestFactory: AuthenticatedRequestFactory, injec
   override fun defaultDto() = UnitValueInsertDto(
     name = "Test Unit",
     code = "TU",
-    unitGroupId = injectContext.get(TestConstants.InjectionKeys.UNIT_GROUP)
+    unitGroupId = injectContext.get(InjectionKeys.UNIT_GROUP)
   )
 }

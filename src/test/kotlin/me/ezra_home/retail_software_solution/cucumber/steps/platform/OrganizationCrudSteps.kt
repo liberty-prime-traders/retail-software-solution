@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
-import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
+import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
@@ -29,7 +29,7 @@ class OrganizationCrudSteps(
       "/secured/organizations",
       OrganizationInsertDto(name = name, subdomain = subdomain, passCode = UUID.fromString(passcode))
     )
-    injectContext.store(TestConstants.InjectionKeys.ORGANIZATION, response.getResponseId())
+    injectContext.store(InjectionKeys.ORGANIZATION, response.getResponseId())
   }
 
   @When("I update the current organization with name {string}")
