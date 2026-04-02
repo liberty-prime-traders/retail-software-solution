@@ -4,6 +4,7 @@ import io.cucumber.java.After
 import io.cucumber.java.Before
 import jakarta.annotation.PostConstruct
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.cucumber.config.TestSchemaSeeder
 import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
@@ -24,7 +25,8 @@ class TestHooks(
   private val injectContext: InjectContext,
   private val authContext: AuthContext,
   private val cacheManager: CacheManager,
-  private val applicationContext: ApplicationContext
+  private val applicationContext: ApplicationContext,
+  private val seeder: TestSchemaSeeder
 ) {
 
   private lateinit var transientCacheNames: Set<String>
@@ -46,10 +48,11 @@ class TestHooks(
   @Before
   fun beforeScenario() {
     testDatabaseCleaner.clean()
+    injectContext.clear()
+    seeder.seedLocation()
     transientCacheNames.forEach { cacheManager.getCache(it)?.clear() }
     authContext.reset()
     responseContext.reset()
-    injectContext.clear()
   }
 
   @Before("@kafka-consumer")

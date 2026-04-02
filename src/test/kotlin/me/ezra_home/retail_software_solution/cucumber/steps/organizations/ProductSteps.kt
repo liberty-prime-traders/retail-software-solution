@@ -4,16 +4,14 @@ import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductContext
-import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductGroupContext
-import me.ezra_home.retail_software_solution.cucumber.context.organizations.UnitContext
+import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
-import java.util.UUID
 
 class ProductSteps(
   private val apiClient: ApiClient,
@@ -25,7 +23,7 @@ class ProductSteps(
   fun createProducts(dataTable: DataTable) {
     dataTable.asMaps().forEach { row ->
       val id = productFixtureBuilder.createFromRow(row)
-      injectContext.store(ProductContext.ID, id)
+      injectContext.store(TestConstants.InjectionKeys.PRODUCT, id)
     }
   }
 
@@ -36,11 +34,11 @@ class ProductSteps(
       OrganizationProductInsertDto(
         productName = name,
         description = description,
-        productGroupId = UUID.fromString(injectContext.get(ProductGroupContext.ID)),
-        baseUnitId = UUID.fromString(injectContext.get(UnitContext.VALUE_ID))
+        productGroupId = injectContext.get(TestConstants.InjectionKeys.PRODUCT_GROUP),
+        baseUnitId = injectContext.get(TestConstants.InjectionKeys.UNIT_VALUE)
       )
     )
-    response.jsonPath().getString("id")?.let { injectContext.store(ProductContext.ID, it) }
+    injectContext.store(TestConstants.InjectionKeys.PRODUCT, response.getResponseId())
   }
 
   @When("I search for products with text {string}")

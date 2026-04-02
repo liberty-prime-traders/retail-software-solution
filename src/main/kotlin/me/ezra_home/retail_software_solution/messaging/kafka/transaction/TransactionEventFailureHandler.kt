@@ -13,6 +13,7 @@ class TransactionEventFailureHandler(
   fun handle(event: TransactionEvent) {
     when (event) {
       is PurchaseDeliveredEvent -> purchaseDeliveryProcessor.markFailed(event.deliveryId)
+      else -> {}
     }
   }
 }

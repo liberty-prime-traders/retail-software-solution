@@ -1,22 +1,44 @@
 package me.ezra_home.retail_software_solution.cucumber.context
 
 import org.springframework.stereotype.Component
+import java.util.UUID
 import java.util.regex.Pattern
 
 @Component
 class InjectContext {
 
-  private val store = mutableMapOf<String, MutableList<String>>()
+  private val multiStore = mutableMapOf<String, MutableList<String>>()
+  private val persistentStore = mutableMapOf<String, MutableList<String>>()
 
-  fun store(key: String, value: String) {
-    store.getOrPut(key) { mutableListOf() }.add(value)
+  fun store(key: String, value: UUID) {
+    multiStore.getOrPut(key) { mutableListOf() }.add(value.toString())
   }
 
-  fun find(key: String, index: Int? = null): String? =
-    store[key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
+  fun storeString(key: String, value: String) {
+    multiStore.getOrPut(key) { mutableListOf() }.add(value)
+  }
 
-  fun get(key: String, index: Int? = null): String =
-    checkNotNull(find(key, index)) { "No value found in context for key '$key'" }
+  fun persist(key: String, value: UUID) {
+    persistentStore.getOrPut(key) { mutableListOf() }.add(value.toString())
+  }
+
+  fun persistString(key: String, value: String) {
+    persistentStore.getOrPut(key) { mutableListOf() }.add(value)
+  }
+
+  fun find(key: String, index: Int? = null): UUID? = findString(key, index)?.let { UUID.fromString(it) }
+
+  fun get(key: String, index: Int? = null): UUID = checkNotNull(find(key, index)) { "No value found in context for key '$key'" }
+
+  fun findString(key: String, index: Int? = null): String? {
+    persistentStore[key]?.let { list ->
+      return if (index == null) list.lastOrNull() else list.getOrNull(index)
+    }
+    return multiStore[key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
+  }
+
+  fun getString(key: String, index: Int? = null): String =
+    checkNotNull(findString(key, index)) { "No value found in context for key '$key'" }
 
   fun inject(text: String): String {
     val matcher = PLACEHOLDER_PATTERN.matcher(text)
@@ -26,14 +48,14 @@ class InjectContext {
       val parts = placeholder.split("->")
       val key = parts[0]
       val index = parts.getOrNull(1)?.toIntOrNull()
-      val resolved = find(key, index) ?: matcher.group()
+      val resolved = findString(key, index) ?: matcher.group()
       matcher.appendReplacement(sb, Regex.escapeReplacement(resolved))
     }
     matcher.appendTail(sb)
     return sb.toString()
   }
 
-  fun clear() = store.clear()
+  fun clear() = multiStore.clear()
 
   companion object {
     private val PLACEHOLDER_PATTERN = Pattern.compile("#([^\"\\s.!?,:;()\\[\\]{}/_]+)")

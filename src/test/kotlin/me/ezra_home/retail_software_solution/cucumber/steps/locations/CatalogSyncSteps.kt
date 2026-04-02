@@ -3,19 +3,17 @@ package me.ezra_home.retail_software_solution.cucumber.steps.locations
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.cucumber.context.locations.LocationContext
-import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductContext
-import me.ezra_home.retail_software_solution.cucumber.fixtures.locations.LocationFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
-import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.fixtures.locations.LocationFixtureBuilder
+import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.util.enums.LocationType
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
-import java.util.UUID
-import kotlin.test.fail
+import org.awaitility.Awaitility.await
+import java.time.Duration
 
 class CatalogSyncSteps(
   private val requestFactory: AuthenticatedRequestFactory,
@@ -33,17 +31,17 @@ class CatalogSyncSteps(
         description = "Location used in cucumber kafka consumer flow"
       )
     )
-    injectContext.store(LocationContext.CATALOG_SYNC_LOCATION_ID, locationId)
+    injectContext.store(TestConstants.InjectionKeys.CATALOG_SYNC_LOCATION, locationId)
   }
 
   @Given("I use the catalog sync location context")
   fun useCatalogSyncLocationContext() {
-    authContext.currentLocationId = UUID.fromString(injectContext.get(LocationContext.CATALOG_SYNC_LOCATION_ID))
+    authContext.currentLocationId = injectContext.get(TestConstants.InjectionKeys.CATALOG_SYNC_LOCATION)
   }
 
   @Then("the location catalog should contain product {string}")
   fun verifyLocationCatalogContainsProduct(productName: String) {
-    val productId = injectContext.get(ProductContext.ID)
+    val productId = injectContext.get(TestConstants.InjectionKeys.PRODUCT)
 
     val searchBody = PageRequest(
       previousCursor = null,
@@ -51,19 +49,16 @@ class CatalogSyncSteps(
       parameters = ProductSearchParameters(searchText = productName)
     )
 
-    val timeoutAt = System.currentTimeMillis() + TestConstants.Timeouts.KAFKA_SYNC_MS
-    while (System.currentTimeMillis() < timeoutAt) {
-      val found = requestFactory.jsonRequest()
-        .body(searchBody)
-        .post("/secured/location-products/search")
-        .jsonPath()
-        .getList("contents", LocationProductResponseDto::class.java)
-        ?.any { it.productName == productName && it.id?.toString() == productId } == true
-
-      if (found) return
-      Thread.sleep(TestConstants.Timeouts.KAFKA_POLL_INTERVAL_MS)
-    }
-
-    fail("Product '$productName' (id=$productId) was not found in location catalog within timeout")
+    await().alias("Product '$productName' (id=$productId) not found in location catalog")
+      .atMost(Duration.ofMillis(TestConstants.Timeouts.KAFKA_SYNC_MS))
+      .pollInterval(Duration.ofMillis(TestConstants.Timeouts.KAFKA_POLL_INTERVAL_MS))
+      .until {
+        requestFactory.jsonRequest()
+          .body(searchBody)
+          .post("/secured/location-products/search")
+          .jsonPath()
+          .getList("contents", LocationProductResponseDto::class.java)
+          ?.any { it.productName == productName && it.id == productId } == true
+      }
   }
 }

@@ -73,6 +73,6 @@ class ResponseSteps(
   fun storeResponseField(field: String, key: String) {
     val value = responseContext.lastResponse?.jsonPath()?.getString(field)
     assertNotNull(value, "Response does not contain field '$field'")
-    injectContext.store(key, value)
+    injectContext.storeString(key, value)
   }
 }

@@ -25,10 +25,9 @@ Feature: Create Product
     And a catalog event should be published for table "PRODUCT"
     And the catalog event should reference the created resource
 
-  @kafka-producer @kafka-consumer
+  @kafka-consumer
   Scenario: Product creation is consumed and synced to location catalog
-    Given a public schema organization exists
-    And I am authenticated as an organization admin
+    Given I am authenticated as a platform admin
     And a location exists for catalog sync
     And I am authenticated as an organization user
     And I use the catalog sync location context

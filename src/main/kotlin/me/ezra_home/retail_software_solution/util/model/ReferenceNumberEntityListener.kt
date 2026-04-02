@@ -19,6 +19,7 @@ class ReferenceNumberEntityListener {
     }
 
     companion object {
+        const val BEAN_NAME = "referenceNumberEntityListener"
         private val log = LoggerFactory.getLogger(ReferenceNumberEntityListener::class.java)
         private var applicationContext: ApplicationContext? = null
     }

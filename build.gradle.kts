@@ -14,7 +14,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		   languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -74,6 +74,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.testcontainers:postgresql")
 	testImplementation("org.testcontainers:kafka")
+	testImplementation("org.awaitility:awaitility-kotlin:4.2.1")
 
 }
 

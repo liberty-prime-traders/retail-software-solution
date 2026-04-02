@@ -6,11 +6,13 @@ import java.util.UUID
 @Component
 class AuthContext {
   var authToken: String? = null
+  var currentUserId: UUID? = null
   var currentOrganizationId: UUID? = null
   var currentLocationId: UUID? = null
 
   fun reset() {
     authToken = null
+    currentUserId = null
     currentOrganizationId = null
     currentLocationId = null
   }

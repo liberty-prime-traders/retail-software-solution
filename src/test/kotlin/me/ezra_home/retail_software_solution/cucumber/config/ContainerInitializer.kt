@@ -14,12 +14,16 @@ class ContainerInitializer : ApplicationContextInitializer<ConfigurableApplicati
         withDatabaseName("rtss_e2e_test")
         withUsername("rtss_test_user")
         withPassword("rtss_test_password")
+        withReuse(true)
         start()
       }
     }
 
     private val kafka by lazy {
-      ConfluentKafkaContainer("confluentinc/cp-kafka:7.6.0").apply { start() }
+      ConfluentKafkaContainer("confluentinc/cp-kafka:7.6.0").apply {
+        withReuse(true)
+        start()
+      }
     }
   }
 

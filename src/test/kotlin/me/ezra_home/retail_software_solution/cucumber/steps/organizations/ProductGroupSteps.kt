@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.organizations
 
 import io.cucumber.java.en.Given
-import me.ezra_home.retail_software_solution.cucumber.context.organizations.ProductGroupContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductGroupFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 
 class ProductGroupSteps(
   private val productGroupFixtureBuilder: ProductGroupFixtureBuilder,
@@ -12,6 +12,6 @@ class ProductGroupSteps(
 
   @Given("a product group exists")
   fun createProductGroup() {
-    injectContext.store(ProductGroupContext.ID, productGroupFixtureBuilder.create())
+    injectContext.store(TestConstants.InjectionKeys.PRODUCT_GROUP, productGroupFixtureBuilder.create())
   }
 }

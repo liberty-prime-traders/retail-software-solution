@@ -53,7 +53,7 @@ class KafkaConsumerTestSupport(
       val groupOffsets = latestOffsets.mapValues { (_, offsetResult) ->
         OffsetAndMetadata(offsetResult.offset())
       }
-      admin.alterConsumerGroupOffsets(KafkaConstants.ConsumerGroups.CATALOG_SYNC, groupOffsets).all().get()
+      admin.alterConsumerGroupOffsets(KafkaConstants.ConsumerGroups.Catalog.SYNC, groupOffsets).all().get()
     }
   }
 }

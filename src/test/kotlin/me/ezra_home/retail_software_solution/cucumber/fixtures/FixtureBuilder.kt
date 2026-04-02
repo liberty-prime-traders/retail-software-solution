@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.cucumber.fixtures
 import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
 import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.getResponseId
+import java.util.UUID
 import kotlin.test.assertEquals
 
 abstract class FixtureBuilder<INSERT_DTO>(
@@ -15,7 +16,7 @@ abstract class FixtureBuilder<INSERT_DTO>(
 
   protected open fun fromRow(row: Map<String, String>): INSERT_DTO = defaultDto()
 
-  fun create(dto: INSERT_DTO = defaultDto()): String {
+  fun create(dto: INSERT_DTO = defaultDto()): UUID {
     val response = requestFactory.jsonRequest().body(dto).post(endpoint)
     assertEquals(
       200,
@@ -25,5 +26,5 @@ abstract class FixtureBuilder<INSERT_DTO>(
     return response.getResponseId()
   }
 
-  fun createFromRow(row: Map<String, String>): String = create(fromRow(row))
+  fun createFromRow(row: Map<String, String>): UUID = create(fromRow(row))
 }

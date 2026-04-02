@@ -5,12 +5,12 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
+import me.ezra_home.retail_software_solution.configuration.session.LocationSession
+import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_ID
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_LOCATION_SCHEMA
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants.DEFAULT_ORG_SCHEMA
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
@@ -86,11 +86,19 @@ class TestSecurityConfiguration {
         val sessionContext = SessionContext().apply {
           systemUserId = principal?.systemUserId
           oktaId = principal?.oktaId
-          organizationId = request.getHeader(RtsHeaders.ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID
-          organizationSchemaName = DEFAULT_ORG_SCHEMA
-          locationId = request.getHeader(RtsHeaders.LOCATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID
-          locationSchemaName = DEFAULT_LOCATION_SCHEMA
           tenantFilterIsComplete = true
+
+          this.location = LocationSession(
+            id = request.getHeader(RtsHeaders.LOCATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID,
+            schemaName = TestConstants.Seed.LOCATION_SCHEMA,
+            timezone = "UTC"
+          )
+
+          this.organization = OrgSession(
+            id = request.getHeader(RtsHeaders.ORGANIZATION_ID_HEADER)?.let { UUID.fromString(it) } ?: DEFAULT_ID,
+            schemaName = TestConstants.Seed.ORG_SCHEMA,
+            timezone = "UTC"
+          )
         }
         SessionContextProvider.setSession(sessionContext)
         try {
@@ -117,12 +125,6 @@ class TestSecurityConfiguration {
         oktaId = "okta-platform-admin",
         systemUserId = DEFAULT_ID,
         roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
-      )
-      TestConstants.Tokens.ORG_ADMIN -> TestPrincipal(
-        token = token,
-        oktaId = "okta-org-admin",
-        systemUserId = DEFAULT_ID,
-        roles = listOf(RtsRoles.ROLE_CREATE_ORGANIZATION)
       )
       TestConstants.Tokens.ORG_USER -> TestPrincipal(
         token = token,
