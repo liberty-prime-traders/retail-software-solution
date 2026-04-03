@@ -26,6 +26,11 @@ class AuthorizationPassService(
         return authorizationPassRepository.findAll().map { authorizationPassMapper.toResponseDto(it) }
     }
 
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getSecretCode(passRecordId: UUID): UUID {
+        return authorizationPassRepository.getReferenceById(passRecordId).code
+    }
+
     fun issue(dto: AuthorizationPassInsertDto): AuthorizationPassResponseDto {
         val entity = AuthorizationPassEntity(
             passType = dto.passType,
