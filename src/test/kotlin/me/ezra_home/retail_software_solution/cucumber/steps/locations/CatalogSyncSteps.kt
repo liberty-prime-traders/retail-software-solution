@@ -33,7 +33,7 @@ class CatalogSyncSteps(
         apiClient.post("/secured/location-products/search", searchBody)
           .jsonPath()
           .getList("contents", LocationProductResponseDto::class.java)
-          ?.any { it.productName == productName && it.id == productId } == true
+          ?.any { it.productName == productName && it.productId == productId } == true
       }
   }
 }
