@@ -1,14 +1,16 @@
 package me.ezra_home.retail_software_solution.cucumber.support
 
-import java.util.UUID
-
 object TestConstants {
 
-  val DEFAULT_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-
   object Tokens {
+    const val TOKEN_HEADER = "X-Auth-Token"
     const val PLATFORM_ADMIN = "mock-platform-admin-token"
     const val ORG_USER = "mock-user-token"
+  }
+
+  object Okta {
+    const val PLATFORM_USER = "okta-platform-user"
+    const val ORGANIZATION_USER = "okta-organization-user"
   }
 
   object Timeouts {
@@ -20,6 +22,6 @@ object TestConstants {
   object Seed {
     const val ORG_SCHEMA = "org_test"
     const val LOCATION_SCHEMA = "loc_test"
-    const val PLATFORM_USER_OKTA_ID = "okta-platform-user"
   }
+
 }

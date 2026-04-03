@@ -130,13 +130,13 @@ registerCucumberLaneTask(
 
 registerCucumberLaneTask(
 	"cucumberKafkaProducerTest",
-	"@kafka-producer and not @kafka-consumer and not @ignore",
+	"@publishes-to-kafka and not @consumes-from-kafka and not @ignore",
 	"Runs cucumber kafka producer scenarios."
 )
 
 registerCucumberLaneTask(
 	"cucumberKafkaConsumerTest",
-	"@kafka-consumer and not @ignore",
+	"@consumes-from-kafka and not @ignore",
 	"Runs cucumber kafka consumer scenarios."
 )
 

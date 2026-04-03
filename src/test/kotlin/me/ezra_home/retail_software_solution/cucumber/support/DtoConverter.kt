@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cucumber.support
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.cucumber.datatable.DataTable
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import org.springframework.stereotype.Component
 
 @Component

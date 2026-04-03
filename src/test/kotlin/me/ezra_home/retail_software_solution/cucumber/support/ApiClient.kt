@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.support
 
 import io.restassured.response.Response
-import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import org.springframework.stereotype.Component
 
 @Component

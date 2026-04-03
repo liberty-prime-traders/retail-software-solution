@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.context
+package me.ezra_home.retail_software_solution.cucumber.support.context
 
 object InjectionKeys {
     const val SYSTEM_USER_ID = "systemUserId"
@@ -9,5 +9,4 @@ object InjectionKeys {
     const val UNIT_GROUP = "unitGroup"
     const val UNIT_VALUE = "unitValue"
     const val LOCATION = "location"
-    const val CATALOG_SYNC_LOCATION = "catalogSyncLocationId"
 }

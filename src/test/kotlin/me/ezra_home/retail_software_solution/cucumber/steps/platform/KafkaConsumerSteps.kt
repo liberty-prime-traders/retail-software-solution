@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.cucumber.java.After
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
-import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -30,7 +30,7 @@ class KafkaConsumerSteps(
   private var kafkaConsumer: KafkaConsumer<String, String>? = null
   private var lastCatalogEvent: JsonNode? = null
 
-  @After("@kafka-producer")
+  @After("@publishes-to-kafka")
   fun closeKafkaConsumer() {
     kafkaConsumer?.close()
     kafkaConsumer = null
@@ -87,9 +87,9 @@ class KafkaConsumerSteps(
   fun verifyCatalogEventEntityMatchesResponse() {
     val event = assertNotNull(lastCatalogEvent, "No catalog event captured")
     val createdResourceId = assertNotNull(
-      responseContext.lastResponse?.jsonPath()?.getString("id"),
+      responseContext.idFromResponse(),
       "No created resource id found in last response"
     )
-    assertEquals(createdResourceId, event.path("entityId").asText())
+    assertEquals(createdResourceId.toString(), event.path("entityId").asText())
   }
 }

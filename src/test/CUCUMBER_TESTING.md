@@ -26,22 +26,16 @@ Reports land in `build/reports/tests/{lane}/index.html` and `build/reports/cucum
 
 Each lane is a Gradle task that filters by tag. Tag scenarios to control which lanes they appear in.
 
-| Lane             | Gradle Task                 | Run when                                       |
-|------------------|-----------------------------|------------------------------------------------|
-| `smoke`          | `cucumberSmokeTest`         | `@smoke`                                       |
-| `kafka-producer` | `cucumberKafkaProducerTest` | `@kafka-producer` (excludes `@kafka-consumer`) |
-| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@kafka-consumer`                              |
-| `regression`     | `cucumberRegressionTest`    | everything except `@ignore`                    |
+| Lane             | Gradle Task                 | Run when                                         |
+|------------------|-----------------------------|--------------------------------------------------|
+| `smoke`          | `cucumberSmokeTest`         | `@smoke`                                         |
+| `kafka-producer` | `cucumberKafkaProducerTest` | `@publishes-to-kafka` (excludes `@consumes-from-kafka`)  |
+| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@consumes-from-kafka`                                |
+| `regression`     | `cucumberRegressionTest`    | everything except `@ignore`                      |
 
-**`@kafka-producer`** — tests that an action publishes the right event to the topic. The step manually creates a Kafka consumer, polls the topic, and asserts the message shape. The application's own listeners are not running.
+**`@publishes-to-kafka`** — tests that an action publishes the right event to the topic. The step manually creates a Kafka consumer, polls the topic, and asserts the message shape. The application's own listeners are not running.
 
-**`@kafka-consumer`** — tests the full event pipeline. The application's listeners are started before the scenario, consumer offsets are reset to latest, and the test asserts the downstream effect (e.g. a product was synced to the location catalog). Slower and heavier than producer tests.
-
-Annotate a scenario with both if it needs to verify both sides:
-```gherkin
-@products @kafka-producer @kafka-consumer
-Scenario: Product creation is consumed and synced to location catalog
-```
+**`@consumes-from-kafka`** — tests the full event pipeline. The application's listeners are started before the scenario, consumer offsets are reset to latest, and the test asserts the downstream effect (e.g. a product was synced to the location catalog). Slower and heavier than publish tests.
 
 Other tags: `@ignore` to skip everywhere.
 
@@ -181,11 +175,11 @@ Before every scenario:
 1. All test tables are truncated (`RESTART IDENTITY CASCADE`) — platform schema and Liquibase tables excluded
 2. Auth, response, and inject contexts are reset
 
-For `@kafka-consumer` scenarios, before the scenario also:
+For `@consumes-from-kafka` scenarios, before the scenario also:
 1. Resets `catalog-sync-group` offsets to latest (skips any backlog from previous runs)
 2. Ensures the public schema org exists
 3. Starts the application's Kafka listener containers
 
-After `@kafka-consumer` scenarios, listeners are stopped so they don't bleed into the next scenario.
+After `@consumes-from-kafka` scenarios, listeners are stopped so they don't bleed into the next scenario.
 
 Kafka polling timeouts: 15 s for published events, 20 s for consumer sync effects.

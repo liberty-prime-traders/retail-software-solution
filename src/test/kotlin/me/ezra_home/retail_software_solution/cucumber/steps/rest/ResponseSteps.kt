@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Then
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import org.hamcrest.Matchers.hasSize
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

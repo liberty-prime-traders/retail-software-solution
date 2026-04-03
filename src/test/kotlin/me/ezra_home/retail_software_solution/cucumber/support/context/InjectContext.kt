@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.context
+package me.ezra_home.retail_software_solution.cucumber.support.context
 
 import org.springframework.stereotype.Component
 import java.util.UUID

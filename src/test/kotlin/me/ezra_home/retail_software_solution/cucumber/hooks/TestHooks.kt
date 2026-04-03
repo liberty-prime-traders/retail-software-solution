@@ -4,9 +4,9 @@ import io.cucumber.java.After
 import io.cucumber.java.Before
 import jakarta.annotation.PostConstruct
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.cucumber.context.AuthContext
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
 import me.ezra_home.retail_software_solution.cucumber.support.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
@@ -47,16 +47,16 @@ class TestHooks(
     testDatabaseCleaner.clean()
     injectContext.clear()
     transientCacheNames.forEach { cacheManager.getCache(it)?.clear() }
-    authContext.reset()
+    authContext.initialize()
     responseContext.reset()
   }
 
-  @Before("@kafka-consumer")
+  @Before("@consumes-from-kafka")
   fun beforeKafkaConsumerScenario() {
     kafkaConsumerTestSupport.prepareConsumerScenario()
   }
 
-  @After("@kafka-consumer")
+  @After("@consumes-from-kafka")
   fun stopKafkaListenersForConsumerScenarios() {
     kafkaConsumerTestSupport.stopKafkaListeners()
   }

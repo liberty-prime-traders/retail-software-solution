@@ -4,12 +4,10 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-@Profile("!test")
 class TenantFilter(
     private val locationSchemaInitializer: LocationSchemaInitializer,
     private val organizationSchemaInitializer: OrganizationSchemaInitializer

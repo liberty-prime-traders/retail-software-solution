@@ -1,19 +1,19 @@
 package me.ezra_home.retail_software_solution.cucumber.fixtures.organizations
 
-import me.ezra_home.retail_software_solution.cucumber.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.context.InjectionKeys
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectionKeys
 import me.ezra_home.retail_software_solution.cucumber.fixtures.FixtureBuilder
-import me.ezra_home.retail_software_solution.cucumber.support.AuthenticatedRequestFactory
+import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.DtoConverter
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import org.springframework.stereotype.Component
 
 @Component
 class ProductFixtureBuilder(
-  requestFactory: AuthenticatedRequestFactory,
-  injectContext: InjectContext,
-  private val dtoConverter: DtoConverter
-) : FixtureBuilder<OrganizationProductInsertDto>(requestFactory, injectContext) {
+    injectContext: InjectContext,
+    apiClient: ApiClient,
+    private val dtoConverter: DtoConverter,
+) : FixtureBuilder<OrganizationProductInsertDto>(injectContext, apiClient) {
 
   override val endpoint = "/secured/products"
 

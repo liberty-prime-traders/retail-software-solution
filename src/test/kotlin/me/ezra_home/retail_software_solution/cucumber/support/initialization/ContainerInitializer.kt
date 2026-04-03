@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.config
+package me.ezra_home.retail_software_solution.cucumber.support.initialization
 
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext

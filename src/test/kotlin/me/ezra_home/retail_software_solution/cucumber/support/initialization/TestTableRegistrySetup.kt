@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.config
+package me.ezra_home.retail_software_solution.cucumber.support.initialization
 
 import jakarta.annotation.PostConstruct
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
