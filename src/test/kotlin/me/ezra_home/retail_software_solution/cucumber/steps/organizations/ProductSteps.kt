@@ -6,10 +6,8 @@ import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
-import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 
@@ -28,16 +26,10 @@ class ProductSteps(
 
   @When("I create a product with name {string} and description {string}")
   fun createProduct(name: String, description: String) {
-    val response = apiClient.post(
-      "/secured/products",
-      OrganizationProductInsertDto(
-        productName = name,
-        description = description,
-        productGroupId = injectContext.get(TransientKey.PRODUCT_GROUP),
-        baseUnitId = injectContext.get(TransientKey.UNIT_VALUE)
-      )
+    injectContext.store(
+      TransientKey.PRODUCT,
+      productFixtureBuilder.createFromRow(mapOf("productName" to name, "description" to description))
     )
-    injectContext.store(TransientKey.PRODUCT, ResponseContext.idFromResponse(response))
   }
 
   @When("I search for products with text {string}")
