@@ -5,7 +5,7 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.context.InjectionKeys
+import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
@@ -22,7 +22,7 @@ class ProductSteps(
   @Given("the following products exist:")
   fun createProducts(dataTable: DataTable) {
     dataTable.asMaps().forEach { row ->
-      injectContext.store(InjectionKeys.PRODUCT, productFixtureBuilder.createFromRow(row))
+      injectContext.store(TransientKey.PRODUCT, productFixtureBuilder.createFromRow(row))
     }
   }
 
@@ -33,11 +33,11 @@ class ProductSteps(
       OrganizationProductInsertDto(
         productName = name,
         description = description,
-        productGroupId = injectContext.get(InjectionKeys.PRODUCT_GROUP),
-        baseUnitId = injectContext.get(InjectionKeys.UNIT_VALUE)
+        productGroupId = injectContext.get(TransientKey.PRODUCT_GROUP),
+        baseUnitId = injectContext.get(TransientKey.UNIT_VALUE)
       )
     )
-    injectContext.store(InjectionKeys.PRODUCT, ResponseContext.idFromResponse(response))
+    injectContext.store(TransientKey.PRODUCT, ResponseContext.idFromResponse(response))
   }
 
   @When("I search for products with text {string}")

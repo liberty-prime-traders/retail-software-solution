@@ -1,35 +1,17 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import io.cucumber.java.en.When
-import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
-import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.context.InjectionKeys
-import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
 import java.util.Optional
-import java.util.UUID
 
 class OrganizationCrudSteps(
-  private val apiClient: ApiClient,
-  private val injectContext: InjectContext,
-  private val authContext: AuthContext,
-  private val responseContext: ResponseContext
+  private val apiClient: ApiClient
 ) {
 
   @When("I get all organizations")
   fun getAllOrganizations() {
     apiClient.get("/secured/organizations")
-  }
-
-  @When("I create an organization with name {string} and subdomain {string}, and passcode {string}")
-  fun createOrganization(name: String, subdomain: String, passcode: String) {
-    val response = apiClient.post(
-      "/secured/organizations",
-      OrganizationInsertDto(name = name, subdomain = subdomain, passCode = UUID.fromString(passcode))
-    )
-    injectContext.store(InjectionKeys.ORGANIZATION, ResponseContext.idFromResponse(response))
   }
 
   @When("I update the current organization with name {string}")

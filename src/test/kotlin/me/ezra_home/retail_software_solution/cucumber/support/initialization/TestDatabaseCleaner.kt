@@ -1,6 +1,7 @@
-package me.ezra_home.retail_software_solution.cucumber.support
+package me.ezra_home.retail_software_solution.cucumber.support.initialization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
@@ -9,11 +10,20 @@ import javax.sql.DataSource
 @Component
 class TestDatabaseCleaner(
   @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE)
-  dataSource: DataSource
+  platformDataSource: DataSource,
+  @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
+  orgDataSource: DataSource,
+  @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
+  locationDataSource: DataSource
 ) {
-  private val jdbcTemplate = JdbcTemplate(dataSource)
-  private var cachedTableKey: String? = null
-  private var cachedTruncateSql: String? = null
+
+  private val templates = mapOf(
+    DataSourceBeanNames.PLATFORM_SCHEMA_NAME to JdbcTemplate(platformDataSource),
+    TestConstants.Seed.ORG_SCHEMA to JdbcTemplate(orgDataSource),
+    TestConstants.Seed.LOCATION_SCHEMA to JdbcTemplate(locationDataSource)
+  )
+
+  private val sqlCache = mutableMapOf<String, String?>()
 
   companion object {
     private val PROTECTED_SCHEMAS = setOf("pg_catalog", "information_schema", DataSourceBeanNames.PLATFORM_SCHEMA_NAME)
@@ -21,29 +31,27 @@ class TestDatabaseCleaner(
   }
 
   fun clean() {
-    val truncateSql = getOrBuildTruncateSql() ?: return
-    jdbcTemplate.execute(truncateSql)
+    templates.forEach { (schemaName, template) ->
+      sqlCache.getOrPut(schemaName) { buildTruncateSql(template) }?.let { template.execute(it) }
+    }
   }
 
-  private fun getOrBuildTruncateSql(): String? {
+  private fun buildTruncateSql(template: JdbcTemplate): String? {
     val schemaList = PROTECTED_SCHEMAS.joinToString(",") { "'$it'" }
     val tableList = PROTECTED_TABLES.joinToString(",") { "'$it'" }
     val scope = "WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ($schemaList) AND table_name NOT IN ($tableList)"
 
-    val tables = jdbcTemplate.query(
+    val tables = template.query(
       "SELECT table_schema, table_name FROM information_schema.tables $scope ORDER BY table_schema, table_name"
     ) { rs, _ ->
       "${quoteIdentifier(rs.getString("table_schema"))}.${quoteIdentifier(rs.getString("table_name"))}"
     }
 
-    val tableKey = tables.joinToString(",")
-    if (tableKey == cachedTableKey) return cachedTruncateSql
-
-    cachedTableKey = tableKey
-    cachedTruncateSql = if (tables.isEmpty()) null
+    return if (tables.isEmpty()) null
     else "TRUNCATE TABLE ${tables.joinToString(", ")} RESTART IDENTITY CASCADE"
-    return cachedTruncateSql
   }
 
-  private fun quoteIdentifier(identifier: String): String = "\"${identifier.replace("\"", "\"\"")}\""
+  private fun quoteIdentifier(identifier: String): String {
+    return "\"${identifier.replace("\"", "\"\"")}\""
+  }
 }

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.cucumber.support.context.InjectCont
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import java.util.UUID
-import kotlin.test.assertEquals
 
 abstract class FixtureBuilder<INSERT_DTO>(
   protected val injectContext: InjectContext,
@@ -23,11 +22,7 @@ abstract class FixtureBuilder<INSERT_DTO>(
       throw IllegalStateException("${this::class.simpleName} prerequisite missing: ${e.message}", e)
     }
     val response = apiClient.post(endpoint, resolvedDto)
-    assertEquals(
-      200,
-      response.statusCode,
-      "Failed to create fixture at $endpoint. Response: ${response.asString()}"
-    )
+    check(response.statusCode == 200) { "Failed to create fixture at $endpoint: ${response.asString()}" }
     return ResponseContext.idFromResponse(response)
   }
 

@@ -6,10 +6,10 @@ import jakarta.annotation.PostConstruct
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.KafkaContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
-import me.ezra_home.retail_software_solution.cucumber.support.TestDatabaseCleaner
-import me.ezra_home.retail_software_solution.cucumber.support.initialization.BoilerPlateDataInitializer
+import me.ezra_home.retail_software_solution.cucumber.support.initialization.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.beans.factory.getBeansWithAnnotation
 import org.springframework.util.ClassUtils
@@ -23,9 +23,9 @@ class TestHooks(
   private val kafkaConsumerTestSupport: KafkaConsumerTestSupport,
   private val injectContext: InjectContext,
   private val authContext: AuthContext,
+  private val kafkaContext: KafkaContext,
   private val cacheManager: CacheManager,
   private val applicationContext: ApplicationContext,
-  private val boilerPlateDataInitializer: BoilerPlateDataInitializer
 ) {
 
   private lateinit var transientCacheNames: Set<String>
@@ -48,10 +48,15 @@ class TestHooks(
   fun beforeScenario() {
     testDatabaseCleaner.clean()
     injectContext.clear()
+    kafkaContext.reset()
     transientCacheNames.forEach { cacheManager.getCache(it)?.clear() }
-    boilerPlateDataInitializer.restoreLocation()
     authContext.initialize()
     responseContext.reset()
+  }
+
+  @Before("@publishes-to-kafka")
+  fun beforePublishKafkaScenario() {
+    kafkaConsumerTestSupport.subscribeCatalogEventsFromLatest()
   }
 
   @Before("@consumes-from-kafka")
@@ -62,5 +67,10 @@ class TestHooks(
   @After("@consumes-from-kafka")
   fun stopKafkaListenersForConsumerScenarios() {
     kafkaConsumerTestSupport.stopKafkaListeners()
+  }
+
+  @After("@publishes-to-kafka")
+  fun closePublishKafkaConsumer() {
+    kafkaConsumerTestSupport.closeCatalogEventsConsumer()
   }
 }

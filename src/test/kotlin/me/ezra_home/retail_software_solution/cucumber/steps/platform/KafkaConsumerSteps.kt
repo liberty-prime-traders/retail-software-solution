@@ -2,66 +2,29 @@ package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.cucumber.java.After
-import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
+import me.ezra_home.retail_software_solution.cucumber.support.context.KafkaContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
-import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.common.TopicPartition
-import org.apache.kafka.common.serialization.StringDeserializer
-import org.awaitility.Awaitility.await
-import org.springframework.beans.factory.annotation.Value
 import java.time.Duration
-import java.util.Properties
-import java.util.UUID
+import org.awaitility.Awaitility.await
 import kotlin.test.assertNotNull
 import kotlin.test.assertEquals
 
 class KafkaConsumerSteps(
   private val responseContext: ResponseContext,
   private val objectMapper: ObjectMapper,
-  @param:Value("\${spring.kafka.bootstrap-servers}")
-  private val bootstrapServers: String
+  private val kafkaConsumerTestSupport: KafkaConsumerTestSupport,
+  private val kafkaContext: KafkaContext
 ) {
-
-  private var kafkaConsumer: KafkaConsumer<String, String>? = null
-  private var lastCatalogEvent: JsonNode? = null
-
-  @After("@publishes-to-kafka")
-  fun closeKafkaConsumer() {
-    kafkaConsumer?.close()
-    kafkaConsumer = null
-  }
-
-  @Given("I am subscribed to the catalog events topic")
-  fun subscribeToCatalogEvents() {
-    val properties = Properties().apply {
-      put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-      put(ConsumerConfig.GROUP_ID_CONFIG, "cucumber-catalog-${UUID.randomUUID()}")
-      put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.java.name)
-      put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer::class.java.name)
-      put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
-      put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-    }
-
-    val consumer = KafkaConsumer<String, String>(properties)
-    val topic = KafkaConstants.Topics.CATALOG_EVENTS
-    val partitions = consumer.partitionsFor(topic).map { TopicPartition(topic, it.partition()) }
-    consumer.assign(partitions)
-    consumer.poll(Duration.ofMillis(200))
-
-    val endOffsets = consumer.endOffsets(partitions)
-    partitions.forEach { consumer.seek(it, endOffsets[it] ?: 0L) }
-
-    kafkaConsumer = consumer
-  }
 
   @Then("a catalog event should be published for table {string}")
   fun verifyCatalogEventPublished(tableName: String) {
-    val consumer = assertNotNull(kafkaConsumer, "Kafka consumer not initialized — call: I am subscribed to the catalog events topic")
+    val consumer = assertNotNull(
+      kafkaConsumerTestSupport.catalogEventsConsumer,
+      "Kafka consumer not initialized — add @publishes-to-kafka tag to the scenario"
+    )
 
     var matchedEvent: JsonNode? = null
 
@@ -80,12 +43,12 @@ class KafkaConsumerSteps(
         false
       }
 
-    lastCatalogEvent = matchedEvent
+    kafkaContext.lastCatalogEvent = matchedEvent
   }
 
   @Then("the catalog event should reference the created resource")
   fun verifyCatalogEventEntityMatchesResponse() {
-    val event = assertNotNull(lastCatalogEvent, "No catalog event captured")
+    val event = assertNotNull(kafkaContext.lastCatalogEvent, "No catalog event captured")
     val createdResourceId = assertNotNull(
       responseContext.idFromResponse(),
       "No created resource id found in last response"

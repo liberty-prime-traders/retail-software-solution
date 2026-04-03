@@ -9,47 +9,44 @@ class InjectContext {
   private val multiStore = mutableMapOf<String, MutableList<String>>()
   private val persistentStore = mutableMapOf<String, MutableList<String>>()
 
-  fun store(key: String, value: UUID) {
-    multiStore.getOrPut(key) { mutableListOf() }.add(value.toString())
+  fun store(key: TransientKey, value: UUID) {
+    multiStore.getOrPut(key.key) { mutableListOf() }.add(value.toString())
   }
 
-  fun storeString(key: String, value: String) {
-    multiStore.getOrPut(key) { mutableListOf() }.add(value)
+  fun persist(key: PersistentKey, value: UUID) {
+    persistentStore.getOrPut(key.key) { mutableListOf() }.add(value.toString())
   }
 
-  fun persist(key: String, value: UUID) {
-    persistentStore.getOrPut(key) { mutableListOf() }.add(value.toString())
-  }
+  fun find(key: ContextKey, index: Int? = null): UUID? = findString(key, index)?.let { UUID.fromString(it) }
 
-  fun persistString(key: String, value: String) {
-    persistentStore.getOrPut(key) { mutableListOf() }.add(value)
-  }
+  fun get(key: ContextKey, index: Int? = null): UUID = checkNotNull(find(key, index)) { "No value found in context for key '${key.key}'" }
 
-  fun find(key: String, index: Int? = null): UUID? = findString(key, index)?.let { UUID.fromString(it) }
-
-  fun get(key: String, index: Int? = null): UUID = checkNotNull(find(key, index)) { "No value found in context for key '$key'" }
-
-  fun findString(key: String, index: Int? = null): String? {
-    persistentStore[key]?.let { list ->
-      return if (index == null) list.lastOrNull() else list.getOrNull(index)
+  fun findString(key: ContextKey, index: Int? = null): String? {
+    val store = when (key) {
+      is PersistentKey -> persistentStore
+      is TransientKey -> multiStore
     }
-    return multiStore[key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
+    return store[key.key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
   }
 
-  fun getString(key: String, index: Int? = null): String =
-    checkNotNull(findString(key, index)) { "No value found in context for key '$key'" }
+  fun getString(key: ContextKey, index: Int? = null): String =
+    checkNotNull(findString(key, index)) { "No value found in context for key '${key.key}'" }
 
   fun inject(text: String): String =
     PLACEHOLDER_PATTERN.replace(text) { match ->
       val parts = match.groupValues[1].split("->")
-      val key = parts[0]
+      val keyStr = parts[0]
       val index = parts.getOrNull(1)?.toIntOrNull()
-      findString(key, index) ?: match.value
+      KEY_LOOKUP[keyStr]?.let { findString(it, index) } ?: match.value
     }
 
   fun clear() = multiStore.clear()
 
   companion object {
     private val PLACEHOLDER_PATTERN = Regex("#([^\"\\s.!?,:;()\\[\\]{}/_]+)")
+    private val KEY_LOOKUP: Map<String, ContextKey> = buildMap {
+      PersistentKey.entries.forEach { put(it.key, it) }
+      TransientKey.entries.forEach { put(it.key, it) }
+    }
   }
 }

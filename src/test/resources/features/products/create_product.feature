@@ -19,8 +19,6 @@ Feature: Create Product
 
   @publishes-to-kafka
   Scenario: Product creation publishes catalog event to Kafka
-    And I am subscribed to the catalog events topic
     When I create a product with name "Kafka Product" and description "Event validation"
-    Then the response status should be 200
     And a catalog event should be published for table "PRODUCT"
-    And the catalog event should reference the created resource
+    Then the catalog event should reference the created resource

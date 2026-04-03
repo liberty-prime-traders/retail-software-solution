@@ -31,6 +31,10 @@ class AuthorizationPassEndpoint(private val authorizationPassService: Authorizat
     fun update(@RequestBody dto: AuthorizationPassUpdateDto): AuthorizationPassResponseDto =
         authorizationPassService.update(dto)
 
+    @GetMapping("/{id}/secret-code")
+    fun getSecretCode(@PathVariable id: UUID): Map<String, UUID> =
+        mapOf("code" to authorizationPassService.getSecretCode(id))
+
     @PutMapping("/{id}/revoke")
     fun revoke(@PathVariable id: UUID): AuthorizationPassResponseDto =
         authorizationPassService.revoke(id)

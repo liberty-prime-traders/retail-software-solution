@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.cucumber.config
 
 import io.cucumber.spring.CucumberContextConfiguration
 import me.ezra_home.retail_software_solution.TestMockBeansConfiguration
-import me.ezra_home.retail_software_solution.configuration.security.OktaOAuth2WebSecurityConfiguration
 import me.ezra_home.retail_software_solution.cucumber.support.initialization.ContainerInitializer
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import

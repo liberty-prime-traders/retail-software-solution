@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Pr
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.context.InjectionKeys
+import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import org.awaitility.Awaitility.await
@@ -18,7 +18,7 @@ class CatalogSyncSteps(
 
   @Then("the location catalog should contain product {string}")
   fun verifyLocationCatalogContainsProduct(productName: String) {
-    val productId = injectContext.get(InjectionKeys.PRODUCT)
+    val productId = injectContext.get(TransientKey.PRODUCT)
 
     val searchBody = PageRequest(
       previousCursor = null,

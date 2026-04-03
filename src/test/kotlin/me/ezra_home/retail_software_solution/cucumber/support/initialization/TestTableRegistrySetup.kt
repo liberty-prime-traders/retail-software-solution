@@ -14,6 +14,13 @@ class TestTableRegistrySetup(private val tableRegistryCache: TableRegistryCache)
     const val BEAN_NAME = "testTableRegistrySetup"
   }
 
+  /***
+   * Ensures that all tables in the registry are marked as validated before tests run.
+   * This is necessary because every insert generates a reference# using a validated registry entry.
+   * There is no need to test this because it is an infrastructure detail that end users will not
+   * interact with directly, and a failure here would indicate a catastrophic issue in the system
+   * that would be caught by other tests.
+    */
   @PostConstruct
   fun validateAllTables() {
     tableRegistryCache.getAllTables()

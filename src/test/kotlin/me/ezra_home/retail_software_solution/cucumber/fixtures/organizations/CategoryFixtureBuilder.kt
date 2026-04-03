@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class CategoryFixtureBuilder(
-    injectContext: InjectContext,
-    apiClient: ApiClient
+  injectContext: InjectContext,
+  apiClient: ApiClient
 ) : FixtureBuilder<ProductCategoryInsertDto>(injectContext, apiClient) {
 
   override val endpoint = "/secured/product-category"
