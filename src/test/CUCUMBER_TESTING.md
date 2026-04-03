@@ -7,7 +7,7 @@ HTTP-level E2E tests against a real Postgres and Kafka stack, isolated from dev/
 
 ## Running Tests
 
-Postgres and Kafka are managed automatically by Testcontainers. Docker Desktop must be running before starting any tests.
+Postgres and Kafka are managed automatically by Testcontainers with container reuse enabled. Docker Desktop must be running before starting any tests.
 
 ```bash
 ./cucumber.sh              # all tests (regression lane)
@@ -26,14 +26,14 @@ Reports land in `build/reports/tests/{lane}/index.html` and `build/reports/cucum
 
 Each lane is a Gradle task that filters by tag. Tag scenarios to control which lanes they appear in.
 
-| Lane             | Gradle Task                 | Run when                                         |
-|------------------|-----------------------------|--------------------------------------------------|
-| `smoke`          | `cucumberSmokeTest`         | `@smoke`                                         |
-| `kafka-producer` | `cucumberKafkaProducerTest` | `@publishes-to-kafka` (excludes `@consumes-from-kafka`)  |
-| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@consumes-from-kafka`                                |
-| `regression`     | `cucumberRegressionTest`    | everything except `@ignore`                      |
+| Lane             | Gradle Task                 | Run when                                                        |
+|------------------|-----------------------------|-----------------------------------------------------------------|
+| `smoke`          | `cucumberSmokeTest`         | `@smoke and not @ignore`                                        |
+| `kafka-producer` | `cucumberKafkaProducerTest` | `@publishes-to-kafka and not @consumes-from-kafka and not @ignore` |
+| `kafka-consumer` | `cucumberKafkaConsumerTest` | `@consumes-from-kafka and not @ignore`                          |
+| `regression`     | `cucumberRegressionTest`    | `not @ignore`                                                   |
 
-**`@publishes-to-kafka`** — tests that an action publishes the right event to the topic. The step manually creates a Kafka consumer, polls the topic, and asserts the message shape. The application's own listeners are not running.
+**`@publishes-to-kafka`** — tests that an action publishes the right event to the topic. Before the scenario a Kafka consumer subscribes from latest; the step polls and asserts message shape. The application's own listeners are not running.
 
 **`@consumes-from-kafka`** — tests the full event pipeline. The application's listeners are started before the scenario, consumer offsets are reset to latest, and the test asserts the downstream effect (e.g. a product was synced to the location catalog). Slower and heavier than publish tests.
 
@@ -41,85 +41,85 @@ Other tags: `@ignore` to skip everywhere.
 
 ---
 
+## Boilerplate Session
+
+`BoilerPlateDataInitializer` runs once after Spring starts (before any scenario). It bootstraps a complete org/location pair through the real API and stores them in `BoilerPlateSessionContextHolder` and `InjectContext` (`PersistentKey.ORGANIZATION`).
+
+This means every scenario starts with a real organization and location already in place. Steps that need to reference them use the `#organization` and `#location->0` placeholders.
+
+---
+
 ## Authentication
 
-Steps set one of three mock tokens. The security filter maps the token to a principal and roles — no real Okta involved.
+Steps set one of two mock tokens. The security filter maps the token to a principal and roles — no real Okta involved.
 
 ```gherkin
-Given I am authenticated as an organization user    # can create products, cannot manage orgs
-Given I am authenticated as an organization admin   # org management rights
-Given I am authenticated as a platform admin        # cross-org access
-Given I am not authenticated                        # expects 403
+Given I am authenticated as an organization user    # ORG_USER token, org-level access
+Given I am not authenticated                        # no token, expects 403
 ```
 
-All authenticated steps also seed `currentOrganizationId` and `currentLocationId` with a default UUID so request headers are always present.
-
 An auth step must appear before any step that creates fixture data. Fixture creation calls the real API and will fail with a 401 if no token is set.
+
+The `AuthContext` is initialized to `PLATFORM_ADMIN` token before every scenario by `TestHooks`. Auth steps override this.
 
 ---
 
 ## Fixtures
 
-Fixtures create the prerequisite data a test needs via the real API. They exist to remove setup noise from feature files.
+Fixture steps create prerequisite data through the real API and store the resulting ID in `InjectContext`. They use dedicated fixture builder classes rather than inline API calls.
 
-A simple fixture call:
-```kotlin
-val categoryId = categoryFixtureBuilder.create()          // random defaults
-val categoryId = categoryFixtureBuilder.create(           // specific values
-  ProductCategoryInsertDto(categoryName = "Electronics")
-)
-```
-
-Fixtures compose — `ProductFixtureBuilder` internally builds a product group (which builds a category) and a base unit, then hands back the two IDs a product creation needs:
-```kotlin
-val fixture = productFixtureBuilder.create()
-// fixture.productGroupId, fixture.baseUnitId — ready to use
-```
-
-When a step needs a product to exist, it calls the fixture and stamps those IDs onto every row:
 ```gherkin
-Given I am authenticated as an organization user
+Given a category exists
+Given a product group exists
+Given a unit group exists
+Given a unit exists
+Given a location context exists
+```
+
+Each step chains off the previous — `product group exists` reads `CATEGORY` from `InjectContext`, `unit exists` reads `UNIT_GROUP`, etc. Steps must appear in dependency order.
+
+For batch product creation:
+```gherkin
 Given the following products exist:
   | productName | description  |
   | Widget A    | First widget |
   | Widget B    | Second widget|
 ```
 
-The step converts each row to `OrganizationProductInsertDto` via `DtoConverter`, then `.copy(productGroupId = ..., baseUnitId = ...)` from the fixture. The feature file only describes business data — never IDs.
+The step resolves `PRODUCT_GROUP` and `UNIT_VALUE` from `InjectContext` and merges them into each row. Feature files describe business data only — never IDs.
 
 ---
 
 ## Cross-Step Data (`InjectContext`)
 
-When a step creates something, it stores the result so later steps can reference it using `#key->index` (0-based).
+`InjectContext` has two stores:
+
+- **Transient** (`TransientKey`) — cleared before every scenario
+- **Persistent** (`PersistentKey`) — survives for the entire test session
+
+When a step creates something, it stores the resulting ID under its key. Later steps reference it with `#keyname` (last added) or `#keyname->index` (0-based).
+
+**TransientKey names:** `product`, `category`, `product_group`, `unit_group`, `unit_value`, `location`
+
+**PersistentKey names:** `organization`
 
 ```gherkin
-When I create a product with name "Widget" and description "test"
-Then the response status should be 200
-And I store the response "id" as "product"
-
-When I send a GET request to "/secured/products/#product->0"
-Then the response field "productName" should be "Widget"
-```
-
-Creating multiple things under the same key and accessing by index:
-```gherkin
+# #product->0 is the first created product, #product->1 is the second
 Given the following products exist:
   | productName | description |
   | Widget A    | first       |
   | Widget B    | second      |
 
-# #product->0 is Widget A, #product->1 is Widget B
 When I send a DELETE request to "/secured/products/#product->1"
 ```
 
-`InjectContext` is cleared before every scenario. Steps store using typed key constants (e.g. `ProductContext.ID`, `LocationContext.ID`) so there are no magic strings in Kotlin code — only in feature files where that is intentional.
+The `AuthenticatedRequestFactory` automatically attaches `X-Organization-Id` and `X-Location-Id` headers from `InjectContext` on every request — no manual header setup needed.
 
 ---
 
 ## DataTable to DTO
 
-Column names must match DTO field names exactly. `DtoConverter` handles the conversion and resolves any `#key->index` placeholders in cell values before Jackson parses them.
+Column names must match DTO field names exactly. `DtoConverter` handles conversion and resolves `#key->index` placeholders before Jackson parses.
 
 Special cell values:
 - `NULL` → `null`
@@ -169,17 +169,42 @@ Then the response error field "message" should be "Duplicate name"
 
 ---
 
+## Kafka Steps
+
+**Publisher assertion** (use with `@publishes-to-kafka`):
+```gherkin
+Then a catalog event should be published for table "organization_product"
+And the catalog event should reference the created resource
+```
+
+The first step polls the topic for up to 15 s and stores the matched event in `KafkaContext`. The second compares the event's `entityId` to the response ID from the previous create call.
+
+**Consumer sync assertion** (use with `@consumes-from-kafka`):
+```gherkin
+Then the location catalog should contain product "Widget A"
+```
+
+Polls the location-products search endpoint for up to 20 s waiting for async Kafka consumption to complete.
+
+---
+
 ## Scenario Lifecycle
 
 Before every scenario:
-1. All test tables are truncated (`RESTART IDENTITY CASCADE`) — platform schema and Liquibase tables excluded
-2. Auth, response, and inject contexts are reset
+1. All test tables truncated (`RESTART IDENTITY CASCADE`) — platform schema and Liquibase tables excluded
+2. Auth, response, inject (transient), and Kafka contexts reset
+3. Organization/location-scoped caches cleared
+4. `AuthContext` initialized to `PLATFORM_ADMIN`
+
+For `@publishes-to-kafka` scenarios, before the scenario also:
+1. Subscribes a Kafka consumer to `CATALOG_EVENTS` topic from latest offset
 
 For `@consumes-from-kafka` scenarios, before the scenario also:
 1. Resets `catalog-sync-group` offsets to latest (skips any backlog from previous runs)
-2. Ensures the public schema org exists
-3. Starts the application's Kafka listener containers
+2. Starts the application's Kafka listener containers
 
-After `@consumes-from-kafka` scenarios, listeners are stopped so they don't bleed into the next scenario.
+After `@publishes-to-kafka` scenarios: catalog events consumer is closed.
+
+After `@consumes-from-kafka` scenarios: listeners are stopped so they don't bleed into the next scenario.
 
 Kafka polling timeouts: 15 s for published events, 20 s for consumer sync effects.
