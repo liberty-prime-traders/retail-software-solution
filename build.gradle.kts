@@ -26,6 +26,18 @@ repositories {
 	mavenCentral()
 }
 
+val cucumberTestSourceSet = sourceSets.create("cucumberTest") {
+	compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+	runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+}
+
+val cucumberTestImplementation: Configuration by configurations.getting {
+	extendsFrom(configurations.testImplementation.get())
+}
+val cucumberTestRuntimeOnly: Configuration by configurations.getting {
+	extendsFrom(configurations.testRuntimeOnly.get())
+}
+
 dependencies {
 	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
 	implementation("com.okta.spring:okta-spring-sdk")
@@ -58,18 +70,18 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-oauth2-jose")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
-	testImplementation("io.cucumber:cucumber-java:7.18.1")
-	testImplementation("io.cucumber:cucumber-spring:7.18.1")
-	testImplementation("io.cucumber:cucumber-junit-platform-engine:7.18.1")
-	testImplementation("io.rest-assured:rest-assured:5.4.0")
-	testImplementation("io.rest-assured:kotlin-extensions:5.4.0")
-	testImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
-	testRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	testImplementation("org.testcontainers:postgresql")
-	testImplementation("org.testcontainers:kafka")
-	testImplementation("org.awaitility:awaitility-kotlin:4.2.1")
 
+	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
+	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	cucumberTestImplementation("io.cucumber:cucumber-java:7.18.1")
+	cucumberTestImplementation("io.cucumber:cucumber-spring:7.18.1")
+	cucumberTestImplementation("io.cucumber:cucumber-junit-platform-engine:7.18.1")
+	cucumberTestImplementation("io.rest-assured:rest-assured:5.4.0")
+	cucumberTestImplementation("io.rest-assured:kotlin-extensions:5.4.0")
+	cucumberTestImplementation("org.junit.platform:junit-platform-suite-api:1.10.2")
+	cucumberTestImplementation("org.testcontainers:postgresql")
+	cucumberTestImplementation("org.testcontainers:kafka")
+	cucumberTestImplementation("org.awaitility:awaitility-kotlin:4.2.1")
 }
 
 kotlin {
@@ -100,9 +112,8 @@ fun registerCucumberLaneTask(taskName: String, tagExpression: String, descriptio
 	tasks.register<Test>(taskName) {
 		group = "verification"
 		description = descriptionText
-		filter {
-			includeTestsMatching("me.ezra_home.retail_software_solution.cucumber.RunCucumberTest")
-		}
+		testClassesDirs = cucumberTestSourceSet.output.classesDirs
+		classpath = cucumberTestSourceSet.runtimeClasspath
 		systemProperty("cucumber.filter.tags", tagExpression)
 	}
 }

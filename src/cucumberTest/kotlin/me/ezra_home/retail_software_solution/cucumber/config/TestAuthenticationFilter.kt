@@ -4,7 +4,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.support.TestConstants
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder

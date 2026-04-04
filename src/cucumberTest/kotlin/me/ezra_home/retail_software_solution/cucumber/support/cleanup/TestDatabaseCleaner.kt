@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.support.cleanup
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.support.TestConstants
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate

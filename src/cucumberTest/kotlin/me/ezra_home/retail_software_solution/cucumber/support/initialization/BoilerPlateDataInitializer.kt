@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.cucumber.support.initialization
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey

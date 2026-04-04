@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cucumber.support.context
 
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.support.TestConstants
 import org.springframework.stereotype.Component
 
 @Component

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cucumber.support
+package me.ezra_home.retail_software_solution.support
 
 object TestConstants {
 

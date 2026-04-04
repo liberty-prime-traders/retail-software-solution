@@ -52,7 +52,9 @@ class PlatformSchemaDataSourceConfig(private val environment: Environment) {
     ): SpringLiquibase {
         val profiles = environment.activeProfiles.toSet()
         val shouldRunLiquibase = !profiles.contains("test") || profiles.contains("cucumber")
-        ensurePlatformSchemaExists(dataSource)
+        if (shouldRunLiquibase) {
+            ensurePlatformSchemaExists(dataSource)
+        }
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"

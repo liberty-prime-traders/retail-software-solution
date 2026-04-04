@@ -4,7 +4,7 @@ import com.okta.sdk.client.Client
 import com.okta.sdk.resource.user.User
 import com.okta.sdk.resource.user.UserList
 import com.okta.sdk.resource.user.UserProfile
-import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.support.TestConstants
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.boot.test.context.TestConfiguration

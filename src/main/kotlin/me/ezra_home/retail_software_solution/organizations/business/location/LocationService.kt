@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -46,12 +45,6 @@ class LocationService(
         val schemaName = SchemaNameGenerator.generateSchemaName(locationName, "loc")
         locationSchemaService.createSchema(schemaName)
         return schemaName
-    }
-
-    fun reinsertLocation(entity: LocationEntity): LocationEntity {
-        entity.id = null
-        locationCache.upsertLocation(entity)
-        return entity
     }
 
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {
