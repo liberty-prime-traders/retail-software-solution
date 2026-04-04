@@ -8,7 +8,6 @@ import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
@@ -20,10 +19,7 @@ import javax.sql.DataSource
     entityManagerFactoryRef = DataSourceBeanNames.ORGANIZATION_SCHEMA_ENTITY_MANAGER_FACTORY,
     transactionManagerRef = DataSourceBeanNames.ORGANIZATION_SCHEMA_TRANSACTION_MANAGER
 )
-class OrganizationSchemaDataSourceConfig(
-    private val organizationTenantIdentifier: OrganizationTenantIdentifier,
-    private val environment: Environment
-) {
+class OrganizationSchemaDataSourceConfig(private val organizationTenantIdentifier: OrganizationTenantIdentifier) {
 
     @Primary
     @Bean(name = [DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE])
@@ -50,15 +46,10 @@ class OrganizationSchemaDataSourceConfig(
     fun organizationSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
-        val shouldRun = environment.getProperty(
-            "app.liquibase.organization-enabled",
-            Boolean::class.java,
-            false
-        )
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/organizations/db-changelog-master.yml"
-            setShouldRun(shouldRun)
+            setShouldRun(false)
         }
     }
 }

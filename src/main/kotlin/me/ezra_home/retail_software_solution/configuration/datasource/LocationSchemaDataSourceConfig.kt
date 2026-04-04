@@ -8,7 +8,6 @@ import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
@@ -20,10 +19,7 @@ import javax.sql.DataSource
     entityManagerFactoryRef = DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY,
     transactionManagerRef = DataSourceBeanNames.LOCATION_SCHEMA_TRANSACTION_MANAGER
 )
-class LocationSchemaDataSourceConfig(
-    private val locationTenantIdentifier: LocationTenantIdentifier,
-    private val environment: Environment
-) {
+class LocationSchemaDataSourceConfig(private val locationTenantIdentifier: LocationTenantIdentifier) {
 
     @Primary
     @Bean(name = [DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE])
@@ -50,15 +46,10 @@ class LocationSchemaDataSourceConfig(
     fun locationSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
-        val shouldRun = environment.getProperty(
-            "app.liquibase.location-enabled",
-            Boolean::class.java,
-            false
-        )
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/locations/db-changelog-master.yml"
-            setShouldRun(shouldRun)
+            setShouldRun(false)
         }
     }
 }

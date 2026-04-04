@@ -5,7 +5,6 @@ Feature: Catalog Sync
 
   Background:
     Given I am authenticated as an organization user
-    And a location context exists
     And a category exists
     And a product group exists
     And a unit group exists

@@ -4,6 +4,6 @@ import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class  CacheSchemaLevel(
+annotation class CacheSchemaLevel(
     val schemaLevel: SchemaLevel = SchemaLevel.PLATFORM
 )

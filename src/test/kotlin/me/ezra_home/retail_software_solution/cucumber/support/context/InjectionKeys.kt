@@ -5,7 +5,8 @@ sealed interface ContextKey {
 }
 
 enum class PersistentKey(override val key: String) : ContextKey {
-  ORGANIZATION("organization")
+  ORGANIZATION("organization"),
+  LOCATION("location")
 }
 
 enum class TransientKey(override val key: String) : ContextKey {
@@ -14,5 +15,4 @@ enum class TransientKey(override val key: String) : ContextKey {
   PRODUCT_GROUP("productGroup"),
   UNIT_GROUP("unitGroup"),
   UNIT_VALUE("unitValue"),
-  LOCATION("location")
 }

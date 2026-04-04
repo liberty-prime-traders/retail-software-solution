@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.support.initialization
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
@@ -14,6 +15,7 @@ import me.ezra_home.retail_software_solution.platform.business.authorization_pas
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.AuthorizationPassInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.util.model.ReferenceNumberEntityListener
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.annotation.DependsOn
@@ -24,7 +26,6 @@ import java.util.UUID
 @Component
 @DependsOn(
   DataSourceBeanNames.PLATFORM_SCHEMA_LIQUIBASE,
-  TestTableRegistrySetup.BEAN_NAME,
   ReferenceNumberEntityListener.BEAN_NAME
 )
 class BoilerPlateDataInitializer(
@@ -33,30 +34,36 @@ class BoilerPlateDataInitializer(
   private val injectContext: InjectContext,
   private val organizationCache: OrganizationCache,
   private val locationCache: LocationCache,
-  private val holder: BoilerPlateSessionContextHolder
+  private val tableRegistryCache: TableRegistryCache
 ) {
+
+  companion object {
+    const val SUBDOMAIN = "test"
+  }
 
   @EventListener(ApplicationReadyEvent::class)
   fun initialize() {
-    authContext.authToken = TestConstants.Tokens.PLATFORM_ADMIN
+    val existingOrganization = organizationCache.getAllOrganizations()
+    if (existingOrganization.isEmpty()) {
+      validateAllTables()
+      authContext.authToken = TestConstants.Tokens.PLATFORM_ADMIN
+      val platformUserId = createPlatformUser()
+      val passRecordId = issuePass(platformUserId)
+      reserveSubdomain()
+      createOrganization(passRecordId)
+      createLocation()
+      createOrgUser()
 
-    val platformUserId = createPlatformUser()
-    val subdomain = reserveSubdomain()
-    val passRecordId = issuePass(platformUserId)
-    val orgId = createOrganization(subdomain, passRecordId)
-    val locationId = createLocation()
-
-    holder.org = organizationCache.getAllOrganizations()
-      .firstOrNull { it.id == orgId }
-      ?: error("Boilerplate org not found in cache after creation")
-
-    holder.withOrgSession {
-      holder.location = locationCache.getAllLocations()
-        .firstOrNull { it.id == locationId }
-        ?: error("Boilerplate location not found in cache after creation")
+    } else {
+      existingOrganization.find { it.subdomain == SUBDOMAIN }?.let { organization ->
+        injectContext.persist(PersistentKey.ORGANIZATION, organization.getNullSafeId())
+        SessionContextProvider.initOrganization(organization)
+        locationCache.getAllLocations().firstOrNull()?.let { location ->
+          injectContext.persist(PersistentKey.LOCATION, location.getNullSafeId())
+        }
+        SessionContextProvider.clear()
+      }
     }
-
-    createOrgUser()
   }
 
   private fun createPlatformUser(): UUID {
@@ -72,10 +79,9 @@ class BoilerPlateDataInitializer(
     check(response.statusCode() == 200) { "Failed to create org user: ${response.asString()}" }
   }
 
-  private fun reserveSubdomain(): String {
-    val response = apiClient.get("/secured/reserved-subdomains/verify?suggestedSubdomain=test")
+  private fun reserveSubdomain() {
+    val response = apiClient.get("/secured/reserved-subdomains/verify?suggestedSubdomain=$SUBDOMAIN")
     check(response.statusCode() == 200) { "Failed to reserve subdomain: ${response.asString()}" }
-    return response.jsonPath().getString("subdomain")
   }
 
   private fun issuePass(userId: UUID): UUID {
@@ -91,27 +97,34 @@ class BoilerPlateDataInitializer(
     return ResponseContext.idFromResponse(response)
   }
 
-  private fun createOrganization(subdomain: String, passRecordId: UUID): UUID {
+  private fun createOrganization(passRecordId: UUID) {
     val secretCodeResponse = apiClient.get("/secured/authorization-passes/$passRecordId/secret-code")
     check(secretCodeResponse.statusCode() == 200) { "Failed to get secret code: ${secretCodeResponse.asString()}" }
     val secretCode = UUID.fromString(secretCodeResponse.jsonPath().getString("code"))
 
     val response = apiClient.post(
       "/secured/organizations",
-      OrganizationInsertDto(name = "Test Organization", subdomain = subdomain, passCode = secretCode)
+      OrganizationInsertDto(name = "Test Organization", subdomain = SUBDOMAIN, passCode = secretCode)
     )
     check(response.statusCode() == 200) { "Failed to create organization: ${response.asString()}" }
-    val orgId = ResponseContext.idFromResponse(response)
-    injectContext.persist(PersistentKey.ORGANIZATION, orgId)
-    return orgId
+    injectContext.persist(PersistentKey.ORGANIZATION, ResponseContext.idFromResponse(response))
   }
 
-  private fun createLocation(): UUID {
+  private fun createLocation() {
     val response = apiClient.post(
       "/secured/locations",
       LocationInsertDto(locationType = LocationType.SHOP, name = "Test Location")
     )
     check(response.statusCode() == 200) { "Failed to create location: ${response.asString()}" }
-    return ResponseContext.idFromResponse(response)
+    injectContext.persist(PersistentKey.LOCATION, ResponseContext.idFromResponse(response))
+  }
+
+  private fun validateAllTables() {
+    tableRegistryCache.getAllTables()
+      .filter { !it.validated }
+      .forEach {
+        it.validated = true
+        tableRegistryCache.upsertTable(it)
+      }
   }
 }

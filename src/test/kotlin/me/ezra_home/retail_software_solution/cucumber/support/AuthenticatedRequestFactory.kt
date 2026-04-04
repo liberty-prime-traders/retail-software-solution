@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
-import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import org.springframework.core.env.Environment
 import org.springframework.core.env.getRequiredProperty
 import org.springframework.stereotype.Component
@@ -27,7 +26,7 @@ class AuthenticatedRequestFactory(
 
     authContext.authToken?.let { request.header(TestConstants.Tokens.TOKEN_HEADER, it) }
     injectContext.find(PersistentKey.ORGANIZATION)?.let { request.header(RtsHeaders.ORGANIZATION_ID_HEADER, it.toString()) }
-    injectContext.find(TransientKey.LOCATION)?.let { request.header(RtsHeaders.LOCATION_ID_HEADER, it.toString()) }
+    injectContext.find(PersistentKey.LOCATION)?.let { request.header(RtsHeaders.LOCATION_ID_HEADER, it.toString()) }
     return request
   }
 }

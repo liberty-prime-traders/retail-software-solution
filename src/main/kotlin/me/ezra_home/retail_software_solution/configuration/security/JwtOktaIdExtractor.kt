@@ -6,7 +6,7 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.stereotype.Component
 
 @Component
-@Profile("!test")
+@Profile("!cucumber")
 class JwtOktaIdExtractor : OktaIdExtractor {
 
     companion object {

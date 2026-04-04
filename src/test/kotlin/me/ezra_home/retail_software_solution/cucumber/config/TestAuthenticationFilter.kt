@@ -18,11 +18,7 @@ class TestAuthenticationFilter : OncePerRequestFilter() {
     val roles: List<String>
   )
 
-  override fun doFilterInternal(
-    request: HttpServletRequest,
-    response: HttpServletResponse,
-    filterChain: FilterChain
-  ) {
+  override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
     val token = request.getHeader(TestConstants.Tokens.TOKEN_HEADER)
     val principal = mapTokenToPrincipal(token)
     if (principal != null) {

@@ -2,20 +2,13 @@ package me.ezra_home.retail_software_solution.cucumber.hooks
 
 import io.cucumber.java.After
 import io.cucumber.java.Before
-import jakarta.annotation.PostConstruct
-import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
+import me.ezra_home.retail_software_solution.cucumber.support.cleanup.CacheCleaner
+import me.ezra_home.retail_software_solution.cucumber.support.cleanup.TestDatabaseCleaner
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.KafkaContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
-import me.ezra_home.retail_software_solution.cucumber.support.KafkaConsumerTestSupport
-import me.ezra_home.retail_software_solution.cucumber.support.initialization.TestDatabaseCleaner
-import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import org.springframework.beans.factory.getBeansWithAnnotation
-import org.springframework.util.ClassUtils
-import org.springframework.cache.CacheManager
-import org.springframework.cache.annotation.CacheConfig
-import org.springframework.context.ApplicationContext
 
 class TestHooks(
   private val responseContext: ResponseContext,
@@ -24,32 +17,15 @@ class TestHooks(
   private val injectContext: InjectContext,
   private val authContext: AuthContext,
   private val kafkaContext: KafkaContext,
-  private val cacheManager: CacheManager,
-  private val applicationContext: ApplicationContext,
+  private val cacheCleaner: CacheCleaner,
 ) {
-
-  private lateinit var transientCacheNames: Set<String>
-
-  @PostConstruct
-  fun resolveTransientCaches() {
-    transientCacheNames = applicationContext.getBeansWithAnnotation<CacheSchemaLevel>().values
-      .map { ClassUtils.getUserClass(it) }
-      .filter { type ->
-        val level = type.getAnnotation(CacheSchemaLevel::class.java)?.schemaLevel
-        level == SchemaLevel.ORGANIZATION || level == SchemaLevel.LOCATION
-      }
-      .flatMap { type ->
-        type.getAnnotation(CacheConfig::class.java)?.cacheNames?.toList() ?: emptyList()
-      }
-      .toSet()
-  }
 
   @Before
   fun beforeScenario() {
     testDatabaseCleaner.clean()
     injectContext.clear()
     kafkaContext.reset()
-    transientCacheNames.forEach { cacheManager.getCache(it)?.clear() }
+    cacheCleaner.clearAllCaches()
     authContext.initialize()
     responseContext.reset()
   }
@@ -57,6 +33,11 @@ class TestHooks(
   @Before("@publishes-to-kafka")
   fun beforePublishKafkaScenario() {
     kafkaConsumerTestSupport.subscribeCatalogEventsFromLatest()
+  }
+
+  @After("@publishes-to-kafka")
+  fun closePublishKafkaConsumer() {
+    kafkaConsumerTestSupport.closeCatalogEventsConsumer()
   }
 
   @Before("@consumes-from-kafka")
@@ -67,10 +48,5 @@ class TestHooks(
   @After("@consumes-from-kafka")
   fun stopKafkaListenersForConsumerScenarios() {
     kafkaConsumerTestSupport.stopKafkaListeners()
-  }
-
-  @After("@publishes-to-kafka")
-  fun closePublishKafkaConsumer() {
-    kafkaConsumerTestSupport.closeCatalogEventsConsumer()
   }
 }

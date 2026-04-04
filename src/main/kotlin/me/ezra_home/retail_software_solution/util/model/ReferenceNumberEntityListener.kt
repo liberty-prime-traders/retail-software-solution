@@ -9,7 +9,7 @@ import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-@Component
+@Component(ReferenceNumberEntityListener.BEAN_NAME)
 class ReferenceNumberEntityListener {
 
 

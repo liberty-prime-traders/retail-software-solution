@@ -11,8 +11,7 @@ import org.springframework.test.context.ContextConfiguration
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@ActiveProfiles("test", "cucumber")
 @Import(TestMockBeansConfiguration::class, TestSecurityConfiguration::class)
 @ContextConfiguration(initializers = [ContainerInitializer::class])
-class CucumberSpringConfiguration {
-}
+class CucumberSpringConfiguration

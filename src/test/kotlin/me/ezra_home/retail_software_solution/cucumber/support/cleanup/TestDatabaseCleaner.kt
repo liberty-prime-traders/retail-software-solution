@@ -1,7 +1,8 @@
-package me.ezra_home.retail_software_solution.cucumber.support.initialization
+package me.ezra_home.retail_software_solution.cucumber.support.cleanup
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.cucumber.support.TestConstants
+import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
@@ -11,8 +12,10 @@ import javax.sql.DataSource
 class TestDatabaseCleaner(
   @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE)
   platformDataSource: DataSource,
+
   @Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
   orgDataSource: DataSource,
+
   @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
   locationDataSource: DataSource
 ) {
@@ -26,8 +29,23 @@ class TestDatabaseCleaner(
   private val sqlCache = mutableMapOf<String, String?>()
 
   companion object {
-    private val PROTECTED_SCHEMAS = setOf("pg_catalog", "information_schema", DataSourceBeanNames.PLATFORM_SCHEMA_NAME)
-    private val PROTECTED_TABLES = setOf("databasechangelog", "databasechangeloglock")
+    private val PROTECTED_SCHEMAS = setOf("pg_catalog", "information_schema")
+    private val PROTECTED_TABLES = setOf(
+      "databasechangelog",
+      "databasechangeloglock",
+
+      TableNames.DB_VERSION,
+      TableNames.SYS_USER,
+      TableNames.RESERVED_SUBDOMAIN,
+      TableNames.TABLE_REGISTRY,
+      TableNames.ORGANIZATION,
+      TableNames.ORGANIZATION_AUDIT,
+      TableNames.AUTHORIZATION_PASS,
+      TableNames.AUTHORIZATION_PASS_AUDIT,
+
+      TableNames.LOCATION,
+      TableNames.LOCATION_AUDIT
+    )
   }
 
   fun clean() {

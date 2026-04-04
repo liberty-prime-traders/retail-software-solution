@@ -33,8 +33,6 @@ services:
       retries: 10
 
   rtss-kafka-ui:
-    profiles:
-      - ui
     image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}
     restart: unless-stopped
     environment:

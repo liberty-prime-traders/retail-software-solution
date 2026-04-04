@@ -18,15 +18,12 @@ java {
 	}
 }
 
-configurations {
-	compileOnly {
-		extendsFrom(configurations.annotationProcessor.get())
-	}
+configurations.testRuntimeClasspath {
+	exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
 }
 
 repositories {
 	mavenCentral()
-	gradlePluginPortal()
 }
 
 dependencies {
@@ -51,9 +48,6 @@ dependencies {
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	kapt("org.mapstruct:mapstruct-processor:1.6.3")
 
-	compileOnly("org.projectlombok:lombok")
-	kapt("org.projectlombok:lombok")
-
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
 	}
@@ -76,10 +70,6 @@ dependencies {
 	testImplementation("org.testcontainers:kafka")
 	testImplementation("org.awaitility:awaitility-kotlin:4.2.1")
 
-}
-
-configurations.testRuntimeClasspath {
-	exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
 }
 
 kotlin {
@@ -110,15 +100,10 @@ fun registerCucumberLaneTask(taskName: String, tagExpression: String, descriptio
 	tasks.register<Test>(taskName) {
 		group = "verification"
 		description = descriptionText
-		useJUnitPlatform()
 		filter {
 			includeTestsMatching("me.ezra_home.retail_software_solution.cucumber.RunCucumberTest")
 		}
 		systemProperty("cucumber.filter.tags", tagExpression)
-		systemProperty("cucumber.junit-platform.naming-strategy", "long")
-		systemProperty("okta.oauth2.enabled", "false")
-		systemProperty("okta.client.enabled", "false")
-		systemProperty("spring.profiles.active", "test")
 	}
 }
 

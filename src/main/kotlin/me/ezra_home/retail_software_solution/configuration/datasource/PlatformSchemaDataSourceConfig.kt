@@ -50,17 +50,14 @@ class PlatformSchemaDataSourceConfig(private val environment: Environment) {
     fun platformSchemaLiquibase(
         @Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_DATA_SOURCE) dataSource: DataSource
     ): SpringLiquibase {
+        val profiles = environment.activeProfiles.toSet()
+        val shouldRunLiquibase = !profiles.contains("test") || profiles.contains("cucumber")
         ensurePlatformSchemaExists(dataSource)
-        val shouldRun = environment.getProperty(
-            "app.liquibase.platform-enabled",
-            Boolean::class.java,
-            !environment.activeProfiles.contains("test")
-        )
         return SpringLiquibase().apply {
             this.dataSource = dataSource
             changeLog = "classpath:db/changelog/platform/db-changelog-master.yml"
             defaultSchema = DataSourceBeanNames.PLATFORM_SCHEMA_NAME
-            setShouldRun(shouldRun)
+            setShouldRun(shouldRunLiquibase)
         }
     }
 
