@@ -14,11 +14,11 @@ object TableNames {
     const val TAX_TYPE = "tax_type"
     const val JURISDICTION = "jurisdiction"
     const val JURISDICTION_TAX_TYPE = "jurisdiction_tax_type"
+    const val SYS_USER = "sys_user"
 
     // Organization tables
     const val ADDRESS = "address"
     const val CONTACT = "contact"
-    const val SYS_USER = "sys_user"
     const val LOCATION = "location"
     const val PRODUCT_CATEGORY = "product_category"
     const val JOB_TITLE = "job_title"

@@ -1,0 +1,3 @@
+# Empty file to override Okta's spring.factories
+# This prevents Okta auto-configuration in tests
+org.springframework.boot.env.EnvironmentPostProcessor=

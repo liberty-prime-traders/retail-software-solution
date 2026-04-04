@@ -29,6 +29,7 @@ class InventoryEventConsumer(
       setupContext(event.sourceSchema)
       when (event) {
         is PurchaseDeliveredEvent -> purchaseDeliveryHandler.handle(event)
+        else -> {}
       }
     }
   }

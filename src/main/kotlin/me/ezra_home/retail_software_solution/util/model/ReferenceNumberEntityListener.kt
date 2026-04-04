@@ -9,7 +9,7 @@ import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-@Component
+@Component(ReferenceNumberEntityListener.BEAN_NAME)
 class ReferenceNumberEntityListener {
 
 
@@ -19,6 +19,7 @@ class ReferenceNumberEntityListener {
     }
 
     companion object {
+        const val BEAN_NAME = "referenceNumberEntityListener"
         private val log = LoggerFactory.getLogger(ReferenceNumberEntityListener::class.java)
         private var applicationContext: ApplicationContext? = null
     }

@@ -26,6 +26,11 @@ services:
 
     volumes:
       - rtss-kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
 
   rtss-kafka-ui:
     image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}

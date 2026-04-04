@@ -31,11 +31,11 @@ class OrganizationAdminEndpoint(private val organizationAdminService: Organizati
     }
 
     @PostMapping("{adminId}")
-    fun createOrganizationAdmin(@PathVariable("adminId") adminId: UUID): OrganizationAdminResponseDto =
+    fun createOrganizationAdmin(@PathVariable adminId: UUID): OrganizationAdminResponseDto =
         organizationAdminService.createOrganizationAdmin(adminId)
 
     @PostMapping("terminate/{adminId}")
-    fun terminateOrganizationAdmin(@PathVariable("adminId") adminId: UUID): ResponseEntity<HttpStatus> {
+    fun terminateOrganizationAdmin(@PathVariable adminId: UUID): ResponseEntity<HttpStatus> {
         organizationAdminService.terminateOrganizationAdmin(adminId)
         return ResponseEntity(HttpStatus.NO_CONTENT)
     }

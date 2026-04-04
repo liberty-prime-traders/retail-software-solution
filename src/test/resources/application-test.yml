@@ -2,27 +2,41 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-  datasource:
-    platform: &h2-config
-      jdbc-url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
-      username: sa
-      password:
-      driver-class-name: org.h2.Driver
-      hikari:
-        auto-commit: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+      - com.okta.spring.boot.oauth.OktaOAuth2AutoConfig
+      - com.okta.spring.boot.oauth.OktaOAuth2ResourceServerAutoConfig
+      - com.okta.spring.boot.sdk.config.OktaClientPropertiesConfiguration
 
-    location: *h2-config
-    organization: *h2-config
+  datasource:
+    location:
+      changelog: db/changelog/locations/db-changelog-master.yml
+    organization:
+      changelog: db/changelog/organizations/db-changelog-master.yml
+
+  kafka:
+    listener:
+      auto-startup: false
 
   jpa:
     show-sql: false
     hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate.dialect: org.hibernate.dialect.H2Dialect
-
-  kafka:
-    bootstrap-servers: localhost:9092
+      ddl-auto: validate
 
   liquibase:
-    enabled: false
+    enabled: true
+
+okta:
+  oauth2:
+    issuer: https://localhost:8080
+    client-id: test-client-id
+    client-secret: test-client-secret
+  client:
+    org-url: https://localhost:8080
+    token: test-token
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG

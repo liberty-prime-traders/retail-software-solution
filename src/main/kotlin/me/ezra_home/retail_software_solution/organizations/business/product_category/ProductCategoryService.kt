@@ -55,7 +55,7 @@ class ProductCategoryService(
 
     companion object {
         const val NAME_IS_REQUIRED = "A category must have a name"
-        const val NAME_ALREADY_EXISTS = "A category with the name %s is already assigned."
+        const val NAME_ALREADY_EXISTS = "A category with the name %s already exists."
     }
 
 }
