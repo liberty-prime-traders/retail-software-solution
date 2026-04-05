@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseService
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseCancelLinesDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseNotesUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseSearchService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseNotesUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -42,7 +42,7 @@ class PurchaseEndpoint(
     purchaseService.convertDraftToOrder(dto)
 
   @PutMapping("{id}/line-cancel-quantities")
-  fun cancelLines(@PathVariable id: UUID, @RequestBody lines: List<PurchaseLineCancelDto>): PurchaseResponseDto =
+  fun cancelLines(@PathVariable id: UUID, @RequestBody lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto =
     purchaseService.updateCancelQuantities(id, lines)
 
   @PutMapping("{id}/notes")

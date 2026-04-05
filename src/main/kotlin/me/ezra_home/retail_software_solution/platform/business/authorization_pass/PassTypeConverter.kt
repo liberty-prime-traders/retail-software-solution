@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.authorization_pass
 
 import jakarta.persistence.Converter
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.PassType
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassType
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 
 @Converter(autoApply = true)

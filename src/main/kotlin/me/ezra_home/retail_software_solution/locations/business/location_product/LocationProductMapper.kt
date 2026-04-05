@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductResponseDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitName
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier

@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.`public`.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

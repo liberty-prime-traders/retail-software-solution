@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.dto
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.IdentityType
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.IdentityType
 import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
 

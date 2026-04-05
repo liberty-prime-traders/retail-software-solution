@@ -4,8 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.PassStatus
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.PassType
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassStatus
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassType
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName

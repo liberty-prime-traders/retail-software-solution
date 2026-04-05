@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineProductDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity

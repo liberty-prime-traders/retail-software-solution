@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionService
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionInsertDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionResponseDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionService
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionInsertDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionResponseDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize

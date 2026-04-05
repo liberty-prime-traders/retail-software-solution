@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product.sea
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.OrganizationProductQueryBuilder
-import me.ezra_home.retail_software_solution.organizations.business.product.public.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

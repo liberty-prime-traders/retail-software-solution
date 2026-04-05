@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.product
 
-import me.ezra_home.retail_software_solution.organizations.business.product.public.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import java.util.UUID
 
 data class ProductSyncData(

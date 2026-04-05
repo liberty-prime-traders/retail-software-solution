@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.OrganizationJoinRequestService
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.OrganizationAdminJoinRequestResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.OrganizationJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestService
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestResponseDto
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping

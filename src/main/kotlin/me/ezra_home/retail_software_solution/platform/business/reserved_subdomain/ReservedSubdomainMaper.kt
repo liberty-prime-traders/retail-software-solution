@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.reserved_subdoma
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainEntity
-import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.`public`.ReservedSubdomainDto
+import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.api.ReservedSubdomainDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

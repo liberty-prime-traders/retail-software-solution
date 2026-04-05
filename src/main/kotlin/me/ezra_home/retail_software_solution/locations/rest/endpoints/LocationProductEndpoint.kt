@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.location.LocationProductSearchService
-import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductService
-import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductResponseDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.PathVariable

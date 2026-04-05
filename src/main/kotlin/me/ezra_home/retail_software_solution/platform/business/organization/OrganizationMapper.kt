@@ -5,9 +5,9 @@ import me.ezra_home.retail_software_solution.platform.business.authorization_pas
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionQualifier
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
-import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig

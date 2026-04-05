@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagService
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagUpdateDto
 import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode

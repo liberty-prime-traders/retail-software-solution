@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleService
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleService
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleUpdateDto
 import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode

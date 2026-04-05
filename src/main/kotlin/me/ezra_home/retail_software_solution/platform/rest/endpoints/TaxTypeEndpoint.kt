@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeService
-import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeInsertDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeResponseDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeService
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeInsertDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeResponseDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize

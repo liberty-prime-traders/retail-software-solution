@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.organizations.business.tag.mapping
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.TagEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping

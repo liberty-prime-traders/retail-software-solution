@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassService
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassInsertDto
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassResponseDto
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassService
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassInsertDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassResponseDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassUpdateDto
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

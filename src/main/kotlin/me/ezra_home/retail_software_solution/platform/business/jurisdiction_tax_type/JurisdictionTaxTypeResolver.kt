@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax
 
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionCache
 import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
-import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.PlatformTaxTypeDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import org.springframework.stereotype.Component
 import java.util.UUID
 

@@ -5,7 +5,7 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseDeliveryStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseDeliveryStatusConverter
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName

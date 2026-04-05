@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.authorization_pass
 
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassResponseDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.AuthorizationPassEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig

@@ -3,9 +3,9 @@ package me.ezra_home.retail_software_solution.organizations.business.contact
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactQualifier
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ToIdentityType
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping

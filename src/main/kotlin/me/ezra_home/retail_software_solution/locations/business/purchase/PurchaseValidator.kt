@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseCancelLinesDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object PurchaseValidator {

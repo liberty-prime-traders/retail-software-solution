@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupService
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupService
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping

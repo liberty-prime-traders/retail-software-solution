@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method
 
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodDto
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.public.PaymentMethodInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.public.PaymentMethodResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.public.PaymentMethodUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodUpdateDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping
 
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.public.TagSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.TagSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
 import me.ezra_home.retail_software_solution.organizations.business.tag.TagCache
 import org.springframework.stereotype.Component

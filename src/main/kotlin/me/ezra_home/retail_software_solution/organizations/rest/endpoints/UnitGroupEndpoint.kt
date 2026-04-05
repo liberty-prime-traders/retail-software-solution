@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupService
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin

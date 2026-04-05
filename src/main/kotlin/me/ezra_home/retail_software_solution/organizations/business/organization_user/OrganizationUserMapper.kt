@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.organization_user
 
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.public.OrganizationUserResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper

@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_group
 
 import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

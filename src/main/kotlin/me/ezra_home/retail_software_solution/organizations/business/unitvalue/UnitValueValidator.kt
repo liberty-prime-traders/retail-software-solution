@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

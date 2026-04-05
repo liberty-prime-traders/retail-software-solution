@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateService
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateService
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping

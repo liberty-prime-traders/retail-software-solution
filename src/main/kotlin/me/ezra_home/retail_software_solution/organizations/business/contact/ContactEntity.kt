@@ -5,8 +5,8 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactStatus
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactType
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactStatus
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName

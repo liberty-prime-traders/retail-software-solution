@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactUpdateDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping

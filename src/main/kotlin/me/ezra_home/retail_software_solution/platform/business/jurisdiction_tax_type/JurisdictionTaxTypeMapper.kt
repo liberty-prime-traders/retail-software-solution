@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type
 
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeEntity
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.`public`.JurisdictionTaxTypeInsertDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeInsertDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

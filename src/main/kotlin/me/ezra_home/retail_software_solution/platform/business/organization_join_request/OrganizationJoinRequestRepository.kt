@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestEntity
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.JoinRequestStatus
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.JoinRequestStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 

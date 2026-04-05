@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.MigrationStatus
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRetryRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRetryRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType

@@ -9,7 +9,7 @@ data class OrganizationAdminDto(
     var createdOn: OffsetDateTime? = null,
     var referenceNumber: String? = null,
     var userId: UUID? = null,
-    var endOn: OffsetDateTime? = null
+    var endOn: OffsetDateTime? = null,
 ) {
     fun isActive(): Boolean = endOn == null
 }

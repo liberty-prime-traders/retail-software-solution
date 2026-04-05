@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationHistoryService
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationService
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRetryRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.OrganizationMigrationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationHistoryService
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationService
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRetryRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.OrganizationMigrationResponseDto
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin

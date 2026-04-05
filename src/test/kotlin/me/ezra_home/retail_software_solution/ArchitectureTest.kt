@@ -21,7 +21,7 @@ class ArchitectureTest {
     private fun areNonServiceDomainClasses() = object : DescribedPredicate<JavaClass>("are non-public business domain classes") {
         override fun test(javaClass: JavaClass) =
             domainOf(javaClass.packageName) != null &&
-            !javaClass.packageName.contains(".public")
+            !javaClass.packageName.contains(".api")
     }
 
     private fun onlyBeAccessedFromOwnDomainOrOutsideBusiness() = object : ArchCondition<JavaClass>("only be accessed from within the same domain or outside the business layer") {

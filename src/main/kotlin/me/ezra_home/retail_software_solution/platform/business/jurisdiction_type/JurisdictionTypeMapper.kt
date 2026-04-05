@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_type
 
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.`public`.JurisdictionTypeInsertDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.`public`.JurisdictionTypeResponseDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.`public`.JurisdictionTypeUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeInsertDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeResponseDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.JurisdictionTypeEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping

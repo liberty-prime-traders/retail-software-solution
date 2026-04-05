@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto
 
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.public.OrgJurisdictionTaxTypeStatus
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeStatus
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -9,6 +9,6 @@ data class OrgJurisdictionTaxTypeDto(
     var createdById: UUID? = null,
     var createdOn: OffsetDateTime? = null,
     var referenceNumber: String? = null,
-    var jurisdictionTaxTypeId: UUID? = null,
+    var jurisdictionTaxTypeId: UUID,
     var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE
 )

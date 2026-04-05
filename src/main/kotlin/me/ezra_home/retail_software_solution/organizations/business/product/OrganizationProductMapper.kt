@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductDto
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitName

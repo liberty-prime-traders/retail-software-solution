@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncInitiator
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncLogFetcher
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncInitiator
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogUpdater
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncLogResponseDto
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncRequestDto
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncInitiateType
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogResponseDto
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncRequestDto
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncInitiateType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

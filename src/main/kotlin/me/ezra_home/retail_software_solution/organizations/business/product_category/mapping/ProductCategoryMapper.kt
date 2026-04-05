@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.organizations.business.product_cat
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.JoinRequestStatus
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.JoinRequestStatus
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
