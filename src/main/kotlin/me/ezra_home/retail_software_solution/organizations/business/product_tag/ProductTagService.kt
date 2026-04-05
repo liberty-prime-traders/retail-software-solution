@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
-import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.dto.ProductTagDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -31,28 +31,24 @@ class ProductTagService(
         val activeProductTags = productTagCache.findActiveProductTagsByProductId(productId)
         val activeTagIds = activeProductTags.map { it.tagId }
 
-        val entitiesToUpdate = mutableListOf<ProductTagEntity>()
+        val dtosToUpdate = mutableListOf<ProductTagDto>()
 
         tagsToRemove.forEach { tagId ->
             val existingAssignment = activeProductTags.find { it.tagId == tagId }
             if (existingAssignment != null) {
                 existingAssignment.endOn = OffsetDateTime.now()
-                entitiesToUpdate.add(existingAssignment)
+                dtosToUpdate.add(existingAssignment)
             }
         }
 
         tagsToAdd.forEach { tagId ->
             if (!activeTagIds.contains(tagId)) {
-                val newProductTag = ProductTagEntity(
-                    productId = productId,
-                    tagId = tagId
-                )
-                entitiesToUpdate.add(newProductTag)
+                dtosToUpdate.add(ProductTagDto(productId = productId, tagId = tagId))
             }
         }
 
-        if (entitiesToUpdate.isNotEmpty()) {
-            productTagCache.saveAllProductTags(entitiesToUpdate)
+        if (dtosToUpdate.isNotEmpty()) {
+            productTagCache.saveAllProductTags(dtosToUpdate)
         }
     }
 }

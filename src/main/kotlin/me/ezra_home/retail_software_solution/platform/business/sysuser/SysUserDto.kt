@@ -1,17 +1,16 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser
 
-import com.okta.sdk.resource.user.UserStatus
-import java.io.Serializable
+import me.ezra_home.retail_software_solution.util.model.HasId
+import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SysUserDto(
-    val id: UUID,
-    val status: UserStatus?,
-    val oktaId: String?,
-    val firstName: String?,
-    val lastName: String?,
-    val mobilePhone: String?,
-    val secondEmail: String?,
-    val email: String?,
-    val userType: UserType
-) : Serializable
+    override var id: UUID? = null,
+    var createdById: UUID? = null,
+    var createdOn: OffsetDateTime? = null,
+    var referenceNumber: String? = null,
+    var oktaId: String? = null,
+    var localFirstName: String? = null,
+    var localLastName: String? = null,
+    var userType: UserType? = null
+) : HasId

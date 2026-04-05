@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleUpdateDto
@@ -15,18 +16,23 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
 internal interface JobTitleMapper {
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toDto(titleEntity: JobTitleEntity): JobTitleResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(titleInsertDto: JobTitleInsertDto): JobTitleEntity
+    fun toDomainDto(titleInsertDto: JobTitleInsertDto): JobTitleDto
+
+    fun toDomainDto(titleEntity: JobTitleEntity): JobTitleDto
+
+    fun toEntity(titleDto: JobTitleDto): JobTitleEntity
+
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    fun toDto(titleDto: JobTitleDto): JobTitleResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(titleUpdateDto: JobTitleUpdateDto, @MappingTarget titleEntity: JobTitleEntity)
+    fun partialUpdate(titleUpdateDto: JobTitleUpdateDto, @MappingTarget titleDto: JobTitleDto)
 }

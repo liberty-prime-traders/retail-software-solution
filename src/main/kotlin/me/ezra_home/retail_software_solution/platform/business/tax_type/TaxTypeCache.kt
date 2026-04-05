@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.tax_type
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.platform.model.TaxTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -14,15 +14,16 @@ import java.util.UUID
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.TAX_TYPE])
 internal class TaxTypeCache(
-    private val taxTypeRepository: TaxTypeRepository
+    private val taxTypeRepository: TaxTypeRepository,
+    private val mapper: TaxTypeMapper
 ) {
 
     @Cacheable
-    fun getAll(): Collection<TaxTypeEntity> = taxTypeRepository.findAll()
+    fun getAll(): Collection<TaxTypeDto> = taxTypeRepository.findAll().map { mapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsert(entity: TaxTypeEntity) {
-        taxTypeRepository.save(entity)
+    fun upsert(dto: TaxTypeDto) {
+        taxTypeRepository.save(mapper.toEntity(dto))
     }
 
     @CacheEvict(allEntries = true)

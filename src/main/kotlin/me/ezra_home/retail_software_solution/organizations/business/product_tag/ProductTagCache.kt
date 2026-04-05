@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.dto.ProductTagDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,23 +13,26 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_TAG])
-internal class ProductTagCache(private val productTagRepository: ProductTagRepository) {
+internal class ProductTagCache(
+    private val productTagRepository: ProductTagRepository,
+    private val productTagMapper: ProductTagMapper
+) {
 
     @Cacheable
-    fun findActiveProductTagsByProductId(productId: UUID): Collection<ProductTagEntity> =
-        productTagRepository.findActiveProductTagsByProductId(productId)
+    fun findActiveProductTagsByProductId(productId: UUID): Collection<ProductTagDto> =
+        productTagRepository.findActiveProductTagsByProductId(productId).map { productTagMapper.toDomainDto(it) }
 
     @Cacheable
     fun findActiveTagIdsByProductId(productId: UUID): Collection<UUID> =
         productTagRepository.findActiveTagIdsByProductId(productId)
 
-    fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagEntity> {
+    fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagDto> {
         if (productIds.isEmpty()) return emptyList()
-        return productTagRepository.findActiveProductTagsByProductIds(productIds)
+        return productTagRepository.findActiveProductTagsByProductIds(productIds).map { productTagMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)
-    fun saveAllProductTags(productTagEntities: List<ProductTagEntity>) {
-        productTagRepository.saveAll(productTagEntities)
+    fun saveAllProductTags(productTagDtos: List<ProductTagDto>) {
+        productTagRepository.saveAll(productTagDtos.map { productTagMapper.toEntity(it) })
     }
 }

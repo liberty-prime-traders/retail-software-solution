@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -20,7 +20,7 @@ internal class OrganizationMigrationHandler(
 ) {
   fun migrateOrganizationAndLocations(
     organizationId: UUID,
-    targetDbVersion: DbVersionEntity,
+    targetDbVersion: DbVersionDto,
     locationIds: Set<UUID>
   ): OrganizationLocationsMigration {
     val organization = organizationCache.getAllOrganizations().find { it.id == organizationId }
@@ -75,4 +75,3 @@ internal class OrganizationMigrationHandler(
     }
   }
 }
-

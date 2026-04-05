@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.address
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.address.dto.AddressDto
 import me.ezra_home.retail_software_solution.organizations.business.address.dto.AddressInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.address.dto.AddressResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.address.dto.AddressUpdateDto
@@ -14,18 +15,23 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
 internal interface AddressMapper {
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toDto(addressEntity: AddressEntity): AddressResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(addressInsertDto: AddressInsertDto): AddressEntity
+    fun toDomainDto(addressInsertDto: AddressInsertDto): AddressDto
+
+    fun toDomainDto(addressEntity: AddressEntity): AddressDto
+
+    fun toEntity(addressDto: AddressDto): AddressEntity
+
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    fun toDto(addressDto: AddressDto): AddressResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(addressDto: AddressUpdateDto, @MappingTarget addressEntity: AddressEntity)
+    fun partialUpdate(addressUpdateDto: AddressUpdateDto, @MappingTarget addressDto: AddressDto)
 }

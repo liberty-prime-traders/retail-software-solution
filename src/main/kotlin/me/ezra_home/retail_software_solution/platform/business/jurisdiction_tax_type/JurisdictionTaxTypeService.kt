@@ -3,11 +3,10 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeService
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionCache
-import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionEntity
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionTaxTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.dto.JurisdictionDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.CalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxApplicationLevel
+import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
 import org.springframework.stereotype.Service
@@ -50,7 +49,7 @@ class JurisdictionTaxTypeService(
             if ((dto.taxTypeId to dto.jurisdictionId) in existingLinks)
                 throw RtsGenericException("A link between this tax type and jurisdiction already exists")
         }
-        jurisdictionTaxTypeCache.upsertAll(dtos.map { jurisdictionTaxTypeMapper.toEntity(it) })
+        jurisdictionTaxTypeCache.upsertAll(dtos.map { jurisdictionTaxTypeMapper.toDomainDto(it) })
     }
 
     fun addOrReactivate(jurisdictionId: UUID, taxTypeIds: List<UUID>) {
@@ -59,7 +58,7 @@ class JurisdictionTaxTypeService(
         val existingJurisdictionTaxTypes = jurisdictionTaxTypeCache.getAll()
             .filter { it.jurisdictionId == jurisdictionId }
             .associateBy { it.taxTypeId }
-        val toReactivate = mutableListOf<JurisdictionTaxTypeEntity>()
+        val toReactivate = mutableListOf<JurisdictionTaxTypeDto>()
         val toCreate = mutableListOf<JurisdictionTaxTypeInsertDto>()
         taxTypeIds.forEach { taxTypeId ->
             if (taxTypeId !in taxTypeIdSet) throw RtsGenericException("Tax type not found")
@@ -73,7 +72,7 @@ class JurisdictionTaxTypeService(
             jurisdictionTaxTypeCache.upsertAll(toReactivate)
         }
         if (toCreate.isNotEmpty()) {
-            jurisdictionTaxTypeCache.upsertAll(toCreate.map { jurisdictionTaxTypeMapper.toEntity(it) })
+            jurisdictionTaxTypeCache.upsertAll(toCreate.map { jurisdictionTaxTypeMapper.toDomainDto(it) })
         }
     }
 
@@ -86,7 +85,7 @@ class JurisdictionTaxTypeService(
             .groupBy { it.jurisdictionId }
         val childJurisdictions = jurisdictionCache.getAll().groupBy { it.parentJurisdictionId }
 
-        fun buildJurisdictionNode(jurisdiction: JurisdictionEntity): TreeNode<UUID>? {
+        fun buildJurisdictionNode(jurisdiction: JurisdictionDto): TreeNode<UUID>? {
             val taxTypeNodes = linksByJurisdiction[jurisdiction.id].orEmpty().map { link ->
                 val taxTypeLabel = "${jurisdiction.name} - ${taxTypeIndex[link.taxTypeId]?.name}"
                 TreeNode(link.getNullSafeId(), taxTypeLabel, selectable = true)
@@ -105,10 +104,10 @@ class JurisdictionTaxTypeService(
         val linkIndex = jurisdictionTaxTypeCache.getAll()
             .filter { it.jurisdictionId == jurisdictionId }
             .associateBy { it.taxTypeId }
-        val entities = taxTypeIds.map { taxTypeId ->
+        val dtos = taxTypeIds.map { taxTypeId ->
             linkIndex[taxTypeId]?.also { it.active = false }
                 ?: throw RtsGenericException("Tax type $taxTypeId is not linked to this jurisdiction")
         }
-        jurisdictionTaxTypeCache.upsertAll(entities)
+        jurisdictionTaxTypeCache.upsertAll(dtos)
     }
 }

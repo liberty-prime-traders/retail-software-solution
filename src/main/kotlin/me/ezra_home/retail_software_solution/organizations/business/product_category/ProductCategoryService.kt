@@ -21,25 +21,25 @@ class ProductCategoryService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllCategories(): Collection<ProductCategoryResponseDto> {
-        return productCategoryCache.getAllCategories().map { productCategoryMapper.toDto(it) }
+        return productCategoryCache.getAllCategories().map { productCategoryMapper.toResponseDto(it) }
     }
 
     fun createCategory(productCategoryInsertDto: ProductCategoryInsertDto): ProductCategoryResponseDto {
         val categoryName = StringUtils.getValueOrException(productCategoryInsertDto.categoryName, NAME_IS_REQUIRED)
         productCategoryCache.getAllCategories().find { StringUtils.isEquivalent(it.categoryName, categoryName) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))}
-        val newProductCategoryEntity = productCategoryMapper.toEntity(productCategoryInsertDto)
-        val savedProductCategoryEntity = productCategoryCache.upsertCategories(newProductCategoryEntity)
-        return productCategoryMapper.toDto(savedProductCategoryEntity)
+        val dto = productCategoryMapper.toDomainDto(productCategoryInsertDto)
+        val savedDto = productCategoryCache.upsertCategories(dto)
+        return productCategoryMapper.toResponseDto(savedDto)
     }
 
-    fun updateCategory(productCategoryDto: ProductCategoryUpdateDto): ProductCategoryResponseDto {
-        validateCategoryUpdate(productCategoryDto)
-        val categoryToUpdate = productCategoryCache.getAllCategories().find { Objects.equals(productCategoryDto.id, it.id) }
-        if (categoryToUpdate == null) throw UpdatingNonExistingRecordException()
-        productCategoryMapper.partialUpdate(productCategoryDto, categoryToUpdate)
-        val updatedCategory = productCategoryCache.upsertCategories(categoryToUpdate)
-        return productCategoryMapper.toDto(updatedCategory)
+    fun updateCategory(productCategoryUpdateDto: ProductCategoryUpdateDto): ProductCategoryResponseDto {
+        validateCategoryUpdate(productCategoryUpdateDto)
+        val categoryToUpdate = productCategoryCache.getAllCategories().find { Objects.equals(productCategoryUpdateDto.id, it.id) }
+            ?: throw UpdatingNonExistingRecordException()
+        productCategoryMapper.partialUpdate(productCategoryUpdateDto, categoryToUpdate)
+        val updatedDto = productCategoryCache.upsertCategories(categoryToUpdate)
+        return productCategoryMapper.toResponseDto(updatedDto)
     }
 
     private fun validateCategoryUpdate(productCategoryUpdateDto: ProductCategoryUpdateDto) {

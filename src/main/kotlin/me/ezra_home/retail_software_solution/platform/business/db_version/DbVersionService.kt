@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_version
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionMapper
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -31,7 +31,7 @@ class DbVersionService(
     @TransactionalOnPlatformSchema
     fun activateDbVersion(versionId: UUID): DbVersionResponseDto {
         val allDbVersions = dbVersionCache.getAllDbVersions()
-        val dbVersionToActivate = allDbVersions.find { it.id == versionId} ?: throw UpdatingNonExistingRecordException()
+        val dbVersionToActivate = allDbVersions.find { it.id == versionId } ?: throw UpdatingNonExistingRecordException()
         if (dbVersionToActivate.activatedOn == null) {
             verifyDbVersionForActivation(dbVersionToActivate, allDbVersions)
             val lastSequenceNumber = dbVersionCache.findMaxSequenceNumber() ?: 0L
@@ -42,15 +42,15 @@ class DbVersionService(
         return dbVersionMapper.toResponseDto(dbVersionToActivate)
     }
 
-    private fun verifyDbVersionForActivation(dbVersion: DbVersionEntity, allDbVersions: Collection<DbVersionEntity>) {
+    private fun verifyDbVersionForActivation(dbVersion: DbVersionDto, allDbVersions: Collection<DbVersionDto>) {
         dbVersion.prevVersionId?.let { prevVersionId ->
             if (prevVersionId == dbVersion.id) {
                 throw RtsGenericException("A DB version cannot point to itself as previous version.")
             }
-            val prevVersionEntity = allDbVersions.find { it.id == prevVersionId}
+            val prevVersionDto = allDbVersions.find { it.id == prevVersionId }
                 ?: throw RtsGenericException("Previous DB version does not exist.")
-            if (prevVersionEntity.activatedOn == null) {
-                throw RtsGenericException("Previous version (${prevVersionEntity.versionNumber}) must be activated first")
+            if (prevVersionDto.activatedOn == null) {
+                throw RtsGenericException("Previous version (${prevVersionDto.versionNumber}) must be activated first")
             }
         }
     }

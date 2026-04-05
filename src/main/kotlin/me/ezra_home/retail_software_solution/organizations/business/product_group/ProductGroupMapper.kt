@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_gro
 
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryName
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryNameQualifier
+import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
@@ -17,19 +18,23 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 @Mapper(config = RtsMapperConfig::class, uses = [ProductCategoryNameQualifier::class])
 internal interface ProductGroupMapper {
 
-  @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-  @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
-  fun toDto(productGroupEntity: ProductGroupEntity): ProductGroupResponseDto
-
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdById", ignore = true)
   @Mapping(target = "createdOn", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
-  fun toEntity(productGroupInsertDto: ProductGroupInsertDto): ProductGroupEntity
+  fun toDomainDto(productGroupInsertDto: ProductGroupInsertDto): ProductGroupDto
+
+  fun toDomainDto(productGroupEntity: ProductGroupEntity): ProductGroupDto
+
+  fun toEntity(productGroupDto: ProductGroupDto): ProductGroupEntity
+
+  @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+  @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
+  fun toResponseDto(productGroupDto: ProductGroupDto): ProductGroupResponseDto
 
   @Mapping(target = "createdById", ignore = true)
   @Mapping(target = "createdOn", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-  fun partialUpdate(productGroupDto: ProductGroupUpdateDto, @MappingTarget productGroupEntity: ProductGroupEntity)
+  fun partialUpdate(productGroupUpdateDto: ProductGroupUpdateDto, @MappingTarget productGroupDto: ProductGroupDto)
 }

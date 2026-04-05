@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 internal class MigrationStatusUpdater(
   private val dbMigrationCache: DbMigrationCache
 ) {
-  fun markSuccess(migration: DbMigrationEntity, message: String) {
+  fun markSuccess(migration: DbMigrationDto, message: String) {
     migration.apply {
       status = MigrationStatus.SUCCESS
       this.message = message.take(100)
@@ -17,7 +17,7 @@ internal class MigrationStatusUpdater(
     dbMigrationCache.upsertDbMigration(migration)
   }
 
-  fun markPartial(migration: DbMigrationEntity, message: String) {
+  fun markPartial(migration: DbMigrationDto, message: String) {
     migration.apply {
       status = MigrationStatus.PARTIAL
       this.message = message.take(100)
@@ -26,7 +26,7 @@ internal class MigrationStatusUpdater(
     dbMigrationCache.upsertDbMigration(migration)
   }
 
-  fun markFailure(migration: DbMigrationEntity, error: Exception) {
+  fun markFailure(migration: DbMigrationDto, error: Exception) {
     migration.apply {
       status = MigrationStatus.FAILURE
       message = error.message?.take(100) ?: "Unknown error during migration"
@@ -35,7 +35,7 @@ internal class MigrationStatusUpdater(
     dbMigrationCache.upsertDbMigration(migration)
   }
 
-  fun markIgnored(migration: DbMigrationEntity, reason: String) {
+  fun markIgnored(migration: DbMigrationDto, reason: String) {
     migration.apply {
       status = MigrationStatus.IGNORED
       message = reason.take(100)

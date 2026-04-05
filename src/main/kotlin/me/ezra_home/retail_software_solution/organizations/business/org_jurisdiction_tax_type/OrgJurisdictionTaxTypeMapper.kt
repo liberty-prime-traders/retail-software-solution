@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type
 
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeDto
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeResponseDto
 import me.ezra_home.retail_software_solution.organizations.model.OrgJurisdictionTaxTypeEntity
@@ -16,12 +17,16 @@ internal interface OrgJurisdictionTaxTypeMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(dto: OrgJurisdictionTaxTypeInsertDto): OrgJurisdictionTaxTypeEntity
+    fun toDomainDto(dto: OrgJurisdictionTaxTypeInsertDto): OrgJurisdictionTaxTypeDto
+
+    fun toDomainDto(entity: OrgJurisdictionTaxTypeEntity): OrgJurisdictionTaxTypeDto
+
+    fun toEntity(dto: OrgJurisdictionTaxTypeDto): OrgJurisdictionTaxTypeEntity
 
     @Mapping(target = "platformTaxId", expression = "java(platformTaxType.getId())")
     @Mapping(target = "taxLabel", expression = "java(platformTaxType.getLabel())")
     fun toResponseDto(
-        entity: OrgJurisdictionTaxTypeEntity,
+        dto: OrgJurisdictionTaxTypeDto,
         @Context platformTaxType: PlatformTaxTypeDto
     ): OrgJurisdictionTaxTypeResponseDto
 }

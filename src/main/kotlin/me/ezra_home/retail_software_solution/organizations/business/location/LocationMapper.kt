@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
@@ -20,10 +21,14 @@ internal interface LocationMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "schemaName", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(locationInsertDto: LocationInsertDto): LocationEntity
+    fun toDomainDto(locationInsertDto: LocationInsertDto): LocationDto
+
+    fun toDomainDto(locationEntity: LocationEntity): LocationDto
+
+    fun toEntity(locationDto: LocationDto): LocationEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toResponseDto(locationEntity: LocationEntity): LocationResponseDto
+    fun toResponseDto(locationDto: LocationDto): LocationResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
@@ -31,5 +36,5 @@ internal interface LocationMapper {
     @Mapping(target = "schemaName", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(locationUpdateDto: LocationUpdateDto, @MappingTarget locationEntity: LocationEntity)
+    fun partialUpdate(locationUpdateDto: LocationUpdateDto, @MappingTarget locationDto: LocationDto)
 }

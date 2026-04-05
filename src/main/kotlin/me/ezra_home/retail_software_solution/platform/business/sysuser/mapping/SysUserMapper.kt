@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import com.okta.sdk.resource.user.User
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
 import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
 import org.mapstruct.Context
@@ -12,6 +13,10 @@ import java.util.function.Supplier
 
 @Mapper(config = RtsMapperConfig::class)
 internal interface SysUserMapper {
+    fun toDomainDto(entity: SysUserEntity): SysUserDto
+
+    fun toEntity(dto: SysUserDto): SysUserEntity
+
     @Mapping(source = "id", target = "oktaId")
     @Mapping(target = "id", expression = "java(idSupplier.get())")
     @Mapping(source = "profile.firstName", target = "firstName")
@@ -20,7 +25,7 @@ internal interface SysUserMapper {
     @Mapping(source = "profile.secondEmail", target = "secondEmail")
     @Mapping(source = "profile.email", target = "email")
     @Mapping(target = "userType", constant = "END_USER")
-    fun oktaToSystemUser(oktaUserDto: User?, @Context idSupplier: Supplier<UUID?>): SysUserDto
+    fun oktaToSystemUser(oktaUserDto: User?, @Context idSupplier: Supplier<UUID?>): SysUserWithProfileDto
 
     @Mapping(source = "localFirstName", target = "firstName")
     @Mapping(source = "localLastName", target = "lastName")
@@ -28,5 +33,5 @@ internal interface SysUserMapper {
     @Mapping(target = "mobilePhone", ignore = true)
     @Mapping(target = "secondEmail", ignore = true)
     @Mapping(target = "email", ignore = true)
-    fun sysUserEntityToSysUserDto(sysUserEntity: SysUserEntity): SysUserDto
+    fun toSysUserDto(entityDto: SysUserDto): SysUserWithProfileDto
 }

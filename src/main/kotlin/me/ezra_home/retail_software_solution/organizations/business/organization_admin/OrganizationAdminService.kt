@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.organization_admin
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationAdminEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserService
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -25,8 +24,8 @@ class OrganizationAdminService(
 
     fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
         validateUserExists(adminId)
-        val entity = OrganizationAdminEntity(adminId)
-        return organizationAdminMapper.toResponseDto(entity)
+        val dto = OrganizationAdminDto(userId = adminId)
+        return organizationAdminMapper.toResponseDto(dto)
     }
 
     private fun validateUserExists(adminId: UUID) {

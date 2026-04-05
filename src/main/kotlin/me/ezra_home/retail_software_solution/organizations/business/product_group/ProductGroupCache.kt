@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_gro
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.ProductGroupEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,18 +13,23 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_GROUP])
-internal class ProductGroupCache(private val productGroupRepository: ProductGroupRepository) {
+internal class ProductGroupCache(
+    private val productGroupRepository: ProductGroupRepository,
+    private val productGroupMapper: ProductGroupMapper
+) {
 
   @Cacheable
-  fun findAllProductGroups(): Collection<ProductGroupEntity> = productGroupRepository.findAll()
+  fun findAllProductGroups(): Collection<ProductGroupDto> =
+      productGroupRepository.findAll().map { productGroupMapper.toDomainDto(it) }
 
   @CacheEvict(allEntries = true)
-  fun upsertProductGroup(productGroupEntity: ProductGroupEntity) {
-    productGroupRepository.save(productGroupEntity)
+  fun upsertProductGroup(productGroupDto: ProductGroupDto): ProductGroupDto {
+    val saved = productGroupRepository.save(productGroupMapper.toEntity(productGroupDto))
+    return productGroupMapper.toDomainDto(saved)
   }
 
   @CacheEvict(allEntries = true)
   fun deleteProductGroupById(productGroupId: UUID) {
-        productGroupRepository.deleteById(productGroupId)
-    }
+    productGroupRepository.deleteById(productGroupId)
+  }
 }

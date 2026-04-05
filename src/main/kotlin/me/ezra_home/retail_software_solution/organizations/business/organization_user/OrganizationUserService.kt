@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminService
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -38,15 +37,15 @@ class OrganizationUserService(
 
         return organizationUserCache.getOrganizationUsers().filter {
             organizationUserIds.contains(it.id) && it.isActive()
-        }.map { organizationUserEntity ->
-            organizationUserEntity.endOn = OffsetDateTime.now()
-            organizationUserCache.upsertOrganizationUser(organizationUserEntity)
-            organizationUserMapper.toDto(organizationUserEntity)
+        }.map { dto ->
+            dto.endOn = OffsetDateTime.now()
+            organizationUserCache.upsertOrganizationUser(dto)
+            organizationUserMapper.toDto(dto)
         }
     }
 
     fun admitJoinRequests(joinRequests: Collection<OrganizationAdminJoinRequestResponseDto>) {
-        joinRequests.map { OrganizationUserEntity(it.id).apply { userId = it.createdById } }
-            .let { organizationUserCache.upsertOrganizationUsers(it)}
+        joinRequests.map { OrganizationUserDto(joinRequestId = it.id, userId = it.createdById) }
+            .let { organizationUserCache.upsertOrganizationUsers(it) }
     }
 }

@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionTaxTypeEntity
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,17 +12,18 @@ import org.springframework.stereotype.Component
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.JURISDICTION_TAX_TYPE])
 internal class JurisdictionTaxTypeCache(
-    private val jurisdictionTaxTypeRepository: JurisdictionTaxTypeRepository
+    private val jurisdictionTaxTypeRepository: JurisdictionTaxTypeRepository,
+    private val mapper: JurisdictionTaxTypeMapper
 ) {
 
     @Cacheable
-    fun getAll(): Collection<JurisdictionTaxTypeEntity> = jurisdictionTaxTypeRepository.findAll()
+    fun getAll(): Collection<JurisdictionTaxTypeDto> = jurisdictionTaxTypeRepository.findAll().map { mapper.toDomainDto(it) }
 
     @Cacheable
-    fun getActive(): Collection<JurisdictionTaxTypeEntity> = jurisdictionTaxTypeRepository.findAll().filter { it.active }
+    fun getActive(): Collection<JurisdictionTaxTypeDto> = jurisdictionTaxTypeRepository.findAll().filter { it.active }.map { mapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsertAll(entities: Collection<JurisdictionTaxTypeEntity>) {
-        jurisdictionTaxTypeRepository.saveAll(entities)
+    fun upsertAll(dtos: Collection<JurisdictionTaxTypeDto>) {
+        jurisdictionTaxTypeRepository.saveAll(dtos.map { mapper.toEntity(it) })
     }
 }

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueUpdateDto
@@ -19,16 +20,20 @@ abstract class UnitValueMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    abstract fun toEntity(unitValueInsertDto: UnitValueInsertDto): UnitValueEntity
+    abstract fun toDomainDto(unitValueInsertDto: UnitValueInsertDto): UnitValueDto
+
+    abstract fun toDomainDto(unitValueEntity: UnitValueEntity): UnitValueDto
+
+    abstract fun toEntity(unitValueDto: UnitValueDto): UnitValueEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = "baseUnit", target = "baseUnitName", qualifiedBy = [UnitName::class])
-    abstract fun toResponseDto(unitValueEntity: UnitValueEntity): UnitValueResponseDto
+    abstract fun toResponseDto(unitValueDto: UnitValueDto): UnitValueResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "unitGroupId", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    abstract fun partialUpdate(unitValueUpdateDto: UnitValueUpdateDto, @MappingTarget unitValueEntity: UnitValueEntity)
+    abstract fun partialUpdate(unitValueUpdateDto: UnitValueUpdateDto, @MappingTarget unitValueDto: UnitValueDto)
 }

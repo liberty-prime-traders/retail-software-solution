@@ -19,24 +19,24 @@ class ProductGroupService(
 
   @TransactionalOnOrganizationSchema(readOnly = true)
   fun getAllProductGroups(): Collection<ProductGroupResponseDto> {
-    return productGroupCache.findAllProductGroups().map { productGroupMapper.toDto(it) }
+    return productGroupCache.findAllProductGroups().map { productGroupMapper.toResponseDto(it) }
   }
 
   fun createProductGroup(productGroupInsertDto: ProductGroupInsertDto): ProductGroupResponseDto {
     productGroupValidator.validateProductGroupInsert(productGroupInsertDto)
-    val productGroupEntity = productGroupMapper.toEntity(productGroupInsertDto)
-    productGroupCache.upsertProductGroup(productGroupEntity)
-    return productGroupMapper.toDto(productGroupEntity)
+    val dto = productGroupMapper.toDomainDto(productGroupInsertDto)
+    val savedDto = productGroupCache.upsertProductGroup(dto)
+    return productGroupMapper.toResponseDto(savedDto)
   }
 
-  fun updateProductGroup(productGroupDto: ProductGroupUpdateDto): ProductGroupResponseDto {
-    val productGroupToUpdate = productGroupRepository.findById(productGroupDto.id).orElseThrow {
-      UpdatingNonExistingRecordException()
-    }
-    productGroupValidator.validateProductGroupUpdate(productGroupDto)
-    productGroupMapper.partialUpdate(productGroupDto, productGroupToUpdate)
-    productGroupCache.upsertProductGroup(productGroupToUpdate)
-    return productGroupMapper.toDto(productGroupToUpdate)
+  fun updateProductGroup(productGroupUpdateDto: ProductGroupUpdateDto): ProductGroupResponseDto {
+    productGroupRepository.findById(productGroupUpdateDto.id).orElseThrow { UpdatingNonExistingRecordException() }
+    productGroupValidator.validateProductGroupUpdate(productGroupUpdateDto)
+    val dto = productGroupCache.findAllProductGroups().find { it.id == productGroupUpdateDto.id }
+        ?: throw UpdatingNonExistingRecordException()
+    productGroupMapper.partialUpdate(productGroupUpdateDto, dto)
+    val savedDto = productGroupCache.upsertProductGroup(dto)
+    return productGroupMapper.toResponseDto(savedDto)
   }
 
   fun deleteProductGroup(productGroupId: UUID) {

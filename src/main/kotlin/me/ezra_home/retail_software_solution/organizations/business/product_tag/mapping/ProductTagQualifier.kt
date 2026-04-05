@@ -22,7 +22,7 @@ internal class ProductTagQualifier(
 
         return tagCache.getAllTags()
             .filter { activeProductTagIds.contains(it.id) }
-            .map { tag -> TagSummaryDto(id = tag.getNullSafeId(), tagName = tag.tagName) }
+            .map { tag -> TagSummaryDto(id = tag.id!!, tagName = tag.tagName) }
     }
 
     fun populateTagsForProducts(products: List<OrganizationProductResponseDto>): List<OrganizationProductResponseDto> {
@@ -34,12 +34,12 @@ internal class ProductTagQualifier(
         val productTags = productTagCache.findActiveProductTagsByProductIds(productIds)
         val tagIdsByProductId = productTags.groupBy({it.productId},  { it.tagId })
 
-        val tagsById = tagCache.getAllTags().associateBy { it.id }
+        val tagsById = tagCache.getAllTags().filter { it.id != null }.associateBy { it.id!! }
 
         return products.map { product ->
             val tagIds = tagIdsByProductId[product.id] ?: emptyList()
             val tags = tagIds.mapNotNull { tagId ->
-                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.getNullSafeId(), tagName = tag.tagName) }
+                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.id!!, tagName = tag.tagName) }
             }
             product.copy(activeTags = tags)
         }

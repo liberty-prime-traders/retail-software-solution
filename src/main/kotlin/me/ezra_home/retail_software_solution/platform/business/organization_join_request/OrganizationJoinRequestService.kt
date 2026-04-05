@@ -3,11 +3,10 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserService
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
-import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
 import org.springframework.stereotype.Service
 import java.util.Collections
 import java.util.UUID
@@ -21,16 +20,18 @@ class OrganizationJoinRequestService(
 ) {
 
     fun createJoinRequest(
-        subdomain: String, userId: UUID, organization: OrganizationEntity?
+        subdomain: String, userId: UUID, organization: OrganizationDto?
     ): OrganizationLaunchResponseDto {
         val hasPendingRequest = organizationJoinRequestCache.existsBySubdomainAndCreatedByIdAndStatus(
             subdomain, userId, JoinRequestStatus.PENDING
         )
         if (hasPendingRequest.not()) {
-            val joinRequest = OrganizationJoinRequestEntity(
-                subdomain, JoinRequestStatus.PENDING, organization?.id
+            val joinRequestDto = OrganizationJoinRequestDto(
+                subdomain = subdomain,
+                status = JoinRequestStatus.PENDING,
+                organizationId = organization?.id
             )
-            organizationJoinRequestCache.upsertOrganizationJoinRequest(joinRequest)
+            organizationJoinRequestCache.upsertOrganizationJoinRequest(joinRequestDto)
         }
         return organizationJoinRequestMapper.toLaunchResponse(
             organization = null,

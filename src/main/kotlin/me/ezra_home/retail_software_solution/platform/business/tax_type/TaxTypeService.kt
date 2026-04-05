@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -28,23 +28,23 @@ class TaxTypeService(
         if (dto.taxTriggers.isEmpty()) throw RtsGenericException("At least one tax trigger is required")
         if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A tax type named '${dto.name}' already exists")
-        val entity = taxTypeMapper.toEntity(dto)
-        taxTypeCache.upsert(entity)
-        return taxTypeMapper.toResponseDto(entity)
+        val taxTypeDto = taxTypeMapper.toDomainDto(dto)
+        taxTypeCache.upsert(taxTypeDto)
+        return taxTypeMapper.toResponseDto(taxTypeDto)
     }
 
     fun update(dto: TaxTypeUpdateDto): TaxTypeResponseDto {
-        val entity = taxTypeCache.getAll().find { it.id == dto.id }
+        val taxTypeDto = taxTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
-        val effectiveName = if (dto.name != null) dto.name.orElse(null) else entity.name
+        val effectiveName = if (dto.name != null) dto.name.orElse(null) else taxTypeDto.name
         StringUtils.getValueOrException(effectiveName, "Name must not be blank")
         if (dto.taxTriggers != null && dto.taxTriggers.orElse(emptyList()).isEmpty())
             throw RtsGenericException("At least one tax trigger is required")
-        if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, effectiveName) && it.id != entity.id })
+        if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, effectiveName) && it.id != taxTypeDto.id })
             throw RtsGenericException("A tax type named '$effectiveName' already exists")
-        taxTypeMapper.partialUpdate(dto, entity)
-        taxTypeCache.upsert(entity)
-        return taxTypeMapper.toResponseDto(entity)
+        taxTypeMapper.partialUpdate(dto, taxTypeDto)
+        taxTypeCache.upsert(taxTypeDto)
+        return taxTypeMapper.toResponseDto(taxTypeDto)
     }
 
     fun delete(id: UUID) {

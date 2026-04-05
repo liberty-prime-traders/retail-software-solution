@@ -25,20 +25,20 @@ class JurisdictionTypeService(
         StringUtils.getValueOrException(dto.name, "Name must not be blank")
         if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A jurisdiction type named '${dto.name}' already exists")
-        val entity = jurisdictionTypeMapper.toEntity(dto)
-        jurisdictionTypeCache.upsert(entity)
-        return jurisdictionTypeMapper.toResponseDto(entity)
+        val jurisdictionTypeDto = jurisdictionTypeMapper.toDomainDto(dto)
+        jurisdictionTypeCache.upsert(jurisdictionTypeDto)
+        return jurisdictionTypeMapper.toResponseDto(jurisdictionTypeDto)
     }
 
     fun update(dto: JurisdictionTypeUpdateDto): JurisdictionTypeResponseDto {
-        val entity = jurisdictionTypeCache.getAll().find { it.id == dto.id }
+        val jurisdictionTypeDto = jurisdictionTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
-        jurisdictionTypeMapper.partialUpdate(dto, entity)
-        StringUtils.getValueOrException(entity.name, "Name must not be blank")
-        if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, entity.name) && it.id != entity.id })
-            throw RtsGenericException("A jurisdiction type named '${entity.name}' already exists")
-        jurisdictionTypeCache.upsert(entity)
-        return jurisdictionTypeMapper.toResponseDto(entity)
+        jurisdictionTypeMapper.partialUpdate(dto, jurisdictionTypeDto)
+        StringUtils.getValueOrException(jurisdictionTypeDto.name, "Name must not be blank")
+        if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, jurisdictionTypeDto.name) && it.id != jurisdictionTypeDto.id })
+            throw RtsGenericException("A jurisdiction type named '${jurisdictionTypeDto.name}' already exists")
+        jurisdictionTypeCache.upsert(jurisdictionTypeDto)
+        return jurisdictionTypeMapper.toResponseDto(jurisdictionTypeDto)
     }
 
     fun delete(id: UUID) = jurisdictionTypeCache.delete(id)

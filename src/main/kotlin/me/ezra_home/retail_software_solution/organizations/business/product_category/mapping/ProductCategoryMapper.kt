@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_category.mapping
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryUpdateDto
@@ -14,18 +15,23 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
 internal interface ProductCategoryMapper {
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toDto(productCategoryEntity: ProductCategoryEntity): ProductCategoryResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(productCategoryInsertDto: ProductCategoryInsertDto): ProductCategoryEntity
+    fun toDomainDto(productCategoryInsertDto: ProductCategoryInsertDto): ProductCategoryDto
+
+    fun toDomainDto(productCategoryEntity: ProductCategoryEntity): ProductCategoryDto
+
+    fun toEntity(productCategoryDto: ProductCategoryDto): ProductCategoryEntity
+
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    fun toResponseDto(productCategoryDto: ProductCategoryDto): ProductCategoryResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(productCategoryDto: ProductCategoryUpdateDto, @MappingTarget productCategoryEntity: ProductCategoryEntity)
+    fun partialUpdate(productCategoryUpdateDto: ProductCategoryUpdateDto, @MappingTarget productCategoryDto: ProductCategoryDto)
 }

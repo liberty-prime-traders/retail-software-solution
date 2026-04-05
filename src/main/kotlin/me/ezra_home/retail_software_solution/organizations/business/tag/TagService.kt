@@ -22,7 +22,7 @@ class TagService (
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllTags(): Collection<TagResponseDto> {
-        return tagCache.getAllTags().map { tagMapper.toDto(it) }
+        return tagCache.getAllTags().map { tagMapper.toResponseDto(it) }
     }
 
     fun createTag(tagInsertDto: TagInsertDto): TagResponseDto {
@@ -32,15 +32,15 @@ class TagService (
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, tagName))}
 
         val similarTags = tagRepository.findSimilarTags(tagName, SIMILARITY_THRESHOLD)
-            .map { tagMapper.toDto(it) }
+            .map { tagMapper.toResponseDto(tagMapper.toDomainDto(it)) }
 
         if (similarTags.isNotEmpty()) {
             throwTagSimilarityException(tagName, similarTags)
         }
 
-        val newTagEntity = tagMapper.toEntity(tagInsertDto)
-        val savedTagEntity = tagCache.upsertTag(newTagEntity)
-        return tagMapper.toDto(savedTagEntity)
+        val dto = tagMapper.toDomainDto(tagInsertDto)
+        val savedDto = tagCache.upsertTag(dto)
+        return tagMapper.toResponseDto(savedDto)
     }
 
     private fun throwTagSimilarityException(attemptedName: String, similarTags: List<TagResponseDto>) {
@@ -51,13 +51,13 @@ class TagService (
         )
     }
 
-    fun updateTag(tagDto: TagUpdateDto): TagResponseDto {
-        validateTagUpdate(tagDto)
-        val tagToUpdate = tagCache.getAllTags().find { Objects.equals(tagDto.id, it.id) }
-        if (tagToUpdate == null) throw UpdatingNonExistingRecordException()
-        tagMapper.partialUpdate(tagDto, tagToUpdate)
-        val updatedTag = tagCache.upsertTag(tagToUpdate)
-        return tagMapper.toDto(updatedTag)
+    fun updateTag(tagUpdateDto: TagUpdateDto): TagResponseDto {
+        validateTagUpdate(tagUpdateDto)
+        val tagToUpdate = tagCache.getAllTags().find { Objects.equals(tagUpdateDto.id, it.id) }
+            ?: throw UpdatingNonExistingRecordException()
+        tagMapper.partialUpdate(tagUpdateDto, tagToUpdate)
+        val updatedDto = tagCache.upsertTag(tagToUpdate)
+        return tagMapper.toResponseDto(updatedDto)
     }
 
     private fun validateTagUpdate(tagUpdateDto: TagUpdateDto) {
@@ -69,7 +69,7 @@ class TagService (
 
         val similarTags = tagRepository.findSimilarTags(name, SIMILARITY_THRESHOLD)
             .filter { it.id != tagUpdateDto.id }
-            .map { tagMapper.toDto(it) }
+            .map { tagMapper.toResponseDto(tagMapper.toDomainDto(it)) }
 
         if (similarTags.isNotEmpty()) {
             throwTagSimilarityException(name, similarTags)
@@ -83,7 +83,7 @@ class TagService (
     companion object {
         const val NAME_IS_REQUIRED = "A tag must have a name"
         const val NAME_ALREADY_EXISTS = "A tag with the name %s already exists."
-        const val SIMILARITY_THRESHOLD = 0.4 // 40% similarity threshold
+        const val SIMILARITY_THRESHOLD = 0.4
     }
 
 }

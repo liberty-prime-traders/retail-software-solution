@@ -11,7 +11,6 @@ internal class ProductCategoryNameQualifier(private val productCategoryCache: Pr
 
     @ProductCategoryName
     fun resolveCategoryName(categoryId: UUID?): String? {
-        val categoriesById = productCategoryCache.getCategoriesById()
-        return categoryId?.let { categoriesById[it]?.categoryName }
+        return categoryId?.let { productCategoryCache.getCategoriesById()[it]?.categoryName }
     }
 }

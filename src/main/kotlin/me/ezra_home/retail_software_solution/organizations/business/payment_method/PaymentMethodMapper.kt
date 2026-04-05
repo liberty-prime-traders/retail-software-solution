@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method
 
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodUpdateDto
@@ -19,14 +20,18 @@ internal interface PaymentMethodMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodEntity
+    fun toDomainDto(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodDto
+
+    fun toDomainDto(paymentMethodEntity: PaymentMethodEntity): PaymentMethodDto
+
+    fun toEntity(paymentMethodDto: PaymentMethodDto): PaymentMethodEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toResponseDto(paymentMethodEntity: PaymentMethodEntity): PaymentMethodResponseDto
+    fun toResponseDto(paymentMethodDto: PaymentMethodDto): PaymentMethodResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(paymentMethodUpdateDto: PaymentMethodUpdateDto, @MappingTarget paymentMethodEntity: PaymentMethodEntity)
+    fun partialUpdate(paymentMethodUpdateDto: PaymentMethodUpdateDto, @MappingTarget paymentMethodDto: PaymentMethodDto)
 }

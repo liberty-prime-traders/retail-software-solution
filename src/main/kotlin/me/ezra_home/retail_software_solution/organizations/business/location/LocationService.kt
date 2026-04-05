@@ -21,20 +21,18 @@ class LocationService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllLocations(): Collection<LocationResponseDto> {
-        return locationCache.getAllLocations().map {
-            locationMapper.toResponseDto(it)
-        }
+        return locationCache.getAllLocations().map { locationMapper.toResponseDto(it) }
     }
 
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         locationValidator.validateLocationInsert(locationInsertDto)
         val schemaName = createLocationSchema(locationInsertDto.name!!)
         try {
-            val locationEntity = locationMapper.toEntity(locationInsertDto).apply {
+            val locationDto = locationMapper.toDomainDto(locationInsertDto).apply {
                 this.schemaName = schemaName
             }
-            locationCache.upsertLocation(locationEntity)
-            return locationMapper.toResponseDto(locationEntity)
+            locationCache.upsertLocation(locationDto)
+            return locationMapper.toResponseDto(locationDto)
         } catch (e: Exception) {
             locationSchemaService.dropSchema(schemaName)
             throw e
@@ -50,11 +48,9 @@ class LocationService(
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {
         val locationId = SessionContextProvider.getLocationId()
         locationValidator.validateLocationUpdate(locationUpdateDto)
-        val locationEntity = locationCache.getAllLocations().find { Objects.equals(it.id, locationId) }
-        if (locationEntity == null) {
-            throw UpdatingNonExistingRecordException()
-        }
-        locationMapper.partialUpdate(locationUpdateDto, locationEntity)
-        return locationMapper.toResponseDto(locationEntity)
+        val locationDto = locationCache.getAllLocations().find { Objects.equals(it.id, locationId) }
+            ?: throw UpdatingNonExistingRecordException()
+        locationMapper.partialUpdate(locationUpdateDto, locationDto)
+        return locationMapper.toResponseDto(locationDto)
     }
 }

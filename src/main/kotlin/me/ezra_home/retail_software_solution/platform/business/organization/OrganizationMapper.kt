@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.platform.business.authorization_pas
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.PassReferenceNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionQualifier
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
@@ -29,13 +30,16 @@ internal interface OrganizationMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "currentDbVersionId", ignore = true)
     @Mapping(target = "creationPassId", ignore = true)
-    fun toEntity(dto: OrganizationInsertDto): OrganizationEntity
+    fun toDomainDto(dto: OrganizationInsertDto): OrganizationDto
 
+    fun toDomainDto(entity: OrganizationEntity): OrganizationDto
+
+    fun toEntity(dto: OrganizationDto): OrganizationEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = "currentDbVersionId", target = "currentDbVersion", qualifiedBy = [DbVersionNumber::class])
     @Mapping(source = "creationPassId", target = "creationPassReferenceNumber", qualifiedBy = [PassReferenceNumber::class])
-    fun toResponseDto(organizationEntity: OrganizationEntity): OrganizationResponseDto
+    fun toResponseDto(dto: OrganizationDto): OrganizationResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
@@ -46,5 +50,5 @@ internal interface OrganizationMapper {
     @Mapping(target = "creationPassId", ignore = true)
     @Mapping(target = "subdomain", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(dto: OrganizationUpdateDto, @MappingTarget entity: OrganizationEntity)
+    fun partialUpdate(dto: OrganizationUpdateDto, @MappingTarget organizationDto: OrganizationDto)
 }

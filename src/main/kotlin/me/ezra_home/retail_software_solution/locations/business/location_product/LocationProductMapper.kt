@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
@@ -16,9 +17,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 @Mapper(config = RtsMapperConfig::class, uses = [UnitValueQualifier::class])
 internal interface LocationProductMapper {
 
+  fun toDomainDto(entity: LocationProductEntity): LocationProductDto
+
+  fun toEntity(dto: LocationProductDto): LocationProductEntity
+
   @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
   @Mapping(source = "baseUnitId", target = "baseUnit", qualifiedBy = [UnitName::class])
-  fun toDto(entity: LocationProductEntity): LocationProductResponseDto
+  fun toDto(dto: LocationProductDto): LocationProductResponseDto
 
   @Mapping(target = "productId", ignore = true)
   @Mapping(target = "productName", ignore = true)
@@ -34,5 +39,5 @@ internal interface LocationProductMapper {
   @Mapping(target = "lastPurchasePrice", ignore = true)
   @Mapping(target = "stockBalance", ignore = true)
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-  fun partialUpdate(dto: LocationProductUpdateDto, @MappingTarget entity: LocationProductEntity)
+  fun partialUpdate(dto: LocationProductUpdateDto, @MappingTarget locationProductDto: LocationProductDto)
 }

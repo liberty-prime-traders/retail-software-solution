@@ -15,7 +15,7 @@ import java.util.UUID
 
 @Service
 @TransactionalOnOrganizationSchema
-class PaymentMethodService (
+class PaymentMethodService(
     private val paymentMethodMapper: PaymentMethodMapper,
     private val paymentMethodCache: PaymentMethodCache
 ) {
@@ -27,9 +27,9 @@ class PaymentMethodService (
 
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
-        val entity = paymentMethodMapper.toEntity(paymentMethodInsertDto)
-        paymentMethodCache.upsertPaymentMethod(entity)
-        return paymentMethodMapper.toResponseDto(entity)
+        val dto = paymentMethodMapper.toDomainDto(paymentMethodInsertDto)
+        paymentMethodCache.upsertPaymentMethod(dto)
+        return paymentMethodMapper.toResponseDto(dto)
     }
 
     private fun validateNameOnSave(optionalName: Optional<String>?, id: UUID? = null) {
@@ -41,11 +41,11 @@ class PaymentMethodService (
 
     fun updatePaymentMethod(paymentMethodUpdateDto: PaymentMethodUpdateDto): PaymentMethodResponseDto {
         val id = paymentMethodUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val entityFromDatabase = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
+        val dto = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
         validateNameOnSave(paymentMethodUpdateDto.name, paymentMethodUpdateDto.id)
-        paymentMethodMapper.partialUpdate(paymentMethodUpdateDto, entityFromDatabase)
-        paymentMethodCache.upsertPaymentMethod(entityFromDatabase)
-        return paymentMethodMapper.toResponseDto(entityFromDatabase)
+        paymentMethodMapper.partialUpdate(paymentMethodUpdateDto, dto)
+        paymentMethodCache.upsertPaymentMethod(dto)
+        return paymentMethodMapper.toResponseDto(dto)
     }
 
     fun deletePaymentMethod(id: UUID) {

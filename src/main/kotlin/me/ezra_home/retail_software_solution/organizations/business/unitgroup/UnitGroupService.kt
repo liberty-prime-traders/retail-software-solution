@@ -28,9 +28,9 @@ class UnitGroupService(
 
     fun createUnitGroup(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto {
         validateNameOnSave(Optional.ofNullable(unitGroupInsertDto.name))
-        val entity = unitGroupMapper.toEntity(unitGroupInsertDto)
-        unitGroupCache.upsertUnitGroup(entity)
-        return unitGroupMapper.toResponseDto(entity)
+        val dto = unitGroupMapper.toDomainDto(unitGroupInsertDto)
+        unitGroupCache.upsertUnitGroup(dto)
+        return unitGroupMapper.toResponseDto(dto)
     }
 
     private fun validateNameOnSave(optionalName: Optional<String>?, id: UUID? = null) {
@@ -42,11 +42,11 @@ class UnitGroupService(
 
     fun updateUnitGroup(unitGroupUpdateDto: UnitGroupUpdateDto): UnitGroupResponseDto {
         val id = unitGroupUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val entityFromDatabase = unitGroupCache.getAllUnitGroups().find { it.id == id } ?: throw NotFoundException()
+        val dto = unitGroupCache.getAllUnitGroups().find { it.id == id } ?: throw NotFoundException()
         validateNameOnSave(unitGroupUpdateDto.name, unitGroupUpdateDto.id)
-        unitGroupMapper.partialUpdate(unitGroupUpdateDto, entityFromDatabase)
-        unitGroupCache.upsertUnitGroup(entityFromDatabase)
-        return unitGroupMapper.toResponseDto(entityFromDatabase)
+        unitGroupMapper.partialUpdate(unitGroupUpdateDto, dto)
+        unitGroupCache.upsertUnitGroup(dto)
+        return unitGroupMapper.toResponseDto(dto)
     }
 
     fun deleteUnitGroup(id: UUID) {

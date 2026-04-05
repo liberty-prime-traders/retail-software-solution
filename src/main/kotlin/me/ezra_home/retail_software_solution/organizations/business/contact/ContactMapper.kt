@@ -1,9 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
 
+import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactQualifier
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactUpdateDto
-import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactQualifier
 import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ToIdentityType
 import me.ezra_home.retail_software_solution.organizations.model.ContactEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
@@ -21,16 +22,20 @@ internal interface ContactMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(contactInsertDto: ContactInsertDto): ContactEntity
+    fun toDomainDto(contactInsertDto: ContactInsertDto): ContactDto
+
+    fun toDomainDto(contactEntity: ContactEntity): ContactDto
+
+    fun toEntity(contactDto: ContactDto): ContactEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = ".", target = "identityType", qualifiedBy = [ToIdentityType::class])
     @Mapping(source = "identity.displayName", target = "fullName")
-    fun toResponseDto(contactEntity: ContactEntity): ContactResponseDto
+    fun toResponseDto(contactDto: ContactDto): ContactResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(contactUpdateDto: ContactUpdateDto, @MappingTarget contactEntity: ContactEntity)
+    fun partialUpdate(contactUpdateDto: ContactUpdateDto, @MappingTarget contactDto: ContactDto)
 }

@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
+import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -12,12 +12,12 @@ import java.util.UUID
 internal class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
 
   fun createOrganizationMigration(
-    organization: OrganizationEntity,
-    targetDbVersion: DbVersionEntity,
+    organization: OrganizationDto,
+    targetDbVersion: DbVersionDto,
     migrationType: MigrationType,
     message: String
-  ): DbMigrationEntity {
-    return DbMigrationEntity(
+  ): DbMigrationDto {
+    return DbMigrationDto(
       dbVersionId = targetDbVersion.getNullSafeId(),
       schemaOwnerId = organization.getNullSafeId(),
       schemaOwnerType = SchemaOwnerType.ORGANIZATION,
@@ -28,11 +28,11 @@ internal class MigrationInitializer(private val dbMigrationCache: DbMigrationCac
   }
 
   fun createLocationMigration(
-    location: LocationEntity,
-    targetDbVersion: DbVersionEntity,
+    location: LocationDto,
+    targetDbVersion: DbVersionDto,
     parentMigrationId: UUID
-  ): DbMigrationEntity {
-    return DbMigrationEntity(
+  ): DbMigrationDto {
+    return DbMigrationDto(
       dbVersionId = targetDbVersion.getNullSafeId(),
       schemaOwnerId = location.getNullSafeId(),
       schemaOwnerType = SchemaOwnerType.LOCATION,
@@ -44,10 +44,10 @@ internal class MigrationInitializer(private val dbMigrationCache: DbMigrationCac
   }
 
   fun createRetryMigration(
-    originalMigration: DbMigrationEntity,
-    targetDbVersion: DbVersionEntity
-  ): DbMigrationEntity {
-    return DbMigrationEntity(
+    originalMigration: DbMigrationDto,
+    targetDbVersion: DbVersionDto
+  ): DbMigrationDto {
+    return DbMigrationDto(
       dbVersionId = targetDbVersion.getNullSafeId(),
       schemaOwnerId = originalMigration.schemaOwnerId,
       schemaOwnerType = SchemaOwnerType.ORGANIZATION,

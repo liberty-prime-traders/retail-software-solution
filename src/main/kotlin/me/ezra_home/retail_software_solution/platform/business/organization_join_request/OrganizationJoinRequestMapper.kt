@@ -17,6 +17,10 @@ import org.mapstruct.NullValueMappingStrategy
 )
 internal interface OrganizationJoinRequestMapper {
 
+    fun toDomainDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestDto
+
+    fun toEntity(dto: OrganizationJoinRequestDto): OrganizationJoinRequestEntity
+
     fun toLaunchResponse(
         organization: OrganizationResponseDto?,
         isOrganizationAdmin: Boolean,
@@ -25,10 +29,10 @@ internal interface OrganizationJoinRequestMapper {
 
     @Mapping(source = "subdomain", target = "domain")
     @Mapping(source = "createdOn", target = "requestedDate")
-    fun toDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestResponseDto
+    fun toDto(dto: OrganizationJoinRequestDto): OrganizationJoinRequestResponseDto
 
     @Mapping(source = "createdById", target = "fullName", qualifiedBy = [FullName::class])
     @Mapping(source = "createdOn", target = "requestedDate")
-    fun toAdminDto(entity: OrganizationJoinRequestEntity): OrganizationAdminJoinRequestResponseDto
+    fun toAdminDto(dto: OrganizationJoinRequestDto): OrganizationAdminJoinRequestResponseDto
 
 }

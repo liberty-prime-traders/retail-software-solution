@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.mapping.DbMigrationMapper
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -12,22 +13,25 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_MIGRATION])
-internal class DbMigrationCache(private val dbMigrationRepository: DbMigrationRepository) {
+internal class DbMigrationCache(
+    private val dbMigrationRepository: DbMigrationRepository,
+    private val mapper: DbMigrationMapper
+) {
 
     @Cacheable
-    fun getAllDbMigrations(): Collection<DbMigrationEntity> {
-        return dbMigrationRepository.findAll()
+    fun getAllDbMigrations(): Collection<DbMigrationDto> {
+        return dbMigrationRepository.findAll().map { mapper.toDomainDto(it) }
     }
 
     @Cacheable
     fun getAllDbMigrationsFilteredByDate(
         start: OffsetDateTime,
         end: OffsetDateTime
-    ): Collection<DbMigrationEntity> {
+    ): Collection<DbMigrationDto> {
         return dbMigrationRepository.findByStartOnBetweenOrderByStartOnDesc(
             start = start,
             end = end
-        )
+        ).map { mapper.toDomainDto(it) }
     }
 
     @Cacheable
@@ -35,40 +39,40 @@ internal class DbMigrationCache(private val dbMigrationRepository: DbMigrationRe
         schemaOwnerId: UUID,
         schemaOwnerType: SchemaOwnerType,
         dbVersionId: UUID
-    ): DbMigrationEntity? {
+    ): DbMigrationDto? {
         return dbMigrationRepository.findTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
             schemaOwnerId = schemaOwnerId,
             schemaOwnerType = schemaOwnerType,
             dbVersionId = dbVersionId
-        )
+        )?.let { mapper.toDomainDto(it) }
     }
 
     @Cacheable
     fun getLatestFailedLocationMigrationForOrgParent(
         migrationParentId: UUID,
         locationId: UUID
-    ): DbMigrationEntity? {
+    ): DbMigrationDto? {
         return dbMigrationRepository.findTopBySchemaOwnerIdAndSchemaOwnerTypeAndMigrationParentIdAndStatusOrderByStartOnDesc(
             schemaOwnerId = locationId,
             schemaOwnerType = SchemaOwnerType.LOCATION,
             migrationParentId = migrationParentId,
             status = MigrationStatus.FAILURE
-        )
+        )?.let { mapper.toDomainDto(it) }
     }
 
     @Cacheable
     fun getDbLocationMigrationsByMigrationsParentId(
         migrationParentId: UUID,
-    ): Collection<DbMigrationEntity> {
+    ): Collection<DbMigrationDto> {
         return dbMigrationRepository.findByMigrationParentIdAndSchemaOwnerType(
             migrationParentId,
             SchemaOwnerType.LOCATION
-        )
+        ).map { mapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertDbMigration(dbMigrationEntity: DbMigrationEntity) {
-        dbMigrationRepository.save(dbMigrationEntity)
+    fun upsertDbMigration(dto: DbMigrationDto) {
+        dbMigrationRepository.save(mapper.toEntity(dto))
     }
 
 }

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type
 
+import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeUpdateDto
@@ -18,9 +19,13 @@ internal interface TaxTypeMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(dto: TaxTypeInsertDto): TaxTypeEntity
+    fun toDomainDto(dto: TaxTypeInsertDto): TaxTypeDto
 
-    fun toResponseDto(entity: TaxTypeEntity): TaxTypeResponseDto
+    fun toDomainDto(entity: TaxTypeEntity): TaxTypeDto
+
+    fun toEntity(dto: TaxTypeDto): TaxTypeEntity
+
+    fun toResponseDto(dto: TaxTypeDto): TaxTypeResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
@@ -28,5 +33,5 @@ internal interface TaxTypeMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "calculationMethod", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(dto: TaxTypeUpdateDto, @MappingTarget entity: TaxTypeEntity)
+    fun partialUpdate(dto: TaxTypeUpdateDto, @MappingTarget taxTypeDto: TaxTypeDto)
 }

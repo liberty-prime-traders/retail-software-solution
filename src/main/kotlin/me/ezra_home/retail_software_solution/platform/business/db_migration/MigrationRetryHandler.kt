@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
+import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
+import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -18,8 +18,8 @@ internal class MigrationRetryHandler(
   private val dbMigrationCache: DbMigrationCache
 ) {
   fun retryLocationMigrations(
-    originalMigration: DbMigrationEntity,
-    targetDbVersion: DbVersionEntity,
+    originalMigration: DbMigrationDto,
+    targetDbVersion: DbVersionDto,
     locationIds: Set<UUID>
   ): OrganizationLocationsMigration {
     val organization = organizationCache.getAllOrganizations().find { it.id == originalMigration.schemaOwnerId }
@@ -69,8 +69,8 @@ internal class MigrationRetryHandler(
 
   private fun consolidateResults(
     originalMigrationId: UUID,
-    newResults: List<DbMigrationEntity>
-  ): List<DbMigrationEntity> {
+    newResults: List<DbMigrationDto>
+  ): List<DbMigrationDto> {
     val previousAttempts = dbMigrationCache.getDbLocationMigrationsByMigrationsParentId(originalMigrationId)
     val newResultsMap = newResults.associateBy { it.schemaOwnerId }
 
@@ -83,4 +83,3 @@ internal class MigrationRetryHandler(
     return dbMigrationCache.getLatestFailedLocationMigrationForOrgParent(parentMigrationId, locationId) != null
   }
 }
-

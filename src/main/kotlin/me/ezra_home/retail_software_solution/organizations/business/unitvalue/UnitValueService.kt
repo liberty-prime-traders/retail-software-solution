@@ -33,20 +33,18 @@ class UnitValueService(
 
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueInsert(unitValueInsertDto)
-        val unitValueEntity = unitValueMapper.toEntity(unitValueInsertDto)
-        unitValueCache.upsertUnitValue(unitValueEntity)
-        return unitValueMapper.toResponseDto(unitValueEntity)
+        val dto = unitValueMapper.toDomainDto(unitValueInsertDto)
+        unitValueCache.upsertUnitValue(dto)
+        return unitValueMapper.toResponseDto(dto)
     }
 
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
         unitValueValidator.validateUnitValueUpdate(unitValueUpdateDto)
-        val unitValueFromDb = unitValueCache.getAllUnitValues().find { Objects.equals(it.id, unitValueUpdateDto.id) }
-        if (unitValueFromDb == null) {
-            throw UpdatingNonExistingRecordException()
-        }
-        unitValueMapper.partialUpdate(unitValueUpdateDto, unitValueFromDb)
-        unitValueCache.upsertUnitValue(unitValueFromDb)
-        return unitValueMapper.toResponseDto(unitValueFromDb)
+        val dto = unitValueCache.getAllUnitValues().find { Objects.equals(it.id, unitValueUpdateDto.id) }
+            ?: throw UpdatingNonExistingRecordException()
+        unitValueMapper.partialUpdate(unitValueUpdateDto, dto)
+        unitValueCache.upsertUnitValue(dto)
+        return unitValueMapper.toResponseDto(dto)
     }
 
     fun deleteUnitValue(id: UUID?) {

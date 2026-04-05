@@ -29,32 +29,35 @@ class LocationProductService(
   fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
 
   fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
-    val productToUpdate = locationProductRepository.findById(dto.id).orElseThrow {
+    val entity = locationProductRepository.findById(dto.id).orElseThrow {
       UpdatingNonExistingRecordException()
     }
     LocationProductValidator.validateProductUpdate(dto)
-    locationProductMapper.partialUpdate(dto, productToUpdate)
-    locationProductCache.upsertLocationProduct(productToUpdate)
-    return locationProductMapper.toDto(productToUpdate)
+    val productDto = locationProductMapper.toDomainDto(entity)
+    locationProductMapper.partialUpdate(dto, productDto)
+    locationProductCache.upsertLocationProduct(productDto)
+    return locationProductMapper.toDto(productDto)
   }
 
   fun deactivateProduct(productId: UUID): LocationProductResponseDto {
-    val productToDeactivate = locationProductRepository.findById(productId).orElseThrow {
+    val entity = locationProductRepository.findById(productId).orElseThrow {
       UpdatingNonExistingRecordException()
     }
-    productToDeactivate.status = ProductStatus.DISCONTINUED
-    locationProductCache.upsertLocationProduct(productToDeactivate)
-    return locationProductMapper.toDto(productToDeactivate)
+    val productDto = locationProductMapper.toDomainDto(entity)
+    productDto.status = ProductStatus.DISCONTINUED
+    locationProductCache.upsertLocationProduct(productDto)
+    return locationProductMapper.toDto(productDto)
   }
 
   fun reactivateProduct(productId: UUID): LocationProductResponseDto {
-    val productToReactivate = locationProductRepository.findById(productId).orElseThrow {
+    val entity = locationProductRepository.findById(productId).orElseThrow {
       UpdatingNonExistingRecordException()
     }
-    verifyOrgProductIsActive(productToReactivate.productId)
-    productToReactivate.status = ProductStatus.ACTIVE
-    locationProductCache.upsertLocationProduct(productToReactivate)
-    return locationProductMapper.toDto(productToReactivate)
+    verifyOrgProductIsActive(entity.productId)
+    val productDto = locationProductMapper.toDomainDto(entity)
+    productDto.status = ProductStatus.ACTIVE
+    locationProductCache.upsertLocationProduct(productDto)
+    return locationProductMapper.toDto(productDto)
   }
 
   @TransactionalOnOrganizationSchema(readOnly = true)

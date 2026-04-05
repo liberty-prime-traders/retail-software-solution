@@ -8,9 +8,13 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 internal interface JurisdictionTaxTypeMapper {
 
+    fun toDomainDto(entity: JurisdictionTaxTypeEntity): JurisdictionTaxTypeDto
+
+    fun toEntity(dto: JurisdictionTaxTypeDto): JurisdictionTaxTypeEntity
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "active", constant = "true")
-    fun toEntity(dto: JurisdictionTaxTypeInsertDto): JurisdictionTaxTypeEntity
+    fun toDomainDto(insertDto: JurisdictionTaxTypeInsertDto): JurisdictionTaxTypeDto
 }

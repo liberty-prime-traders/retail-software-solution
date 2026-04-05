@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -13,10 +12,13 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
-internal class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
+internal class OrganizationUserCache(
+    private val organizationUserRepository: OrganizationUserRepository,
+    private val organizationUserMapper: OrganizationUserMapper
+) {
     @Cacheable
-    fun getOrganizationUsers(): Collection<OrganizationUserEntity> {
-        return organizationUserRepository.findAll()
+    fun getOrganizationUsers(): Collection<OrganizationUserDto> {
+        return organizationUserRepository.findAll().map { organizationUserMapper.toDomainDto(it) }
     }
 
     @Cacheable
@@ -25,12 +27,12 @@ internal class OrganizationUserCache(private val organizationUserRepository: Org
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUser(organizationUserEntity: OrganizationUserEntity) {
-        organizationUserRepository.save(organizationUserEntity)
+    fun upsertOrganizationUser(dto: OrganizationUserDto) {
+        organizationUserRepository.save(organizationUserMapper.toEntity(dto))
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUsers(organizationUserEntities: Collection<OrganizationUserEntity>) {
-        organizationUserRepository.saveAll(organizationUserEntities)
+    fun upsertOrganizationUsers(dtos: Collection<OrganizationUserDto>) {
+        organizationUserRepository.saveAll(dtos.map { organizationUserMapper.toEntity(it) })
     }
 }

@@ -29,18 +29,18 @@ class JobTitleService(
         jobTitleCache.getAllJobTitles().find { StringUtils.isEquivalent(it.value, value) }
             ?.let { throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
 
-        val newTitleEntity = jobTitleMapper.toEntity(titleInsertDto)
-        jobTitleCache.upsertJobTitle(newTitleEntity)
-        return jobTitleMapper.toDto(newTitleEntity)
+        val dto = jobTitleMapper.toDomainDto(titleInsertDto)
+        jobTitleCache.upsertJobTitle(dto)
+        return jobTitleMapper.toDto(dto)
     }
 
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
         validateJobTitleUpdate(titleDto)
-        val titleToUpdate = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
+        val dto = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
             ?: throw UpdatingNonExistingRecordException()
-        jobTitleMapper.partialUpdate(titleDto, titleToUpdate)
-        jobTitleCache.upsertJobTitle(titleToUpdate)
-        return jobTitleMapper.toDto(titleToUpdate)
+        jobTitleMapper.partialUpdate(titleDto, dto)
+        jobTitleCache.upsertJobTitle(dto)
+        return jobTitleMapper.toDto(dto)
     }
 
     private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {

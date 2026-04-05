@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_type
 
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeUpdateDto
@@ -18,14 +19,18 @@ internal interface JurisdictionTypeMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(dto: JurisdictionTypeInsertDto): JurisdictionTypeEntity
+    fun toDomainDto(dto: JurisdictionTypeInsertDto): JurisdictionTypeDto
 
-    fun toResponseDto(entity: JurisdictionTypeEntity): JurisdictionTypeResponseDto
+    fun toDomainDto(entity: JurisdictionTypeEntity): JurisdictionTypeDto
+
+    fun toEntity(dto: JurisdictionTypeDto): JurisdictionTypeEntity
+
+    fun toResponseDto(dto: JurisdictionTypeDto): JurisdictionTypeResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(dto: JurisdictionTypeUpdateDto, @MappingTarget entity: JurisdictionTypeEntity)
+    fun partialUpdate(dto: JurisdictionTypeUpdateDto, @MappingTarget jurisdictionTypeDto: JurisdictionTypeDto)
 }

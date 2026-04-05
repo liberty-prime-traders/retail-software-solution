@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.contact
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.ContactEntity
+import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -14,17 +14,18 @@ import java.util.UUID
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.CONTACT])
 internal class ContactCache(
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val contactMapper: ContactMapper
 ) {
 
     @Cacheable
-    fun getAllContacts(): Collection<ContactEntity> {
-        return contactRepository.findAll()
+    fun getAllContacts(): Collection<ContactDto> {
+        return contactRepository.findAll().map { contactMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertContact(contactEntity: ContactEntity) {
-        contactRepository.save(contactEntity)
+    fun upsertContact(contactDto: ContactDto) {
+        contactRepository.save(contactMapper.toEntity(contactDto))
     }
 
     @CacheEvict(allEntries = true)

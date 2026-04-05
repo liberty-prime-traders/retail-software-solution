@@ -10,7 +10,7 @@ import java.util.Objects
 
 @Service
 @TransactionalOnLocationSchema
-class AddressService(
+class AddressService internal constructor(
     private val addressMapper: AddressMapper,
     private val addressCache: AddressCache
 ) {
@@ -21,16 +21,16 @@ class AddressService(
     }
 
     fun createAddress(addressInsertDto: AddressInsertDto): AddressResponseDto {
-        val newAddressEntity = addressMapper.toEntity(addressInsertDto)
-        val savedAddressEntity = addressCache.upsertAddress(newAddressEntity)
-        return addressMapper.toDto(savedAddressEntity)
+        val dto = addressMapper.toDomainDto(addressInsertDto)
+        addressCache.upsertAddress(dto)
+        return addressMapper.toDto(dto)
     }
 
-    fun updateAddress(addressDto: AddressUpdateDto): AddressResponseDto {
-        val addressToUpdate = addressCache.getAllAddresses().find { Objects.equals(addressDto.id, it.id) }
-        if (addressToUpdate == null) throw UpdatingNonExistingRecordException()
-        addressMapper.partialUpdate(addressDto, addressToUpdate)
-        val updatedAddress = addressCache.upsertAddress(addressToUpdate)
-        return addressMapper.toDto(updatedAddress)
+    fun updateAddress(addressUpdateDto: AddressUpdateDto): AddressResponseDto {
+        val dto = addressCache.getAllAddresses().find { Objects.equals(addressUpdateDto.id, it.id) }
+            ?: throw UpdatingNonExistingRecordException()
+        addressMapper.partialUpdate(addressUpdateDto, dto)
+        addressCache.upsertAddress(dto)
+        return addressMapper.toDto(dto)
     }
 }

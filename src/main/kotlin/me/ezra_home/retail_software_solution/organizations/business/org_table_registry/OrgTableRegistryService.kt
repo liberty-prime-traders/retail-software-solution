@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_table_registry
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.OrgTableRegistryEntity
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -22,23 +22,23 @@ class OrgTableRegistryService(
     fun getAll(): Collection<OrgTableRegistryResponseDto> =
         orgTableRegistryCache.getAllTables().map { orgTableRegistryMapper.toDto(it) }
 
-    fun update(dto: OrgTableRegistryUpdateDto): OrgTableRegistryResponseDto {
+    fun update(updateDto: OrgTableRegistryUpdateDto): OrgTableRegistryResponseDto {
         val allTables = orgTableRegistryCache.getAllTables()
-        val entity = allTables.find { it.id == dto.id } ?: throw RtsGenericException("Org Table not found")
-        orgTableRegistryMapper.patchEntity(dto, entity)
-        validateRequiredFields(entity)
-        validateOrgWideUniqueness(entity.defaultPrefix, entity.displayName, entity.id, allTables)
-        validatePlatformWideUniqueness(entity.defaultPrefix, entity.displayName, allTables)
-        orgTableRegistryCache.upsertTable(entity)
-        return orgTableRegistryMapper.toDto(entity)
+        val dto = allTables.find { it.id == updateDto.id } ?: throw RtsGenericException("Org Table not found")
+        orgTableRegistryMapper.partialUpdate(updateDto, dto)
+        validateRequiredFields(dto)
+        validateOrgWideUniqueness(dto.defaultPrefix!!, dto.displayName!!, dto.id, allTables)
+        validatePlatformWideUniqueness(dto.defaultPrefix!!, dto.displayName!!, allTables)
+        orgTableRegistryCache.upsertTable(dto)
+        return orgTableRegistryMapper.toDto(dto)
     }
 
-    private fun validateRequiredFields(entity: OrgTableRegistryEntity) {
-        StringUtils.getValueOrException(entity.defaultPrefix, "Default prefix is required")
-        StringUtils.getValueOrException(entity.displayName, "Display name is required")
+    private fun validateRequiredFields(dto: OrgTableRegistryDto) {
+        StringUtils.getValueOrException(dto.defaultPrefix, "Default prefix is required")
+        StringUtils.getValueOrException(dto.displayName, "Display name is required")
     }
 
-    private fun validateOrgWideUniqueness(defaultPrefix: String, displayName: String, tableId: UUID?, allOrgTables: Collection<OrgTableRegistryEntity>) {
+    private fun validateOrgWideUniqueness(defaultPrefix: String, displayName: String, tableId: UUID?, allOrgTables: Collection<OrgTableRegistryDto>) {
         allOrgTables
             .find { StringUtils.isEquivalent(it.defaultPrefix, defaultPrefix) && it.id != tableId }
             ?.let { throw RtsGenericException("The default prefix '$defaultPrefix' conflicts with org table '${it.id}'") }
@@ -48,7 +48,7 @@ class OrgTableRegistryService(
             ?.let { throw RtsGenericException("An Org Table using the display name '$displayName' already exists") }
     }
 
-    private fun validatePlatformWideUniqueness(defaultPrefix: String, displayName: String, allOrgTables: Collection<OrgTableRegistryEntity>) {
+    private fun validatePlatformWideUniqueness(defaultPrefix: String, displayName: String, allOrgTables: Collection<OrgTableRegistryDto>) {
         val overriddenRegistryIds = allOrgTables.map { it.registryId }.toSet()
         val platformTablesNotOverridden = platformTableRegistryCache.getAllTables()
             .filter { it.id !in overriddenRegistryIds }

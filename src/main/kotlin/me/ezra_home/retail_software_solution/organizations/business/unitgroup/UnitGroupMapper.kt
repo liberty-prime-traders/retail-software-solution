@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitgroup
 
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupUpdateDto
@@ -19,15 +20,18 @@ internal interface UnitGroupMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupEntity
+    fun toDomainDto(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupDto
+
+    fun toDomainDto(unitGroupEntity: UnitGroupEntity): UnitGroupDto
+
+    fun toEntity(unitGroupDto: UnitGroupDto): UnitGroupEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toResponseDto(unitGroupEntity: UnitGroupEntity): UnitGroupResponseDto
-
+    fun toResponseDto(unitGroupDto: UnitGroupDto): UnitGroupResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(unitGroupUpdateDto: UnitGroupUpdateDto, @MappingTarget unitGroupEntity: UnitGroupEntity)
+    fun partialUpdate(unitGroupUpdateDto: UnitGroupUpdateDto, @MappingTarget unitGroupDto: UnitGroupDto)
 }

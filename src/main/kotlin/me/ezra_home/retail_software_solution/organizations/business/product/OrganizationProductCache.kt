@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
+import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -12,16 +12,21 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT])
-internal class OrganizationProductCache(private val organizationProductRepository: OrganizationProductRepository) {
+internal class OrganizationProductCache(
+    private val organizationProductRepository: OrganizationProductRepository,
+    private val organizationProductMapper: OrganizationProductMapper
+) {
 
     @Cacheable
-    fun findAllProducts(): List<OrganizationProductEntity> = organizationProductRepository.findAllProducts()
+    fun findAllProducts(): List<OrganizationProductDto> =
+        organizationProductRepository.findAllProducts().map { organizationProductMapper.toDomainDto(it) }
 
     @Cacheable
     fun countAllProducts(): Long = organizationProductRepository.count()
 
     @CacheEvict(allEntries = true)
-    fun upsertProduct(productEntity: OrganizationProductEntity) {
-        organizationProductRepository.save(productEntity)
+    fun upsertProduct(productDto: OrganizationProductDto): OrganizationProductDto {
+        val saved = organizationProductRepository.save(organizationProductMapper.toEntity(productDto))
+        return organizationProductMapper.toDomainDto(saved)
     }
 }

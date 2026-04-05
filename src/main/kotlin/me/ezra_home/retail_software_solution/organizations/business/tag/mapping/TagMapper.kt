@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.tag.mapping
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagUpdateDto
@@ -14,18 +15,23 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
 internal interface TagMapper {
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toDto(tagEntity: TagEntity): TagResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toEntity(tagInsertDto: TagInsertDto): TagEntity
+    fun toDomainDto(tagInsertDto: TagInsertDto): TagDto
+
+    fun toDomainDto(tagEntity: TagEntity): TagDto
+
+    fun toEntity(tagDto: TagDto): TagEntity
+
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    fun toResponseDto(tagDto: TagDto): TagResponseDto
 
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(tagDto: TagUpdateDto, @MappingTarget tagEntity: TagEntity)
+    fun partialUpdate(tagUpdateDto: TagUpdateDto, @MappingTarget tagDto: TagDto)
 }
