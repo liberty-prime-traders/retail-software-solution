@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_table_registry
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameQualifier

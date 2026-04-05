@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.business.reserved_subdomain
 
-import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.ReservedSubdomainEntity
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.api.ReservedDomainStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

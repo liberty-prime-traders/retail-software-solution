@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.stereotype.Component
 import java.util.UUID

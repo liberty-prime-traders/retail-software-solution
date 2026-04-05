@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 

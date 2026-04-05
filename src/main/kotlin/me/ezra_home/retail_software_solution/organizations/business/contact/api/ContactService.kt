@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.Cont
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactMapper
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactValidator
-import me.ezra_home.retail_software_solution.organizations.business.contact.dto.ContactDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactDto
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.UUID

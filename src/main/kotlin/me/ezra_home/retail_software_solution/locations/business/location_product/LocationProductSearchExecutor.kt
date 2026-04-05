@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
@@ -11,9 +12,12 @@ import org.springframework.stereotype.Component
 class LocationProductSearchExecutor(
   @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   emf: LocalContainerEntityManagerFactoryBean,
-  private val mapper: LocationProductMapper
+  private val mapper: LocationProductMapper,
+  private val unitValueService: UnitValueService
 ) : ProductSearchExecutor<LocationProductEntity, LocationProductResponseDto>(emf, LocationProductEntity::class.java) {
 
-  override fun map(entity: LocationProductEntity) =
-    mapper.toDto(mapper.toDomainDto(entity))
+  override fun map(entity: LocationProductEntity): LocationProductResponseDto  {
+    val baseUnitName = unitValueService.getUnitName(entity.baseUnitId)
+    return mapper.toDto(mapper.toDomainDto(entity), baseUnitName)
+  }
 }

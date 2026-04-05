@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.org_table_r
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryCache
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryMapper
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryDto
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -27,8 +27,8 @@ class OrgTableRegistryService(
         val dto = allTables.find { it.id == updateDto.id } ?: throw RtsGenericException("Org Table not found")
         orgTableRegistryMapper.partialUpdate(updateDto, dto)
         validateRequiredFields(dto)
-        validateOrgWideUniqueness(dto.defaultPrefix!!, dto.displayName!!, dto.id, allTables)
-        validatePlatformWideUniqueness(dto.defaultPrefix!!, dto.displayName!!, allTables)
+        validateOrgWideUniqueness(dto.defaultPrefix, dto.displayName, dto.id, allTables)
+        validatePlatformWideUniqueness(dto.defaultPrefix, dto.displayName, allTables)
         orgTableRegistryCache.upsertTable(dto)
         return orgTableRegistryMapper.toDto(dto)
     }

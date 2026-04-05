@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.tax_rate
 
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeStatus
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService

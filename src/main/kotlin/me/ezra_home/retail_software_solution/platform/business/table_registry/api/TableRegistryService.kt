@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.table_registry.a
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryMapper
-import me.ezra_home.retail_software_solution.platform.business.table_registry.dto.TableRegistryDto
+import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.model.TableName

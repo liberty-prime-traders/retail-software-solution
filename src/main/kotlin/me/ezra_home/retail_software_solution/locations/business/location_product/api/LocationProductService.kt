@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -19,12 +20,14 @@ class LocationProductService(
   private val locationProductRepository: LocationProductRepository,
   private val locationProductCache: LocationProductCache,
   private val locationProductMapper: LocationProductMapper,
-  private val organizationProductRepository: OrganizationProductRepository
+  private val organizationProductRepository: OrganizationProductRepository,
+  private val unitValueService: UnitValueService
 ) {
 
   @TransactionalOnLocationSchema(readOnly = true)
   fun findAllProducts(): List<LocationProductResponseDto> {
-    return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it) }
+    val unitNamesById = unitValueService.getUnitNamesById()
+    return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it, unitNamesById[it.baseUnitId]) }
   }
 
   @TransactionalOnLocationSchema(readOnly = true)
@@ -38,7 +41,7 @@ class LocationProductService(
     val productDto = locationProductMapper.toDomainDto(entity)
     locationProductMapper.partialUpdate(dto, productDto)
     locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto)
+    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
   }
 
   fun deactivateProduct(productId: UUID): LocationProductResponseDto {
@@ -48,7 +51,7 @@ class LocationProductService(
     val productDto = locationProductMapper.toDomainDto(entity)
     productDto.status = ProductStatus.DISCONTINUED
     locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto)
+    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
   }
 
   fun reactivateProduct(productId: UUID): LocationProductResponseDto {
@@ -59,7 +62,7 @@ class LocationProductService(
     val productDto = locationProductMapper.toDomainDto(entity)
     productDto.status = ProductStatus.ACTIVE
     locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto)
+    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
   }
 
   @TransactionalOnOrganizationSchema(readOnly = true)

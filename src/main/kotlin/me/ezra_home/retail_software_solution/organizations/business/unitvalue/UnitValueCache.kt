@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
@@ -31,6 +30,12 @@ class UnitValueCache(
     fun getAllUnitValues(): Collection<UnitValueDto> {
         return unitValueRepository.findAll().map { unitValueMapper.toDomainDto(it) }
     }
+
+    @Cacheable
+    fun getUnitNamesById(): Map<UUID, String> =
+        unitValueRepository.findAll()
+            .mapNotNull { entity -> entity.id?.let { it to entity.name } }
+            .toMap()
 
     @CacheEvict(allEntries = true)
     fun upsertUnitValue(unitValueDto: UnitValueDto) {

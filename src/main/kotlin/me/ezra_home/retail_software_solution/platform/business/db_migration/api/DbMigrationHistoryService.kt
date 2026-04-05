@@ -28,7 +28,7 @@ class DbMigrationHistoryService(
         val locIdToName: Map<UUID, String?> = buildMap {
             organizationsWithLocations.forEach {
                 org -> org.locations.forEach {
-                    put(it.getNullSafeId(), it.name)
+                    put(it.id, it.name)
                 }
             }
         }

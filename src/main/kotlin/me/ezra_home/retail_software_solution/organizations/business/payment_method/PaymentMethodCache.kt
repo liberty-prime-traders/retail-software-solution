@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodDto
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodDto
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable

@@ -3,12 +3,12 @@ package me.ezra_home.retail_software_solution.organizations.business.product.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.messaging.kafka.catalog.CatalogEventHandler
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductCache
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductDto
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductMapper
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductValidator
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
@@ -22,15 +22,9 @@ class OrganizationProductService(
     private val organizationProductRepository: OrganizationProductRepository,
     private val organizationProductValidator: OrganizationProductValidator,
     private val productTagService: ProductTagService,
-    private val productTagQualifier: ProductTagQualifier,
-    private val catalogEventHandler: CatalogEventHandler
+    private val catalogEventHandler: CatalogEventHandler,
+    private val unitValueService: UnitValueService
 ) {
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun findAllProducts(): List<OrganizationProductResponseDto> {
-        val responseDtos = organizationProductCache.findAllProducts().map { organizationProductMapper.toResponseDtoWithoutTags(it) }
-        return productTagQualifier.populateTagsForProducts(responseDtos)
-    }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun countAllProducts(): Long = organizationProductCache.countAllProducts()
@@ -47,7 +41,7 @@ class OrganizationProductService(
             )
         }
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
-        return organizationProductMapper.toResponseDto(savedDto)
+        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
 
     fun updateProduct(productUpdateDto: OrganizationProductUpdateDto): OrganizationProductResponseDto {
@@ -63,7 +57,7 @@ class OrganizationProductService(
             tagsToRemove = productUpdateDto.tagsToRemove
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
-        return organizationProductMapper.toResponseDto(savedDto)
+        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
 
     fun deactivateProduct(productId: UUID): OrganizationProductResponseDto {
@@ -82,7 +76,7 @@ class OrganizationProductService(
         productDto.status = status
         val savedDto = organizationProductCache.upsertProduct(productDto)
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
-        return organizationProductMapper.toResponseDto(savedDto)
+        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
 
 }

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method
 
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.dto.PaymentMethodDto
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodUpdateDto

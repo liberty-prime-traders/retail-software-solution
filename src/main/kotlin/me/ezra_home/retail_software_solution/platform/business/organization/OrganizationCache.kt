@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable

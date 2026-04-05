@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateCache
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateMapper
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateValidator
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeResolver
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException

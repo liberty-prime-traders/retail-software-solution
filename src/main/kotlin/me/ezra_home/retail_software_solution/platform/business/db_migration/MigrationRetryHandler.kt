@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.OrganizationLocationsMigration
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

@@ -50,4 +50,8 @@ class OrganizationAdminService(
         return organizationAdminCache.getAdminHistory()
             .find { it.isActive() && it.userId == userId } != null
     }
+
+    fun registerFounder(userId: UUID) {
+        organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminDto(userId = userId))
+    }
 }

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationDto
+import me.ezra_home.retail_software_solution.organizations.business.location.LocationDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationUpdateDto

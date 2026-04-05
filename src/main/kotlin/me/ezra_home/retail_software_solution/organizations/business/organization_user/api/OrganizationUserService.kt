@@ -51,4 +51,8 @@ class OrganizationUserService(
         joinRequests.map { OrganizationUserDto(joinRequestId = it.id, userId = it.createdById) }
             .let { organizationUserCache.upsertOrganizationUsers(it) }
     }
+
+    fun registerFounder(userId: UUID) {
+        organizationUserCache.upsertOrganizationUser(OrganizationUserDto(userId = userId))
+    }
 }

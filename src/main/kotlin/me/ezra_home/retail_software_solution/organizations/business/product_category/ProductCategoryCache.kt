@@ -4,7 +4,7 @@ import java.util.UUID
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryMapper
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

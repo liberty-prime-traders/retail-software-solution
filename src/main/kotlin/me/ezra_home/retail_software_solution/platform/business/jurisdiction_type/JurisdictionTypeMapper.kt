@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_type
 
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.dto.JurisdictionTypeDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.JurisdictionTypeDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeUpdateDto

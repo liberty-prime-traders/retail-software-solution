@@ -7,14 +7,14 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 class PurchaseDeliveryAssembler(
   private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
-  private val unitValueQualifier: UnitValueQualifier
+  private val unitValueService: UnitValueService
 ) {
 
   private data class LineResolutionContext(
@@ -63,7 +63,7 @@ class PurchaseDeliveryAssembler(
             referenceNumber = product.getNullSafeReferenceNumber(),
             productName = product.productName,
             productGroupName = product.productGroupName,
-            baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)
+            baseUnit = unitValueService.getUnitName(product.baseUnitId)
           )
         )
       }

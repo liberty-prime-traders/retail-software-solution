@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_gro
 
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryName
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryNameQualifier
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupUpdateDto

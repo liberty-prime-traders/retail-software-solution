@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitgroup
 
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupUpdateDto

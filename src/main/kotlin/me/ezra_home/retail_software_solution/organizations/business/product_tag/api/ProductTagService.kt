@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagValidator
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.dto.ProductTagDto
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime

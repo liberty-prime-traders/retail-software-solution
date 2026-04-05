@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query

@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRetryRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component

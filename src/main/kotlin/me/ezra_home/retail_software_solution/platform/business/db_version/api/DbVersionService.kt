@@ -2,7 +2,9 @@ package me.ezra_home.retail_software_solution.platform.business.db_version.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
-import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionMapper
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionMapper
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionNumber
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -17,15 +19,13 @@ class DbVersionService(
 ) {
 
     fun getAllDbVersions(): Collection<DbVersionResponseDto> {
+        val versionNumbersMap = dbVersionCache.getVersionNumbersById()
         return dbVersionCache.getAllDbVersions()
-            .map { dbVersionMapper.toResponseDto(it) }
+            .map { dbVersionMapper.toResponseDto(it, versionNumbersMap[it.prevVersionId]) }
     }
 
-    fun getVersionNumber(versionId: UUID?): String? {
-        return versionId?.let {
-            dbVersionCache.getAllDbVersions().find { it.id == versionId }?.versionNumber
-        }
-    }
+    @DbVersionNumber
+    fun getVersionNumber(versionId: UUID?): String? = versionId?.let { dbVersionCache.getVersionNumbersById()[it] }
 
     @TransactionalOnPlatformSchema
     fun activateDbVersion(versionId: UUID): DbVersionResponseDto {
@@ -38,10 +38,11 @@ class DbVersionService(
             dbVersionToActivate.activatedOn = OffsetDateTime.now()
             dbVersionCache.upsertDbVersion(dbVersionToActivate)
         }
-        return dbVersionMapper.toResponseDto(dbVersionToActivate)
+        val prevVersionNumber = dbVersionCache.getVersionNumbersById()[dbVersionToActivate.prevVersionId]
+        return dbVersionMapper.toResponseDto(dbVersionToActivate, prevVersionNumber)
     }
 
-    private fun verifyDbVersionForActivation(dbVersion: me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto, allDbVersions: Collection<me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto>) {
+    private fun verifyDbVersionForActivation(dbVersion: DbVersionDto, allDbVersions: Collection<DbVersionDto>) {
         dbVersion.prevVersionId?.let { prevVersionId ->
             if (prevVersionId == dbVersion.id) {
                 throw RtsGenericException("A DB version cannot point to itself as previous version.")

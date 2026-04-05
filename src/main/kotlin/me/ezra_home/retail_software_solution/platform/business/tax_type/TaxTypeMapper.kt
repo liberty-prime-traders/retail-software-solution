@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type
 
-import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeUpdateDto

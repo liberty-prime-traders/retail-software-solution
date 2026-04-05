@@ -2,16 +2,10 @@ package me.ezra_home.retail_software_solution.platform.business.organization.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationMapper
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
-import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminService
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserService
-import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminEntity
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserEntity
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassService
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassType
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
@@ -35,17 +29,14 @@ import java.util.UUID
 class OrganizationService(
     private val organizationMapper: OrganizationMapper,
     private val organizationCache: OrganizationCache,
-    private val locationCache: LocationCache,
+    private val locationService: LocationService,
     private val reservedSubdomainService: ReservedSubdomainService,
-    private val organizationAdminCache: OrganizationAdminCache,
+    private val organizationAdminService: OrganizationAdminService,
     private val organizationValidator: OrganizationValidator,
     private val organizationJoinRequestService: OrganizationJoinRequestService,
     private val organizationSchemaService: OrganizationSchemaService,
     private val organizationUserService: OrganizationUserService,
     private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
-    private val organizationAdminService: OrganizationAdminService,
-    private val organizationUserCache: OrganizationUserCache,
-    private val locationMapper: LocationMapper,
     private val authorizationPassService: AuthorizationPassService
 ) {
 
@@ -67,8 +58,8 @@ class OrganizationService(
             }
             organizationCache.upsertOrganization(organizationDto)
             SessionContextProvider.initOrganization(organizationDto)
-            organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminDto(organizationDto.createdById!!))
-            organizationUserCache.upsertOrganizationUser(OrganizationUserEntity().apply { userId = organizationDto.createdById!! })
+            organizationAdminService.registerFounder(organizationDto.createdById!!)
+            organizationUserService.registerFounder(organizationDto.createdById!!)
             return organizationMapper.toResponseDto(organizationDto)
         } catch (e: Exception) {
             organizationSchemaService.dropSchema(schemaName)
@@ -124,18 +115,10 @@ class OrganizationService(
     }
 
     fun getAllOrganizationsWithLocations(): Collection<OrganizationWithLocations> {
-        val organizationsWithLocations = mutableListOf<OrganizationWithLocations>()
-        for (organization in organizationCache.getAllOrganizations()) {
+        return organizationCache.getAllOrganizations().map { organization ->
             SessionContextProvider.initOrganization(organization)
-            val locations = locationCache.getAllLocations()
-            organizationsWithLocations.add(
-                OrganizationWithLocations(
-                    organization = organization,
-                    locations = locations
-                )
-            )
+            OrganizationWithLocations(organization = organization, locations = locationService.getAllLocations())
         }
-        return organizationsWithLocations
     }
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -144,7 +127,6 @@ class OrganizationService(
             .find { it.id == organizationId }
             ?: throw RtsGenericException("The organization with id $organizationId does not exist")
         SessionContextProvider.initOrganization(organization)
-        return locationCache.getAllLocations()
-            .map { locationMapper.toResponseDto(it) }
+        return locationService.getAllLocations()
     }
 }

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveredLineDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.tag.mapping
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.TagDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagUpdateDto

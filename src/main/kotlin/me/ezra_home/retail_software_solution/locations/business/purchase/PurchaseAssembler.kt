@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -24,7 +24,7 @@ class PurchaseAssembler(
   private val purchaseDeliveryRepository: PurchaseDeliveryRepository,
   private val purchaseDeliveryAssembler: PurchaseDeliveryAssembler,
   private val contactCache: ContactCache,
-  private val unitValueQualifier: UnitValueQualifier,
+  private val unitValueService: UnitValueService,
   private val userQualifier: UserQualifier
 ) {
 
@@ -90,7 +90,7 @@ class PurchaseAssembler(
           referenceNumber = product.getNullSafeReferenceNumber(),
           productName = product.productName,
           productGroupName = product.productGroupName,
-          baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)
+          baseUnit = unitValueService.getUnitName(product.baseUnitId)
         ),
         quantityOrdered = line.quantityOrdered,
         unitCost = line.unitCost,

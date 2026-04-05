@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.address
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.business.address.dto.AddressDto
+import me.ezra_home.retail_software_solution.organizations.business.address.AddressDto
 import me.ezra_home.retail_software_solution.organizations.business.address.api.AddressInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.address.api.AddressResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.address.api.AddressUpdateDto
