@@ -8,7 +8,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-interface AuthorizationPassMapper {
+internal interface AuthorizationPassMapper {
 
     @Mapping(source = "assignedToId", target = "assignedTo", qualifiedBy = [FullName::class])
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])

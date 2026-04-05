@@ -11,7 +11,7 @@ import java.util.UUID
 annotation class DbVersionNumber
 
 @Component
-class DbVersionQualifier(private final val dbVersionCache: DbVersionCache) {
+internal class DbVersionQualifier(private final val dbVersionCache: DbVersionCache) {
 
     @DbVersionNumber
     fun resolveVersionNumber(versionId: UUID?): String? {

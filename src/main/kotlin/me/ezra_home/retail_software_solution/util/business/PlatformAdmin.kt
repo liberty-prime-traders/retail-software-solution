@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.util.business
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import org.springframework.security.core.context.SecurityContextHolder
 
-object PlatformAdmin {
+internal object PlatformAdmin {
 
     fun isPlatformAdmin(): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication

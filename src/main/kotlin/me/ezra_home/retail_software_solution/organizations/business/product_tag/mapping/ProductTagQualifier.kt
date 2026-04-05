@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class ProductTagQualifier(
+internal class ProductTagQualifier(
     private val productTagCache: ProductTagCache,
     private val tagCache: TagCache
 ) {

@@ -7,7 +7,7 @@ import java.util.UUID
 
 @Component
 @TransactionalOnOrganizationSchema
-class ProductCategoryNameQualifier(private val productCategoryCache: ProductCategoryCache,) {
+internal class ProductCategoryNameQualifier(private val productCategoryCache: ProductCategoryCache,) {
 
     @ProductCategoryName
     fun resolveCategoryName(categoryId: UUID?): String? {

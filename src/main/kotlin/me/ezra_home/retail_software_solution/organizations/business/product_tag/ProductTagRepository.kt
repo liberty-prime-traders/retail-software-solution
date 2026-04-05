@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
+internal interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
 
     @Query("""
         SELECT pt.tagId FROM ProductTagEntity pt

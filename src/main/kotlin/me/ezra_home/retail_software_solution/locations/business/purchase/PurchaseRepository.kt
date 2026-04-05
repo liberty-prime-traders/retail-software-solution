@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface PurchaseRepository : JpaRepository<PurchaseEntity, UUID> {
+internal interface PurchaseRepository : JpaRepository<PurchaseEntity, UUID> {
 
   @Query("SELECT p FROM PurchaseEntity p")
   fun findTopN(pageable: Pageable): List<PurchaseEntity>

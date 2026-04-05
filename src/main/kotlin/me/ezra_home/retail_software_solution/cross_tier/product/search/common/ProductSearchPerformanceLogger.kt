@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import org.slf4j.LoggerFactory
 
-object ProductSearchPerformanceLogger {
+internal object ProductSearchPerformanceLogger {
 
   private const val SLOW_QUERY_THRESHOLD_MS = 1000
   private val logger = LoggerFactory.getLogger(ProductSearchPerformanceLogger::class.java)

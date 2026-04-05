@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_ADMIN])
-class OrganizationAdminCache(private val organizationAdminRepository: OrganizationAdminRepository) {
+internal class OrganizationAdminCache(private val organizationAdminRepository: OrganizationAdminRepository) {
 
     @Cacheable
     fun getAdminHistory(): Collection<OrganizationAdminEntity> {

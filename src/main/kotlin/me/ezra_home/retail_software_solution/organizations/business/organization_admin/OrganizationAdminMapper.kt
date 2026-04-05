@@ -7,7 +7,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-interface OrganizationAdminMapper {
+internal interface OrganizationAdminMapper {
     @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])
     @Mapping(source = "createdOn", target = "startOn")
     fun toResponseDto(organizationAdminEntity: OrganizationAdminEntity): OrganizationAdminResponseDto

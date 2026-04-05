@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
-class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
+internal class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
     @Cacheable
     fun getOrganizationUsers(): Collection<OrganizationUserEntity> {
         return organizationUserRepository.findAll()

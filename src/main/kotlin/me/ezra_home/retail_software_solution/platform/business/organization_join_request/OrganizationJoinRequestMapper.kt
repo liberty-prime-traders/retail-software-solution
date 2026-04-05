@@ -15,7 +15,7 @@ import org.mapstruct.NullValueMappingStrategy
     config = RtsMapperConfig::class,
     nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT
 )
-interface OrganizationJoinRequestMapper {
+internal interface OrganizationJoinRequestMapper {
 
     fun toLaunchResponse(
         organization: OrganizationResponseDto?,

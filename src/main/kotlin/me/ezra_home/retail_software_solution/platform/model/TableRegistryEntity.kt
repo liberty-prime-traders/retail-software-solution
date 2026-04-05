@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.TABLE_REGISTRY)
 @HasReference(tableName = TableName.TABLE_REGISTRY)
-class TableRegistryEntity(
+internal class TableRegistryEntity(
     @Column(name = "table_name", insertable = false, updatable = false)
     var tableName: String,
 

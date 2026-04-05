@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface TaxRateRepository : JpaRepository<TaxRateEntity, UUID>
+internal interface TaxRateRepository : JpaRepository<TaxRateEntity, UUID>

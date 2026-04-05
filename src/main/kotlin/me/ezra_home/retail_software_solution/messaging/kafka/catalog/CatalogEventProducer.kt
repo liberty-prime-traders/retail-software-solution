@@ -5,7 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
 @Component
-class CatalogEventProducer(
+internal class CatalogEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, CatalogChangedEvent>
 ) {
 

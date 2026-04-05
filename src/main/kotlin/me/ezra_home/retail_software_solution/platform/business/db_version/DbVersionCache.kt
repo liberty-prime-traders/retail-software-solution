@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_VERSION])
-class DbVersionCache(private val dbVersionRepository: DbVersionRepository) {
+internal class DbVersionCache(private val dbVersionRepository: DbVersionRepository) {
 
     @Cacheable
     fun getAllDbVersions(): Collection<DbVersionEntity> {

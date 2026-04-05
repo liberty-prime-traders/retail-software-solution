@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class UnitValueQualifier(private val unitValueCache: UnitValueCache) {
+internal class UnitValueQualifier(private val unitValueCache: UnitValueCache) {
 
     @UnitName
     fun getUnitName(unitValueId: UUID?): String? {

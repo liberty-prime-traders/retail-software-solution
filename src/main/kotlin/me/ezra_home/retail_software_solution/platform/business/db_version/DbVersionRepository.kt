@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.util.UUID
 
-interface DbVersionRepository : JpaRepository<DbVersionEntity, UUID> {
+internal interface DbVersionRepository : JpaRepository<DbVersionEntity, UUID> {
 
     @Query("SELECT MAX(d.sequenceNumber) FROM DbVersionEntity d")
     fun findMaxSequenceNumber(): Long?

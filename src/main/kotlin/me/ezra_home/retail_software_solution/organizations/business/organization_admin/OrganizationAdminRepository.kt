@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface OrganizationAdminRepository: JpaRepository<OrganizationAdminEntity, UUID>
+internal interface OrganizationAdminRepository: JpaRepository<OrganizationAdminEntity, UUID>

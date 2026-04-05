@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface PurchaseDeliveryRepository : JpaRepository<PurchaseDeliveryEntity, UUID> {
+internal interface PurchaseDeliveryRepository : JpaRepository<PurchaseDeliveryEntity, UUID> {
   fun findByPurchaseIdIn(purchaseIds: List<UUID>): List<PurchaseDeliveryEntity>
 }

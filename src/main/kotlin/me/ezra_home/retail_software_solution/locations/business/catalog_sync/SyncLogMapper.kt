@@ -6,6 +6,6 @@ import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConf
 import org.mapstruct.Mapper
 
 @Mapper(config = RtsMapperConfig::class)
-interface SyncLogMapper {
+internal interface SyncLogMapper {
   fun toDto(entity: SyncLogEntity): SyncLogResponseDto
 }

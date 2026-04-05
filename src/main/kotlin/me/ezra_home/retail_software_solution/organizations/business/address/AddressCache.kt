@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.ADDRESS])
-class AddressCache(private val addressRepository: AddressRepository) {
+internal class AddressCache(private val addressRepository: AddressRepository) {
 
     @Cacheable
     fun getAllAddresses(): Collection<AddressEntity> = addressRepository.findAll()

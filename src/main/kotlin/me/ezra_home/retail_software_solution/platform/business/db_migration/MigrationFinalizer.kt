@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import org.springframework.stereotype.Component
 
 @Component
-class MigrationFinalizer(
+internal class MigrationFinalizer(
   private val migrationStatusUpdater: MigrationStatusUpdater
 ) {
   fun finalizeOrganizationMigration(

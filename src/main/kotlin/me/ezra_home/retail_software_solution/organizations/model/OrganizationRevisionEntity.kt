@@ -8,4 +8,4 @@ import org.hibernate.envers.RevisionEntity
 @Entity
 @RevisionEntity
 @Table(name = "revinfo")
-class OrganizationRevisionEntity : BaseRevisionEntity()
+internal class OrganizationRevisionEntity : BaseRevisionEntity()

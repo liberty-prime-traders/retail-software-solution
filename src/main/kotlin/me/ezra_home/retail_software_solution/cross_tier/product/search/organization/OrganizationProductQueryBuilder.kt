@@ -13,7 +13,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.fi
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
-object OrganizationProductQueryBuilder {
+internal object OrganizationProductQueryBuilder {
 
   private val P = Aliases.ColumnNames.CrossTierProduct
   private val ORG_P = Aliases.ColumnNames.OrganizationProduct

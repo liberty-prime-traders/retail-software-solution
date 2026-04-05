@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class MigrationValidator(
+internal class MigrationValidator(
   private val dbVersionCache: DbVersionCache,
   private val dbMigrationCache: DbMigrationCache,
 ) {

@@ -12,7 +12,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.ORGANIZATION_USER)
 @HasReference(tableName = TableName.ORGANIZATION_USER)
-class OrganizationUserEntity(
+internal class OrganizationUserEntity(
 
     @Column(name = "join_request_id", updatable = false)
     var joinRequestId: UUID? = null,

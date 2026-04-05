@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import java.util.Objects
 
 @Component
-class LocationValidator(private val locationCache: LocationCache) {
+internal class LocationValidator(private val locationCache: LocationCache) {
 
 
     companion object {

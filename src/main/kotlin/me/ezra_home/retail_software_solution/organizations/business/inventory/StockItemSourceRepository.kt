@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface StockItemSourceRepository : JpaRepository<StockItemSourceEntity, UUID> {
+internal interface StockItemSourceRepository : JpaRepository<StockItemSourceEntity, UUID> {
   fun findByCode(code: StockItemSource): StockItemSourceEntity?
 }

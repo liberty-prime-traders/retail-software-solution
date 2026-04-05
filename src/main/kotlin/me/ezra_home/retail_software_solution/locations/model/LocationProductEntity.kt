@@ -21,7 +21,7 @@ import org.hibernate.envers.NotAudited
 @Entity
 @Table(name = TableNames.LOCATION_PRODUCT)
 @HasReference(tableName = TableName.LOCATION_PRODUCT)
-class LocationProductEntity(
+internal class LocationProductEntity(
 
   @Column(name = "product_id", nullable = false, unique = true)
   var productId: UUID,

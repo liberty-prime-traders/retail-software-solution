@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.PURCHASE_DELIVERY_LINE)
 @HasReference(tableName = TableName.PURCHASE_DELIVERY_LINE)
-class PurchaseDeliveryLineEntity(
+internal class PurchaseDeliveryLineEntity(
 
   @Column(name = "purchase_delivery_id", nullable = false)
   var purchaseDeliveryId: UUID,

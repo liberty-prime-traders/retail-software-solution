@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface SupplierReturnRepository : JpaRepository<SupplierReturnEntity, UUID>
+internal interface SupplierReturnRepository : JpaRepository<SupplierReturnEntity, UUID>

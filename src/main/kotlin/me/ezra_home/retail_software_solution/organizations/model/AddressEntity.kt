@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.ADDRESS)
 @HasReference(tableName = TableName.ADDRESS)
-class AddressEntity(
+internal class AddressEntity(
 
     @Column(name = "line1", length = 100)
     var line1: String? = null,

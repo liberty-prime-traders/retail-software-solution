@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-class SyncStrategyRegistry(strategies: List<SyncStrategy>) {
+internal class SyncStrategyRegistry(strategies: List<SyncStrategy>) {
 
   private val strategyMap: Map<SyncMode, SyncStrategy> = strategies.associateBy { it.getSyncMode() }
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class LocationBatchProcessor(
+internal class LocationBatchProcessor(
   private val locationCache: LocationCache,
   private val schemaMigrator: SchemaMigrator,
   private val dbVersionService: DbVersionService,

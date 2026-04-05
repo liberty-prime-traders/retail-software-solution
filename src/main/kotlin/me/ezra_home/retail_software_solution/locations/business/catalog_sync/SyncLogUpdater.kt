@@ -9,7 +9,7 @@ import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
-class SyncLogUpdater(
+internal class SyncLogUpdater(
   private val syncLogRepository: SyncLogRepository,
   private val syncLogFetcher: SyncLogFetcher
 ) {

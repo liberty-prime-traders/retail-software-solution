@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class JurisdictionTaxTypeResolver(
+internal class JurisdictionTaxTypeResolver(
     private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
     private val jurisdictionCache: JurisdictionCache,
     private val taxTypeCache: TaxTypeCache

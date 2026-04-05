@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_JOIN_REQUEST])
-class OrganizationJoinRequestCache(private val organizationJoinRequestRepository: OrganizationJoinRequestRepository) {
+internal class OrganizationJoinRequestCache(private val organizationJoinRequestRepository: OrganizationJoinRequestRepository) {
 
     @CacheEvict(allEntries = true)
     fun upsertOrganizationJoinRequest(organizationJoinRequestEntity: OrganizationJoinRequestEntity) {

@@ -7,7 +7,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-interface ReservedSubdomainMaper {
+internal interface ReservedSubdomainMaper {
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toDto(entity: ReservedSubdomainEntity): ReservedSubdomainDto

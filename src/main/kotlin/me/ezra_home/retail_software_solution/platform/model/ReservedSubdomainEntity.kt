@@ -14,7 +14,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @Entity
 @Table(name = TableNames.RESERVED_SUBDOMAIN)
 @HasReference(tableName = TableName.RESERVED_SUBDOMAIN)
-class ReservedSubdomainEntity(
+internal class ReservedSubdomainEntity(
     @Column(name = "subdomain", updatable = false)
      var subdomain: String? = null,
 

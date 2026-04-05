@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
+internal interface SubdomainRepository : JpaRepository<ReservedSubdomainEntity, UUID> {
 
     fun findByStatusNotAndSubdomain(reservedDomainStatus: ReservedDomainStatus, subdomain: String): List<ReservedSubdomainEntity>
 

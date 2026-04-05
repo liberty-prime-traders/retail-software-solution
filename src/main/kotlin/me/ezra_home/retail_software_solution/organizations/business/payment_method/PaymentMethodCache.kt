@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PAYMENT_METHOD])
-class PaymentMethodCache (
+internal class PaymentMethodCache (
     private val paymentMethodRepository: PaymentMethodRepository
 ) {
 

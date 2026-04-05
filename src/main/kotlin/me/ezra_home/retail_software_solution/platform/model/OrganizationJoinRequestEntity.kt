@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.ORGANIZATION_JOIN_REQUEST)
 @HasReference(tableName = TableName.ORGANIZATION_JOIN_REQUEST)
-class OrganizationJoinRequestEntity(
+internal class OrganizationJoinRequestEntity(
 
     @Column(name = "subdomain", nullable = false, length = 63)
     var subdomain: String,

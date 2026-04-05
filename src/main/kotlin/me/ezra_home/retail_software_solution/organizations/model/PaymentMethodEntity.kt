@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.PAYMENT_METHOD)
 @HasReference(tableName = TableName.PAYMENT_METHOD)
-class PaymentMethodEntity (
+internal class PaymentMethodEntity (
 
     @Column(name = "name", unique = true, length = 100)
     var name: String? = null,

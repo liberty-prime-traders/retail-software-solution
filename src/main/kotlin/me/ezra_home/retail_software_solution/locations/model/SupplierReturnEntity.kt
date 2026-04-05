@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.SUPPLIER_RETURN)
 @HasReference(tableName = TableName.SUPPLIER_RETURN)
-class SupplierReturnEntity(
+internal class SupplierReturnEntity(
 
   @Column(name = "supplier_id", nullable = false)
   var supplierId: UUID,

@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync.st
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncMode
 
-interface SyncStrategy {
+internal interface SyncStrategy {
 
   fun getSyncMode(): SyncMode
 

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface AuthorizationPassRepository : JpaRepository<AuthorizationPassEntity, UUID> {
+internal interface AuthorizationPassRepository : JpaRepository<AuthorizationPassEntity, UUID> {
     fun findByCode(code: UUID): AuthorizationPassEntity?
 }

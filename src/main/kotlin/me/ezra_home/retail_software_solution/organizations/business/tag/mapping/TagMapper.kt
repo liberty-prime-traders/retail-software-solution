@@ -13,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-interface TagMapper {
+internal interface TagMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toDto(tagEntity: TagEntity): TagResponseDto
 

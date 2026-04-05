@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 
 @Service
-class SyncInitiator(
+internal class SyncInitiator(
   private val validator: SyncValidator,
   private val syncLogUpdater: SyncLogUpdater,
   private val strategyRegistry: SyncStrategyRegistry,

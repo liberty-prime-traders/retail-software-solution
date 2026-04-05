@@ -19,7 +19,7 @@ annotation class ProductCategoryId
 
 @Component
 @TransactionalOnOrganizationSchema
-class OrganizationProductCategoryQualifier(
+internal class OrganizationProductCategoryQualifier(
   private val productGroupCache: ProductGroupCache,
   private val productCategoryCache: ProductCategoryCache
 ) {

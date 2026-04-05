@@ -20,7 +20,7 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = TableNames.SYNC_LOG)
 @HasReference(tableName = TableName.SYNC_LOG)
-class SyncLogEntity(
+internal class SyncLogEntity(
 
   @Convert(converter = TableNameConverter::class)
   @Column(name = "table_name", nullable = false, length = 50)

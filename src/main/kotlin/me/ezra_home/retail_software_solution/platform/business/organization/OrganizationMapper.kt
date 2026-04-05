@@ -20,7 +20,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
     config = RtsMapperConfig::class,
     uses = [AuthorizationPassQualifier::class, DbVersionQualifier::class]
 )
-interface OrganizationMapper {
+internal interface OrganizationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

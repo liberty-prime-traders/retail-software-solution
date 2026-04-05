@@ -14,7 +14,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.UNIT_VALUE)
 @HasReference(tableName = TableName.UNIT_VALUE)
-class UnitValueEntity(
+internal class UnitValueEntity(
 
     @Column(name = "name", nullable = false)
     var name: String,

@@ -4,4 +4,4 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 
 @Converter(autoApply = true)
-class JoinRequestStatusConverter : EnumConverter<JoinRequestStatus>(JoinRequestStatus::class.java)
+internal class JoinRequestStatusConverter : EnumConverter<JoinRequestStatus>(JoinRequestStatus::class.java)

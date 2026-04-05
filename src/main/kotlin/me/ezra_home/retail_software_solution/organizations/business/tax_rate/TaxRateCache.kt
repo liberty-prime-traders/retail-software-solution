@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TAX_RATE])
-class TaxRateCache(private val taxRateRepository: TaxRateRepository) {
+internal class TaxRateCache(private val taxRateRepository: TaxRateRepository) {
 
     @Cacheable
     fun getAll(): Collection<TaxRateEntity> = taxRateRepository.findAll()

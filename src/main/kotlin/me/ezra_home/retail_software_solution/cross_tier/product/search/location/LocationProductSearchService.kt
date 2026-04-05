@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import org.springframework.stereotype.Service
 
 @Service
-class LocationProductSearchService(
+internal class LocationProductSearchService(
   private val locationProductService: LocationProductService,
   locationProductFetcher: LocationProductFetcher
 ) : ProductSearchService<LocationProductResponseDto>(

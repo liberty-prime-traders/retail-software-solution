@@ -4,7 +4,7 @@ import jakarta.persistence.Tuple
 import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatusConverter
 import java.util.UUID
 
-object ProductSyncDataMapper {
+internal object ProductSyncDataMapper {
   private val statusConverter = ProductStatusConverter()
 
   fun fromTuple(tuple: Tuple): ProductSyncData {

@@ -4,4 +4,4 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 
 @Converter(autoApply = true)
-class LocationTypeConverter : EnumConverter<LocationType>(LocationType::class.java)
+internal class LocationTypeConverter : EnumConverter<LocationType>(LocationType::class.java)

@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import java.time.Instant
 import java.util.UUID
 
-object PurchaseDeliveryMapper {
+internal object PurchaseDeliveryMapper {
 
   fun toEntity(dto: PurchaseDeliveryCreateDto) = PurchaseDeliveryEntity(
     purchaseId = dto.purchaseId,

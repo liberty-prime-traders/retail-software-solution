@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 
 @Service
-class ReferenceNumberGenerator(
+internal class ReferenceNumberGenerator(
     private val sequenceFetcher: SequenceFetcher,
     private val tableRegistryCache: TableRegistryCache,
     private val orgTableRegistryCache: OrgTableRegistryCache

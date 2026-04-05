@@ -19,7 +19,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.STOCK_MOVEMENT)
 @HasReference(tableName = TableName.STOCK_MOVEMENT)
-class StockMovementEntity(
+internal class StockMovementEntity(
 
   @Column(name = "stock_entry_id", nullable = false)
   var stockEntryId: UUID,

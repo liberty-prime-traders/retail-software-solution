@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 
-class TextSearchFilterStrategy(
+internal class TextSearchFilterStrategy(
   private val searchText: String?,
   private val searchStrategy: SearchStrategy
 ) : FilterStrategy {

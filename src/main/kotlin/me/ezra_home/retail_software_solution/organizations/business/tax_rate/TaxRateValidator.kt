@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Component
-class TaxRateValidator(
+internal class TaxRateValidator(
     private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
     private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
     private val taxRateCache: TaxRateCache

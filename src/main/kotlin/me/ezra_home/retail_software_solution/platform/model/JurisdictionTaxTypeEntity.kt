@@ -11,7 +11,7 @@ import java.util.UUID
 @Audited
 @Entity
 @Table(name = TableNames.JURISDICTION_TAX_TYPE)
-class JurisdictionTaxTypeEntity(
+internal class JurisdictionTaxTypeEntity(
 
     @Column(name = "tax_type_id", nullable = false, updatable = false)
     var taxTypeId: UUID,

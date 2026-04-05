@@ -14,7 +14,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.UNIT_VALUE])
-class UnitValueCache(private val unitValueRepository: UnitValueRepository) {
+internal class UnitValueCache(private val unitValueRepository: UnitValueRepository) {
 
     @Cacheable
     fun getByUnitGroupId(unitGroupId: UUID?): Collection<UnitValueEntity> {

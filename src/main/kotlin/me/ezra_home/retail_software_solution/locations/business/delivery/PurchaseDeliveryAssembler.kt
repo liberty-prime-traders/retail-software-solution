@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-class PurchaseDeliveryAssembler(
+internal class PurchaseDeliveryAssembler(
   private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
   private val unitValueQualifier: UnitValueQualifier
 ) {

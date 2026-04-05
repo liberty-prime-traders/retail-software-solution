@@ -14,7 +14,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.PRODUCT_GROUP)
 @HasReference(tableName = TableName.PRODUCT_GROUP)
-class ProductGroupEntity(
+internal class ProductGroupEntity(
 
     @Column(name = "group_name", nullable = false)
     var groupName: String,

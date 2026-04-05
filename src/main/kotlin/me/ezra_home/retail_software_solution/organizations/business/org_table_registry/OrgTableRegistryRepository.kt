@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface OrgTableRegistryRepository: JpaRepository<OrgTableRegistryEntity, UUID>
+internal interface OrgTableRegistryRepository: JpaRepository<OrgTableRegistryEntity, UUID>

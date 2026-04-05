@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.mapp
 import org.springframework.stereotype.Component
 
 @Component
-class MigrationResponseMapper(private val dbMigrationMapper: DbMigrationMapper) {
+internal class MigrationResponseMapper(private val dbMigrationMapper: DbMigrationMapper) {
 
   fun toOrganizationResponse(migration: OrganizationLocationsMigration): OrganizationMigrationResponseDto {
     return dbMigrationMapper.toOrganizationResponseDto(migration.organizationMigration).apply {

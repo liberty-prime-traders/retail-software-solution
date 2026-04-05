@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.OffsetDateTime
 import java.util.UUID
 
-interface DbMigrationRepository : JpaRepository<DbMigrationEntity, UUID> {
+internal interface DbMigrationRepository : JpaRepository<DbMigrationEntity, UUID> {
     fun findByStartOnBetweenOrderByStartOnDesc(
         start: OffsetDateTime,
         end: OffsetDateTime

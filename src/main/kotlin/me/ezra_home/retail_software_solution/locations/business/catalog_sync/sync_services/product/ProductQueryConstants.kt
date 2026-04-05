@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.product
 
-object ProductQueryConstants {
+internal object ProductQueryConstants {
   object Tables {
     const val MAIN = "product"
     const val AUDIT = "product_aud"

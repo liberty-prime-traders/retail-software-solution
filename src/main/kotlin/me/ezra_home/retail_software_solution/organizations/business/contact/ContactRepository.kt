@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface ContactRepository: JpaRepository<ContactEntity, UUID>
+internal interface ContactRepository: JpaRepository<ContactEntity, UUID>

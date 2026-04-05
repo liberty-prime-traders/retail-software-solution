@@ -10,7 +10,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-interface OrgJurisdictionTaxTypeMapper {
+internal interface OrgJurisdictionTaxTypeMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

@@ -13,7 +13,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TAG])
-class TagCache(private val tagRepository: TagRepository) {
+internal class TagCache(private val tagRepository: TagRepository) {
 
     @Cacheable
     fun getAllTags(): Collection<TagEntity> = tagRepository.findAll()

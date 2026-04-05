@@ -1,5 +1,5 @@
 package me.ezra_home.retail_software_solution.util.async
 
-interface AsyncExecutor {
+internal interface AsyncExecutor {
   fun execute(block: () -> Unit)
 }

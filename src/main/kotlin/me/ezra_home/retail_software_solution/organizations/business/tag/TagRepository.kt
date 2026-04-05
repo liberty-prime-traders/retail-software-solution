@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 
 @Repository
-interface TagRepository: JpaRepository<TagEntity, UUID> {
+internal interface TagRepository: JpaRepository<TagEntity, UUID> {
 
     @Query("""
         SELECT t FROM TagEntity t

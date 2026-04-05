@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.catalog_sync.Syn
 import org.springframework.stereotype.Component
 
 @Component
-class FullSyncStrategy : SyncStrategy {
+internal class FullSyncStrategy : SyncStrategy {
 
   override fun getSyncMode(): SyncMode = SyncMode.FULL
 

@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION])
-class OrganizationCache(private val organizationRepository: OrganizationRepository) {
+internal class OrganizationCache(private val organizationRepository: OrganizationRepository) {
 
   @Cacheable
   fun getAllOrganizations(): Collection<OrganizationEntity> {

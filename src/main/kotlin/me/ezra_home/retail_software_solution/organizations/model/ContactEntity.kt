@@ -22,7 +22,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.CONTACT)
 @HasReference(tableName = TableName.CONTACT)
-class ContactEntity(
+internal class ContactEntity(
 
     @Convert(converter = ContactTypeConverter::class)
     @Column(name = "contact_type", nullable = false)

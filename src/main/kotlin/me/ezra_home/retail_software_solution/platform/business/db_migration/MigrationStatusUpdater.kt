@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
 @Component
-class MigrationStatusUpdater(
+internal class MigrationStatusUpdater(
   private val dbMigrationCache: DbMigrationCache
 ) {
   fun markSuccess(migration: DbMigrationEntity, message: String) {

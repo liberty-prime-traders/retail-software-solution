@@ -7,7 +7,7 @@ import java.util.Objects
 import java.util.UUID
 
 @Component
-class UserQualifier(private val sysUserCache: SysUserCache, ) {
+internal class UserQualifier(private val sysUserCache: SysUserCache, ) {
 
     @FullName
     fun getUserFullName(userId: UUID?): String? {

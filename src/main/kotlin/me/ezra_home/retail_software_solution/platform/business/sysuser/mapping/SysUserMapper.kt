@@ -11,7 +11,7 @@ import java.util.UUID
 import java.util.function.Supplier
 
 @Mapper(config = RtsMapperConfig::class)
-interface SysUserMapper {
+internal interface SysUserMapper {
     @Mapping(source = "id", target = "oktaId")
     @Mapping(target = "id", expression = "java(idSupplier.get())")
     @Mapping(source = "profile.firstName", target = "firstName")

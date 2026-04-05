@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.util.model
 
-object TableNames {
+internal object TableNames {
     // Platform tables
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"

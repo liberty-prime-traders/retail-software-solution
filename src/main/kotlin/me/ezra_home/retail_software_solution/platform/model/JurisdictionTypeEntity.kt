@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.JURISDICTION_TYPE)
 @HasReference(tableName = TableName.JURISDICTION_TYPE)
-class JurisdictionTypeEntity(
+internal class JurisdictionTypeEntity(
 
     @Column(name = "name", length = 100, nullable = false)
     var name: String,

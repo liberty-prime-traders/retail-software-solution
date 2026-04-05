@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
-object PurchaseValidator {
+internal object PurchaseValidator {
 
   fun guardNoDuplicateProducts(lines: List<HasLocationProduct>) {
     val productIds = lines.map { it.locationProductId }

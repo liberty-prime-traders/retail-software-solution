@@ -29,9 +29,6 @@ class InjectContext {
     return store[key.key]?.let { if (index == null) it.lastOrNull() else it.getOrNull(index) }
   }
 
-  fun getString(key: ContextKey, index: Int? = null): String =
-    checkNotNull(findString(key, index)) { "No value found in context for key '${key.key}'" }
-
   fun inject(text: String): String =
     PLACEHOLDER_PATTERN.replace(text) { match ->
       val parts = match.groupValues[1].split("->")

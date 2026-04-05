@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface OrganizationRepository: JpaRepository<OrganizationEntity, UUID> {
+internal interface OrganizationRepository: JpaRepository<OrganizationEntity, UUID> {
     fun findOneBySubdomain(subdomain: String): OrganizationEntity?
 }

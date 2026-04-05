@@ -16,7 +16,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.TAX_RATE)
 @HasReference(tableName = TableName.TAX_RATE)
-class TaxRateEntity(
+internal class TaxRateEntity(
 
     @Column(name = "org_jurisdiction_tax_type_id", nullable = false, updatable = false)
     var orgJurisdictionTaxTypeId: UUID,

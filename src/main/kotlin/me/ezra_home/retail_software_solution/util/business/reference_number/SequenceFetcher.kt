@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class SequenceFetcher(
+internal class SequenceFetcher(
     @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_ENTITY_MANAGER_FACTORY)
     private final val organizationEntityManagerFactory: EntityManagerFactory,
 

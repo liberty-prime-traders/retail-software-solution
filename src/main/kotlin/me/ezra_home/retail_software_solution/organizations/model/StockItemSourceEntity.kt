@@ -14,7 +14,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @Entity
 @Table(name = TableNames.STOCK_ITEM_SOURCE)
 @HasReference(tableName = TableName.STOCK_ITEM_SOURCE)
-class StockItemSourceEntity(
+internal class StockItemSourceEntity(
 
   @Convert(converter = StockItemSourceConverter::class)
   @Column(name = "code", nullable = false, length = 20, unique = true, updatable = false)

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class PurchaseDeliveryInventoryHandler(
+internal class PurchaseDeliveryInventoryHandler(
   private val processor: PurchaseDeliveryInventoryProcessor
 ) {
 

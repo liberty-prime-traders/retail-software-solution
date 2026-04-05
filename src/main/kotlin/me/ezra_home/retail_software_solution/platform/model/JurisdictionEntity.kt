@@ -14,7 +14,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.JURISDICTION)
 @HasReference(tableName = TableName.JURISDICTION)
-class JurisdictionEntity(
+internal class JurisdictionEntity(
 
     @Column(name = "name", length = 200, nullable = false)
     var name: String,

@@ -18,7 +18,7 @@ import org.hibernate.envers.NotAudited
 @Entity
 @Table(name = TableNames.PRODUCT)
 @HasReference(tableName = TableName.PRODUCT)
-class OrganizationProductEntity(
+internal class OrganizationProductEntity(
 
     @Column(name = "name", nullable = false)
     var productName: String,

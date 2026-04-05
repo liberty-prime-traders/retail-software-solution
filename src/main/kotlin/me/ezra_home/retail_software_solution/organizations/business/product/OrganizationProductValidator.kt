@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 
 @Component
-class OrganizationProductValidator(
+internal class OrganizationProductValidator(
     private val organizationProductRepository: OrganizationProductRepository
 ) {
 

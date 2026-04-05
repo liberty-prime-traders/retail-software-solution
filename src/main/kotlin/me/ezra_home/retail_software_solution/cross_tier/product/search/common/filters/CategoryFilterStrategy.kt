@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import java.util.UUID
 
-class CategoryFilterStrategy(
+internal class CategoryFilterStrategy(
   private val categoryIds: Set<UUID>,
   private val tableAlias: String
 ) : FilterStrategy {

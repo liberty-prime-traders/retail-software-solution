@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface UnitValueRepository : JpaRepository<UnitValueEntity, UUID> {
+internal interface UnitValueRepository : JpaRepository<UnitValueEntity, UUID> {
 
     fun findByUnitGroupId(unitGroupId: UUID): Collection<UnitValueEntity>
 }

@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 import java.util.UUID
 
-object PurchaseDeliveryValidator {
+internal object PurchaseDeliveryValidator {
 
   fun validate(dto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineEntity>) {
     if (dto.lines.isEmpty())

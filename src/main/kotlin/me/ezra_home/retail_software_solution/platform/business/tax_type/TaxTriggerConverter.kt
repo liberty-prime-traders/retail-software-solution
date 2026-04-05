@@ -4,4 +4,4 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumListConverter
 
 @Converter(autoApply = true)
-class TaxTriggerConverter : EnumListConverter<TaxTrigger>(TaxTrigger::class.java)
+internal class TaxTriggerConverter : EnumListConverter<TaxTrigger>(TaxTrigger::class.java)

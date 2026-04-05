@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = TableNames.DB_VERSION)
-class DbVersionEntity(
+internal class DbVersionEntity(
 
     @Column(name = "version_number", updatable = false, insertable = false)
     val versionNumber: String,

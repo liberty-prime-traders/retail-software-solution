@@ -14,7 +14,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @Entity
 @Table(name = TableNames.SYS_USER)
 @HasReference(tableName = TableName.SYS_USER)
-class SysUserEntity(
+internal class SysUserEntity(
 
     @Column(name = "okta_id", nullable = false, length = 50)
     var oktaId: String? = null,

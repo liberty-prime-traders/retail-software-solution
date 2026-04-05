@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.CONTACT])
-class ContactCache(
+internal class ContactCache(
     private val contactRepository: ContactRepository
 ) {
 

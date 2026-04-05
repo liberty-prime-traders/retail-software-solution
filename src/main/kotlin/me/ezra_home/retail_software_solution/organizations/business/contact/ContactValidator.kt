@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class ContactValidator(
+internal class ContactValidator(
     private val contactCache: ContactCache
 ) {
 

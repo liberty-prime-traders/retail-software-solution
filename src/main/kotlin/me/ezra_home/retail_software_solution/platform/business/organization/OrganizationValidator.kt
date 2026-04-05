@@ -8,7 +8,7 @@ import java.util.Optional
 import java.util.UUID
 
 @Component
-class OrganizationValidator(private val organizationCache: OrganizationCache) {
+internal class OrganizationValidator(private val organizationCache: OrganizationCache) {
 
     fun validateNameOnSave(name: String, id: UUID? = null) {
         organizationCache.getAllOrganizations()

@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface StockEntryRepository : JpaRepository<StockEntryEntity, UUID>
+internal interface StockEntryRepository : JpaRepository<StockEntryEntity, UUID>

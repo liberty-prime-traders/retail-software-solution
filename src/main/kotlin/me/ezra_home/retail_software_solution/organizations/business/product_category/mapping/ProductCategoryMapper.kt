@@ -13,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-interface ProductCategoryMapper {
+internal interface ProductCategoryMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toDto(productCategoryEntity: ProductCategoryEntity): ProductCategoryResponseDto
 

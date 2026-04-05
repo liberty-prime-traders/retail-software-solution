@@ -21,7 +21,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.AUTHORIZATION_PASS)
 @HasReference(tableName = TableName.AUTHORIZATION_PASS)
-class AuthorizationPassEntity(
+internal class AuthorizationPassEntity(
 
     @NotAudited
     @Column(name = "code", nullable = false, unique = true, updatable = false)

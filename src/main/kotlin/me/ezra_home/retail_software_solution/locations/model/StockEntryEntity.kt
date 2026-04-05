@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.STOCK_ENTRY)
 @HasReference(tableName = TableName.STOCK_ENTRY)
-class StockEntryEntity(
+internal class StockEntryEntity(
 
   @Column(name = "purchase_delivery_line_id")
   var purchaseDeliveryLineId: UUID? = null,

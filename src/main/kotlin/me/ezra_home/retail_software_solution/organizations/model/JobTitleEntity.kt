@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.JOB_TITLE)
 @HasReference(tableName = TableName.JOB_TITLE)
-class JobTitleEntity(
+internal class JobTitleEntity(
     @Column(name = "value")
     var value: String
 ) : HasReferenceEntity()

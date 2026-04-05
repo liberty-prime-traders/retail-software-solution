@@ -9,7 +9,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = TableNames.ORG_TABLE_REGISTRY)
-class OrgTableRegistryEntity(
+internal class OrgTableRegistryEntity(
     @Column(name = "registry_id", nullable = false, insertable = false, updatable = false)
     var registryId: UUID,
 

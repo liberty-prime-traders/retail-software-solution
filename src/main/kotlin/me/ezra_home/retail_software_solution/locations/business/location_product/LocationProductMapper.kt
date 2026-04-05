@@ -14,7 +14,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class, uses = [UnitValueQualifier::class])
-interface LocationProductMapper {
+internal interface LocationProductMapper {
 
   @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
   @Mapping(source = "baseUnitId", target = "baseUnit", qualifiedBy = [UnitName::class])

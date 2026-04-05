@@ -4,4 +4,4 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 
 @Converter(autoApply = true)
-class CategoryTypeConverter : EnumConverter<CategoryType>(CategoryType::class.java)
+internal class CategoryTypeConverter : EnumConverter<CategoryType>(CategoryType::class.java)

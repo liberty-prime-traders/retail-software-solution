@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.UNIT_GROUP)
 @HasReference(tableName = TableName.UNIT_GROUP)
-class UnitGroupEntity(
+internal class UnitGroupEntity(
 
     @Column(name = "name", nullable = false)
     var name: String? = null,

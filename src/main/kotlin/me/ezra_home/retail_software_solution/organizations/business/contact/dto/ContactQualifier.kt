@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 annotation class ToIdentityType
 
 @Component
-object ContactQualifier {
+internal object ContactQualifier {
 
     @ToIdentityType
     fun mapToIdentityType(contactEntity: ContactEntity): IdentityType {

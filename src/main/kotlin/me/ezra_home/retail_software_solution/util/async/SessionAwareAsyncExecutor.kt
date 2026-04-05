@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import java.util.concurrent.Executors
 
 @Component
-class SessionAwareAsyncExecutor : AsyncExecutor {
+internal class SessionAwareAsyncExecutor : AsyncExecutor {
 
   private val executor = Executors.newCachedThreadPool()
 

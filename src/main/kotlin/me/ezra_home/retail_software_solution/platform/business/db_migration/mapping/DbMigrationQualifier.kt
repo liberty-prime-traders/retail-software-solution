@@ -14,7 +14,7 @@ annotation class SchemaOwnerName
 
 
 @Component
-class DbMigrationQualifier(
+internal class DbMigrationQualifier(
     private val organizationCache: OrganizationCache,
     private val locationCache: LocationCache
 ) {

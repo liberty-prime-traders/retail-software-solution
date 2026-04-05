@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-object Aliases {
+internal object Aliases {
   object ColumnNames {
 
     object CrossTierProduct {

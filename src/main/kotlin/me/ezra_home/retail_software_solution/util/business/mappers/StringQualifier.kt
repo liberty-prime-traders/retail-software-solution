@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 import java.util.Optional
 
 @Component
-object StringQualifier {
+internal object StringQualifier {
     fun mapString(value: String?): String? {
         return StringUtils.getValueOrNull(value)
     }

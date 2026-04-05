@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @Service
-class PurchaseAssembler(
+internal class PurchaseAssembler(
   private val locationProductRepository: LocationProductRepository,
   private val purchaseLineRepository: PurchaseLineRepository,
   private val purchaseDeliveryRepository: PurchaseDeliveryRepository,

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
+internal class MigrationInitializer(private val dbMigrationCache: DbMigrationCache) {
 
   fun createOrganizationMigration(
     organization: OrganizationEntity,

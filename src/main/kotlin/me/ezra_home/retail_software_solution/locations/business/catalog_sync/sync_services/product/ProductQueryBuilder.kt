@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sy
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncQueryConstants
 
-object ProductQueryBuilder {
+internal object ProductQueryBuilder {
 
   private const val P = ProductQueryConstants.Aliases.PRODUCT_TABLE
   private const val A = ProductQueryConstants.Aliases.PRODUCT_AUDIT_TABLE

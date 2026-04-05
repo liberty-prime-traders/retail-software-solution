@@ -12,7 +12,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.PRODUCT_TAG)
 @HasReference(tableName = TableName.PRODUCT_TAG)
-class ProductTagEntity(
+internal class ProductTagEntity(
 
     @Column(name = "product_id", nullable = false, updatable = false)
     var productId: UUID,

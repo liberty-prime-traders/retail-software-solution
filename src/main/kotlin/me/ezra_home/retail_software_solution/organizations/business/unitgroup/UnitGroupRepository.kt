@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface UnitGroupRepository: JpaRepository<UnitGroupEntity, UUID>
+internal interface UnitGroupRepository: JpaRepository<UnitGroupEntity, UUID>

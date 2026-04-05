@@ -13,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-interface AddressMapper {
+internal interface AddressMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toDto(addressEntity: AddressEntity): AddressResponseDto
 

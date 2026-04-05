@@ -13,7 +13,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.fi
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 
-object LocationProductSearchQueryBuilder {
+internal object LocationProductSearchQueryBuilder {
 
   private val P = Aliases.ColumnNames.CrossTierProduct
 

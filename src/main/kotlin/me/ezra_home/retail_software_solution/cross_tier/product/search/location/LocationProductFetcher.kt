@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class LocationProductFetcher(
+internal class LocationProductFetcher(
     private val executor: ProductSearchExecutor,
     private val locationProductMapper: LocationProductMapper,
     private val stockMovementRepository: StockMovementRepository

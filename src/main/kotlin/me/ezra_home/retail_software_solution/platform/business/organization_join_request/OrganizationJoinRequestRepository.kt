@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequ
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
-interface OrganizationJoinRequestRepository : JpaRepository<OrganizationJoinRequestEntity, UUID> {
+internal interface OrganizationJoinRequestRepository : JpaRepository<OrganizationJoinRequestEntity, UUID> {
 
     fun existsBySubdomainAndCreatedByIdAndStatus(
         subdomain: String,

@@ -15,7 +15,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class, uses = [ProductCategoryNameQualifier::class])
-interface ProductGroupMapper {
+internal interface ProductGroupMapper {
 
   @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
   @Mapping(source = "categoryId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])

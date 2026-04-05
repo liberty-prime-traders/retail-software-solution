@@ -4,4 +4,4 @@ import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 
 @Converter(autoApply = true)
-class SyncInitiateTypeConverter : EnumConverter<SyncInitiateType>(SyncInitiateType::class.java)
+internal class SyncInitiateTypeConverter : EnumConverter<SyncInitiateType>(SyncInitiateType::class.java)

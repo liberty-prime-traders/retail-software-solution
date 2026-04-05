@@ -16,7 +16,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.TAG)
 @HasReference(tableName = TableName.TAG)
-class TagEntity(
+internal class TagEntity(
 
     @Column(name = "category")
     @Convert(converter = CategoryTypeConverter::class)

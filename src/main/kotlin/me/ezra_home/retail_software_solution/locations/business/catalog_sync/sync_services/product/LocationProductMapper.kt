@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sy
 import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
 import java.time.OffsetDateTime
 
-object LocationProductMapper {
+internal object LocationProductMapper {
 
   fun toLocationProduct(syncData: ProductSyncData): LocationProductEntity {
     return LocationProductEntity(

@@ -7,7 +7,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class, uses = [DbVersionQualifier::class])
-interface DbVersionMapper {
+internal interface DbVersionMapper {
     @Mapping(source = "prevVersionId", target = "prevVersion", qualifiedBy = [DbVersionNumber::class])
     fun toResponseDto(dbVersionEntity: DbVersionEntity): DbVersionResponseDto
 }

@@ -15,7 +15,7 @@ import org.hibernate.envers.NotAudited
 @Entity
 @Table(name = TableNames.ORGANIZATION)
 @HasReference(tableName = TableName.ORGANIZATION)
-class OrganizationEntity(
+internal class OrganizationEntity(
 
     @Column(name = "name")
     var name: String,

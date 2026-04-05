@@ -16,7 +16,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.LOCATION)
 @HasReference(tableName = TableName.LOCATION)
-class LocationEntity(
+internal class LocationEntity(
 
     @Column(name = "location_type", nullable = false)
     @Convert(converter = LocationTypeConverter::class)

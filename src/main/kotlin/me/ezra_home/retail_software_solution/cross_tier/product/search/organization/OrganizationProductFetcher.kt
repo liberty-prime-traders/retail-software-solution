@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnOrganizationSchema(readOnly = true)
-class OrganizationProductFetcher(
+internal class OrganizationProductFetcher(
     private val organizationProductMapper: OrganizationProductMapper,
     private val executor: ProductSearchExecutor,
     private val productTagQualifier: ProductTagQualifier

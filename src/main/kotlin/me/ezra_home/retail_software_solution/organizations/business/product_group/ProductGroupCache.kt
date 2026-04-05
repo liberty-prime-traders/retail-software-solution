@@ -13,7 +13,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_GROUP])
-class ProductGroupCache(private val productGroupRepository: ProductGroupRepository) {
+internal class ProductGroupCache(private val productGroupRepository: ProductGroupRepository) {
 
   @Cacheable
   fun findAllProductGroups(): Collection<ProductGroupEntity> = productGroupRepository.findAll()

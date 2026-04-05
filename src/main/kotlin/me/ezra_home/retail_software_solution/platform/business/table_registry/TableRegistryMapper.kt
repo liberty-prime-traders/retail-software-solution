@@ -16,7 +16,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
     config = RtsMapperConfig::class,
     uses = [DbVersionQualifier::class]
 )
-interface TableRegistryMapper {
+internal interface TableRegistryMapper {
 
     @Mapping(source = "minimumVersionId", target = "minimumVersion", qualifiedBy = [DbVersionNumber::class])
     fun toDto(entity: TableRegistryEntity): TableRegistryResponseDto

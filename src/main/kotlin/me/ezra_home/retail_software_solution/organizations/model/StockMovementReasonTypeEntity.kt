@@ -15,7 +15,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.STOCK_MOVEMENT_REASON_TYPE)
 @HasReference(tableName = TableName.STOCK_MOVEMENT_REASON_TYPE)
-class StockMovementReasonTypeEntity(
+internal class StockMovementReasonTypeEntity(
 
   @Column(name = "stock_movement_reason_id", nullable = false, updatable = false)
   val stockMovementReasonId: UUID,

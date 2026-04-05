@@ -16,7 +16,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
     config = RtsMapperConfig::class,
     uses = [TableNameResolver::class]
 )
-interface OrgTableRegistryMapper {
+internal interface OrgTableRegistryMapper {
 
     @Mapping(source = "registryId", target = "tableName", qualifiedBy = [TableNameQualifier::class])
     fun toDto(entity: OrgTableRegistryEntity): OrgTableRegistryResponseDto

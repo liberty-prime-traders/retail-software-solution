@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
 import java.time.OffsetDateTime
 import java.util.UUID
 
-object PurchaseMapper {
+internal object PurchaseMapper {
 
   fun toDraftEntity(dto: PurchaseCreateDto) = PurchaseEntity(
     supplierId = dto.supplierId,

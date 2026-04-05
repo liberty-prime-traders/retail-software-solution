@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.ORG_TABLE_REGISTRY])
-class OrgTableRegistryCache(private val repository: OrgTableRegistryRepository) {
+internal class OrgTableRegistryCache(private val repository: OrgTableRegistryRepository) {
 
     @Cacheable
     fun getAllTables(): Collection<OrgTableRegistryEntity> = repository.findAll()

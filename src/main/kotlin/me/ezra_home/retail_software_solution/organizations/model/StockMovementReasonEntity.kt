@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @Entity
 @Table(name = TableNames.STOCK_MOVEMENT_REASON)
 @HasReference(tableName = TableName.STOCK_MOVEMENT_REASON)
-class StockMovementReasonEntity(
+internal class StockMovementReasonEntity(
 
   @Column(name = "code", nullable = false, length = 20, unique = true, updatable = false)
   var code: String,

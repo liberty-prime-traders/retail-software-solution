@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-object ProductSearchValidator {
+internal object ProductSearchValidator {
 
   private const val MAX_ARRAY_SIZE = 50
 

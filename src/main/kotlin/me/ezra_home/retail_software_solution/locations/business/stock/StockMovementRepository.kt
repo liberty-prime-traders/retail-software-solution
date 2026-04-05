@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
+internal interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
 
   @Query("""
     SELECT sm.locationProductId AS locationProductId, sm.remainingQuantity AS remainingQuantity

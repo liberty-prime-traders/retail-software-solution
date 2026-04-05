@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
+internal interface SyncLogRepository : JpaRepository<SyncLogEntity, UUID> {
 
   @Query("""
     SELECT s.lastProcessedRevision

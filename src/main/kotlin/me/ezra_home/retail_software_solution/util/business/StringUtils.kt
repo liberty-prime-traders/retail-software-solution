@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.util.business
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.util.Optional
 
-object StringUtils {
+internal object StringUtils {
 
     fun getValueOrNull(str: String?): String? {
         return if (hasValue(str)) {

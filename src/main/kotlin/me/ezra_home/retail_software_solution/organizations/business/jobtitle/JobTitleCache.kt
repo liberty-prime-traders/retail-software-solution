@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TITLE])
-class JobTitleCache(private val jobTitleRepository: JobTitleRepository) {
+internal class JobTitleCache(private val jobTitleRepository: JobTitleRepository) {
 
     @Cacheable
     fun getAllJobTitles(): Collection<JobTitleEntity> = jobTitleRepository.findAll()

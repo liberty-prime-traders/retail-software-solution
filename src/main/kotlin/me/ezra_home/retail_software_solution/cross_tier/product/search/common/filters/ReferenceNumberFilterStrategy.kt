@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Pa
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 
-class ReferenceNumberFilterStrategy(private val referenceNumber: String?) : FilterStrategy {
+internal class ReferenceNumberFilterStrategy(private val referenceNumber: String?) : FilterStrategy {
 
   override fun apply(context: QueryBuilderContext) {
     referenceNumber?.takeIf { it.isNotBlank() }?.let { ref ->

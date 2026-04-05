@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 
 @Component
-class UnitValueValidator(
+internal class UnitValueValidator(
     private val unitValueCache: UnitValueCache,
     private val unitGroupCache: UnitGroupCache
 ) {

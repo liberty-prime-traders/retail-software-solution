@@ -11,7 +11,7 @@ import java.util.UUID
 annotation class PassReferenceNumber
 
 @Component
-class AuthorizationPassQualifier(private val authorizationPassRepository: AuthorizationPassRepository) {
+internal class AuthorizationPassQualifier(private val authorizationPassRepository: AuthorizationPassRepository) {
 
     @PassReferenceNumber
     fun getPassReferenceNumber(passId: UUID?): String? {

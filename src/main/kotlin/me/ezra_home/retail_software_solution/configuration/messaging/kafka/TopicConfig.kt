@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.TopicBuilder
 
 @Configuration
-class TopicConfig {
+internal class TopicConfig {
 
     @Bean
     fun catalogEventsTopic(): NewTopic {

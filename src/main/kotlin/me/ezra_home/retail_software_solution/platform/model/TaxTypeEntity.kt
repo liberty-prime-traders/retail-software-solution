@@ -22,7 +22,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.TAX_TYPE)
 @HasReference(tableName = TableName.TAX_TYPE)
-class TaxTypeEntity(
+internal class TaxTypeEntity(
 
     @Column(name = "name", length = 100, nullable = false)
     var name: String,

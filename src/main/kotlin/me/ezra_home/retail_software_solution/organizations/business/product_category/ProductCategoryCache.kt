@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_CATEGORY])
-class ProductCategoryCache(private val productCategoryRepository: ProductCategoryRepository) {
+internal class ProductCategoryCache(private val productCategoryRepository: ProductCategoryRepository) {
 
     @Cacheable
     fun getAllCategories(): Collection<ProductCategoryEntity> = productCategoryRepository.findAll()

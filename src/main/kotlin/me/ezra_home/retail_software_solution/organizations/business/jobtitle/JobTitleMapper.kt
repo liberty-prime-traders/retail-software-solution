@@ -14,7 +14,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 
 @Mapper(config = RtsMapperConfig::class)
-interface JobTitleMapper {
+internal interface JobTitleMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     fun toDto(titleEntity: JobTitleEntity): JobTitleResponseDto
 

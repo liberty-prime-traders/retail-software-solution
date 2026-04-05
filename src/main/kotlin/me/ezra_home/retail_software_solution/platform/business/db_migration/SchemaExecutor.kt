@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 import javax.sql.DataSource
 
 @Component
-class SchemaExecutor(
+internal class SchemaExecutor(
     @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_DATA_SOURCE)
     private val organizationDataSource: DataSource,
 

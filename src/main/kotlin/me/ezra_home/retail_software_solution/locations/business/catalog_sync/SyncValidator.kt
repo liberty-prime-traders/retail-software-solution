@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-class SyncValidator(private val syncLogFetcher: SyncLogFetcher) {
+internal class SyncValidator(private val syncLogFetcher: SyncLogFetcher) {
 
   fun validateCanSync(tableName: TableName) {
     require(tableName.schemaLevel == SchemaLevel.ORGANIZATION) {

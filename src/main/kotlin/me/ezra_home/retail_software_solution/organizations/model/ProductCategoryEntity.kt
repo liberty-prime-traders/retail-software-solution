@@ -13,7 +13,7 @@ import org.hibernate.envers.Audited
 @Entity
 @Table(name = TableNames.PRODUCT_CATEGORY)
 @HasReference(tableName = TableName.PRODUCT_CATEGORY)
-class ProductCategoryEntity(
+internal class ProductCategoryEntity(
 
     @Column(name = "category_name", nullable = false)
     var categoryName: String? = null,

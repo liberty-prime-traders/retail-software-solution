@@ -13,7 +13,7 @@ import org.mapstruct.Mapping
     config = RtsMapperConfig::class,
     uses = [DbVersionQualifier::class, DbMigrationQualifier::class]
 )
-interface DbMigrationMapper {
+internal interface DbMigrationMapper {
     @Mapping(target = "locations", ignore = true)
     @Mapping(source = ".", target = "organizationName", qualifiedBy = [SchemaOwnerName::class])
     @Mapping(source = "dbVersionId", target = "versionNumber", qualifiedBy = [DbVersionNumber::class])

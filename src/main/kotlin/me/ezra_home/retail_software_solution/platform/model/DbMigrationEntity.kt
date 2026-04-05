@@ -20,7 +20,7 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.DB_MIGRATION)
 @HasReference(tableName = TableName.DB_MIGRATION)
-class DbMigrationEntity(
+internal class DbMigrationEntity(
 
     @Column(name = "db_version_id", nullable = false, updatable = false)
     val dbVersionId: UUID,

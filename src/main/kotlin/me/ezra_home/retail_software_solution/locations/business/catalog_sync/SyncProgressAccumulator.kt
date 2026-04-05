@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
 import java.util.UUID
 
-class SyncProgressAccumulator(val syncLogId: UUID) {
+internal class SyncProgressAccumulator(val syncLogId: UUID) {
 
   private var totalProcessed = 0
   private var totalSkipped = 0

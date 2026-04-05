@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class SyncOrchestrator(
+internal class SyncOrchestrator(
   private val syncLogUpdater: SyncLogUpdater,
   private val strategyRegistry: SyncStrategyRegistry,
   private val serviceRegistry: SyncServiceRegistry,

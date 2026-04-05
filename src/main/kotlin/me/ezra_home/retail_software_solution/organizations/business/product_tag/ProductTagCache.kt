@@ -13,7 +13,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_TAG])
-class ProductTagCache(private val productTagRepository: ProductTagRepository) {
+internal class ProductTagCache(private val productTagRepository: ProductTagRepository) {
 
     @Cacheable
     fun findActiveProductTagsByProductId(productId: UUID): Collection<ProductTagEntity> =

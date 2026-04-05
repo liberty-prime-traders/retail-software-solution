@@ -12,7 +12,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_MIGRATION])
-class DbMigrationCache(private val dbMigrationRepository: DbMigrationRepository) {
+internal class DbMigrationCache(private val dbMigrationRepository: DbMigrationRepository) {
 
     @Cacheable
     fun getAllDbMigrations(): Collection<DbMigrationEntity> {

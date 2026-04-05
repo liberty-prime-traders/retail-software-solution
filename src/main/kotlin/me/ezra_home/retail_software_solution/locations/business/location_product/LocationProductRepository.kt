@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID> {
+internal interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID> {
   @Query("SELECT lp FROM LocationProductEntity lp ORDER BY lower(lp.productName) ASC")
   fun findAllLocationProducts(): List<LocationProductEntity>
 

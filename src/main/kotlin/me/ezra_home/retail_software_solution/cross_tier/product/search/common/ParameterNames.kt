@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-object ParameterNames {
+internal object ParameterNames {
   const val PREVIOUS_NAME = "previousName"
   const val STATUS_LIST = "statusList"
   const val NAME_OR_DESCRIPTION = "nameOrDescription"

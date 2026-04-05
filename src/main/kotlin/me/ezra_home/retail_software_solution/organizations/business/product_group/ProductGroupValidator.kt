@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class ProductGroupValidator(
+internal class ProductGroupValidator(
   private val productGroupCache: ProductGroupCache,
   private val productCategoryCache: ProductCategoryCache
 ) {

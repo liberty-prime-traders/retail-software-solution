@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @Service
-class PurchaseDeliveryInventoryProcessor(
+internal class PurchaseDeliveryInventoryProcessor(
   private val stockItemSourceService: StockItemSourceService,
   private val locationProductRepository: LocationProductRepository,
   private val stockEntryRepository: StockEntryRepository,

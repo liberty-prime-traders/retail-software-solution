@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-class OrganizationMigrationHandler(
+internal class OrganizationMigrationHandler(
   private val organizationCache: OrganizationCache,
   private val dbVersionService: DbVersionService,
   private val schemaMigrator: SchemaMigrator,

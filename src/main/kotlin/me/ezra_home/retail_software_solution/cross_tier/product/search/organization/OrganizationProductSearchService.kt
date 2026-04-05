@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.dto.
 import org.springframework.stereotype.Service
 
 @Service
-class OrganizationProductSearchService(
+internal class OrganizationProductSearchService(
   private val organizationProductService: OrganizationProductService,
   organizationProductFetcher: OrganizationProductFetcher
 ) : ProductSearchService<OrganizationProductResponseDto>(

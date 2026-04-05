@@ -16,7 +16,7 @@ import java.util.Collections
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.USER])
-class SysUserCache(
+internal class SysUserCache(
     private val userRepository: SysUserRepository,
     private val sysUserMapper: SysUserMapper,
     private val oktaClient: Client
