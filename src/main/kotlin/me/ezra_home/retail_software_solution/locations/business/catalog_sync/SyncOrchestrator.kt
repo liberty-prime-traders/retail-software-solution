@@ -2,12 +2,15 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy.SyncStrategyRegistry
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncServiceRegistry
-import me.ezra_home.retail_software_solution.locations.model.SyncLogEntity
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogEntity
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncLogFetcher
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-internal class SyncOrchestrator(
+class SyncOrchestrator(
   private val syncLogUpdater: SyncLogUpdater,
   private val strategyRegistry: SyncStrategyRegistry,
   private val serviceRegistry: SyncServiceRegistry,

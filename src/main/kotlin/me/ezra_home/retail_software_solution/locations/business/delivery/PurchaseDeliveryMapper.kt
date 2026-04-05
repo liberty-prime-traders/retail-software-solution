@@ -1,16 +1,16 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveredLineDto
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryCreateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryLineEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import java.time.Instant
 import java.util.UUID
 
-internal object PurchaseDeliveryMapper {
+object PurchaseDeliveryMapper {
 
   fun toEntity(dto: PurchaseDeliveryCreateDto) = PurchaseDeliveryEntity(
     purchaseId = dto.purchaseId,

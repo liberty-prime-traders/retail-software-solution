@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration.dto
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.MigrationStatus
 import me.ezra_home.retail_software_solution.platform.business.db_migration.MigrationType
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.model.HasId

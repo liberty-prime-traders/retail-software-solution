@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-internal interface PurchaseLineRepository : JpaRepository<PurchaseLineEntity, UUID> {
+interface PurchaseLineRepository : JpaRepository<PurchaseLineEntity, UUID> {
   fun findByPurchaseId(purchaseId: UUID): List<PurchaseLineEntity>
   fun findByPurchaseIdIn(purchaseIds: Collection<UUID>): List<PurchaseLineEntity>
 }

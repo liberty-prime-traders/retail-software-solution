@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.JURISDICTION])
-internal class JurisdictionCache(
+class JurisdictionCache(
     private val jurisdictionRepository: JurisdictionRepository,
     private val mapper: JurisdictionMapper
 ) {

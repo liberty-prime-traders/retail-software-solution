@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.tag.dto
 
-import me.ezra_home.retail_software_solution.organizations.business.tag.CategoryType
+import me.ezra_home.retail_software_solution.organizations.business.tag.public.CategoryType
 import java.time.OffsetDateTime
 import java.util.UUID
 

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_VERSION])
-internal class DbVersionCache(
+class DbVersionCache(
     private val dbVersionRepository: DbVersionRepository,
     private val mapper: DbVersionMapper
 ) {

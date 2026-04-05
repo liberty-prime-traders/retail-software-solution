@@ -2,11 +2,11 @@ package me.ezra_home.retail_software_solution.organizations.business.org_table_r
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryDto
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.public.OrgTableRegistryResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.public.OrgTableRegistryUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameResolver
-import me.ezra_home.retail_software_solution.organizations.model.OrgTableRegistryEntity
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryEntity
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -17,7 +17,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
     config = RtsMapperConfig::class,
     uses = [TableNameResolver::class]
 )
-internal interface OrgTableRegistryMapper {
+interface OrgTableRegistryMapper {
 
     fun toDomainDto(entity: OrgTableRegistryEntity): OrgTableRegistryDto
 

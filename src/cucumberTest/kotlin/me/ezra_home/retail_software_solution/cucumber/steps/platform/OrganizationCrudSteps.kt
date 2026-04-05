@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cucumber.steps.platform
 
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationUpdateDto
 import java.util.Optional
 
 class OrganizationCrudSteps(

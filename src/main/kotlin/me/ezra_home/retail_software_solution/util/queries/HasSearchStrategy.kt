@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.util.queries
 
-internal interface HasSearchStrategy<T : HasSearchStrategy<T>> {
+interface HasSearchStrategy<T : HasSearchStrategy<T>> {
     val searchStrategy: SearchStrategy
 
     fun copySelf(

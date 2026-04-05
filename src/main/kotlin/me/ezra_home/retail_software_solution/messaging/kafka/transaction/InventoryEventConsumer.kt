@@ -14,7 +14,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
 
 @Service
-internal class InventoryEventConsumer(
+class InventoryEventConsumer(
   private val purchaseDeliveryHandler: PurchaseDeliveryInventoryHandler,
   private val organizationCache: OrganizationCache,
   private val locationCache: LocationCache

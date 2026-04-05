@@ -5,11 +5,11 @@ import me.ezra_home.retail_software_solution.platform.business.authorization_pas
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionNumber
 import me.ezra_home.retail_software_solution.platform.business.db_version.mapping.DbVersionQualifier
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
+import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -21,7 +21,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
     config = RtsMapperConfig::class,
     uses = [AuthorizationPassQualifier::class, DbVersionQualifier::class]
 )
-internal interface OrganizationMapper {
+interface OrganizationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

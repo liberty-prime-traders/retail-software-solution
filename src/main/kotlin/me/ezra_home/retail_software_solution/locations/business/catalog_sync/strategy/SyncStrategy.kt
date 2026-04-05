@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncMode
 
-internal interface SyncStrategy {
+interface SyncStrategy {
 
   fun getSyncMode(): SyncMode
 

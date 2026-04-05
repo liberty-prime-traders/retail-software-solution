@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class ProductRevisionFetcher(
+class ProductRevisionFetcher(
   @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   private val organizationEmf: EntityManagerFactory
 ) {

@@ -9,12 +9,12 @@ import me.ezra_home.retail_software_solution.cucumber.support.context.InjectCont
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassType
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.AuthorizationPassInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationType
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.PassType
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.`public`.AuthorizationPassInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.`public`.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.util.model.ReferenceNumberEntityListener
 import org.springframework.boot.context.event.ApplicationReadyEvent

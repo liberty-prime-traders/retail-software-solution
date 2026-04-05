@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Pa
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 
-internal class NameFilterStrategy(private val previousName: String) : FilterStrategy {
+class NameFilterStrategy(private val previousName: String) : FilterStrategy {
 
   override fun apply(context: QueryBuilderContext) {
     if (previousName.isNotBlank()) {

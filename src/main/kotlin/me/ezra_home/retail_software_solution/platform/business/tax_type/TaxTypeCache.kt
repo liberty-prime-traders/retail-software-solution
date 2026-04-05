@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.TAX_TYPE])
-internal class TaxTypeCache(
+class TaxTypeCache(
     private val taxTypeRepository: TaxTypeRepository,
     private val mapper: TaxTypeMapper
 ) {

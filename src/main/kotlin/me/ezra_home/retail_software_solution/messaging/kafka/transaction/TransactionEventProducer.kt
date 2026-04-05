@@ -9,7 +9,7 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 @Component
-internal class TransactionEventProducer(
+class TransactionEventProducer(
   private val kafkaTemplate: KafkaTemplate<String, TransactionEvent>,
   private val failureHandler: TransactionEventFailureHandler
 ) {

@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 
-internal object LocationProductValidator {
+object LocationProductValidator {
 
   fun validateProductUpdate(dto: LocationProductUpdateDto) {
     dto.defaultSalePrice?.ifPresent { price ->

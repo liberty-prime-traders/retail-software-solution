@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TAX_RATE])
-internal class TaxRateCache(
+class TaxRateCache(
     private val taxRateRepository: TaxRateRepository,
     private val taxRateMapper: TaxRateMapper
 ) {

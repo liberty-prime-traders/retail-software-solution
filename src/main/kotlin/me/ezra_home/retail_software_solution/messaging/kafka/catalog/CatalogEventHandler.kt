@@ -13,7 +13,7 @@ import java.time.Instant
 import java.util.UUID
 
 @Component
-internal class CatalogEventHandler(
+class CatalogEventHandler(
     private val organizationCache: OrganizationCache,
     private val locationCache: LocationCache,
     private val syncServiceRegistry: SyncServiceRegistry,

@@ -22,7 +22,7 @@ annotation class JurisdictionTaxTypes
 annotation class ParentJurisdictionName
 
 @Component
-internal class JurisdictionQualifier(
+class JurisdictionQualifier(
     private val jurisdictionTypeCache: JurisdictionTypeCache,
     private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
     private val jurisdictionCache: JurisdictionCache

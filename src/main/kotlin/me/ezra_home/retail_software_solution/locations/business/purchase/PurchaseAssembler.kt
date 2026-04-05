@@ -3,13 +3,13 @@ package me.ezra_home.retail_software_solution.locations.business.purchase
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryAssembler
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineProductDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineProductDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @Service
-internal class PurchaseAssembler(
+class PurchaseAssembler(
   private val locationProductRepository: LocationProductRepository,
   private val purchaseLineRepository: PurchaseLineRepository,
   private val purchaseDeliveryRepository: PurchaseDeliveryRepository,

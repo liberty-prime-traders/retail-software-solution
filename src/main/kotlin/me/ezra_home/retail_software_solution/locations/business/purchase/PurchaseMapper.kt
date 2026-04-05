@@ -1,16 +1,17 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseStatus
 import java.time.OffsetDateTime
 import java.util.UUID
 
-internal object PurchaseMapper {
+object PurchaseMapper {
 
   fun toDraftEntity(dto: PurchaseCreateDto) = PurchaseEntity(
     supplierId = dto.supplierId,

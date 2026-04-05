@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.location
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductService
-import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductResponseDto
 import org.springframework.stereotype.Service
 
 @Service
-internal class LocationProductSearchService(
+class LocationProductSearchService(
   private val locationProductService: LocationProductService,
   locationProductFetcher: LocationProductFetcher
 ) : ProductSearchService<LocationProductResponseDto>(

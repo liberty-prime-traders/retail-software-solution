@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.JURISDICTION_TAX_TYPE])
-internal class JurisdictionTaxTypeCache(
+class JurisdictionTaxTypeCache(
     private val jurisdictionTaxTypeRepository: JurisdictionTaxTypeRepository,
     private val mapper: JurisdictionTaxTypeMapper
 ) {

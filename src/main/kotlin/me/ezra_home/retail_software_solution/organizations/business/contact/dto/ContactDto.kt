@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.dto
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactStatus
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactType
+import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactStatus
+import me.ezra_home.retail_software_solution.organizations.business.contact.public.ContactType
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID

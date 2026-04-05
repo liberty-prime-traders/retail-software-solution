@@ -6,7 +6,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
 @Component
-internal object DateQualifier {
+object DateQualifier {
     fun toOffsetDateTime(instant: Instant?): OffsetDateTime? {
         return instant?.atOffset(ZoneOffset.UTC)
     }

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.db_version.`public`.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class OrganizationMigrationHandler(
+class OrganizationMigrationHandler(
   private val organizationCache: OrganizationCache,
   private val dbVersionService: DbVersionService,
   private val schemaMigrator: SchemaMigrator,

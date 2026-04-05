@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type
 
 import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeInsertDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeResponseDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.TaxTypeUpdateDto
-import me.ezra_home.retail_software_solution.platform.model.TaxTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeInsertDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeResponseDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxTypeUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -13,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface TaxTypeMapper {
+interface TaxTypeMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

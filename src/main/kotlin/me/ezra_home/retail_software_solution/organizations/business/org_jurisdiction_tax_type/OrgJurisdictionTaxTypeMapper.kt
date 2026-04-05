@@ -1,17 +1,17 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type
 
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeDto
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto.OrgJurisdictionTaxTypeResponseDto
-import me.ezra_home.retail_software_solution.organizations.model.OrgJurisdictionTaxTypeEntity
-import me.ezra_home.retail_software_solution.platform.business.tax_type.dto.PlatformTaxTypeDto
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.public.OrgJurisdictionTaxTypeInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.public.OrgJurisdictionTaxTypeResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface OrgJurisdictionTaxTypeMapper {
+interface OrgJurisdictionTaxTypeMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

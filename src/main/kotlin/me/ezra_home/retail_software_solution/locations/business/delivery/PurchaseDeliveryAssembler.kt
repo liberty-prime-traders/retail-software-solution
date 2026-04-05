@@ -1,18 +1,18 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineProductDto
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryLineEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineProductDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-internal class PurchaseDeliveryAssembler(
+class PurchaseDeliveryAssembler(
   private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
   private val unitValueQualifier: UnitValueQualifier
 ) {

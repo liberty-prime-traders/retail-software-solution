@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_ADMIN])
-internal class OrganizationAdminCache(
+class OrganizationAdminCache(
     private val organizationAdminRepository: OrganizationAdminRepository,
     private val organizationAdminMapper: OrganizationAdminMapper
 ) {

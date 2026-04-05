@@ -10,7 +10,7 @@ import org.hibernate.Hibernate
 import org.hibernate.proxy.HibernateProxy
 import java.io.IOException
 
-internal class HibernateProxyTypeAdapter private constructor(private val context: Gson) : TypeAdapter<HibernateProxy?>() {
+class HibernateProxyTypeAdapter private constructor(private val context: Gson) : TypeAdapter<HibernateProxy?>() {
 
     companion object {
         val FACTORY: TypeAdapterFactory = object : TypeAdapterFactory {

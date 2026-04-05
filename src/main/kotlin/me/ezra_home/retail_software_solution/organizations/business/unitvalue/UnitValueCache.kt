@@ -14,7 +14,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.UNIT_VALUE])
-internal class UnitValueCache(
+class UnitValueCache(
     private val unitValueRepository: UnitValueRepository,
     private val unitValueMapper: UnitValueMapper
 ) {

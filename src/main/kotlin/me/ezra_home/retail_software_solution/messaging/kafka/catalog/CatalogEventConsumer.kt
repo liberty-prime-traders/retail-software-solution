@@ -5,7 +5,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
 
 @Service
-internal class CatalogEventConsumer(
+class CatalogEventConsumer(
     private val catalogEventHandler: CatalogEventHandler
 ) {
 

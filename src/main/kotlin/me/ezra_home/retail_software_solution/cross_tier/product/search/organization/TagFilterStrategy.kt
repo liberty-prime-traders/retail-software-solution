@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import java.util.UUID
 
-internal class TagFilterStrategy(
+class TagFilterStrategy(
   private val tagIds: Set<UUID>
 ) : FilterStrategy {
 

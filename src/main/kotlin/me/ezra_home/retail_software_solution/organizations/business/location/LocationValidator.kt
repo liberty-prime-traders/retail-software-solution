@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationUpdateDto
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import java.util.Objects
 
 @Component
-internal class LocationValidator(private val locationCache: LocationCache) {
+class LocationValidator(private val locationCache: LocationCache) {
 
 
     companion object {

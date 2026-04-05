@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncLogFetcher
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class SyncBatchProcessor(private val syncLogFetcher: SyncLogFetcher) {
+class SyncBatchProcessor(private val syncLogFetcher: SyncLogFetcher) {
 
   private val logger = LoggerFactory.getLogger(SyncBatchProcessor::class.java)
   private val batchSize = 10

@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 
 @Component
-internal class SchemaMigrator(
+class SchemaMigrator(
   private val schemaExecutor: SchemaExecutor,
   private val migrationStatusUpdater: MigrationStatusUpdater
 ) {

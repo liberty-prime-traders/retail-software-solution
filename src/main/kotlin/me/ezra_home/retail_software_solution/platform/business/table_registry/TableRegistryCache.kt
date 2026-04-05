@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.TABLE_REGISTRY])
-internal class TableRegistryCache(
+class TableRegistryCache(
     private val repository: TableRegistryRepository,
     private val mapper: TableRegistryMapper
 ) {

@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueDto
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.UnitValueEntity
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper

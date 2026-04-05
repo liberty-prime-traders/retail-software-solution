@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class JurisdictionValidator(
+class JurisdictionValidator(
     private val jurisdictionCache: JurisdictionCache,
     private val jurisdictionTypeCache: JurisdictionTypeCache
 ) {

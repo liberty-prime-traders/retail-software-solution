@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component(ReferenceNumberEntityListener.BEAN_NAME)
-internal class ReferenceNumberEntityListener {
+class ReferenceNumberEntityListener {
 
 
     @Autowired

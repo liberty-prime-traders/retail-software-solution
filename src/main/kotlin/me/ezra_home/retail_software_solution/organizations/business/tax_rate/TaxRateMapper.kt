@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.organizations.business.tax_rate
 
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateResponseDto
-import me.ezra_home.retail_software_solution.organizations.model.TaxRateEntity
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface TaxRateMapper {
+interface TaxRateMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

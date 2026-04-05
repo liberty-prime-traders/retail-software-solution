@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_CATEGORY])
-internal class ProductCategoryCache(
+class ProductCategoryCache(
     private val productCategoryRepository: ProductCategoryRepository,
     private val productCategoryMapper: ProductCategoryMapper
 ) {

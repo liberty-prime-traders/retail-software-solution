@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.dto.JobTitleUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.JobTitleEntity
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.public.JobTitleUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.JobTitleEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -15,7 +15,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface JobTitleMapper {
+interface JobTitleMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

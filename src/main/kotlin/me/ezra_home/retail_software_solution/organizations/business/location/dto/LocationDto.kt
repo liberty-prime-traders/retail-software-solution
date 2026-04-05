@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.location.dto
 
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationType
 import me.ezra_home.retail_software_solution.util.model.HasId
 import java.time.OffsetDateTime
 import java.util.UUID

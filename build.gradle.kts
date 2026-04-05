@@ -70,6 +70,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-oauth2-jose")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
+	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 
 	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-launcher")

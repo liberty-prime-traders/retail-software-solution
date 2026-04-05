@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.UNIT_GROUP])
-internal class UnitGroupCache(
+class UnitGroupCache(
     private val unitGroupRepository: UnitGroupRepository,
     private val unitGroupMapper: UnitGroupMapper
 ) {

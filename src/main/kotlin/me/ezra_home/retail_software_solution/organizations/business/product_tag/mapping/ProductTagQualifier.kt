@@ -1,14 +1,14 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping
 
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.TagSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.public.TagSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
 import me.ezra_home.retail_software_solution.organizations.business.tag.TagCache
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class ProductTagQualifier(
+class ProductTagQualifier(
     private val productTagCache: ProductTagCache,
     private val tagCache: TagCache
 ) {

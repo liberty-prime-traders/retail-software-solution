@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncLogFetcher
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Component
 
 
 @Component
-internal class SyncValidator(private val syncLogFetcher: SyncLogFetcher) {
+class SyncValidator(private val syncLogFetcher: SyncLogFetcher) {
 
   fun validateCanSync(tableName: TableName) {
     require(tableName.schemaLevel == SchemaLevel.ORGANIZATION) {

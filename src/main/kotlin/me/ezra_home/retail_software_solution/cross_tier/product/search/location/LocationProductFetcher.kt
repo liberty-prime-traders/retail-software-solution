@@ -4,9 +4,9 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
-import me.ezra_home.retail_software_solution.locations.business.location_product.dto.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.`public`.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-internal class LocationProductFetcher(
+class LocationProductFetcher(
     private val executor: ProductSearchExecutor,
     private val locationProductMapper: LocationProductMapper,
     private val stockMovementRepository: StockMovementRepository

@@ -1,11 +1,12 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.MigrationStatus
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
 @Component
-internal class MigrationStatusUpdater(
+class MigrationStatusUpdater(
   private val dbMigrationCache: DbMigrationCache
 ) {
   fun markSuccess(migration: DbMigrationDto, message: String) {

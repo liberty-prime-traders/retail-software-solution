@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.util.queries
 
 import java.util.UUID
 
-internal object QueryFormatter {
+object QueryFormatter {
 
   fun formatQueryWithParameters(sqlQuery: SqlQuery, pageSize: Int, pageSizeParamName: String = "pageSize"): String {
     var formattedSql = sqlQuery.sql

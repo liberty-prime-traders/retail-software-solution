@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.dto.JurisdictionDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.dto.JurisdictionInsertDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.dto.JurisdictionResponseDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.dto.JurisdictionUpdateDto
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionEntity
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionInsertDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionResponseDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.`public`.JurisdictionUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -13,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class, uses = [JurisdictionQualifier::class])
-internal interface JurisdictionMapper {
+interface JurisdictionMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

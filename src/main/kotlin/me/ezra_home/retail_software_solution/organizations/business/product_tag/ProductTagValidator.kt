@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class ProductTagValidator(
+class ProductTagValidator(
     private val tagCache: TagCache
 ) {
 

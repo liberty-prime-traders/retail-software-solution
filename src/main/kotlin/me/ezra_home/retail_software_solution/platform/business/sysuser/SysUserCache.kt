@@ -3,6 +3,8 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser
 import com.okta.sdk.client.Client
 import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.platform.business.sysuser.`public`.SysUserWithProfileDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.`public`.UserType
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -15,7 +17,7 @@ import java.util.Collections
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.USER])
-internal class SysUserCache(
+class SysUserCache(
     private val userRepository: SysUserRepository,
     private val sysUserMapper: SysUserMapper,
     private val oktaClient: Client

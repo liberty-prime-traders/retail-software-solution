@@ -13,7 +13,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_GROUP])
-internal class ProductGroupCache(
+class ProductGroupCache(
     private val productGroupRepository: ProductGroupRepository,
     private val productGroupMapper: ProductGroupMapper
 ) {

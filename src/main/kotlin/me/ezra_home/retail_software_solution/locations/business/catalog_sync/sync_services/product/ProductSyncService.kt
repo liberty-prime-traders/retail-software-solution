@@ -6,10 +6,10 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.util.business.StringUtils
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.public.ProductStatus
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime

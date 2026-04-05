@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.dto
 
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.public.ProductStatus
 import java.time.OffsetDateTime
 import java.util.UUID
 

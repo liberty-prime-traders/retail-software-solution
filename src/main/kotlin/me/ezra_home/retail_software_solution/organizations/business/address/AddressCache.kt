@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.ADDRESS])
-internal class AddressCache(
+class AddressCache(
     private val addressRepository: AddressRepository,
     private val addressMapper: AddressMapper
 ) {

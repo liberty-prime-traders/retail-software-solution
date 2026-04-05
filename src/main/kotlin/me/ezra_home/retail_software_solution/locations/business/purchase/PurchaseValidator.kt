@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCancelDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseCancelLinesDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
-internal object PurchaseValidator {
+object PurchaseValidator {
 
   fun guardNoDuplicateProducts(lines: List<HasLocationProduct>) {
     val productIds = lines.map { it.locationProductId }
@@ -34,7 +35,7 @@ internal object PurchaseValidator {
       throw RtsGenericException("locationProductId is required for new purchase lines.")
   }
 
-  fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseLineCancelDto) {
+  fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseCancelLinesDto) {
     val maxCancelable = line.quantityOrdered - line.quantityDelivered
     if (cancel.quantityCanceled > maxCancelable)
       throw RtsGenericException(

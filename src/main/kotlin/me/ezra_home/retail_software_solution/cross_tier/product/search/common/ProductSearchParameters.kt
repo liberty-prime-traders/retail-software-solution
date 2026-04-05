@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.public.ProductStatus
 import me.ezra_home.retail_software_solution.util.queries.HasSearchStrategy
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import java.util.UUID

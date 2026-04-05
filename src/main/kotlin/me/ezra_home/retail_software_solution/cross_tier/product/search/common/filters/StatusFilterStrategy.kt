@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Al
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 
-internal class StatusFilterStrategy(private val statusCodes: Set<String>) : FilterStrategy {
+class StatusFilterStrategy(private val statusCodes: Set<String>) : FilterStrategy {
 
   override fun apply(context: QueryBuilderContext) {
     if (statusCodes.isNotEmpty()) {

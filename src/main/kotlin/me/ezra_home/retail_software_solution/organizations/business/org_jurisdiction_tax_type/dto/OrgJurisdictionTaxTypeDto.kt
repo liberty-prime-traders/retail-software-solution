@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.dto
 
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeStatus
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.public.OrgJurisdictionTaxTypeStatus
 import java.time.OffsetDateTime
 import java.util.UUID
 

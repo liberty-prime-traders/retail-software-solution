@@ -1,8 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRetryRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.DbMigrationRetryRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class MigrationValidator(
+class MigrationValidator(
   private val dbVersionCache: DbVersionCache,
   private val dbMigrationCache: DbMigrationCache,
 ) {

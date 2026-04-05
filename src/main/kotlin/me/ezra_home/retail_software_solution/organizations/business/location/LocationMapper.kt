@@ -1,12 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationDto
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.public.LocationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -14,7 +13,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface LocationMapper {
+interface LocationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

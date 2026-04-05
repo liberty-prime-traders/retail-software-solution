@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import com.okta.sdk.resource.user.User
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserWithProfileDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.`public`.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
-import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserEntity
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -12,7 +12,7 @@ import java.util.UUID
 import java.util.function.Supplier
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface SysUserMapper {
+interface SysUserMapper {
     fun toDomainDto(entity: SysUserEntity): SysUserDto
 
     fun toEntity(dto: SysUserDto): SysUserEntity

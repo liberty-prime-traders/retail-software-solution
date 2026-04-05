@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.LOCATION])
-internal class LocationCache(
+class LocationCache(
     private val locationRepository: LocationRepository,
     private val locationMapper: LocationMapper
 ) {

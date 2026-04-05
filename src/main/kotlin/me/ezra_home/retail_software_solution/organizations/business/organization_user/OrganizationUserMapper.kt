@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.organizations.business.organization_user
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.public.OrganizationUserResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface OrganizationUserMapper {
+interface OrganizationUserMapper {
 
     fun toDomainDto(entity: OrganizationUserEntity): OrganizationUserDto
 

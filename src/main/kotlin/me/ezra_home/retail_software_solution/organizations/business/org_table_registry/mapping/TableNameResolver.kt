@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class TableNameResolver(private val tableRegistryCache: TableRegistryCache) {
+class TableNameResolver(private val tableRegistryCache: TableRegistryCache) {
 
     @TableNameQualifier
     fun resolveTableName(registryId: UUID?): String? {

@@ -3,4 +3,4 @@ package me.ezra_home.retail_software_solution.util.enums
 import jakarta.persistence.Converter
 
 @Converter(autoApply = true)
-internal class SchemaLevelConverter: EnumConverter<SchemaLevel>(SchemaLevel::class.java)
+class SchemaLevelConverter: EnumConverter<SchemaLevel>(SchemaLevel::class.java)

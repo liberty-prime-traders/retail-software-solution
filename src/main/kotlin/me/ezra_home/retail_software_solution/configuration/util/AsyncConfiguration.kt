@@ -5,4 +5,4 @@ import org.springframework.scheduling.annotation.EnableAsync
 
 @Configuration
 @EnableAsync
-internal class AsyncConfiguration
+class AsyncConfiguration

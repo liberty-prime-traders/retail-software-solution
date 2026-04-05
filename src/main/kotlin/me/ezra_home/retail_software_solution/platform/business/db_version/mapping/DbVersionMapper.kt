@@ -2,13 +2,13 @@ package me.ezra_home.retail_software_solution.platform.business.db_version.mappi
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionResponseDto
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
+import me.ezra_home.retail_software_solution.platform.business.db_version.`public`.DbVersionResponseDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionEntity
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class, uses = [DbVersionQualifier::class])
-internal interface DbVersionMapper {
+interface DbVersionMapper {
     fun toDomainDto(entity: DbVersionEntity): DbVersionDto
 
     fun toEntity(dto: DbVersionDto): DbVersionEntity

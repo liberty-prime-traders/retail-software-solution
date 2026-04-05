@@ -14,7 +14,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TAG])
-internal class TagCache(
+class TagCache(
     private val tagRepository: TagRepository,
     private val tagMapper: TagMapper
 ) {

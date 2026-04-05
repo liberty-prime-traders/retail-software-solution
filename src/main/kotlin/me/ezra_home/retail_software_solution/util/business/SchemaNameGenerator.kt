@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.util.business
 
 import java.text.Normalizer
 
-internal object SchemaNameGenerator {
+object SchemaNameGenerator {
 
     fun generateSubDomain(suggestedName: String): String {
         val normalized = Normalizer.normalize(suggestedName, Normalizer.Form.NFD)

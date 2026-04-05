@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
 
-import me.ezra_home.retail_software_solution.organizations.business.contact.dto.IdentityType
+import me.ezra_home.retail_software_solution.organizations.business.contact.public.IdentityType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class ContactValidator(
+class ContactValidator(
     private val contactCache: ContactCache
 ) {
 

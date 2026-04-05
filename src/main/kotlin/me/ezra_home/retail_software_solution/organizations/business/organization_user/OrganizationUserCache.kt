@@ -12,7 +12,7 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
-internal class OrganizationUserCache(
+class OrganizationUserCache(
     private val organizationUserRepository: OrganizationUserRepository,
     private val organizationUserMapper: OrganizationUserMapper
 ) {

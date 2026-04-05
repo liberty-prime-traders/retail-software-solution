@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.organizations.business.product_cat
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product_category.dto.ProductCategoryUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.ProductCategoryEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.public.ProductCategoryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -14,7 +14,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface ProductCategoryMapper {
+interface ProductCategoryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

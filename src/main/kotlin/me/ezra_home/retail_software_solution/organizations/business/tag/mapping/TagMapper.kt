@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.organizations.business.tag.mapping
 
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.tag.dto.TagUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.TagEntity
+import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.public.TagUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.TagEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
@@ -14,7 +14,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface TagMapper {
+interface TagMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

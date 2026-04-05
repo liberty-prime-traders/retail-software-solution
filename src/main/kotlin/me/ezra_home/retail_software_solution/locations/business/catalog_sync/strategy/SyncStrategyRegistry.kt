@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.`public`.SyncMode
 import org.springframework.stereotype.Component
 
 
 @Component
-internal class SyncStrategyRegistry(strategies: List<SyncStrategy>) {
+class SyncStrategyRegistry(strategies: List<SyncStrategy>) {
 
   private val strategyMap: Map<SyncMode, SyncStrategy> = strategies.associateBy { it.getSyncMode() }
 

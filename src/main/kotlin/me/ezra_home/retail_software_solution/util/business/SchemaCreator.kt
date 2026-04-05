@@ -9,7 +9,7 @@ import liquibase.database.jvm.JdbcConnection
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import javax.sql.DataSource
 
-internal object SchemaCreator {
+object SchemaCreator {
 
     fun createSchema(schemaName: String, dataSource: DataSource, changeLog: String) {
         try {

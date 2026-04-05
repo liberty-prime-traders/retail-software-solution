@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TITLE])
-internal class JobTitleCache(
+class JobTitleCache(
     private val jobTitleRepository: JobTitleRepository,
     private val jobTitleMapper: JobTitleMapper
 ) {

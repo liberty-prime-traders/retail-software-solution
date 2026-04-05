@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.organizations.business.tax_rate
 
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeStatus
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.public.OrgJurisdictionTaxTypeStatus
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.dto.TaxRateUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeService
-import me.ezra_home.retail_software_solution.platform.business.tax_type.CalculationMethod
-import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxApplicationLevel
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.public.TaxRateUpdateDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.`public`.JurisdictionTaxTypeService
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.`public`.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Component
-internal class TaxRateValidator(
+class TaxRateValidator(
     private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
     private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
     private val taxRateCache: TaxRateCache

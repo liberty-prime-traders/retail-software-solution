@@ -5,7 +5,7 @@ import jakarta.persistence.MappedSuperclass
 import java.time.OffsetDateTime
 
 @MappedSuperclass
-internal class ExpirableAssignmentEntity(
+class ExpirableAssignmentEntity(
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null
 

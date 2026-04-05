@@ -4,7 +4,7 @@ import jakarta.persistence.QueryTimeoutException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 
-internal object SearchStrategyExecutor {
+object SearchStrategyExecutor {
 
   fun <PARAMETERS: HasSearchStrategy<PARAMETERS>, RESPONSE_TYPE> executeWithRetry(
       searchText: String,

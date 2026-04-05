@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT])
-internal class OrganizationProductCache(
+class OrganizationProductCache(
     private val organizationProductRepository: OrganizationProductRepository,
     private val organizationProductMapper: OrganizationProductMapper
 ) {

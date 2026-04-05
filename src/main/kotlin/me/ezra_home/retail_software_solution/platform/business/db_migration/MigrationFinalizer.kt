@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.
 import org.springframework.stereotype.Component
 
 @Component
-internal class MigrationFinalizer(
+class MigrationFinalizer(
   private val migrationStatusUpdater: MigrationStatusUpdater
 ) {
   fun finalizeOrganizationMigration(

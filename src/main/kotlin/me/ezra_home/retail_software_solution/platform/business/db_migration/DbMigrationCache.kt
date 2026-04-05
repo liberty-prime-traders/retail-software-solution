@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.`public`.MigrationStatus
 import me.ezra_home.retail_software_solution.platform.business.db_migration.mapping.DbMigrationMapper
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.cache.annotation.CacheConfig
@@ -13,7 +14,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.DB_MIGRATION])
-internal class DbMigrationCache(
+class DbMigrationCache(
     private val dbMigrationRepository: DbMigrationRepository,
     private val mapper: DbMigrationMapper
 ) {

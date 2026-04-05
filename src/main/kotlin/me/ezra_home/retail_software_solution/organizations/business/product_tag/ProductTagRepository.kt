@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
-import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-internal interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
+interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
 
     @Query("""
         SELECT pt.tagId FROM ProductTagEntity pt

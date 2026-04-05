@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
 import jakarta.persistence.Query
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductEntity
 import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.springframework.beans.factory.annotation.Qualifier
@@ -11,7 +11,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
 
 @Component
-internal class ProductSearchExecutor(
+class ProductSearchExecutor(
   @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   private val organizationEmf: LocalContainerEntityManagerFactoryBean,
   @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)

@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitgroup
 
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupDto
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.dto.UnitGroupUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.UnitGroupEntity
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.public.UnitGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
@@ -14,7 +14,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class)
-internal interface UnitGroupMapper {
+interface UnitGroupMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

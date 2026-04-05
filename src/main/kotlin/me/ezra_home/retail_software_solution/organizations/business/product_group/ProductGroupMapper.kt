@@ -3,10 +3,10 @@ package me.ezra_home.retail_software_solution.organizations.business.product_gro
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryName
 import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
-import me.ezra_home.retail_software_solution.organizations.model.ProductGroupEntity
+import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
@@ -16,7 +16,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(config = RtsMapperConfig::class, uses = [ProductCategoryNameQualifier::class])
-internal interface ProductGroupMapper {
+interface ProductGroupMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdById", ignore = true)

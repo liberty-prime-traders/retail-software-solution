@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionEntity
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-internal interface JurisdictionRepository : JpaRepository<JurisdictionEntity, UUID>
+interface JurisdictionRepository : JpaRepository<JurisdictionEntity, UUID>

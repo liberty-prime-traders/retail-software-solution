@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.db_version.`public`.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.dto.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class LocationBatchProcessor(
+class LocationBatchProcessor(
   private val locationCache: LocationCache,
   private val schemaMigrator: SchemaMigrator,
   private val dbVersionService: DbVersionService,

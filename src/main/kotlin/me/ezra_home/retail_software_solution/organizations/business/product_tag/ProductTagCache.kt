@@ -13,7 +13,7 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_TAG])
-internal class ProductTagCache(
+class ProductTagCache(
     private val productTagRepository: ProductTagRepository,
     private val productTagMapper: ProductTagMapper
 ) {

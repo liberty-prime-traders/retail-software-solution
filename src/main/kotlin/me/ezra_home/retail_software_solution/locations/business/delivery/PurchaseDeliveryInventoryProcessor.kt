@@ -4,12 +4,12 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.locations.model.StockEntryEntity
-import me.ezra_home.retail_software_solution.locations.model.StockMovementEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
-import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.StockItemSourceService
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.public.StockItemSourceService
 import me.ezra_home.retail_software_solution.locations.business.stock.MovementType
-import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseDeliveryStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.`public`.PurchaseDeliveryStatus
 import me.ezra_home.retail_software_solution.organizations.business.inventory.StockItemSource
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @Service
-internal class PurchaseDeliveryInventoryProcessor(
+class PurchaseDeliveryInventoryProcessor(
   private val stockItemSourceService: StockItemSourceService,
   private val locationProductRepository: LocationProductRepository,
   private val stockEntryRepository: StockEntryRepository,

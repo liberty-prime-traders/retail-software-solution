@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service
 @Service
 @CacheSchemaLevel(SchemaLevel.LOCATION)
 @CacheConfig(cacheNames = [CacheNames.LOCATION_PRODUCT])
-internal class LocationProductCache(
+class LocationProductCache(
     private val locationProductRepository: LocationProductRepository,
     private val locationProductMapper: LocationProductMapper
 ) {

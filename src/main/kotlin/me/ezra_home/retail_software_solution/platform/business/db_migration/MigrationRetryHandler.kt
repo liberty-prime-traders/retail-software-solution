@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class MigrationRetryHandler(
+class MigrationRetryHandler(
   private val organizationCache: OrganizationCache,
   private val migrationInitializer: MigrationInitializer,
   private val migrationStatusUpdater: MigrationStatusUpdater,

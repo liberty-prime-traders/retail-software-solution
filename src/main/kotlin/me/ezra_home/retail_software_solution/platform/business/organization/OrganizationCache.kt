@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION])
-internal class OrganizationCache(
+class OrganizationCache(
     private val organizationRepository: OrganizationRepository,
     private val mapper: OrganizationMapper
 ) {

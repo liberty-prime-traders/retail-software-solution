@@ -4,9 +4,9 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductMapper
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.public.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationProductEntity
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductEntity
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnOrganizationSchema(readOnly = true)
-internal class OrganizationProductFetcher(
+class OrganizationProductFetcher(
     private val organizationProductMapper: OrganizationProductMapper,
     private val executor: ProductSearchExecutor,
     private val productTagQualifier: ProductTagQualifier

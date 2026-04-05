@@ -6,7 +6,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Optional
 
-internal object DateTimes {
+object DateTimes {
 
     fun isValidTimezone(tz: String): Boolean = runCatching { ZoneId.of(tz) }.isSuccess
 

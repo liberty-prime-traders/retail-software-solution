@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_group
 
 import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.public.ProductGroupUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
-internal class ProductGroupValidator(
+class ProductGroupValidator(
   private val productGroupCache: ProductGroupCache,
   private val productCategoryCache: ProductCategoryCache
 ) {

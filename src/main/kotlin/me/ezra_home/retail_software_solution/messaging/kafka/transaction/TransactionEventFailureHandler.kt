@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import org.springframework.stereotype.Service
 
 @Service
-internal class TransactionEventFailureHandler(
+class TransactionEventFailureHandler(
   private val purchaseDeliveryProcessor: PurchaseDeliveryInventoryProcessor
 ) {
 

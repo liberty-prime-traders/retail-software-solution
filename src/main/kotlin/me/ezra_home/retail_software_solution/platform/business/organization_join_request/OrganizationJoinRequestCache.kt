@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.`public`.JoinRequestStatus
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -9,7 +10,7 @@ import java.util.UUID
 
 @Component
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_JOIN_REQUEST])
-internal class OrganizationJoinRequestCache(
+class OrganizationJoinRequestCache(
     private val organizationJoinRequestRepository: OrganizationJoinRequestRepository,
     private val mapper: OrganizationJoinRequestMapper
 ) {

@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryCreateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.`public`.PurchaseDeliveryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 import java.util.UUID
 
-internal object PurchaseDeliveryValidator {
+object PurchaseDeliveryValidator {
 
   fun validate(dto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineEntity>) {
     if (dto.lines.isEmpty())

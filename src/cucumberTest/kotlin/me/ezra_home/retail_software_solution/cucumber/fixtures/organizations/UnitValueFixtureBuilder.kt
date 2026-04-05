@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.cucumber.support.context.InjectCont
 import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import me.ezra_home.retail_software_solution.cucumber.fixtures.FixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.dto.UnitValueInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.public.UnitValueInsertDto
 import org.springframework.stereotype.Component
 
 @Component
