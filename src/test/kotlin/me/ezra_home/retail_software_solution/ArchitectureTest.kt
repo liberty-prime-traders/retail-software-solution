@@ -24,7 +24,9 @@ class ArchitectureTest {
             !javaClass.packageName.contains(".api")
     }
 
-    private fun onlyBeAccessedFromOwnDomainOrOutsideBusiness() = object : ArchCondition<JavaClass>("only be accessed from within the same domain or outside the business layer") {
+    private fun onlyBeAccessedFromOwnDomainOrOutsideBusiness() = object : ArchCondition<JavaClass>(
+        "only be accessed from within the same domain or outside the business layer"
+    ) {
         override fun check(javaClass: JavaClass, events: ConditionEvents) {
             val classDomain = domainOf(javaClass.packageName) ?: return
             javaClass.accessesToSelf

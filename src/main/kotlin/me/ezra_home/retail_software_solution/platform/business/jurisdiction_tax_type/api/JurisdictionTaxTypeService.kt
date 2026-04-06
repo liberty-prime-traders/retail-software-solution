@@ -103,6 +103,13 @@ class JurisdictionTaxTypeService(
             .mapNotNull { buildJurisdictionNode(it) }
     }
 
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getActiveTaxTypeIdsByJurisdiction(): Map<UUID, List<UUID>> =
+        jurisdictionTaxTypeCache.getAll()
+            .filter { it.active }
+            .groupBy { it.jurisdictionId }
+            .mapValues { (_, dtos) -> dtos.map { it.taxTypeId } }
+
     fun stopByTaxTypeIds(jurisdictionId: UUID, taxTypeIds: List<UUID>) {
         val linkIndex = jurisdictionTaxTypeCache.getAll()
             .filter { it.jurisdictionId == jurisdictionId }

@@ -18,7 +18,9 @@ class JurisdictionCache(
 ) {
 
     @Cacheable
-    fun getAll(): Collection<JurisdictionDto> = jurisdictionRepository.findAll().map { mapper.toDomainDto(it) }
+    fun getAll(): Collection<JurisdictionDto> {
+         return jurisdictionRepository.findAll().map { mapper.toDomainDto(it) }
+    }
 
     @CacheEvict(allEntries = true)
     fun upsert(dto: JurisdictionDto) {

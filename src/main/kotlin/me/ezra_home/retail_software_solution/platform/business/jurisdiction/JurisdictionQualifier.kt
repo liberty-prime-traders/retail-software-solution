@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.JurisdictionTypeCache
+import org.mapstruct.Context
 import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -22,24 +21,17 @@ annotation class JurisdictionTaxTypes
 annotation class ParentJurisdictionName
 
 @Component
-class JurisdictionQualifier(
-    private val jurisdictionTypeCache: JurisdictionTypeCache,
-    private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
-    private val jurisdictionCache: JurisdictionCache
-) {
+class JurisdictionQualifier {
 
     @JurisdictionTypeName
-    fun getJurisdictionTypeName(jurisdictionTypeId: UUID): String? =
-        jurisdictionTypeCache.getAll().find { it.id == jurisdictionTypeId }?.name
+    fun getJurisdictionTypeName(jurisdictionTypeId: UUID, @Context ctx: JurisdictionMappingContext): String? =
+        ctx.typeNames[jurisdictionTypeId]
 
     @ParentJurisdictionName
-    fun getParentJurisdictionName(parentJurisdictionId: UUID?): String? =
-        parentJurisdictionId?.let { id -> jurisdictionCache.getAll().find { it.id == id }?.name }
+    fun getParentJurisdictionName(parentJurisdictionId: UUID?, @Context ctx: JurisdictionMappingContext): String? =
+        parentJurisdictionId?.let { ctx.jurisdictionNames[it] }
 
     @JurisdictionTaxTypes
-    fun getJurisdictionTaxTypes(jurisdictionId: UUID): List<UUID> {
-        return jurisdictionTaxTypeCache.getAll()
-            .filter { it.jurisdictionId == jurisdictionId && it.active }
-            .map { it.taxTypeId }
-    }
+    fun getJurisdictionTaxTypes(jurisdictionId: UUID, @Context ctx: JurisdictionMappingContext): List<UUID> =
+        ctx.taxTypesByJurisdiction[jurisdictionId] ?: emptyList()
 }

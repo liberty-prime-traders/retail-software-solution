@@ -1,12 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionInsertDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
+import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
@@ -28,7 +27,7 @@ interface JurisdictionMapper {
     @Mapping(source = "jurisdictionTypeId", target = "jurisdictionType", qualifiedBy = [JurisdictionTypeName::class])
     @Mapping(source = "parentJurisdictionId", target = "parentJurisdiction", qualifiedBy = [ParentJurisdictionName::class])
     @Mapping(source = "id", target = "taxTypes", qualifiedBy = [JurisdictionTaxTypes::class])
-    fun toResponseDto(dto: JurisdictionDto): JurisdictionResponseDto
+    fun toResponseDto(dto: JurisdictionDto, @Context ctx: JurisdictionMappingContext): JurisdictionResponseDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
