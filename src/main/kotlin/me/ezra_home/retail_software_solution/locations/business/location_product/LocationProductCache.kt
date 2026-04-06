@@ -26,7 +26,7 @@ class LocationProductCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: LocationProductInsertDto): LocationProductDto {
-        val saved = locationProductRepository.save(locationProductMapper.toEntity(insertDto))
+        val saved = locationProductRepository.saveAndFlush(locationProductMapper.toEntity(insertDto))
         return locationProductMapper.toDomainDto(saved)
     }
 

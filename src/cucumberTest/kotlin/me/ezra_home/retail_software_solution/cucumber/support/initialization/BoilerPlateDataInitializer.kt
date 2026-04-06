@@ -56,10 +56,10 @@ class BoilerPlateDataInitializer(
 
     } else {
       existingOrganization.find { it.subdomain == SUBDOMAIN }?.let { organization ->
-        injectContext.persist(PersistentKey.ORGANIZATION, organization.getNullSafeId())
+        injectContext.persist(PersistentKey.ORGANIZATION, organization.id)
         SessionContextProvider.initOrganization(organization)
         locationCache.getAllLocations().firstOrNull()?.let { location ->
-          injectContext.persist(PersistentKey.LOCATION, location.getNullSafeId())
+          injectContext.persist(PersistentKey.LOCATION, location.id)
         }
         SessionContextProvider.clear()
       }
@@ -123,8 +123,9 @@ class BoilerPlateDataInitializer(
     tableRegistryCache.getAllTables()
       .filter { !it.validated }
       .forEach {
-        it.validated = true
-        tableRegistryCache.upsertTable(it)
+        it.copy(validated = true).also { validated ->
+          tableRegistryCache.save(validated)
+        }
       }
   }
 }

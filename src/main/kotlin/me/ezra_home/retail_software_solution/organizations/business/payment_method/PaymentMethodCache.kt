@@ -25,7 +25,7 @@ class PaymentMethodCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: PaymentMethodInsertDto): PaymentMethodDto {
-        val saved = paymentMethodRepository.save(paymentMethodMapper.toEntity(insertDto))
+        val saved = paymentMethodRepository.saveAndFlush(paymentMethodMapper.toEntity(insertDto))
         return paymentMethodMapper.toDomainDto(saved)
     }
 

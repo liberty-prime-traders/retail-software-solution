@@ -73,7 +73,7 @@ class DbMigrationCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: DbMigrationInsertDto): DbMigrationDto {
-        val saved = dbMigrationRepository.save(mapper.toEntity(insertDto))
+        val saved = dbMigrationRepository.saveAndFlush(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

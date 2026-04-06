@@ -34,7 +34,7 @@ class ProductTagCache(
     @CacheEvict(allEntries = true)
     fun createProductTags(insertDtos: List<ProductTagInsertDto>): List<ProductTagDto> {
         val entities = insertDtos.map { productTagMapper.toEntity(it) }
-        return productTagRepository.saveAll(entities).map { productTagMapper.toDomainDto(it) }
+        return productTagRepository.saveAllAndFlush(entities).map { productTagMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)

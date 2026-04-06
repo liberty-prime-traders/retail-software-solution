@@ -26,7 +26,7 @@ class LocationCache(
     @CacheEvict(allEntries = true)
     fun create(insertDto: LocationInsertDto, schemaName: String): LocationDto {
         val entity = locationMapper.toEntity(insertDto).apply { this.schemaName = schemaName }
-        val saved = locationRepository.save(entity)
+        val saved = locationRepository.saveAndFlush(entity)
         return locationMapper.toDomainDto(saved)
     }
 

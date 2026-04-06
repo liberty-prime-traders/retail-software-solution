@@ -30,7 +30,7 @@ class ProductCategoryCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: ProductCategoryInsertDto): ProductCategoryDto {
-        val saved = productCategoryRepository.save(productCategoryMapper.toEntity(insertDto))
+        val saved = productCategoryRepository.saveAndFlush(productCategoryMapper.toEntity(insertDto))
         return productCategoryMapper.toDomainDto(saved)
     }
 

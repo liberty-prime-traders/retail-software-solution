@@ -26,7 +26,7 @@ class JurisdictionTaxTypeCache(
 
     @CacheEvict(allEntries = true)
     fun createAll(insertDtos: Collection<JurisdictionTaxTypeInsertDto>): List<JurisdictionTaxTypeDto> {
-        val saved = jurisdictionTaxTypeRepository.saveAll(insertDtos.map { mapper.toEntity(it) })
+        val saved = jurisdictionTaxTypeRepository.saveAllAndFlush(insertDtos.map { mapper.toEntity(it) })
         return saved.map { mapper.toDomainDto(it) }
     }
 

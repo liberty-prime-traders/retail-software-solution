@@ -29,7 +29,7 @@ class OrganizationCache(
             this.schemaName = schemaName
             this.creationPassId = passId
         }
-        val saved = organizationRepository.save(entity)
+        val saved = organizationRepository.saveAndFlush(entity)
         return mapper.toDomainDto(saved)
     }
 

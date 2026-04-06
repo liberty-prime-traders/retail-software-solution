@@ -24,7 +24,7 @@ class OrganizationAdminCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrganizationAdminInsertDto): OrganizationAdminDto {
-        val saved = organizationAdminRepository.save(organizationAdminMapper.toEntity(insertDto))
+        val saved = organizationAdminRepository.saveAndFlush(organizationAdminMapper.toEntity(insertDto))
         return organizationAdminMapper.toDomainDto(saved)
     }
 

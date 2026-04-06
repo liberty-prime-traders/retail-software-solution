@@ -29,14 +29,14 @@ class OrganizationUserCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrganizationUserInsertDto): OrganizationUserDto {
-        val saved = organizationUserRepository.save(organizationUserMapper.toEntity(insertDto))
+        val saved = organizationUserRepository.saveAndFlush(organizationUserMapper.toEntity(insertDto))
         return organizationUserMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)
     fun createAll(insertDtos: Collection<OrganizationUserInsertDto>): List<OrganizationUserDto> {
         val entities = insertDtos.map { organizationUserMapper.toEntity(it) }
-        return organizationUserRepository.saveAll(entities).map { organizationUserMapper.toDomainDto(it) }
+        return organizationUserRepository.saveAllAndFlush(entities).map { organizationUserMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)

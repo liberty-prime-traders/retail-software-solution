@@ -28,7 +28,7 @@ class OrganizationProductCache(
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrganizationProductInsertDto): OrganizationProductDto {
         val entity = organizationProductMapper.toEntity(insertDto).apply { status = ProductStatus.ACTIVE }
-        val saved = organizationProductRepository.save(entity)
+        val saved = organizationProductRepository.saveAndFlush(entity)
         return organizationProductMapper.toDomainDto(saved)
     }
 

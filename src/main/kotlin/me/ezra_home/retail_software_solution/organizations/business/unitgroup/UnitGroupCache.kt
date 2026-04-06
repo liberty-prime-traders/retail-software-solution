@@ -26,7 +26,7 @@ class UnitGroupCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: UnitGroupInsertDto): UnitGroupDto {
-        val saved = unitGroupRepository.save(unitGroupMapper.toEntity(insertDto))
+        val saved = unitGroupRepository.saveAndFlush(unitGroupMapper.toEntity(insertDto))
         return unitGroupMapper.toDomainDto(saved)
     }
 

@@ -9,6 +9,4 @@ abstract class HasReferenceEntity(
     @Column(name = "reference_number", unique = true)
     var referenceNumber: String? = null
 
-): HasCreatorEntity() {
-
-}
+): HasCreatorEntity()

@@ -55,7 +55,7 @@ class SysUserCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: SysUserInsertDto): SysUserDto {
-        val saved = userRepository.save(sysUserMapper.toEntity(insertDto))
+        val saved = userRepository.saveAndFlush(sysUserMapper.toEntity(insertDto))
         return sysUserMapper.toDomainDto(saved)
     }
 }

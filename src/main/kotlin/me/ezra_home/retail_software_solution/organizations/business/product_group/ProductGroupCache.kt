@@ -25,7 +25,7 @@ class ProductGroupCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: ProductGroupInsertDto): ProductGroupDto {
-        val saved = productGroupRepository.save(productGroupMapper.toEntity(insertDto))
+        val saved = productGroupRepository.saveAndFlush(productGroupMapper.toEntity(insertDto))
         return productGroupMapper.toDomainDto(saved)
     }
 

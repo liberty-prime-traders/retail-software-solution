@@ -6,7 +6,7 @@ import java.util.UUID
 
 data class SysUserDto(
     val id: UUID,
-    val createdById: UUID,
+    val createdById: UUID? = null,
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
     val oktaId: String? = null,
