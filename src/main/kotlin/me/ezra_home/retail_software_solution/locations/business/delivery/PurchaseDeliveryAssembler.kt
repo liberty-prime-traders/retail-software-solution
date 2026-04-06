@@ -21,7 +21,7 @@ class PurchaseDeliveryAssembler(
     productSummaries: Map<UUID, LocationProductSummaryDto>
   ): List<PurchaseDeliveryResponseDto> {
     if (deliveries.isEmpty()) return emptyList()
-    val deliveryIds = deliveries.map { it.getNullSafeId() }
+    val deliveryIds = deliveries.map { it.id!! }
     val allDeliveryLines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveryIds)
     val deliveryLinesByDeliveryId = allDeliveryLines.groupBy { it.purchaseDeliveryId }
     return deliveries.map { delivery ->
@@ -36,9 +36,10 @@ class PurchaseDeliveryAssembler(
     purchaseLineById: Map<UUID, PurchaseLineDto>,
     productSummaries: Map<UUID, LocationProductSummaryDto>
   ): PurchaseDeliveryResponseDto {
+    val unitNamesById = unitValueService.getUnitNamesById()
     return PurchaseDeliveryResponseDto(
-      id = delivery.getNullSafeId(),
-      referenceNumber = delivery.getNullSafeReferenceNumber(),
+      id = delivery.id!!,
+      referenceNumber = delivery.referenceNumber!!,
       purchaseId = delivery.purchaseId,
       status = delivery.status,
       deliveredAt = delivery.deliveredAt,
@@ -47,16 +48,16 @@ class PurchaseDeliveryAssembler(
         val purchaseLine = purchaseLineById[dl.purchaseLineId]!!
         val product = productSummaries[purchaseLine.locationProductId]!!
         PurchaseDeliveryLineResponseDto(
-          id = dl.getNullSafeId(),
-          referenceNumber = dl.getNullSafeReferenceNumber(),
+          id = dl.id!!,
+          referenceNumber = dl.referenceNumber!!,
           quantityDelivered = dl.quantityDelivered,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
           locationProduct = PurchaseLineProductDto(
-            referenceNumber = product.getNullSafeReferenceNumber(),
+            referenceNumber = product.referenceNumber,
             productName = product.productName,
             productGroupName = product.productGroupName,
-            baseUnit = unitValueService.getUnitName(product.baseUnitId)
+            baseUnit = unitNamesById[product.baseUnitId]
           )
         )
       }

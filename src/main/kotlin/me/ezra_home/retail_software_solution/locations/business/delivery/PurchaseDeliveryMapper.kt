@@ -37,12 +37,12 @@ object PurchaseDeliveryMapper {
     timestamp = Instant.now(),
     correlationId = null,
     purchaseId = purchaseId,
-    deliveryId = deliveryRecord.delivery.getNullSafeId(),
+    deliveryId = deliveryRecord.delivery.id!!,
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
-        deliveryLineId = dl.getNullSafeId(),
+        deliveryLineId = dl.id!!,
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
         unitCost = dl.unitCost

@@ -1,14 +1,13 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api
 
-import me.ezra_home.retail_software_solution.util.model.HasId
 import java.time.OffsetDateTime
 import java.util.UUID
 
 data class JurisdictionTaxTypeDto(
-    override var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var taxTypeId: UUID,
-    var jurisdictionId: UUID,
-    var active: Boolean = true
-) : HasId
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val taxTypeId: UUID,
+    val jurisdictionId: UUID,
+    val active: Boolean = true
+)

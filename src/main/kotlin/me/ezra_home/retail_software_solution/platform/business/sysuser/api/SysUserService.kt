@@ -29,7 +29,7 @@ class SysUserService(private val sysUserCache: SysUserCache, private val sysUser
 
     private fun addSystemUser(oktaId: String?): SysUserDto {
         return ServiceAccountContext.runWithServiceAccount<SysUserDto>(ServiceAccount.RECORD_INITIALIZER) {
-            sysUserCache.addSystemUser(SysUserDto(oktaId = oktaId, userType = UserType.END_USER))
+            sysUserCache.create(SysUserInsertDto(oktaId = oktaId, userType = UserType.END_USER))
         }
     }
 }

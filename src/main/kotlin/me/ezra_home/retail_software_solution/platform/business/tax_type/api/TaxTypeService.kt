@@ -27,23 +27,22 @@ class TaxTypeService(
         if (dto.taxTriggers.isEmpty()) throw RtsGenericException("At least one tax trigger is required")
         if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A tax type named '${dto.name}' already exists")
-        val taxTypeDto = taxTypeMapper.toDomainDto(dto)
-        taxTypeCache.upsert(taxTypeDto)
-        return taxTypeMapper.toResponseDto(taxTypeDto)
+        val saved = taxTypeCache.create(dto)
+        return taxTypeMapper.toResponseDto(saved)
     }
 
     fun update(dto: TaxTypeUpdateDto): TaxTypeResponseDto {
-        val taxTypeDto = taxTypeCache.getAll().find { it.id == dto.id }
+        val existing = taxTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
-        val effectiveName = if (dto.name != null) dto.name.orElse(null) else taxTypeDto.name
+        val effectiveName = dto.name?.orElse(existing.name) ?: existing.name
         StringUtils.getValueOrException(effectiveName, "Name must not be blank")
         if (dto.taxTriggers != null && dto.taxTriggers.orElse(emptyList()).isEmpty())
             throw RtsGenericException("At least one tax trigger is required")
-        if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, effectiveName) && it.id != taxTypeDto.id })
+        if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, effectiveName) && it.id != existing.id })
             throw RtsGenericException("A tax type named '$effectiveName' already exists")
-        taxTypeMapper.partialUpdate(dto, taxTypeDto)
-        taxTypeCache.upsert(taxTypeDto)
-        return taxTypeMapper.toResponseDto(taxTypeDto)
+        val updated = dto.applyTo(existing)
+        val saved = taxTypeCache.save(updated)
+        return taxTypeMapper.toResponseDto(saved)
     }
 
     fun delete(id: UUID) {

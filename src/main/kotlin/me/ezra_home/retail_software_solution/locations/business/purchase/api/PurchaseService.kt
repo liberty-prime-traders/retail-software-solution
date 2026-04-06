@@ -14,7 +14,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 private fun PurchaseLineEntity.toDto() = PurchaseLineDto(
-    id = getNullSafeId(),
+    id = id!!,
     purchaseId = purchaseId,
     locationProductId = locationProductId,
     quantityOrdered = quantityOrdered,
@@ -39,16 +39,16 @@ class PurchaseService(
           throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
       val lines = purchaseLineRepository.findByPurchaseId(purchaseId)
       return PurchaseDeliveryContext(
-          purchaseId = purchase.getNullSafeId(),
+          purchaseId = purchase.id!!,
           supplierId = purchase.supplierId,
-          purchaseLineById = lines.associateBy { it.getNullSafeId() }.mapValues { it.value.toDto() }
+          purchaseLineById = lines.associateBy { it.id!! }.mapValues { it.value.toDto() }
       )
   }
 
   fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
       val purchase = purchaseRepository.findById(purchaseId).orElseThrow { UpdatingNonExistingRecordException() }
       val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
-      val lineById = purchaseLines.associateBy { it.getNullSafeId() }
+      val lineById = purchaseLines.associateBy { it.id!! }
       val toSave = deliveries.map { (lineId, qty) ->
           lineById[lineId]?.also { it.quantityDelivered = it.quantityDelivered.add(qty) }
               ?: throw RtsGenericException("Purchase line $lineId not found")
@@ -62,7 +62,7 @@ class PurchaseService(
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.save(it) }
-    val lines = PurchaseMapper.toLineEntities(purchase.getNullSafeId(), dto.lines)
+    val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -72,7 +72,7 @@ class PurchaseService(
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.applyDraftUpdate(purchase, dto)
     purchaseRepository.save(purchase)
-    val lines = applyLineUpdates(purchase.getNullSafeId(), dto)
+    val lines = applyLineUpdates(purchase.id!!, dto)
     PurchaseValidator.guardNoDuplicateProducts(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -81,7 +81,7 @@ class PurchaseService(
     PurchaseValidator.guardHasLines(dto.lines)
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
     val purchase = PurchaseMapper.toOrderEntity(dto).also { purchaseRepository.save(it) }
-    val lines = PurchaseMapper.toLineEntities(purchase.getNullSafeId(), dto.lines)
+    val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
@@ -91,7 +91,7 @@ class PurchaseService(
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.convertDraftToOrder(purchase, dto)
     purchaseRepository.save(purchase)
-    val lines = applyLineUpdates(purchase.getNullSafeId(), dto)
+    val lines = applyLineUpdates(purchase.id!!, dto)
     PurchaseValidator.guardHasLines(lines)
     PurchaseValidator.guardNoDuplicateProducts(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
@@ -116,7 +116,7 @@ class PurchaseService(
   }
 
   private fun applyCancelUpdates(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseCancelLinesDto>) {
-    val linesById = existingLines.associateBy { it.getNullSafeId() }
+    val linesById = existingLines.associateBy { it.id!! }
     val toSave = cancels.mapNotNull { cancel ->
       linesById[cancel.purchaseLineId]?.also { line ->
         PurchaseValidator.guardCancelQuantity(line, cancel)

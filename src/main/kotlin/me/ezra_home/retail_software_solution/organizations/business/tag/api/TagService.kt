@@ -40,8 +40,7 @@ class TagService(
             throwTagSimilarityException(tagName, similarTags)
         }
 
-        val dto = tagMapper.toDomainDto(tagInsertDto)
-        val savedDto = tagCache.upsertTag(dto)
+        val savedDto = tagCache.create(tagInsertDto)
         return tagMapper.toResponseDto(savedDto)
     }
 
@@ -55,11 +54,11 @@ class TagService(
 
     fun updateTag(tagUpdateDto: TagUpdateDto): TagResponseDto {
         validateTagUpdate(tagUpdateDto)
-        val tagToUpdate = tagCache.getAllTags().find { Objects.equals(tagUpdateDto.id, it.id) }
+        val existing = tagCache.getAllTags().find { Objects.equals(tagUpdateDto.id, it.id) }
             ?: throw UpdatingNonExistingRecordException()
-        tagMapper.partialUpdate(tagUpdateDto, tagToUpdate)
-        val updatedDto = tagCache.upsertTag(tagToUpdate)
-        return tagMapper.toResponseDto(updatedDto)
+        val updated = tagUpdateDto.applyTo(existing)
+        val savedDto = tagCache.save(updated)
+        return tagMapper.toResponseDto(savedDto)
     }
 
     private fun validateTagUpdate(tagUpdateDto: TagUpdateDto) {
@@ -87,5 +86,4 @@ class TagService(
         const val NAME_ALREADY_EXISTS = "A tag with the name %s already exists."
         const val SIMILARITY_THRESHOLD = 0.4
     }
-
 }

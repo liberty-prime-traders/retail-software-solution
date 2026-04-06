@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import org.springframework.cache.annotation.CacheConfig
@@ -38,8 +39,15 @@ class UnitValueCache(
             .toMap()
 
     @CacheEvict(allEntries = true)
-    fun upsertUnitValue(unitValueDto: UnitValueDto) {
-        unitValueRepository.save(unitValueMapper.toEntity(unitValueDto))
+    fun create(insertDto: UnitValueInsertDto): UnitValueDto {
+        val saved = unitValueRepository.save(unitValueMapper.toEntity(insertDto))
+        return unitValueMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(unitValueDto: UnitValueDto): UnitValueDto {
+        val saved = unitValueRepository.save(unitValueMapper.toEntity(unitValueDto))
+        return unitValueMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

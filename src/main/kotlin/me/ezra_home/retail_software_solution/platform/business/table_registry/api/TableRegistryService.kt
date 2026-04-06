@@ -28,8 +28,7 @@ class TableRegistryService(
         val dto = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
         if (!dto.validated) {
             validateName(dto.tableName)
-            dto.validated = true
-            tableRegistryCache.upsertTable(dto)
+            tableRegistryCache.save(dto.copy(validated = true))
         }
         return tableRegistryMapper.toDto(dto)
     }
@@ -39,16 +38,13 @@ class TableRegistryService(
     }
 
     fun update(dto: TableRegistryUpdateDto): TableRegistryResponseDto {
-        val id = dto.id
         val allTables = tableRegistryCache.getAllTables()
-        val tableDto = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
-        tableRegistryMapper.patchDto(dto, tableDto)
-        val effectiveDefaultPrefix = tableDto.defaultPrefix
-        val effDisplayName = tableDto.displayName
-        validateRequiredFields(tableDto)
-        validateUniqueness(tableDto.tableName, effectiveDefaultPrefix, effDisplayName, tableDto.id, allTables)
-        tableRegistryCache.upsertTable(tableDto)
-        return tableRegistryMapper.toDto(tableDto)
+        val tableDto = allTables.find { it.id == dto.id } ?: throw RtsGenericException("Table not found")
+        val updated = dto.applyTo(tableDto)
+        validateRequiredFields(updated)
+        validateUniqueness(updated.tableName, updated.defaultPrefix, updated.displayName, updated.id, allTables)
+        val saved = tableRegistryCache.save(updated)
+        return tableRegistryMapper.toDto(saved)
     }
 
     private fun validateRequiredFields(dto: TableRegistryDto) {
@@ -58,27 +54,26 @@ class TableRegistryService(
     }
 
     private fun validateUniqueness(
-        tableName: String?,
-        defaultPrefix: String?,
-        displayName: String?,
-        tableId: UUID?,
+        tableName: String,
+        defaultPrefix: String,
+        displayName: String,
+        tableId: UUID,
         allTables: Collection<TableRegistryDto>
     ) {
-        if (!tableName.isNullOrBlank()) {
+        if (tableName.isNotBlank()) {
             allTables
                 .find { StringUtils.isEquivalent(it.tableName, tableName) && it.id != tableId }
                 ?.let { throw RtsGenericException("A Table using the name '$tableName' already exists") }
         }
-        if (!defaultPrefix.isNullOrBlank()) {
+        if (defaultPrefix.isNotBlank()) {
             allTables
                 .find { StringUtils.isEquivalent(it.defaultPrefix, defaultPrefix) && it.id != tableId }
                 ?.let { throw RtsGenericException("A Table using the default prefix '$defaultPrefix' already exists") }
         }
-        if (!displayName.isNullOrBlank()) {
+        if (displayName.isNotBlank()) {
             allTables
                 .find { StringUtils.isEquivalent(it.displayName, displayName) && it.id != tableId }
                 ?.let { throw RtsGenericException("A Table using the display name '$displayName' already exists") }
         }
     }
-
 }

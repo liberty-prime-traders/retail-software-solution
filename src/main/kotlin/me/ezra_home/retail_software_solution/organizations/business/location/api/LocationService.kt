@@ -32,10 +32,7 @@ class LocationService(
         locationValidator.validateLocationInsert(locationInsertDto)
         val schemaName = createLocationSchema(locationInsertDto.name!!)
         try {
-            val locationDto = locationMapper.toDomainDto(locationInsertDto).apply {
-                this.schemaName = schemaName
-            }
-            locationCache.upsertLocation(locationDto)
+            val locationDto = locationCache.create(locationInsertDto, schemaName)
             return locationMapper.toResponseDto(locationDto)
         } catch (e: Exception) {
             locationSchemaService.dropSchema(schemaName)
@@ -52,9 +49,10 @@ class LocationService(
     fun updateLocation(locationUpdateDto: LocationUpdateDto): LocationResponseDto {
         val locationId = SessionContextProvider.getLocationId()
         locationValidator.validateLocationUpdate(locationUpdateDto)
-        val locationDto = locationCache.getAllLocations().find { Objects.equals(it.id, locationId) }
+        val existing = locationCache.getAllLocations().find { Objects.equals(it.id, locationId) }
             ?: throw UpdatingNonExistingRecordException()
-        locationMapper.partialUpdate(locationUpdateDto, locationDto)
-        return locationMapper.toResponseDto(locationDto)
+        val updated = locationUpdateDto.applyTo(existing)
+        val saved = locationCache.save(updated)
+        return locationMapper.toResponseDto(saved)
     }
 }

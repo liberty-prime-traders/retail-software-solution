@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserCache
-import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -41,18 +40,17 @@ class OrganizationUserService(
         return organizationUserCache.getOrganizationUsers().filter {
             organizationUserIds.contains(it.id) && it.isActive()
         }.map { dto ->
-            dto.endOn = OffsetDateTime.now()
-            organizationUserCache.upsertOrganizationUser(dto)
-            organizationUserMapper.toDto(dto)
+            val saved = organizationUserCache.save(dto.copy(endOn = OffsetDateTime.now()))
+            organizationUserMapper.toDto(saved)
         }
     }
 
     fun admitJoinRequests(joinRequests: Collection<OrganizationAdminJoinRequestResponseDto>) {
-        joinRequests.map { OrganizationUserDto(joinRequestId = it.id, userId = it.createdById) }
-            .let { organizationUserCache.upsertOrganizationUsers(it) }
+        joinRequests.map { OrganizationUserInsertDto(joinRequestId = it.id, userId = it.createdById) }
+            .let { organizationUserCache.createAll(it) }
     }
 
     fun registerFounder(userId: UUID) {
-        organizationUserCache.upsertOrganizationUser(OrganizationUserDto(userId = userId))
+        organizationUserCache.create(OrganizationUserInsertDto(userId = userId))
     }
 }

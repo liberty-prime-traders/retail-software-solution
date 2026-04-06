@@ -16,7 +16,7 @@ interface OrgJurisdictionTaxTypeMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toDomainDto(dto: OrgJurisdictionTaxTypeInsertDto): OrgJurisdictionTaxTypeDto
+    fun toEntity(dto: OrgJurisdictionTaxTypeInsertDto): OrgJurisdictionTaxTypeEntity
 
     fun toDomainDto(entity: OrgJurisdictionTaxTypeEntity): OrgJurisdictionTaxTypeDto
 

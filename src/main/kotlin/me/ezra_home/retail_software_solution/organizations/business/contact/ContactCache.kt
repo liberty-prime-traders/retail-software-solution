@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.contact
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -24,8 +25,15 @@ class ContactCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertContact(contactDto: ContactDto) {
-        contactRepository.save(contactMapper.toEntity(contactDto))
+    fun create(insertDto: ContactInsertDto): ContactDto {
+        val saved = contactRepository.save(contactMapper.toEntity(insertDto))
+        return contactMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(contactDto: ContactDto): ContactDto {
+        val saved = contactRepository.save(contactMapper.toEntity(contactDto))
+        return contactMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

@@ -9,4 +9,12 @@ data class TableRegistryUpdateDto(
     val displayName: Optional<String>?,
     val description: Optional<String>?,
     val userFacing: Optional<Boolean>?
-)
+) {
+
+    fun applyTo(existing: TableRegistryDto): TableRegistryDto = existing.copy(
+        defaultPrefix = defaultPrefix?.orElse(existing.defaultPrefix) ?: existing.defaultPrefix,
+        displayName = displayName?.orElse(existing.displayName) ?: existing.displayName,
+        description = description?.orElse(existing.description) ?: existing.description,
+        userFacing = userFacing?.orElse(existing.userFacing) ?: existing.userFacing
+    )
+}

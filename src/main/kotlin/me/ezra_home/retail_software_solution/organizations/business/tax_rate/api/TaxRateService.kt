@@ -36,18 +36,16 @@ class TaxRateService(
 
     fun create(dto: TaxRateInsertDto): TaxRateResponseDto {
         taxRateValidator.validateForCreate(dto)
-        val taxRateDto = taxRateMapper.toDomainDto(dto)
-        val savedDto = taxRateCache.save(taxRateDto)
+        val savedDto = taxRateCache.create(dto)
         return toResponseDto(savedDto)
     }
 
     fun update(dto: TaxRateUpdateDto): TaxRateResponseDto {
         if (dto.name == null && dto.endDate == null) throw RtsGenericException("Nothing to update")
-        val taxRateDto = taxRateCache.getAll().firstOrNull { it.id == dto.id } ?: throw UpdatingNonExistingRecordException()
-        taxRateValidator.validateForUpdate(taxRateDto, dto)
-        if (dto.name != null) taxRateDto.name = dto.name.orElse(null)!!
-        if (dto.endDate != null) taxRateDto.endDate = dto.endDate.orElse(null)
-        val savedDto = taxRateCache.save(taxRateDto)
+        val existing = taxRateCache.getAll().firstOrNull { it.id == dto.id } ?: throw UpdatingNonExistingRecordException()
+        taxRateValidator.validateForUpdate(existing, dto)
+        val updated = dto.applyTo(existing)
+        val savedDto = taxRateCache.save(updated)
         return toResponseDto(savedDto)
     }
 

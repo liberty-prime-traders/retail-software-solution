@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
@@ -26,20 +25,20 @@ class LocationProductSyncService(
             if (fieldsMatch(existing, syncDto)) return false
 
             val dto = locationProductMapper.toDomainDto(existing)
-            dto.productName = syncDto.productName
-            dto.description = syncDto.description
-            dto.productGroupName = syncDto.productGroupName ?: ""
-            dto.categoryId = syncDto.categoryId
-            dto.baseUnitId = syncDto.baseUnitId
-            dto.lastSyncedAt = OffsetDateTime.now()
-            if (existing.status == ProductStatus.ACTIVE) {
-                dto.status = syncDto.status
-            }
-            locationProductCache.upsertLocationProduct(dto)
+            val updatedStatus = if (existing.status == ProductStatus.ACTIVE) syncDto.status else dto.status
+            locationProductCache.save(dto.copy(
+                productName = syncDto.productName,
+                description = syncDto.description,
+                productGroupName = syncDto.productGroupName ?: "",
+                categoryId = syncDto.categoryId,
+                baseUnitId = syncDto.baseUnitId,
+                lastSyncedAt = OffsetDateTime.now(),
+                status = updatedStatus
+            ))
             return true
         }
 
-        locationProductCache.upsertLocationProduct(LocationProductDto(
+        locationProductCache.create(LocationProductInsertDto(
             productId = syncDto.productId,
             productName = syncDto.productName,
             description = syncDto.description,
@@ -52,12 +51,11 @@ class LocationProductSyncService(
         return true
     }
 
-    private fun fieldsMatch(existing: LocationProductEntity, syncDto: LocationProductSyncDto): Boolean {
-        return StringUtils.isEquivalent(existing.productName, syncDto.productName)
+    private fun fieldsMatch(existing: LocationProductEntity, syncDto: LocationProductSyncDto): Boolean =
+        StringUtils.isEquivalent(existing.productName, syncDto.productName)
             && StringUtils.isEquivalent(existing.description, syncDto.description)
             && StringUtils.isEquivalent(existing.productGroupName, syncDto.productGroupName)
             && existing.categoryId == syncDto.categoryId
             && existing.baseUnitId == syncDto.baseUnitId
             && existing.status == syncDto.status
-    }
 }

@@ -26,8 +26,7 @@ class PaymentMethodService(
 
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
-        val dto = paymentMethodMapper.toDomainDto(paymentMethodInsertDto)
-        paymentMethodCache.upsertPaymentMethod(dto)
+        val dto = paymentMethodCache.create(paymentMethodInsertDto)
         return paymentMethodMapper.toResponseDto(dto)
     }
 
@@ -40,11 +39,11 @@ class PaymentMethodService(
 
     fun updatePaymentMethod(paymentMethodUpdateDto: PaymentMethodUpdateDto): PaymentMethodResponseDto {
         val id = paymentMethodUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val dto = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
+        val existing = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
         validateNameOnSave(paymentMethodUpdateDto.name, paymentMethodUpdateDto.id)
-        paymentMethodMapper.partialUpdate(paymentMethodUpdateDto, dto)
-        paymentMethodCache.upsertPaymentMethod(dto)
-        return paymentMethodMapper.toResponseDto(dto)
+        val updated = paymentMethodUpdateDto.applyTo(existing)
+        val saved = paymentMethodCache.save(updated)
+        return paymentMethodMapper.toResponseDto(saved)
     }
 
     fun deletePaymentMethod(id: UUID) {

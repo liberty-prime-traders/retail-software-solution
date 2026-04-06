@@ -20,6 +20,6 @@ class ProductTagQualifier(
         if (activeTagIds.isEmpty()) return emptyList()
         return tagService.getAllTagDtos()
             .filter { activeTagIds.contains(it.id) }
-            .map { tag -> TagSummaryDto(id = tag.id!!, tagName = tag.tagName) }
+            .map { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
     }
 }

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.organization_admin
 
+import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
@@ -11,7 +12,15 @@ interface OrganizationAdminMapper {
 
     fun toDomainDto(entity: OrganizationAdminEntity): OrganizationAdminDto
 
-    @Mapping(target="adminId", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdById", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "endOn", ignore = true)
+    @Mapping(target = "adminId", ignore = true)
+    fun toEntity(insertDto: OrganizationAdminInsertDto): OrganizationAdminEntity
+
+    @Mapping(target = "adminId", ignore = true)
     fun toEntity(dto: OrganizationAdminDto): OrganizationAdminEntity
 
     @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])

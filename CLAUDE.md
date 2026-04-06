@@ -5,3 +5,10 @@
 - avoid star imports.
 - stop commenting all over. Comments should only call out gotchas. not explain what I can see by reading the code
 
+- You can use agents to perform tasks that require multiple steps or interactions with external systems. 
+- However, I have noticed agents getting stuck in loops or taking unnecessary steps. To avoid this, you should:
+  - Define clear and specific goals for the agent.
+  - Limit the number of steps or interactions the agent can take.
+  - Monitor the agent's actions and intervene if it goes off track.
+  - Occasionally do a health check on the agent's performance and adjust its parameters or goals as needed.
+  - If it is stuck, you can take over or reset it. Don't let it keep going in circles.

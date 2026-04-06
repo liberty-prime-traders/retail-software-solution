@@ -1,17 +1,16 @@
 package me.ezra_home.retail_software_solution.platform.business.table_registry.api
 
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.util.model.HasId
 import java.util.UUID
 
 data class TableRegistryDto(
-    override var id: UUID? = null,
-    var tableName: String,
-    var defaultPrefix: String,
-    var minimumVersionId: UUID,
-    var schemaLevel: SchemaLevel,
-    var displayName: String,
-    var description: String,
-    var userFacing: Boolean = false,
-    var validated: Boolean = false
-) : HasId
+    val id: UUID,
+    val tableName: String,
+    val defaultPrefix: String,
+    val minimumVersionId: UUID,
+    val schemaLevel: SchemaLevel,
+    val displayName: String,
+    val description: String,
+    val userFacing: Boolean = false,
+    val validated: Boolean = false
+)

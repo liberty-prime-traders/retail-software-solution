@@ -41,7 +41,7 @@ class TaxRateValidator(
     }
 
     fun validateForUpdate(taxRateDto: TaxRateDto, dto: TaxRateUpdateDto) {
-        val id = taxRateDto.id!!
+        val id = taxRateDto.id
         val updatedName = dto.name?.orElseThrow { RtsGenericException("Name must not be null") }
             ?.also { validateName(it) }
         val updatedEndDate = dto.endDate?.orElseThrow { RtsGenericException("End date must not be null") }
@@ -79,7 +79,7 @@ class TaxRateValidator(
             it.orgJurisdictionTaxTypeId == orgJurisdictionTaxTypeId &&
             (excludeId == null || it.id != excludeId) &&
             (endDate == null || !it.startDate.isAfter(endDate)) &&
-            (it.endDate == null || !it.endDate!!.isBefore(startDate))
+            (it.endDate == null || !it.endDate.isBefore(startDate))
         }
 
     private fun getTaxApplicationLevel(orgJurisdictionTaxTypeId: UUID): TaxApplicationLevel {

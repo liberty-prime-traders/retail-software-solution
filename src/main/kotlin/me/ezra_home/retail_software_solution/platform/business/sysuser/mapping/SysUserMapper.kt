@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 import com.okta.sdk.resource.user.User
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserInsertDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
@@ -16,6 +17,14 @@ interface SysUserMapper {
     fun toDomainDto(entity: SysUserEntity): SysUserDto
 
     fun toEntity(dto: SysUserDto): SysUserEntity
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdById", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "localFirstName", ignore = true)
+    @Mapping(target = "localLastName", ignore = true)
+    fun toEntity(insertDto: SysUserInsertDto): SysUserEntity
 
     @Mapping(source = "id", target = "oktaId")
     @Mapping(target = "id", expression = "java(idSupplier.get())")

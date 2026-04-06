@@ -30,45 +30,46 @@ class ContactService(
             contactInsertDto.firstName,
             contactInsertDto.companyName
         )
-        val dto = contactMapper.toDomainDto(contactInsertDto)
-        cleanupIncompatibleFields(dto, contactInsertDto.identityType)
+        val cleanedInsert = cleanupIncompatibleFields(contactInsertDto)
+        val dto = contactCache.create(cleanedInsert)
         contactValidator.validateUniqueness(dto.identity)
-        contactCache.upsertContact(dto)
         return contactMapper.toResponseDto(dto)
     }
 
-    fun cleanupIncompatibleFields(dto: ContactDto, identityType: IdentityType) {
-        when (identityType) {
-            IdentityType.ORGANIZATION -> {
-                dto.firstName = null
-                dto.lastName = null
-            }
-            IdentityType.INDIVIDUAL -> {
-                dto.companyName = null
-            }
+    private fun cleanupIncompatibleFields(insertDto: ContactInsertDto): ContactInsertDto {
+        return when (insertDto.identityType) {
+            IdentityType.ORGANIZATION -> insertDto.copy(firstName = null, lastName = null)
+            IdentityType.INDIVIDUAL -> insertDto.copy(companyName = null)
+        }
+    }
+
+    private fun cleanupIncompatibleFields(dto: ContactDto, identityType: IdentityType): ContactDto {
+        return when (identityType) {
+            IdentityType.ORGANIZATION -> dto.copy(firstName = null, lastName = null)
+            IdentityType.INDIVIDUAL -> dto.copy(companyName = null)
         }
     }
 
     fun updateContact(contactUpdateDto: ContactUpdateDto): ContactResponseDto {
         val id = contactUpdateDto.id
-        val dto = contactCache.getAllContacts().find { it.id == id }
+        val existing = contactCache.getAllContacts().find { it.id == id }
             ?: throw UpdatingNonExistingRecordException()
 
-        contactMapper.partialUpdate(contactUpdateDto, dto)
+        var updated = contactUpdateDto.applyTo(existing)
 
         val identityType = contactUpdateDto.identityType
-            ?.let { it.orElseGet { determineIdentityType(dto) } }
-            ?: determineIdentityType(dto)
+            ?.let { it.orElseGet { determineIdentityType(updated) } }
+            ?: determineIdentityType(updated)
 
         contactValidator.validateIdentity(
             identityType,
-            dto.firstName,
-            dto.companyName
+            updated.firstName,
+            updated.companyName
         )
-        cleanupIncompatibleFields(dto, identityType)
-        contactValidator.validateUniqueness(dto.identity, id)
-        contactCache.upsertContact(dto)
-        return contactMapper.toResponseDto(dto)
+        updated = cleanupIncompatibleFields(updated, identityType)
+        contactValidator.validateUniqueness(updated.identity, id)
+        val saved = contactCache.save(updated)
+        return contactMapper.toResponseDto(saved)
     }
 
     private fun determineIdentityType(dto: ContactDto): IdentityType {

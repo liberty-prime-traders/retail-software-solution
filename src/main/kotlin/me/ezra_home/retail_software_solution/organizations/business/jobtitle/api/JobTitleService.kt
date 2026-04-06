@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.UUID
 
-
 @Service
 @TransactionalOnOrganizationSchema
 class JobTitleService(
@@ -28,18 +27,17 @@ class JobTitleService(
         jobTitleCache.getAllJobTitles().find { StringUtils.isEquivalent(it.value, value) }
             ?.let { throw RtsGenericException(String.format(VALUE_ALREADY_EXISTS, value)) }
 
-        val dto = jobTitleMapper.toDomainDto(titleInsertDto)
-        jobTitleCache.upsertJobTitle(dto)
+        val dto = jobTitleCache.create(titleInsertDto)
         return jobTitleMapper.toDto(dto)
     }
 
     fun updateJobTitle(titleDto: JobTitleUpdateDto): JobTitleResponseDto {
         validateJobTitleUpdate(titleDto)
-        val dto = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
+        val existing = jobTitleCache.getAllJobTitles().find { Objects.equals(titleDto.id, it.id) }
             ?: throw UpdatingNonExistingRecordException()
-        jobTitleMapper.partialUpdate(titleDto, dto)
-        jobTitleCache.upsertJobTitle(dto)
-        return jobTitleMapper.toDto(dto)
+        val updated = titleDto.applyTo(existing)
+        val saved = jobTitleCache.save(updated)
+        return jobTitleMapper.toDto(saved)
     }
 
     private fun validateJobTitleUpdate(jobTitleUpdateDto: JobTitleUpdateDto) {
@@ -56,5 +54,4 @@ class JobTitleService(
         const val VALUE_IS_REQUIRED = "A job title must have a value"
         const val VALUE_ALREADY_EXISTS = "A job title with the value %s already exists."
     }
-
 }

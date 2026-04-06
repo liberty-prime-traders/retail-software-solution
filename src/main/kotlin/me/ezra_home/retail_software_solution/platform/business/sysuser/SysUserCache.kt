@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser
 import com.okta.sdk.client.Client
 import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserInsertDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.UserType
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
@@ -53,7 +54,8 @@ class SysUserCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun addSystemUser(dto: SysUserDto): SysUserDto {
-        return sysUserMapper.toDomainDto(userRepository.save(sysUserMapper.toEntity(dto)))
+    fun create(insertDto: SysUserInsertDto): SysUserDto {
+        val saved = userRepository.save(sysUserMapper.toEntity(insertDto))
+        return sysUserMapper.toDomainDto(saved)
     }
 }

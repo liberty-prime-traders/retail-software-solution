@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -23,8 +24,15 @@ class PaymentMethodCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertPaymentMethod(paymentMethodDto: PaymentMethodDto) {
-        paymentMethodRepository.save(paymentMethodMapper.toEntity(paymentMethodDto))
+    fun create(insertDto: PaymentMethodInsertDto): PaymentMethodDto {
+        val saved = paymentMethodRepository.save(paymentMethodMapper.toEntity(insertDto))
+        return paymentMethodMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(paymentMethodDto: PaymentMethodDto): PaymentMethodDto {
+        val saved = paymentMethodRepository.save(paymentMethodMapper.toEntity(paymentMethodDto))
+        return paymentMethodMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

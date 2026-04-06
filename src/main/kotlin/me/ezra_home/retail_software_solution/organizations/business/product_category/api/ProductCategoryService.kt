@@ -32,18 +32,17 @@ class ProductCategoryService(
         val categoryName = StringUtils.getValueOrException(productCategoryInsertDto.categoryName, NAME_IS_REQUIRED)
         productCategoryCache.getAllCategories().find { StringUtils.isEquivalent(it.categoryName, categoryName) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, categoryName))}
-        val dto = productCategoryMapper.toDomainDto(productCategoryInsertDto)
-        val savedDto = productCategoryCache.upsertCategories(dto)
+        val savedDto = productCategoryCache.create(productCategoryInsertDto)
         return productCategoryMapper.toResponseDto(savedDto)
     }
 
     fun updateCategory(productCategoryUpdateDto: ProductCategoryUpdateDto): ProductCategoryResponseDto {
         validateCategoryUpdate(productCategoryUpdateDto)
-        val categoryToUpdate = productCategoryCache.getAllCategories().find { Objects.equals(productCategoryUpdateDto.id, it.id) }
+        val existing = productCategoryCache.getAllCategories().find { Objects.equals(productCategoryUpdateDto.id, it.id) }
             ?: throw UpdatingNonExistingRecordException()
-        productCategoryMapper.partialUpdate(productCategoryUpdateDto, categoryToUpdate)
-        val updatedDto = productCategoryCache.upsertCategories(categoryToUpdate)
-        return productCategoryMapper.toResponseDto(updatedDto)
+        val updated = productCategoryUpdateDto.applyTo(existing)
+        val savedDto = productCategoryCache.save(updated)
+        return productCategoryMapper.toResponseDto(savedDto)
     }
 
     private fun validateCategoryUpdate(productCategoryUpdateDto: ProductCategoryUpdateDto) {
@@ -61,5 +60,4 @@ class ProductCategoryService(
         const val NAME_IS_REQUIRED = "A category must have a name"
         const val NAME_ALREADY_EXISTS = "A category with the name %s already exists."
     }
-
 }

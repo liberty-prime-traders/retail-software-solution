@@ -16,8 +16,11 @@ class LocationProductSearchExecutor(
   private val unitValueService: UnitValueService
 ) : ProductSearchExecutor<LocationProductEntity, LocationProductResponseDto>(emf, LocationProductEntity::class.java) {
 
-  override fun map(entity: LocationProductEntity): LocationProductResponseDto  {
-    val baseUnitName = unitValueService.getUnitName(entity.baseUnitId)
-    return mapper.toDto(mapper.toDomainDto(entity), baseUnitName)
+
+  override fun map(entities: List<LocationProductEntity>): List<LocationProductResponseDto> {
+    val unitNamesById = unitValueService.getUnitNamesById()
+    return entities.map { entity ->
+      mapper.toDto(mapper.toDomainDto(entity), unitNamesById[entity.baseUnitId])
+    }
   }
 }

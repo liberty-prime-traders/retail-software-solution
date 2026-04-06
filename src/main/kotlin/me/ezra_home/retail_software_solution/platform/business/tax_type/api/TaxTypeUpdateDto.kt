@@ -11,4 +11,13 @@ data class TaxTypeUpdateDto(
     val taxRecoveryType: Optional<TaxRecoveryType>? = null,
     val taxApplicationLevel: Optional<TaxApplicationLevel>? = null,
     val taxTriggers: Optional<List<TaxTrigger>>? = null
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: TaxTypeDto): TaxTypeDto = existing.copy(
+        name = name?.orElse(existing.name) ?: existing.name,
+        description = description?.orElse(existing.description) ?: existing.description,
+        taxRecoveryType = taxRecoveryType?.orElse(existing.taxRecoveryType) ?: existing.taxRecoveryType,
+        taxApplicationLevel = taxApplicationLevel?.orElse(existing.taxApplicationLevel) ?: existing.taxApplicationLevel,
+        taxTriggers = taxTriggers?.orElse(existing.taxTriggers) ?: existing.taxTriggers
+    )
+}

@@ -8,4 +8,12 @@ data class OrganizationUpdateDto(
     val description: Optional<String>? = null,
     val hidden: Optional<Boolean>? = null,
     val timezone: Optional<String>? = null
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: OrganizationDto): OrganizationDto = existing.copy(
+        name = name?.orElse(existing.name) ?: existing.name,
+        description = description?.orElse(null) ?: existing.description,
+        hidden = hidden?.orElse(existing.hidden) ?: existing.hidden,
+        timezone = timezone?.orElse(null) ?: existing.timezone
+    )
+}

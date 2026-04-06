@@ -18,4 +18,18 @@ data class ContactUpdateDto(
     val creditLimit: Optional<BigDecimal>? = null,
     val notes: Optional<String>? = null,
     val status: Optional<ContactStatus>? = null
-): Serializable
+): Serializable {
+
+    fun applyTo(existing: ContactDto): ContactDto = existing.copy(
+        contactType = contactType?.orElse(existing.contactType) ?: existing.contactType,
+        firstName = firstName?.orElse(existing.firstName) ?: existing.firstName,
+        lastName = lastName?.orElse(existing.lastName) ?: existing.lastName,
+        companyName = companyName?.orElse(existing.companyName) ?: existing.companyName,
+        email = email?.orElse(existing.email) ?: existing.email,
+        phone = phone?.orElse(existing.phone) ?: existing.phone,
+        address = address?.orElse(existing.address) ?: existing.address,
+        creditLimit = creditLimit?.orElse(existing.creditLimit) ?: existing.creditLimit,
+        notes = notes?.orElse(existing.notes) ?: existing.notes,
+        status = status?.orElse(existing.status) ?: existing.status
+    )
+}

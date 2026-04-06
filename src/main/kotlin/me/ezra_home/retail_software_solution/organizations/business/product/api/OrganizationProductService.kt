@@ -41,32 +41,28 @@ class OrganizationProductService(
 
     fun createProduct(productInsertDto: OrganizationProductInsertDto): OrganizationProductResponseDto {
         organizationProductValidator.validateProductInsert(productInsertDto)
-        val dto = organizationProductMapper.toDomainDto(productInsertDto)
-        dto.status = ProductStatus.ACTIVE
-        val savedDto = organizationProductCache.upsertProduct(dto)
-        if (savedDto.id != null) {
-            productTagService.manageProductTags(
-                productId = savedDto.id!!,
-                tagsToAdd = productInsertDto.tagsToAdd
-            )
-        }
-        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
+        val savedDto = organizationProductCache.create(productInsertDto)
+        productTagService.manageProductTags(
+            productId = savedDto.id,
+            tagsToAdd = productInsertDto.tagsToAdd
+        )
+        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
         return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
 
     fun updateProduct(productUpdateDto: OrganizationProductUpdateDto): OrganizationProductResponseDto {
         organizationProductRepository.findById(productUpdateDto.id).orElseThrow { UpdatingNonExistingRecordException() }
         organizationProductValidator.validateProductUpdate(productUpdateDto)
-        val dto = organizationProductCache.findAllProducts().find { it.id == productUpdateDto.id }
+        val existing = organizationProductCache.findAllProducts().find { it.id == productUpdateDto.id }
             ?: throw UpdatingNonExistingRecordException()
-        organizationProductMapper.partialUpdate(productUpdateDto, dto)
-        val savedDto = organizationProductCache.upsertProduct(dto)
+        val updated = productUpdateDto.applyTo(existing)
+        val savedDto = organizationProductCache.save(updated)
         productTagService.manageProductTags(
             productId = productUpdateDto.id,
             tagsToAdd = productUpdateDto.tagsToAdd,
             tagsToRemove = productUpdateDto.tagsToRemove
         )
-        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
+        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
         return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
 
@@ -83,10 +79,9 @@ class OrganizationProductService(
     }
 
     private fun updateStatus(productDto: OrganizationProductDto, status: ProductStatus): OrganizationProductResponseDto {
-        productDto.status = status
-        val savedDto = organizationProductCache.upsertProduct(productDto)
-        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id!!)
+        val updated = productDto.copy(status = status)
+        val savedDto = organizationProductCache.save(updated)
+        catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
         return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
     }
-
 }

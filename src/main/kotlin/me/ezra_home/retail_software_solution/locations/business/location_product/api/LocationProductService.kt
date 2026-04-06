@@ -16,76 +16,69 @@ import java.util.UUID
 @Service
 @TransactionalOnLocationSchema
 class LocationProductService(
-  private val locationProductRepository: LocationProductRepository,
-  private val locationProductCache: LocationProductCache,
-  private val locationProductMapper: LocationProductMapper,
-  private val organizationProductService: OrganizationProductService,
-  private val unitValueService: UnitValueService
+    private val locationProductRepository: LocationProductRepository,
+    private val locationProductCache: LocationProductCache,
+    private val locationProductMapper: LocationProductMapper,
+    private val organizationProductService: OrganizationProductService,
+    private val unitValueService: UnitValueService
 ) {
 
-  @TransactionalOnLocationSchema(readOnly = true)
-  fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> {
-    return locationProductRepository.findAllById(ids).associate { entity ->
-      entity.getNullSafeId() to LocationProductSummaryDto(
-        id = entity.getNullSafeId(),
-        referenceNumber = entity.getNullSafeReferenceNumber(),
-        productName = entity.productName,
-        productGroupName = entity.productGroupName,
-        baseUnitId = entity.baseUnitId
-      )
+    @TransactionalOnLocationSchema(readOnly = true)
+    fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> =
+        locationProductRepository.findAllById(ids).associate { entity ->
+            entity.id!! to LocationProductSummaryDto(
+                id = entity.id!!,
+                referenceNumber = entity.referenceNumber!!,
+                productName = entity.productName,
+                productGroupName = entity.productGroupName,
+                baseUnitId = entity.baseUnitId
+            )
+        }
+
+    fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
+        val products = locationProductRepository.findAllById(prices.keys)
+        products.forEach { it.lastPurchasePrice = prices[it.id] }
+        locationProductRepository.saveAll(products)
+        locationProductCache.evictAll()
     }
-  }
 
-  fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
-    val products = locationProductRepository.findAllById(prices.keys)
-    products.forEach { it.lastPurchasePrice = prices[it.id] }
-    locationProductRepository.saveAll(products)
-    locationProductCache.evictAll()
-  }
-
-  @TransactionalOnLocationSchema(readOnly = true)
-  fun findAllProducts(): List<LocationProductResponseDto> {
-    val unitNamesById = unitValueService.getUnitNamesById()
-    return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it, unitNamesById[it.baseUnitId]) }
-  }
-
-  @TransactionalOnLocationSchema(readOnly = true)
-  fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
-
-  fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
-    val entity = locationProductRepository.findById(dto.id).orElseThrow {
-      UpdatingNonExistingRecordException()
+    @TransactionalOnLocationSchema(readOnly = true)
+    fun findAllProducts(): List<LocationProductResponseDto> {
+        val unitNamesById = unitValueService.getUnitNamesById()
+        return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it, unitNamesById[it.baseUnitId]) }
     }
-    LocationProductValidator.validateProductUpdate(dto)
-    val productDto = locationProductMapper.toDomainDto(entity)
-    locationProductMapper.partialUpdate(dto, productDto)
-    locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
-  }
 
-  fun deactivateProduct(productId: UUID): LocationProductResponseDto {
-    val entity = locationProductRepository.findById(productId).orElseThrow {
-      UpdatingNonExistingRecordException()
+    @TransactionalOnLocationSchema(readOnly = true)
+    fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
+
+    fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(dto.id).orElseThrow {
+            UpdatingNonExistingRecordException()
+        }
+        LocationProductValidator.validateProductUpdate(dto)
+        val updated = dto.applyTo(locationProductMapper.toDomainDto(entity))
+        val saved = locationProductCache.save(updated)
+        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
     }
-    val productDto = locationProductMapper.toDomainDto(entity)
-    productDto.status = ProductStatus.DISCONTINUED
-    locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
-  }
 
-  fun reactivateProduct(productId: UUID): LocationProductResponseDto {
-    val entity = locationProductRepository.findById(productId).orElseThrow {
-      UpdatingNonExistingRecordException()
+    fun deactivateProduct(productId: UUID): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(productId).orElseThrow {
+            UpdatingNonExistingRecordException()
+        }
+        val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.DISCONTINUED))
+        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
     }
-    verifyOrgProductIsActive(entity.productId)
-    val productDto = locationProductMapper.toDomainDto(entity)
-    productDto.status = ProductStatus.ACTIVE
-    locationProductCache.upsertLocationProduct(productDto)
-    return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
-  }
 
-  fun verifyOrgProductIsActive(orgProductId: UUID) {
-    organizationProductService.verifyProductIsActive(orgProductId)
-  }
+    fun reactivateProduct(productId: UUID): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(productId).orElseThrow {
+            UpdatingNonExistingRecordException()
+        }
+        verifyOrgProductIsActive(entity.productId)
+        val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.ACTIVE))
+        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
+    }
 
+    fun verifyOrgProductIsActive(orgProductId: UUID) {
+        organizationProductService.verifyProductIsActive(orgProductId)
+    }
 }

@@ -8,4 +8,10 @@ data class ProductCategoryUpdateDto(
     val id: UUID? = null,
     val categoryName: Optional<String>? = null,
     val description: Optional<String>? = null,
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: ProductCategoryDto): ProductCategoryDto = existing.copy(
+        categoryName = categoryName?.orElse(existing.categoryName) ?: existing.categoryName,
+        description = description?.orElse(existing.description) ?: existing.description
+    )
+}

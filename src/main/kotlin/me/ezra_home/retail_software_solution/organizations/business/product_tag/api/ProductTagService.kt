@@ -32,11 +32,11 @@ class ProductTagService(
         val productIds = products.mapNotNull { it.id }
         val productTags = productTagCache.findActiveProductTagsByProductIds(productIds)
         val tagIdsByProductId = productTags.groupBy({ it.productId }, { it.tagId })
-        val tagsById = tagService.getAllTagDtos().filter { it.id != null }.associateBy { it.id!! }
+        val tagsById = tagService.getAllTagDtos().associateBy { it.id }
         return products.map { product ->
             val tagIds = tagIdsByProductId[product.id] ?: emptyList()
             val tags = tagIds.mapNotNull { tagId ->
-                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.id!!, tagName = tag.tagName) }
+                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
             }
             product.copy(activeTags = tags)
         }
@@ -57,24 +57,20 @@ class ProductTagService(
         val activeProductTags = productTagCache.findActiveProductTagsByProductId(productId)
         val activeTagIds = activeProductTags.map { it.tagId }
 
-        val dtosToUpdate = mutableListOf<ProductTagDto>()
-
-        tagsToRemove.forEach { tagId ->
-            val existingAssignment = activeProductTags.find { it.tagId == tagId }
-            if (existingAssignment != null) {
-                existingAssignment.endOn = OffsetDateTime.now()
-                dtosToUpdate.add(existingAssignment)
-            }
-        }
-
-        tagsToAdd.forEach { tagId ->
-            if (!activeTagIds.contains(tagId)) {
-                dtosToUpdate.add(ProductTagDto(productId = productId, tagId = tagId))
-            }
+        val dtosToUpdate = tagsToRemove.mapNotNull { tagId ->
+            activeProductTags.find { it.tagId == tagId }?.copy(endOn = OffsetDateTime.now())
         }
 
         if (dtosToUpdate.isNotEmpty()) {
             productTagCache.saveAllProductTags(dtosToUpdate)
+        }
+
+        val insertDtos = tagsToAdd
+            .filter { !activeTagIds.contains(it) }
+            .map { tagId -> ProductTagInsertDto(productId = productId, tagId = tagId) }
+
+        if (insertDtos.isNotEmpty()) {
+            productTagCache.createProductTags(insertDtos)
         }
     }
 }

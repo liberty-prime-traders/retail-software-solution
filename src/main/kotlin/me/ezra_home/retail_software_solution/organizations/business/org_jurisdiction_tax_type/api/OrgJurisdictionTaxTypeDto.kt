@@ -4,10 +4,10 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrgJurisdictionTaxTypeDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var jurisdictionTaxTypeId: UUID,
-    var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val jurisdictionTaxTypeId: UUID,
+    val status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE
 )

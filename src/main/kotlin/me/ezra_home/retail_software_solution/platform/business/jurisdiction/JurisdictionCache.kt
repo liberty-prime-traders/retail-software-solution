@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -19,13 +20,18 @@ class JurisdictionCache(
 ) {
 
     @Cacheable
-    fun getAll(): Collection<JurisdictionDto> {
-         return jurisdictionRepository.findAll().map { mapper.toDomainDto(it) }
+    fun getAll(): Collection<JurisdictionDto> = jurisdictionRepository.findAll().map { mapper.toDomainDto(it) }
+
+    @CacheEvict(allEntries = true)
+    fun create(insertDto: JurisdictionInsertDto): JurisdictionDto {
+        val saved = jurisdictionRepository.save(mapper.toEntity(insertDto))
+        return mapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)
-    fun upsert(dto: JurisdictionDto) {
-        jurisdictionRepository.save(mapper.toEntity(dto))
+    fun save(dto: JurisdictionDto): JurisdictionDto {
+        val saved = jurisdictionRepository.save(mapper.toEntity(dto))
+        return mapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

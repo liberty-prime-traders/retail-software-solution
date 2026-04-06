@@ -5,14 +5,14 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class OrganizationProductDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var productName: String,
-    var description: String? = null,
-    var productGroupId: UUID,
-    var productGroupName: String? = null,
-    var baseUnitId: UUID,
-    var status: ProductStatus? = ProductStatus.ACTIVE
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val productName: String,
+    val description: String? = null,
+    val productGroupId: UUID,
+    val productGroupName: String? = null,
+    val baseUnitId: UUID,
+    val status: ProductStatus? = ProductStatus.ACTIVE
 )

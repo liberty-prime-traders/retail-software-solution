@@ -6,4 +6,9 @@ import java.util.UUID
 data class OrgJurisdictionTaxTypeUpdateDto(
     val id: UUID,
     val status: OrgJurisdictionTaxTypeStatus
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: OrgJurisdictionTaxTypeDto): OrgJurisdictionTaxTypeDto = existing.copy(
+        status = status
+    )
+}

@@ -35,7 +35,7 @@ class PurchaseDeliveryService(
 
   private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {
     val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(dto))
-    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.getNullSafeId(), dto)
+    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
   }

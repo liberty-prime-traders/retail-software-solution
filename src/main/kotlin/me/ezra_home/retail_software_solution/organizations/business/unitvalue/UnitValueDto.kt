@@ -4,14 +4,14 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class UnitValueDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var name: String? = null,
-    var description: String? = null,
-    var code: String? = null,
-    var unitGroupId: UUID? = null,
-    var baseUnit: UUID? = null,
-    var conversionFactor: Double? = null
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val name: String? = null,
+    val description: String? = null,
+    val code: String? = null,
+    val unitGroupId: UUID? = null,
+    val baseUnit: UUID? = null,
+    val conversionFactor: Double? = null
 )

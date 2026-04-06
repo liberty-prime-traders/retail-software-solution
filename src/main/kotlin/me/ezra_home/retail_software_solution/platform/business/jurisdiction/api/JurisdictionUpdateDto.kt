@@ -11,4 +11,11 @@ data class JurisdictionUpdateDto(
     val parentJurisdictionId: Optional<UUID>? = null,
     val taxTypesToAddOrReactivate: List<UUID>? = null,
     val taxTypesToDiscontinue: List<UUID>? = null
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: JurisdictionDto): JurisdictionDto = existing.copy(
+        name = name?.orElse(existing.name) ?: existing.name,
+        jurisdictionTypeId = jurisdictionTypeId?.orElse(existing.jurisdictionTypeId) ?: existing.jurisdictionTypeId,
+        parentJurisdictionId = parentJurisdictionId?.orElse(null) ?: existing.parentJurisdictionId
+    )
+}

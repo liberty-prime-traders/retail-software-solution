@@ -50,12 +50,12 @@ class OrganizationMigrationHandler(
         previousVersionLabel = dbVersionService.getVersionNumber(targetDbVersion.prevVersionId)
       )
 
-      organizationService.updateCurrentDbVersion(organization.getNullSafeId(), targetDbVersion.getNullSafeId())
+      organizationService.updateCurrentDbVersion(organization.id, targetDbVersion.id)
 
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = migration.getNullSafeId(),
+        parentMigrationId = migration.id,
         locationIds = locationIds
       )
 

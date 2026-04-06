@@ -6,14 +6,14 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class TaxRateDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var orgJurisdictionTaxTypeId: UUID,
-    var name: String,
-    var ratePercentage: BigDecimal? = null,
-    var rateFlatAmount: BigDecimal? = null,
-    var startDate: LocalDate,
-    var endDate: LocalDate? = null
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val orgJurisdictionTaxTypeId: UUID,
+    val name: String,
+    val ratePercentage: BigDecimal? = null,
+    val rateFlatAmount: BigDecimal? = null,
+    val startDate: LocalDate,
+    val endDate: LocalDate? = null
 )

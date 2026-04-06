@@ -6,41 +6,33 @@ import java.time.OffsetDateTime
 
 @Component
 class MigrationStatusUpdater(
-  private val dbMigrationCache: DbMigrationCache
+    private val dbMigrationCache: DbMigrationCache
 ) {
-  fun markSuccess(migration: DbMigrationDto, message: String) {
-    migration.apply {
-      status = MigrationStatus.SUCCESS
-      this.message = message.take(100)
-      endOn = OffsetDateTime.now()
-    }
-    dbMigrationCache.upsertDbMigration(migration)
-  }
+    fun markSuccess(migration: DbMigrationDto, message: String): DbMigrationDto =
+        dbMigrationCache.save(migration.copy(
+            status = MigrationStatus.SUCCESS,
+            message = message.take(100),
+            endOn = OffsetDateTime.now()
+        ))
 
-  fun markPartial(migration: DbMigrationDto, message: String) {
-    migration.apply {
-      status = MigrationStatus.PARTIAL
-      this.message = message.take(100)
-      endOn = OffsetDateTime.now()
-    }
-    dbMigrationCache.upsertDbMigration(migration)
-  }
+    fun markPartial(migration: DbMigrationDto, message: String): DbMigrationDto =
+        dbMigrationCache.save(migration.copy(
+            status = MigrationStatus.PARTIAL,
+            message = message.take(100),
+            endOn = OffsetDateTime.now()
+        ))
 
-  fun markFailure(migration: DbMigrationDto, error: Exception) {
-    migration.apply {
-      status = MigrationStatus.FAILURE
-      message = error.message?.take(100) ?: "Unknown error during migration"
-      endOn = OffsetDateTime.now()
-    }
-    dbMigrationCache.upsertDbMigration(migration)
-  }
+    fun markFailure(migration: DbMigrationDto, error: Exception): DbMigrationDto =
+        dbMigrationCache.save(migration.copy(
+            status = MigrationStatus.FAILURE,
+            message = error.message?.take(100) ?: "Unknown error during migration",
+            endOn = OffsetDateTime.now()
+        ))
 
-  fun markIgnored(migration: DbMigrationDto, reason: String) {
-    migration.apply {
-      status = MigrationStatus.IGNORED
-      message = reason.take(100)
-      endOn = OffsetDateTime.now()
-    }
-    dbMigrationCache.upsertDbMigration(migration)
-  }
+    fun markIgnored(migration: DbMigrationDto, reason: String): DbMigrationDto =
+        dbMigrationCache.save(migration.copy(
+            status = MigrationStatus.IGNORED,
+            message = reason.take(100),
+            endOn = OffsetDateTime.now()
+        ))
 }

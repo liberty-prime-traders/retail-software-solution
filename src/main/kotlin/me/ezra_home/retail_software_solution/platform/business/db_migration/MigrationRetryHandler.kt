@@ -26,7 +26,7 @@ class MigrationRetryHandler(
     val retryMigration = migrationInitializer.createRetryMigration(originalMigration, targetDbVersion)
 
     return try {
-      val eligibleLocationIds = filterEligibleLocations(originalMigration.getNullSafeId(), locationIds)
+      val eligibleLocationIds = filterEligibleLocations(originalMigration.id, locationIds)
 
       if (eligibleLocationIds.isEmpty()) {
         migrationStatusUpdater.markIgnored(
@@ -39,7 +39,7 @@ class MigrationRetryHandler(
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = retryMigration.getNullSafeId(),
+        parentMigrationId = retryMigration.id,
         locationIds = eligibleLocationIds
       )
 
@@ -50,7 +50,7 @@ class MigrationRetryHandler(
         isRetry = true
       )
 
-      val consolidatedResults = consolidateResults(originalMigration.getNullSafeId(), locationResults.successful)
+      val consolidatedResults = consolidateResults(originalMigration.id, locationResults.successful)
 
       OrganizationLocationsMigration(retryMigration, consolidatedResults)
     } catch (e: Exception) {

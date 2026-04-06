@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -22,7 +23,14 @@ class OrganizationAdminCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationAdmin(dto: OrganizationAdminDto) {
-        organizationAdminRepository.save(organizationAdminMapper.toEntity(dto))
+    fun create(insertDto: OrganizationAdminInsertDto): OrganizationAdminDto {
+        val saved = organizationAdminRepository.save(organizationAdminMapper.toEntity(insertDto))
+        return organizationAdminMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(dto: OrganizationAdminDto): OrganizationAdminDto {
+        val saved = organizationAdminRepository.save(organizationAdminMapper.toEntity(dto))
+        return organizationAdminMapper.toDomainDto(saved)
     }
 }

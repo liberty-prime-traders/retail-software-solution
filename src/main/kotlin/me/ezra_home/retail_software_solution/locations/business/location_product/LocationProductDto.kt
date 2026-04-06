@@ -6,20 +6,20 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class LocationProductDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var productId: UUID? = null,
-    var productName: String? = null,
-    var description: String? = null,
-    var productGroupName: String? = null,
-    var categoryId: UUID? = null,
-    var baseUnitId: UUID? = null,
-    var defaultSalePrice: BigDecimal? = null,
-    var minStockLevel: Int? = null,
-    var lastPurchasePrice: BigDecimal? = null,
-    var status: ProductStatus = ProductStatus.ACTIVE,
-    var lastSyncedAt: OffsetDateTime? = null,
-    var stockBalance: BigDecimal? = null
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val productId: UUID? = null,
+    val productName: String? = null,
+    val description: String? = null,
+    val productGroupName: String? = null,
+    val categoryId: UUID? = null,
+    val baseUnitId: UUID? = null,
+    val defaultSalePrice: BigDecimal? = null,
+    val minStockLevel: Int? = null,
+    val lastPurchasePrice: BigDecimal? = null,
+    val status: ProductStatus = ProductStatus.ACTIVE,
+    val lastSyncedAt: OffsetDateTime? = null,
+    val stockBalance: BigDecimal? = null
 )

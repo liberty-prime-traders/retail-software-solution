@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.tax_type
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -22,8 +23,15 @@ class TaxTypeCache(
     fun getAll(): Collection<TaxTypeDto> = taxTypeRepository.findAll().map { mapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsert(dto: TaxTypeDto) {
-        taxTypeRepository.save(mapper.toEntity(dto))
+    fun create(insertDto: TaxTypeInsertDto): TaxTypeDto {
+        val saved = taxTypeRepository.save(mapper.toEntity(insertDto))
+        return mapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(dto: TaxTypeDto): TaxTypeDto {
+        val saved = taxTypeRepository.save(mapper.toEntity(dto))
+        return mapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

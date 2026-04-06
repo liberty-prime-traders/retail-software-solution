@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -21,8 +22,15 @@ class JobTitleCache(
     fun getAllJobTitles(): Collection<JobTitleDto> = jobTitleRepository.findAll().map { jobTitleMapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsertJobTitle(jobTitleDto: JobTitleDto) {
-        jobTitleRepository.save(jobTitleMapper.toEntity(jobTitleDto))
+    fun create(insertDto: JobTitleInsertDto): JobTitleDto {
+        val saved = jobTitleRepository.save(jobTitleMapper.toEntity(insertDto))
+        return jobTitleMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(jobTitleDto: JobTitleDto): JobTitleDto {
+        val saved = jobTitleRepository.save(jobTitleMapper.toEntity(jobTitleDto))
+        return jobTitleMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

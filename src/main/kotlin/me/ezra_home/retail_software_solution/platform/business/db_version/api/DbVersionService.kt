@@ -32,15 +32,18 @@ class DbVersionService(
     fun activateDbVersion(versionId: UUID): DbVersionResponseDto {
         val allDbVersions = dbVersionCache.getAllDbVersions()
         val dbVersionToActivate = allDbVersions.find { it.id == versionId } ?: throw UpdatingNonExistingRecordException()
-        if (dbVersionToActivate.activatedOn == null) {
+        val saved = if (dbVersionToActivate.activatedOn == null) {
             verifyDbVersionForActivation(dbVersionToActivate, allDbVersions)
             val lastSequenceNumber = dbVersionCache.findMaxSequenceNumber() ?: 0L
-            dbVersionToActivate.sequenceNumber = lastSequenceNumber.plus(1)
-            dbVersionToActivate.activatedOn = OffsetDateTime.now()
-            dbVersionCache.upsertDbVersion(dbVersionToActivate)
+            dbVersionCache.save(dbVersionToActivate.copy(
+                sequenceNumber = lastSequenceNumber + 1,
+                activatedOn = OffsetDateTime.now()
+            ))
+        } else {
+            dbVersionToActivate
         }
-        val prevVersionNumber = dbVersionCache.getVersionNumbersById()[dbVersionToActivate.prevVersionId]
-        return dbVersionMapper.toResponseDto(dbVersionToActivate, prevVersionNumber)
+        val prevVersionNumber = dbVersionCache.getVersionNumbersById()[saved.prevVersionId]
+        return dbVersionMapper.toResponseDto(saved, prevVersionNumber)
     }
 
     private fun verifyDbVersionForActivation(dbVersion: DbVersionDto, allDbVersions: Collection<DbVersionDto>) {

@@ -39,9 +39,8 @@ class OrganizationService(
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun getAllOrganizations(): Collection<OrganizationResponseDto> {
-        return organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
-    }
+    fun getAllOrganizations(): Collection<OrganizationResponseDto> =
+        organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllOrganizationDtos(): Collection<OrganizationDto> = organizationCache.getAllOrganizations()
@@ -49,8 +48,7 @@ class OrganizationService(
     fun updateCurrentDbVersion(organizationId: UUID, versionId: UUID) {
         val org = organizationCache.getAllOrganizations().find { it.id == organizationId }
             ?: throw RtsGenericException("Organization not found")
-        org.currentDbVersionId = versionId
-        organizationCache.upsertOrganization(org)
+        organizationCache.save(org.copy(currentDbVersionId = versionId))
     }
 
     fun createOrganization(dto: OrganizationInsertDto): OrganizationResponseDto {
@@ -60,15 +58,11 @@ class OrganizationService(
         markSubdomainAsUsed(dto.subdomain)
         val schemaName = createOrganizationSchema(dto.subdomain)
         try {
-            val organizationDto = organizationMapper.toDomainDto(dto).apply {
-                this.schemaName = schemaName
-                this.creationPassId = pass.id
-            }
-            organizationCache.upsertOrganization(organizationDto)
-            SessionContextProvider.initOrganization(organizationDto)
-            organizationAdminService.registerFounder(organizationDto.createdById!!)
-            organizationUserService.registerFounder(organizationDto.createdById!!)
-            return organizationMapper.toResponseDto(organizationDto)
+            val saved = organizationCache.create(dto, schemaName, pass.id!!)
+            SessionContextProvider.initOrganization(saved)
+            organizationAdminService.registerFounder(saved.createdById)
+            organizationUserService.registerFounder(saved.createdById)
+            return organizationMapper.toResponseDto(saved)
         } catch (e: Exception) {
             organizationSchemaService.dropSchema(schemaName)
             throw e
@@ -92,11 +86,10 @@ class OrganizationService(
         val organizationId = SessionContextProvider.getOrganizationId()
         organizationValidator.validateNameOnSave(dto.name, organizationId)
         DateTimes.validateTimezone(dto.timezone)
-        val organizationDto = organizationCache.getAllOrganizations()
+        val existing = organizationCache.getAllOrganizations()
             .find { it.id == organizationId } ?: throw NotFoundException()
-        organizationMapper.partialUpdate(dto, organizationDto)
-        organizationCache.upsertOrganization(organizationDto)
-        return organizationMapper.toResponseDto(organizationDto)
+        val saved = organizationCache.save(dto.applyTo(existing))
+        return organizationMapper.toResponseDto(saved)
     }
 
     fun deleteOrganization() {
@@ -121,12 +114,11 @@ class OrganizationService(
         }
     }
 
-    fun getAllOrganizationsWithLocations(): Collection<OrganizationWithLocations> {
-        return organizationCache.getAllOrganizations().map { organization ->
+    fun getAllOrganizationsWithLocations(): Collection<OrganizationWithLocations> =
+        organizationCache.getAllOrganizations().map { organization ->
             SessionContextProvider.initOrganization(organization)
             OrganizationWithLocations(organization = organization, locations = locationService.getAllLocations())
         }
-    }
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getOrganizationLocations(organizationId: UUID): Collection<LocationResponseDto> {

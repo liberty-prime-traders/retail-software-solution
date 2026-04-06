@@ -37,17 +37,16 @@ class OrgJurisdictionTaxTypeService(
             if (dto.jurisdictionTaxTypeId in existingJurisdictionIds)
                 throw RtsGenericException("An assignment already exists for: $label")
         }
-        val domainDtos = dtos.map { orgJurisdictionTaxTypeMapper.toDomainDto(it) }
-        orgJurisdictionTaxTypeCache.saveAll(domainDtos)
-        return domainDtos.map { toResponseDto(it, index) }
+        val savedDtos = orgJurisdictionTaxTypeCache.createAll(dtos)
+        return savedDtos.map { toResponseDto(it, index) }
     }
 
     fun update(dto: OrgJurisdictionTaxTypeUpdateDto): OrgJurisdictionTaxTypeResponseDto {
         val existing = orgJurisdictionTaxTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
-        existing.status = dto.status
-        orgJurisdictionTaxTypeCache.saveAll(listOf(existing))
-        return toResponseDto(existing, jurisdictionTaxTypeService.buildIndex())
+        val updated = dto.applyTo(existing)
+        orgJurisdictionTaxTypeCache.saveAll(listOf(updated))
+        return toResponseDto(updated, jurisdictionTaxTypeService.buildIndex())
     }
 
     private fun toResponseDto(dto: OrgJurisdictionTaxTypeDto, index: Map<UUID, PlatformTaxTypeDto>): OrgJurisdictionTaxTypeResponseDto {

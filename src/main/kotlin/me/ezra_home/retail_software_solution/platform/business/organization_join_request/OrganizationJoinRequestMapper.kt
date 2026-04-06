@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
@@ -19,6 +20,12 @@ interface OrganizationJoinRequestMapper {
     fun toDomainDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestDto
 
     fun toEntity(dto: OrganizationJoinRequestDto): OrganizationJoinRequestEntity
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdById", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
+    fun toEntity(insertDto: OrganizationJoinRequestInsertDto): OrganizationJoinRequestEntity
 
     fun toLaunchResponse(
         organization: OrganizationResponseDto?,

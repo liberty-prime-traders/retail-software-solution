@@ -16,24 +16,17 @@ class DbVersionCache(
 ) {
 
     @Cacheable
-    fun getAllDbVersions(): Collection<DbVersionDto> {
-        return dbVersionRepository.findAll().map { mapper.toDomainDto(it) }
-    }
+    fun getAllDbVersions(): Collection<DbVersionDto> = dbVersionRepository.findAll().map { mapper.toDomainDto(it) }
 
     @Cacheable
-    fun getVersionNumbersById(): Map<UUID, String> {
-        return dbVersionRepository.findAll()
-            .mapNotNull { entity -> entity.id?.let { it to entity.versionNumber } }
-            .toMap()
-    }
+    fun getVersionNumbersById(): Map<UUID, String> =
+        getAllDbVersions().associate { it.id to it.versionNumber }
 
-    fun findMaxSequenceNumber(): Long? {
-        return dbVersionRepository.findMaxSequenceNumber()
-    }
+    fun findMaxSequenceNumber(): Long? = dbVersionRepository.findMaxSequenceNumber()
 
     @CacheEvict(allEntries = true)
-    fun upsertDbVersion(dto: DbVersionDto) {
-        dbVersionRepository.save(mapper.toEntity(dto))
+    fun save(dto: DbVersionDto): DbVersionDto {
+        val saved = dbVersionRepository.save(mapper.toEntity(dto))
+        return mapper.toDomainDto(saved)
     }
-
 }

@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -28,6 +29,12 @@ class ProductTagCache(
     fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagDto> {
         if (productIds.isEmpty()) return emptyList()
         return productTagRepository.findActiveProductTagsByProductIds(productIds).map { productTagMapper.toDomainDto(it) }
+    }
+
+    @CacheEvict(allEntries = true)
+    fun createProductTags(insertDtos: List<ProductTagInsertDto>): List<ProductTagDto> {
+        val entities = insertDtos.map { productTagMapper.toEntity(it) }
+        return productTagRepository.saveAll(entities).map { productTagMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)

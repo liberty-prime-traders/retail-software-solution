@@ -23,13 +23,13 @@ class OrgTableRegistryService(
 
     fun update(updateDto: OrgTableRegistryUpdateDto): OrgTableRegistryResponseDto {
         val allTables = orgTableRegistryCache.getAllTables()
-        val dto = allTables.find { it.id == updateDto.id } ?: throw RtsGenericException("Org Table not found")
-        orgTableRegistryMapper.partialUpdate(updateDto, dto)
-        validateRequiredFields(dto)
-        validateOrgWideUniqueness(dto.defaultPrefix, dto.displayName, dto.id, allTables)
-        validatePlatformWideUniqueness(dto.defaultPrefix, dto.displayName, allTables)
-        orgTableRegistryCache.upsertTable(dto)
-        return orgTableRegistryMapper.toDto(dto)
+        val existing = allTables.find { it.id == updateDto.id } ?: throw RtsGenericException("Org Table not found")
+        val updated = updateDto.applyTo(existing)
+        validateRequiredFields(updated)
+        validateOrgWideUniqueness(updated.defaultPrefix, updated.displayName, updated.id, allTables)
+        validatePlatformWideUniqueness(updated.defaultPrefix, updated.displayName, allTables)
+        orgTableRegistryCache.upsertTable(updated)
+        return orgTableRegistryMapper.toDto(updated)
     }
 
     private fun validateRequiredFields(dto: OrgTableRegistryDto) {

@@ -1,18 +1,17 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type.api
 
-import me.ezra_home.retail_software_solution.util.model.HasId
 import java.time.OffsetDateTime
 import java.util.UUID
 
 data class TaxTypeDto(
-    override var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var name: String,
-    var description: String? = null,
-    var calculationMethod: CalculationMethod,
-    var taxRecoveryType: TaxRecoveryType,
-    var taxApplicationLevel: TaxApplicationLevel,
-    var taxTriggers: List<TaxTrigger>
-) : HasId
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val name: String,
+    val description: String? = null,
+    val calculationMethod: CalculationMethod,
+    val taxRecoveryType: TaxRecoveryType,
+    val taxApplicationLevel: TaxApplicationLevel,
+    val taxTriggers: List<TaxTrigger>
+)

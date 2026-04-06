@@ -45,7 +45,7 @@ object SessionContextProvider {
 
     fun initOrganization(organization: OrganizationDto) {
         getSession().organization = OrgSession(
-            id = organization.getNullSafeId(),
+            id = organization.id,
             schemaName = organization.schemaName!!,
             timezone = organization.timezone
         )
@@ -53,7 +53,7 @@ object SessionContextProvider {
 
     fun initLocation(location: LocationDto) {
         getSession().location = LocationSession(
-            id = location.id!!,
+            id = location.id,
             schemaName = location.schemaName!!,
             timezone = location.timezone
         )

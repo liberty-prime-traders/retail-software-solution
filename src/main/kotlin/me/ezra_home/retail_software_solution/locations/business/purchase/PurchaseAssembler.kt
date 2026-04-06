@@ -26,11 +26,11 @@ class PurchaseAssembler(
 ) {
 
   fun buildResponses(purchases: List<PurchaseEntity>): List<PurchaseResponseDto> {
-    val purchaseIds = purchases.map { it.getNullSafeId() }
+    val purchaseIds = purchases.map { it.id!! }
     val allLines = purchaseLineRepository.findByPurchaseIdIn(purchaseIds)
     val productSummaries = loadProductSummaries(allLines.map { it.locationProductId })
     val linesByPurchaseId = allLines.groupBy { it.purchaseId }
-    val purchaseLineDtoMap = allLines.associateBy { it.getNullSafeId() }.mapValues { it.value.toLineDto() }
+    val purchaseLineDtoMap = allLines.associateBy { it.id!! }.mapValues { it.value.toLineDto() }
     val deliveryResponsesByPurchaseId = purchaseDeliveryFetcher.getDeliveryResponses(purchaseIds, purchaseLineDtoMap, productSummaries)
     val supplierNameMap = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
     return purchases.map { purchase ->
@@ -42,9 +42,9 @@ class PurchaseAssembler(
 
   fun buildResponse(purchase: PurchaseEntity, lines: List<PurchaseLineEntity>): PurchaseResponseDto {
     val productSummaries = loadProductSummaries(lines.map { it.locationProductId })
-    val purchaseLineDtoMap = lines.associateBy { it.getNullSafeId() }.mapValues { it.value.toLineDto() }
+    val purchaseLineDtoMap = lines.associateBy { it.id!! }.mapValues { it.value.toLineDto() }
     val deliveries = purchaseDeliveryFetcher.getDeliveryResponses(
-        listOf(purchase.getNullSafeId()), purchaseLineDtoMap, productSummaries
+        listOf(purchase.id!!), purchaseLineDtoMap, productSummaries
     )[purchase.id] ?: emptyList()
     val supplierNameMap = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
     return buildResponse(purchase, lines, productSummaries, supplierNameMap, deliveries)
@@ -54,14 +54,14 @@ class PurchaseAssembler(
     purchase: PurchaseEntity,
     lines: List<PurchaseLineEntity>,
     productSummaries: Map<UUID, LocationProductSummaryDto>,
-    supplierNameMap: Map<UUID?, String>,
+    supplierNameMap: Map<UUID, String>,
     deliveries: List<PurchaseDeliveryResponseDto>
   ): PurchaseResponseDto {
     val lineDtos = toLinesDto(lines, productSummaries)
     val orderTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) }
     return PurchaseResponseDto(
-      id = purchase.getNullSafeId(),
-      referenceNumber = purchase.getNullSafeReferenceNumber(),
+      id = purchase.id!!,
+      referenceNumber = purchase.referenceNumber!!,
       supplierId = purchase.supplierId,
       supplierName = supplierNameMap[purchase.supplierId],
       status = purchase.status,
@@ -81,17 +81,18 @@ class PurchaseAssembler(
       locationProductService.findSummaryByIds(ids)
 
   private fun toLinesDto(lines: List<PurchaseLineEntity>, productSummaries: Map<UUID, LocationProductSummaryDto>): List<PurchaseLineResponseDto> {
+    val unitNamesById = unitValueService.getUnitNamesById()
     return lines.map { line ->
       val product = productSummaries[line.locationProductId]!!
       val quantityExpected = line.quantityOrdered.subtract(line.quantityCanceled)
       PurchaseLineResponseDto(
-        id = line.getNullSafeId(),
-        referenceNumber = line.getNullSafeReferenceNumber(),
+        id = line.id!!,
+        referenceNumber = line.referenceNumber!!,
         locationProduct = PurchaseLineProductDto(
-          referenceNumber = product.getNullSafeReferenceNumber(),
+          referenceNumber = product.referenceNumber,
           productName = product.productName,
           productGroupName = product.productGroupName,
-          baseUnit = unitValueService.getUnitName(product.baseUnitId)
+          baseUnit = unitNamesById[product.baseUnitId]
         ),
         quantityOrdered = line.quantityOrdered,
         unitCost = line.unitCost,
@@ -105,7 +106,7 @@ class PurchaseAssembler(
   }
 
   private fun PurchaseLineEntity.toLineDto() = PurchaseLineDto(
-      id = getNullSafeId(),
+      id = id!!,
       purchaseId = purchaseId,
       locationProductId = locationProductId,
       quantityOrdered = quantityOrdered,

@@ -39,7 +39,7 @@ class StockService(
             val entry = entriesByLineId[line.deliveryLineId]!!
             val newBalance = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + line.quantityDelivered
             StockMovementEntity(
-                stockEntryId = entry.getNullSafeId(),
+                stockEntryId = entry.id!!,
                 locationProductId = line.locationProductId,
                 movementType = MovementType.PURCHASE_RECEIVED,
                 movedQuantity = line.quantityDelivered,

@@ -13,7 +13,7 @@ abstract class ProductSearchExecutor<T, D>(
     private const val MIN_PAGE_SIZE = 1
   }
 
-  protected abstract fun map(entity: T): D
+  protected abstract fun map(entities: List<T>): List<D>
 
   fun execute(sqlQuery: SqlQuery, pageSize: Int, setTimeout: Boolean): List<D> {
     val startTime = System.currentTimeMillis()
@@ -33,7 +33,7 @@ abstract class ProductSearchExecutor<T, D>(
 
       ProductSearchPerformanceLogger.logPerformance(startTime, sqlQuery.metadata, results.size)
 
-      return results.map { map(it) }
+      return map(results)
     }
   }
 }

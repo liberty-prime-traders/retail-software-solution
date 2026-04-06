@@ -20,16 +20,15 @@ class AddressService(
     }
 
     fun createAddress(addressInsertDto: AddressInsertDto): AddressResponseDto {
-        val dto = addressMapper.toDomainDto(addressInsertDto)
-        addressCache.upsertAddress(dto)
+        val dto = addressCache.create(addressInsertDto)
         return addressMapper.toDto(dto)
     }
 
     fun updateAddress(addressUpdateDto: AddressUpdateDto): AddressResponseDto {
-        val dto = addressCache.getAllAddresses().find { Objects.equals(addressUpdateDto.id, it.id) }
+        val existing = addressCache.getAllAddresses().find { Objects.equals(addressUpdateDto.id, it.id) }
             ?: throw UpdatingNonExistingRecordException()
-        addressMapper.partialUpdate(addressUpdateDto, dto)
-        addressCache.upsertAddress(dto)
-        return addressMapper.toDto(dto)
+        val updated = addressUpdateDto.applyTo(existing)
+        val saved = addressCache.save(updated)
+        return addressMapper.toDto(saved)
     }
 }

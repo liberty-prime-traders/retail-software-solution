@@ -33,8 +33,7 @@ class ProductGroupService(
 
     fun createProductGroup(productGroupInsertDto: ProductGroupInsertDto): ProductGroupResponseDto {
         productGroupValidator.validateProductGroupInsert(productGroupInsertDto)
-        val dto = productGroupMapper.toDomainDto(productGroupInsertDto)
-        val savedDto = productGroupCache.upsertProductGroup(dto)
+        val savedDto = productGroupCache.create(productGroupInsertDto)
         val categoriesById = productCategoryService.getCategoryNamesById()
         return productGroupMapper.toResponseDto(savedDto, categoriesById[savedDto.categoryId])
     }
@@ -42,10 +41,10 @@ class ProductGroupService(
     fun updateProductGroup(productGroupUpdateDto: ProductGroupUpdateDto): ProductGroupResponseDto {
         productGroupRepository.findById(productGroupUpdateDto.id).orElseThrow { UpdatingNonExistingRecordException() }
         productGroupValidator.validateProductGroupUpdate(productGroupUpdateDto)
-        val dto = productGroupCache.findAllProductGroups().find { it.id == productGroupUpdateDto.id }
+        val existing = productGroupCache.findAllProductGroups().find { it.id == productGroupUpdateDto.id }
             ?: throw UpdatingNonExistingRecordException()
-        productGroupMapper.partialUpdate(productGroupUpdateDto, dto)
-        val savedDto = productGroupCache.upsertProductGroup(dto)
+        val updated = productGroupUpdateDto.applyTo(existing)
+        val savedDto = productGroupCache.save(updated)
         val categoriesById = productCategoryService.getCategoryNamesById()
         return productGroupMapper.toResponseDto(savedDto, categoriesById[savedDto.categoryId])
     }

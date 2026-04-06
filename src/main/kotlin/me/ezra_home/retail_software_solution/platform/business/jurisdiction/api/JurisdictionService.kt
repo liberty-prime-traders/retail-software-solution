@@ -30,7 +30,7 @@ class JurisdictionService(
 
     private fun buildContext() = JurisdictionMappingContext(
         typeNames = jurisdictionTypeService.getAll().associate { it.id to it.name },
-        jurisdictionNames = jurisdictionCache.getAll().associate { it.getNullSafeId() to it.name },
+        jurisdictionNames = jurisdictionCache.getAll().associate { it.id to it.name },
         taxTypesByJurisdiction = jurisdictionTaxTypeService.getActiveTaxTypeIdsByJurisdiction()
     )
 
@@ -38,30 +38,29 @@ class JurisdictionService(
         jurisdictionValidator.validateName(dto.name)
         jurisdictionValidator.validateTypeExists(dto.jurisdictionTypeId)
         jurisdictionValidator.validateParent(dto.parentJurisdictionId)
-        val jurisdictionDto = jurisdictionMapper.toDomainDto(dto)
-        jurisdictionCache.upsert(jurisdictionDto)
+        val saved = jurisdictionCache.create(dto)
         dto.taxTypesToAddOrReactivate
-            ?.map { JurisdictionTaxTypeInsertDto(it, jurisdictionDto.getNullSafeId()) }
+            ?.map { JurisdictionTaxTypeInsertDto(it, saved.id) }
             ?.let { jurisdictionTaxTypeService.createAll(it) }
-        return jurisdictionMapper.toResponseDto(jurisdictionDto, buildContext())
+        return jurisdictionMapper.toResponseDto(saved, buildContext())
     }
 
     fun update(dto: JurisdictionUpdateDto): JurisdictionResponseDto {
-        val jurisdictionDto = jurisdictionCache.getAll().find { it.id == dto.id } ?: throw UpdatingNonExistingRecordException()
+        val existing = jurisdictionCache.getAll().find { it.id == dto.id } ?: throw UpdatingNonExistingRecordException()
         dto.jurisdictionTypeId?.let { jurisdictionTypeId ->
             jurisdictionTypeId.ifPresent { jurisdictionValidator.validateTypeExists(it) }
         }
         jurisdictionValidator.validateParent(dto.parentJurisdictionId?.orElse(null), dto.id)
-        jurisdictionMapper.partialUpdate(dto, jurisdictionDto)
-        jurisdictionValidator.validateName(jurisdictionDto.name)
-        jurisdictionCache.upsert(jurisdictionDto)
+        val updated = dto.applyTo(existing)
+        jurisdictionValidator.validateName(updated.name)
+        val saved = jurisdictionCache.save(updated)
         dto.taxTypesToAddOrReactivate?.let {
             jurisdictionTaxTypeService.addOrReactivate(dto.id, it)
         }
         dto.taxTypesToDiscontinue?.let {
             jurisdictionTaxTypeService.stopByTaxTypeIds(dto.id, it)
         }
-        return jurisdictionMapper.toResponseDto(jurisdictionDto, buildContext())
+        return jurisdictionMapper.toResponseDto(saved, buildContext())
     }
 
     fun delete(id: UUID) = jurisdictionCache.delete(id)

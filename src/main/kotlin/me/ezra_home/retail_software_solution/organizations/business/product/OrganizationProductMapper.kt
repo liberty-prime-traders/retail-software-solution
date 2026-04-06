@@ -2,16 +2,12 @@ package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import org.mapstruct.BeanMapping
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
-import org.mapstruct.MappingTarget
-import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(
     config = RtsMapperConfig::class,
@@ -25,7 +21,7 @@ interface OrganizationProductMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "productGroupName", ignore = true)
-    fun toDomainDto(productInsertDto: OrganizationProductInsertDto): OrganizationProductDto
+    fun toEntity(productInsertDto: OrganizationProductInsertDto): OrganizationProductEntity
 
     fun toDomainDto(productEntity: OrganizationProductEntity): OrganizationProductDto
 
@@ -44,12 +40,4 @@ interface OrganizationProductMapper {
     @Mapping(target = "baseUnit", expression = "java(baseUnit)")
     @Mapping(target = "activeTags", ignore = true)
     fun toResponseDtoWithoutTags(productDto: OrganizationProductDto, @Context baseUnit: String?): OrganizationProductResponseDto
-
-    @Mapping(target = "createdById", ignore = true)
-    @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "referenceNumber", ignore = true)
-    @Mapping(target = "status", ignore = true)
-    @Mapping(target = "productGroupName", ignore = true)
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun partialUpdate(productUpdateDto: OrganizationProductUpdateDto, @MappingTarget productDto: OrganizationProductDto)
 }

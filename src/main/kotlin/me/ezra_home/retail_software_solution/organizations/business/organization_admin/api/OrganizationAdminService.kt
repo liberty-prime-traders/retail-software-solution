@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminCache
-import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.OrganizationAdminMapper
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -27,7 +26,7 @@ class OrganizationAdminService(
 
     fun createOrganizationAdmin(adminId: UUID): OrganizationAdminResponseDto {
         validateUserExists(adminId)
-        val dto = OrganizationAdminDto(userId = adminId)
+        val dto = organizationAdminCache.create(OrganizationAdminInsertDto(userId = adminId))
         return organizationAdminMapper.toResponseDto(dto)
     }
 
@@ -39,10 +38,7 @@ class OrganizationAdminService(
     fun terminateOrganizationAdmin(adminId: UUID) {
         organizationAdminCache.getAdminHistory()
             .find { it.isActive() && it.userId == adminId }
-            ?.let {
-                it.endOn = OffsetDateTime.now()
-                organizationAdminCache.upsertOrganizationAdmin(it)
-            }
+            ?.let { organizationAdminCache.save(it.copy(endOn = OffsetDateTime.now())) }
     }
 
     fun isOrganizationAdmin(): Boolean {
@@ -52,6 +48,6 @@ class OrganizationAdminService(
     }
 
     fun registerFounder(userId: UUID) {
-        organizationAdminCache.upsertOrganizationAdmin(OrganizationAdminDto(userId = userId))
+        organizationAdminCache.create(OrganizationAdminInsertDto(userId = userId))
     }
 }

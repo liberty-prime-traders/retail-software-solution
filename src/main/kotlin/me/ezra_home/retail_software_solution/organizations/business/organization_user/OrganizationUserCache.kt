@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -27,12 +28,20 @@ class OrganizationUserCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUser(dto: OrganizationUserDto) {
-        organizationUserRepository.save(organizationUserMapper.toEntity(dto))
+    fun create(insertDto: OrganizationUserInsertDto): OrganizationUserDto {
+        val saved = organizationUserRepository.save(organizationUserMapper.toEntity(insertDto))
+        return organizationUserMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUsers(dtos: Collection<OrganizationUserDto>) {
-        organizationUserRepository.saveAll(dtos.map { organizationUserMapper.toEntity(it) })
+    fun createAll(insertDtos: Collection<OrganizationUserInsertDto>): List<OrganizationUserDto> {
+        val entities = insertDtos.map { organizationUserMapper.toEntity(it) }
+        return organizationUserRepository.saveAll(entities).map { organizationUserMapper.toDomainDto(it) }
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(dto: OrganizationUserDto): OrganizationUserDto {
+        val saved = organizationUserRepository.save(organizationUserMapper.toEntity(dto))
+        return organizationUserMapper.toDomainDto(saved)
     }
 }

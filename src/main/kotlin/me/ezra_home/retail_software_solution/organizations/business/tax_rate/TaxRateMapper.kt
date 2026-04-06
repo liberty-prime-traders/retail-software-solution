@@ -13,7 +13,7 @@ interface TaxRateMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
-    fun toDomainDto(dto: TaxRateInsertDto): TaxRateDto
+    fun toEntity(dto: TaxRateInsertDto): TaxRateEntity
 
     fun toDomainDto(entity: TaxRateEntity): TaxRateDto
 

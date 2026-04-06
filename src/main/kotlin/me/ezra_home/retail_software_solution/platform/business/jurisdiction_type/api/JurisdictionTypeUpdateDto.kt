@@ -8,4 +8,10 @@ data class JurisdictionTypeUpdateDto(
     val id: UUID,
     val name: Optional<String>? = null,
     val description: Optional<String>? = null
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: JurisdictionTypeDto): JurisdictionTypeDto = existing.copy(
+        name = name?.orElse(existing.name) ?: existing.name,
+        description = description?.orElse(null) ?: existing.description
+    )
+}

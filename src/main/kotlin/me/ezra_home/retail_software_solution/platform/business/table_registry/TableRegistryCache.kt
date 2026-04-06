@@ -18,5 +18,8 @@ class TableRegistryCache(
     fun getAllTables(): Collection<TableRegistryDto> = repository.findAll().map { mapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsertTable(dto: TableRegistryDto) = repository.save(mapper.toEntity(dto))
+    fun save(dto: TableRegistryDto): TableRegistryDto {
+        val saved = repository.save(mapper.toEntity(dto))
+        return mapper.toDomainDto(saved)
+    }
 }

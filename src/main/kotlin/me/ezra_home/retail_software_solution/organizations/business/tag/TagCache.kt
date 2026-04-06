@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.tag
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.mapping.TagMapper
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
@@ -23,7 +24,13 @@ class TagCache(
     fun getAllTags(): Collection<TagDto> = tagRepository.findAll().map { tagMapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsertTag(tagDto: TagDto): TagDto {
+    fun create(insertDto: TagInsertDto): TagDto {
+        val saved = tagRepository.save(tagMapper.toEntity(insertDto))
+        return tagMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(tagDto: TagDto): TagDto {
         val saved = tagRepository.save(tagMapper.toEntity(tagDto))
         return tagMapper.toDomainDto(saved)
     }

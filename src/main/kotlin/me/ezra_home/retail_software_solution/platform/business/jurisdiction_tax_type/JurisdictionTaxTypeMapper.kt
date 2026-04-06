@@ -17,5 +17,5 @@ interface JurisdictionTaxTypeMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "active", constant = "true")
-    fun toDomainDto(insertDto: JurisdictionTaxTypeInsertDto): JurisdictionTaxTypeDto
+    fun toEntity(insertDto: JurisdictionTaxTypeInsertDto): JurisdictionTaxTypeEntity
 }

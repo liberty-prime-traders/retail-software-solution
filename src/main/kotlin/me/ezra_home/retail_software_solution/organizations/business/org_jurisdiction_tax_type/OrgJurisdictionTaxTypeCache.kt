@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.org_jurisdi
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeDto
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -20,6 +21,12 @@ class OrgJurisdictionTaxTypeCache(
     @Cacheable
     fun getAll(): Collection<OrgJurisdictionTaxTypeDto> =
         orgJurisdictionTaxTypeRepository.findAll().map { orgJurisdictionTaxTypeMapper.toDomainDto(it) }
+
+    @CacheEvict(allEntries = true)
+    fun createAll(insertDtos: Collection<OrgJurisdictionTaxTypeInsertDto>): List<OrgJurisdictionTaxTypeDto> {
+        val entities = insertDtos.map { orgJurisdictionTaxTypeMapper.toEntity(it) }
+        return orgJurisdictionTaxTypeRepository.saveAll(entities).map { orgJurisdictionTaxTypeMapper.toDomainDto(it) }
+    }
 
     @CacheEvict(allEntries = true)
     fun saveAll(dtos: Collection<OrgJurisdictionTaxTypeDto>) {

@@ -4,11 +4,11 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class ProductGroupDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var groupName: String,
-    var description: String? = null,
-    var categoryId: UUID
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val groupName: String,
+    val description: String? = null,
+    val categoryId: UUID
 )

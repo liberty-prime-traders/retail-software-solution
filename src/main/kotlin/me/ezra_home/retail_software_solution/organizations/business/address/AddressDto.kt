@@ -4,14 +4,14 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class AddressDto(
-    var id: UUID? = null,
-    var createdById: UUID? = null,
-    var createdOn: OffsetDateTime? = null,
-    var referenceNumber: String? = null,
-    var line1: String? = null,
-    var line2: String? = null,
-    var line3: String? = null,
-    var state: String? = null,
-    var postalCode: String? = null,
-    var country: String? = null
+    val id: UUID,
+    val createdById: UUID,
+    val createdOn: OffsetDateTime,
+    val referenceNumber: String,
+    val line1: String? = null,
+    val line2: String? = null,
+    val line3: String? = null,
+    val state: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null
 )

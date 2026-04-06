@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_cat
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -24,11 +25,17 @@ class ProductCategoryCache(
 
     @Cacheable
     fun getCategoryNamesById(): Map<UUID, String> {
-        return getAllCategories().associate { it.getNullSafeId() to it.categoryName!! }
+        return getAllCategories().associate { it.id to it.categoryName!! }
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertCategories(productCategoryDto: ProductCategoryDto): ProductCategoryDto {
+    fun create(insertDto: ProductCategoryInsertDto): ProductCategoryDto {
+        val saved = productCategoryRepository.save(productCategoryMapper.toEntity(insertDto))
+        return productCategoryMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(productCategoryDto: ProductCategoryDto): ProductCategoryDto {
         val saved = productCategoryRepository.save(productCategoryMapper.toEntity(productCategoryDto))
         return productCategoryMapper.toDomainDto(saved)
     }

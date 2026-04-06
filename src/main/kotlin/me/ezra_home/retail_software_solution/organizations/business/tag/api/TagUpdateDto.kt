@@ -9,4 +9,11 @@ data class TagUpdateDto(
     val category: Optional<CategoryType>? = null,
     val tagName: Optional<String>? = null,
     val description: Optional<String>? = null,
-) : Serializable
+) : Serializable {
+
+    fun applyTo(existing: TagDto): TagDto = existing.copy(
+        category = category?.orElse(existing.category) ?: existing.category,
+        tagName = tagName?.orElse(existing.tagName) ?: existing.tagName,
+        description = description?.orElse(existing.description) ?: existing.description
+    )
+}

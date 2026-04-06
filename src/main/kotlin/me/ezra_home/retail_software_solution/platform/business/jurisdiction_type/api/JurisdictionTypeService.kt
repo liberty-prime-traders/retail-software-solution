@@ -24,20 +24,19 @@ class JurisdictionTypeService(
         StringUtils.getValueOrException(dto.name, "Name must not be blank")
         if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A jurisdiction type named '${dto.name}' already exists")
-        val jurisdictionTypeDto = jurisdictionTypeMapper.toDomainDto(dto)
-        jurisdictionTypeCache.upsert(jurisdictionTypeDto)
-        return jurisdictionTypeMapper.toResponseDto(jurisdictionTypeDto)
+        val saved = jurisdictionTypeCache.create(dto)
+        return jurisdictionTypeMapper.toResponseDto(saved)
     }
 
     fun update(dto: JurisdictionTypeUpdateDto): JurisdictionTypeResponseDto {
-        val jurisdictionTypeDto = jurisdictionTypeCache.getAll().find { it.id == dto.id }
+        val existing = jurisdictionTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
-        jurisdictionTypeMapper.partialUpdate(dto, jurisdictionTypeDto)
-        StringUtils.getValueOrException(jurisdictionTypeDto.name, "Name must not be blank")
-        if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, jurisdictionTypeDto.name) && it.id != jurisdictionTypeDto.id })
-            throw RtsGenericException("A jurisdiction type named '${jurisdictionTypeDto.name}' already exists")
-        jurisdictionTypeCache.upsert(jurisdictionTypeDto)
-        return jurisdictionTypeMapper.toResponseDto(jurisdictionTypeDto)
+        val updated = dto.applyTo(existing)
+        StringUtils.getValueOrException(updated.name, "Name must not be blank")
+        if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, updated.name) && it.id != updated.id })
+            throw RtsGenericException("A jurisdiction type named '${updated.name}' already exists")
+        val saved = jurisdictionTypeCache.save(updated)
+        return jurisdictionTypeMapper.toResponseDto(saved)
     }
 
     fun delete(id: UUID) = jurisdictionTypeCache.delete(id)
