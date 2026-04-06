@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search.filter_strategies
 
-import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.TagFilterStrategy
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
+import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

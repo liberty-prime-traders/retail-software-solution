@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration.mapping
 
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component
@@ -15,17 +15,17 @@ annotation class SchemaOwnerName
 
 @Component
 class DbMigrationQualifier(
-    private val organizationCache: OrganizationCache,
-    private val locationCache: LocationCache
+    private val organizationService: OrganizationService,
+    private val locationService: LocationService
 ) {
     @SchemaOwnerName
     fun getSchemaOwnerName(dto: DbMigrationDto): String? {
         return when (dto.schemaOwnerType) {
             SchemaOwnerType.ORGANIZATION ->
-                organizationCache.getAllOrganizations().find { it.id == dto.schemaOwnerId }?.name
+                organizationService.getAllOrganizationDtos().find { it.id == dto.schemaOwnerId }?.name
 
             SchemaOwnerType.LOCATION ->
-                locationCache.getAllLocations().find { it.id == dto.schemaOwnerId }?.name
+                locationService.getAllLocationDtos().find { it.id == dto.schemaOwnerId }?.name
         }
     }
 }

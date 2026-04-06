@@ -1,17 +1,16 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
-import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -20,9 +19,29 @@ class LocationProductService(
   private val locationProductRepository: LocationProductRepository,
   private val locationProductCache: LocationProductCache,
   private val locationProductMapper: LocationProductMapper,
-  private val organizationProductRepository: OrganizationProductRepository,
+  private val organizationProductService: OrganizationProductService,
   private val unitValueService: UnitValueService
 ) {
+
+  @TransactionalOnLocationSchema(readOnly = true)
+  fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> {
+    return locationProductRepository.findAllById(ids).associate { entity ->
+      entity.getNullSafeId() to LocationProductSummaryDto(
+        id = entity.getNullSafeId(),
+        referenceNumber = entity.getNullSafeReferenceNumber(),
+        productName = entity.productName,
+        productGroupName = entity.productGroupName,
+        baseUnitId = entity.baseUnitId
+      )
+    }
+  }
+
+  fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
+    val products = locationProductRepository.findAllById(prices.keys)
+    products.forEach { it.lastPurchasePrice = prices[it.id] }
+    locationProductRepository.saveAll(products)
+    locationProductCache.evictAll()
+  }
 
   @TransactionalOnLocationSchema(readOnly = true)
   fun findAllProducts(): List<LocationProductResponseDto> {
@@ -65,14 +84,8 @@ class LocationProductService(
     return locationProductMapper.toDto(productDto, unitValueService.getUnitName(productDto.baseUnitId))
   }
 
-  @TransactionalOnOrganizationSchema(readOnly = true)
   fun verifyOrgProductIsActive(orgProductId: UUID) {
-    val orgProduct = organizationProductRepository.findById(orgProductId).orElseThrow {
-      UpdatingNonExistingRecordException()
-    }
-    if (orgProduct.status != ProductStatus.ACTIVE) {
-      throw RtsGenericException("Cannot reactivate location product: organization product is not active")
-    }
+    organizationProductService.verifyProductIsActive(orgProductId)
   }
 
 }

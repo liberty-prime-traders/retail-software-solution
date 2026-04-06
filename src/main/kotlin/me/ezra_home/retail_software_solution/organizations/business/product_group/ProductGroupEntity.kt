@@ -7,8 +7,8 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
-import java.util.UUID
 import org.hibernate.envers.Audited
+import java.util.UUID
 
 @Audited
 @Entity

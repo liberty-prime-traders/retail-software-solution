@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration.mapping
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationEntity
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.LocationMigrationResponse
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.OrganizationMigrationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionNumber
-import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationEntity
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 

@@ -3,7 +3,8 @@ package me.ezra_home.retail_software_solution.platform.business.organization_joi
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserService
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestCache
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
@@ -38,6 +39,10 @@ class OrganizationJoinRequestService(
             isOrganizationAdmin = false,
             accessRequested = true
         )
+    }
+
+    fun buildMemberLaunchResponse(organization: OrganizationResponseDto, isOrganizationAdmin: Boolean): OrganizationLaunchResponseDto {
+        return organizationJoinRequestMapper.toLaunchResponse(organization, isOrganizationAdmin, false)
     }
 
     fun getUserJoinRequests(): Collection<OrganizationJoinRequestResponseDto> {

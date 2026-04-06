@@ -2,11 +2,9 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineResponseDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity
-import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -17,31 +15,26 @@ class PurchaseDeliveryAssembler(
   private val unitValueService: UnitValueService
 ) {
 
-  private data class LineResolutionContext(
-    val purchaseLineById: Map<UUID, PurchaseLineEntity>,
-    val productMap: Map<UUID?, LocationProductEntity>
-  )
-
   fun buildResponses(
     deliveries: List<PurchaseDeliveryEntity>,
-    purchaseLines: List<PurchaseLineEntity>,
-    productMap: Map<UUID?, LocationProductEntity>
+    purchaseLines: Map<UUID, PurchaseLineDto>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
   ): List<PurchaseDeliveryResponseDto> {
     if (deliveries.isEmpty()) return emptyList()
     val deliveryIds = deliveries.map { it.getNullSafeId() }
     val allDeliveryLines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveryIds)
-    val context = LineResolutionContext(purchaseLines.associateBy { it.getNullSafeId() }, productMap)
     val deliveryLinesByDeliveryId = allDeliveryLines.groupBy { it.purchaseDeliveryId }
     return deliveries.map { delivery ->
       val deliveryLines = deliveryLinesByDeliveryId[delivery.id] ?: emptyList()
-      toDto(delivery, deliveryLines, context)
+      toDto(delivery, deliveryLines, purchaseLines, productSummaries)
     }
   }
 
   private fun toDto(
     delivery: PurchaseDeliveryEntity,
     deliveryLines: List<PurchaseDeliveryLineEntity>,
-    context: LineResolutionContext
+    purchaseLineById: Map<UUID, PurchaseLineDto>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
   ): PurchaseDeliveryResponseDto {
     return PurchaseDeliveryResponseDto(
       id = delivery.getNullSafeId(),
@@ -51,8 +44,8 @@ class PurchaseDeliveryAssembler(
       deliveredAt = delivery.deliveredAt,
       notes = delivery.notes,
       lines = deliveryLines.map { dl ->
-        val purchaseLine = context.purchaseLineById[dl.purchaseLineId]!!
-        val product = context.productMap[purchaseLine.locationProductId]!!
+        val purchaseLine = purchaseLineById[dl.purchaseLineId]!!
+        val product = productSummaries[purchaseLine.locationProductId]!!
         PurchaseDeliveryLineResponseDto(
           id = dl.getNullSafeId(),
           referenceNumber = dl.getNullSafeReferenceNumber(),

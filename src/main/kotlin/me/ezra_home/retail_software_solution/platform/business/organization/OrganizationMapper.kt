@@ -1,10 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.business.organization
 
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.AuthorizationPassQualifier
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassReferenceNumber
-import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionNumber
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationUpdateDto

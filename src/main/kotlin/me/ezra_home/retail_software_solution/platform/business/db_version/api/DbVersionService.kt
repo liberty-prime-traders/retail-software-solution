@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionMapper
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionNumber
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -17,6 +16,8 @@ class DbVersionService(
     private val dbVersionCache: DbVersionCache,
     private val dbVersionMapper: DbVersionMapper
 ) {
+
+    fun getAllDbVersionDtos(): Collection<DbVersionDto> = dbVersionCache.getAllDbVersions()
 
     fun getAllDbVersions(): Collection<DbVersionResponseDto> {
         val versionNumbersMap = dbVersionCache.getVersionNumbersById()

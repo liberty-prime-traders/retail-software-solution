@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

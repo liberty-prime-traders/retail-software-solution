@@ -1,8 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.tax_rate
 
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeStatus
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
@@ -18,7 +17,7 @@ import java.util.UUID
 
 @Component
 class TaxRateValidator(
-    private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
+    private val orgJurisdictionTaxTypeFetcher: OrgJurisdictionTaxTypeFetcher,
     private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
     private val taxRateCache: TaxRateCache
 ) {
@@ -26,7 +25,7 @@ class TaxRateValidator(
     fun validateForCreate(dto: TaxRateInsertDto) {
         validateName(dto.name)
         validateDates(dto.startDate, dto.endDate)
-        val parent = orgJurisdictionTaxTypeCache.getAll()
+        val parent = orgJurisdictionTaxTypeFetcher.getAllDtos()
             .firstOrNull { it.id == dto.orgJurisdictionTaxTypeId }
             ?: throw RtsGenericException("Org jurisdiction tax type not found")
         if (parent.status != OrgJurisdictionTaxTypeStatus.ACTIVE)
@@ -84,7 +83,7 @@ class TaxRateValidator(
         }
 
     private fun getTaxApplicationLevel(orgJurisdictionTaxTypeId: UUID): TaxApplicationLevel {
-        val parent = orgJurisdictionTaxTypeCache.getAll().first { it.id == orgJurisdictionTaxTypeId }
+        val parent = orgJurisdictionTaxTypeFetcher.getAllDtos().first { it.id == orgJurisdictionTaxTypeId }
         return jurisdictionTaxTypeService.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
     }
 

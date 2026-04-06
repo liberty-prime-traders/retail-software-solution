@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.api.
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ProductTagQualifier
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping

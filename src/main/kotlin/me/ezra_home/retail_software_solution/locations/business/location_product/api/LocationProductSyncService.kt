@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Service

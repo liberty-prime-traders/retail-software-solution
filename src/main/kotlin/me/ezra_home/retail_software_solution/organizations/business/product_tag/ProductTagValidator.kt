@@ -1,19 +1,19 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
-import me.ezra_home.retail_software_solution.organizations.business.tag.TagCache
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
 class ProductTagValidator(
-    private val tagCache: TagCache
+    private val tagService: TagService
 ) {
 
     fun validateTagsExist(tagIds: Set<UUID>) {
         if (tagIds.isEmpty()) return
 
-        val existingTagIds = tagCache.getAllTags().mapNotNull { it.id }.toSet()
+        val existingTagIds = tagService.getAllTagDtos().mapNotNull { it.id }.toSet()
         val missingTagIds = tagIds - existingTagIds
         if (missingTagIds.isNotEmpty()) {
             throw RtsGenericException(

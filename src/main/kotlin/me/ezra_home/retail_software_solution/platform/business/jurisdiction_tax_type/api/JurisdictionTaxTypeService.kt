@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeService
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionCache
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionDto
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeFetcher
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionFetcher
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeMapper
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
-import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
 import org.springframework.stereotype.Service
@@ -20,16 +20,16 @@ import java.util.UUID
 class JurisdictionTaxTypeService(
     private val jurisdictionTaxTypeMapper: JurisdictionTaxTypeMapper,
     private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
-    private val jurisdictionCache: JurisdictionCache,
-    private val taxTypeCache: TaxTypeCache,
-    private val orgJurisdictionTaxTypeService: OrgJurisdictionTaxTypeService
+    private val jurisdictionFetcher: JurisdictionFetcher,
+    private val taxTypeFetcher: TaxTypeFetcher,
+    private val orgJurisdictionTaxTypeFetcher: OrgJurisdictionTaxTypeFetcher
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getCalculationMethod(jurisdictionTaxTypeId: UUID): CalculationMethod {
         val link = jurisdictionTaxTypeCache.getAll().find { it.id == jurisdictionTaxTypeId }
             ?: throw RtsGenericException("Jurisdiction tax type not found")
-        return taxTypeCache.getAll().find { it.id == link.taxTypeId }?.calculationMethod
+        return taxTypeFetcher.getAllDtos().find { it.id == link.taxTypeId }?.calculationMethod
             ?: throw RtsGenericException("Tax type not found for jurisdiction link")
     }
 
@@ -37,14 +37,35 @@ class JurisdictionTaxTypeService(
     fun getTaxApplicationLevel(jurisdictionTaxTypeId: UUID): TaxApplicationLevel {
         val link = jurisdictionTaxTypeCache.getAll().find { it.id == jurisdictionTaxTypeId }
             ?: throw RtsGenericException("Jurisdiction tax type not found")
-        return taxTypeCache.getAll().find { it.id == link.taxTypeId }?.taxApplicationLevel
+        return taxTypeFetcher.getAllDtos().find { it.id == link.taxTypeId }?.taxApplicationLevel
             ?: throw RtsGenericException("Tax type not found for jurisdiction link")
+    }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun isInUse(taxTypeId: UUID): Boolean =
+        jurisdictionTaxTypeCache.getAll().any { it.taxTypeId == taxTypeId }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getActiveIds(): Set<UUID> =
+        jurisdictionTaxTypeCache.getActive().mapNotNull { it.id }.toHashSet()
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun buildIndex(): Map<UUID, PlatformTaxTypeDto> {
+        val jurisdictionIndex = jurisdictionFetcher.getAllDtos().associateBy { it.id }
+        val taxTypeIndex = taxTypeFetcher.getAllDtos().associateBy { it.id }
+        return jurisdictionTaxTypeCache.getAll().mapNotNull { link ->
+            link.id?.let { id ->
+                val jurisdiction = jurisdictionIndex[link.jurisdictionId] ?: return@mapNotNull null
+                val taxType = taxTypeIndex[link.taxTypeId] ?: return@mapNotNull null
+                id to PlatformTaxTypeDto(taxType.getNullSafeId(), "${jurisdiction.name} - ${taxType.name}")
+            }
+        }.toMap()
     }
 
     fun createAll(dtos: List<JurisdictionTaxTypeInsertDto>) {
         if (dtos.isEmpty()) return
-        val taxTypeIds = taxTypeCache.getAll().mapTo(HashSet()) { it.id }
-        val jurisdictionIds = jurisdictionCache.getAll().mapTo(HashSet()) { it.id }
+        val taxTypeIds = taxTypeFetcher.getAllDtos().mapTo(HashSet()) { it.id }
+        val jurisdictionIds = jurisdictionFetcher.getAllDtos().mapTo(HashSet()) { it.id }
         val existingLinks = jurisdictionTaxTypeCache.getAll().mapTo(HashSet()) { it.taxTypeId to it.jurisdictionId }
         dtos.forEach { dto ->
             if (dto.taxTypeId !in taxTypeIds) throw RtsGenericException("Tax type not found")
@@ -57,7 +78,7 @@ class JurisdictionTaxTypeService(
 
     fun addOrReactivate(jurisdictionId: UUID, taxTypeIds: List<UUID>) {
         if (taxTypeIds.isEmpty()) return
-        val taxTypeIdSet = taxTypeCache.getAll().mapTo(HashSet()) { it.id }
+        val taxTypeIdSet = taxTypeFetcher.getAllDtos().mapTo(HashSet()) { it.id }
         val existingJurisdictionTaxTypes = jurisdictionTaxTypeCache.getAll()
             .filter { it.jurisdictionId == jurisdictionId }
             .associateBy { it.taxTypeId }
@@ -81,12 +102,13 @@ class JurisdictionTaxTypeService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAvailableTaxTypes(): List<TreeNode<UUID>> {
-        val assignedIds = orgJurisdictionTaxTypeService.getActivelyAssignedJurisdictionTaxTypeIds()
-        val taxTypeIndex = taxTypeCache.getAll().associateBy { it.id }
+        val assignedIds = orgJurisdictionTaxTypeFetcher.getActivelyAssignedIds()
+        val taxTypeIndex = taxTypeFetcher.getAllDtos().associateBy { it.id }
         val linksByJurisdiction = jurisdictionTaxTypeCache.getActive()
             .filterNot { it.id in assignedIds }
             .groupBy { it.jurisdictionId }
-        val childJurisdictions = jurisdictionCache.getAll().groupBy { it.parentJurisdictionId }
+        val allJurisdictions = jurisdictionFetcher.getAllDtos()
+        val childJurisdictions = allJurisdictions.groupBy { it.parentJurisdictionId }
 
         fun buildJurisdictionNode(jurisdiction: JurisdictionDto): TreeNode<UUID>? {
             val taxTypeNodes = linksByJurisdiction[jurisdiction.id].orEmpty().map { link ->
@@ -98,7 +120,7 @@ class JurisdictionTaxTypeService(
             return TreeNode(jurisdiction.getNullSafeId(), jurisdiction.name, selectable = false, children = taxTypeNodes + childNodes)
         }
 
-        return jurisdictionCache.getAll()
+        return allJurisdictions
             .filter { it.parentJurisdictionId == null }
             .mapNotNull { buildJurisdictionNode(it) }
     }

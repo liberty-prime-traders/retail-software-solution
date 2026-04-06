@@ -1,12 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.JobTitleDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleUpdateDto
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.JobTitleEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

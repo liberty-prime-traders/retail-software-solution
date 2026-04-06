@@ -1,8 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.inventory.StockItemSource
-import me.ezra_home.retail_software_solution.organizations.business.inventory.StockItemSourceRepository
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.StockItemSourceRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.util.UUID

@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.jurisdiction
 
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.JurisdictionTypeCache
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeService
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -9,7 +9,7 @@ import java.util.UUID
 @Component
 class JurisdictionValidator(
     private val jurisdictionCache: JurisdictionCache,
-    private val jurisdictionTypeCache: JurisdictionTypeCache
+    private val jurisdictionTypeService: JurisdictionTypeService
 ) {
 
     fun validateName(name: String) {
@@ -17,7 +17,7 @@ class JurisdictionValidator(
     }
 
     fun validateTypeExists(jurisdictionTypeId: UUID) {
-        if (jurisdictionTypeCache.getAll().none { it.id == jurisdictionTypeId })
+        if (jurisdictionTypeService.getAll().none { it.id == jurisdictionTypeId })
             throw RtsGenericException("Jurisdiction type not found")
     }
 

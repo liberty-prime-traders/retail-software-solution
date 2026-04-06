@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_cat
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
-import me.ezra_home.retail_software_solution.organizations.business.product_category.mapping.ProductCategoryMapper
+import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -16,6 +16,12 @@ class ProductCategoryService(
     private val productCategoryMapper: ProductCategoryMapper,
     private val productCategoryCache: ProductCategoryCache,
 ) {
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllCategoryDtos(): Collection<ProductCategoryDto> = productCategoryCache.getAllCategories()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getCategoryNamesById(): Map<UUID, String> = productCategoryCache.getCategoryNamesById()
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllCategories(): Collection<ProductCategoryResponseDto> {

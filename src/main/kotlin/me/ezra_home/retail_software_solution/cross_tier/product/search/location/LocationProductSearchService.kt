@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.location
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import org.springframework.stereotype.Service
 
 @Service

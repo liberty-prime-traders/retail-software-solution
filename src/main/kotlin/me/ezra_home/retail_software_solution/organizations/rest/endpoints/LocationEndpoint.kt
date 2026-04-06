@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationUpdateDto
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin

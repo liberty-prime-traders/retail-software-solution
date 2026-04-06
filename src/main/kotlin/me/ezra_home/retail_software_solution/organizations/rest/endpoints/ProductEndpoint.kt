@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
-import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.OrganizationProductSearchService
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.PathVariable

@@ -20,6 +20,9 @@ class TagService(
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllTagDtos(): Collection<TagDto> = tagCache.getAllTags()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllTags(): Collection<TagResponseDto> {
         return tagCache.getAllTags().map { tagMapper.toResponseDto(it) }
     }

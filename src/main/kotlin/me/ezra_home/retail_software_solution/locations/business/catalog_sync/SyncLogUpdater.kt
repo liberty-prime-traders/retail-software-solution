@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogEntity
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncStatus
 import org.springframework.stereotype.Service

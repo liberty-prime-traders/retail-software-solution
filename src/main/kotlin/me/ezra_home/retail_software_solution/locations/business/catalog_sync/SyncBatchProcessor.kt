@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.UUID

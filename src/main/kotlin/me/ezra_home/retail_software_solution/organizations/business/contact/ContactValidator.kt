@@ -1,4 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactIdentity
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.IdentityType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

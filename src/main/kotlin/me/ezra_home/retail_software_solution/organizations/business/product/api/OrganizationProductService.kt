@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Orga
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
@@ -28,6 +29,15 @@ class OrganizationProductService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun countAllProducts(): Long = organizationProductCache.countAllProducts()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun verifyProductIsActive(orgProductId: UUID) {
+        val dto = organizationProductCache.findAllProducts().find { it.id == orgProductId }
+            ?: throw UpdatingNonExistingRecordException()
+        if (dto.status != ProductStatus.ACTIVE) {
+            throw RtsGenericException("Cannot reactivate location product: organization product is not active")
+        }
+    }
 
     fun createProduct(productInsertDto: OrganizationProductInsertDto): OrganizationProductResponseDto {
         organizationProductValidator.validateProductInsert(productInsertDto)

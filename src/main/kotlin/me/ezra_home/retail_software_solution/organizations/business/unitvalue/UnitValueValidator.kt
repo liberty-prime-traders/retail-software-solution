@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class UnitValueValidator(
     private val unitValueCache: UnitValueCache,
-    private val unitGroupCache: UnitGroupCache
+    private val unitGroupService: UnitGroupService
 ) {
 
     fun validateUnitValueInsert(unitValueInsertDto: UnitValueInsertDto) {
@@ -23,7 +23,7 @@ class UnitValueValidator(
         if (unitValueInsertDto.unitGroupId == null) {
             throw RtsGenericException(UNIT_GROUP_ID_IS_REQUIRED)
         }
-        if (unitGroupCache.getAllUnitGroups().none { it.id == unitValueInsertDto.unitGroupId }) {
+        if (unitGroupService.getAllUnitGroupDtos().none { it.id == unitValueInsertDto.unitGroupId }) {
             throw RtsGenericException(PROVIDED_MISSING_UNIT_GROUP)
         }
         unitValueCache.getAllUnitValues().find { StringUtils.isEquivalent(it.name, unitValueInsertDto.name) }

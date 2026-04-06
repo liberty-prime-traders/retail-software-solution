@@ -25,6 +25,9 @@ class LocationService(
         return locationCache.getAllLocations().map { locationMapper.toResponseDto(it) }
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllLocationDtos(): Collection<LocationDto> = locationCache.getAllLocations()
+
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         locationValidator.validateLocationInsert(locationInsertDto)
         val schemaName = createLocationSchema(locationInsertDto.name!!)

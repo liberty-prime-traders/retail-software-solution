@@ -5,17 +5,17 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
-import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatusConverter
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
-import org.hibernate.envers.Audited
-import org.hibernate.envers.NotAudited
 
 @Audited
 @Entity

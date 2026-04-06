@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.configuration.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationDto
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID

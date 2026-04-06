@@ -47,8 +47,10 @@ class ArchitectureTest {
     private fun domainOf(packageName: String): String? {
         val idx = packageName.indexOf(".business.")
         if (idx == -1) return null
+        val prefix = packageName.substring(0, idx)
+        if (prefix.endsWith(".util")) return null
         val afterBusiness = packageName.substring(idx + ".business.".length).substringBefore(".")
         if (afterBusiness.isEmpty()) return null
-        return packageName.substring(0, idx + ".business.".length) + afterBusiness
+        return "$prefix.business.$afterBusiness"
     }
 }

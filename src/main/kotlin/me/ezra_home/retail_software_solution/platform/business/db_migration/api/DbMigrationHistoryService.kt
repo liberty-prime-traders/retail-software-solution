@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.db_migration.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationCache
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.stereotype.Service
@@ -13,7 +13,7 @@ import java.util.UUID
 @TransactionalOnPlatformSchema(readOnly = true)
 class DbMigrationHistoryService(
     private val dbMigrationCache: DbMigrationCache,
-    private val dbVersionCache: DbVersionCache,
+    private val dbVersionService: DbVersionService,
     private val organizationService: OrganizationService,
 ) {
     fun getMigrationHistory(startDateTime: OffsetDateTime, endDateTime: OffsetDateTime): List<OrganizationMigrationResponseDto> {
@@ -36,7 +36,7 @@ class DbMigrationHistoryService(
         val locationsByParentId = mutableMapOf<UUID, MutableList<LocationMigrationResponse>>()
         val topLevelOrgMigrations = mutableListOf<OrganizationMigrationResponseDto>()
 
-        val dbVersionsMap = dbVersionCache.getAllDbVersions().associateBy { it.id }
+        val dbVersionsMap = dbVersionService.getAllDbVersionDtos().associateBy { it.id }
         val allMigrations = dbMigrationCache.getAllDbMigrationsFilteredByDate(startDateTime, endDateTime)
         for (migration in allMigrations) {
             val versionNumber = dbVersionsMap[migration.dbVersionId]?.versionNumber

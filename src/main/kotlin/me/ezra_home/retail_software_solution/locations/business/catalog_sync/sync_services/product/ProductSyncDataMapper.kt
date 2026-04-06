@@ -1,15 +1,14 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.product
 
 import jakarta.persistence.Tuple
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatusConverter
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import java.util.UUID
 
 object ProductSyncDataMapper {
-  private val statusConverter = ProductStatusConverter()
 
   fun fromTuple(tuple: Tuple): ProductSyncData {
     val statusString = tuple.getRequired(ProductQueryConstants.Columns.STATUS, String::class.java)
-    val status = statusConverter.convertToEntityAttribute(statusString)
+    val status = ProductStatus.entries.firstOrNull { it.code == statusString }
       ?: throw IllegalStateException("Invalid status value: $statusString")
 
     return ProductSyncData(

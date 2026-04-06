@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_typ
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.JurisdictionTypeDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

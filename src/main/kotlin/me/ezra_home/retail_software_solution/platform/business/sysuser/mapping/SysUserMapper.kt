@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import com.okta.sdk.resource.user.User
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_group.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryService
 import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupCache
 import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupMapper
 import me.ezra_home.retail_software_solution.organizations.business.product_group.ProductGroupRepository
@@ -15,19 +16,27 @@ class ProductGroupService(
     private val productGroupMapper: ProductGroupMapper,
     private val productGroupCache: ProductGroupCache,
     private val productGroupRepository: ProductGroupRepository,
-    private val productGroupValidator: ProductGroupValidator
+    private val productGroupValidator: ProductGroupValidator,
+    private val productCategoryService: ProductCategoryService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllGroupDtos(): Collection<ProductGroupDto> = productGroupCache.findAllProductGroups()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllProductGroups(): Collection<ProductGroupResponseDto> {
-        return productGroupCache.findAllProductGroups().map { productGroupMapper.toResponseDto(it) }
+        val categoriesById = productCategoryService.getCategoryNamesById()
+        return productGroupCache.findAllProductGroups().map {
+            productGroupMapper.toResponseDto(it, categoriesById[it.categoryId])
+        }
     }
 
     fun createProductGroup(productGroupInsertDto: ProductGroupInsertDto): ProductGroupResponseDto {
         productGroupValidator.validateProductGroupInsert(productGroupInsertDto)
         val dto = productGroupMapper.toDomainDto(productGroupInsertDto)
         val savedDto = productGroupCache.upsertProductGroup(dto)
-        return productGroupMapper.toResponseDto(savedDto)
+        val categoriesById = productCategoryService.getCategoryNamesById()
+        return productGroupMapper.toResponseDto(savedDto, categoriesById[savedDto.categoryId])
     }
 
     fun updateProductGroup(productGroupUpdateDto: ProductGroupUpdateDto): ProductGroupResponseDto {
@@ -37,7 +46,8 @@ class ProductGroupService(
             ?: throw UpdatingNonExistingRecordException()
         productGroupMapper.partialUpdate(productGroupUpdateDto, dto)
         val savedDto = productGroupCache.upsertProductGroup(dto)
-        return productGroupMapper.toResponseDto(savedDto)
+        val categoriesById = productCategoryService.getCategoryNamesById()
+        return productGroupMapper.toResponseDto(savedDto, categoriesById[savedDto.categoryId])
     }
 
     fun deleteProductGroup(productGroupId: UUID) {

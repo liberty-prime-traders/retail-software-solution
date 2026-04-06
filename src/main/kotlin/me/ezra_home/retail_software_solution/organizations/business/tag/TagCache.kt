@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.tag.TagDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.mapping.TagMapper
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig

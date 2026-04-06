@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryService
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryService
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryUpdateDto
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping

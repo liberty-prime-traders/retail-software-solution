@@ -1,12 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestEntity
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.NullValueMappingStrategy

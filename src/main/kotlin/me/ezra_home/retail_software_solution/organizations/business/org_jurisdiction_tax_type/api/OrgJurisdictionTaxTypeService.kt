@@ -3,9 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.org_jurisdi
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeMapper
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeResolver
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -17,25 +15,17 @@ import java.util.UUID
 class OrgJurisdictionTaxTypeService(
     private val orgJurisdictionTaxTypeMapper: OrgJurisdictionTaxTypeMapper,
     private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
-    private val jurisdictionTaxTypeCache: JurisdictionTaxTypeCache,
-    private val resolver: JurisdictionTaxTypeResolver
+    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService
 ) {
 
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getActivelyAssignedJurisdictionTaxTypeIds(): Set<UUID> {
-        return orgJurisdictionTaxTypeCache.getAll()
-            .filter { it.status == OrgJurisdictionTaxTypeStatus.ACTIVE }
-            .mapTo(HashSet()) { it.jurisdictionTaxTypeId }
-    }
-
     fun getAll(): List<OrgJurisdictionTaxTypeResponseDto> {
-        val index = resolver.buildIndex()
+        val index = jurisdictionTaxTypeService.buildIndex()
         return orgJurisdictionTaxTypeCache.getAll().map { toResponseDto(it, index) }
     }
 
     fun createAll(dtos: List<OrgJurisdictionTaxTypeInsertDto>): List<OrgJurisdictionTaxTypeResponseDto> {
-        val index = resolver.buildIndex()
-        val activeIds = jurisdictionTaxTypeCache.getActive().mapNotNull { it.id }.toHashSet()
+        val index = jurisdictionTaxTypeService.buildIndex()
+        val activeIds = jurisdictionTaxTypeService.getActiveIds()
         val existingJurisdictionIds = orgJurisdictionTaxTypeCache.getAll().mapTo(HashSet()) { it.jurisdictionTaxTypeId }
         val seen = HashSet<UUID>()
         dtos.forEach { dto ->
@@ -57,7 +47,7 @@ class OrgJurisdictionTaxTypeService(
             ?: throw UpdatingNonExistingRecordException()
         existing.status = dto.status
         orgJurisdictionTaxTypeCache.saveAll(listOf(existing))
-        return toResponseDto(existing, resolver.buildIndex())
+        return toResponseDto(existing, jurisdictionTaxTypeService.buildIndex())
     }
 
     private fun toResponseDto(dto: OrgJurisdictionTaxTypeDto, index: Map<UUID, PlatformTaxTypeDto>): OrgJurisdictionTaxTypeResponseDto {

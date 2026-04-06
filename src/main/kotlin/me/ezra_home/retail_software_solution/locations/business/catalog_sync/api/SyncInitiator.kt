@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.api
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncBatchProcessor
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogEntity
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogMapper
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogUpdater

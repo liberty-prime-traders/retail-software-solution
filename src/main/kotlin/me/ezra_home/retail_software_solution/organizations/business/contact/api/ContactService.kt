@@ -2,10 +2,8 @@ package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactIdentity
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactMapper
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactValidator
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactDto
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -17,6 +15,9 @@ class ContactService(
     private val contactCache: ContactCache,
     private val contactValidator: ContactValidator
 ) {
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllContactDtos(): Collection<ContactDto> = contactCache.getAllContacts()
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllContacts(): Collection<ContactResponseDto> {

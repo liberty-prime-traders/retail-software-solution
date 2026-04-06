@@ -1,10 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type
 
-import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeDto
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeResponseDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeEntity
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.BeanMapping
 import org.mapstruct.Mapper

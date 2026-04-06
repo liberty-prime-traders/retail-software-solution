@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.contact
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict

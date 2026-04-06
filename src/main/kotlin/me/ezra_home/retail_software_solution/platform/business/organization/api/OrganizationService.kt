@@ -12,7 +12,6 @@ import me.ezra_home.retail_software_solution.platform.business.organization.Orga
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationMapper
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationSchemaService
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationValidator
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.api.ReservedDomainStatus
@@ -36,13 +35,22 @@ class OrganizationService(
     private val organizationJoinRequestService: OrganizationJoinRequestService,
     private val organizationSchemaService: OrganizationSchemaService,
     private val organizationUserService: OrganizationUserService,
-    private val organizationJoinRequestMapper: OrganizationJoinRequestMapper,
     private val authorizationPassService: AuthorizationPassService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllOrganizations(): Collection<OrganizationResponseDto> {
         return organizationCache.getAllOrganizations().map { organizationMapper.toResponseDto(it) }
+    }
+
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getAllOrganizationDtos(): Collection<OrganizationDto> = organizationCache.getAllOrganizations()
+
+    fun updateCurrentDbVersion(organizationId: UUID, versionId: UUID) {
+        val org = organizationCache.getAllOrganizations().find { it.id == organizationId }
+            ?: throw RtsGenericException("Organization not found")
+        org.currentDbVersionId = versionId
+        organizationCache.upsertOrganization(org)
     }
 
     fun createOrganization(dto: OrganizationInsertDto): OrganizationResponseDto {
@@ -104,10 +112,9 @@ class OrganizationService(
             ?: return organizationJoinRequestService.createJoinRequest(domain, userId, null)
         SessionContextProvider.initOrganization(organization)
         return if (organizationUserService.isOrganizationMember(userId)) {
-            organizationJoinRequestMapper.toLaunchResponse(
+            organizationJoinRequestService.buildMemberLaunchResponse(
                 organization = organizationMapper.toResponseDto(organization),
-                isOrganizationAdmin = organizationAdminService.isOrganizationAdmin(),
-                accessRequested = false
+                isOrganizationAdmin = organizationAdminService.isOrganizationAdmin()
             )
         } else {
             organizationJoinRequestService.createJoinRequest(domain, userId, organization)

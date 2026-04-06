@@ -1,14 +1,13 @@
 package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
-import java.util.UUID
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.jobtitle.JobTitleDto
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)

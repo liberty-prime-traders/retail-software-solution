@@ -21,6 +21,10 @@ class AuthorizationPassService(
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
+    fun getPassReferenceNumber(passId: UUID): String? =
+        authorizationPassRepository.findById(passId).orElse(null)?.referenceNumber
+
+    @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllPasses(): List<AuthorizationPassResponseDto> {
         return authorizationPassRepository.findAll().map { authorizationPassMapper.toResponseDto(it) }
     }

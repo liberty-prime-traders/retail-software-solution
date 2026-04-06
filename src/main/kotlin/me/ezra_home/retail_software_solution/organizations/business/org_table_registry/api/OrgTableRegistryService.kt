@@ -3,8 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.org_table_r
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryCache
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryMapper
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryDto
-import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
+import me.ezra_home.retail_software_solution.platform.business.table_registry.api.TableRegistryService
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -15,7 +14,7 @@ import java.util.UUID
 class OrgTableRegistryService(
     private val orgTableRegistryCache: OrgTableRegistryCache,
     private val orgTableRegistryMapper: OrgTableRegistryMapper,
-    private val platformTableRegistryCache: TableRegistryCache
+    private val tableRegistryService: TableRegistryService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -50,7 +49,7 @@ class OrgTableRegistryService(
 
     private fun validatePlatformWideUniqueness(defaultPrefix: String, displayName: String, allOrgTables: Collection<OrgTableRegistryDto>) {
         val overriddenRegistryIds = allOrgTables.map { it.registryId }.toSet()
-        val platformTablesNotOverridden = platformTableRegistryCache.getAllTables()
+        val platformTablesNotOverridden = tableRegistryService.getAllTableDtos()
             .filter { it.id !in overriddenRegistryIds }
 
         platformTablesNotOverridden

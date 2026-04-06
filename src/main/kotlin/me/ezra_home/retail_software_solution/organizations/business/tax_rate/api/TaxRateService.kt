@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.organizations.business.tax_rate.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeStatus
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateCache
+import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateMapper
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateValidator
-import me.ezra_home.retail_software_solution.organizations.business.tax_rate.TaxRateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeResolver
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -18,14 +18,14 @@ class TaxRateService(
     private val taxRateMapper: TaxRateMapper,
     private val taxRateCache: TaxRateCache,
     private val taxRateValidator: TaxRateValidator,
-    private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
-    private val jurisdictionTaxTypeResolver: JurisdictionTaxTypeResolver
+    private val orgJurisdictionTaxTypeFetcher: OrgJurisdictionTaxTypeFetcher,
+    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): Collection<TaxRateResponseDto> {
-        val platformIndex = jurisdictionTaxTypeResolver.buildIndex()
-        val parentMap = orgJurisdictionTaxTypeCache.getAll().associateBy { it.id }
+        val platformIndex = jurisdictionTaxTypeService.buildIndex()
+        val parentMap = orgJurisdictionTaxTypeFetcher.getAllDtos().associateBy { it.id }
         return taxRateCache.getAll().map { taxRateDto ->
             val parent = parentMap[taxRateDto.orgJurisdictionTaxTypeId]
             val taxLabel = parent?.let { platformIndex[it.jurisdictionTaxTypeId]?.label }
@@ -52,8 +52,8 @@ class TaxRateService(
     }
 
     private fun toResponseDto(taxRateDto: TaxRateDto): TaxRateResponseDto {
-        val platformIndex = jurisdictionTaxTypeResolver.buildIndex()
-        val parent = orgJurisdictionTaxTypeCache.getAll().firstOrNull { it.id == taxRateDto.orgJurisdictionTaxTypeId }
+        val platformIndex = jurisdictionTaxTypeService.buildIndex()
+        val parent = orgJurisdictionTaxTypeFetcher.getAllDtos().firstOrNull { it.id == taxRateDto.orgJurisdictionTaxTypeId }
         val taxLabel = parent?.let { platformIndex[it.jurisdictionTaxTypeId]?.label }
         val parentIsActive = parent?.status == OrgJurisdictionTaxTypeStatus.ACTIVE
         return taxRateMapper.toResponseDto(taxRateDto, taxLabel, parentIsActive)

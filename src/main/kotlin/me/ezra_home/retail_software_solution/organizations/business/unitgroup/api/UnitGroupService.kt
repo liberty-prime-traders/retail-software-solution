@@ -20,6 +20,9 @@ class UnitGroupService(
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllUnitGroupDtos(): Collection<UnitGroupDto> = unitGroupCache.getAllUnitGroups()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllUnitGroups(): Collection<UnitGroupResponseDto> {
         return unitGroupCache.getAllUnitGroups().map { unitGroupMapper.toResponseDto(it) }
     }

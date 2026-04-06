@@ -1,18 +1,17 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
-import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionDto
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
 class LocationBatchProcessor(
-  private val locationCache: LocationCache,
+  private val locationService: LocationService,
   private val schemaMigrator: SchemaMigrator,
   private val dbVersionService: DbVersionService,
   private val migrationInitializer: MigrationInitializer
@@ -28,7 +27,7 @@ class LocationBatchProcessor(
     }
 
     SessionContextProvider.initOrganization(organization)
-    val locations = locationCache.getAllLocations().filter { it.id in locationIds }
+    val locations = locationService.getAllLocationDtos().filter { it.id in locationIds }
 
     if (locations.isEmpty()) {
       throw RtsGenericException("None of the specified locations were found for migration")
