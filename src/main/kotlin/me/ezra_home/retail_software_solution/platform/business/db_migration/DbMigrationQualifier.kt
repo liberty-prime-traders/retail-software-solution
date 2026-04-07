@@ -1,7 +1,6 @@
-package me.ezra_home.retail_software_solution.platform.business.db_migration.mapping
+package me.ezra_home.retail_software_solution.platform.business.db_migration
 
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
-import me.ezra_home.retail_software_solution.platform.business.db_migration.DbMigrationDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.mapstruct.Qualifier

@@ -7,30 +7,30 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryMapper
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema
 class PurchaseDeliveryService(
-  private val purchaseService: PurchaseService,
+  private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
   private val deliveryRepository: PurchaseDeliveryRepository,
   private val deliveryLineRepository: PurchaseDeliveryLineRepository,
   private val eventPublisher: ApplicationEventPublisher
 ) {
 
   fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
-    val context = purchaseService.prepareForDelivery(dto.purchaseId)
+    val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
     PurchaseDeliveryValidator.validate(dto, context.purchaseLineById)
 
     val deliveryRecord = persistDelivery(dto)
     publishDeliveryEvent(context, deliveryRecord)
 
     val deliveries = dto.lines.map { it.purchaseLineId to it.quantityDelivered }
-    return purchaseService.commitDelivery(dto.purchaseId, deliveries)
+    return deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
   }
 
   private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {

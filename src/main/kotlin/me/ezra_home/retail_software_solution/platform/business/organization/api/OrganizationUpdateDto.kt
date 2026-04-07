@@ -12,8 +12,8 @@ data class OrganizationUpdateDto(
 
     fun applyTo(existing: OrganizationDto): OrganizationDto = existing.copy(
         name = name?.orElse(existing.name) ?: existing.name,
-        description = description?.orElse(null) ?: existing.description,
+        description = if (description != null) description.orElse(null) else existing.description,
         hidden = hidden?.orElse(existing.hidden) ?: existing.hidden,
-        timezone = timezone?.orElse(null) ?: existing.timezone
+        timezone = if (timezone != null) timezone.orElse(null) else existing.timezone
     )
 }

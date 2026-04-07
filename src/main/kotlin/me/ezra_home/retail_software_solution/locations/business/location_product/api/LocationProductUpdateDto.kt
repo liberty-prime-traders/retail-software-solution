@@ -13,7 +13,7 @@ data class LocationProductUpdateDto(
 ) : Serializable {
 
     fun applyTo(existing: LocationProductDto): LocationProductDto = existing.copy(
-        defaultSalePrice = defaultSalePrice?.orElse(null) ?: existing.defaultSalePrice,
-        minStockLevel = minStockLevel?.orElse(null) ?: existing.minStockLevel
+        defaultSalePrice = if (defaultSalePrice != null) defaultSalePrice.orElse(null) else existing.defaultSalePrice,
+        minStockLevel = if (minStockLevel != null) minStockLevel.orElse(null) else existing.minStockLevel
     )
 }

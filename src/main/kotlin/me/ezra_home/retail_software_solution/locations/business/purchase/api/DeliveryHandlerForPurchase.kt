@@ -1,0 +1,57 @@
+package me.ezra_home.retail_software_solution.locations.business.purchase.api
+
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.util.UUID
+
+@Service
+class DeliveryHandlerForPurchase(
+    private val purchaseRepository: PurchaseRepository,
+    private val purchaseLineRepository: PurchaseLineRepository,
+    private val purchaseAssembler: PurchaseAssembler
+) {
+
+    fun prepareForDelivery(purchaseId: UUID): PurchaseDeliveryContext {
+        val purchase = purchaseRepository.getReferenceById(purchaseId)
+        if (purchase.status == PurchaseStatus.CANCELED)
+            throw RtsGenericException("Cannot record a delivery on a canceled purchase.")
+        if (purchase.status == PurchaseStatus.FULLY_DELIVERED)
+            throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
+        val lines = purchaseLineRepository.findByPurchaseId(purchaseId)
+        return PurchaseDeliveryContext(
+            purchaseId = purchase.id!!,
+            supplierId = purchase.supplierId,
+            purchaseLineById = lines.associateBy { it.id!! }.mapValues {
+                PurchaseMapper.purchaseLineEntityToDto(it.value)
+            }
+        )
+    }
+
+    fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
+        val purchase = purchaseRepository.getReferenceById(purchaseId)
+        val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
+        val lineById = purchaseLines.associateBy { it.id!! }
+        val toSave = deliveries.map { (lineId, qty) ->
+            lineById[lineId]?.also { it.quantityDelivered = it.quantityDelivered.add(qty) }
+                ?: throw RtsGenericException("Purchase line $lineId not found")
+        }
+        purchaseLineRepository.saveAll(toSave)
+        purchase.status = resolveDeliveryStatus(purchaseLines)
+        purchaseRepository.save(purchase)
+        return purchaseAssembler.buildResponse(purchase, purchaseLines)
+    }
+
+    private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
+        val fullyDelivered = purchaseLines.all {
+            it.quantityOrdered - it.quantityCanceled - it.quantityDelivered <= BigDecimal.ZERO
+        }
+        return if (fullyDelivered) PurchaseStatus.FULLY_DELIVERED else PurchaseStatus.PARTIALLY_DELIVERED
+    }
+}

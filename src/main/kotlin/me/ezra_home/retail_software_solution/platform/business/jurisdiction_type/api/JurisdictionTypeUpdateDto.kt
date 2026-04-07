@@ -12,6 +12,6 @@ data class JurisdictionTypeUpdateDto(
 
     fun applyTo(existing: JurisdictionTypeDto): JurisdictionTypeDto = existing.copy(
         name = name?.orElse(existing.name) ?: existing.name,
-        description = description?.orElse(null) ?: existing.description
+        description = if (description != null) description.orElse(null) else existing.description
     )
 }

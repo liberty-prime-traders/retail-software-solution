@@ -11,8 +11,6 @@ class OrgJurisdictionTaxTypeFetcher(private val orgJurisdictionTaxTypeCache: Org
 
     fun getAllDtos(): Collection<OrgJurisdictionTaxTypeDto> = orgJurisdictionTaxTypeCache.getAll()
 
-    fun getActivelyAssignedIds(): Set<UUID> =
-        orgJurisdictionTaxTypeCache.getAll()
-            .filter { it.status == OrgJurisdictionTaxTypeStatus.ACTIVE }
-            .mapTo(HashSet()) { it.jurisdictionTaxTypeId }
+    fun getAlreadyAssignedIds(): Set<UUID> =
+        orgJurisdictionTaxTypeCache.getAll().mapTo(HashSet()) { it.jurisdictionTaxTypeId }
 }

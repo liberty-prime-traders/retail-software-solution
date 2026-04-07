@@ -33,8 +33,8 @@ class OrgTableRegistryService(
     }
 
     private fun validateRequiredFields(dto: OrgTableRegistryDto) {
-        StringUtils.getValueOrException(dto.defaultPrefix, "Default prefix is required")
-        StringUtils.getValueOrException(dto.displayName, "Display name is required")
+        StringUtils.requireHasValue(dto.defaultPrefix, "Default prefix is required")
+        StringUtils.requireHasValue(dto.displayName, "Display name is required")
     }
 
     private fun validateOrgWideUniqueness(defaultPrefix: String, displayName: String, tableId: UUID?, allOrgTables: Collection<OrgTableRegistryDto>) {

@@ -13,7 +13,7 @@ class JurisdictionValidator(
 ) {
 
     fun validateName(name: String) {
-        StringUtils.getValueOrException(name, "Name must not be blank")
+        StringUtils.requireHasValue(name, "Name must not be blank")
     }
 
     fun validateTypeExists(jurisdictionTypeId: UUID) {

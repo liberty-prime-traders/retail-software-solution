@@ -48,9 +48,9 @@ class TableRegistryService(
     }
 
     private fun validateRequiredFields(dto: TableRegistryDto) {
-        StringUtils.getValueOrException(dto.tableName, "Table name is required")
-        StringUtils.getValueOrException(dto.defaultPrefix, "Default prefix is required")
-        StringUtils.getValueOrException(dto.displayName, "Display name is required")
+        StringUtils.requireHasValue(dto.tableName, "Table name is required")
+        StringUtils.requireHasValue(dto.defaultPrefix, "Default prefix is required")
+        StringUtils.requireHasValue(dto.displayName, "Display name is required")
     }
 
     private fun validateUniqueness(

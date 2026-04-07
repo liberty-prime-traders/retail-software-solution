@@ -11,4 +11,4 @@ import java.util.UUID
 @Entity
 @Table(name = TableNames.ORGANIZATION_ADMIN)
 @HasReference(tableName = TableName.ORGANIZATION_ADMIN)
-class OrganizationAdminEntity(var adminId: UUID): ExpirableUserAssignmentEntity(userId = adminId)
+class OrganizationAdminEntity(userId: UUID): ExpirableUserAssignmentEntity(userId = userId)

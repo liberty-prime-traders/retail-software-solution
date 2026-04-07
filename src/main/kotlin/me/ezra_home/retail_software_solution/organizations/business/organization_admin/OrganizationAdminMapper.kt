@@ -17,10 +17,8 @@ interface OrganizationAdminMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "endOn", ignore = true)
-    @Mapping(target = "adminId", ignore = true)
     fun toEntity(insertDto: OrganizationAdminInsertDto): OrganizationAdminEntity
 
-    @Mapping(target = "adminId", ignore = true)
     fun toEntity(dto: OrganizationAdminDto): OrganizationAdminEntity
 
     @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])

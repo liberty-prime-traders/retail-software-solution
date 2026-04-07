@@ -21,7 +21,7 @@ class JurisdictionTypeService(
         jurisdictionTypeCache.getAll().map { jurisdictionTypeMapper.toResponseDto(it) }
 
     fun create(dto: JurisdictionTypeInsertDto): JurisdictionTypeResponseDto {
-        StringUtils.getValueOrException(dto.name, "Name must not be blank")
+        StringUtils.requireHasValue(dto.name, "Name must not be blank")
         if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, dto.name) })
             throw RtsGenericException("A jurisdiction type named '${dto.name}' already exists")
         val saved = jurisdictionTypeCache.create(dto)
@@ -32,7 +32,7 @@ class JurisdictionTypeService(
         val existing = jurisdictionTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
         val updated = dto.applyTo(existing)
-        StringUtils.getValueOrException(updated.name, "Name must not be blank")
+        StringUtils.requireHasValue(updated.name, "Name must not be blank")
         if (jurisdictionTypeCache.getAll().any { StringUtils.isEquivalent(it.name, updated.name) && it.id != updated.id })
             throw RtsGenericException("A jurisdiction type named '${updated.name}' already exists")
         val saved = jurisdictionTypeCache.save(updated)

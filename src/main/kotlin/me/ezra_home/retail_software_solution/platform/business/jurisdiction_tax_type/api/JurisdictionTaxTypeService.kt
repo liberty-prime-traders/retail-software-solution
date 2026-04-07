@@ -98,7 +98,7 @@ class JurisdictionTaxTypeService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAvailableTaxTypes(): List<TreeNode<UUID>> {
-        val assignedIds = orgJurisdictionTaxTypeFetcher.getActivelyAssignedIds()
+        val assignedIds = orgJurisdictionTaxTypeFetcher.getAlreadyAssignedIds()
         val taxTypeIndex = taxTypeFetcher.getAllDtos().associateBy { it.id }
         val linksByJurisdiction = jurisdictionTaxTypeCache.getActive()
             .filterNot { it.id in assignedIds }

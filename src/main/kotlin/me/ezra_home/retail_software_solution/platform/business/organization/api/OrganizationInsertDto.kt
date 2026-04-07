@@ -9,5 +9,5 @@ data class OrganizationInsertDto(
     val passCode: UUID,
     val description: String? = null,
     val hidden: Boolean = false,
-    val timezone: String? = null
+    val timezone: String = "Africa/Addis_Ababa"
 ) : Serializable
