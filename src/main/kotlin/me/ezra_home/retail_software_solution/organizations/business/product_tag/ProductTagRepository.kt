@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
-import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

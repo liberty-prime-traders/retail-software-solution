@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.configuration.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
-import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID
@@ -43,17 +43,17 @@ object SessionContextProvider {
         sessionContextThreadLocal.remove()
     }
 
-    fun initOrganization(organization: OrganizationEntity) {
+    fun initOrganization(organization: OrganizationDto) {
         getSession().organization = OrgSession(
-            id = organization.getNullSafeId(),
+            id = organization.id,
             schemaName = organization.schemaName!!,
             timezone = organization.timezone
         )
     }
 
-    fun initLocation(location: LocationEntity) {
+    fun initLocation(location: LocationDto) {
         getSession().location = LocationSession(
-            id = location.getNullSafeId(),
+            id = location.id,
             schemaName = location.schemaName!!,
             timezone = location.timezone
         )

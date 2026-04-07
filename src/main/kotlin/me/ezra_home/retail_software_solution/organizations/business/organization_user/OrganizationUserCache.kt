@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.OrganizationUserEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -13,10 +13,13 @@ import java.util.UUID
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.ORGANIZATION_USER])
-class OrganizationUserCache(private val organizationUserRepository: OrganizationUserRepository) {
+class OrganizationUserCache(
+    private val organizationUserRepository: OrganizationUserRepository,
+    private val organizationUserMapper: OrganizationUserMapper
+) {
     @Cacheable
-    fun getOrganizationUsers(): Collection<OrganizationUserEntity> {
-        return organizationUserRepository.findAll()
+    fun getOrganizationUsers(): Collection<OrganizationUserDto> {
+        return organizationUserRepository.findAll().map { organizationUserMapper.toDomainDto(it) }
     }
 
     @Cacheable
@@ -25,12 +28,20 @@ class OrganizationUserCache(private val organizationUserRepository: Organization
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUser(organizationUserEntity: OrganizationUserEntity) {
-        organizationUserRepository.save(organizationUserEntity)
+    fun create(insertDto: OrganizationUserInsertDto): OrganizationUserDto {
+        val saved = organizationUserRepository.saveAndFlush(organizationUserMapper.toEntity(insertDto))
+        return organizationUserMapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertOrganizationUsers(organizationUserEntities: Collection<OrganizationUserEntity>) {
-        organizationUserRepository.saveAll(organizationUserEntities)
+    fun createAll(insertDtos: Collection<OrganizationUserInsertDto>): List<OrganizationUserDto> {
+        val entities = insertDtos.map { organizationUserMapper.toEntity(it) }
+        return organizationUserRepository.saveAllAndFlush(entities).map { organizationUserMapper.toDomainDto(it) }
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(dto: OrganizationUserDto): OrganizationUserDto {
+        val saved = organizationUserRepository.save(organizationUserMapper.toEntity(dto))
+        return organizationUserMapper.toDomainDto(saved)
     }
 }

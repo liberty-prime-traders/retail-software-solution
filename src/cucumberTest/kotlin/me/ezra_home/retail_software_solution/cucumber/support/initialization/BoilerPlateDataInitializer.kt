@@ -3,19 +3,19 @@ package me.ezra_home.retail_software_solution.cucumber.support.initialization
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
-import me.ezra_home.retail_software_solution.support.TestConstants
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationType
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.PassType
-import me.ezra_home.retail_software_solution.platform.business.authorization_pass.dto.AuthorizationPassInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationType
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassInsertDto
+import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassType
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
+import me.ezra_home.retail_software_solution.support.TestConstants
 import me.ezra_home.retail_software_solution.util.model.ReferenceNumberEntityListener
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.annotation.DependsOn
@@ -56,10 +56,10 @@ class BoilerPlateDataInitializer(
 
     } else {
       existingOrganization.find { it.subdomain == SUBDOMAIN }?.let { organization ->
-        injectContext.persist(PersistentKey.ORGANIZATION, organization.getNullSafeId())
+        injectContext.persist(PersistentKey.ORGANIZATION, organization.id)
         SessionContextProvider.initOrganization(organization)
         locationCache.getAllLocations().firstOrNull()?.let { location ->
-          injectContext.persist(PersistentKey.LOCATION, location.getNullSafeId())
+          injectContext.persist(PersistentKey.LOCATION, location.id)
         }
         SessionContextProvider.clear()
       }
@@ -123,8 +123,9 @@ class BoilerPlateDataInitializer(
     tableRegistryCache.getAllTables()
       .filter { !it.validated }
       .forEach {
-        it.validated = true
-        tableRegistryCache.upsertTable(it)
+        it.copy(validated = true).also { validated ->
+          tableRegistryCache.save(validated)
+        }
       }
   }
 }

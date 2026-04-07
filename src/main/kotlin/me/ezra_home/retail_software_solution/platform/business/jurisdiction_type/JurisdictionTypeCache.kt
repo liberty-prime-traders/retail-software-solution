@@ -2,7 +2,8 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_typ
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.platform.model.JurisdictionTypeEntity
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeDto
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -14,15 +15,23 @@ import java.util.UUID
 @CacheSchemaLevel(SchemaLevel.PLATFORM)
 @CacheConfig(cacheNames = [CacheNames.JURISDICTION_TYPE])
 class JurisdictionTypeCache(
-    private val jurisdictionTypeRepository: JurisdictionTypeRepository
+    private val jurisdictionTypeRepository: JurisdictionTypeRepository,
+    private val mapper: JurisdictionTypeMapper
 ) {
 
     @Cacheable
-    fun getAll(): Collection<JurisdictionTypeEntity> = jurisdictionTypeRepository.findAll()
+    fun getAll(): Collection<JurisdictionTypeDto> = jurisdictionTypeRepository.findAll().map { mapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsert(entity: JurisdictionTypeEntity) {
-        jurisdictionTypeRepository.save(entity)
+    fun create(insertDto: JurisdictionTypeInsertDto): JurisdictionTypeDto {
+        val saved = jurisdictionTypeRepository.saveAndFlush(mapper.toEntity(insertDto))
+        return mapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(dto: JurisdictionTypeDto): JurisdictionTypeDto {
+        val saved = jurisdictionTypeRepository.save(mapper.toEntity(dto))
+        return mapper.toDomainDto(saved)
     }
 
     @CacheEvict(allEntries = true)

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveredLineDto
 import java.time.Instant
 import java.util.UUID
 

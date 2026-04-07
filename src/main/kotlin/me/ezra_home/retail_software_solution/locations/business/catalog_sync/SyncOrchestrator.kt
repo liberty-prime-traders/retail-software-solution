@@ -1,8 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncStatus
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy.SyncStrategyRegistry
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncServiceRegistry
-import me.ezra_home.retail_software_solution.locations.model.SyncLogEntity
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 

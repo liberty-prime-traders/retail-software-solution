@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
-import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
-import me.ezra_home.retail_software_solution.util.queries.SqlQuery
-import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
+import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
+import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

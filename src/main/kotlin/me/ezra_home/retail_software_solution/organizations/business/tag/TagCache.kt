@@ -2,7 +2,9 @@ package me.ezra_home.retail_software_solution.organizations.business.tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.TagEntity
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.tag.mapping.TagMapper
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,13 +15,25 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.TAG])
-class TagCache(private val tagRepository: TagRepository) {
+class TagCache(
+    private val tagRepository: TagRepository,
+    private val tagMapper: TagMapper
+) {
 
     @Cacheable
-    fun getAllTags(): Collection<TagEntity> = tagRepository.findAll()
+    fun getAllTags(): Collection<TagDto> = tagRepository.findAll().map { tagMapper.toDomainDto(it) }
 
     @CacheEvict(allEntries = true)
-    fun upsertTag(tagEntity: TagEntity): TagEntity = tagRepository.save(tagEntity)
+    fun create(insertDto: TagInsertDto): TagDto {
+        val saved = tagRepository.saveAndFlush(tagMapper.toEntity(insertDto))
+        return tagMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(tagDto: TagDto): TagDto {
+        val saved = tagRepository.save(tagMapper.toEntity(tagDto))
+        return tagMapper.toDomainDto(saved)
+    }
 
     @CacheEvict(allEntries = true)
     fun deleteTag(id: UUID) {

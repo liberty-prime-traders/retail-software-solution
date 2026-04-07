@@ -4,10 +4,10 @@ import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.When
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
-import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.ProductFixtureBuilder
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
+import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
+import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 

@@ -3,15 +3,15 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.location
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.util.queries.SqlQuery
-import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.CategoryFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.NameFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.ReferenceNumberFilterStrategy
-import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.StatusFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
+import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 object LocationProductSearchQueryBuilder {
 

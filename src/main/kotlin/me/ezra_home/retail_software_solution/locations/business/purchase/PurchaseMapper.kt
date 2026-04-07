@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -57,4 +57,14 @@ object PurchaseMapper {
       unitCost = it.unitCost
     )
   }
+
+  fun purchaseLineEntityToDto(entity: PurchaseLineEntity) = PurchaseLineDto(
+    id = entity.id!!,
+    purchaseId = entity.purchaseId,
+    locationProductId = entity.locationProductId,
+    quantityOrdered = entity.quantityOrdered,
+    unitCost = entity.unitCost,
+    quantityDelivered = entity.quantityDelivered,
+    quantityCanceled = entity.quantityCanceled
+  )
 }

@@ -1,16 +1,15 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionService
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
 class OrganizationMigrationHandler(
-  private val organizationCache: OrganizationCache,
+  private val organizationService: OrganizationService,
   private val dbVersionService: DbVersionService,
   private val schemaMigrator: SchemaMigrator,
   private val migrationInitializer: MigrationInitializer,
@@ -20,10 +19,10 @@ class OrganizationMigrationHandler(
 ) {
   fun migrateOrganizationAndLocations(
     organizationId: UUID,
-    targetDbVersion: DbVersionEntity,
+    targetDbVersion: DbVersionDto,
     locationIds: Set<UUID>
   ): OrganizationLocationsMigration {
-    val organization = organizationCache.getAllOrganizations().find { it.id == organizationId }
+    val organization = organizationService.getAllOrganizationDtos().find { it.id == organizationId }
       ?: throw RtsGenericException("Organization not found")
 
     val schemaName = organization.schemaName
@@ -51,13 +50,12 @@ class OrganizationMigrationHandler(
         previousVersionLabel = dbVersionService.getVersionNumber(targetDbVersion.prevVersionId)
       )
 
-      organization.currentDbVersionId = targetDbVersion.id
-      organizationCache.upsertOrganization(organization)
+      organizationService.updateCurrentDbVersion(organization.id, targetDbVersion.id)
 
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = migration.getNullSafeId(),
+        parentMigrationId = migration.id,
         locationIds = locationIds
       )
 
@@ -75,4 +73,3 @@ class OrganizationMigrationHandler(
     }
   }
 }
-

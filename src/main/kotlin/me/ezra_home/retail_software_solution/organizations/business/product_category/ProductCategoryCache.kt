@@ -1,30 +1,44 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_category
 
-import java.util.UUID
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.ProductCategoryEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_CATEGORY])
-class ProductCategoryCache(private val productCategoryRepository: ProductCategoryRepository) {
+class ProductCategoryCache(
+    private val productCategoryRepository: ProductCategoryRepository,
+    private val productCategoryMapper: ProductCategoryMapper
+) {
 
     @Cacheable
-    fun getAllCategories(): Collection<ProductCategoryEntity> = productCategoryRepository.findAll()
+    fun getAllCategories(): Collection<ProductCategoryDto> =
+        productCategoryRepository.findAll().map { productCategoryMapper.toDomainDto(it) }
 
     @Cacheable
-    fun getCategoriesById(): Map<UUID, ProductCategoryEntity> {
-        return getAllCategories().associateBy { it.getNullSafeId() }
+    fun getCategoryNamesById(): Map<UUID, String> {
+        return getAllCategories().associate { it.id to it.categoryName!! }
     }
 
     @CacheEvict(allEntries = true)
-    fun upsertCategories(productCategoryEntity: ProductCategoryEntity): ProductCategoryEntity = productCategoryRepository.save(productCategoryEntity)
+    fun create(insertDto: ProductCategoryInsertDto): ProductCategoryDto {
+        val saved = productCategoryRepository.saveAndFlush(productCategoryMapper.toEntity(insertDto))
+        return productCategoryMapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun save(productCategoryDto: ProductCategoryDto): ProductCategoryDto {
+        val saved = productCategoryRepository.save(productCategoryMapper.toEntity(productCategoryDto))
+        return productCategoryMapper.toDomainDto(saved)
+    }
 
     @CacheEvict(allEntries = true)
     fun deleteCategory(id: UUID) {

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync
 
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Component

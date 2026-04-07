@@ -1,11 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveredLineDto
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryCreateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryLineEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import java.time.Instant
 import java.util.UUID
@@ -29,22 +26,23 @@ object PurchaseDeliveryMapper {
     }
 
   fun toEvent(
-    purchase: PurchaseEntity,
+    purchaseId: UUID,
+    supplierId: UUID,
     deliveryRecord: DeliveryRecord,
-    purchaseLineById: Map<UUID, PurchaseLineEntity>,
+    purchaseLineById: Map<UUID, PurchaseLineDto>,
     sourceSchema: String
   ) = PurchaseDeliveredEvent(
     eventId = UUID.randomUUID(),
     sourceSchema = sourceSchema,
     timestamp = Instant.now(),
     correlationId = null,
-    purchaseId = purchase.getNullSafeId(),
-    deliveryId = deliveryRecord.delivery.getNullSafeId(),
-    supplierId = purchase.supplierId,
+    purchaseId = purchaseId,
+    deliveryId = deliveryRecord.delivery.id!!,
+    supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
-        deliveryLineId = dl.getNullSafeId(),
+        deliveryLineId = dl.id!!,
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
         unitCost = dl.unitCost

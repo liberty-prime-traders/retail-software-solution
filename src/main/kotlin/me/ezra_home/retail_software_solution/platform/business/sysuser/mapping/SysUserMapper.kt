@@ -1,9 +1,11 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
 
 import com.okta.sdk.resource.user.User
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
-import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserEntity
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserInsertDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -12,6 +14,18 @@ import java.util.function.Supplier
 
 @Mapper(config = RtsMapperConfig::class)
 interface SysUserMapper {
+    fun toDomainDto(entity: SysUserEntity): SysUserDto
+
+    fun toEntity(dto: SysUserDto): SysUserEntity
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdById", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "localFirstName", ignore = true)
+    @Mapping(target = "localLastName", ignore = true)
+    fun toEntity(insertDto: SysUserInsertDto): SysUserEntity
+
     @Mapping(source = "id", target = "oktaId")
     @Mapping(target = "id", expression = "java(idSupplier.get())")
     @Mapping(source = "profile.firstName", target = "firstName")
@@ -20,7 +34,7 @@ interface SysUserMapper {
     @Mapping(source = "profile.secondEmail", target = "secondEmail")
     @Mapping(source = "profile.email", target = "email")
     @Mapping(target = "userType", constant = "END_USER")
-    fun oktaToSystemUser(oktaUserDto: User?, @Context idSupplier: Supplier<UUID?>): SysUserDto
+    fun oktaToSystemUser(oktaUserDto: User?, @Context idSupplier: Supplier<UUID?>): SysUserWithProfileDto
 
     @Mapping(source = "localFirstName", target = "firstName")
     @Mapping(source = "localLastName", target = "lastName")
@@ -28,5 +42,5 @@ interface SysUserMapper {
     @Mapping(target = "mobilePhone", ignore = true)
     @Mapping(target = "secondEmail", ignore = true)
     @Mapping(target = "email", ignore = true)
-    fun sysUserEntityToSysUserDto(sysUserEntity: SysUserEntity): SysUserDto
+    fun toSysUserDto(entityDto: SysUserDto): SysUserWithProfileDto
 }

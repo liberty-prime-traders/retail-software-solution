@@ -1,16 +1,14 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.OrganizationLocationsMigration
-import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import java.util.UUID
 
 @Component
 class MigrationRetryHandler(
-  private val organizationCache: OrganizationCache,
+  private val organizationService: OrganizationService,
   private val migrationInitializer: MigrationInitializer,
   private val migrationStatusUpdater: MigrationStatusUpdater,
   private val locationBatchProcessor: LocationBatchProcessor,
@@ -18,17 +16,17 @@ class MigrationRetryHandler(
   private val dbMigrationCache: DbMigrationCache
 ) {
   fun retryLocationMigrations(
-    originalMigration: DbMigrationEntity,
-    targetDbVersion: DbVersionEntity,
+    originalMigration: DbMigrationDto,
+    targetDbVersion: DbVersionDto,
     locationIds: Set<UUID>
   ): OrganizationLocationsMigration {
-    val organization = organizationCache.getAllOrganizations().find { it.id == originalMigration.schemaOwnerId }
+    val organization = organizationService.getAllOrganizationDtos().find { it.id == originalMigration.schemaOwnerId }
       ?: throw RtsGenericException("Organization not found")
 
     val retryMigration = migrationInitializer.createRetryMigration(originalMigration, targetDbVersion)
 
     return try {
-      val eligibleLocationIds = filterEligibleLocations(originalMigration.getNullSafeId(), locationIds)
+      val eligibleLocationIds = filterEligibleLocations(originalMigration.id, locationIds)
 
       if (eligibleLocationIds.isEmpty()) {
         migrationStatusUpdater.markIgnored(
@@ -41,7 +39,7 @@ class MigrationRetryHandler(
       val locationResults = locationBatchProcessor.processLocations(
         organization = organization,
         targetDbVersion = targetDbVersion,
-        parentMigrationId = retryMigration.getNullSafeId(),
+        parentMigrationId = retryMigration.id,
         locationIds = eligibleLocationIds
       )
 
@@ -52,7 +50,7 @@ class MigrationRetryHandler(
         isRetry = true
       )
 
-      val consolidatedResults = consolidateResults(originalMigration.getNullSafeId(), locationResults.successful)
+      val consolidatedResults = consolidateResults(originalMigration.id, locationResults.successful)
 
       OrganizationLocationsMigration(retryMigration, consolidatedResults)
     } catch (e: Exception) {
@@ -69,8 +67,8 @@ class MigrationRetryHandler(
 
   private fun consolidateResults(
     originalMigrationId: UUID,
-    newResults: List<DbMigrationEntity>
-  ): List<DbMigrationEntity> {
+    newResults: List<DbMigrationDto>
+  ): List<DbMigrationDto> {
     val previousAttempts = dbMigrationCache.getDbLocationMigrationsByMigrationsParentId(originalMigrationId)
     val newResultsMap = newResults.associateBy { it.schemaOwnerId }
 
@@ -83,4 +81,3 @@ class MigrationRetryHandler(
     return dbMigrationCache.getLatestFailedLocationMigrationForOrgParent(parentMigrationId, locationId) != null
   }
 }
-

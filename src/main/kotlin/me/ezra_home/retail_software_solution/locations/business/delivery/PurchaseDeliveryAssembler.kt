@@ -1,69 +1,63 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.delivery.dto.PurchaseDeliveryResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineProductDto
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseDeliveryLineEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueQualifier
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 class PurchaseDeliveryAssembler(
   private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
-  private val unitValueQualifier: UnitValueQualifier
+  private val unitValueService: UnitValueService
 ) {
-
-  private data class LineResolutionContext(
-    val purchaseLineById: Map<UUID, PurchaseLineEntity>,
-    val productMap: Map<UUID?, LocationProductEntity>
-  )
 
   fun buildResponses(
     deliveries: List<PurchaseDeliveryEntity>,
-    purchaseLines: List<PurchaseLineEntity>,
-    productMap: Map<UUID?, LocationProductEntity>
+    purchaseLines: Map<UUID, PurchaseLineDto>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
   ): List<PurchaseDeliveryResponseDto> {
     if (deliveries.isEmpty()) return emptyList()
-    val deliveryIds = deliveries.map { it.getNullSafeId() }
+    val deliveryIds = deliveries.map { it.id!! }
     val allDeliveryLines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveryIds)
-    val context = LineResolutionContext(purchaseLines.associateBy { it.getNullSafeId() }, productMap)
     val deliveryLinesByDeliveryId = allDeliveryLines.groupBy { it.purchaseDeliveryId }
     return deliveries.map { delivery ->
       val deliveryLines = deliveryLinesByDeliveryId[delivery.id] ?: emptyList()
-      toDto(delivery, deliveryLines, context)
+      toDto(delivery, deliveryLines, purchaseLines, productSummaries)
     }
   }
 
   private fun toDto(
     delivery: PurchaseDeliveryEntity,
     deliveryLines: List<PurchaseDeliveryLineEntity>,
-    context: LineResolutionContext
+    purchaseLineById: Map<UUID, PurchaseLineDto>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
   ): PurchaseDeliveryResponseDto {
+    val unitNamesById = unitValueService.getUnitNamesById()
     return PurchaseDeliveryResponseDto(
-      id = delivery.getNullSafeId(),
-      referenceNumber = delivery.getNullSafeReferenceNumber(),
+      id = delivery.id!!,
+      referenceNumber = delivery.referenceNumber!!,
       purchaseId = delivery.purchaseId,
       status = delivery.status,
       deliveredAt = delivery.deliveredAt,
       notes = delivery.notes,
       lines = deliveryLines.map { dl ->
-        val purchaseLine = context.purchaseLineById[dl.purchaseLineId]!!
-        val product = context.productMap[purchaseLine.locationProductId]!!
+        val purchaseLine = purchaseLineById[dl.purchaseLineId]!!
+        val product = productSummaries[purchaseLine.locationProductId]!!
         PurchaseDeliveryLineResponseDto(
-          id = dl.getNullSafeId(),
-          referenceNumber = dl.getNullSafeReferenceNumber(),
+          id = dl.id!!,
+          referenceNumber = dl.referenceNumber!!,
           quantityDelivered = dl.quantityDelivered,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
           locationProduct = PurchaseLineProductDto(
-            referenceNumber = product.getNullSafeReferenceNumber(),
+            referenceNumber = product.referenceNumber,
             productName = product.productName,
             productGroupName = product.productGroupName,
-            baseUnit = unitValueQualifier.getUnitName(product.baseUnitId)
+            baseUnit = unitNamesById[product.baseUnitId]
           )
         )
       }

@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 
@@ -24,7 +23,7 @@ class SchemaMigrator(
 
   fun migrateLocationSchema(
     schemaName: String,
-    migration: DbMigrationEntity,
+    migration: DbMigrationDto,
     entityName: String,
     versionLabel: String,
     previousVersionLabel: String? = null
@@ -38,4 +37,3 @@ class SchemaMigrator(
     }
   }
 }
-

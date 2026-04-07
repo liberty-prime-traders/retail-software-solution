@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.cucumber.fixtures
 
+import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
-import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import java.util.UUID
 
 abstract class FixtureBuilder<INSERT_DTO>(

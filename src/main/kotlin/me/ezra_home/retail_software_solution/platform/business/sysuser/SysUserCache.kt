@@ -3,8 +3,10 @@ package me.ezra_home.retail_software_solution.platform.business.sysuser
 import com.okta.sdk.client.Client
 import com.okta.sdk.resource.user.UserList
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserInsertDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.UserType
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.SysUserMapper
-import me.ezra_home.retail_software_solution.platform.model.SysUserEntity
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -23,8 +25,8 @@ class SysUserCache(
 ) {
 
     @Cacheable
-    fun getSystemUsers(): Collection<SysUserEntity> {
-        return userRepository.findAll()
+    fun getSystemUsers(): Collection<SysUserDto> {
+        return userRepository.findAll().map { sysUserMapper.toDomainDto(it) }
     }
 
     @Cacheable
@@ -37,20 +39,23 @@ class SysUserCache(
     }
 
     @Cacheable
-    fun getAllUsers(): Collection<SysUserDto> {
+    fun getAllUsers(): Collection<SysUserWithProfileDto> {
         val sysUsers = getSystemUsers()
         if (sysUsers.isEmpty()) return Collections.emptyList()
         val oktaUsers = getUsersFromOkta().associateBy { it.id }
         val systemEndUsers = sysUsers.filter { it.userType == UserType.END_USER }.map { sysUser ->
             val oktaUser = oktaUsers[sysUser.oktaId]
-            sysUserMapper.oktaToSystemUser(oktaUser) {sysUser.id}
+            sysUserMapper.oktaToSystemUser(oktaUser) { sysUser.id }
         }
         val serviceAccounts = sysUsers.filter { it.userType == UserType.SERVICE_ACCOUNT }.map { sysUser ->
-            sysUserMapper.sysUserEntityToSysUserDto(sysUser)
+            sysUserMapper.toSysUserDto(sysUser)
         }
         return systemEndUsers + serviceAccounts
     }
 
     @CacheEvict(allEntries = true)
-    fun addSystemUser(userEntity: SysUserEntity): SysUserEntity = userRepository.save(userEntity)
+    fun create(insertDto: SysUserInsertDto): SysUserDto {
+        val saved = userRepository.saveAndFlush(sysUserMapper.toEntity(insertDto))
+        return sysUserMapper.toDomainDto(saved)
+    }
 }

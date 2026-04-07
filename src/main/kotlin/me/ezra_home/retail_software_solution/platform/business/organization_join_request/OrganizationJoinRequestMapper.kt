@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.platform.business.organization_join_request
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.platform.business.organization.dto.OrganizationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationAdminJoinRequestResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationJoinRequestResponseDto
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.dto.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.model.OrganizationJoinRequestEntity
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestInsertDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestResponseDto
+import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.NullValueMappingStrategy
@@ -17,6 +17,16 @@ import org.mapstruct.NullValueMappingStrategy
 )
 interface OrganizationJoinRequestMapper {
 
+    fun toDomainDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestDto
+
+    fun toEntity(dto: OrganizationJoinRequestDto): OrganizationJoinRequestEntity
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdById", ignore = true)
+    @Mapping(target = "createdOn", ignore = true)
+    @Mapping(target = "referenceNumber", ignore = true)
+    fun toEntity(insertDto: OrganizationJoinRequestInsertDto): OrganizationJoinRequestEntity
+
     fun toLaunchResponse(
         organization: OrganizationResponseDto?,
         isOrganizationAdmin: Boolean,
@@ -25,10 +35,10 @@ interface OrganizationJoinRequestMapper {
 
     @Mapping(source = "subdomain", target = "domain")
     @Mapping(source = "createdOn", target = "requestedDate")
-    fun toDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestResponseDto
+    fun toDto(dto: OrganizationJoinRequestDto): OrganizationJoinRequestResponseDto
 
     @Mapping(source = "createdById", target = "fullName", qualifiedBy = [FullName::class])
     @Mapping(source = "createdOn", target = "requestedDate")
-    fun toAdminDto(entity: OrganizationJoinRequestEntity): OrganizationAdminJoinRequestResponseDto
+    fun toAdminDto(dto: OrganizationJoinRequestDto): OrganizationAdminJoinRequestResponseDto
 
 }

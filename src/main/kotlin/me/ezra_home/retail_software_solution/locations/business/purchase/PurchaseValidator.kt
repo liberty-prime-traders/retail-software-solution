@@ -1,9 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCancelDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineUpdateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object PurchaseValidator {
@@ -34,7 +33,7 @@ object PurchaseValidator {
       throw RtsGenericException("locationProductId is required for new purchase lines.")
   }
 
-  fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseLineCancelDto) {
+  fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseCancelLinesDto) {
     val maxCancelable = line.quantityOrdered - line.quantityDelivered
     if (cancel.quantityCanceled > maxCancelable)
       throw RtsGenericException(

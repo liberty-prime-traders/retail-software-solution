@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_group
 
-import me.ezra_home.retail_software_solution.organizations.business.product_category.ProductCategoryCache
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product_group.dto.ProductGroupUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryService
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -11,7 +11,7 @@ import java.util.UUID
 @Component
 class ProductGroupValidator(
   private val productGroupCache: ProductGroupCache,
-  private val productCategoryCache: ProductCategoryCache
+  private val productCategoryService: ProductCategoryService
 ) {
 
   fun validateProductGroupUpdate(dto: ProductGroupUpdateDto) {
@@ -34,7 +34,7 @@ class ProductGroupValidator(
 
   private fun validateProductGroupCategory(categoryId: UUID?) {
     categoryId?.let {
-      productCategoryCache.getAllCategories().find { it.id == categoryId }
+      productCategoryService.getAllCategoryDtos().find { it.id == categoryId }
         ?: throw RtsGenericException(INVALID_CATEGORY_ID)
     }
   }

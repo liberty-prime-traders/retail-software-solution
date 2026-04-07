@@ -1,0 +1,18 @@
+package me.ezra_home.retail_software_solution.organizations.business.address.api
+
+import java.io.Serializable
+import java.time.OffsetDateTime
+import java.util.UUID
+
+data class AddressResponseDto(
+    val id: UUID,
+    val line1: String?,
+    val line2: String?,
+    val line3: String?,
+    val state: String?,
+    val postalCode: String?,
+    val country: String?,
+    val createdBy: String?,
+    val createdOn: OffsetDateTime?,
+    val referenceNumber: String?
+) : Serializable

@@ -8,6 +8,6 @@ data class PageRequest<PARAMETER: HasSearchStrategy<PARAMETER>, CURSOR>  (
     val parameters: PARAMETER
 ) {
     companion object {
-        const val REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD = 1
+        const val REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD = 1000
     }
 }

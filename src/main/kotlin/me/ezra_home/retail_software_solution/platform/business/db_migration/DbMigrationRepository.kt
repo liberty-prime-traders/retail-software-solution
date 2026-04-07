@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import org.springframework.data.jpa.repository.JpaRepository
 import java.time.OffsetDateTime

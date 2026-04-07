@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.catalog_sync.strategy
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncMode
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncMode
 import org.springframework.stereotype.Component
 
 

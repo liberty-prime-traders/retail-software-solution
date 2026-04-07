@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_migration.dto.DbMigrationRetryRequestDto
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
-import me.ezra_home.retail_software_solution.platform.model.DbVersionEntity
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRetryRequestDto
+import me.ezra_home.retail_software_solution.platform.business.db_migration.api.MigrationStatus
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionDto
+import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
 import me.ezra_home.retail_software_solution.util.enums.SchemaOwnerType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -12,24 +12,24 @@ import java.util.UUID
 
 @Component
 class MigrationValidator(
-  private val dbVersionCache: DbVersionCache,
+  private val dbVersionService: DbVersionService,
   private val dbMigrationCache: DbMigrationCache,
 ) {
-  fun validateMigrationRequest(request: DbMigrationRequestDto): DbVersionEntity {
+  fun validateMigrationRequest(request: DbMigrationRequestDto): DbVersionDto {
     val targetVersion = getActiveTargetVersion(request.targetDbVersionId)
     validatePreviousMigrationCompleted(request.organizationId, targetVersion)
     return targetVersion
   }
 
-  fun validateRetryRequest(request: DbMigrationRetryRequestDto): Pair<DbMigrationEntity, DbVersionEntity> {
+  fun validateRetryRequest(request: DbMigrationRetryRequestDto): Pair<DbMigrationDto, DbVersionDto> {
     val originalMigration = getOriginalMigration(request.orgMigrationId)
     validateRetryEligibility(originalMigration)
     val targetVersion = getTargetVersion(originalMigration.dbVersionId)
     return Pair(originalMigration, targetVersion)
   }
 
-  private fun getActiveTargetVersion(versionId: UUID): DbVersionEntity {
-    val version = dbVersionCache.getAllDbVersions().find { it.id == versionId }
+  private fun getActiveTargetVersion(versionId: UUID): DbVersionDto {
+    val version = dbVersionService.getAllDbVersionDtos().find { it.id == versionId }
       ?: throw RtsGenericException("Target DB version not found")
 
     version.activatedOn ?: throw RtsGenericException("Target DB version is inactive")
@@ -37,15 +37,15 @@ class MigrationValidator(
     return version
   }
 
-  private fun getTargetVersion(versionId: UUID): DbVersionEntity {
-    return dbVersionCache.getAllDbVersions().find { it.id == versionId }
+  private fun getTargetVersion(versionId: UUID): DbVersionDto {
+    return dbVersionService.getAllDbVersionDtos().find { it.id == versionId }
       ?: throw RtsGenericException("Target DB version not found")
   }
 
-  private fun validatePreviousMigrationCompleted(organizationId: UUID, targetVersion: DbVersionEntity) {
+  private fun validatePreviousMigrationCompleted(organizationId: UUID, targetVersion: DbVersionDto) {
     val prevVersionId = targetVersion.prevVersionId ?: return
 
-    val prevVersion = dbVersionCache.getAllDbVersions().find { it.id == prevVersionId }
+    val prevVersion = dbVersionService.getAllDbVersionDtos().find { it.id == prevVersionId }
       ?: return
 
     val previousMigration = dbMigrationCache.getTopBySchemaOwnerIdAndSchemaOwnerTypeAndDbVersionIdOrderByStartOnDesc(
@@ -64,12 +64,12 @@ class MigrationValidator(
     }
   }
 
-  private fun getOriginalMigration(migrationId: UUID): DbMigrationEntity {
+  private fun getOriginalMigration(migrationId: UUID): DbMigrationDto {
     return dbMigrationCache.getAllDbMigrations().find { it.id == migrationId }
       ?: throw RtsGenericException("Original DB migration not found")
   }
 
-  private fun validateRetryEligibility(migration: DbMigrationEntity) {
+  private fun validateRetryEligibility(migration: DbMigrationDto) {
     if (migration.schemaOwnerType != SchemaOwnerType.ORGANIZATION) {
       throw RtsGenericException("Only organization-level migrations can be retried")
     }

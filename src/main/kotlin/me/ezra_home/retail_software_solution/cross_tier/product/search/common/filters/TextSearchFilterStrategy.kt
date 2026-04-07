@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.cross_tier.product.search.common.f
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames.NAME_OR_DESCRIPTION
-import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import me.ezra_home.retail_software_solution.util.queries.FilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 
 class TextSearchFilterStrategy(
   private val searchText: String?,

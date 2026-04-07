@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.organizations.business.product.ProductStatus
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchValidator
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows

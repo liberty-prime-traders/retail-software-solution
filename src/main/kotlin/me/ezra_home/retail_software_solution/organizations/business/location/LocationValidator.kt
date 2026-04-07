@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.location
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.location.dto.LocationUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationUpdateDto
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
