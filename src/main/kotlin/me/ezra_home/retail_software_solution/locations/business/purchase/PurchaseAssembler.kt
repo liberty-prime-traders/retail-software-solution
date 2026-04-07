@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
@@ -30,9 +29,15 @@ class PurchaseAssembler(
     val allLines = purchaseLineRepository.findByPurchaseIdIn(purchaseIds)
     val productSummaries = loadProductSummaries(allLines.map { it.locationProductId })
     val linesByPurchaseId = allLines.groupBy { it.purchaseId }
-    val purchaseLineDtoMap = allLines.associateBy { it.id!! }.mapValues { it.value.toLineDto() }
-    val deliveryResponsesByPurchaseId = purchaseDeliveryFetcher.getDeliveryResponses(purchaseIds, purchaseLineDtoMap, productSummaries)
-    val supplierNameMap = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
+    val purchaseLineDtoMap = allLines.associateBy { it.id!! }.mapValues {
+      PurchaseMapper.purchaseLineEntityToDto(it.value)
+    }
+    val deliveryResponsesByPurchaseId = purchaseDeliveryFetcher.getDeliveryResponses(
+      purchaseIds, purchaseLineDtoMap, productSummaries
+    )
+    val supplierNameMap = contactService.getAllContactDtos().associateBy(
+      { it.id }, { it.identity.displayName }
+    )
     return purchases.map { purchase ->
       val lines = linesByPurchaseId[purchase.id] ?: emptyList()
       val deliveries = deliveryResponsesByPurchaseId[purchase.id] ?: emptyList()
@@ -42,11 +47,15 @@ class PurchaseAssembler(
 
   fun buildResponse(purchase: PurchaseEntity, lines: List<PurchaseLineEntity>): PurchaseResponseDto {
     val productSummaries = loadProductSummaries(lines.map { it.locationProductId })
-    val purchaseLineDtoMap = lines.associateBy { it.id!! }.mapValues { it.value.toLineDto() }
+    val purchaseLineDtoMap = lines.associateBy { it.id!! }.mapValues {
+      PurchaseMapper.purchaseLineEntityToDto(it.value)
+    }
     val deliveries = purchaseDeliveryFetcher.getDeliveryResponses(
         listOf(purchase.id!!), purchaseLineDtoMap, productSummaries
     )[purchase.id] ?: emptyList()
-    val supplierNameMap = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
+    val supplierNameMap = contactService.getAllContactDtos().associateBy(
+      { it.id }, { it.identity.displayName }
+    )
     return buildResponse(purchase, lines, productSummaries, supplierNameMap, deliveries)
   }
 
@@ -80,7 +89,10 @@ class PurchaseAssembler(
   private fun loadProductSummaries(ids: List<UUID>): Map<UUID, LocationProductSummaryDto> =
       locationProductService.findSummaryByIds(ids)
 
-  private fun toLinesDto(lines: List<PurchaseLineEntity>, productSummaries: Map<UUID, LocationProductSummaryDto>): List<PurchaseLineResponseDto> {
+  private fun toLinesDto(
+    lines: List<PurchaseLineEntity>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
+  ): List<PurchaseLineResponseDto> {
     val unitNamesById = unitValueService.getUnitNamesById()
     return lines.map { line ->
       val product = productSummaries[line.locationProductId]!!
@@ -104,14 +116,4 @@ class PurchaseAssembler(
       )
     }
   }
-
-  private fun PurchaseLineEntity.toLineDto() = PurchaseLineDto(
-      id = id!!,
-      purchaseId = purchaseId,
-      locationProductId = locationProductId,
-      quantityOrdered = quantityOrdered,
-      unitCost = unitCost,
-      quantityDelivered = quantityDelivered,
-      quantityCanceled = quantityCanceled
-  )
 }
