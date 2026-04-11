@@ -1,0 +1,105 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-account-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: account
+      changes:
+        - createTable:
+            tableName: account
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: nvarchar2(10)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_code_notnull
+                    unique: true
+                    uniqueConstraintName: account_code_unique
+
+              - column:
+                  name: name
+                  type: nvarchar2(150)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_name_notnull
+
+              - column:
+                  name: account_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_account_type_notnull
+
+              - column:
+                  name: currency_code
+                  type: nvarchar2(3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_currency_code_notnull
+
+              - column:
+                  name: is_postable
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_is_postable_notnull
+
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_is_active_notnull
+
+              - column:
+                  name: is_system
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_is_system_notnull
+
+              - column:
+                  name: current_balance
+                  type: decimal(19,4)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_current_balance_notnull
+
+              - column:
+                  name: balance_updated_at
+                  type: timestamptz
+
+              - column:
+                  name: parent_account_id
+                  type: uuid
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: account_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: account

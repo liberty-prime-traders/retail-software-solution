@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-feature-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: feature
+      changes:
+        - createTable:
+            tableName: feature
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: feature_id_pk
+
+              - column:
+                  name: feature
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: feature_feature_notnull
+                    unique: true
+                    uniqueConstraintName: feature_feature_unique
+
+              - column:
+                  name: description
+                  type: nvarchar2(255)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: feature_description_notnull
+      rollback:
+        - dropTable:
+            tableName: feature

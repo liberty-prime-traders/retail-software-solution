@@ -1,0 +1,49 @@
+package me.ezra_home.retail_software_solution.organizations.business.account.api
+
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
+import me.ezra_home.retail_software_solution.organizations.business.account.SystemAccount
+import org.springframework.stereotype.Component
+import java.util.UUID
+
+@Component
+class CoaDefaultsInserter(private val accountCache: AccountCache) {
+
+    fun seedDefaults() {
+        if (accountCache.getAll().isNotEmpty()) return
+
+        val savedIds = mutableMapOf<SystemAccount, UUID>()
+        var remaining = SystemAccount.entries.toList()
+
+        while (remaining.isNotEmpty()) {
+            val batch = remaining.filter { it.parent == null || it.parent in savedIds }
+            val saved = accountCache.saveAll(batch.map { buildInsertDto(it, savedIds) })
+            indexSavedIds(batch, saved, savedIds)
+            remaining = remaining - batch.toSet()
+        }
+    }
+
+    private fun buildInsertDto(account: SystemAccount, savedIds: Map<SystemAccount, UUID>): AccountInsertDto {
+        return AccountInsertDto(
+            code = account.code,
+            name = account.accountName,
+            accountType = account.type,
+            currencyCode = "KES",
+            accountIsPostable = account.isPostable,
+            accountIsSystemMaintained = true,
+            parentAccountId = account.parent?.let { savedIds[it] }
+        )
+    }
+
+    private fun indexSavedIds(
+        batch: List<SystemAccount>,
+        saved: List<AccountDto>,
+        savedIds: MutableMap<SystemAccount, UUID>
+    ) {
+        val savedByCode = saved.associateBy { it.code }
+        batch.forEach { account ->
+            savedIds[account] = savedByCode[account.code]?.id
+                ?: throw IllegalStateException("Saved account not found for code: ${account.code}")
+        }
+    }
+}

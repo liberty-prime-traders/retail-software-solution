@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-account-parent-account-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_account_parent_account_id
+      changes:
+        - createIndex:
+            indexName: idx_account_parent_account_id
+            tableName: account
+            columns:
+              - column:
+                  name: parent_account_id
+      rollback:
+        - dropIndex:
+            indexName: idx_account_parent_account_id
+            tableName: account
+

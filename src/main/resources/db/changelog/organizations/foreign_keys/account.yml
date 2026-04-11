@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-account-parent-account-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: account_parent_account_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: account
+            baseColumnNames: parent_account_id
+            referencedTableName: account
+            referencedColumnNames: id
+            constraintName: account_parent_account_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: account
+            constraintName: account_parent_account_id_fk

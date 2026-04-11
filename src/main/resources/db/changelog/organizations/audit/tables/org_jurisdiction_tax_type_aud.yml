@@ -39,6 +39,14 @@ databaseChangeLog:
                   type: nvarchar2(5)
 
               - column:
+                  name: payable_account_code
+                  type: nvarchar2(10)
+
+              - column:
+                  name: recoverable_account_code
+                  type: nvarchar2(10)
+
+              - column:
                   name: revend
                   type: bigint
 

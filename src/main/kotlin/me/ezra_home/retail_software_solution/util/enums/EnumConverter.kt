@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.util.enums
 
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.util.EnumSet
 
 @Converter
@@ -13,6 +14,8 @@ open class EnumConverter<ENUM>(private val enumClass: Class<ENUM>) : AttributeCo
     }
 
     override fun convertToEntityAttribute(code: String?): ENUM? {
-        return EnumSet.allOf(enumClass).firstOrNull { enumValue -> enumValue.code.contentEquals(code) }
+        return EnumSet.allOf(enumClass)
+            .firstOrNull { enumValue -> enumValue.code.contentEquals(code) }
+            ?: throw RtsGenericException("No enum constant '${code}' found for enum class '${enumClass.simpleName}'")
     }
 }

@@ -23,6 +23,12 @@ class OrgJurisdictionTaxTypeEntity(
 
     @Convert(converter = OrgJurisdictionTaxTypeStatusConverter::class)
     @Column(name = "status", length = 5, nullable = false)
-    var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE
+    var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
+
+    @Column(name = "payable_account_code", length = 10)
+    var payableAccountCode: String? = null,
+
+    @Column(name = "recoverable_account_code", length = 10)
+    var recoverableAccountCode: String? = null
 
 ) : HasReferenceEntity()

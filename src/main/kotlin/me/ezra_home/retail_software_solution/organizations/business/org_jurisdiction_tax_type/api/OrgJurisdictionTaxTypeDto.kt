@@ -9,5 +9,11 @@ data class OrgJurisdictionTaxTypeDto(
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
     val jurisdictionTaxTypeId: UUID,
-    val status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE
-)
+    val status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
+    val payableAccountCode: String? = null,
+    val recoverableAccountCode: String? = null
+) {
+    fun isLinkedToAccount(): Boolean {
+        return recoverableAccountCode != null || payableAccountCode != null
+    }
+}

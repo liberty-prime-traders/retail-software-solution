@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.account.api.TaxAccountsValidator
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeMapper
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
@@ -15,7 +16,8 @@ import java.util.UUID
 class OrgJurisdictionTaxTypeService(
     private val orgJurisdictionTaxTypeMapper: OrgJurisdictionTaxTypeMapper,
     private val orgJurisdictionTaxTypeCache: OrgJurisdictionTaxTypeCache,
-    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService
+    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
+    private val taxAccountsValidator: TaxAccountsValidator
 ) {
 
     fun getAll(): List<OrgJurisdictionTaxTypeResponseDto> {
@@ -29,13 +31,15 @@ class OrgJurisdictionTaxTypeService(
         val existingJurisdictionIds = orgJurisdictionTaxTypeCache.getAll().mapTo(HashSet()) { it.jurisdictionTaxTypeId }
         val seen = HashSet<UUID>()
         dtos.forEach { dto ->
-            val label = index[dto.jurisdictionTaxTypeId]?.label ?: dto.jurisdictionTaxTypeId.toString()
+            val platformTaxType = index[dto.jurisdictionTaxTypeId] ?: throw RtsGenericException("Jurisdiction tax type not found: ${dto.jurisdictionTaxTypeId}")
+            val taxLabel = platformTaxType.label
             if (!seen.add(dto.jurisdictionTaxTypeId))
-                throw RtsGenericException("Duplicate jurisdiction tax type in request: $label")
+                throw RtsGenericException("Duplicate jurisdiction tax type in request: $taxLabel")
             if (dto.jurisdictionTaxTypeId !in activeIds)
-                throw RtsGenericException("Jurisdiction tax type not found or stopped: $label")
+                throw RtsGenericException("Jurisdiction tax type not found or is already stopped: $taxLabel")
             if (dto.jurisdictionTaxTypeId in existingJurisdictionIds)
-                throw RtsGenericException("An assignment already exists for: $label")
+                throw RtsGenericException("$taxLabel is already registered for this organization")
+            taxAccountsValidator.validate(dto.payableAccountCode, dto.recoverableAccountCode, platformTaxType)
         }
         val savedDtos = orgJurisdictionTaxTypeCache.createAll(dtos)
         return savedDtos.map { toResponseDto(it, index) }
@@ -44,14 +48,17 @@ class OrgJurisdictionTaxTypeService(
     fun update(dto: OrgJurisdictionTaxTypeUpdateDto): OrgJurisdictionTaxTypeResponseDto {
         val existing = orgJurisdictionTaxTypeCache.getAll().find { it.id == dto.id }
             ?: throw UpdatingNonExistingRecordException()
+
         val updated = dto.applyTo(existing)
+        val index = jurisdictionTaxTypeService.buildIndex()
+        val platformTaxType = index[existing.jurisdictionTaxTypeId] ?: throw RtsGenericException("Jurisdiction tax type not found")
+        taxAccountsValidator.validate(updated.payableAccountCode, updated.recoverableAccountCode, platformTaxType)
         orgJurisdictionTaxTypeCache.saveAll(listOf(updated))
-        return toResponseDto(updated, jurisdictionTaxTypeService.buildIndex())
+        return toResponseDto(updated, index)
     }
 
     private fun toResponseDto(dto: OrgJurisdictionTaxTypeDto, index: Map<UUID, PlatformTaxTypeDto>): OrgJurisdictionTaxTypeResponseDto {
-        val platformTaxType = index[dto.jurisdictionTaxTypeId]
-            ?: throw RtsGenericException("Jurisdiction tax type not found: ${dto.jurisdictionTaxTypeId}")
+        val platformTaxType = index[dto.jurisdictionTaxTypeId] ?: throw RtsGenericException("Jurisdiction tax type not found")
         return orgJurisdictionTaxTypeMapper.toResponseDto(dto, platformTaxType)
     }
 }

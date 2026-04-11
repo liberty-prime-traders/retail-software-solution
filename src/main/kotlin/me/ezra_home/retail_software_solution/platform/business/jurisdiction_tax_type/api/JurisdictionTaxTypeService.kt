@@ -54,7 +54,7 @@ class JurisdictionTaxTypeService(
         return jurisdictionTaxTypeCache.getAll().mapNotNull { link ->
             val jurisdiction = jurisdictionIndex[link.jurisdictionId] ?: return@mapNotNull null
             val taxType = taxTypeIndex[link.taxTypeId] ?: return@mapNotNull null
-            link.id to PlatformTaxTypeDto(taxType.id, "${jurisdiction.name} - ${taxType.name}")
+            link.id to PlatformTaxTypeDto(taxType.id, "${jurisdiction.name} - ${taxType.name}", taxType.taxRecoveryType)
         }.toMap()
     }
 

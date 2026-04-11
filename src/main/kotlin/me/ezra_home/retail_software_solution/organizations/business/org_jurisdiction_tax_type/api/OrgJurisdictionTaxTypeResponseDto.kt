@@ -10,5 +10,7 @@ data class OrgJurisdictionTaxTypeResponseDto(
     val createdOn: OffsetDateTime?,
     val platformTaxId: UUID,
     val taxLabel: String,
-    val status: OrgJurisdictionTaxTypeStatus
+    val status: OrgJurisdictionTaxTypeStatus,
+    val payableAccountCode: String?,
+    val recoverableAccountCode: String?
 ) : Serializable

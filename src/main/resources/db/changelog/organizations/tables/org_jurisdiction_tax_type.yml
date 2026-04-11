@@ -53,6 +53,14 @@ databaseChangeLog:
                     uniqueConstraintName: org_jurisdiction_tax_type_reference_number_unique
                     nullable: false
                     notNullConstraintName: org_jurisdiction_tax_type_reference_number_notnull
+
+              - column:
+                  name: payable_account_code
+                  type: nvarchar2(10)
+
+              - column:
+                  name: recoverable_account_code
+                  type: nvarchar2(10)
       rollback:
         - dropTable:
             tableName: org_jurisdiction_tax_type
