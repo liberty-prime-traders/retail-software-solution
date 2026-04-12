@@ -56,11 +56,11 @@ databaseChangeLog:
 
               - column:
                   name: payable_account_code
-                  type: nvarchar2(10)
+                  type: nvarchar2(50)
 
               - column:
                   name: recoverable_account_code
-                  type: nvarchar2(10)
+                  type: nvarchar2(50)
       rollback:
         - dropTable:
             tableName: org_jurisdiction_tax_type

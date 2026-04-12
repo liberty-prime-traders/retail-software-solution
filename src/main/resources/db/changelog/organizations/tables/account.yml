@@ -21,7 +21,7 @@ databaseChangeLog:
 
               - column:
                   name: code
-                  type: nvarchar2(10)
+                  type: nvarchar2(50)
                   constraints:
                     nullable: false
                     notNullConstraintName: account_code_notnull
@@ -48,14 +48,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: account_currency_code_notnull
-
-              - column:
-                  name: is_postable
-                  type: boolean
-                  defaultValueBoolean: true
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: account_is_postable_notnull
 
               - column:
                   name: is_active

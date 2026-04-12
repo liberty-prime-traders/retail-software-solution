@@ -33,9 +33,6 @@ class AccountEntity(
     @Column(name = "currency_code", length = 3, nullable = false, updatable = false)
     var currencyCode: String,
 
-    @Column(name = "is_postable", nullable = false)
-    var accountIsPostable: Boolean = true,
-
     @Column(name = "is_active", nullable = false)
     var accountIsActive: Boolean = true,
 

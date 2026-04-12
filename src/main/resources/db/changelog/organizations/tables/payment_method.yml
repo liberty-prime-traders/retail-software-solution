@@ -46,3 +46,7 @@ databaseChangeLog:
                     uniqueConstraintName: payment_method_reference_number_unique
                     nullable: false
                     notNullConstraintName: payment_method_reference_number_not_null
+
+              - column:
+                  name: account_code
+                  type: nvarchar2(50)

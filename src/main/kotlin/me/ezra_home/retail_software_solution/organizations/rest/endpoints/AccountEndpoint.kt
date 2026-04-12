@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountCreateRequest
+import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountChildCreateRequest
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountRootCreateRequest
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountUpdateDto
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,15 +21,18 @@ class AccountEndpoint(private val accountService: AccountService) {
     @GetMapping
     fun getAll(): List<AccountResponseDto> = accountService.getAll()
 
-    @PostMapping
-    fun create(@RequestBody dto: AccountCreateRequest): AccountResponseDto = accountService.create(dto)
+    @PostMapping("child")
+    fun createChild(@RequestBody dto: AccountChildCreateRequest): AccountResponseDto = accountService.createChild(dto)
+
+    @PostMapping("root")
+    fun createRoot(@RequestBody dto: AccountRootCreateRequest): AccountResponseDto = accountService.createRoot(dto)
 
     @PutMapping
     fun rename(@RequestBody dto: AccountUpdateDto): AccountResponseDto = accountService.rename(dto)
 
-    @PostMapping("{id}/deactivate")
+    @PutMapping("{id}/deactivate")
     fun deactivate(@PathVariable id: UUID): AccountResponseDto = accountService.toggleActive(id, false)
 
-    @PostMapping("{id}/activate")
+    @PutMapping("{id}/activate")
     fun activate(@PathVariable id: UUID): AccountResponseDto = accountService.toggleActive(id, true)
 }

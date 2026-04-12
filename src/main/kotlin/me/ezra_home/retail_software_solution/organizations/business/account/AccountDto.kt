@@ -12,12 +12,14 @@ data class AccountDto(
     val name: String,
     val accountType: AccountType,
     val currencyCode: String,
-    val accountIsPostable: Boolean,
     val accountIsActive: Boolean,
     val accountIsSystemMaintained: Boolean,
     val currentBalance: BigDecimal,
     val balanceUpdatedAt: OffsetDateTime?,
     val parentAccountId: UUID?
 ) {
-    val label: String get() = "$name ($code)"
+    val label: String get() = "$name (${toDisplayCode()})"
+    fun toDisplayCode(): String {
+        return code.split(".").joinToString(".") { it.trimStart('0').ifEmpty { "0" } }
+    }
 }

@@ -7,8 +7,7 @@ data class AccountInsertDto(
     val code: String,
     val name: String,
     val accountType: AccountType,
-    val currencyCode: String,
-    val accountIsPostable: Boolean = true,
+    val currencyCode: String? = null,
     val accountIsSystemMaintained: Boolean = false,
     val parentAccountId: UUID? = null
 )

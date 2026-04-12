@@ -8,11 +8,13 @@ import java.util.UUID
 data class PaymentMethodUpdateDto(
     val id: UUID? = null,
     val name: Optional<String>? = null,
-    val description: Optional<String>? = null
+    val description: Optional<String>? = null,
+    val accountCode: Optional<String>? = null
 ): Serializable {
 
     fun applyTo(existing: PaymentMethodDto): PaymentMethodDto = existing.copy(
         name = name?.orElse(existing.name) ?: existing.name,
-        description = description?.orElse(existing.description) ?: existing.description
+        description = description?.orElse(existing.description) ?: existing.description,
+        accountCode = accountCode?.orElse(existing.accountCode) ?: existing.accountCode
     )
 }

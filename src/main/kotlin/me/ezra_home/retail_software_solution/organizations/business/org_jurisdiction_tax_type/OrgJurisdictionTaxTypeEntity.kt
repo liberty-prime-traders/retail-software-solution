@@ -25,10 +25,10 @@ class OrgJurisdictionTaxTypeEntity(
     @Column(name = "status", length = 5, nullable = false)
     var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
 
-    @Column(name = "payable_account_code", length = 10)
+    @Column(name = "payable_account_code", length = 50)
     var payableAccountCode: String? = null,
 
-    @Column(name = "recoverable_account_code", length = 10)
+    @Column(name = "recoverable_account_code", length = 50)
     var recoverableAccountCode: String? = null
 
 ) : HasReferenceEntity()

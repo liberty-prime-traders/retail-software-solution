@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.account.api.PaymentAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodCache
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -16,7 +17,8 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class PaymentMethodService(
     private val paymentMethodMapper: PaymentMethodMapper,
-    private val paymentMethodCache: PaymentMethodCache
+    private val paymentMethodCache: PaymentMethodCache,
+    private val paymentAccountValidator: PaymentAccountValidator
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -26,6 +28,7 @@ class PaymentMethodService(
 
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
+        paymentAccountValidator.validate(paymentMethodInsertDto.accountCode)
         val dto = paymentMethodCache.create(paymentMethodInsertDto)
         return paymentMethodMapper.toResponseDto(dto)
     }
@@ -42,6 +45,7 @@ class PaymentMethodService(
         val existing = paymentMethodCache.getAllPaymentMethods().find { it.id == id } ?: throw UpdatingNonExistingRecordException()
         validateNameOnSave(paymentMethodUpdateDto.name, paymentMethodUpdateDto.id)
         val updated = paymentMethodUpdateDto.applyTo(existing)
+        paymentAccountValidator.validate(updated.accountCode)
         val saved = paymentMethodCache.save(updated)
         return paymentMethodMapper.toResponseDto(saved)
     }

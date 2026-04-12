@@ -2,18 +2,22 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountCodeGenerator
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountMapper
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountValidator
+import me.ezra_home.retail_software_solution.organizations.business.account.ChildAccountCreator
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.util.UUID
+
 
 @Service
 @TransactionalOnOrganizationSchema
 class AccountService(
     private val accountCache: AccountCache,
-    private val accountMapper: AccountMapper
+    private val accountMapper: AccountMapper,
+    private val childAccountCreator: ChildAccountCreator
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -25,9 +29,29 @@ class AccountService(
         }
     }
 
-    fun create(dto: AccountCreateRequest): AccountResponseDto {
-        val newAccount = createChild(dto)
-        val accountsById: Map<UUID, AccountDto> = accountCache.getAll().associateBy { it.id }
+    fun createRoot(dto: AccountRootCreateRequest): AccountResponseDto {
+        val accountType = dto.accountType
+        if (accountType.canBeRoot().not()) {
+            throw RtsGenericException("Only certain account types can be created as root accounts and $accountType is not one of them")
+        }
+        val accounts = accountCache.getAll()
+        accounts.find { it.parentAccountId == null && StringUtils.isEquivalent(it.name, dto.name) }
+            ?.let { throw RtsGenericException("A root account with the same name already exists") }
+
+        val code = AccountCodeGenerator.generateRootCode(accounts)
+        val insertDto = AccountInsertDto(
+            code = code,
+            name = dto.name,
+            accountType = accountType
+        )
+        val saved = accountCache.create(insertDto)
+        return accountMapper.toResponseDto(saved)
+    }
+
+    fun createChild(dto: AccountChildCreateRequest): AccountResponseDto {
+        val accounts = accountCache.getAll()
+        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
+        val newAccount = childAccountCreator.createChild(dto, accountsById)
         return accountMapper.toResponseDto(newAccount, accountsById[newAccount.parentAccountId]?.label)
     }
 
@@ -59,31 +83,5 @@ class AccountService(
         return accountMapper.toResponseDto(saved, parentLabel)
     }
 
-    private fun createChild(dto: AccountCreateRequest): AccountDto {
-        val accounts = accountCache.getAll()
-        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
-        val parentId = dto.parentAccountId
-        val parent = accountsById[parentId]
-            ?: throw RtsGenericException("Parent account not found")
 
-        val children = accounts.filter { it.parentAccountId == parentId }
-        AccountValidator.validateForChildCreate(parent, children)
-
-        val insertDto = AccountInsertDto(
-            code = generateChildCode(parent.code, children),
-            name = dto.name,
-            accountType = parent.accountType,
-            currencyCode = parent.currencyCode,
-            parentAccountId = parentId
-        )
-        return accountCache.create(insertDto)
-    }
-
-    private fun generateChildCode(parentCode: String, children: List<AccountDto>): String {
-        val prefix = parentCode.take(2)
-        val parentNumeric = parentCode.drop(2).toInt()
-        val step = if (parentNumeric % 1000 == 0) 100 else 10
-        val highestChild = children.maxOfOrNull { it.code.drop(2).toInt() } ?: parentNumeric
-        return "$prefix${highestChild + step}"
-    }
 }

@@ -39,10 +39,6 @@ databaseChangeLog:
                   type: boolean
 
               - column:
-                  name: is_postable
-                  type: boolean
-
-              - column:
                   name: revend
                   type: bigint
 

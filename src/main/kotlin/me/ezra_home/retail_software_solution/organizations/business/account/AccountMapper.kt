@@ -17,13 +17,15 @@ interface AccountMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    @Mapping(target = "currentBalance", ignore = true)
+    @Mapping(target = "currentBalance", constant = "0.0")
     @Mapping(target = "balanceUpdatedAt", ignore = true)
-    @Mapping(target = "accountIsActive", defaultValue = "true")
+    @Mapping(target = "currencyCode", defaultValue = "KES")
+    @Mapping(target = "accountIsActive", constant = "true")
     fun toEntity(insertDto: AccountInsertDto): AccountEntity
 
     @Mapping(target = "parentAccount", expression = "java(parentAccount)")
     @Mapping(target = "accountIsExtensible", source = ".", qualifiedBy = [IsExtensible::class])
-    fun toResponseDto(dto: AccountDto, @Context parentAccount: String? = null): AccountResponseDto
+    @Mapping(target = "displayName", source = "label")
+    fun toResponseDto(dto: AccountDto, @Context parentAccount: AccountDto? = null): AccountResponseDto
 
 }

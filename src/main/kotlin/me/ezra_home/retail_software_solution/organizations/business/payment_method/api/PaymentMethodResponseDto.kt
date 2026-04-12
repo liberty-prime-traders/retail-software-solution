@@ -10,5 +10,6 @@ data class PaymentMethodResponseDto(
     val createdOn: OffsetDateTime?,
     val name: String?,
     val description: String?,
-    val referenceNumber: String?
+    val referenceNumber: String?,
+    val accountCode: String?
 ): Serializable
