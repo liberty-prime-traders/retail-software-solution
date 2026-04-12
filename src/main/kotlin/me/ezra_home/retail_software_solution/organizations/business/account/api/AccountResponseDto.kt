@@ -16,7 +16,7 @@ data class AccountResponseDto(
     val accountIsSystemMaintained: Boolean,
     val currentBalance: BigDecimal,
     val balanceUpdatedAt: OffsetDateTime?,
-    val parentAccountId: UUID?,
+    val parentAccountCode: String?,
     val parentAccount: String?,
     val accountIsExtensible: Boolean
 ) : Serializable

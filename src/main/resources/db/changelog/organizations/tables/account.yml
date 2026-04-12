@@ -68,7 +68,7 @@ databaseChangeLog:
               - column:
                   name: current_balance
                   type: decimal(19,4)
-                  defaultValueNumeric: 0
+                  defaultValueNumeric: "0.00"
                   constraints:
                     nullable: false
                     notNullConstraintName: account_current_balance_notnull
@@ -78,8 +78,8 @@ databaseChangeLog:
                   type: timestamptz
 
               - column:
-                  name: parent_account_id
-                  type: uuid
+                  name: parent_account_code
+                  type: nvarchar2(50)
 
               - column:
                   name: created_by_id

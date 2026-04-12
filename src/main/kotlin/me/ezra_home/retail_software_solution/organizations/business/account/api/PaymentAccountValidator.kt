@@ -19,7 +19,7 @@ class PaymentAccountValidator(private val accountCache: AccountCache) {
             throw RtsGenericException("Payment method account must be of type Asset")
         }
 
-        val parent = allAccounts.firstOrNull { it.id == account.parentAccountId }
+        val parent = allAccounts.firstOrNull { it.code == account.parentAccountCode }
             ?: throw RtsGenericException("Payment method account has no parent: $code")
         if (account.accountIsSystemMaintained) {
             val systemAccount = SystemAccount.fromCode(account.code)

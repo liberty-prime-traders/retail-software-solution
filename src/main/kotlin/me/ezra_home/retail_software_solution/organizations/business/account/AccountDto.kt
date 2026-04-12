@@ -16,7 +16,7 @@ data class AccountDto(
     val accountIsSystemMaintained: Boolean,
     val currentBalance: BigDecimal,
     val balanceUpdatedAt: OffsetDateTime?,
-    val parentAccountId: UUID?
+    val parentAccountCode: String?
 ) {
     val label: String get() = "$name (${toDisplayCode()})"
     fun toDisplayCode(): String {

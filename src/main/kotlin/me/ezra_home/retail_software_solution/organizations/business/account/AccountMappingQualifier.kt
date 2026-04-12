@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component
 @Target(AnnotationTarget.FUNCTION)
 annotation class IsExtensible
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class ParentAccountLabel
+
 @Component
 class AccountMappingQualifier {
 
@@ -19,5 +24,10 @@ class AccountMappingQualifier {
         }
         val parentSystemAccount = parentAccountDto?.let { SystemAccount.fromCode(it.code) }
         return parentSystemAccount?.isExtensible() != true
+    }
+
+    @ParentAccountLabel
+    fun getParentAccountLabel(dto: AccountDto, @Context parentAccountDto: AccountDto?): String? {
+        return parentAccountDto?.label
     }
 }

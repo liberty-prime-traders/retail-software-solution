@@ -23,7 +23,7 @@ interface AccountMapper {
     @Mapping(target = "accountIsActive", constant = "true")
     fun toEntity(insertDto: AccountInsertDto): AccountEntity
 
-    @Mapping(target = "parentAccount", expression = "java(parentAccount)")
+    @Mapping(target = "parentAccount", source = ".", qualifiedBy = [ParentAccountLabel::class])
     @Mapping(target = "accountIsExtensible", source = ".", qualifiedBy = [IsExtensible::class])
     @Mapping(target = "displayName", source = "label")
     fun toResponseDto(dto: AccountDto, @Context parentAccount: AccountDto? = null): AccountResponseDto

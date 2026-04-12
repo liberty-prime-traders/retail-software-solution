@@ -23,9 +23,9 @@ class AccountService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<AccountResponseDto> {
         val accounts = accountCache.getAll()
-        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
+        val accountsByCode = accounts.associateBy { it.code }
         return accounts.map {
-            accountMapper.toResponseDto(it, accountsById[it.parentAccountId]?.label)
+            accountMapper.toResponseDto(it, accountsByCode[it.parentAccountCode])
         }
     }
 
@@ -35,7 +35,7 @@ class AccountService(
             throw RtsGenericException("Only certain account types can be created as root accounts and $accountType is not one of them")
         }
         val accounts = accountCache.getAll()
-        accounts.find { it.parentAccountId == null && StringUtils.isEquivalent(it.name, dto.name) }
+        accounts.find { it.parentAccountCode == null && StringUtils.isEquivalent(it.name, dto.name) }
             ?.let { throw RtsGenericException("A root account with the same name already exists") }
 
         val code = AccountCodeGenerator.generateRootCode(accounts)
@@ -50,9 +50,9 @@ class AccountService(
 
     fun createChild(dto: AccountChildCreateRequest): AccountResponseDto {
         val accounts = accountCache.getAll()
-        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
-        val newAccount = childAccountCreator.createChild(dto, accountsById)
-        return accountMapper.toResponseDto(newAccount, accountsById[newAccount.parentAccountId]?.label)
+        val accountsByCode = accounts.associateBy { it.code }
+        val newAccount = childAccountCreator.createChild(dto, accountsByCode)
+        return accountMapper.toResponseDto(newAccount, accountsByCode[newAccount.parentAccountCode])
     }
 
     fun rename(dto: AccountUpdateDto): AccountResponseDto {
@@ -63,8 +63,8 @@ class AccountService(
             throw RtsGenericException("System accounts cannot be renamed")
         }
         val saved = accountCache.update(dto.applyTo(existing))
-        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
-        return accountMapper.toResponseDto(saved, accountsById[saved.parentAccountId]?.label)
+        val accountsByCode = accounts.associateBy { it.code }
+        return accountMapper.toResponseDto(saved, accountsByCode[saved.parentAccountCode])
     }
 
     fun toggleActive(id: UUID, setActive: Boolean): AccountResponseDto {
@@ -74,13 +74,13 @@ class AccountService(
         if (existing.accountIsSystemMaintained) {
             throw RtsGenericException("System accounts cannot be activated or deactivated")
         }
-        val accountsById: Map<UUID, AccountDto> = accounts.associateBy { it.id }
-        val parentLabel = accountsById[existing.parentAccountId]?.label
+        val accountsByCode = accounts.associateBy { it.code }
+        val parentAccount = accountsByCode[existing.parentAccountCode]
         if (existing.accountIsActive == setActive) {
-            return accountMapper.toResponseDto(existing, parentLabel)
+            return accountMapper.toResponseDto(existing, parentAccount)
         }
         val saved = accountCache.update(existing.copy(accountIsActive = setActive))
-        return accountMapper.toResponseDto(saved, parentLabel)
+        return accountMapper.toResponseDto(saved, parentAccount)
     }
 
 

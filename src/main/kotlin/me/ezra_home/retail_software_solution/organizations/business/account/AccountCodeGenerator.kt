@@ -23,7 +23,7 @@ object AccountCodeGenerator {
     fun generateRootCode(accounts: List<AccountDto>): String {
         return withNumberFormatHandled {
             val orgRoots = accounts
-                .filter { it.parentAccountId == null }
+                .filter { it.parentAccountCode == null }
                 .mapNotNull { it.code.toIntOrNull() }
                 .filter { it >= ORG_ROOT_START }
             val next = if (orgRoots.isEmpty()) ORG_ROOT_START else orgRoots.max() + 1

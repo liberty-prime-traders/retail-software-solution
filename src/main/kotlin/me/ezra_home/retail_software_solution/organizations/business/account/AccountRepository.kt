@@ -7,5 +7,5 @@ import java.util.UUID
 @Repository
 interface AccountRepository : JpaRepository<AccountEntity, UUID> {
 
-    fun findAllByParentAccountId(parentAccountId: UUID): List<AccountEntity>
+    fun findAllByParentAccountCode(parentAccountCode: String): List<AccountEntity>
 }

@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.util.UUID
 
 @Service
 class ChildAccountCreator(
@@ -14,19 +13,19 @@ class ChildAccountCreator(
     private val accountUsagesFinder: AccountUsagesFinder
 ) {
 
-    fun createChild(dto: AccountChildCreateRequest, accountsById: Map<UUID, AccountDto>): AccountDto {
-        val parentId = dto.parentAccountId
-        val parent = accountsById[parentId] ?: throw RtsGenericException("Parent account not found")
-        val siblings = accountsById.values.filter { it.parentAccountId == parentId }
+    fun createChild(dto: AccountChildCreateRequest, accountsByCode: Map<String, AccountDto>): AccountDto {
+        val parentCode = dto.parentAccountCode
+        val parent = accountsByCode[parentCode] ?: throw RtsGenericException("Parent account not found")
+        val siblings = accountsByCode.values.filter { it.parentAccountCode == parentCode }
 
-        runValidations(dto, parent, siblings, accountsById)
+        runValidations(dto, parent, siblings, accountsByCode)
 
         val insertDto = AccountInsertDto(
             code = AccountCodeGenerator.generateChildCode(parent.code, siblings),
             name = dto.name,
             accountType = parent.accountType,
             currencyCode = parent.currencyCode,
-            parentAccountId = parentId
+            parentAccountCode = parentCode
         )
         return accountCache.create(insertDto)
     }
@@ -35,11 +34,11 @@ class ChildAccountCreator(
         childCreateRequest: AccountChildCreateRequest,
         parent: AccountDto,
         siblings: List<AccountDto>,
-        accountsById: Map<UUID, AccountDto>
+        accountsByCode: Map<String, AccountDto>
     ) {
         ensureParentCanGainChild(parent)
         preventNameCollisionAmongSiblings(childCreateRequest, siblings)
-        preventSystemAccountGainingGrandChild(parent, accountsById)
+        preventSystemAccountGainingGrandChild(parent, accountsByCode)
         accountUsagesFinder.failOnUsagesForCode(parent.code)
     }
 
@@ -55,8 +54,8 @@ class ChildAccountCreator(
         }
     }
 
-    private fun preventSystemAccountGainingGrandChild(parent: AccountDto, accountsById: Map<UUID, AccountDto>) {
-        val grandparent = accountsById[parent.parentAccountId] ?: return
+    private fun preventSystemAccountGainingGrandChild(parent: AccountDto, accountsByCode: Map<String, AccountDto>) {
+        val grandparent = accountsByCode[parent.parentAccountCode] ?: return
         val isSystemAccount = grandparent.accountIsSystemMaintained
         val isExtensible = SystemAccount.fromCode(grandparent.code)?.isExtensible() == true
         if (isSystemAccount && isExtensible) {

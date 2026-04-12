@@ -28,7 +28,7 @@ class TaxAccountsValidator(private val accountCache: AccountCache) {
         val account = allAccounts.firstOrNull { StringUtils.isEquivalent(it.code, normalizedCode) }
             ?: throw RtsGenericException("Payable account not found: $normalizedCode")
         if (account.accountIsSystemMaintained) {
-            val parent = allAccounts.firstOrNull { it.id == account.parentAccountId }
+            val parent = allAccounts.firstOrNull { it.code == account.parentAccountCode }
                 ?: throw RtsGenericException("Payable account has no parent: $normalizedCode")
             if (SystemAccount.fromCode(parent.code) != SystemAccount.TAX_PAYABLE) {
                 throw RtsGenericException("Payable tax account must be under the TAX_PAYABLE parent account")
@@ -59,7 +59,7 @@ class TaxAccountsValidator(private val accountCache: AccountCache) {
         val account = allAccounts.firstOrNull { StringUtils.isEquivalent(it.code, normalizedCode) }
             ?: throw RtsGenericException("Recoverable account not found: $normalizedCode")
         if (account.accountIsSystemMaintained) {
-            val parent = allAccounts.firstOrNull { it.id == account.parentAccountId }
+            val parent = allAccounts.firstOrNull { it.code == account.parentAccountCode }
                 ?: throw RtsGenericException("Recoverable account has no parent: $normalizedCode")
             if (SystemAccount.fromCode(parent.code) != SystemAccount.TAX_RECOVERABLE) {
                 throw RtsGenericException("Recoverable account must be under the TAX_RECOVERABLE parent account")

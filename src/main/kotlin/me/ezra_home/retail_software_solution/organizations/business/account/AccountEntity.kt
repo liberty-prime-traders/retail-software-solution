@@ -10,7 +10,6 @@ import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-import java.util.UUID
 
 @Audited
 @Entity
@@ -49,7 +48,7 @@ class AccountEntity(
     var balanceUpdatedAt: OffsetDateTime? = null,
 
     @NotAudited
-    @Column(name = "parent_account_id", updatable = false)
-    var parentAccountId: UUID? = null
+    @Column(name = "parent_account_code", updatable = false)
+    var parentAccountCode: String? = null
 
 ) : HasCreatorEntity()
