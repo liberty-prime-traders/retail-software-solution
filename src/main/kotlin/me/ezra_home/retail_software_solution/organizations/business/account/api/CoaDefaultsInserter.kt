@@ -10,8 +10,12 @@ import org.springframework.stereotype.Component
 class CoaDefaultsInserter(private val accountCache: AccountCache) {
 
     fun seedDefaults() {
-        if (accountCache.getAll().isNotEmpty()) return
-        accountCache.saveAll(SystemAccount.entries.map { buildInsertDto(it) })
+        val allAccounts = accountCache.getAll().map { it.code }.toSet()
+        val toInsert = SystemAccount.entries.filter { it.code !in allAccounts }
+            .map { buildInsertDto(it) }
+        if (toInsert.isNotEmpty()) {
+            accountCache.saveAll(toInsert)
+        }
     }
 
     private fun buildInsertDto(account: SystemAccount): AccountInsertDto {

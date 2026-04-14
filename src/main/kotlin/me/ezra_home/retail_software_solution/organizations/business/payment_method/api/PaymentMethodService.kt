@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
 import me.ezra_home.retail_software_solution.organizations.business.account.api.PaymentAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodCache
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodMapper
@@ -18,19 +19,24 @@ import java.util.UUID
 class PaymentMethodService(
     private val paymentMethodMapper: PaymentMethodMapper,
     private val paymentMethodCache: PaymentMethodCache,
-    private val paymentAccountValidator: PaymentAccountValidator
+    private val paymentAccountValidator: PaymentAccountValidator,
+    private val accountService: AccountService
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllPaymentMethods(): Collection<PaymentMethodResponseDto> {
-        return paymentMethodCache.getAllPaymentMethods().map { paymentMethodMapper.toResponseDto(it) }
+        val accountNamesByCode = accountService.getAccountNamesByCode()
+        return paymentMethodCache.getAllPaymentMethods().map {
+            paymentMethodMapper.toResponseDto(it, accountNamesByCode[it.accountCode])
+        }
     }
 
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
         paymentAccountValidator.validate(paymentMethodInsertDto.accountCode)
         val dto = paymentMethodCache.create(paymentMethodInsertDto)
-        return paymentMethodMapper.toResponseDto(dto)
+        val accountNamesByCode = accountService.getAccountNamesByCode()
+        return paymentMethodMapper.toResponseDto(dto, accountNamesByCode[dto.accountCode])
     }
 
     private fun validateNameOnSave(optionalName: Optional<String>?, id: UUID? = null) {
@@ -47,7 +53,8 @@ class PaymentMethodService(
         val updated = paymentMethodUpdateDto.applyTo(existing)
         paymentAccountValidator.validate(updated.accountCode)
         val saved = paymentMethodCache.save(updated)
-        return paymentMethodMapper.toResponseDto(saved)
+        val accountNamesByCode = accountService.getAccountNamesByCode()
+        return paymentMethodMapper.toResponseDto(saved, accountNamesByCode[saved.accountCode])
     }
 
     fun deletePaymentMethod(id: UUID) {

@@ -11,5 +11,6 @@ data class PaymentMethodResponseDto(
     val name: String?,
     val description: String?,
     val referenceNumber: String?,
-    val accountCode: String?
+    val accountCode: String?,
+    val linkedAccount: String?
 ): Serializable

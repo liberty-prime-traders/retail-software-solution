@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCodeGenerator
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountMapper
 import me.ezra_home.retail_software_solution.organizations.business.account.ChildAccountCreator
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -27,6 +26,11 @@ class AccountService(
         return accounts.map {
             accountMapper.toResponseDto(it, accountsByCode[it.parentAccountCode])
         }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAccountNamesByCode(): Map<String, String> {
+        return accountCache.getAll().associate { it.code to it.label }
     }
 
     fun createRoot(dto: AccountRootCreateRequest): AccountResponseDto {

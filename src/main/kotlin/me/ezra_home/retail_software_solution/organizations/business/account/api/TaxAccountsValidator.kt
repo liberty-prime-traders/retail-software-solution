@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 class TaxAccountsValidator(private val accountCache: AccountCache) {
 
     fun validate(
-        payableAccountCode: String?,
+        payableAccountCode: String,
         recoverableAccountCode: String?,
         platformTaxType: PlatformTaxTypeDto
     ) {
@@ -23,7 +23,7 @@ class TaxAccountsValidator(private val accountCache: AccountCache) {
         validateRecoverableAccountCode(recoverableAccountCode, platformTaxType, allAccounts)
     }
 
-    private fun validatePayableAccountCode(code: String?, allAccounts: List<AccountDto>) {
+    private fun validatePayableAccountCode(code: String, allAccounts: List<AccountDto>) {
         val normalizedCode = StringUtils.getValueOrException(code, "Every tax type must be associated with a payable account")
         val account = allAccounts.firstOrNull { StringUtils.isEquivalent(it.code, normalizedCode) }
             ?: throw RtsGenericException("Payable account not found: $normalizedCode")

@@ -10,10 +10,6 @@ data class OrgJurisdictionTaxTypeDto(
     val referenceNumber: String,
     val jurisdictionTaxTypeId: UUID,
     val status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
-    val payableAccountCode: String? = null,
+    val payableAccountCode: String,
     val recoverableAccountCode: String? = null
-) {
-    fun isLinkedToAccount(): Boolean {
-        return recoverableAccountCode != null || payableAccountCode != null
-    }
-}
+)

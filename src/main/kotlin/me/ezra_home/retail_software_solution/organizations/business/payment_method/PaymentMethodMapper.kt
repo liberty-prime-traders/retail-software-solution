@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.payment_meth
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
+import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
@@ -21,5 +22,6 @@ interface PaymentMethodMapper {
     fun toEntity(paymentMethodDto: PaymentMethodDto): PaymentMethodEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    fun toResponseDto(paymentMethodDto: PaymentMethodDto): PaymentMethodResponseDto
+    @Mapping(target = "linkedAccount", expression = "java(linkedAccount)")
+    fun toResponseDto(paymentMethodDto: PaymentMethodDto, @Context linkedAccount: String?): PaymentMethodResponseDto
 }

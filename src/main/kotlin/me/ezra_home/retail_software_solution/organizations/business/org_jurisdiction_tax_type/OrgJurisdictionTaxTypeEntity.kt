@@ -26,7 +26,7 @@ class OrgJurisdictionTaxTypeEntity(
     var status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
 
     @Column(name = "payable_account_code", length = 50)
-    var payableAccountCode: String? = null,
+    var payableAccountCode: String,
 
     @Column(name = "recoverable_account_code", length = 50)
     var recoverableAccountCode: String? = null

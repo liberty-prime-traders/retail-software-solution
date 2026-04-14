@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.payment_method.api
 
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import java.io.Serializable
 import java.util.Optional
 import java.util.UUID
@@ -14,7 +15,7 @@ data class PaymentMethodUpdateDto(
 
     fun applyTo(existing: PaymentMethodDto): PaymentMethodDto = existing.copy(
         name = name?.orElse(existing.name) ?: existing.name,
-        description = description?.orElse(existing.description) ?: existing.description,
-        accountCode = accountCode?.orElse(existing.accountCode) ?: existing.accountCode
+        description = StringUtils.useIfProvided(description, existing.description),
+        accountCode = StringUtils.useIfProvided(accountCode, existing.accountCode)
     )
 }
