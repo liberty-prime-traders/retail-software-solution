@@ -5,5 +5,6 @@ import java.util.UUID
 
 data class PlatformTaxTypeDto(
     val id: UUID,
-    val label: String
+    val label: String,
+    val taxRecoveryType: TaxRecoveryType
 ) : Serializable

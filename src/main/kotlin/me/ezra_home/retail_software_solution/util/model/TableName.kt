@@ -6,6 +6,8 @@ import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : HasCode {
 
   // Platform-level tables
+  FEATURE(TableNames.FEATURE, SchemaLevel.PLATFORM),
+  ORGANIZATION_FEATURE(TableNames.ORGANIZATION_FEATURE, SchemaLevel.PLATFORM),
   SYS_USER(TableNames.SYS_USER, SchemaLevel.PLATFORM),
   ORGANIZATION(TableNames.ORGANIZATION, SchemaLevel.PLATFORM),
   RESERVED_SUBDOMAIN(TableNames.RESERVED_SUBDOMAIN, SchemaLevel.PLATFORM),
@@ -19,6 +21,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   JURISDICTION_TAX_TYPE(TableNames.JURISDICTION_TAX_TYPE, SchemaLevel.PLATFORM),
 
   // Organization-level tables
+  ACCOUNT(TableNames.ACCOUNT, SchemaLevel.ORGANIZATION),
   PRODUCT(TableNames.PRODUCT, SchemaLevel.ORGANIZATION),
   PRODUCT_GROUP(TableNames.PRODUCT_GROUP, SchemaLevel.ORGANIZATION),
   PRODUCT_CATEGORY(TableNames.PRODUCT_CATEGORY, SchemaLevel.ORGANIZATION),
@@ -62,6 +65,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   JURISDICTION_TAX_TYPE_AUDIT(TableNames.JURISDICTION_TAX_TYPE_AUDIT, SchemaLevel.PLATFORM),
 
   // Organization-level audit tables
+  ACCOUNT_AUDIT(TableNames.ACCOUNT_AUDIT, SchemaLevel.ORGANIZATION),
   PRODUCT_AUDIT(TableNames.PRODUCT_AUDIT, SchemaLevel.ORGANIZATION),
   ADDRESS_AUDIT(TableNames.ADDRESS_AUDIT, SchemaLevel.ORGANIZATION),
   CONTACT_AUDIT(TableNames.CONTACT_AUDIT, SchemaLevel.ORGANIZATION),

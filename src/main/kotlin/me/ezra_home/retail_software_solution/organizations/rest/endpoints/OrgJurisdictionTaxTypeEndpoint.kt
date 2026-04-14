@@ -4,8 +4,9 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeService
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
-import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxesTreeBuilder
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxRecoveryType
+import me.ezra_home.retail_software_solution.util.ui_models.TreeNodeWithData
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,14 +21,14 @@ import java.util.UUID
 @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
 class OrgJurisdictionTaxTypeEndpoint(
     private val orgJurisdictionTaxTypeService: OrgJurisdictionTaxTypeService,
-    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService
+    private val jurisdictionTaxesTreeBuilder: JurisdictionTaxesTreeBuilder
 ) {
 
     @GetMapping
     fun getAll(): List<OrgJurisdictionTaxTypeResponseDto> = orgJurisdictionTaxTypeService.getAll()
 
     @GetMapping("available")
-    fun getTree(): List<TreeNode<UUID>> = jurisdictionTaxTypeService.getAvailableTaxTypes()
+    fun getTree(): List<TreeNodeWithData<UUID, TaxRecoveryType>> = jurisdictionTaxesTreeBuilder.getAvailableTaxTypes()
 
     @PostMapping
     fun createAll(@RequestBody dtos: List<OrgJurisdictionTaxTypeInsertDto>): List<OrgJurisdictionTaxTypeResponseDto> =

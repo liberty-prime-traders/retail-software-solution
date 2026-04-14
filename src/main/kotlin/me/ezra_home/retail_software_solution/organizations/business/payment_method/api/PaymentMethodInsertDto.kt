@@ -4,5 +4,6 @@ import java.io.Serializable
 
 data class PaymentMethodInsertDto(
     val name: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val accountCode: String? = null
 ): Serializable

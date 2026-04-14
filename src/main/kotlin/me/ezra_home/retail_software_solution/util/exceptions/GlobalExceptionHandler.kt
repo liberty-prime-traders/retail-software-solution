@@ -20,7 +20,7 @@ class GlobalExceptionHandler {
         log.warn("Business error on ${req.method} ${req.requestURI}: ${ex.message}")
         return ResponseEntity
             .status(ex.statusCode)
-            .body(ApiError(ex.message))
+            .body(ApiError(ex.message, ex.payload))
     }
 
     @ExceptionHandler(DataAccessException::class)
@@ -48,5 +48,6 @@ class GlobalExceptionHandler {
 
 data class ApiError(
     val message: String,
+    val body: Any? = null,
     val timestamp: Instant = Instant.now()
 )

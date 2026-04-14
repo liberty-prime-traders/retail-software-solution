@@ -9,5 +9,6 @@ data class PaymentMethodDto(
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
     val name: String? = null,
-    val description: String? = null
+    val description: String? = null,
+    val accountCode: String? = null
 )

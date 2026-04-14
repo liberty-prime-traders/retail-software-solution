@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-feature-chart-of-accounts
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - insert:
+            tableName: feature
+            columns:
+              - column:
+                  name: feature
+                  value: CHART_OF_ACCOUNTS
+              - column:
+                  name: description
+                  value: Enables a full chart of accounts for the organization, seeding a default account hierarchy on activation
+

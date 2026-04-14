@@ -24,11 +24,11 @@ class JurisdictionService(
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAll(): Collection<JurisdictionResponseDto> {
-        val ctx = buildContext()
+        val ctx = buildMappingContext()
         return jurisdictionCache.getAll().map { jurisdictionMapper.toResponseDto(it, ctx) }
     }
 
-    private fun buildContext() = JurisdictionMappingContext(
+    private fun buildMappingContext() = JurisdictionMappingContext(
         typeNames = jurisdictionTypeService.getAll().associate { it.id to it.name },
         jurisdictionNames = jurisdictionCache.getAll().associate { it.id to it.name },
         taxTypesByJurisdiction = jurisdictionTaxTypeService.getActiveTaxTypeIdsByJurisdiction()
@@ -42,7 +42,7 @@ class JurisdictionService(
         dto.taxTypesToAddOrReactivate
             ?.map { JurisdictionTaxTypeInsertDto(it, saved.id) }
             ?.let { jurisdictionTaxTypeService.createAll(it) }
-        return jurisdictionMapper.toResponseDto(saved, buildContext())
+        return jurisdictionMapper.toResponseDto(saved, buildMappingContext())
     }
 
     fun update(dto: JurisdictionUpdateDto): JurisdictionResponseDto {
@@ -60,7 +60,7 @@ class JurisdictionService(
         dto.taxTypesToDiscontinue?.let {
             jurisdictionTaxTypeService.stopByTaxTypeIds(dto.id, it)
         }
-        return jurisdictionMapper.toResponseDto(saved, buildContext())
+        return jurisdictionMapper.toResponseDto(saved, buildMappingContext())
     }
 
     fun delete(id: UUID) = jurisdictionCache.delete(id)

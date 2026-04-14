@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-org-organization-feature-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: organization_feature
+      changes:
+        - createTable:
+            tableName: organization_feature
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_feature_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_feature_created_on_notnull
+
+              - column:
+                  name: feature_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_feature_feature_code_notnull
+                    unique: true
+                    uniqueConstraintName: organization_feature_feature_code_unique
+
+              - column:
+                  name: status
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: organization_feature_status_notnull
+
+              - column:
+                  name: enabled_on
+                  type: timestamptz
+
+              - column:
+                  name: enabled_by
+                  type: uuid
+
+              - column:
+                  name: disabled_on
+                  type: timestamptz
+
+              - column:
+                  name: disabled_by
+                  type: uuid
+      rollback:
+        - dropTable:
+            tableName: organization_feature

@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.util.model
 
 object TableNames {
     // Platform tables
+    const val FEATURE = "feature"
+    const val ORGANIZATION_FEATURE = "organization_feature"
     const val ORGANIZATION = "organization"
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
@@ -17,6 +19,7 @@ object TableNames {
     const val SYS_USER = "sys_user"
 
     // Organization tables
+    const val ACCOUNT = "account"
     const val ADDRESS = "address"
     const val CONTACT = "contact"
     const val LOCATION = "location"
@@ -58,6 +61,7 @@ object TableNames {
     const val JURISDICTION_TAX_TYPE_AUDIT = "jurisdiction_tax_type_aud"
 
     // Organization audit tables
+    const val ACCOUNT_AUDIT = "account_aud"
     const val ADDRESS_AUDIT = "address_aud"
     const val CONTACT_AUDIT = "contact_aud"
     const val JOB_TITLE_AUDIT = "job_title_aud"

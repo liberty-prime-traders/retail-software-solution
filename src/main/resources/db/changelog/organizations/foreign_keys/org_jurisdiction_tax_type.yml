@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-org-jurisdiction-tax-type-payable-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: org_jurisdiction_tax_type_payable_account_code_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_jurisdiction_tax_type
+            baseColumnNames: payable_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: org_jurisdiction_tax_type_payable_account_code_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_jurisdiction_tax_type
+            constraintName: org_jurisdiction_tax_type_payable_account_code_fk
+
+  - changeSet:
+      id: add-fk-org-jurisdiction-tax-type-recoverable-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: org_jurisdiction_tax_type_recoverable_account_code_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_jurisdiction_tax_type
+            baseColumnNames: recoverable_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: org_jurisdiction_tax_type_recoverable_account_code_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_jurisdiction_tax_type
+            constraintName: org_jurisdiction_tax_type_recoverable_account_code_fk

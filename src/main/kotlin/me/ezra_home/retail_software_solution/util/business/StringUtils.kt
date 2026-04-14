@@ -63,4 +63,10 @@ object StringUtils {
             .lowercase()
     }
 
+    fun useIfProvided(optional: Optional<String>?, existing: String?): String? {
+        if (optional == null) {
+            return existing
+        }
+        return optional.map { getValueOrNull(it) }.orElse(null)
+    }
 }
