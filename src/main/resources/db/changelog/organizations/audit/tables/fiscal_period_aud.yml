@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fiscal-period-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: fiscal_period_aud
+      changes:
+        - createTable:
+            tableName: fiscal_period_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: nvarchar2(50)
+
+              - column:
+                  name: closed_at
+                  type: timestamptz
+
+              - column:
+                  name: closed_by
+                  type: uuid
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: fiscal_period_aud
+            columnNames: id, rev
+            constraintName: pk_fiscal_period_aud
+
+      rollback:
+        - dropTable:
+            tableName: fiscal_period_aud

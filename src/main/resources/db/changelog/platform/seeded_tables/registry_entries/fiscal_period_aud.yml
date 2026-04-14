@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-fiscal-period-aud-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: fiscal_period_aud
+              - column:
+                  name: default_prefix
+                  value: FPAUD
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Fiscal Period Audit
+              - column:
+                  name: description
+                  value: Audit trail for fiscal period changes
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

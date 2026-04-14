@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fiscal-period-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: fiscal_period
+      changes:
+        - createTable:
+            tableName: fiscal_period
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_name_notnull
+
+              - column:
+                  name: start_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_start_date_notnull
+
+              - column:
+                  name: end_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_end_date_notnull
+
+              - column:
+                  name: is_year_end
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_is_year_end_notnull
+
+              - column:
+                  name: is_adjustment_period
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_is_adjustment_period_notnull
+
+              - column:
+                  name: closed_at
+                  type: timestamptz
+
+              - column:
+                  name: closed_by
+                  type: uuid
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fiscal_period_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: fiscal_period

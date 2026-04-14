@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-org-accounting-config-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: org_accounting_config
+              - column:
+                  name: default_prefix
+                  value: OACFG
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Org Accounting Config
+              - column:
+                  name: description
+                  value: Organization-level accounting configuration including fiscal year settings
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

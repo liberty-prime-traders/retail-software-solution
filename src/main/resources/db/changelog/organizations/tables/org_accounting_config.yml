@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-org-accounting-config-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: org_accounting_config
+      changes:
+        - createTable:
+            tableName: org_accounting_config
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: fiscal_year_end_month
+                  type: int
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_fiscal_year_end_month_notnull
+
+              - column:
+                  name: fiscal_year_end_day
+                  type: int
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_fiscal_year_end_day_notnull
+
+              - column:
+                  name: fiscal_period_cycle
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_fiscal_period_cycle_notnull
+
+              - column:
+                  name: period_week_start_day
+                  type: nvarchar2(9)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_period_week_start_day_notnull
+
+              - column:
+                  name: period_prep_days
+                  type: int
+                  defaultValueNumeric: "2"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_period_prep_days_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_accounting_config_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: org_accounting_config
