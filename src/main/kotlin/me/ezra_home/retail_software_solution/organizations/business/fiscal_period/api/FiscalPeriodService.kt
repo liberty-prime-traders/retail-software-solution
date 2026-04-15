@@ -35,11 +35,12 @@ class FiscalPeriodService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<FiscalPeriodResponseDto> {
-        val config = configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
+        val config = requireConfig()
         val dtos = repository.findAll().map { mapper.toDomainDto(it) }
         val periodsByYearEnd = dtos.groupBy { FiscalPeriodUtils.yearEnd(it.endDate, config.fiscalYearEndMonth) }
         return dtos.map { dto ->
-            val yearPeers = periodsByYearEnd[FiscalPeriodUtils.yearEnd(dto.endDate, config.fiscalYearEndMonth)].orEmpty()
+            val yearEnd = FiscalPeriodUtils.yearEnd(dto.endDate, config.fiscalYearEndMonth)
+            val yearPeers = periodsByYearEnd[yearEnd].orEmpty()
             toResponseDto(dto, config, validator.isClosable(dto, yearPeers))
         }
     }
@@ -47,6 +48,8 @@ class FiscalPeriodService(
     fun close(ids: Set<UUID>): List<FiscalPeriodResponseDto> {
         val now = Instant.now()
         val periods = repository.findByIdIn(ids)
+        val missingIds = ids - periods.mapNotNull { it.id }.toSet()
+        if (missingIds.isNotEmpty()) throw RtsGenericException("Fiscal periods not found: $missingIds")
         periods.forEach { period ->
             if (period.yearEnd) {
                 throw RtsGenericException("Period '${period.name}' is a year-end period — use the year-end close endpoint")
@@ -55,7 +58,7 @@ class FiscalPeriodService(
             period.closedAt = now
             period.closedBy = SessionContextProvider.getUserId()
         }
-        val config = configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
+        val config = requireConfig()
         return repository.saveAll(periods).map {
             dto -> toResponseDto(mapper.toDomainDto(dto), config, false)
         }
@@ -65,24 +68,23 @@ class FiscalPeriodService(
         val id = fiscalPeriodRenameDto.id
         val name = fiscalPeriodRenameDto.name
         val period = repository.findById(id).orElseThrow { RtsGenericException("Fiscal period not found: $id") }
-        val config = configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
+        val config = requireConfig()
         if (StringUtils.isEquivalent(period.name, name)) {
             val dto = mapper.toDomainDto(period)
             return toResponseDto(dto, config, validator.isClosable(dto))
         }
         val yearEnd = FiscalPeriodUtils.yearEnd(period.startDate, config.fiscalYearEndMonth)
         val yearStart = FiscalPeriodUtils.yearStart(yearEnd)
-        repository.findPeriodsInGivenYear(yearStart, yearEnd)
-            .filter { StringUtils.isEquivalent(it.name, name) }
-            .let {
-                if (it.isNotEmpty()) {
-                    throw RtsGenericException("A period named '$name' already exists in this fiscal year")
-                }
-            }
+        val nameConflict = repository.findPeriodsInGivenYear(yearStart, yearEnd)
+            .any { StringUtils.isEquivalent(it.name, name) }
+        if (nameConflict) throw RtsGenericException("A period named '$name' already exists in this fiscal year")
         period.name = name
         val savedDto = mapper.toDomainDto(repository.save(period))
         return toResponseDto(savedDto, config, validator.isClosable(savedDto))
     }
+
+    private fun requireConfig(): OrgAccountingConfigDto =
+        configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
 
     private fun toResponseDto(
         dto: FiscalPeriodDto,

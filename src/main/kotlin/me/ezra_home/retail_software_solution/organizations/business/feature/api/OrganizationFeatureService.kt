@@ -22,6 +22,13 @@ class OrganizationFeatureService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<OrganizationFeatureResponseDto> = featureCache.getAll().map { mapper.toResponseDto(it) }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun isActive(feature: Feature): Boolean {
+        return featureCache.getAll().any {
+            it.feature == feature && it.status == OrganizationFeatureStatus.ACTIVE
+        }
+    }
+
     fun activate(features: HashSet<Feature>): List<OrganizationFeatureResponseDto> {
         val existingByCode = featureCache.getAll().associateBy { it.feature }
         val toSave = buildActivateDtos(features, existingByCode)

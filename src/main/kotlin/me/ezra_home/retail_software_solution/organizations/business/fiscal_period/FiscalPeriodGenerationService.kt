@@ -22,11 +22,10 @@ class FiscalPeriodGenerationService(
         val config = configService.getConfig() ?: return
         val today = DateTimes.Local.Now.organization()
         var lastPeriodEnd = repository.findTopByOrderByEndDateDesc()?.endDate ?: today.minusDays(1)
+        val strategy = strategyRegistry.get(config.fiscalPeriodCycle)
 
-        while (true) {
-            if (ChronoUnit.DAYS.between(today, lastPeriodEnd) > config.periodPrepDays) break
+        while (ChronoUnit.DAYS.between(today, lastPeriodEnd) <= config.periodPrepDays) {
             val nextStart = lastPeriodEnd.plusDays(1)
-            val strategy = strategyRegistry.get(config.fiscalPeriodCycle)
             val cleanStart = strategy.nextCleanStart(nextStart, config)
             lastPeriodEnd = if (cleanStart.isAfter(nextStart)) {
                 savePeriod(nextStart, PeriodRange(nextStart, cleanStart.minusDays(1)), config, stub = true)

@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit
 object FiscalPeriodNameGenerator {
 
     private val monthYearFormatter = DateTimeFormatter.ofPattern("MMM yyyy")
+    private const val TWO_DIGIT = "%02d"
 
     fun stubName(start: LocalDate): String = "Stub ${start.format(monthYearFormatter)}"
 
@@ -18,19 +19,19 @@ object FiscalPeriodNameGenerator {
         return when (config.fiscalPeriodCycle) {
             FiscalPeriodCycle.MONTHLY -> start.format(monthYearFormatter)
             FiscalPeriodCycle.QUARTERLY -> {
-                val q = ((start.monthValue - fiscalStartMonth + 12) % 12) / 3 + 1
-                "Q$q ${fyStart.year}"
+                val monthOffset = (start.monthValue - fiscalStartMonth + 12) % 12
+                "Q${monthOffset / 3 + 1} ${fyStart.year}"
             }
             FiscalPeriodCycle.SEMI_ANNUAL -> {
-                val h = ((start.monthValue - fiscalStartMonth + 12) % 12) / 6 + 1
-                "H$h ${fyStart.year}"
+                val monthOffset = (start.monthValue - fiscalStartMonth + 12) % 12
+                "H${monthOffset / 6 + 1} ${fyStart.year}"
             }
             FiscalPeriodCycle.ANNUAL -> "FY ${fyStart.year}"
             FiscalPeriodCycle.WEEKLY -> {
                 val daysToFirstWeek = FiscalPeriodUtils.daysUntilDayOfWeek(fyStart, config.periodWeekStartDay)
                 val firstWeekStart = fyStart.plusDays(daysToFirstWeek.toLong())
                 val weekNumber = (ChronoUnit.DAYS.between(firstWeekStart, start) / 7 + 1).toInt()
-                "W${String.format("%02d", weekNumber)} ${fyStart.year}"
+                "W${String.format(TWO_DIGIT, weekNumber)} ${fyStart.year}"
             }
             FiscalPeriodCycle.FOUR_FOUR_FIVE -> {
                 val firstPeriodStart = fyStart.plusDays(FiscalPeriodUtils.daysUntilDayOfWeek(fyStart, config.periodWeekStartDay).toLong())
@@ -39,7 +40,7 @@ object FiscalPeriodNameGenerator {
                     val posInGroup = FiscalPeriodUtils.positionIn445(firstPeriodStart, start)
                     (elapsed / 91L).toInt() * 3 + posInGroup + 1
                 }
-                "P${String.format("%02d", periodNumber)} FY${fyStart.year}"
+                "P${String.format(TWO_DIGIT, periodNumber)} FY${fyStart.year}"
             }
         }
     }

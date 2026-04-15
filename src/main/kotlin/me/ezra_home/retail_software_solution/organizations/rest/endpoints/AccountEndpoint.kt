@@ -7,6 +7,8 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountTreeBuilder
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountsTreesForSelection
+import me.ezra_home.retail_software_solution.platform.business.feature.api.Feature
+import me.ezra_home.retail_software_solution.util.annotations.RequiresFeature
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -18,6 +20,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("secured/accounts")
+@RequiresFeature(Feature.CHART_OF_ACCOUNTS)
 class AccountEndpoint(
     private val accountService: AccountService,
     private val accountTreeBuilder: AccountTreeBuilder
