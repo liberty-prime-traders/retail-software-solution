@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
-import me.ezra_home.retail_software_solution.organizations.business.account.SystemAccount
 import org.springframework.stereotype.Component
 
 @Component

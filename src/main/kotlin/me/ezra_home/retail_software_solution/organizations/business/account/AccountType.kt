@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.account
 
+import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 
 enum class AccountType(override val code: String, val normalBalance: EntryType) : HasCode {

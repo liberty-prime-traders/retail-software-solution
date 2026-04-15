@@ -4,6 +4,7 @@ object KafkaConstants {
     object Topics {
         const val CATALOG_EVENTS = "catalog-events"
         const val TRANSACTION_EVENTS = "transaction-events"
+        const val NOTIFICATIONS = "notifications"
     }
 
     object ConsumerGroups {
@@ -14,6 +15,10 @@ object KafkaConstants {
         object Transaction {
             const val INVENTORY = "inventory-group"
             const val ACCOUNTING = "accounting-group"
+        }
+
+        object Notification {
+            const val ALERTS = "notification-alerts-group"
         }
     }
 }

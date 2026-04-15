@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-accounting-processor-service-account'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - insert:
+            tableName: sys_user
+            columns:
+              - column:
+                  name: id
+                  value: '55555555-5555-5555-5555-555555555555'
+              - column:
+                  name: okta_id
+                  value: 'ACCOUNTING_PROCESSOR'
+              - column:
+                  name: reference_number
+                  valueComputed: "'PUSR' || LPAD(nextval('seq_sys_user_reference_number')::text, 2, '0')"
+              - column:
+                  name: local_first_name
+                  value: 'Accounting Processor'
+              - column:
+                  name: user_type
+                  value: 'S'

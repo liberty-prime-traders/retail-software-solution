@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.account
 
+import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import org.mapstruct.Context
 import org.mapstruct.Qualifier
 import org.springframework.stereotype.Component

@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-ledger-entry-group-source-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ledger_entry_group_source_ref
+      changes:
+        - createIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_group_source_ref
+            columns:
+              - column:
+                  name: source_reference_number
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_group_source_ref
+
+  - changeSet:
+      id: create-index-ledger-entry-group-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ledger_entry_grp_ref
+      changes:
+        - createIndex:
+            tableName: ledger_entry
+            indexName: idx_ledger_entry_grp_ref
+            columns:
+              - column:
+                  name: group_reference_number
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry
+            indexName: idx_ledger_entry_grp_ref
+
+  - changeSet:
+      id: create-index-subledger-entry-group-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_subledger_entry_grp_ref
+      changes:
+        - createIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_grp_ref
+            columns:
+              - column:
+                  name: group_reference_number
+      rollback:
+        - dropIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_grp_ref
+
+  - changeSet:
+      id: create-index-subledger-entry-contact-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_subledger_entry_contact_ref
+      changes:
+        - createIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_contact_ref
+            columns:
+              - column:
+                  name: contact_reference_number
+      rollback:
+        - dropIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_contact_ref

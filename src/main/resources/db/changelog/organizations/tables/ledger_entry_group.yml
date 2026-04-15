@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-ledger-entry-group-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: ledger_entry_group
+      changes:
+        - createTable:
+            tableName: ledger_entry_group
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: ledger_entry_group_reference_number_unique
+
+              - column:
+                  name: source_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_source_reference_number_notnull
+
+              - column:
+                  name: source_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_source_type_notnull
+
+              - column:
+                  name: source_location_id
+                  type: uuid
+
+              - column:
+                  name: fiscal_period_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_fiscal_period_id_notnull
+
+              - column:
+                  name: posted_on
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_posted_on_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: ledger_entry_group

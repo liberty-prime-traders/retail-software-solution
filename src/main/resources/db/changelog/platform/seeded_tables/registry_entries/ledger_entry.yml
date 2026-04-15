@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-ledger-entry-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: ledger_entry
+              - column:
+                  name: default_prefix
+                  value: LDGNT
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Ledger Entry
+              - column:
+                  name: description
+                  value: Individual debit or credit entry in the general ledger
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

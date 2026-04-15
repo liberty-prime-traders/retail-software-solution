@@ -43,9 +43,7 @@ class PurchaseDeliveryService(
   private fun publishDeliveryEvent(context: PurchaseDeliveryContext, deliveryRecord: DeliveryRecord) {
     val sourceSchema = SessionContextProvider.getLocationSchema()
     eventPublisher.publishEvent(
-      PurchaseDeliveryMapper.toEvent(
-        context.purchaseId, context.supplierId, deliveryRecord, context.purchaseLineById, sourceSchema
-      )
+      PurchaseDeliveryMapper.toEvent(context.purchaseId, context.supplierId, deliveryRecord, context.purchaseLineById, sourceSchema)
     )
   }
 }

@@ -38,6 +38,8 @@ object PurchaseDeliveryMapper {
     correlationId = null,
     purchaseId = purchaseId,
     deliveryId = deliveryRecord.delivery.id!!,
+    deliveryReferenceNumber = deliveryRecord.delivery.referenceNumber!!,
+    deliveredAt = deliveryRecord.delivery.deliveredAt?.toInstant(),
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!

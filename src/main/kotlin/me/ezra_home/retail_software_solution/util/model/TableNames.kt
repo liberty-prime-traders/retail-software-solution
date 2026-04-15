@@ -43,6 +43,11 @@ object TableNames {
     const val ORG_ACCOUNTING_CONFIG = "org_accounting_config"
     const val FISCAL_PERIOD = "fiscal_period"
 
+    // Organization ledger tables
+    const val LEDGER_ENTRY_GROUP = "ledger_entry_group"
+    const val LEDGER_ENTRY = "ledger_entry"
+    const val SUBLEDGER_ENTRY = "subledger_entry"
+
     // Location tables
     const val SYNC_LOG = "sync_log"
     const val LOCATION_PRODUCT = "location_product"

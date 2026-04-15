@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
-import me.ezra_home.retail_software_solution.organizations.business.account.SystemAccount
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxRecoveryType
 import me.ezra_home.retail_software_solution.util.business.StringUtils
