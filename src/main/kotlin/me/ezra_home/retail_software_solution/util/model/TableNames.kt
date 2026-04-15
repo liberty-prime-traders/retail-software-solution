@@ -78,7 +78,6 @@ object TableNames {
     const val TAX_RATE_AUDIT = "tax_rate_aud"
     const val PRODUCT_TAX_ASSIGNMENT_AUDIT = "product_tax_assignment_aud"
     const val ORG_JURISDICTION_TAX_TYPE_AUDIT = "org_jurisdiction_tax_type_aud"
-    const val FISCAL_PERIOD_AUDIT = "fiscal_period_aud"
 
     // Location audit tables
     const val LOCATION_PRODUCT_AUDIT = "location_product_aud"

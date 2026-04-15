@@ -43,11 +43,11 @@ class YearEndCloseService(
         return FiscalPeriodResponseDto(
             id = dto.id,
             name = dto.name,
-            fiscalYear = FiscalPeriodUtils.fiscalYearLabel(dto.endDate, config.fiscalYearEndMonth, config.fiscalYearEndDay),
+            fiscalYear = FiscalPeriodUtils.fiscalYearLabel(dto.endDate, config.fiscalYearEndMonth),
             startDate = dto.startDate,
             endDate = dto.endDate,
             yearEnd = dto.yearEnd,
-            adjustmentPeriod = dto.adjustmentPeriod,
+            stub = dto.stub,
             closedAt = dto.closedAt,
             closedBy = userFullNameQualifier.getUserFullName(dto.closedBy),
             closable = false

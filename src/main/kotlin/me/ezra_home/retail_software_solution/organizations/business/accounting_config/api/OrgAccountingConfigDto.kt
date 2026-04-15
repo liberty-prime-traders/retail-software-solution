@@ -9,7 +9,6 @@ data class OrgAccountingConfigDto(
     val createdById: UUID,
     val createdOn: OffsetDateTime,
     val fiscalYearEndMonth: Int,
-    val fiscalYearEndDay: Int,
     val fiscalPeriodCycle: FiscalPeriodCycle,
     val periodWeekStartDay: DayOfWeek,
     val periodPrepDays: Int

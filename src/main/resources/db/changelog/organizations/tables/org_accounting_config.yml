@@ -27,13 +27,6 @@ databaseChangeLog:
                     notNullConstraintName: org_accounting_config_fiscal_year_end_month_notnull
 
               - column:
-                  name: fiscal_year_end_day
-                  type: int
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: org_accounting_config_fiscal_year_end_day_notnull
-
-              - column:
                   name: fiscal_period_cycle
                   type: nvarchar2(5)
                   constraints:

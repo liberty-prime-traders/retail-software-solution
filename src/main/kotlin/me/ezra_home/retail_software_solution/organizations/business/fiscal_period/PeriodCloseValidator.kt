@@ -35,7 +35,7 @@ class PeriodCloseValidator(
 
     private fun hasOpenSiblings(id: UUID, endDate: LocalDate): Boolean {
         val config = configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
-        val yearEnd = FiscalPeriodUtils.yearEnd(endDate, config.fiscalYearEndMonth, config.fiscalYearEndDay)
+        val yearEnd = FiscalPeriodUtils.yearEnd(endDate, config.fiscalYearEndMonth)
         val yearStart = FiscalPeriodUtils.yearStart(yearEnd)
         return repository.countOpenInYear(yearStart, yearEnd, id) > 0
     }

@@ -12,8 +12,10 @@ class SemiAnnualPeriodStrategy : PeriodCycleStrategy {
     }
 
     override fun nextCleanStart(from: LocalDate, context: PeriodGenerationContext): LocalDate {
-        if (from.dayOfMonth == 1 && (from.monthValue - 1) % 6 == 0) return from
-        val monthsToAdd = 6 - ((from.monthValue - 1) % 6)
+        val fiscalStartMonth = (context.config.fiscalYearEndMonth % 12) + 1
+        val offset = ((from.monthValue - fiscalStartMonth) + 12) % 12
+        if (from.dayOfMonth == 1 && offset % 6 == 0) return from
+        val monthsToAdd = 6 - (offset % 6)
         return from.withDayOfMonth(1).plusMonths(monthsToAdd.toLong())
     }
 }

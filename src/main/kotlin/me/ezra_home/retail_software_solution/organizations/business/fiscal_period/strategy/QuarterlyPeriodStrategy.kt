@@ -12,8 +12,10 @@ class QuarterlyPeriodStrategy : PeriodCycleStrategy {
     }
 
     override fun nextCleanStart(from: LocalDate, context: PeriodGenerationContext): LocalDate {
-        if (from.dayOfMonth == 1 && (from.monthValue - 1) % 3 == 0) return from
-        val monthsToAdd = 3 - ((from.monthValue - 1) % 3)
+        val fiscalStartMonth = (context.config.fiscalYearEndMonth % 12) + 1
+        val offset = ((from.monthValue - fiscalStartMonth) + 12) % 12
+        if (from.dayOfMonth == 1 && offset % 3 == 0) return from
+        val monthsToAdd = 3 - (offset % 3)
         return from.withDayOfMonth(1).plusMonths(monthsToAdd.toLong())
     }
 }

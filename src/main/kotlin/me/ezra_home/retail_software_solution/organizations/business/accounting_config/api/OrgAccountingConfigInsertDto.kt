@@ -4,7 +4,6 @@ import java.time.DayOfWeek
 
 data class OrgAccountingConfigInsertDto(
     val fiscalYearEndMonth: Int,
-    val fiscalYearEndDay: Int,
     val fiscalPeriodCycle: FiscalPeriodCycle,
     val periodWeekStartDay: DayOfWeek,
     val periodPrepDays: Int

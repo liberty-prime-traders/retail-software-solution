@@ -32,8 +32,8 @@ class FiscalPeriodEntity(
     var yearEnd: Boolean = false,
 
     @NotAudited
-    @Column(name = "is_adjustment_period", nullable = false, updatable = false)
-    var adjustmentPeriod: Boolean = false,
+    @Column(name = "is_stub", nullable = false, updatable = false)
+    var stub: Boolean = false,
 
     @Column(name = "closed_at")
     var closedAt: Instant? = null,

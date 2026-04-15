@@ -16,9 +16,6 @@ class OrgAccountingConfigEntity(
     @Column(name = "fiscal_year_end_month", nullable = false)
     var fiscalYearEndMonth: Int,
 
-    @Column(name = "fiscal_year_end_day", nullable = false)
-    var fiscalYearEndDay: Int,
-
     @Column(name = "fiscal_period_cycle", nullable = false, length = 5)
     var fiscalPeriodCycle: FiscalPeriodCycle,
 

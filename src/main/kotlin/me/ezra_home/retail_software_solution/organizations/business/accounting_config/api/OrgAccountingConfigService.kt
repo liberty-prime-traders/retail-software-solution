@@ -29,7 +29,6 @@ class OrgAccountingConfigService(
         val today = DateTimes.Local.Now.organization()
         configCache.create(OrgAccountingConfigInsertDto(
             fiscalYearEndMonth = today.monthValue,
-            fiscalYearEndDay = today.dayOfMonth,
             fiscalPeriodCycle = FiscalPeriodCycle.MONTHLY,
             periodWeekStartDay = DayOfWeek.MONDAY,
             periodPrepDays = 2

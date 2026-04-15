@@ -37,9 +37,9 @@ class FiscalPeriodService(
     fun getAll(): List<FiscalPeriodResponseDto> {
         val config = configService.getConfig() ?: throw RtsGenericException("Accounting configuration has not been initialized")
         val dtos = repository.findAll().map { mapper.toDomainDto(it) }
-        val periodsByYearEnd = dtos.groupBy { FiscalPeriodUtils.yearEnd(it.endDate, config.fiscalYearEndMonth, config.fiscalYearEndDay) }
+        val periodsByYearEnd = dtos.groupBy { FiscalPeriodUtils.yearEnd(it.endDate, config.fiscalYearEndMonth) }
         return dtos.map { dto ->
-            val yearPeers = periodsByYearEnd[FiscalPeriodUtils.yearEnd(dto.endDate, config.fiscalYearEndMonth, config.fiscalYearEndDay)].orEmpty()
+            val yearPeers = periodsByYearEnd[FiscalPeriodUtils.yearEnd(dto.endDate, config.fiscalYearEndMonth)].orEmpty()
             toResponseDto(dto, config, validator.isClosable(dto, yearPeers))
         }
     }
@@ -70,7 +70,7 @@ class FiscalPeriodService(
             val dto = mapper.toDomainDto(period)
             return toResponseDto(dto, config, validator.isClosable(dto))
         }
-        val yearEnd = FiscalPeriodUtils.yearEnd(period.startDate, config.fiscalYearEndMonth, config.fiscalYearEndDay)
+        val yearEnd = FiscalPeriodUtils.yearEnd(period.startDate, config.fiscalYearEndMonth)
         val yearStart = FiscalPeriodUtils.yearStart(yearEnd)
         repository.findPeriodsInGivenYear(yearStart, yearEnd)
             .filter { StringUtils.isEquivalent(it.name, name) }
@@ -92,11 +92,11 @@ class FiscalPeriodService(
         return FiscalPeriodResponseDto(
             id = dto.id,
             name = dto.name,
-            fiscalYear = FiscalPeriodUtils.fiscalYearLabel(dto.endDate, config.fiscalYearEndMonth, config.fiscalYearEndDay),
+            fiscalYear = FiscalPeriodUtils.fiscalYearLabel(dto.endDate, config.fiscalYearEndMonth),
             startDate = dto.startDate,
             endDate = dto.endDate,
             yearEnd = dto.yearEnd,
-            adjustmentPeriod = dto.adjustmentPeriod,
+            stub = dto.stub,
             closedAt = dto.closedAt,
             closedBy = userFullNameQualifier.getUserFullName(dto.closedBy),
             closable = closable

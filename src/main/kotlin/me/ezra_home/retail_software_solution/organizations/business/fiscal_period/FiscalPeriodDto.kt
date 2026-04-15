@@ -13,7 +13,7 @@ data class FiscalPeriodDto(
     val startDate: LocalDate,
     val endDate: LocalDate,
     val yearEnd: Boolean,
-    val adjustmentPeriod: Boolean,
+    val stub: Boolean,
     val closedAt: Instant?,
     val closedBy: UUID?
 ) {
