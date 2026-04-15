@@ -51,8 +51,8 @@ databaseChangeLog:
                   type: decimal(15,3)
 
               - column:
-                  name: reference_id
-                  type: uuid
+                  name: external_reference_number
+                  type: varchar(30)
 
               - column:
                   name: revend

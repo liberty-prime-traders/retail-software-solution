@@ -43,6 +43,7 @@ object PurchaseDeliveryMapper {
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
         deliveryLineId = dl.id!!,
+        lineReferenceNumber = dl.referenceNumber!!,
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
         unitCost = dl.unitCost
