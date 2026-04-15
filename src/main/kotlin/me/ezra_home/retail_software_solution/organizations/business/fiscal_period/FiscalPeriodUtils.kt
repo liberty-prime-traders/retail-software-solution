@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.fiscal_period
 
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 
 object FiscalPeriodUtils {
 
@@ -19,5 +21,21 @@ object FiscalPeriodUtils {
         val start = yearStart(fiscalYearEnd)
         return if (start.year == fiscalYearEnd.year) "FY${fiscalYearEnd.year}"
         else "FY${start.year}/${fiscalYearEnd.year.toString().takeLast(2)}"
+    }
+
+    fun fiscalStartMonth(endMonth: Int): Int = (endMonth % 12) + 1
+
+    fun daysUntilDayOfWeek(from: LocalDate, target: DayOfWeek): Int =
+        (target.value - from.dayOfWeek.value + 7) % 7
+
+    fun positionIn445(firstPeriodStart: LocalDate, periodStart: LocalDate): Int {
+        val elapsed = ChronoUnit.DAYS.between(firstPeriodStart, periodStart)
+        if (elapsed <= 0) return 0
+        return when ((elapsed % 91L).toInt()) {
+            in 0..27 -> 0
+            in 28..55 -> 1
+            in 56..90 -> 2
+            else -> throw IllegalStateException("elapsed % 91 out of range: $elapsed")
+        }
     }
 }

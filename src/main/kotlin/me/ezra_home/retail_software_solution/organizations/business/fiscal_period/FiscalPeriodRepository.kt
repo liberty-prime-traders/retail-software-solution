@@ -13,9 +13,6 @@ interface FiscalPeriodRepository : JpaRepository<FiscalPeriodEntity, UUID> {
 
     fun findByIdIn(ids: Set<UUID>): List<FiscalPeriodEntity>
 
-    @Query("SELECT COUNT(p) FROM FiscalPeriodEntity p WHERE p.startDate >= :from AND p.startDate <= :to AND p.stub = false")
-    fun countFullPeriodsForDates(from: LocalDate, to: LocalDate): Int
-
     @Query("SELECT p FROM FiscalPeriodEntity p WHERE p.startDate >= :from AND p.startDate <= :to")
     fun findPeriodsInGivenYear(from: LocalDate, to: LocalDate): Collection<FiscalPeriodEntity>
 
