@@ -40,6 +40,8 @@ object TableNames {
     const val TAX_RATE = "tax_rate"
     const val PRODUCT_TAX_ASSIGNMENT = "product_tax_assignment"
     const val ORG_JURISDICTION_TAX_TYPE = "org_jurisdiction_tax_type"
+    const val ORG_ACCOUNTING_CONFIG = "org_accounting_config"
+    const val FISCAL_PERIOD = "fiscal_period"
 
     // Location tables
     const val SYNC_LOG = "sync_log"
