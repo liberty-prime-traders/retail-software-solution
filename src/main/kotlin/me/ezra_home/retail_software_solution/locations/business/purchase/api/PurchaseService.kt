@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
@@ -18,11 +19,13 @@ import java.util.UUID
 class PurchaseService(
   private val purchaseRepository: PurchaseRepository,
   private val purchaseLineRepository: PurchaseLineRepository,
+  private val locationProductRepository: LocationProductRepository,
   private val purchaseAssembler: PurchaseAssembler
 ) {
 
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
+    guardNoInactiveProducts(dto.lines.map { it.locationProductId })
     val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.saveAndFlush(it) }
     val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
@@ -42,6 +45,7 @@ class PurchaseService(
   fun createOrder(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardHasLines(dto.lines)
     PurchaseValidator.guardNoDuplicateProducts(dto.lines)
+    guardNoInactiveProducts(dto.lines.map { it.locationProductId })
     val purchase = PurchaseMapper.toOrderEntity(dto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(purchase.id!!, dto.lines)
     purchaseLineRepository.saveAll(lines)
@@ -88,6 +92,11 @@ class PurchaseService(
     }
   }
 
+  private fun guardNoInactiveProducts(productIds: List<UUID>) {
+    val products = locationProductRepository.findAllById(productIds)
+    PurchaseValidator.guardNoInactiveProducts(products)
+  }
+
   private fun resolveStatusAfterCancellation(lines: List<PurchaseLineEntity>): PurchaseStatus? {
     val allAccountedFor = lines.all { it.quantityDelivered + it.quantityCanceled == it.quantityOrdered }
     val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }
@@ -105,10 +114,12 @@ class PurchaseService(
     val toSave = mutableListOf<PurchaseLineEntity>()
     val toCreate = mutableListOf<PurchaseLineEntity>()
 
+    val newProductIds = dto.lines.filter { linesById[it.id] == null }.map { it.locationProductId }
+    guardNoInactiveProducts(newProductIds)
+
     for (lineDto in dto.lines) {
       val existing = lineDto.id.let { linesById[it] }
       if (existing == null) {
-        PurchaseValidator.guardNewLineHasProduct(lineDto)
         toCreate.add(PurchaseMapper.toNewLineEntity(purchaseId, lineDto))
       } else if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
         toDelete.add(existing)

@@ -35,6 +35,10 @@ object SessionContextProvider {
         return getSession().location?.schemaName ?: throw RtsGenericException("Location schema not found in session.")
     }
 
+    fun getOrganizationSchema(): String {
+        return getSession().organization?.schemaName ?: throw RtsGenericException("Organization schema not found in session.")
+    }
+
     fun getOrgTimezone(): String {
         return getSession().organization?.timezone ?: throw RtsGenericException("Organization timezone not found in session.")
     }

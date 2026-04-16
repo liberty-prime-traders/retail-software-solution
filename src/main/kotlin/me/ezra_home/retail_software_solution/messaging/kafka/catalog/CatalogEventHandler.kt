@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.catalog
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncServiceRegistry
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
@@ -23,8 +24,8 @@ class CatalogEventHandler(
     fun consume(event: CatalogChangedEvent) {
         ServiceAccountContext.runWithServiceAccount(ServiceAccount.CATALOG_SYNC) {
             val organization = organizationCache.getAllOrganizations()
-                .find { it.schemaName == event.sourceSchema }
-                ?: throw RtsGenericException("Organization with schema ${event.sourceSchema} not found")
+                .find { it.schemaName == event.sourceContext.orgSchema }
+                ?: throw RtsGenericException("Organization with schema ${event.sourceContext.orgSchema} not found")
             SessionContextProvider.initOrganization(organization)
 
             locationCache.getAllLocations().forEach { location ->
@@ -35,13 +36,13 @@ class CatalogEventHandler(
     }
 
     fun publish(tableName: TableName, entityId: UUID) {
-        val sourceSchema = SessionContextProvider.getSession().organization?.schemaName
+        val orgSchema = SessionContextProvider.getSession().organization?.schemaName
             ?: throw RtsGenericException("Organization schema name not found in session")
 
         catalogEventProducer.publish(
             CatalogChangedEvent(
                 eventId = UUID.randomUUID(),
-                sourceSchema = sourceSchema,
+                sourceContext = EventSourceContext.OrgLevel(orgSchema),
                 timestamp = Instant.now(),
                 correlationId = null,
                 tableName = tableName,

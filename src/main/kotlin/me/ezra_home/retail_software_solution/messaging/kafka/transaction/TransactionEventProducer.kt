@@ -21,7 +21,7 @@ class TransactionEventProducer(
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun onTransactionEvent(event: TransactionEvent) {
     try {
-      kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, event.sourceSchema, event).get()
+      kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, event.sourceContext.locationSchema, event).get()
     } catch (e: Exception) {
       log.error("Failed to publish event ${event.eventId}", e)
       when (event) {

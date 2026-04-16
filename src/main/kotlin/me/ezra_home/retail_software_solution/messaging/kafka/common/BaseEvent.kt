@@ -5,7 +5,7 @@ import java.util.UUID
 
 abstract class BaseEvent {
     abstract val eventId: UUID
-    abstract val sourceSchema: String
+    abstract val sourceContext: EventSourceContext
     abstract val timestamp: Instant
     abstract val correlationId: UUID?
 }

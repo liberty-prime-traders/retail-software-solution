@@ -44,7 +44,7 @@ object PurchaseMapper {
 
   fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineUpdateDto) = PurchaseLineEntity(
     purchaseId = purchaseId,
-    locationProductId = dto.locationProductId!!,
+    locationProductId = dto.locationProductId,
     quantityOrdered = dto.quantityOrdered,
     unitCost = dto.unitCost
   )

@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import java.time.Instant
 import java.util.UUID
@@ -30,10 +31,10 @@ object PurchaseDeliveryMapper {
     supplierId: UUID,
     deliveryRecord: DeliveryRecord,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
-    sourceSchema: String
+    sourceContext: EventSourceContext.LocationLevel
   ) = PurchaseDeliveredEvent(
     eventId = UUID.randomUUID(),
-    sourceSchema = sourceSchema,
+    sourceContext = sourceContext,
     timestamp = Instant.now(),
     correlationId = null,
     purchaseId = purchaseId,

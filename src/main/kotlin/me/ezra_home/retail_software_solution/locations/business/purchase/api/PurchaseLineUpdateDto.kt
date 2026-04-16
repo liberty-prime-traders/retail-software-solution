@@ -6,7 +6,7 @@ import java.util.UUID
 
 data class PurchaseLineUpdateDto(
   val id: UUID,
-  val locationProductId: UUID?,
+  val locationProductId: UUID,
   val quantityOrdered: BigDecimal,
   val unitCost: BigDecimal
 ) : Serializable

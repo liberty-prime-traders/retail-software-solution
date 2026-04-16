@@ -32,7 +32,7 @@ class TransactionEventConsumerSupport(
         }
 
         ServiceAccountContext.runWithServiceAccount(serviceAccount) {
-            contextSetup.initializeSession(event.sourceSchema)
+            contextSetup.initializeSession(event.sourceContext)
             try {
                 dispatch(event, processorsForEvent)
             } catch (e: Exception) {
@@ -47,7 +47,7 @@ class TransactionEventConsumerSupport(
             notificationProducer.publish(
                 ConsumerFailureEvent(
                     eventId = UUID.randomUUID(),
-                    sourceSchema = event.sourceSchema,
+                    sourceContext = event.sourceContext,
                     timestamp = Instant.now(),
                     correlationId = event.eventId,
                     failedEventId = event.eventId,

@@ -14,7 +14,7 @@ class NotificationEventProducer(
 
     fun publish(event: ConsumerFailureEvent) {
         try {
-            kafkaTemplate.send(KafkaConstants.Topics.NOTIFICATIONS, event.sourceSchema, event)
+            kafkaTemplate.send(KafkaConstants.Topics.NOTIFICATIONS, event.sourceContext.orgSchema, event)
         } catch (e: Exception) {
             log.error("Failed to publish notification for event ${event.failedEventId}", e)
         }
