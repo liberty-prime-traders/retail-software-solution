@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import me.ezra_home.retail_software_solution.util.model.HasCreatorEntity
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.math.BigDecimal

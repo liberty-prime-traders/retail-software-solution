@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
@@ -39,7 +39,7 @@ object PurchaseDeliveryMapper {
     purchaseId = purchaseId,
     deliveryId = deliveryRecord.delivery.id!!,
     deliveryReferenceNumber = deliveryRecord.delivery.referenceNumber!!,
-    deliveredAt = deliveryRecord.delivery.deliveredAt?.toInstant(),
+    deliveredAt = deliveryRecord.delivery.deliveredAt!!,
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!

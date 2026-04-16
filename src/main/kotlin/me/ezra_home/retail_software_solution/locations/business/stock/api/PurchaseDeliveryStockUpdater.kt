@@ -13,7 +13,7 @@ import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
-class StockUpdaterForPurchaseDelivery(
+class PurchaseDeliveryStockUpdater(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val stockItemSourceService: StockItemSourceService

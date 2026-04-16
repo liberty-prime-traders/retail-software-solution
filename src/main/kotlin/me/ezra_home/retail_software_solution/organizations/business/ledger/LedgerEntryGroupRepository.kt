@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface LedgerEntryGroupRepository : JpaRepository<LedgerEntryGroupEntity, UUID>
+interface LedgerEntryGroupRepository : JpaRepository<LedgerEntryGroupEntity, UUID> {
+    fun existsBySourceReferenceNumber(reference: String): Boolean
+}

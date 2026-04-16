@@ -10,7 +10,7 @@ data class LedgerPostingRequest(
     val sourceType: LedgerSourceType,
     val postingDate: LocalDate,
     val entries: List<LedgerEntryRequest>,
-    val subledgerEntry: SubledgerEntryRequest?
+    val subledgerEntries: List<SubledgerEntryRequest>
 )
 
 data class LedgerEntryRequest(

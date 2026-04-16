@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Ledge
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.Instant
@@ -28,7 +27,7 @@ class LedgerPostingService(
         val fiscalPeriodId = fiscalPeriodService.findOpenForDate(request.postingDate)
             ?: throw RtsGenericException("No open fiscal period for ${request.postingDate}")
 
-        val group = groupRepository.saveAndFlush(
+        val group = groupRepository.save(
             LedgerEntryGroupEntity(
                 sourceReferenceNumber = request.sourceReferenceNumber,
                 sourceType = request.sourceType,
@@ -49,9 +48,13 @@ class LedgerPostingService(
             }
         )
 
-        request.subledgerEntry?.let { sub ->
-            val latest = subledgerRepository.findLatestForContact(sub.contactReferenceNumber, PageRequest.of(0, 1)).firstOrNull()
-            subledgerRepository.save(
+        val contactRefs = request.subledgerEntries.map { it.contactReferenceNumber }.toSet()
+        val latestByContact = subledgerRepository.findLatestForContacts(contactRefs)
+            .associateBy { it.contactReferenceNumber }
+
+        subledgerRepository.saveAll(
+            request.subledgerEntries.map { sub ->
+                val latest = latestByContact[sub.contactReferenceNumber]
                 SubledgerEntryEntity(
                     groupReferenceNumber = group.referenceNumber!!,
                     contactReferenceNumber = sub.contactReferenceNumber,
@@ -60,7 +63,7 @@ class LedgerPostingService(
                     runningPayable = (latest?.runningPayable ?: BigDecimal.ZERO) + sub.payableAmount,
                     runningReceivable = (latest?.runningReceivable ?: BigDecimal.ZERO) + sub.receivableAmount
                 )
-            )
-        }
+            }
+        )
     }
 }

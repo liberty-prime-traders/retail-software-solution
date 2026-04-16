@@ -45,6 +45,8 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PRODUCT_TAX_ASSIGNMENT(TableNames.PRODUCT_TAX_ASSIGNMENT, SchemaLevel.ORGANIZATION),
   ORG_JURISDICTION_TAX_TYPE(TableNames.ORG_JURISDICTION_TAX_TYPE, SchemaLevel.ORGANIZATION),
   LEDGER_ENTRY_GROUP(TableNames.LEDGER_ENTRY_GROUP, SchemaLevel.ORGANIZATION),
+  LEDGER_ENTRY(TableNames.LEDGER_ENTRY, SchemaLevel.ORGANIZATION),
+  SUBLEDGER_ENTRY(TableNames.SUBLEDGER_ENTRY, SchemaLevel.ORGANIZATION),
 
   // Location-level tables
   LOCATION_PRODUCT(TableNames.LOCATION_PRODUCT, SchemaLevel.LOCATION),
