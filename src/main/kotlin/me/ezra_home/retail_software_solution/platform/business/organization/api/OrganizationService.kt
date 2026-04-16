@@ -45,6 +45,11 @@ class OrganizationService(
     @TransactionalOnPlatformSchema(readOnly = true)
     fun getAllOrganizationDtos(): Collection<OrganizationDto> = organizationCache.getAllOrganizations()
 
+    @TransactionalOnPlatformSchema(readOnly = true)
+    fun getBySchema(schema: String): OrganizationDto =
+        organizationCache.getAllOrganizations().find { it.schemaName == schema }
+            ?: throw RtsGenericException("No organization found for schema $schema.")
+
     fun updateCurrentDbVersion(organizationId: UUID, versionId: UUID) {
         val org = organizationCache.getAllOrganizations().find { it.id == organizationId }
             ?: throw RtsGenericException("Organization not found")

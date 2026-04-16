@@ -21,7 +21,7 @@ class LedgerEntryEntity(
     var accountCode: String,
 
     @Convert(converter = EntryTypeConverter::class)
-    @Column(name = "entry_type", nullable = false, updatable = false, length = 6)
+    @Column(name = "entry_type", nullable = false, updatable = false, length = 5)
     var entryType: EntryType,
 
     @Column(name = "amount", nullable = false, updatable = false, precision = 19, scale = 4)

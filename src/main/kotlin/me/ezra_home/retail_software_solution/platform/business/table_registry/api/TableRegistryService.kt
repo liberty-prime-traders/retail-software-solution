@@ -28,7 +28,8 @@ class TableRegistryService(
         val dto = allTables.find { it.id == id } ?: throw RtsGenericException("Table not found")
         if (!dto.validated) {
             validateName(dto.tableName)
-            tableRegistryCache.save(dto.copy(validated = true))
+            val updatedRegistry = tableRegistryCache.save(dto.copy(validated = true))
+            return tableRegistryMapper.toDto(updatedRegistry)
         }
         return tableRegistryMapper.toDto(dto)
     }

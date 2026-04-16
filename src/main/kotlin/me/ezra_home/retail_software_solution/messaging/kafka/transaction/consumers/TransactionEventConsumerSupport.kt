@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.consumers
 
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSessionSetup
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.ConsumerFailureEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.NotificationEventProducer
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
@@ -13,7 +14,7 @@ import java.util.UUID
 
 @Component
 class TransactionEventConsumerSupport(
-    private val contextSetup: TransactionEventSessionSetup,
+    private val eventSessionSetup: EventSessionSetup,
     private val notificationProducer: NotificationEventProducer
 ) {
     private val logger = LoggerFactory.getLogger(TransactionEventConsumerSupport::class.java)
@@ -32,7 +33,7 @@ class TransactionEventConsumerSupport(
         }
 
         ServiceAccountContext.runWithServiceAccount(serviceAccount) {
-            contextSetup.initializeSession(event.sourceContext)
+            eventSessionSetup.initFromEvent(event)
             try {
                 dispatch(event, processorsForEvent)
             } catch (e: Exception) {
