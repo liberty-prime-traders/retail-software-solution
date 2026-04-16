@@ -51,6 +51,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUBLEDGER_ENTRY(TableNames.SUBLEDGER_ENTRY, SchemaLevel.ORGANIZATION),
 
   // Location-level tables
+  EVENT_PROCESSING_LOG(TableNames.EVENT_PROCESSING_LOG, SchemaLevel.LOCATION),
   LOCATION_PRODUCT(TableNames.LOCATION_PRODUCT, SchemaLevel.LOCATION),
   SYNC_LOG(TableNames.SYNC_LOG, SchemaLevel.LOCATION),
   PURCHASE(TableNames.PURCHASE, SchemaLevel.LOCATION),

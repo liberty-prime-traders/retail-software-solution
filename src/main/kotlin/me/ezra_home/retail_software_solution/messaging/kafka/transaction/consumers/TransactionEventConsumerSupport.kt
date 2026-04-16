@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSession
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.ConsumerFailureEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.NotificationEventProducer
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.log.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.TransactionEventProcessor
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
 import org.slf4j.LoggerFactory
@@ -15,7 +16,8 @@ import java.util.UUID
 @Component
 class TransactionEventConsumerSupport(
     private val eventSessionSetup: EventSessionSetup,
-    private val notificationProducer: NotificationEventProducer
+    private val notificationProducer: NotificationEventProducer,
+    private val logService: EventProcessingLogService
 ) {
     private val logger = LoggerFactory.getLogger(TransactionEventConsumerSupport::class.java)
 
@@ -34,12 +36,42 @@ class TransactionEventConsumerSupport(
 
         ServiceAccountContext.runWithServiceAccount(serviceAccount) {
             eventSessionSetup.initFromEvent(event)
+            insertPendingLog(event, consumerGroup)
             try {
                 dispatch(event, processorsForEvent)
+                markProcessedLog(event, consumerGroup)
             } catch (e: Exception) {
-                markFailed(event, processorsForEvent)
+                markFailedLog(event, consumerGroup, e)
                 publishNotification(event, consumerGroup, e)
             }
+        }
+    }
+
+    private fun insertPendingLog(event: TransactionEvent, consumerGroup: String) {
+        try {
+            logService.insertPending(event, consumerGroup)
+        } catch (e: Exception) {
+            logger.error("Failed to insert pending log for event ${event.eventId}", e)
+        }
+    }
+
+    private fun <EVENT: TransactionEvent> dispatch(event: EVENT, processors: List<TransactionEventProcessor<EVENT>>) {
+        processors.filter { it.shouldProcess(event) }.forEach { it.handle(event) }
+    }
+
+    private fun markProcessedLog(event: TransactionEvent, consumerGroup: String) {
+        try {
+            logService.markProcessed(event, consumerGroup)
+        } catch (e: Exception) {
+            logger.error("Failed to mark event ${event.eventId} as processed in log", e)
+        }
+    }
+
+    private fun markFailedLog(event: TransactionEvent, consumerGroup: String, e: Exception) {
+        try {
+            logService.markFailed(event, consumerGroup, e.message ?: e.javaClass.simpleName)
+        } catch (logException: Exception) {
+            logger.error("Failed to mark event ${event.eventId} as failed in log", logException)
         }
     }
 
@@ -59,18 +91,5 @@ class TransactionEventConsumerSupport(
         } catch (notificationException: Exception) {
             logger.error("Failed to publish failure notification for event ${event.eventId}", notificationException)
         }
-    }
-
-    private fun <EVENT: TransactionEvent> markFailed(event: EVENT, processors: List<TransactionEventProcessor<EVENT>>) {
-        try {
-            processors.forEach { it.markFailed(event) }
-        } catch (markFailedException: Exception) {
-            logger.error("Failed to mark event ${event.eventId} as failed", markFailedException)
-        }
-    }
-
-
-    private fun <EVENT: TransactionEvent> dispatch(event: EVENT, processors: List<TransactionEventProcessor<EVENT>>) {
-        processors.filter { it.shouldProcess(event) }.forEach { it.handle(event) }
     }
 }

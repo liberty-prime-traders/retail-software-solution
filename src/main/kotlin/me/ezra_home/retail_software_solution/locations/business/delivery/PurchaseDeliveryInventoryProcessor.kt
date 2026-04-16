@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Propagation
 import kotlin.reflect.KClass
 
 @Service
@@ -34,14 +33,6 @@ class PurchaseDeliveryInventoryProcessor(
     locationProductService.updateLastPurchasePrices(unitCostByProductId)
     val delivery = deliveryRepository.findById(event.deliveryId).orElseThrow { UpdatingNonExistingRecordException() }
     delivery.status = PurchaseDeliveryStatus.RECEIVED
-    deliveryRepository.save(delivery)
-  }
-
-  @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
-  override fun markFailed(event: PurchaseDeliveredEvent) {
-    val deliveryId = event.deliveryId
-    val delivery = deliveryRepository.findById(deliveryId).orElseThrow { UpdatingNonExistingRecordException() }
-    delivery.status = PurchaseDeliveryStatus.FAILED
     deliveryRepository.save(delivery)
   }
 }

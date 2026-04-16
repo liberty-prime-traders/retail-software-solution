@@ -1,0 +1,93 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-event-processing-log-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: event_processing_log
+      changes:
+        - createTable:
+            tableName: event_processing_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: event_processing_log_reference_number_unique
+
+              - column:
+                  name: event_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_event_id_notnull
+
+              - column:
+                  name: event_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_event_type_notnull
+
+              - column:
+                  name: consumer_group
+                  type: varchar(50)
+
+              - column:
+                  name: source_document_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_source_document_id_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_status_notnull
+
+              - column:
+                  name: resolution_type
+                  type: varchar(5)
+
+              - column:
+                  name: processed_on
+                  type: timestamptz
+
+              - column:
+                  name: failed_on
+                  type: timestamptz
+
+              - column:
+                  name: failure_reason
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: event_processing_log_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: event_processing_log

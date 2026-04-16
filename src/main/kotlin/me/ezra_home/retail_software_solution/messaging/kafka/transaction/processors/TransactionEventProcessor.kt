@@ -7,5 +7,4 @@ sealed interface TransactionEventProcessor<EVENT : TransactionEvent> {
     val eventType: KClass<EVENT>
     fun handle(event: EVENT)
     fun shouldProcess(event: EVENT): Boolean
-    fun markFailed(event: EVENT) {}
 }

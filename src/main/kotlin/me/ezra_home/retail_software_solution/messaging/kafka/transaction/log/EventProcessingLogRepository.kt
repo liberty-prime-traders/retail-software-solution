@@ -1,0 +1,17 @@
+package me.ezra_home.retail_software_solution.messaging.kafka.transaction.log
+
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.stereotype.Repository
+import java.util.UUID
+
+@Repository
+interface EventProcessingLogRepository : JpaRepository<EventProcessingLogEntity, UUID> {
+
+    @Query("SELECT e FROM EventProcessingLogEntity e"
+        + " WHERE e.eventId = :eventId AND e.consumerGroup = :consumerGroup "
+        + "ORDER BY e.createdOn DESC"
+    )
+    fun findLatestByEventIdAndConsumerGroup(eventId: UUID, consumerGroup: String): EventProcessingLogEntity?
+
+}
