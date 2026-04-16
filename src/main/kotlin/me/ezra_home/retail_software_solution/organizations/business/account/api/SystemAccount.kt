@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.organizations.business.account
+package me.ezra_home.retail_software_solution.organizations.business.account.api
 
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 
 enum class SystemAccount(

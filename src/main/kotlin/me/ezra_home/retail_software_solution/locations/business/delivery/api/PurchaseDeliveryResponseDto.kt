@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery.api
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryStatus
-import java.time.OffsetDateTime
+import java.math.BigDecimal
+import java.time.Instant
 import java.util.UUID
 
 data class PurchaseDeliveryResponseDto(
@@ -9,7 +10,13 @@ data class PurchaseDeliveryResponseDto(
   val referenceNumber: String,
   val purchaseId: UUID,
   val status: PurchaseDeliveryStatus,
-  val deliveredAt: OffsetDateTime?,
+  val deliveredAt: Instant,
   val notes: String?,
   val lines: List<PurchaseDeliveryLineResponseDto>
-)
+) {
+  val deliveryTotal: BigDecimal get() = lines.totalCost()
+
+}
+
+fun List<PurchaseDeliveryLineResponseDto>.totalCost(): BigDecimal =
+  sumOf { it.quantityDelivered.multiply(it.unitCost) }

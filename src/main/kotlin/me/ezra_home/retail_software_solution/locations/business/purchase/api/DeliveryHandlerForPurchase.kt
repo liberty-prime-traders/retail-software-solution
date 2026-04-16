@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -20,9 +19,9 @@ class DeliveryHandlerForPurchase(
 
     fun prepareForDelivery(purchaseId: UUID): PurchaseDeliveryContext {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
-        if (purchase.status == PurchaseStatus.CANCELED)
+        if (purchase.purchaseStatus == PurchaseStatus.CANCELED)
             throw RtsGenericException("Cannot record a delivery on a canceled purchase.")
-        if (purchase.status == PurchaseStatus.FULLY_DELIVERED)
+        if (purchase.purchaseStatus == PurchaseStatus.FULLY_DELIVERED)
             throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
         val lines = purchaseLineRepository.findByPurchaseId(purchaseId)
         return PurchaseDeliveryContext(
@@ -43,7 +42,7 @@ class DeliveryHandlerForPurchase(
                 ?: throw RtsGenericException("Purchase line $lineId not found")
         }
         purchaseLineRepository.saveAll(toSave)
-        purchase.status = resolveDeliveryStatus(purchaseLines)
+        purchase.purchaseStatus = resolveDeliveryStatus(purchaseLines)
         purchaseRepository.save(purchase)
         return purchaseAssembler.buildResponse(purchase, purchaseLines)
     }

@@ -18,7 +18,7 @@ class OrgAccountingConfigCache(
     private val mapper: OrgAccountingConfigMapper
 ) {
 
-    //@Cacheable
+    @Cacheable
     fun get(): OrgAccountingConfigDto? = repository.findAll()
         .firstOrNull()
         ?.let { mapper.toDomainDto(it) }

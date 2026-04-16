@@ -1,8 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object PurchaseValidator {
@@ -19,18 +21,21 @@ object PurchaseValidator {
   }
 
   fun guardIsDraft(purchase: PurchaseEntity) {
-    if (purchase.status != PurchaseStatus.DRAFT)
+    if (purchase.purchaseStatus != PurchaseStatus.DRAFT)
       throw RtsGenericException("Purchase is not in draft status anymore. The requested updates cannot be applied.")
   }
 
   fun guardCanCancelLines(purchase: PurchaseEntity) {
-    if (purchase.status !in listOf(PurchaseStatus.ORDERED, PurchaseStatus.PARTIALLY_DELIVERED))
-      throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.status}")
+    if (purchase.purchaseStatus !in listOf(PurchaseStatus.ORDERED, PurchaseStatus.PARTIALLY_DELIVERED))
+      throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.purchaseStatus}")
   }
 
-  fun guardNewLineHasProduct(dto: PurchaseLineUpdateDto) {
-    if (dto.locationProductId == null)
-      throw RtsGenericException("locationProductId is required for new purchase lines.")
+  fun guardNoInactiveProducts(products: List<LocationProductEntity>) {
+    val inactive = products.filter { it.status != ProductStatus.ACTIVE }
+    if (inactive.isNotEmpty()) {
+      val names = inactive.joinToString { it.productName }
+      throw RtsGenericException("The following products are not active and cannot be added to a purchase: $names")
+    }
   }
 
   fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseCancelLinesDto) {

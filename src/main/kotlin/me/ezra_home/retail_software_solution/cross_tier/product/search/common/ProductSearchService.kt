@@ -15,9 +15,7 @@ abstract class ProductSearchService<DTO>(
   protected abstract fun countAllProducts(): Long
   protected abstract fun findAllProducts(): List<DTO>
 
-  fun searchWithParameters(
-    pageRequest: PageRequest<ProductSearchParameters, String>
-  ): PageResponse<DTO, String> {
+  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<DTO, String> {
 
     if (shouldUseClientSideFiltering()) {
       return loadAllProductsForClientFiltering()

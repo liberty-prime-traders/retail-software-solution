@@ -1,8 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import java.time.Instant
 import java.util.UUID
@@ -30,19 +31,22 @@ object PurchaseDeliveryMapper {
     supplierId: UUID,
     deliveryRecord: DeliveryRecord,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
-    sourceSchema: String
+    sourceContext: EventSourceContext.LocationLevel
   ) = PurchaseDeliveredEvent(
     eventId = UUID.randomUUID(),
-    sourceSchema = sourceSchema,
+    sourceContext = sourceContext,
     timestamp = Instant.now(),
     correlationId = null,
     purchaseId = purchaseId,
     deliveryId = deliveryRecord.delivery.id!!,
+    deliveryReferenceNumber = deliveryRecord.delivery.referenceNumber!!,
+    deliveredAt = deliveryRecord.delivery.deliveredAt,
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
         deliveryLineId = dl.id!!,
+        lineReferenceNumber = dl.referenceNumber!!,
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
         unitCost = dl.unitCost

@@ -22,7 +22,7 @@ object PurchaseMapper {
   fun toOrderEntity(dto: PurchaseCreateDto) = PurchaseEntity(
     supplierId = dto.supplierId,
     notes = dto.notes,
-    status = PurchaseStatus.ORDERED,
+    purchaseStatus = PurchaseStatus.ORDERED,
     dateOrdered = dto.dateOrdered ?: OffsetDateTime.now(),
     orderedById = dto.orderedById ?: SessionContextProvider.getUserId()
   )
@@ -39,12 +39,12 @@ object PurchaseMapper {
     dto.notes?.let { purchase.notes = it.orElse(null) }
     purchase.dateOrdered = dto.dateOrdered?.orElseGet { OffsetDateTime.now() } ?: OffsetDateTime.now()
     purchase.orderedById = dto.orderedById?.orElseGet { SessionContextProvider.getUserId() } ?: SessionContextProvider.getUserId()
-    purchase.status = PurchaseStatus.ORDERED
+    purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 
   fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineUpdateDto) = PurchaseLineEntity(
     purchaseId = purchaseId,
-    locationProductId = dto.locationProductId!!,
+    locationProductId = dto.locationProductId,
     quantityOrdered = dto.quantityOrdered,
     unitCost = dto.unitCost
   )

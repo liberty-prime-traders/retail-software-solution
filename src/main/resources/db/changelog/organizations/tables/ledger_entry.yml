@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-ledger-entry-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: ledger_entry
+      changes:
+        - createTable:
+            tableName: ledger_entry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: group_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_group_reference_number_notnull
+
+              - column:
+                  name: account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_account_code_notnull
+
+              - column:
+                  name: entry_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_entry_type_notnull
+
+              - column:
+                  name: amount
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_amount_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: ledger_entry_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: ledger_entry

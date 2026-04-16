@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cross_tier.product.search.organization
+package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductFetcher
@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service
 @Service
 class OrganizationProductSearchService(private val organizationProductFetcher: OrganizationProductFetcher)
   : ProductSearchService<OrganizationProductResponseDto>(
-  organizationProductFetcher,
-  OrganizationProductQueryBuilder::buildSearchQuery
+  organizationProductFetcher, OrganizationProductQueryBuilder::buildSearchQuery
   ) {
 
   override fun countAllProducts(): Long = organizationProductFetcher.countAllProducts()

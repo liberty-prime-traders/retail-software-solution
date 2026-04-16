@@ -1,0 +1,82 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-subledger-entry-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: subledger_entry
+      changes:
+        - createTable:
+            tableName: subledger_entry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: group_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_group_reference_number_notnull
+
+              - column:
+                  name: contact_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_contact_reference_number_notnull
+
+              - column:
+                  name: payable_amount
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_payable_amount_notnull
+
+              - column:
+                  name: receivable_amount
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_receivable_amount_notnull
+
+              - column:
+                  name: running_payable
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_running_payable_notnull
+
+              - column:
+                  name: running_receivable
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_running_receivable_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_entry_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: subledger_entry

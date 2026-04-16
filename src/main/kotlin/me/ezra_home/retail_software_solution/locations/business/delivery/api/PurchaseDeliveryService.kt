@@ -10,8 +10,11 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -40,12 +43,21 @@ class PurchaseDeliveryService(
     return DeliveryRecord(delivery, lines)
   }
 
+  fun republishEvent(deliveryId: UUID) {
+    val delivery = deliveryRepository.findById(deliveryId)
+      .orElseThrow { RtsGenericException("Delivery $deliveryId not found") }
+    val lines = deliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(deliveryId))
+    val context = deliveryHandlerForPurchase.prepareForDelivery(delivery.purchaseId)
+    publishDeliveryEvent(context, DeliveryRecord(delivery, lines))
+  }
+
   private fun publishDeliveryEvent(context: PurchaseDeliveryContext, deliveryRecord: DeliveryRecord) {
-    val sourceSchema = SessionContextProvider.getLocationSchema()
+    val sourceContext = EventSourceContext.LocationLevel(
+      orgSchema = SessionContextProvider.getOrganizationSchema(),
+      locationSchema = SessionContextProvider.getLocationSchema()
+    )
     eventPublisher.publishEvent(
-      PurchaseDeliveryMapper.toEvent(
-        context.purchaseId, context.supplierId, deliveryRecord, context.purchaseLineById, sourceSchema
-      )
+      PurchaseDeliveryMapper.toEvent(context.purchaseId, context.supplierId, deliveryRecord, context.purchaseLineById, sourceContext)
     )
   }
 }

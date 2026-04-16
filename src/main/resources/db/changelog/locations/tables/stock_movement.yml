@@ -68,8 +68,8 @@ databaseChangeLog:
                     notNullConstraintName: stock_movement_remaining_quantity_notnull
 
               - column:
-                  name: reference_id
-                  type: uuid
+                  name: external_reference_number
+                  type: varchar(30)
 
               - column:
                   name: created_by_id

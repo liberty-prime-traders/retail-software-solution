@@ -41,7 +41,7 @@ class StockMovementEntity(
   @Column(name = "remaining_quantity", nullable = false, precision = 15, scale = 3)
   var remainingQuantity: BigDecimal,
 
-  @Column(name = "reference_id")
-  var referenceId: UUID? = null
+  @Column(name = "external_reference_number", length = 30)
+  var externalReferenceNumber: String? = null
 
 ) : HasReferenceEntity()

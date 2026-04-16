@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.organizations.business.location.Loc
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationSchemaService
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationValidator
 import me.ezra_home.retail_software_solution.util.business.SchemaNameGenerator
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
@@ -27,6 +28,11 @@ class LocationService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllLocationDtos(): Collection<LocationDto> = locationCache.getAllLocations()
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getBySchema(schema: String): LocationDto =
+        locationCache.getAllLocations().find { it.schemaName == schema }
+            ?: throw RtsGenericException("No location found for schema $schema.")
 
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         locationValidator.validateLocationInsert(locationInsertDto)

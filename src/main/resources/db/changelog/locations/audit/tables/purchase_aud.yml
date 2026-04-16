@@ -35,7 +35,11 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: status
+                  name: purchase_status
+                  type: varchar(5)
+
+              - column:
+                  name: payment_status
                   type: varchar(5)
 
               - column:

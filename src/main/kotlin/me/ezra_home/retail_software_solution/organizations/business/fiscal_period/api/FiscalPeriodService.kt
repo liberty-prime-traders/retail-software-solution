@@ -15,6 +15,7 @@ import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
@@ -32,6 +33,10 @@ class FiscalPeriodService(
     fun nudgePeriodGeneration() {
         fiscalPeriodGenerationService.generatePeriods()
     }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun findOpenForDate(date: LocalDate): UUID? =
+        repository.findOpenContaining(date)
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<FiscalPeriodResponseDto> {
