@@ -39,7 +39,7 @@ object PurchaseDeliveryMapper {
     purchaseId = purchaseId,
     deliveryId = deliveryRecord.delivery.id!!,
     deliveryReferenceNumber = deliveryRecord.delivery.referenceNumber!!,
-    deliveredAt = deliveryRecord.delivery.deliveredAt!!,
+    deliveredAt = deliveryRecord.delivery.deliveredAt,
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!

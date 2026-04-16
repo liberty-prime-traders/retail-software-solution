@@ -63,24 +63,24 @@ databaseChangeLog:
             tableName: stock_movement
 
   - changeSet:
-      id: create-index-stock-movement-reference-id
+      id: create-index-stock-movement-external_reference_number
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_stock_movement_reference_id
+                indexName: idx_stock_movement_external_reference_number
       changes:
         - createIndex:
-            indexName: idx_stock_movement_reference_id
+            indexName: idx_stock_movement_external_reference_number
             tableName: stock_movement
             columns:
               - column:
-                  name: reference_id
+                  name: external_reference_number
       rollback:
         - dropIndex:
-            indexName: idx_stock_movement_reference_id
+            indexName: idx_stock_movement_external_reference_number
             tableName: stock_movement
 
   - changeSet:

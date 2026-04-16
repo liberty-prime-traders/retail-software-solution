@@ -2,12 +2,13 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEnricher
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -19,8 +20,8 @@ class LocationProductService(
     private val locationProductRepository: LocationProductRepository,
     private val locationProductCache: LocationProductCache,
     private val locationProductMapper: LocationProductMapper,
-    private val organizationProductService: OrganizationProductService,
-    private val unitValueService: UnitValueService
+    private val locationProductEnricher: LocationProductEnricher,
+    private val organizationProductService: OrganizationProductService
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -44,8 +45,7 @@ class LocationProductService(
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun findAllProducts(): List<LocationProductResponseDto> {
-        val unitNamesById = unitValueService.getUnitNamesById()
-        return locationProductCache.findAllLocationProducts().map { locationProductMapper.toDto(it, unitNamesById[it.baseUnitId]) }
+        return locationProductEnricher.provideMappingContext(locationProductCache.findAllLocationProducts())
     }
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -57,8 +57,7 @@ class LocationProductService(
         }
         LocationProductValidator.validateProductUpdate(dto)
         val updated = dto.applyTo(locationProductMapper.toDomainDto(entity))
-        val saved = locationProductCache.save(updated)
-        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
+        return convertToResponseDto(locationProductCache.save(updated))
     }
 
     fun deactivateProduct(productId: UUID): LocationProductResponseDto {
@@ -66,7 +65,7 @@ class LocationProductService(
             UpdatingNonExistingRecordException()
         }
         val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.DISCONTINUED))
-        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
+        return convertToResponseDto(saved)
     }
 
     fun reactivateProduct(productId: UUID): LocationProductResponseDto {
@@ -75,10 +74,14 @@ class LocationProductService(
         }
         verifyOrgProductIsActive(entity.productId)
         val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.ACTIVE))
-        return locationProductMapper.toDto(saved, unitValueService.getUnitName(saved.baseUnitId))
+        return convertToResponseDto(saved)
     }
 
     fun verifyOrgProductIsActive(orgProductId: UUID) {
         organizationProductService.verifyProductIsActive(orgProductId)
+    }
+
+    private fun convertToResponseDto(dto: LocationProductDto): LocationProductResponseDto {
+        return locationProductEnricher.provideMappingContext(listOf(dto)).first()
     }
 }

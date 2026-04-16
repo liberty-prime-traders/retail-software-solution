@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cross_tier.product.search.location
+package me.ezra_home.retail_software_solution.locations.business.location_product
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames

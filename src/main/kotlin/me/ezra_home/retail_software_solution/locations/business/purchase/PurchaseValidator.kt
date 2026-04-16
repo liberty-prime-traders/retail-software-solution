@@ -19,13 +19,13 @@ object PurchaseValidator {
   }
 
   fun guardIsDraft(purchase: PurchaseEntity) {
-    if (purchase.status != PurchaseStatus.DRAFT)
+    if (purchase.purchaseStatus != PurchaseStatus.DRAFT)
       throw RtsGenericException("Purchase is not in draft status anymore. The requested updates cannot be applied.")
   }
 
   fun guardCanCancelLines(purchase: PurchaseEntity) {
-    if (purchase.status !in listOf(PurchaseStatus.ORDERED, PurchaseStatus.PARTIALLY_DELIVERED))
-      throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.status}")
+    if (purchase.purchaseStatus !in listOf(PurchaseStatus.ORDERED, PurchaseStatus.PARTIALLY_DELIVERED))
+      throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.purchaseStatus}")
   }
 
   fun guardNewLineHasProduct(dto: PurchaseLineUpdateDto) {

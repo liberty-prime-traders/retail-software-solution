@@ -28,9 +28,6 @@ class OrganizationProductService(
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    fun countAllProducts(): Long = organizationProductCache.countAllProducts()
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
     fun verifyProductIsActive(orgProductId: UUID) {
         val dto = organizationProductCache.findAllProducts().find { it.id == orgProductId }
             ?: throw UpdatingNonExistingRecordException()

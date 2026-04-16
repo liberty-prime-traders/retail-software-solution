@@ -64,17 +64,9 @@ class PurchaseService(
     PurchaseValidator.guardCanCancelLines(purchase)
     val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(id))
     applyCancelUpdates(existingLines, lines)
-    purchase.status = resolveStatusAfterCancellation(existingLines) ?: purchase.status
+    purchase.purchaseStatus = resolveStatusAfterCancellation(existingLines) ?: purchase.purchaseStatus
     purchaseRepository.save(purchase)
     return purchaseAssembler.buildResponse(purchase, existingLines)
-  }
-
-  fun updateNotes(id: UUID, notes: String?) {
-    notes?.let {
-      val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
-      purchase.notes = notes
-      purchaseRepository.save(purchase)
-    }
   }
 
   private fun applyCancelUpdates(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseCancelLinesDto>) {
@@ -86,6 +78,14 @@ class PurchaseService(
       }
     }
     purchaseLineRepository.saveAll(toSave)
+  }
+
+  fun updateNotes(id: UUID, notes: String?) {
+    notes?.let {
+      val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
+      purchase.notes = notes
+      purchaseRepository.save(purchase)
+    }
   }
 
   private fun resolveStatusAfterCancellation(lines: List<PurchaseLineEntity>): PurchaseStatus? {

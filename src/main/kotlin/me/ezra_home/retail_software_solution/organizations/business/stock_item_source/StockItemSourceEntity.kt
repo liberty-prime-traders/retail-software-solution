@@ -26,6 +26,6 @@ class StockItemSourceEntity(
   var description: String? = null,
 
   @Column(name = "system_defined", nullable = false, updatable = false)
-  val systemDefined: Boolean = false
+  var systemDefined: Boolean = false
 
 ) : HasReferenceEntity()

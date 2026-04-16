@@ -10,8 +10,10 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -38,6 +40,14 @@ class PurchaseDeliveryService(
     val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
+  }
+
+  fun republishEvent(deliveryId: UUID) {
+    val delivery = deliveryRepository.findById(deliveryId)
+      .orElseThrow { RtsGenericException("Delivery $deliveryId not found") }
+    val lines = deliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(deliveryId))
+    val context = deliveryHandlerForPurchase.prepareForDelivery(delivery.purchaseId)
+    publishDeliveryEvent(context, DeliveryRecord(delivery, lines))
   }
 
   private fun publishDeliveryEvent(context: PurchaseDeliveryContext, deliveryRecord: DeliveryRecord) {

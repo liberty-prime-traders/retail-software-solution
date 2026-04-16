@@ -26,6 +26,7 @@ interface LocationProductMapper {
     fun toEntity(insertDto: LocationProductInsertDto): LocationProductEntity
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(target = "baseUnit", expression = "java(baseUnitName)")
-    fun toDto(dto: LocationProductDto, @Context baseUnitName: String?): LocationProductResponseDto
+    @Mapping(target = "baseUnit", expression = "java(ctx.getUnitName())")
+    @Mapping(target = "stockBalance", expression = "java(ctx.getBalance())")
+    fun toResponseDto(dto: LocationProductDto, @Context ctx: LocationProductContext): LocationProductResponseDto
 }

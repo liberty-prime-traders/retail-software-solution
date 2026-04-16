@@ -36,12 +36,20 @@ databaseChangeLog:
                     notNullConstraintName: purchase_supplier_id_notnull
 
               - column:
-                  name: status
+                  name: purchase_status
                   type: varchar(5)
-                  defaultValue: D
+                  defaultValue: DFT
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_status_notnull
+                    notNullConstraintName: purchase_purchase_status_notnull
+
+              - column:
+                  name: payment_status
+                  type: varchar(5)
+                  defaultValue: UNP
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_payment_status_notnull
 
               - column:
                   name: notes

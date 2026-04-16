@@ -7,7 +7,7 @@ import java.util.UUID
 data class LedgerEntryGroupDto(
     val id: UUID,
     val createdById: UUID,
-    val createdOn: Instant,
+    val createdOn: OffsetDateTime  ,
     val referenceNumber: String,
     val sourceReferenceNumber: String,
     val sourceType: LedgerSourceType,
