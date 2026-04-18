@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.messaging.kafka.transaction.log
+package me.ezra_home.retail_software_solution.locations.business.kafka_log
 
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -9,7 +9,6 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.time.Instant
-import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
@@ -44,6 +43,12 @@ class EventProcessingLogEntity(
     var failedOn: Instant? = null,
 
     @Column(name = "failure_reason", columnDefinition = "text")
-    var failureReason: String? = null
+    var failureReason: String? = null,
+
+    @Column(name = "dlt_partition")
+    var dltPartition: Int? = null,
+
+    @Column(name = "dlt_offset")
+    var dltOffset: Long? = null
 
 ) : HasReferenceEntity()

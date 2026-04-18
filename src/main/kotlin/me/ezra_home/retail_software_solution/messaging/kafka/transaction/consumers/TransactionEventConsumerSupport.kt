@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSession
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.ConsumerFailureEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.NotificationEventProducer
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.log.EventProcessingLogService
+import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.TransactionEventProcessor
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
 import org.slf4j.LoggerFactory
@@ -36,10 +36,8 @@ class TransactionEventConsumerSupport(
 
         ServiceAccountContext.runWithServiceAccount(serviceAccount) {
             eventSessionSetup.initFromEvent(event)
-            insertPendingLog(event, consumerGroup)
             try {
-                dispatch(event, processorsForEvent)
-                markProcessedLog(event, consumerGroup)
+                dispatch(event, consumerGroup, processorsForEvent)
             } catch (e: Exception) {
                 markFailedLog(event, consumerGroup, e)
                 publishNotification(event, consumerGroup, e)
@@ -55,8 +53,26 @@ class TransactionEventConsumerSupport(
         }
     }
 
-    private fun <EVENT: TransactionEvent> dispatch(event: EVENT, processors: List<TransactionEventProcessor<EVENT>>) {
-        processors.filter { it.shouldProcess(event) }.forEach { it.handle(event) }
+    private fun <EVENT: TransactionEvent> dispatch(
+        event: EVENT,
+        consumerGroup: String,
+        processors: List<TransactionEventProcessor<EVENT>>
+    ) {
+        val toProcess = processors.filter { it.shouldProcess(event) }
+        if (toProcess.isEmpty()) {
+            handleNothingToProcess(event, consumerGroup)
+            return
+        }
+        insertPendingLog(event, consumerGroup)
+        toProcess.forEach { it.handle(event) }
+        markProcessedLog(event, consumerGroup)
+    }
+
+    private fun handleNothingToProcess(event: TransactionEvent, consumerGroup: String) {
+        if (logService.isRetrying(event.eventId, consumerGroup)) {
+            logger.warn("Event ${event.eventId} is marked as retrying but no processors want to handle it — marking as processed to unblock")
+            markProcessedLog(event, consumerGroup)
+        }
     }
 
     private fun markProcessedLog(event: TransactionEvent, consumerGroup: String) {

@@ -63,22 +63,25 @@ databaseChangeLog:
             indexName: idx_subledger_entry_grp_ref
 
   - changeSet:
-      id: create-index-subledger-entry-contact-ref
+      id: create-index-subledger-entry-contact-ref-created-on
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_subledger_entry_contact_ref
+                indexName: idx_subledger_entry_contact_created
       changes:
         - createIndex:
             tableName: subledger_entry
-            indexName: idx_subledger_entry_contact_ref
+            indexName: idx_subledger_entry_contact_created
             columns:
               - column:
                   name: contact_reference_number
+              - column:
+                  name: created_on
+                  descending: true
       rollback:
         - dropIndex:
             tableName: subledger_entry
-            indexName: idx_subledger_entry_contact_ref
+            indexName: idx_subledger_entry_contact_created

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.messaging.kafka.transaction.log
+package me.ezra_home.retail_software_solution.locations.business.kafka_log
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -14,4 +14,5 @@ interface EventProcessingLogRepository : JpaRepository<EventProcessingLogEntity,
     )
     fun findLatestByEventIdAndConsumerGroup(eventId: UUID, consumerGroup: String): EventProcessingLogEntity?
 
+    fun findBySourceDocumentId(sourceDocumentId: UUID): List<EventProcessingLogEntity>
 }

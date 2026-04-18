@@ -14,6 +14,7 @@ open class EnumConverter<ENUM>(private val enumClass: Class<ENUM>) : AttributeCo
     }
 
     override fun convertToEntityAttribute(code: String?): ENUM? {
+        if (code == null) return null
         return EnumSet.allOf(enumClass)
             .firstOrNull { enumValue -> enumValue.code.contentEquals(code) }
             ?: throw RtsGenericException("No enum constant '${code}' found for enum class '${enumClass.simpleName}'")

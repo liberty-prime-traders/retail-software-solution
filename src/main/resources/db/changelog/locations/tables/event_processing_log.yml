@@ -77,6 +77,14 @@ databaseChangeLog:
                   type: text
 
               - column:
+                  name: dlt_partition
+                  type: integer
+
+              - column:
+                  name: dlt_offset
+                  type: bigint
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
