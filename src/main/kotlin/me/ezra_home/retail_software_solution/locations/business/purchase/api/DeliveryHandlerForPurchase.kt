@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
@@ -17,13 +19,23 @@ class DeliveryHandlerForPurchase(
     private val purchaseAssembler: PurchaseAssembler
 ) {
 
+    @TransactionalOnLocationSchema(readOnly = true)
     fun prepareForDelivery(purchaseId: UUID): PurchaseDeliveryContext {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         if (purchase.purchaseStatus == PurchaseStatus.CANCELED)
             throw RtsGenericException("Cannot record a delivery on a canceled purchase.")
         if (purchase.purchaseStatus == PurchaseStatus.FULLY_DELIVERED)
             throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
-        val lines = purchaseLineRepository.findByPurchaseId(purchaseId)
+        return buildContext(purchase)
+    }
+
+    @TransactionalOnLocationSchema(readOnly = true)
+    fun getDeliveryContext(purchaseId: UUID): PurchaseDeliveryContext {
+        return buildContext(purchaseRepository.getReferenceById(purchaseId))
+    }
+
+    private fun buildContext(purchase: PurchaseEntity): PurchaseDeliveryContext {
+        val lines = purchaseLineRepository.findByPurchaseId(purchase.id!!)
         return PurchaseDeliveryContext(
             purchaseId = purchase.id!!,
             supplierId = purchase.supplierId,
@@ -32,7 +44,7 @@ class DeliveryHandlerForPurchase(
             }
         )
     }
-
+    @TransactionalOnLocationSchema
     fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)

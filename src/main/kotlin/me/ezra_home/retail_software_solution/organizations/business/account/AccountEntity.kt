@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Audited
 @Entity
@@ -45,7 +45,7 @@ class AccountEntity(
 
     @NotAudited
     @Column(name = "balance_updated_at")
-    var balanceUpdatedAt: OffsetDateTime? = null,
+    var balanceUpdatedAt: Instant? = null,
 
     @NotAudited
     @Column(name = "parent_account_code", updatable = false)

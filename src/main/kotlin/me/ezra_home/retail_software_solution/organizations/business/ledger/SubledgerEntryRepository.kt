@@ -10,15 +10,13 @@ interface SubledgerEntryRepository : JpaRepository<SubledgerEntryEntity, UUID> {
 
     @Query("""
         SELECT s.* FROM subledger_entry s
-        INNER JOIN (
-            SELECT contact_reference_number, MAX(created_on) AS max_created_on
+        WHERE s.id IN (
+            SELECT DISTINCT ON (contact_reference_number) id
             FROM subledger_entry
             WHERE contact_reference_number IN :contactReferenceNumbers
-            GROUP BY contact_reference_number
-        ) latest 
-        ON s.contact_reference_number = latest.contact_reference_number
-               AND s.created_on = latest.max_created_on
-        FOR UPDATE 
+            ORDER BY contact_reference_number, created_on DESC
+        )
+        FOR UPDATE
     """, nativeQuery = true)
     fun findLatestForContacts(contactReferenceNumbers: Set<String>): List<SubledgerEntryEntity>
 }

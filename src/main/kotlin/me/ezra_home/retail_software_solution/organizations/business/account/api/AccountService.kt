@@ -3,11 +3,14 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCodeGenerator
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountMapper
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountRepository
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountResponseBuilder
 import me.ezra_home.retail_software_solution.organizations.business.account.ChildAccountCreator
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntrySummaryDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.util.UUID
 
 
@@ -15,17 +18,14 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class AccountService(
     private val accountCache: AccountCache,
-    private val accountMapper: AccountMapper,
+    private val accountRepository: AccountRepository,
+    private val accountResponseBuilder: AccountResponseBuilder,
     private val childAccountCreator: ChildAccountCreator
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<AccountResponseDto> {
-        val accounts = accountCache.getAll()
-        val accountsByCode = accounts.associateBy { it.code }
-        return accounts.map {
-            accountMapper.toResponseDto(it, accountsByCode[it.parentAccountCode])
-        }
+        return accountResponseBuilder.buildResponse(accountCache.getAll())
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -49,14 +49,14 @@ class AccountService(
             accountType = accountType
         )
         val saved = accountCache.create(insertDto)
-        return accountMapper.toResponseDto(saved)
+        return accountResponseBuilder.buildResponse(saved)
     }
 
     fun createChild(dto: AccountChildCreateRequest): AccountResponseDto {
         val accounts = accountCache.getAll()
         val accountsByCode = accounts.associateBy { it.code }
         val newAccount = childAccountCreator.createChild(dto, accountsByCode)
-        return accountMapper.toResponseDto(newAccount, accountsByCode[newAccount.parentAccountCode])
+        return accountResponseBuilder.buildResponse(newAccount)
     }
 
     fun rename(dto: AccountUpdateDto): AccountResponseDto {
@@ -67,8 +67,7 @@ class AccountService(
             throw RtsGenericException("System accounts cannot be renamed")
         }
         val saved = accountCache.update(dto.applyTo(existing))
-        val accountsByCode = accounts.associateBy { it.code }
-        return accountMapper.toResponseDto(saved, accountsByCode[saved.parentAccountCode])
+        return accountResponseBuilder.buildResponse(saved)
     }
 
     fun toggleActive(id: UUID, setActive: Boolean): AccountResponseDto {
@@ -78,14 +77,19 @@ class AccountService(
         if (existing.accountIsSystemMaintained) {
             throw RtsGenericException("System accounts cannot be activated or deactivated")
         }
-        val accountsByCode = accounts.associateBy { it.code }
-        val parentAccount = accountsByCode[existing.parentAccountCode]
         if (existing.accountIsActive == setActive) {
-            return accountMapper.toResponseDto(existing, parentAccount)
+            return accountResponseBuilder.buildResponse(existing)
         }
         val saved = accountCache.update(existing.copy(accountIsActive = setActive))
-        return accountMapper.toResponseDto(saved, parentAccount)
+        return accountResponseBuilder.buildResponse(saved)
     }
 
-
+    fun patchBalances(entries: List<LedgerEntrySummaryDto>) {
+        val accountsByCode = accountCache.getAll().associateBy { it.code }
+        entries.forEach { entry ->
+            val account = accountsByCode[entry.accountCode] ?: return@forEach
+            val delta = if (account.accountType.normalBalance == entry.entryType) entry.amount else entry.amount.negate()
+            accountRepository.incrementBalance(account.code, delta, Instant.now())
+        }
+    }
 }

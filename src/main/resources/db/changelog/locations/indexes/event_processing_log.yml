@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-event-processing-log-event-id-consumer-group
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_event_processing_log_event_id_consumer_group
+      changes:
+        - createIndex:
+            indexName: idx_event_processing_log_event_id_consumer_group
+            tableName: event_processing_log
+            unique: true
+            columns:
+              - column:
+                  name: event_id
+              - column:
+                  name: consumer_group
+      rollback:
+        - dropIndex:
+            indexName: idx_event_processing_log_event_id_consumer_group
+            tableName: event_processing_log
+
+  - changeSet:
+      id: create-index-event-processing-log-source-document-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_event_processing_log_source_document_id
+      changes:
+        - createIndex:
+            indexName: idx_event_processing_log_source_document_id
+            tableName: event_processing_log
+            columns:
+              - column:
+                  name: source_document_id
+      rollback:
+        - dropIndex:
+            indexName: idx_event_processing_log_source_document_id
+            tableName: event_processing_log

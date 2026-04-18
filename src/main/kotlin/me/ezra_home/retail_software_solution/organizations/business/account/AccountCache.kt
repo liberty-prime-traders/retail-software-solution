@@ -24,8 +24,9 @@ class AccountCache(
 
     @CacheEvict(allEntries = true)
     fun update(dto: AccountDto): AccountDto {
-        val saved = accountRepository.save(accountMapper.toEntity(dto))
-        return accountMapper.toDomainDto(saved)
+        val toSave = accountRepository.getReferenceById(dto.id)
+        val updated = dto.applyTo(toSave)
+        return accountMapper.toDomainDto(accountRepository.save(updated))
     }
 
     @CacheEvict(allEntries = true)

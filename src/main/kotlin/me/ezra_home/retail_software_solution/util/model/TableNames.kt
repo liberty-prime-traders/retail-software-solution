@@ -47,6 +47,7 @@ object TableNames {
     const val SUBLEDGER_ENTRY = "subledger_entry"
 
     // Location tables
+    const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val SYNC_LOG = "sync_log"
     const val LOCATION_PRODUCT = "location_product"
     const val PURCHASE = "purchase"

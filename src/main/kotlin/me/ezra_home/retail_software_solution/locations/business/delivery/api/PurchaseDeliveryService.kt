@@ -1,20 +1,15 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.delivery.DeliveryHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.delivery.DeliveryRecord
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryMapper
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
-import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -22,15 +17,16 @@ class PurchaseDeliveryService(
   private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
   private val deliveryRepository: PurchaseDeliveryRepository,
   private val deliveryLineRepository: PurchaseDeliveryLineRepository,
-  private val eventPublisher: ApplicationEventPublisher
+  private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
+  private val purchaseDeliveryValidator: PurchaseDeliveryValidator
 ) {
 
   fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
     val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
-    PurchaseDeliveryValidator.validate(dto, context.purchaseLineById)
+    purchaseDeliveryValidator.validate(dto, context.purchaseLineById)
 
     val deliveryRecord = persistDelivery(dto)
-    publishDeliveryEvent(context, deliveryRecord)
+    deliveryHandlerForKafka.publish(context, deliveryRecord)
 
     val deliveries = dto.lines.map { it.purchaseLineId to it.quantityDelivered }
     return deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
@@ -41,23 +37,5 @@ class PurchaseDeliveryService(
     val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
-  }
-
-  fun republishEvent(deliveryId: UUID) {
-    val delivery = deliveryRepository.findById(deliveryId)
-      .orElseThrow { RtsGenericException("Delivery $deliveryId not found") }
-    val lines = deliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(deliveryId))
-    val context = deliveryHandlerForPurchase.prepareForDelivery(delivery.purchaseId)
-    publishDeliveryEvent(context, DeliveryRecord(delivery, lines))
-  }
-
-  private fun publishDeliveryEvent(context: PurchaseDeliveryContext, deliveryRecord: DeliveryRecord) {
-    val sourceContext = EventSourceContext.LocationLevel(
-      orgSchema = SessionContextProvider.getOrganizationSchema(),
-      locationSchema = SessionContextProvider.getLocationSchema()
-    )
-    eventPublisher.publishEvent(
-      PurchaseDeliveryMapper.toEvent(context.purchaseId, context.supplierId, deliveryRecord, context.purchaseLineById, sourceContext)
-    )
   }
 }

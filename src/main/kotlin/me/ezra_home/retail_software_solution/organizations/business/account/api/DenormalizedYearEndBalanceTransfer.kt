@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.organizations.business.account.api
 
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountRepository
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Service
 class DenormalizedYearEndBalanceTransfer(
-    private val accountCache: AccountCache,
+    private val accountRepository: AccountRepository
 ) {
 
     // TODO: Replace with proper year-end closing ledger entries
@@ -17,7 +17,7 @@ class DenormalizedYearEndBalanceTransfer(
     // Year-end close should create a ledger_entry_group with source_type = YEAR_END_CLOSE
     // zeroing out revenue/expense accounts into Retained Earnings via double-entry entries
     fun applyYearEndBalanceTransfer() {
-        val accounts = accountCache.getAll()
+        val accounts = accountRepository.findAll()
         val retainedEarnings = accounts.firstOrNull { it.code == SystemAccount.RETAINED_EARNINGS.code }
             ?: throw RtsGenericException("Retained Earnings account not found in organization.")
 
@@ -35,10 +35,9 @@ class DenormalizedYearEndBalanceTransfer(
             .fold(BigDecimal.ZERO) { acc, acct -> acc + acct.currentBalance }
         val netIncome = revenueNet - expenseNet
 
-        val now = OffsetDateTime.now()
         closingAccounts.forEach { acct ->
-            accountCache.update(acct.copy(currentBalance = BigDecimal.ZERO, balanceUpdatedAt = now))
+            accountRepository.incrementBalance(acct.code, acct.currentBalance.negate(), Instant.now())
         }
-        accountCache.update(retainedEarnings.copy(currentBalance = retainedEarnings.currentBalance + netIncome, balanceUpdatedAt = now))
+        accountRepository.incrementBalance(retainedEarnings.code, netIncome, Instant.now())
     }
 }
