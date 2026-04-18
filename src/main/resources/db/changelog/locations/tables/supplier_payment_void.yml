@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-supplier-payment-void-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: supplier_payment_void
+      changes:
+        - createTable:
+            tableName: supplier_payment_void
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_payment_void_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: supplier_payment_void_reference_number_unique
+
+              - column:
+                  name: supplier_payment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_payment_void_supplier_payment_id_notnull
+                    unique: true
+                    uniqueConstraintName: supplier_payment_void_supplier_payment_id_unique
+
+              - column:
+                  name: reason
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_payment_void_reason_notnull
+
+              - column:
+                  name: voided_on
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_payment_void_voided_on_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: supplier_payment_void_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: supplier_payment_void

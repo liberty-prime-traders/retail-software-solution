@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.organizations.business.product.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductQueryBuilder
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductCache
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductMapper
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductQueryBuilder
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService

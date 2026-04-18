@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-supplier-payment-purchase
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_supplier_payment_purchase
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: supplier_payment
+            baseColumnNames: purchase_id
+            referencedTableName: purchase
+            referencedColumnNames: id
+            constraintName: fk_supplier_payment_purchase
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: supplier_payment
+            constraintName: fk_supplier_payment_purchase
+
+  - changeSet:
+      id: add-foreign-key-supplier-payment-delivery
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_supplier_payment_delivery
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: supplier_payment
+            baseColumnNames: delivery_id
+            referencedTableName: purchase_delivery
+            referencedColumnNames: id
+            constraintName: fk_supplier_payment_delivery
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: supplier_payment
+            constraintName: fk_supplier_payment_delivery

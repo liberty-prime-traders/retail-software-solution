@@ -35,4 +35,14 @@ class PurchaseLineEntity(
   @Column(name = "quantity_canceled", nullable = false, precision = 15, scale = 3)
   var quantityCanceled: BigDecimal = BigDecimal.ZERO
 
-) : HasLocationProduct, HasReferenceEntity()
+) : HasLocationProduct, HasReferenceEntity() {
+
+  fun getExpectedQuantity(): BigDecimal {
+    return quantityOrdered.subtract(quantityCanceled)
+  }
+
+  fun getTotalCost(): BigDecimal {
+    return unitCost.multiply(getExpectedQuantity())
+  }
+
+}

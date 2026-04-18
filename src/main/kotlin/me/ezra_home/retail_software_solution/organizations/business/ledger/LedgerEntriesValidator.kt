@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
-import kotlin.collections.filter
 
 object LedgerEntriesValidator {
 

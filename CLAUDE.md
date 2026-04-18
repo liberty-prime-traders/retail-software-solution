@@ -7,8 +7,9 @@
 
 - You can use agents to perform tasks that require multiple steps or interactions with external systems. 
 - However, I have noticed agents getting stuck in loops or taking unnecessary steps. To avoid this, you should:
+  - write your plan to ./.claude/plan.txt before starting and update it as you go.
   - Define clear and specific goals for the agent.
-  Read the minimum files needed to act. Do not read more than 3 files before making a first edit. Adjust as you learn more.
+  - Read the minimum files needed to act. Do not read more than 3 files before making a first edit. Adjust as you learn more.
   - Limit the number of steps or interactions the agent can take.
   - Monitor the agent's actions and intervene if it goes off track.
   - Occasionally do a health check on the agent's performance and adjust its parameters or goals as needed.

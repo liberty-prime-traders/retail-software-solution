@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import kotlin.collections.get
 
 @Service
 @TransactionalOnOrganizationSchema(readOnly = true)

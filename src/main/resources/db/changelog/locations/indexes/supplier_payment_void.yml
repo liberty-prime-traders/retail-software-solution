@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-supplier-payment-void-supplier-payment-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_payment_void_supplier_payment_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_payment_void_supplier_payment_id
+            tableName: supplier_payment_void
+            columns:
+              - column:
+                  name: supplier_payment_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_payment_void_supplier_payment_id
+            tableName: supplier_payment_void

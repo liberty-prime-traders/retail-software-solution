@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxT
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNodeWithData
 import org.springframework.stereotype.Service
 import java.util.UUID
-import kotlin.collections.orEmpty
 
 @Service
 @TransactionalOnPlatformSchema(readOnly = true)

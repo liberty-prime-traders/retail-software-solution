@@ -66,7 +66,7 @@ class PurchaseService(
   fun updateCancelQuantities(id: UUID, lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto {
     val purchase = purchaseRepository.findById(id).orElseThrow { UpdatingNonExistingRecordException() }
     PurchaseValidator.guardCanCancelLines(purchase)
-    val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(id))
+    val existingLines = purchaseLineRepository.findByPurchaseId(id)
     applyCancelUpdates(existingLines, lines)
     purchase.purchaseStatus = resolveStatusAfterCancellation(existingLines) ?: purchase.purchaseStatus
     purchaseRepository.save(purchase)
@@ -95,6 +95,12 @@ class PurchaseService(
   private fun guardNoInactiveProducts(productIds: List<UUID>) {
     val products = locationProductRepository.findAllById(productIds)
     PurchaseValidator.guardNoInactiveProducts(products)
+  }
+
+  fun updatePaymentStatus(purchaseId: UUID, status: PaymentStatus) {
+    val purchase = purchaseRepository.getReferenceById(purchaseId)
+    purchase.paymentStatus = status
+    purchaseRepository.save(purchase)
   }
 
   private fun resolveStatusAfterCancellation(lines: List<PurchaseLineEntity>): PurchaseStatus? {

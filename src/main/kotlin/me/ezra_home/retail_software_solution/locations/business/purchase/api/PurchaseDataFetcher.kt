@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
@@ -12,12 +13,15 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class PurchaseSearchService(
+class PurchaseDataFetcher(
   private val purchaseRepository: PurchaseRepository,
   private val purchaseAssembler: PurchaseAssembler,
+  private val purchaseLineRepository: PurchaseLineRepository,
   @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   private val locationEmf: LocalContainerEntityManagerFactoryBean
 ) {
@@ -27,6 +31,20 @@ class PurchaseSearchService(
     if (recordCount > 1000) throw RtsGenericException("Limit exceeds maximum of 1000")
     val sort = Sort.by(Sort.Direction.DESC, "createdOn")
     return purchaseAssembler.buildResponses(purchaseRepository.findTopN(PageRequest.of(0, recordCount, sort)))
+  }
+
+  fun getSupplierId(purchaseId: UUID): UUID {
+    return purchaseRepository.getReferenceById(purchaseId).supplierId
+  }
+
+  fun findSupplierIdOrThrow(purchaseId: UUID): UUID {
+    return purchaseRepository.findById(purchaseId)
+      .orElseThrow { RtsGenericException("Purchase $purchaseId not found") }
+      .supplierId
+  }
+
+  fun calculatePurchaseTotal(purchaseId: UUID): BigDecimal {
+    return purchaseLineRepository.findByPurchaseId(purchaseId).sumOf { it.getTotalCost() }
   }
 
   private fun execute(sqlQuery: SqlQuery): List<PurchaseEntity> {

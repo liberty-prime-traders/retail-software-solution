@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-supplier-payment-void-supplier-payment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_supplier_payment_void_supplier_payment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: supplier_payment_void
+            baseColumnNames: supplier_payment_id
+            referencedTableName: supplier_payment
+            referencedColumnNames: id
+            constraintName: fk_supplier_payment_void_supplier_payment
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: supplier_payment_void
+            constraintName: fk_supplier_payment_void_supplier_payment

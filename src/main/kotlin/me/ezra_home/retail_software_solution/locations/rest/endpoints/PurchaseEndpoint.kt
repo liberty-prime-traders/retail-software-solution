@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
 import org.springframework.http.ResponseEntity
@@ -22,7 +22,7 @@ import java.util.UUID
 @RequestMapping("secured/purchases")
 class PurchaseEndpoint(
   private val purchaseService: PurchaseService,
-  private val purchaseSearchService: PurchaseSearchService
+  private val purchaseDataFetcher: PurchaseDataFetcher
 ) {
 
   @PostMapping("draft")
@@ -53,7 +53,7 @@ class PurchaseEndpoint(
 
   @GetMapping
   fun fetchTop(@RequestParam n: Int?): List<PurchaseResponseDto> =
-    purchaseSearchService.fetchTop(n)
+    purchaseDataFetcher.fetchTop(n)
 
 //  @PostMapping("search")
 //  fun search(@RequestBody request: PurchaseSearchRequest): List<PurchaseResponseDto> =
