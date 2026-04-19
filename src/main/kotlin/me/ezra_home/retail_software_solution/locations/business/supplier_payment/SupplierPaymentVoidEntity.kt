@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
-import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -19,9 +18,6 @@ class SupplierPaymentVoidEntity(
     var supplierPaymentId: UUID,
 
     @Column(name = "reason", nullable = false, updatable = false)
-    var reason: String,
-
-    @Column(name = "voided_on", nullable = false, updatable = false)
-    var voidedOn: LocalDate
+    var reason: String
 
 ) : ImmutableEntity()

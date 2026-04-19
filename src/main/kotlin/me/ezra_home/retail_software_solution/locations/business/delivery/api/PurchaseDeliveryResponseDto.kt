@@ -14,9 +14,6 @@ data class PurchaseDeliveryResponseDto(
   val notes: String?,
   val lines: List<PurchaseDeliveryLineResponseDto>
 ) {
-  val deliveryTotal: BigDecimal get() = lines.totalCost()
-
+  val deliveryTotal: BigDecimal get() = lines.sumOf { it.quantityDelivered.multiply(it.unitCost) }
 }
 
-fun List<PurchaseDeliveryLineResponseDto>.totalCost(): BigDecimal =
-  sumOf { it.quantityDelivered.multiply(it.unitCost) }

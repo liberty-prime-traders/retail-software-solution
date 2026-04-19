@@ -26,6 +26,8 @@ class PurchaseDataFetcher(
   private val locationEmf: LocalContainerEntityManagerFactoryBean
 ) {
 
+  data class PurchaseInfo(val referenceNumber: String, val supplierId: UUID)
+
   fun fetchTop(n: Int?): List<PurchaseResponseDto> {
     val recordCount = n ?: 10
     if (recordCount > 1000) throw RtsGenericException("Limit exceeds maximum of 1000")
@@ -37,15 +39,15 @@ class PurchaseDataFetcher(
     return purchaseRepository.getReferenceById(purchaseId).supplierId
   }
 
-  fun findSupplierIdOrThrow(purchaseId: UUID): UUID {
-    return purchaseRepository.findById(purchaseId)
-      .orElseThrow { RtsGenericException("Purchase $purchaseId not found") }
-      .supplierId
-  }
-
   fun calculatePurchaseTotal(purchaseId: UUID): BigDecimal {
     return purchaseLineRepository.findByPurchaseId(purchaseId).sumOf { it.getTotalCost() }
   }
+
+  fun findPurchaseInfoByIds(purchaseIds: List<UUID>): Map<UUID, PurchaseInfo> {
+    return purchaseRepository.findAllById(purchaseIds)
+      .associateBy({ it.id!! }, { PurchaseInfo(it.referenceNumber!!, it.supplierId) })
+  }
+
 
   private fun execute(sqlQuery: SqlQuery): List<PurchaseEntity> {
     locationEmf.getObject()!!.createEntityManager().use { em ->

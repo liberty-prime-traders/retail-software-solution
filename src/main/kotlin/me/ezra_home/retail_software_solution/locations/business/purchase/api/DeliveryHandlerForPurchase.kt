@@ -44,6 +44,7 @@ class DeliveryHandlerForPurchase(
             }
         )
     }
+    
     @TransactionalOnLocationSchema
     fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)

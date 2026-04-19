@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.supplier_payment
 
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentVoidCreateDto
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentVoidDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

@@ -45,13 +45,6 @@ databaseChangeLog:
                     notNullConstraintName: supplier_payment_void_reason_notnull
 
               - column:
-                  name: voided_on
-                  type: date
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: supplier_payment_void_voided_on_notnull
-
-              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

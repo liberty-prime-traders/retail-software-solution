@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentAssembler
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentMapper
@@ -18,6 +19,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.text.NumberFormat
 import java.util.UUID
 
 @Service
@@ -31,49 +33,60 @@ class SupplierPaymentService(
     private val purchaseService: PurchaseService,
     private val paymentMethodService: PaymentMethodService,
     private val supplierPaymentHandlerForKafka: SupplierPaymentHandlerForKafka,
-    private val supplierPaymentVoidHandlerForKafka: SupplierPaymentVoidHandlerForKafka
+    private val supplierPaymentVoidHandlerForKafka: SupplierPaymentVoidHandlerForKafka,
+    private val assembler: SupplierPaymentAssembler
 ) {
 
-    fun recordPayment(dto: SupplierPaymentCreateDto): SupplierPaymentDto {
+    fun getPaymentsByPurchaseId(purchaseId: UUID): List<SupplierPaymentResponseDto> {
+        val payments = supplierPaymentRepository.findByPurchaseId(purchaseId)
+        if (payments.isEmpty()) return emptyList()
+        val voidsByPaymentId = supplierPaymentVoidRepository
+            .findBySupplierPaymentIdIn(payments.map { it.id!! })
+            .associateBy { it.supplierPaymentId }
+        return assembler.buildResponses(payments, voidsByPaymentId)
+    }
+
+    fun recordPayment(dto: SupplierPaymentCreateDto): SupplierPaymentResponseDto {
         if (dto.amount <= BigDecimal.ZERO) {
             throw RtsGenericException("Payment amount must be greater than zero")
         }
 
         val purchaseTotal = purchaseDataFetcher.calculatePurchaseTotal(dto.purchaseId)
         val alreadyPaid = calculatePaidAmount(dto.purchaseId)
-        val remainingBalance = purchaseTotal - alreadyPaid
+        val remainingBalance = purchaseTotal.subtract(alreadyPaid)
 
         if (dto.amount > remainingBalance) {
-            throw RtsGenericException("Payment of ${dto.amount} would exceed remaining balance of $remainingBalance")
+            val formattedBalance = NumberFormat.getCurrencyInstance().format(remainingBalance)
+            throw RtsGenericException("Payment of $${dto.amount} would exceed remaining balance of  $formattedBalance")
         }
 
         val entity = supplierPaymentMapper.toEntity(dto)
         supplierPaymentRepository.save(entity)
-        val payment = supplierPaymentMapper.toDomainDto(entity)
 
-        purchaseService.updatePaymentStatus(dto.purchaseId, resolvePaymentStatus(alreadyPaid + dto.amount, purchaseTotal))
+        val newStatus = resolvePaymentStatus(alreadyPaid + dto.amount, purchaseTotal)
+        purchaseService.updatePaymentStatus(dto.purchaseId, newStatus)
         publishTransactionToKafka(dto, entity)
-        return payment
+        return assembler.buildResponse(entity, null, newStatus)
     }
 
-    fun voidPayment(dto: SupplierPaymentVoidCreateDto): SupplierPaymentVoidDto {
-        val payment = supplierPaymentRepository.findById(dto.supplierPaymentId)
+    fun voidPayment(dto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto {
+        val paymentEntity = supplierPaymentRepository.findById(dto.supplierPaymentId)
             .orElseThrow { UpdatingNonExistingRecordException() }
 
         if (supplierPaymentVoidRepository.existsBySupplierPaymentId(dto.supplierPaymentId)) {
-            throw RtsGenericException("Payment ${payment.referenceNumber} has already been voided")
+            throw RtsGenericException("Payment ${paymentEntity.referenceNumber} has already been voided")
         }
 
         val voidEntity = supplierPaymentVoidMapper.toEntity(dto)
         supplierPaymentVoidRepository.save(voidEntity)
-        val paymentVoid = supplierPaymentVoidMapper.toDomainDto(voidEntity)
 
-        val purchaseTotal = purchaseDataFetcher.calculatePurchaseTotal(payment.purchaseId)
-        val paidAfterVoid = calculatePaidAmount(payment.purchaseId)
-        purchaseService.updatePaymentStatus(payment.purchaseId, resolvePaymentStatus(paidAfterVoid, purchaseTotal))
+        val purchaseTotal = purchaseDataFetcher.calculatePurchaseTotal(paymentEntity.purchaseId)
+        val paidAfterVoid = calculatePaidAmount(paymentEntity.purchaseId)
+        val newStatus = resolvePaymentStatus(paidAfterVoid, purchaseTotal)
+        purchaseService.updatePaymentStatus(paymentEntity.purchaseId, newStatus)
 
-        publishVoidTransactionToKafka(payment, voidEntity)
-        return paymentVoid
+        publishVoidTransactionToKafka(paymentEntity, voidEntity)
+        return assembler.buildResponse(paymentEntity, voidEntity, newStatus)
     }
 
     private fun calculatePaidAmount(purchaseId: UUID): BigDecimal {
@@ -96,7 +109,7 @@ class SupplierPaymentService(
     private fun publishTransactionToKafka(dto: SupplierPaymentCreateDto, payment: SupplierPaymentEntity) {
         val accountCode = paymentMethodService.findAccountCode(dto.paymentMethodId)
         if (StringUtils.hasValue(accountCode)) {
-            val supplierId = purchaseDataFetcher.findSupplierIdOrThrow(dto.purchaseId)
+            val supplierId = purchaseDataFetcher.getSupplierId(dto.purchaseId)
             supplierPaymentHandlerForKafka.publish(payment, supplierId, accountCode!!)
         }
     }

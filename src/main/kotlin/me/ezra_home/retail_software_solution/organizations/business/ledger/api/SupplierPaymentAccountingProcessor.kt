@@ -36,8 +36,8 @@ class SupplierPaymentAccountingProcessor(
             sourceType = LedgerSourceType.SUPPLIER_PAYMENT,
             postingDate = event.paymentDate,
             entries = listOf(
-                LedgerEntryRequest(event.paymentMethodAccountCode, EntryType.DEBIT, event.amount),
-                LedgerEntryRequest(SystemAccount.TRADE_PAYABLES.code, EntryType.CREDIT, event.amount)
+                LedgerEntryRequest(event.paymentMethodAccountCode, EntryType.CREDIT, event.amount),
+                LedgerEntryRequest(SystemAccount.TRADE_PAYABLES.code, EntryType.DEBIT, event.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
