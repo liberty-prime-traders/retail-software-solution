@@ -15,6 +15,12 @@ class PurchaseDeliveryFetcher(
     private val purchaseDeliveryAssembler: PurchaseDeliveryAssembler
 ) {
 
+    fun getDeliveryReferenceNumbersById(deliveryIds: List<UUID>): Map<UUID, String> {
+        return purchaseDeliveryRepository.findAllById(deliveryIds)
+            .mapNotNull { entity -> entity.referenceNumber?.let { entity.id!! to it } }
+            .toMap()
+    }
+
     fun getDeliveryResponses(
         purchaseIds: List<UUID>,
         purchaseLineById: Map<UUID, PurchaseLineDto>,

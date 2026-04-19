@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-supplier-payment-purchase-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_payment_purchase_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_payment_purchase_id
+            tableName: supplier_payment
+            columns:
+              - column:
+                  name: purchase_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_payment_purchase_id
+            tableName: supplier_payment

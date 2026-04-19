@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import kotlin.collections.isNotEmpty
 
 @Service
 class AccountUsagesFinder(

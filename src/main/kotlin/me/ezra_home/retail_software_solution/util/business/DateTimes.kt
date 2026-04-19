@@ -26,7 +26,7 @@ object DateTimes {
         }
     }
 
-    private fun organizationZoneId(): ZoneId {
+    fun organizationZoneId(): ZoneId {
         return ZoneId.of(SessionContextProvider.getOrgTimezone())
     }
 }

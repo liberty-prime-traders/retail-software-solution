@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
-import org.hibernate.query.results.Builders.entity
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component

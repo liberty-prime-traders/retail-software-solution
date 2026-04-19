@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction
 
+import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component

@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Orga
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.TagSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagValidator
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

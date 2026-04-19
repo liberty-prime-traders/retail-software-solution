@@ -44,6 +44,7 @@ class DeliveryHandlerForPurchase(
             }
         )
     }
+    
     @TransactionalOnLocationSchema
     fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
@@ -61,7 +62,7 @@ class DeliveryHandlerForPurchase(
 
     private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
         val fullyDelivered = purchaseLines.all {
-            it.quantityOrdered - it.quantityCanceled - it.quantityDelivered <= BigDecimal.ZERO
+            it.getExpectedQuantity() - it.quantityDelivered <= BigDecimal.ZERO
         }
         return if (fullyDelivered) PurchaseStatus.FULLY_DELIVERED else PurchaseStatus.PARTIALLY_DELIVERED
     }

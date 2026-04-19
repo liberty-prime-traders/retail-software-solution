@@ -61,6 +61,8 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   STOCK_ENTRY(TableNames.STOCK_ENTRY, SchemaLevel.LOCATION),
   STOCK_MOVEMENT(TableNames.STOCK_MOVEMENT, SchemaLevel.LOCATION),
   SUPPLIER_RETURN(TableNames.SUPPLIER_RETURN, SchemaLevel.LOCATION),
+  SUPPLIER_PAYMENT(TableNames.SUPPLIER_PAYMENT, SchemaLevel.LOCATION),
+  SUPPLIER_PAYMENT_VOID(TableNames.SUPPLIER_PAYMENT_VOID, SchemaLevel.LOCATION),
 
   // Platform-level audit tables
   ORGANIZATION_AUDIT(TableNames.ORGANIZATION_AUDIT, SchemaLevel.PLATFORM),

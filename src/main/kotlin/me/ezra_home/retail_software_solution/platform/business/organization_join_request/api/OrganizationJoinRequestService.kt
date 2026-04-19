@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.organizations.business.organization
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestCache
-import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.OrganizationJoinRequestMapper
 import org.springframework.stereotype.Service
 import java.util.Collections

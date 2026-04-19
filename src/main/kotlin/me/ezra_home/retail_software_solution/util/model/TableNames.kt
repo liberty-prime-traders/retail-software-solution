@@ -57,6 +57,8 @@ object TableNames {
     const val STOCK_ENTRY = "stock_entry"
     const val STOCK_MOVEMENT = "stock_movement"
     const val SUPPLIER_RETURN = "supplier_return"
+    const val SUPPLIER_PAYMENT = "supplier_payment"
+    const val SUPPLIER_PAYMENT_VOID = "supplier_payment_void"
 
     // Platform audit tables
     const val ORGANIZATION_AUDIT = "organization_aud"
