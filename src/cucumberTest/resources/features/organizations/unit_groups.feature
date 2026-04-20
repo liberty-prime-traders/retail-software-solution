@@ -17,6 +17,7 @@ Feature: Unit Groups
     Then the response status should be 200
     And the response should contain field "id"
     And the response field "name" should be "Volume"
+    And the response field "description" should be "Measurement of volume"
 
   @regression
   Scenario: Authenticated user views list of unit groups
@@ -63,3 +64,9 @@ Feature: Unit Groups
       """
     Then the response status should be 400
     And the response error should contain "already exists"
+
+  @regression
+  Scenario: Unauthenticated user cannot view unit groups
+    Given I am not authenticated
+    When I send a GET request to "/secured/unitgroups"
+    Then the response status should be 403
