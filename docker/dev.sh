@@ -9,5 +9,5 @@ if [[ "$ACTION" == "down" ]]; then
   docker compose -f kafka-compose.yml --env-file "$ENV_FILE" down --remove-orphans
 else
   docker compose -f postgres-compose.yml --env-file "$ENV_FILE" up -d
-  docker compose -f kafka-compose.yml --env-file "$ENV_FILE"up -d
+  docker compose -f kafka-compose.yml --env-file "$ENV_FILE" up -d
 fi
