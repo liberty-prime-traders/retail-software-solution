@@ -11,6 +11,11 @@ class AuthenticationSteps(private val authContext: AuthContext) {
     authContext.authToken = TestConstants.Tokens.ORG_USER
   }
 
+  @Given("I am authenticated as a platform admin")
+  fun authenticateAsAdmin() {
+    authContext.authToken = TestConstants.Tokens.PLATFORM_ADMIN
+  }
+
   @Given("I am not authenticated")
   fun notAuthenticated() {
     authContext.authToken = null

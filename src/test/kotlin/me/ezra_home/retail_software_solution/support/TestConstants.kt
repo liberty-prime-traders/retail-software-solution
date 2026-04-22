@@ -9,7 +9,7 @@ object TestConstants {
   }
 
   object Okta {
-    const val PLATFORM_USER = "okta-platform-user"
+    const val PLATFORM_USER = "SERVICE_ACCOUNT_RECORD_INITIALIZER"
     const val ORGANIZATION_USER = "okta-organization-user"
   }
 
