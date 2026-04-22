@@ -67,3 +67,20 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+              - column:
+                  name: raw_quantity_delivered
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_raw_quantity_delivered_notnull
+
+              - column:
+                  name: raw_unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_raw_unit_id_notnull
+      rollback:
+        - dropTable:
+            tableName: purchase_delivery_line

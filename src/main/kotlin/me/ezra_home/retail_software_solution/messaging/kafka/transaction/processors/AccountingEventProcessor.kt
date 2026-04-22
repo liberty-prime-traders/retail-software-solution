@@ -8,9 +8,12 @@ abstract class AccountingEventProcessor<EVENT : TransactionEvent>(
     private val ledgerPostingService: LedgerPostingService
 ) : TransactionEventProcessor<EVENT> {
 
-    abstract fun prepareLedgerRequest(event: EVENT): LedgerPostingRequest
+    open fun prepareLedgerRequest(event: EVENT): LedgerPostingRequest? = null
+
+    open fun prepareLedgerRequests(event: EVENT): List<LedgerPostingRequest> =
+        listOfNotNull(prepareLedgerRequest(event))
 
     override fun handle(event: EVENT) {
-        ledgerPostingService.post(prepareLedgerRequest(event))
+        prepareLedgerRequests(event).forEach { ledgerPostingService.post(it) }
     }
 }

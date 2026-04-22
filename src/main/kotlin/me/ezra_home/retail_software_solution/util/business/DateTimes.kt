@@ -8,6 +8,8 @@ import java.util.Optional
 
 object DateTimes {
 
+    data class DateRange(val start: LocalDate, val end: LocalDate)
+
     fun isValidTimezone(tz: String): Boolean = runCatching { ZoneId.of(tz) }.isSuccess
 
     fun validateTimezone(timezone: String?) {
@@ -29,4 +31,10 @@ object DateTimes {
     fun organizationZoneId(): ZoneId {
         return ZoneId.of(SessionContextProvider.getOrgTimezone())
     }
+
+    fun todayIsInRange(dateRange: DateRange): Boolean {
+        return dateRange.start.isBefore(Local.Now.organization())
+                && dateRange.end.isAfter(Local.Now.organization())
+    }
+
 }

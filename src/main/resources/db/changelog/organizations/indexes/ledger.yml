@@ -1,5 +1,25 @@
 databaseChangeLog:
   - changeSet:
+      id: add-unique-constraint-ledger-entry-group-source-ref-type
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - uniqueConstraintExists:
+                tableName: ledger_entry_group
+                constraintName: uq_ledger_entry_group_source_ref_type
+      changes:
+        - addUniqueConstraint:
+            tableName: ledger_entry_group
+            constraintName: uq_ledger_entry_group_source_ref_type
+            columnNames: source_reference_number, source_type
+      rollback:
+        - dropUniqueConstraint:
+            tableName: ledger_entry_group
+            constraintName: uq_ledger_entry_group_source_ref_type
+
+  - changeSet:
       id: create-index-ledger-entry-group-source-ref
       author: ezra
       labels: 1.0.0

@@ -47,6 +47,14 @@ databaseChangeLog:
                   type: decimal(15,2)
 
               - column:
+                  name: raw_quantity_delivered
+                  type: numeric(19, 4)
+
+              - column:
+                  name: raw_unit_id
+                  type: uuid
+
+              - column:
                   name: revend
                   type: bigint
 

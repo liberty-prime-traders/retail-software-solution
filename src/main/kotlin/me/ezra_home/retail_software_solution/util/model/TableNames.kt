@@ -27,6 +27,7 @@ object TableNames {
     const val JOB_TITLE = "job_title"
     const val UNIT_GROUP = "unit_group"
     const val UNIT_VALUE = "unit_value"
+    const val UNIT_CONVERSION = "unit_conversion"
     const val PAYMENT_METHOD = "payment_method"
     const val ORGANIZATION_USER = "organization_user"
     const val PRODUCT = "product"
@@ -59,6 +60,11 @@ object TableNames {
     const val SUPPLIER_RETURN = "supplier_return"
     const val SUPPLIER_PAYMENT = "supplier_payment"
     const val SUPPLIER_PAYMENT_VOID = "supplier_payment_void"
+    const val SALE = "sale"
+    const val SALE_LINE = "sale_line"
+    const val SALE_PAYMENT = "sale_payment"
+    const val SALE_PAYMENT_VOID = "sale_payment_void"
+    const val SALE_LINE_STOCK_RESERVATION = "sale_line_stock_reservation"
 
     // Platform audit tables
     const val ORGANIZATION_AUDIT = "organization_aud"
@@ -95,4 +101,6 @@ object TableNames {
     const val STOCK_ENTRY_AUDIT = "stock_entry_aud"
     const val STOCK_MOVEMENT_AUDIT = "stock_movement_aud"
     const val SUPPLIER_RETURN_AUDIT = "supplier_return_aud"
+    const val SALE_AUDIT = "sale_aud"
+    const val SALE_LINE_AUDIT = "sale_line_aud"
 }

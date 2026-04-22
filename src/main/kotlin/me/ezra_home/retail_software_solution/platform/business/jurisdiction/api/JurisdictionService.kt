@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.platform.business.jurisdiction.Juri
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionMapper
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionMappingContext
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.JurisdictionValidator
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeInsertDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_type.api.JurisdictionTypeService
@@ -18,6 +19,7 @@ class JurisdictionService(
     private val jurisdictionMapper: JurisdictionMapper,
     private val jurisdictionCache: JurisdictionCache,
     private val jurisdictionValidator: JurisdictionValidator,
+    private val jurisdictionTaxTypeFetcher: JurisdictionTaxTypeFetcher,
     private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
     private val jurisdictionTypeService: JurisdictionTypeService
 ) {
@@ -31,7 +33,7 @@ class JurisdictionService(
     private fun buildMappingContext() = JurisdictionMappingContext(
         typeNames = jurisdictionTypeService.getAll().associate { it.id to it.name },
         jurisdictionNames = jurisdictionCache.getAll().associate { it.id to it.name },
-        taxTypesByJurisdiction = jurisdictionTaxTypeService.getActiveTaxTypeIdsByJurisdiction()
+        taxTypesByJurisdiction = jurisdictionTaxTypeFetcher.getActiveTaxTypeIdsByJurisdiction()
     )
 
     fun create(dto: JurisdictionInsertDto): JurisdictionResponseDto {

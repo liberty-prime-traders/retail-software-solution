@@ -27,7 +27,7 @@ class SupplierPaymentAssembler(
         val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(listOf(payment.purchaseId)).getValue(payment.purchaseId)
         val deliveryRef = payment.deliveryId?.let { purchaseDeliveryFetcher.getDeliveryReferenceNumbersById(listOf(it))[it] }
         val paymentMethodName = paymentMethodService.getAllPaymentMethods().find { it.id == payment.paymentMethodId }?.name ?: ""
-        val supplierName = contactService.getAllContactDtos().find { it.id == purchaseInfo.supplierId }?.identity?.displayName ?: ""
+        val supplierName = contactService.getContactById(purchaseInfo.supplierId).identity.displayName
         return toDto(payment, purchaseInfo.referenceNumber, deliveryRef, paymentMethodName, supplierName, paymentVoid, paymentStatus)
     }
 

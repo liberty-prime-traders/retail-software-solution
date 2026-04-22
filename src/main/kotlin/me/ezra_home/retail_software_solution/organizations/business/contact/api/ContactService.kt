@@ -20,6 +20,12 @@ class ContactService(
     fun getAllContactDtos(): Collection<ContactDto> = contactCache.getAllContacts()
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+        fun getContactById(id: UUID): ContactDto {
+        return contactCache.getAllContacts().find { it.id == id }
+            ?: throw UpdatingNonExistingRecordException()
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllContacts(): Collection<ContactResponseDto> {
         return contactCache.getAllContacts().map { contactMapper.toResponseDto(it) }
     }
