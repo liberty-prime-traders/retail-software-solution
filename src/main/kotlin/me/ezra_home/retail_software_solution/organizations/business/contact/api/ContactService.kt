@@ -31,8 +31,15 @@ class ContactService(
             contactInsertDto.companyName
         )
         val cleanedInsert = cleanupIncompatibleFields(contactInsertDto)
+        
+        // Validate uniqueness before saving
+        val identity = when(cleanedInsert.identityType) {
+            IdentityType.ORGANIZATION -> ContactIdentity.Organization(cleanedInsert.companyName!!)
+            IdentityType.INDIVIDUAL -> ContactIdentity.Individual(cleanedInsert.firstName!!, cleanedInsert.lastName)
+        }
+        contactValidator.validateUniqueness(identity)
+
         val dto = contactCache.create(cleanedInsert)
-        contactValidator.validateUniqueness(dto.identity)
         return contactMapper.toResponseDto(dto)
     }
 

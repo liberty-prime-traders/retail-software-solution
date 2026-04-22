@@ -33,6 +33,12 @@ class ResponseSteps(
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
   }
 
+  @Then("the response field {string} should be null")
+  fun verifyFieldIsNull(fieldName: String) {
+    val value = responseContext.lastResponse?.jsonPath()?.get<Any>(fieldName)
+    assertTrue(value == null, "Expected field '$fieldName' to be null but was $value")
+  }
+
   @Then("the response should contain:")
   fun verifyFields(table: DataTable) {
     table.asMaps().forEach { row ->
@@ -49,6 +55,12 @@ class ResponseSteps(
   @Then("the response should contain {int} items")
   fun verifyListSize(size: Int) {
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(size))
+  }
+
+  @Then("the response should contain at least {int} items")
+  fun verifyAtLeastListSize(size: Int) {
+    val actualSize = responseContext.lastResponse?.jsonPath()?.getList<Any>("$")?.size ?: 0
+    assertTrue(actualSize >= size, "Expected at least $size items but got $actualSize")
   }
 
   @Then("the response should be an empty list")

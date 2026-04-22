@@ -15,4 +15,5 @@ enum class TransientKey(override val key: String) : ContextKey {
   PRODUCT_GROUP("productGroup"),
   UNIT_GROUP("unitGroup"),
   UNIT_VALUE("unitValue"),
+  CONTACT("contact"),
 }
