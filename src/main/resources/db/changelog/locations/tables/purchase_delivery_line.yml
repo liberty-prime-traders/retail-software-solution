@@ -44,7 +44,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_delivered
-                  type: decimal(15,3)
+                  type: numeric(19, 4)
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_delivery_line_quantity_delivered_notnull
@@ -55,6 +55,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_delivery_line_unit_cost_notnull
+
+              - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_unit_id_notnull
 
               - column:
                   name: created_by_id
@@ -68,19 +75,6 @@ databaseChangeLog:
                   type: timestamptz
                   defaultValueDate: ${now}
 
-              - column:
-                  name: raw_quantity_delivered
-                  type: numeric(19, 4)
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: purchase_delivery_line_raw_quantity_delivered_notnull
-
-              - column:
-                  name: raw_unit_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: purchase_delivery_line_raw_unit_id_notnull
       rollback:
         - dropTable:
             tableName: purchase_delivery_line

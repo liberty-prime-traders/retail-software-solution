@@ -10,5 +10,6 @@ data class PurchaseDeliveryLineResponseDto(
   val purchaseLineId: UUID,
   val locationProduct: PurchaseLineProductDto,
   val quantityDelivered: BigDecimal,
-  val unitCost: BigDecimal
+  val unitId: UUID,
+  val unitCost: BigDecimal,
 )

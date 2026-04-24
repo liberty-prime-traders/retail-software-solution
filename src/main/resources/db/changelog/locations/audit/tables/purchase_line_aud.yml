@@ -40,35 +40,27 @@ databaseChangeLog:
 
               - column:
                   name: quantity_ordered
-                  type: decimal(15,3)
+                  type: numeric(19, 4)
 
               - column:
                   name: unit_cost
                   type: decimal(15,2)
 
               - column:
-                  name: quantity_delivered
-                  type: decimal(15,3)
-
-              - column:
-                  name: quantity_canceled
-                  type: decimal(15,3)
-
-              - column:
-                  name: raw_quantity_ordered
-                  type: numeric(19, 4)
-
-              - column:
-                  name: raw_unit_id
+                  name: unit_id
                   type: uuid
 
               - column:
-                  name: raw_quantity_delivered
+                  name: quantity_delivered
                   type: numeric(19, 4)
 
               - column:
-                  name: raw_quantity_canceled
+                  name: quantity_canceled
                   type: numeric(19, 4)
+
+              - column:
+                  name: conversion_factor
+                  type: decimal(19,10)
 
               - column:
                   name: revend

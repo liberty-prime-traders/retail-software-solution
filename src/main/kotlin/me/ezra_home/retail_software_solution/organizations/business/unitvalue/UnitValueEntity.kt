@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
+import java.math.BigDecimal
 import java.util.UUID
 
 @Audited
@@ -32,6 +33,6 @@ class UnitValueEntity(
     var baseUnit: UUID? = null,
 
     @Column(name = "conversion_factor")
-    var conversionFactor: Double? = null
+    var conversionFactor: BigDecimal? = null
 
 ): HasReferenceEntity()

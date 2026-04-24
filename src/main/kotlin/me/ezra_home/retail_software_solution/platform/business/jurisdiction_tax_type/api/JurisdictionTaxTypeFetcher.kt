@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -23,10 +22,6 @@ class JurisdictionTaxTypeFetcher(
 
     fun getCalculationMethod(jurisdictionTaxTypeId: UUID): CalculationMethod {
         return getTaxType(jurisdictionTaxTypeId).calculationMethod
-    }
-
-    fun getTaxTriggers(jurisdictionTaxTypeId: UUID): List<TaxTrigger> {
-        return getTaxType(jurisdictionTaxTypeId).taxTriggers
     }
 
     fun getTaxApplicationLevel(jurisdictionTaxTypeId: UUID): TaxApplicationLevel {

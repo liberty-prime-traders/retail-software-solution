@@ -72,6 +72,20 @@ databaseChangeLog:
                   type: varchar(30)
 
               - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_unit_id_notnull
+
+              - column:
+                  name: conversion_factor
+                  type: decimal(19,10)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_conversion_factor_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
