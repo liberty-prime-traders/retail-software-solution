@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSourceService
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphBuilder
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -21,7 +21,7 @@ class PurchaseDeliveryStockUpdater(
     private val stockMovementRepository: StockMovementRepository,
     private val stockItemSourceService: StockItemSourceService,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val unitConversionGraphBuilder: UnitConversionGraphBuilder
+    private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
     fun recordPurchaseDelivery(event: PurchaseDeliveredEvent) {
@@ -30,7 +30,7 @@ class PurchaseDeliveryStockUpdater(
 
         val entriesByLineId = event.lines.associate { line ->
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
-            val baseQty = unitConversionGraphBuilder.convert(line.unitId, baseUnitId, line.quantityDelivered)
+            val baseQty = unitConversionGraphFacade.convert(line.unitId, baseUnitId, line.quantityDelivered)
             val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantityDelivered), baseQty)
             line.deliveryLineId to StockEntryEntity(
                 purchaseDeliveryLineId = line.deliveryLineId,
@@ -52,7 +52,7 @@ class PurchaseDeliveryStockUpdater(
             val entry = entriesByLineId[line.deliveryLineId]!!
             val newQuantity = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
-            val factor = unitConversionGraphBuilder.getFactor(line.unitId, baseUnitId)
+            val factor = unitConversionGraphFacade.getFactor(line.unitId, baseUnitId)
             StockMovementEntity(
                 stockEntryId = entry.id!!,
                 locationProductId = line.locationProductId,

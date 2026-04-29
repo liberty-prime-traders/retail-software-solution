@@ -27,7 +27,11 @@ class SupplierPaymentVoidAccountingProcessor(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     override fun shouldProcess(event: SupplierPaymentVoidedEvent): Boolean {
-        return ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceType(
+        val paymentWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceType(
+            event.paymentReferenceNumber,
+            LedgerSourceType.SUPPLIER_PAYMENT
+        )
+        return paymentWasPosted && ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceType(
             event.paymentReferenceNumber,
             LedgerSourceType.SUPPLIER_PAYMENT_VOID
         ).not()

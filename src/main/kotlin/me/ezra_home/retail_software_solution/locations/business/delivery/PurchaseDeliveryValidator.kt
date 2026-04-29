@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphBuilder
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 class PurchaseDeliveryValidator(
   private val locationProductDataFetcher: LocationProductDataFetcher,
-  private val unitConversionGraphBuilder: UnitConversionGraphBuilder
+  private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
   fun validate(dto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineDto>) {
@@ -40,7 +40,7 @@ class PurchaseDeliveryValidator(
       if (lineDto.unitCost <= BigDecimal.ZERO)
         throw RtsGenericException("Unit cost must be greater than zero for '${orderedProduct.label}'.")
 
-      val factor = unitConversionGraphBuilder.getFactor(lineDto.unitId, purchaseLine.unitId)
+      val factor = unitConversionGraphFacade.getFactor(lineDto.unitId, purchaseLine.unitId)
       val deliveredInPurchaseLineUnit = Decimals.multiplyScale4(lineDto.quantityDelivered, factor)
       val remaining = purchaseLine.remainingQuantity
       if (deliveredInPurchaseLineUnit > remaining)

@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.UUID
 
 data class PurchaseDeliveredEvent(
@@ -14,7 +15,7 @@ data class PurchaseDeliveredEvent(
   val purchaseId: UUID,
   val deliveryId: UUID,
   val deliveryReferenceNumber: String,
-  val deliveredAt: Instant,
+  val deliveredAt: OffsetDateTime,
   val supplierId: UUID,
   val lines: List<PurchaseDeliveredLineDto>
 ) : TransactionEvent() {
