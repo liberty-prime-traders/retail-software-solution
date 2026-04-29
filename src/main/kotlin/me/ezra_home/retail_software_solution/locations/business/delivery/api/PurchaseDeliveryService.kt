@@ -10,7 +10,8 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphBuilder
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 
@@ -22,7 +23,8 @@ class PurchaseDeliveryService(
   private val deliveryLineRepository: PurchaseDeliveryLineRepository,
   private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
   private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
-  private val unitConversionGraphBuilder: UnitConversionGraphBuilder
+  private val unitConversionGraphFacade: UnitConversionGraphFacade,
+  private val purchasePaymentStatusService: PurchasePaymentStatusService
 ) {
 
   fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
@@ -34,10 +36,11 @@ class PurchaseDeliveryService(
 
     val deliveries = dto.lines.map { line ->
       val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
-      val factor = unitConversionGraphBuilder.getFactor(line.unitId, purchaseLine.unitId)
+      val factor = unitConversionGraphFacade.getFactor(line.unitId, purchaseLine.unitId)
       DeliveryLineQuantity(line.purchaseLineId, Decimals.multiplyScale4(line.quantityDelivered, factor))
     }
-    return deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
+    val response = deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
+    return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(dto.purchaseId))
   }
 
   private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {

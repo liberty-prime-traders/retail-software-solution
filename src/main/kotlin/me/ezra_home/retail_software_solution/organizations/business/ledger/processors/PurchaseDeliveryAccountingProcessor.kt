@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
@@ -13,9 +12,9 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.time.ZoneId
 import kotlin.reflect.KClass
 
 @Service
@@ -33,9 +32,7 @@ class PurchaseDeliveryAccountingProcessor(
     }
 
     override fun prepareLedgerRequest(event: PurchaseDeliveredEvent): LedgerPostingRequest {
-        val postingDate = event.deliveredAt
-            .atZone(ZoneId.of(SessionContextProvider.getOrgTimezone()))
-            .toLocalDate()
+        val postingDate = DateTimes.Local.atOrganizationZone(event.deliveredAt)
 
         return LedgerPostingRequest(
             sourceReferenceNumber = event.deliveryReferenceNumber,

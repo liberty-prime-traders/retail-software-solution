@@ -2,13 +2,13 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import org.springframework.stereotype.Component
 
 @Component
 class LocationProductEnricher(
     private val locationProductMapper: LocationProductMapper,
-    private val unitValueService: UnitValueService,
+    private val unitValueFetcher: UnitValueFetcher,
     private val stockBalanceFetcher: StockBalanceFetcher
 ) {
 
@@ -17,7 +17,7 @@ class LocationProductEnricher(
     }
 
     fun provideMappingContext(dtos: List<LocationProductDto>): List<LocationProductResponseDto> {
-        val unitNamesById = unitValueService.getUnitNamesById()
+        val unitNamesById = unitValueFetcher.getUnitNamesById()
         val balances = stockBalanceFetcher.getLatestBalances(dtos.map { it.id })
         return dtos.map {
             locationProductMapper.toResponseDto(it, LocationProductContext(unitNamesById[it.baseUnitId], balances[it.id]))

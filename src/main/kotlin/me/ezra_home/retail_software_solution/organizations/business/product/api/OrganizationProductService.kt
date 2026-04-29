@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Orga
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -24,7 +24,7 @@ class OrganizationProductService(
     private val organizationProductValidator: OrganizationProductValidator,
     private val productTagService: ProductTagService,
     private val catalogEventHandler: CatalogEventHandler,
-    private val unitValueService: UnitValueService
+    private val unitValueFetcher: UnitValueFetcher
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -44,7 +44,7 @@ class OrganizationProductService(
             tagsToAdd = productInsertDto.tagsToAdd
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
     }
 
     fun updateProduct(productUpdateDto: OrganizationProductUpdateDto): OrganizationProductResponseDto {
@@ -60,7 +60,7 @@ class OrganizationProductService(
             tagsToRemove = productUpdateDto.tagsToRemove
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
     }
 
     fun deactivateProduct(productId: UUID): OrganizationProductResponseDto {
@@ -79,6 +79,6 @@ class OrganizationProductService(
         val updated = productDto.copy(status = status)
         val savedDto = organizationProductCache.save(updated)
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueService.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
     }
 }

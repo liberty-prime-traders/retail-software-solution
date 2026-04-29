@@ -1,11 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryFetcher
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
@@ -17,7 +18,8 @@ import java.util.UUID
 class PurchaseAssembler(
   private val purchaseLineRepository: PurchaseLineRepository,
   private val locationProductDataFetcher: LocationProductDataFetcher,
-  private val purchaseDeliveryFetcher: PurchaseDeliveryFetcher,
+  private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
+  private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
   private val contactService: ContactService,
   private val userQualifier: UserQualifier
 ) {
@@ -30,7 +32,7 @@ class PurchaseAssembler(
     val purchaseLineDtoMap = allLines.associateBy { it.id!! }.mapValues {
       PurchaseMapper.purchaseLineEntityToDto(it.value)
     }
-    val deliveryResponsesByPurchaseId = purchaseDeliveryFetcher.getDeliveryResponses(
+    val deliveryResponsesByPurchaseId = purchaseDeliveryDataFetcher.getDeliveryResponses(
       purchaseIds, purchaseLineDtoMap, productSummaries
     )
     val supplierNameMap = contactService.getAllContactDtos().associateBy(
@@ -48,7 +50,7 @@ class PurchaseAssembler(
     val purchaseLineDtoMap = lines.associateBy { it.id!! }.mapValues {
       PurchaseMapper.purchaseLineEntityToDto(it.value)
     }
-    val deliveries = purchaseDeliveryFetcher.getDeliveryResponses(
+    val deliveries = purchaseDeliveryDataFetcher.getDeliveryResponses(
         listOf(purchase.id!!), purchaseLineDtoMap, productSummaries
     )[purchase.id] ?: emptyList()
     val supplierNameMap = contactService.getAllContactDtos().associateBy(
@@ -65,7 +67,7 @@ class PurchaseAssembler(
     deliveries: List<PurchaseDeliveryResponseDto>
   ): PurchaseResponseDto {
     val lineDtos = toLinesDto(lines, productSummaries)
-    val orderTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) }
+    val deliveredTotal = deliveries.fold(BigDecimal.ZERO) { acc, d -> acc.add(d.deliveryTotal) }
     return PurchaseResponseDto(
       id = purchase.id!!,
       referenceNumber = purchase.referenceNumber!!,
@@ -80,7 +82,9 @@ class PurchaseAssembler(
       createdBy = userQualifier.getUserFullName(purchase.createdById),
       createdOn = purchase.createdOn,
       lines = lineDtos,
-      orderTotal = orderTotal,
+      orderedTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) },
+      deliveredTotal = deliveredTotal,
+      paymentCeiling = purchasePaymentCeilingService.computeCeiling(lines, deliveredTotal).amount,
       deliveries = deliveries
     )
   }

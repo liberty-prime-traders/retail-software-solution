@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.util.business
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.Optional
 
@@ -25,6 +26,10 @@ object DateTimes {
         object Now {
             fun system(): LocalDate = LocalDate.now()
             fun organization(): LocalDate = LocalDate.now(organizationZoneId())
+        }
+
+        fun atOrganizationZone(offsetDateTime: OffsetDateTime): LocalDate {
+            return offsetDateTime.atZoneSameInstant(organizationZoneId()).toLocalDate()
         }
     }
 
