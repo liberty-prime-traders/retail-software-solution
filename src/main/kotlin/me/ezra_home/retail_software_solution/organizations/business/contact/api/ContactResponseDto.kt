@@ -21,5 +21,6 @@ data class ContactResponseDto(
     val address: String? = null,
     val creditLimit: BigDecimal? = null,
     val notes: String? = null,
-    val status: ContactStatus
+    val status: ContactStatus,
+    val systemDefined: Boolean
 ): Serializable

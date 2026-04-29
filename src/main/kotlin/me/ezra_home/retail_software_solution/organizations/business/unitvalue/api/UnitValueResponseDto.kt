@@ -13,8 +13,9 @@ data class UnitValueResponseDto(
     val baseUnit: UUID?,
     val baseUnitName: String?,
     val conversionFactor: BigDecimal?,
-    val createdBy: String?,
-    val createdOn: OffsetDateTime?,
+    val createdBy: String,
+    val createdOn: OffsetDateTime,
     val unitGroupId: UUID,
-    val referenceNumber: String?
+    val referenceNumber: String,
+    val systemDefined: Boolean
 ) : Serializable

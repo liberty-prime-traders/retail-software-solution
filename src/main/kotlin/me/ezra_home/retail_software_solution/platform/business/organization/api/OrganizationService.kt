@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
-import me.ezra_home.retail_software_solution.organizations.business.contact.api.WalkInContactSeeder
+import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgProfileService
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserService
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.AuthorizationPassService
@@ -37,7 +37,7 @@ class OrganizationService(
     private val organizationSchemaService: OrganizationSchemaService,
     private val organizationUserService: OrganizationUserService,
     private val authorizationPassService: AuthorizationPassService,
-    private val walkInContactSeeder: WalkInContactSeeder
+    private val orgProfileService: OrgProfileService
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -69,7 +69,7 @@ class OrganizationService(
             SessionContextProvider.initOrganization(saved)
             organizationAdminService.registerFounder(saved.createdById)
             organizationUserService.registerFounder(saved.createdById)
-            walkInContactSeeder.seed()
+            orgProfileService.applySeedDefaults()
             return organizationMapper.toResponseDto(saved)
         } catch (e: Exception) {
             organizationSchemaService.dropSchema(schemaName)
