@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgDataSeeder
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component
 @TransactionalOnOrganizationSchema
 class UnitValueSeeder(
     private val unitValueCache: UnitValueCache,
-    private val unitGroupCache: UnitGroupCache
+    private val unitGroupService: UnitGroupService
 ) : OrgDataSeeder {
 
     override fun seed() {
-        val unitGroups = unitGroupCache.getAllUnitGroups().associateBy { it.code }
+        val unitGroups = unitGroupService.getAllUnitGroupDtos().associateBy { it.code }
         val existingValues = unitValueCache.getAllUnitValues().associateBy { it.code }.toMutableMap()
         val existingCodes = existingValues.keys
 

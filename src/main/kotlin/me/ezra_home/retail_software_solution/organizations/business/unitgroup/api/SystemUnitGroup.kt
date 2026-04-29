@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.unitgroup
+package me.ezra_home.retail_software_solution.organizations.business.unitgroup.api
 
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 

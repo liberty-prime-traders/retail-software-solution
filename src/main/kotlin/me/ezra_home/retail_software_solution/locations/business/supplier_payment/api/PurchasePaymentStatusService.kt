@@ -5,8 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pay
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService.PaymentCeiling
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentRepository
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidRepository
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.PaymentsCalculatorService
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -14,27 +13,17 @@ import java.util.UUID
 @Service
 @TransactionalOnLocationSchema
 class PurchasePaymentStatusService(
-    private val supplierPaymentRepository: SupplierPaymentRepository,
-    private val supplierPaymentVoidRepository: SupplierPaymentVoidRepository,
     private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
-    private val purchaseUpdater: PurchaseUpdater
+    private val purchaseUpdater: PurchaseUpdater,
+    private val paymentsCalculatorService: PaymentsCalculatorService
 ) {
 
     fun patchThenReturnPaymentStatus(purchaseId: UUID): PaymentStatus {
         val ceiling = purchasePaymentCeilingService.computeCeiling(purchaseId)
-        val totalPaid = calculatePaidAmount(purchaseId)
+        val totalPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(purchaseId)
         val status = resolvePaymentStatus(totalPaid, ceiling)
         purchaseUpdater.updatePaymentStatus(purchaseId, status)
         return status
-    }
-
-    fun calculatePaidAmount(purchaseId: UUID): BigDecimal {
-        val payments = supplierPaymentRepository.findByPurchaseId(purchaseId)
-        if (payments.isEmpty()) return BigDecimal.ZERO
-        val voidedPaymentIds = supplierPaymentVoidRepository
-            .findBySupplierPaymentIdIn(payments.map { it.id!! })
-            .mapTo(HashSet()) { it.supplierPaymentId }
-        return payments.filter { it.id !in voidedPaymentIds }.sumOf { it.amount }
     }
 
     fun resolvePaymentStatus(totalPaid: BigDecimal, ceiling: PaymentCeiling): PaymentStatus {

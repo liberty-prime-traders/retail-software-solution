@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import kotlin.reflect.KClass
@@ -36,7 +37,7 @@ class SupplierPaymentAccountingProcessor(
         return LedgerPostingRequest(
             sourceReferenceNumber = event.paymentReferenceNumber,
             sourceType = LedgerSourceType.SUPPLIER_PAYMENT,
-            postingDate = event.paymentDate,
+            postingDate = DateTimes.Local.atOrganizationZone(event.paymentDate),
             entries = listOf(
                 LedgerEntryRequest(event.paymentMethodAccountCode, EntryType.CREDIT, event.amount),
                 LedgerEntryRequest(SystemAccount.TRADE_PAYABLES.code, EntryType.DEBIT, event.amount)
