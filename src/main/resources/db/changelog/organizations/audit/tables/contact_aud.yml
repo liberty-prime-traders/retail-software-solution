@@ -58,6 +58,9 @@ databaseChangeLog:
                   name: status
                   type: nvarchar2(5)
               - column:
+                  name: system_defined
+                  type: boolean
+              - column:
                   name: revend
                   type: bigint
               - column:

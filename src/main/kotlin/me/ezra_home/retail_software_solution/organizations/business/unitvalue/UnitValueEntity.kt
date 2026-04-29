@@ -33,6 +33,9 @@ class UnitValueEntity(
     var baseUnit: UUID? = null,
 
     @Column(name = "conversion_factor")
-    var conversionFactor: BigDecimal? = null
+    var conversionFactor: BigDecimal? = null,
+
+    @Column(name = "system_defined", nullable = false, updatable = false)
+    var systemDefined: Boolean = false
 
 ): HasReferenceEntity()
