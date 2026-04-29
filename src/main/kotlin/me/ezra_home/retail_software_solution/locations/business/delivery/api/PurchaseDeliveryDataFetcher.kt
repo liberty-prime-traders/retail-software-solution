@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -29,7 +28,12 @@ class PurchaseDeliveryDataFetcher(
         val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))
         if (deliveries.isEmpty()) return BigDecimal.ZERO
         val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveries.map { it.id!! })
-        return lines.sumOf { Decimals.multiplyScale4(it.quantityDelivered, it.unitCost) }
+        return lines.sumOf { it.lineTotal() }
+    }
+
+    fun calculateSingleDeliveryTotal(deliveryId: UUID): BigDecimal {
+        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(deliveryId))
+        return lines.sumOf { it.lineTotal() }
     }
 
     fun getDeliveryResponses(

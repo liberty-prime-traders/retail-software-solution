@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.supplier_paymen
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import java.math.BigDecimal
-import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SupplierPaymentResponseDto(
@@ -14,7 +14,7 @@ data class SupplierPaymentResponseDto(
     val paymentMethod: String,
     val supplier: String,
     val amount: BigDecimal,
-    val paymentDate: LocalDate,
+    val paymentDate: OffsetDateTime,
     val notes: String?,
     val createdBy: String,
     val createdOn: String,

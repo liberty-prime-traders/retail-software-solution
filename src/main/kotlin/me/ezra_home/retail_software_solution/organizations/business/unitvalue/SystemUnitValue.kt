@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.SystemUnitGroup
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.SystemUnitGroup
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 
 enum class SystemUnitValue(

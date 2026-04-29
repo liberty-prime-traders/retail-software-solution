@@ -1,9 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.supplier_payment.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.PaymentsCalculatorService
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentAssembler
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentHandlerForKafka
@@ -17,6 +19,7 @@ import me.ezra_home.retail_software_solution.organizations.business.payment_meth
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.text.NumberFormat
@@ -36,7 +39,9 @@ class SupplierPaymentService(
     private val supplierPaymentVoidHandlerForKafka: SupplierPaymentVoidHandlerForKafka,
     private val assembler: SupplierPaymentAssembler,
     private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
-    private val purchasePaymentStatusService: PurchasePaymentStatusService
+    private val purchasePaymentStatusService: PurchasePaymentStatusService,
+    private val paymentsCalculatorService: PaymentsCalculatorService,
+    private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher
 ) {
 
     fun getPaymentsByPurchaseId(purchaseId: UUID): List<SupplierPaymentResponseDto> {
@@ -52,15 +57,15 @@ class SupplierPaymentService(
         if (dto.amount <= BigDecimal.ZERO) {
             throw RtsGenericException("Payment amount must be greater than zero")
         }
-
+        validateDeliveryLevelPayment(dto)
         val ceiling = purchasePaymentCeilingService.computeCeiling(dto.purchaseId)
-        val alreadyPaid = purchasePaymentStatusService.calculatePaidAmount(dto.purchaseId)
+        val alreadyPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(dto.purchaseId)
 
         if (ceiling.isFullyDelivered) {
             val projected = alreadyPaid + dto.amount
             if (projected > ceiling.deliveredTotal) {
                 val formattedBalance = NumberFormat.getCurrencyInstance().format(ceiling.deliveredTotal - alreadyPaid)
-                throw RtsGenericException("Payment of $${dto.amount} would exceed the remaining balance of $formattedBalance")
+                throw RtsGenericException("Payment of ${dto.amount} would exceed the remaining balance of $formattedBalance")
             }
         }
 
@@ -71,6 +76,18 @@ class SupplierPaymentService(
         purchaseUpdater.updatePaymentStatus(dto.purchaseId, newStatus)
         publishTransactionToKafka(dto, entity)
         return assembler.buildResponse(entity, null, newStatus)
+    }
+
+    private fun validateDeliveryLevelPayment(dto: SupplierPaymentCreateDto) {
+        if (dto.deliveryId != null) {
+            val deliveryCeiling = purchaseDeliveryDataFetcher.calculateSingleDeliveryTotal(dto.deliveryId)
+            val alreadyPaidForDelivery = paymentsCalculatorService.calculatePaidAmountForDelivery(dto.deliveryId)
+            val projected = alreadyPaidForDelivery + dto.amount
+            if (projected > deliveryCeiling) {
+                val formattedBalance = NumberFormat.getCurrencyInstance().format(deliveryCeiling - alreadyPaidForDelivery)
+                throw RtsGenericException("Payment of ${dto.amount} would exceed the remaining delivery balance of $formattedBalance")
+            }
+        }
     }
 
     fun voidPayment(dto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto {
@@ -95,6 +112,12 @@ class SupplierPaymentService(
         if (StringUtils.hasValue(accountCode)) {
             val supplierId = purchaseDataFetcher.getSupplierId(dto.purchaseId)
             supplierPaymentHandlerForKafka.publish(payment, supplierId, accountCode!!)
+        } else {
+            log.debug(
+                "Payment method {} has no account code — ledger entry skipped for payment {}",
+                dto.paymentMethodId,
+                payment.referenceNumber
+            )
         }
     }
 
@@ -103,6 +126,16 @@ class SupplierPaymentService(
         if (StringUtils.hasValue(accountCode)) {
             val supplierId = purchaseDataFetcher.getSupplierId(payment.purchaseId)
             supplierPaymentVoidHandlerForKafka.publish(voidEntity, payment, supplierId, accountCode!!)
+        } else {
+            log.debug(
+                "Payment method {} has no account code — ledger entry skipped for void of {}",
+                payment.paymentMethodId,
+                payment.referenceNumber
+            )
         }
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(SupplierPaymentService::class.java)
     }
 }

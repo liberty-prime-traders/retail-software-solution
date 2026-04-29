@@ -23,7 +23,7 @@ class PurchaseDataFetcher(
   private val locationEmf: LocalContainerEntityManagerFactoryBean
 ) {
 
-  data class PurchaseInfo(val referenceNumber: String, val supplierId: UUID)
+  data class PurchaseInfo(val referenceNumber: String, val supplierId: UUID, val paymentStatus: PaymentStatus)
 
   fun fetchTop(n: Int?): List<PurchaseResponseDto> {
     val recordCount = n ?: 10
@@ -39,7 +39,7 @@ class PurchaseDataFetcher(
 
   fun findPurchaseInfoByIds(purchaseIds: List<UUID>): Map<UUID, PurchaseInfo> {
     return purchaseRepository.findAllById(purchaseIds)
-      .associateBy({ it.id!! }, { PurchaseInfo(it.referenceNumber!!, it.supplierId) })
+      .associateBy({ it.id!! }, { PurchaseInfo(it.referenceNumber!!, it.supplierId, it.paymentStatus) })
   }
 
 

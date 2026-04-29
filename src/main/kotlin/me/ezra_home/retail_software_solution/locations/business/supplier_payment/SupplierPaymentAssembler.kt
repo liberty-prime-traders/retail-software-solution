@@ -50,7 +50,7 @@ class SupplierPaymentAssembler(
                 paymentMethodNamesById[payment.paymentMethodId] ?: "",
                 supplierNamesById[purchaseInfo.supplierId] ?: "",
                 voidsByPaymentId[payment.id!!],
-                null
+                purchaseInfo.paymentStatus
             )
         }
     }

@@ -11,16 +11,16 @@ object DateTimes {
 
     data class DateRange(val start: LocalDate, val end: LocalDate)
 
-    fun isValidTimezone(tz: String): Boolean = runCatching { ZoneId.of(tz) }.isSuccess
+    fun validateTimezone(timezone: Optional<String>?) {
+        timezone?.ifPresent { validateTimezone(it) }
+    }
 
     fun validateTimezone(timezone: String?) {
         if (timezone != null && !isValidTimezone(timezone))
             throw RtsGenericException("'$timezone' is not a valid timezone")
     }
 
-    fun validateTimezone(timezone: Optional<String>?) {
-        timezone?.ifPresent { validateTimezone(it) }
-    }
+    fun isValidTimezone(tz: String): Boolean = runCatching { ZoneId.of(tz) }.isSuccess
 
     object Local {
         object Now {
@@ -33,7 +33,14 @@ object DateTimes {
         }
     }
 
-    fun organizationZoneId(): ZoneId {
+    object Offset {
+        object Now {
+            fun system(): OffsetDateTime = OffsetDateTime.now()
+            fun organization(): OffsetDateTime = OffsetDateTime.now(organizationZoneId())
+        }
+    }
+
+    private fun organizationZoneId(): ZoneId {
         return ZoneId.of(SessionContextProvider.getOrgTimezone())
     }
 
