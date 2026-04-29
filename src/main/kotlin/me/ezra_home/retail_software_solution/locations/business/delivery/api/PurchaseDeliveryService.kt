@@ -8,7 +8,10 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphBuilder
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 
 @Service
@@ -18,7 +21,8 @@ class PurchaseDeliveryService(
   private val deliveryRepository: PurchaseDeliveryRepository,
   private val deliveryLineRepository: PurchaseDeliveryLineRepository,
   private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
-  private val purchaseDeliveryValidator: PurchaseDeliveryValidator
+  private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
+  private val unitConversionGraphBuilder: UnitConversionGraphBuilder
 ) {
 
   fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
@@ -28,7 +32,11 @@ class PurchaseDeliveryService(
     val deliveryRecord = persistDelivery(dto)
     deliveryHandlerForKafka.publish(context, deliveryRecord)
 
-    val deliveries = dto.lines.map { it.purchaseLineId to it.quantityDelivered }
+    val deliveries = dto.lines.map { line ->
+      val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
+      val factor = unitConversionGraphBuilder.getFactor(line.unitId, purchaseLine.unitId)
+      DeliveryLineQuantity(line.purchaseLineId, Decimals.multiplyScale4(line.quantityDelivered, factor))
+    }
     return deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
   }
 

@@ -20,6 +20,13 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
+                  name: code
+                  type: nvarchar2(5)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: unit_group_code_unique
+
+              - column:
                   name: name
                   type: nvarchar2(100)
                   constraints:
@@ -41,6 +48,14 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+              - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_group_system_defined_notnull
 
               - column:
                   name: reference_number

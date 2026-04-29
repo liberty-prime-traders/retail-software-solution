@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.business.tax_type.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeCache
 import me.ezra_home.retail_software_solution.platform.business.tax_type.TaxTypeMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -15,7 +15,7 @@ import java.util.UUID
 class TaxTypeService(
     private val taxTypeMapper: TaxTypeMapper,
     private val taxTypeCache: TaxTypeCache,
-    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService
+    private val jurisdictionTaxTypeFetcher: JurisdictionTaxTypeFetcher
 ) {
 
     @TransactionalOnPlatformSchema(readOnly = true)
@@ -46,7 +46,7 @@ class TaxTypeService(
     }
 
     fun delete(id: UUID) {
-        if (jurisdictionTaxTypeService.isInUse(id))
+        if (jurisdictionTaxTypeFetcher.isInUse(id))
             throw RtsGenericException("Tax type is in use and cannot be deleted")
         taxTypeCache.delete(id)
     }

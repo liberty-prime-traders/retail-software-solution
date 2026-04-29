@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -25,16 +26,13 @@ class LocationProductService(
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> =
-        locationProductRepository.findAllById(ids).associate { entity ->
-            entity.id!! to LocationProductSummaryDto(
-                id = entity.id!!,
-                referenceNumber = entity.referenceNumber!!,
-                productName = entity.productName,
-                productGroupName = entity.productGroupName,
-                baseUnitId = entity.baseUnitId
-            )
-        }
+    fun guardAllActive(ids: Collection<UUID>) {
+        val inactive = locationProductRepository.findAllById(ids)
+            .filter { it.status != ProductStatus.ACTIVE }
+        if (inactive.isNotEmpty()) throw RtsGenericException(
+            "Inactive products are not allowed: ${inactive.map { it.id }}"
+        )
+    }
 
     fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
         val products = locationProductRepository.findAllById(prices.keys)
@@ -42,14 +40,6 @@ class LocationProductService(
         locationProductRepository.saveAll(products)
         locationProductCache.evictAll()
     }
-
-    @TransactionalOnLocationSchema(readOnly = true)
-    fun findAllProducts(): List<LocationProductResponseDto> {
-        return locationProductEnricher.provideMappingContext(locationProductCache.findAllLocationProducts())
-    }
-
-    @TransactionalOnLocationSchema(readOnly = true)
-    fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
 
     fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
         val entity = locationProductRepository.findById(dto.id).orElseThrow {

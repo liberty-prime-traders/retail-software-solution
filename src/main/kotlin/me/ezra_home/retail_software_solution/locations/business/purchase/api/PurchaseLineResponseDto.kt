@@ -9,10 +9,12 @@ data class PurchaseLineResponseDto(
   val referenceNumber: String,
   val locationProduct: PurchaseLineProductDto,
   val quantityOrdered: BigDecimal,
+  val unitId: UUID,
+  val conversionFactor: BigDecimal,
   val unitCost: BigDecimal,
   val lineTotal: BigDecimal,
   val quantityDelivered: BigDecimal,
   val quantityYetToBeDelivered: BigDecimal,
   val quantityCanceled: BigDecimal,
-  val quantityExpected: BigDecimal
+  val quantityExpected: BigDecimal,
 ) : Serializable

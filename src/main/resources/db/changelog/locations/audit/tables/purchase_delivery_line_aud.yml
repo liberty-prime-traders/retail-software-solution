@@ -40,11 +40,15 @@ databaseChangeLog:
 
               - column:
                   name: quantity_delivered
-                  type: decimal(15,3)
+                  type: numeric(19, 4)
 
               - column:
                   name: unit_cost
                   type: decimal(15,2)
+
+              - column:
+                  name: unit_id
+                  type: uuid
 
               - column:
                   name: revend

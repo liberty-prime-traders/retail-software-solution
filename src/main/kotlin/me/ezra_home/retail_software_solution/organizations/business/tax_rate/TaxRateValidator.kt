@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.api.OrgJurisdictionTaxTypeStatus
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeService
+import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -18,7 +18,7 @@ import java.util.UUID
 @Component
 class TaxRateValidator(
     private val orgJurisdictionTaxTypeFetcher: OrgJurisdictionTaxTypeFetcher,
-    private val jurisdictionTaxTypeService: JurisdictionTaxTypeService,
+    private val jurisdictionTaxTypeFetcher: JurisdictionTaxTypeFetcher,
     private val taxRateCache: TaxRateCache
 ) {
 
@@ -31,11 +31,11 @@ class TaxRateValidator(
         if (parent.status != OrgJurisdictionTaxTypeStatus.ACTIVE)
             throw RtsGenericException("Cannot create a rate for an inactive Tax Type")
         validateRateValue(parent.jurisdictionTaxTypeId, dto.ratePercentage, dto.rateFlatAmount)
-        val taxApplicationLevel = jurisdictionTaxTypeService.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
+        val taxApplicationLevel = jurisdictionTaxTypeFetcher.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
         val overlappingRates = overlappingRates(dto.orgJurisdictionTaxTypeId, dto.startDate, dto.endDate)
         val conflictingRate = when (taxApplicationLevel) {
-            TaxApplicationLevel.PRODUCT -> overlappingRates.firstOrNull { StringUtils.isEquivalent(it.name, dto.name) }
-            TaxApplicationLevel.ORGANIZATION -> overlappingRates.firstOrNull()
+            TaxApplicationLevel.LINE_ITEM -> overlappingRates.firstOrNull { StringUtils.isEquivalent(it.name, dto.name) }
+            TaxApplicationLevel.TRANSACTION -> overlappingRates.firstOrNull()
         }
         conflictingRate?.let { throwOverlapError(it) }
     }
@@ -52,8 +52,8 @@ class TaxRateValidator(
         val taxApplicationLevel = getTaxApplicationLevel(taxRateDto.orgJurisdictionTaxTypeId)
         val candidates = overlappingRates(taxRateDto.orgJurisdictionTaxTypeId, taxRateDto.startDate, effectiveEndDate, excludeId = id)
         val conflict = when (taxApplicationLevel) {
-            TaxApplicationLevel.PRODUCT -> candidates.firstOrNull { StringUtils.isEquivalent(it.name, effectiveName) }
-            TaxApplicationLevel.ORGANIZATION -> candidates.firstOrNull()
+            TaxApplicationLevel.LINE_ITEM -> candidates.firstOrNull { StringUtils.isEquivalent(it.name, effectiveName) }
+            TaxApplicationLevel.TRANSACTION -> candidates.firstOrNull()
         }
         conflict?.let { throwOverlapError(it) }
     }
@@ -84,7 +84,7 @@ class TaxRateValidator(
 
     private fun getTaxApplicationLevel(orgJurisdictionTaxTypeId: UUID): TaxApplicationLevel {
         val parent = orgJurisdictionTaxTypeFetcher.getAllDtos().first { it.id == orgJurisdictionTaxTypeId }
-        return jurisdictionTaxTypeService.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
+        return jurisdictionTaxTypeFetcher.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
     }
 
     private fun throwOverlapError(conflict: TaxRateDto) {
@@ -97,7 +97,7 @@ class TaxRateValidator(
         ratePercentage: BigDecimal?,
         rateFlatAmount: BigDecimal?
     ) {
-        when (jurisdictionTaxTypeService.getCalculationMethod(jurisdictionTaxTypeId)) {
+        when (jurisdictionTaxTypeFetcher.getCalculationMethod(jurisdictionTaxTypeId)) {
             CalculationMethod.PERCENTAGE -> {
                 if (ratePercentage == null)
                     throw RtsGenericException("ratePercentage is required for PERCENTAGE tax types")
@@ -108,13 +108,13 @@ class TaxRateValidator(
                 if (rateFlatAmount != null)
                     throw RtsGenericException("rateFlatAmount must not be provided for PERCENTAGE tax types")
             }
-            CalculationMethod.FLAT_PER_UNIT -> {
+            CalculationMethod.FIXED_VALUE -> {
                 if (rateFlatAmount == null)
-                    throw RtsGenericException("rateFlatAmount is required for FLAT_PER_UNIT tax types")
+                    throw RtsGenericException("rateFlatAmount is required for FIXED_VALUE tax types")
                 if (rateFlatAmount < BigDecimal.ZERO)
                     throw RtsGenericException("rateFlatAmount must not be negative")
                 if (ratePercentage != null)
-                    throw RtsGenericException("ratePercentage must not be provided for FLAT_PER_UNIT tax types")
+                    throw RtsGenericException("ratePercentage must not be provided for FIXED_VALUE tax types")
             }
         }
     }

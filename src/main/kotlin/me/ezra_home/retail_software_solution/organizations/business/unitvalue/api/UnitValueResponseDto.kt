@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue.api
 
 import java.io.Serializable
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -11,9 +12,10 @@ data class UnitValueResponseDto(
     val description: String?,
     val baseUnit: UUID?,
     val baseUnitName: String?,
-    val conversionFactor: Double?,
-    val createdBy: String?,
-    val createdOn: OffsetDateTime?,
+    val conversionFactor: BigDecimal?,
+    val createdBy: String,
+    val createdOn: OffsetDateTime,
     val unitGroupId: UUID,
-    val referenceNumber: String?
+    val referenceNumber: String,
+    val systemDefined: Boolean
 ) : Serializable

@@ -23,10 +23,13 @@ class PurchaseDeliveryLineEntity(
   @Column(name = "purchase_line_id", nullable = false)
   var purchaseLineId: UUID,
 
-  @Column(name = "quantity_delivered", nullable = false, precision = 15, scale = 3)
+  @Column(name = "quantity_delivered", nullable = false, precision = 19, scale = 4)
   var quantityDelivered: BigDecimal,
 
   @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
-  var unitCost: BigDecimal
+  var unitCost: BigDecimal,
+
+  @Column(name = "unit_id", nullable = false)
+  var unitId: UUID
 
 ) : HasReferenceEntity()

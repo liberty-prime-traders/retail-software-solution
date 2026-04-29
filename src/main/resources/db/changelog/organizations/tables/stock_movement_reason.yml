@@ -32,8 +32,6 @@ databaseChangeLog:
                   name: code
                   type: varchar(20)
                   constraints:
-                    nullable: false
-                    notNullConstraintName: stock_movement_reason_code_notnull
                     unique: true
                     uniqueConstraintName: stock_movement_reason_code_unique
 

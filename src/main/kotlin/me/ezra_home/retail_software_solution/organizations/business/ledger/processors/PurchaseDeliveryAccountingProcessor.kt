@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.ledger.api
+package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
@@ -9,7 +9,10 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.ZoneId
@@ -51,8 +54,7 @@ class PurchaseDeliveryAccountingProcessor(
         )
     }
     private fun getSubLedgerEntries(event: PurchaseDeliveredEvent): List<SubledgerEntryRequest> {
-        val supplier = contactService.getAllContactDtos().firstOrNull { it.id == event.supplierId }
-                ?: throw RtsGenericException("Supplier ${event.supplierId} not found")
+        val supplier = contactService.getContactById(event.supplierId)
 
         return listOf(
             SubledgerEntryRequest(
