@@ -20,6 +20,8 @@ data class PurchaseResponseDto(
   val createdBy: String?,
   val createdOn: OffsetDateTime?,
   val lines: List<PurchaseLineResponseDto>,
-  val orderTotal: BigDecimal,
+  val orderedTotal: BigDecimal,
+  val deliveredTotal: BigDecimal,
+  val paymentCeiling: BigDecimal,
   val deliveries: List<PurchaseDeliveryResponseDto>
 ) : Serializable

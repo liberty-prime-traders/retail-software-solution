@@ -8,6 +8,8 @@ data class UnitGroupDto(
     val createdById: UUID,
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
-    val name: String? = null,
-    val description: String? = null
+    val code: String? = null,
+    val name: String,
+    val description: String? = null,
+    val systemDefined: Boolean = false
 )

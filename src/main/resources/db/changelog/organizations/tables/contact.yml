@@ -67,6 +67,14 @@ databaseChangeLog:
                     notNullConstraintName: contact_status_notnull
 
               - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_system_defined_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

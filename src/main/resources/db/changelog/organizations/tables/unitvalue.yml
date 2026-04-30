@@ -65,6 +65,14 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_value_system_defined_notnull
+
+              - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:

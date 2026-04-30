@@ -23,7 +23,6 @@ interface OrganizationMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "currentDbVersionId", ignore = true)
     @Mapping(target = "creationPassId", ignore = true)
-    @Mapping(target = "subdomain", ignore = true)
     fun toEntity(dto: OrganizationInsertDto): OrganizationEntity
 
     fun toDomainDto(entity: OrganizationEntity): OrganizationDto

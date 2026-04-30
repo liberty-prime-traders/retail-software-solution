@@ -8,5 +8,6 @@ data class PurchaseDeliveredLineDto(
   val lineReferenceNumber: String,
   val locationProductId: UUID,
   val quantityDelivered: BigDecimal,
+  val unitId: UUID,
   val unitCost: BigDecimal
 )

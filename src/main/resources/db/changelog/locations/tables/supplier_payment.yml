@@ -55,7 +55,7 @@ databaseChangeLog:
 
               - column:
                   name: payment_date
-                  type: date
+                  type: timestamptz
                   constraints:
                     nullable: false
                     notNullConstraintName: supplier_payment_payment_date_notnull

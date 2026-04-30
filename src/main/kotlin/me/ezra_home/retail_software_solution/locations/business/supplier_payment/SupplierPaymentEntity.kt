@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import java.math.BigDecimal
-import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
@@ -29,7 +29,7 @@ class SupplierPaymentEntity(
     var amount: BigDecimal,
 
     @Column(name = "payment_date", nullable = false, updatable = false)
-    var paymentDate: LocalDate,
+    var paymentDate: OffsetDateTime,
 
     @Column(name = "notes")
     var notes: String? = null

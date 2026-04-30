@@ -19,3 +19,24 @@ databaseChangeLog:
         - dropForeignKeyConstraint:
             baseTableName: product
             constraintName: fk_product_product_group
+
+  - changeSet:
+      id: add-foreign-key-product-base-unit
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_product_base_unit
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: product
+            baseColumnNames: base_unit_id
+            referencedTableName: unit_value
+            referencedColumnNames: id
+            constraintName: fk_product_base_unit
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: product
+            constraintName: fk_product_base_unit

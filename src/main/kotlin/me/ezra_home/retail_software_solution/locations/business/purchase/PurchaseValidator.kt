@@ -1,10 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
-import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import java.math.BigDecimal
 
 object PurchaseValidator {
 
@@ -29,19 +27,11 @@ object PurchaseValidator {
       throw RtsGenericException("Cannot cancel lines on a purchase with status ${purchase.purchaseStatus}")
   }
 
-  fun guardNoInactiveProducts(products: List<LocationProductEntity>) {
-    val inactive = products.filter { it.status != ProductStatus.ACTIVE }
-    if (inactive.isNotEmpty()) {
-      val names = inactive.joinToString { it.productName }
-      throw RtsGenericException("The following products are not active and cannot be added to a purchase: $names")
-    }
-  }
-
-  fun guardCancelQuantity(line: PurchaseLineEntity, cancel: PurchaseCancelLinesDto) {
+  fun guardCancelQuantity(line: PurchaseLineEntity, cancelQty: BigDecimal) {
     val maxCancelable = line.quantityOrdered - line.quantityDelivered
-    if (cancel.quantityCanceled > maxCancelable)
+    if (cancelQty > maxCancelable)
       throw RtsGenericException(
-        "Cannot cancel ${cancel.quantityCanceled} items of line ${cancel.purchaseLineId}. " +
+        "Cannot cancel $cancelQty items of line ${line.id}. " +
           "Ordered: ${line.quantityOrdered}, Delivered: ${line.quantityDelivered}, Max cancelable: $maxCancelable"
       )
   }
