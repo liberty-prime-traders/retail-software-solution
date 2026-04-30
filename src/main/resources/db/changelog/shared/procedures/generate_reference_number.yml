@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-function-generate-reference-number'
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: "$$"
+            sql: |
+              CREATE OR REPLACE FUNCTION generate_reference_number(prefix text, seq_name text)
+              RETURNS text AS $$
+                SELECT prefix || lpad(val::text, greatest(6, length(val::text)), '0')
+                FROM (VALUES (nextval(seq_name))) t(val)
+              $$ LANGUAGE sql;

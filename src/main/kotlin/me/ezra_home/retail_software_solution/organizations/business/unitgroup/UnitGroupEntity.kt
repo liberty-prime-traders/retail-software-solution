@@ -15,10 +15,16 @@ import org.hibernate.envers.Audited
 @HasReference(tableName = TableName.UNIT_GROUP)
 class UnitGroupEntity(
 
+    @Column(name = "code", length = 5, updatable = false)
+    var code: String? = null,
+
     @Column(name = "name", nullable = false)
-    var name: String? = null,
+    var name: String,
 
     @Column(name = "description")
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "system_defined", nullable = false, updatable = false)
+    var systemDefined: Boolean = false
 
 ): HasReferenceEntity()

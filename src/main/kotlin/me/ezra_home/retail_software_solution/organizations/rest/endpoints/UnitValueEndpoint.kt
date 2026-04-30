@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
@@ -22,14 +23,17 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/unitvalues")
-class UnitValueEndpoint(private val unitValueService: UnitValueService) {
+class UnitValueEndpoint(
+    private val unitValueService: UnitValueService,
+    private val unitValueFetcher: UnitValueFetcher
+) {
 
     @GetMapping
     fun getForUnitGroup(@RequestParam("unitGroupId") unitGroupId: UUID?): Collection<UnitValueResponseDto> {
         return if (unitGroupId == null) {
-            unitValueService.getAllUnitValues()
+            unitValueFetcher.getAllUnitValues()
         } else {
-            unitValueService.getUnitValuesForUnitGroup(unitGroupId)
+            unitValueFetcher.getUnitValuesForUnitGroup(unitGroupId)
         }
     }
 

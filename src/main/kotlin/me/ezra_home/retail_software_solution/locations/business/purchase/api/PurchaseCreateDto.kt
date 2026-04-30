@@ -9,6 +9,5 @@ data class PurchaseCreateDto(
   val notes: String? = null,
   val dateOrdered: OffsetDateTime? = null,
   val orderedById: UUID? = null,
-  val lines: List<PurchaseLineCreateDto>,
-  val stateToken: String? = null
+  val linesToAdd: List<PurchaseLineCreateDto>
 ) : Serializable

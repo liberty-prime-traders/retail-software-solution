@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.Purcha
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
@@ -17,13 +18,18 @@ class PurchaseDeliveryInventoryProcessor(
     private val deliveryRepository: PurchaseDeliveryRepository
 ) : InventoryEventProcessor<PurchaseDeliveredEvent> {
 
+  private val log = LoggerFactory.getLogger(PurchaseDeliveryInventoryProcessor::class.java)
+
   override val eventType: KClass<PurchaseDeliveredEvent> = PurchaseDeliveredEvent::class
 
   @TransactionalOnLocationSchema(readOnly = true)
   override fun shouldProcess(event: PurchaseDeliveredEvent): Boolean {
     return deliveryRepository.findById(event.deliveryId)
       .map { it.status != PurchaseDeliveryStatus.RECEIVED }
-      .orElseGet { false }
+      .orElseGet {
+        log.warn("Skipping PurchaseDeliveredEvent: delivery ${event.deliveryId} not found")
+        false
+      }
   }
 
   @TransactionalOnLocationSchema

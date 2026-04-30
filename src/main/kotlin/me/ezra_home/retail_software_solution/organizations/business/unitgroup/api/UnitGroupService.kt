@@ -4,9 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils
-import me.ezra_home.retail_software_solution.util.exceptions.QueriedByEmptyIdException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException
+import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
 import java.util.Optional
@@ -41,8 +40,9 @@ class UnitGroupService(
     }
 
     fun updateUnitGroup(unitGroupUpdateDto: UnitGroupUpdateDto): UnitGroupResponseDto {
-        val id = unitGroupUpdateDto.id ?: throw QueriedByEmptyIdException()
-        val existing = unitGroupCache.getAllUnitGroups().find { it.id == id } ?: throw NotFoundException()
+        val existing = unitGroupCache.getAllUnitGroups().find { it.id == unitGroupUpdateDto.id }
+            ?: throw UpdatingNonExistingRecordException()
+        if (existing.systemDefined) throw RtsGenericException("System-defined unit groups cannot be modified")
         validateNameOnSave(unitGroupUpdateDto.name, unitGroupUpdateDto.id)
         val updated = unitGroupUpdateDto.applyTo(existing)
         val saved = unitGroupCache.save(updated)
@@ -50,8 +50,10 @@ class UnitGroupService(
     }
 
     fun deleteUnitGroup(id: UUID) {
-        unitGroupCache.getAllUnitGroups()
-            .find { it.id == id }
-            ?.apply { unitGroupCache.deleteUnitGroup(id) }
+        unitGroupCache.getAllUnitGroups().find { it.id == id }
+            ?.apply {
+                if (this.systemDefined) throw RtsGenericException("System-defined unit groups cannot be deleted")
+                unitGroupCache.deleteUnitGroup(id)
+            }
     }
 }

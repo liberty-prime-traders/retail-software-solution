@@ -5,9 +5,9 @@ import java.util.UUID
 data class LocationProductSummaryDto(
     val id: UUID,
     val referenceNumber: String,
-    val productName: String?,
-    val productGroupName: String?,
-    val baseUnitId: UUID?
+    val productName: String,
+    val productGroupName: String,
+    val baseUnitId: UUID
 ) {
     val label: String
         get() = "$referenceNumber - $productName"
