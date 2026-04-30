@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Orga
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductQueryBuilder
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service
 class OrganizationProductFetcher(
     private val executor: OrganizationProductSearchExecutor,
     private val productTagService: ProductTagService,
-    private val unitValueService: UnitValueService,
+    private val unitValueFetcher: UnitValueFetcher,
     private val organizationProductCache: OrganizationProductCache,
     private val organizationProductMapper: OrganizationProductMapper
 ): FetchesUsingSmartTextStrategy<ProductSearchParameters, OrganizationProductResponseDto> {
@@ -46,7 +46,7 @@ class OrganizationProductFetcher(
     }
 
     fun findAllProducts(): List<OrganizationProductResponseDto> {
-        val unitNamesById = unitValueService.getUnitNamesById()
+        val unitNamesById = unitValueFetcher.getUnitNamesById()
         val responseDtos = organizationProductCache.findAllProducts()
             .map { organizationProductMapper.toResponseDtoWithoutTags(it, unitNamesById[it.baseUnitId]) }
         return productTagService.populateTagsForProducts(responseDtos)

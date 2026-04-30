@@ -15,4 +15,11 @@ data class ContactInsertDto(
     val creditLimit: BigDecimal? = null,
     val notes: String? = null,
     val status: ContactStatus = ContactStatus.ACTIVE
-): Serializable
+): Serializable {
+    val identity: ContactIdentity
+        get() = if (!companyName.isNullOrBlank()) {
+            ContactIdentity.Organization(companyName)
+        } else {
+            ContactIdentity.Individual(firstName.orEmpty(), lastName)
+        }
+}

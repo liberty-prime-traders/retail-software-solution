@@ -15,6 +15,7 @@ abstract class UnitValueMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "systemDefined", constant = "false")
     abstract fun toEntity(unitValueInsertDto: UnitValueInsertDto): UnitValueEntity
 
     abstract fun toDomainDto(unitValueEntity: UnitValueEntity): UnitValueDto

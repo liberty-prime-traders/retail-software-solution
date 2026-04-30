@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactMapper
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactValidator
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -20,6 +21,12 @@ class ContactService(
     fun getAllContactDtos(): Collection<ContactDto> = contactCache.getAllContacts()
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+        fun getContactById(id: UUID): ContactDto {
+        return contactCache.getAllContacts().find { it.id == id }
+            ?: throw UpdatingNonExistingRecordException()
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllContacts(): Collection<ContactResponseDto> {
         return contactCache.getAllContacts().map { contactMapper.toResponseDto(it) }
     }
@@ -31,8 +38,8 @@ class ContactService(
             contactInsertDto.companyName
         )
         val cleanedInsert = cleanupIncompatibleFields(contactInsertDto)
+        contactValidator.validateUniqueness(cleanedInsert.identity)
         val dto = contactCache.create(cleanedInsert)
-        contactValidator.validateUniqueness(dto.identity)
         return contactMapper.toResponseDto(dto)
     }
 
@@ -54,6 +61,7 @@ class ContactService(
         val id = contactUpdateDto.id
         val existing = contactCache.getAllContacts().find { it.id == id }
             ?: throw UpdatingNonExistingRecordException()
+        if (existing.systemDefined) throw RtsGenericException("System-defined contacts cannot be modified")
 
         var updated = contactUpdateDto.applyTo(existing)
 
@@ -80,6 +88,8 @@ class ContactService(
     }
 
     fun deleteContact(id: UUID) {
+        val existing = contactCache.getAllContacts().find { it.id == id } ?: return
+        if (existing.systemDefined) throw RtsGenericException("System-defined contacts cannot be deleted")
         contactCache.deleteContact(id)
     }
 }

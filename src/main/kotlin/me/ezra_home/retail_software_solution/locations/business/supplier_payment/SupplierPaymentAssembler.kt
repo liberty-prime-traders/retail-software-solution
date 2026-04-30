@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.supplier_payment
 
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryFetcher
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentResponseDto
@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 class SupplierPaymentAssembler(
     private val purchaseDataFetcher: PurchaseDataFetcher,
-    private val purchaseDeliveryFetcher: PurchaseDeliveryFetcher,
+    private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
     private val paymentMethodService: PaymentMethodService,
     private val contactService: ContactService,
     private val userQualifier: UserQualifier
@@ -25,9 +25,9 @@ class SupplierPaymentAssembler(
         paymentStatus: PaymentStatus?
     ): SupplierPaymentResponseDto {
         val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(listOf(payment.purchaseId)).getValue(payment.purchaseId)
-        val deliveryRef = payment.deliveryId?.let { purchaseDeliveryFetcher.getDeliveryReferenceNumbersById(listOf(it))[it] }
+        val deliveryRef = payment.deliveryId?.let { purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(listOf(it))[it] }
         val paymentMethodName = paymentMethodService.getAllPaymentMethods().find { it.id == payment.paymentMethodId }?.name ?: ""
-        val supplierName = contactService.getAllContactDtos().find { it.id == purchaseInfo.supplierId }?.identity?.displayName ?: ""
+        val supplierName = contactService.getContactById(purchaseInfo.supplierId).identity.displayName
         return toDto(payment, purchaseInfo.referenceNumber, deliveryRef, paymentMethodName, supplierName, paymentVoid, paymentStatus)
     }
 
@@ -38,7 +38,7 @@ class SupplierPaymentAssembler(
         if (payments.isEmpty()) return emptyList()
         val purchaseInfoById = purchaseDataFetcher.findPurchaseInfoByIds(payments.map { it.purchaseId }.distinct())
         val deliveryIds = payments.mapNotNull { it.deliveryId }
-        val deliveryRefsById = if (deliveryIds.isNotEmpty()) purchaseDeliveryFetcher.getDeliveryReferenceNumbersById(deliveryIds) else emptyMap()
+        val deliveryRefsById = if (deliveryIds.isNotEmpty()) purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(deliveryIds) else emptyMap()
         val paymentMethodNamesById = paymentMethodService.getAllPaymentMethods().associateBy({ it.id }, { it.name })
         val supplierNamesById = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
         return payments.map { payment ->
@@ -50,7 +50,7 @@ class SupplierPaymentAssembler(
                 paymentMethodNamesById[payment.paymentMethodId] ?: "",
                 supplierNamesById[purchaseInfo.supplierId] ?: "",
                 voidsByPaymentId[payment.id!!],
-                null
+                purchaseInfo.paymentStatus
             )
         }
     }

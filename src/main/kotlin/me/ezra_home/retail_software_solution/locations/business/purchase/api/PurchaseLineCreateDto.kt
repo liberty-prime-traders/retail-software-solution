@@ -8,5 +8,6 @@ import java.util.UUID
 data class PurchaseLineCreateDto(
   override val locationProductId: UUID,
   val quantityOrdered: BigDecimal,
+  val unitId: UUID,
   val unitCost: BigDecimal
 ) : HasLocationProduct, Serializable
