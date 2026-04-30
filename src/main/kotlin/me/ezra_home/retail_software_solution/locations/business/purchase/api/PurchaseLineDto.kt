@@ -7,8 +7,9 @@ data class PurchaseLineDto(
     val id: UUID,
     val purchaseId: UUID,
     val locationProductId: UUID,
-    var quantityOrdered: BigDecimal,
     var unitCost: BigDecimal,
-    var quantityDelivered: BigDecimal,
-    var quantityCanceled: BigDecimal
+    val conversionFactor: BigDecimal,
+    val unitId: UUID,
+    val expectedQuantity: BigDecimal,
+    val remainingQuantity: BigDecimal
 )

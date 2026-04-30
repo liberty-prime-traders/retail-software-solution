@@ -35,6 +35,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   JOB_TITLE(TableNames.JOB_TITLE, SchemaLevel.ORGANIZATION),
   UNIT_GROUP(TableNames.UNIT_GROUP, SchemaLevel.ORGANIZATION),
   UNIT_VALUE(TableNames.UNIT_VALUE, SchemaLevel.ORGANIZATION),
+  UNIT_CONVERSION(TableNames.UNIT_CONVERSION, SchemaLevel.ORGANIZATION),
   ORGANIZATION_ADMIN(TableNames.ORGANIZATION_ADMIN, SchemaLevel.ORGANIZATION),
   PAYMENT_METHOD(TableNames.PAYMENT_METHOD, SchemaLevel.ORGANIZATION),
   ORGANIZATION_JOIN_REQUEST(TableNames.ORGANIZATION_JOIN_REQUEST, SchemaLevel.ORGANIZATION),
@@ -63,6 +64,11 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_RETURN(TableNames.SUPPLIER_RETURN, SchemaLevel.LOCATION),
   SUPPLIER_PAYMENT(TableNames.SUPPLIER_PAYMENT, SchemaLevel.LOCATION),
   SUPPLIER_PAYMENT_VOID(TableNames.SUPPLIER_PAYMENT_VOID, SchemaLevel.LOCATION),
+  SALE(TableNames.SALE, SchemaLevel.LOCATION),
+  SALE_LINE(TableNames.SALE_LINE, SchemaLevel.LOCATION),
+  SALE_PAYMENT(TableNames.SALE_PAYMENT, SchemaLevel.LOCATION),
+  SALE_PAYMENT_VOID(TableNames.SALE_PAYMENT_VOID, SchemaLevel.LOCATION),
+  SALE_LINE_STOCK_RESERVATION(TableNames.SALE_LINE_STOCK_RESERVATION, SchemaLevel.LOCATION),
 
   // Platform-level audit tables
   ORGANIZATION_AUDIT(TableNames.ORGANIZATION_AUDIT, SchemaLevel.PLATFORM),
@@ -98,7 +104,9 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PURCHASE_DELIVERY_LINE_AUDIT(TableNames.PURCHASE_DELIVERY_LINE_AUDIT, SchemaLevel.LOCATION),
   STOCK_ENTRY_AUDIT(TableNames.STOCK_ENTRY_AUDIT, SchemaLevel.LOCATION),
   STOCK_MOVEMENT_AUDIT(TableNames.STOCK_MOVEMENT_AUDIT, SchemaLevel.LOCATION),
-  SUPPLIER_RETURN_AUDIT(TableNames.SUPPLIER_RETURN_AUDIT, SchemaLevel.LOCATION);
+  SUPPLIER_RETURN_AUDIT(TableNames.SUPPLIER_RETURN_AUDIT, SchemaLevel.LOCATION),
+  SALE_AUDIT(TableNames.SALE_AUDIT, SchemaLevel.LOCATION),
+  SALE_LINE_AUDIT(TableNames.SALE_LINE_AUDIT, SchemaLevel.LOCATION);
 
   val tableName: String
     get() = code

@@ -15,6 +15,7 @@ interface ContactMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "systemDefined", constant = "false")
     fun toEntity(contactInsertDto: ContactInsertDto): ContactEntity
 
     fun toDomainDto(contactEntity: ContactEntity): ContactDto

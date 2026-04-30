@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-unit-conversion-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: unit_conversion
+      changes:
+        - createTable:
+            tableName: unit_conversion
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: from_unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_conversion_from_unit_id_notnull
+
+              - column:
+                  name: to_unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_conversion_to_unit_id_notnull
+
+              - column:
+                  name: factor
+                  type: numeric(19, 6)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_conversion_factor_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_conversion_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+        - addUniqueConstraint:
+            tableName: unit_conversion
+            columnNames: from_unit_id, to_unit_id
+            constraintName: unit_conversion_from_to_unique
+      rollback:
+        - dropTable:
+            tableName: unit_conversion

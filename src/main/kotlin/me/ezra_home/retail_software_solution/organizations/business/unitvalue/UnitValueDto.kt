@@ -13,5 +13,6 @@ data class UnitValueDto(
     val code: String? = null,
     val unitGroupId: UUID? = null,
     val baseUnit: UUID? = null,
-    val conversionFactor: Double? = null
+    val conversionFactor: Double? = null,
+    val systemDefined: Boolean = false
 )

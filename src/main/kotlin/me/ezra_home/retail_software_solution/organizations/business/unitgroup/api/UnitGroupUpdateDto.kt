@@ -5,7 +5,7 @@ import java.util.Optional
 import java.util.UUID
 
 data class UnitGroupUpdateDto(
-    val id: UUID? = null,
+    val id: UUID,
     val name: Optional<String>? = null,
     val description: Optional<String>? = null
 ) : Serializable {

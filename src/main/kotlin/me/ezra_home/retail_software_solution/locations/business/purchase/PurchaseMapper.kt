@@ -4,9 +4,9 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -42,19 +42,23 @@ object PurchaseMapper {
     purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 
-  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineUpdateDto) = PurchaseLineEntity(
+  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineCreateDto, conversionFactor: BigDecimal) = PurchaseLineEntity(
     purchaseId = purchaseId,
     locationProductId = dto.locationProductId,
     quantityOrdered = dto.quantityOrdered,
-    unitCost = dto.unitCost
+    unitCost = dto.unitCost,
+    unitId = dto.unitId,
+    conversionFactor = conversionFactor
   )
 
-  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>) = lines.map {
+  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, factorByProductId: Map<UUID, BigDecimal>) = lines.map {
     PurchaseLineEntity(
       purchaseId = purchaseId,
       locationProductId = it.locationProductId,
       quantityOrdered = it.quantityOrdered,
-      unitCost = it.unitCost
+      unitCost = it.unitCost,
+      unitId = it.unitId,
+      conversionFactor = factorByProductId.getValue(it.locationProductId)
     )
   }
 
@@ -62,9 +66,10 @@ object PurchaseMapper {
     id = entity.id!!,
     purchaseId = entity.purchaseId,
     locationProductId = entity.locationProductId,
-    quantityOrdered = entity.quantityOrdered,
     unitCost = entity.unitCost,
-    quantityDelivered = entity.quantityDelivered,
-    quantityCanceled = entity.quantityCanceled
+    unitId = entity.unitId,
+    conversionFactor = entity.conversionFactor,
+    expectedQuantity = entity.getExpectedQuantity(),
+    remainingQuantity = entity.getRemainingQuantity()
   )
 }

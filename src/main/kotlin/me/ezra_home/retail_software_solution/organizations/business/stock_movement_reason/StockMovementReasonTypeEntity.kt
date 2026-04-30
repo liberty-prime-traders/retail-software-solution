@@ -18,10 +18,10 @@ import java.util.UUID
 class StockMovementReasonTypeEntity(
 
   @Column(name = "stock_movement_reason_id", nullable = false, updatable = false)
-  val stockMovementReasonId: UUID,
+  var stockMovementReasonId: UUID,
 
   @Convert(converter = MovementTypeConverter::class)
   @Column(name = "movement_type", nullable = false, updatable = false, length = 5)
-  val movementType: MovementType
+  var movementType: MovementType
 
 ) : ExpirableAssignmentEntity()
