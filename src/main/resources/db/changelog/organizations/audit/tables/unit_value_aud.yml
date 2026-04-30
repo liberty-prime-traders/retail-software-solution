@@ -46,6 +46,9 @@ databaseChangeLog:
                   name: conversion_factor
                   type: decimal
               - column:
+                  name: system_defined
+                  type: boolean
+              - column:
                   name: revend
                   type: bigint
               - column:

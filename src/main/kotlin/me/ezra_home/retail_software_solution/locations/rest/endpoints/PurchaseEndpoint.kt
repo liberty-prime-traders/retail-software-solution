@@ -1,12 +1,14 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCanceller
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,7 +24,9 @@ import java.util.UUID
 @RequestMapping("secured/purchases")
 class PurchaseEndpoint(
   private val purchaseService: PurchaseService,
-  private val purchaseDataFetcher: PurchaseDataFetcher
+  private val purchaseDataFetcher: PurchaseDataFetcher,
+  private val purchaseCanceller: PurchaseCanceller,
+  private val purchaseUpdater: PurchaseUpdater,
 ) {
 
   @PostMapping("draft")
@@ -43,11 +47,11 @@ class PurchaseEndpoint(
 
   @PutMapping("{id}/line-cancel-quantities")
   fun cancelLines(@PathVariable id: UUID, @RequestBody lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto =
-    purchaseService.updateCancelQuantities(id, lines)
+    purchaseCanceller.cancel(id, lines)
 
   @PutMapping("{id}/notes")
   fun updateNotes(@PathVariable id: UUID, @RequestBody dto: PurchaseNotesUpdateDto): ResponseEntity<Unit> {
-    purchaseService.updateNotes(id, dto.notes)
+    purchaseUpdater.updateNotes(id, dto.notes)
     return ResponseEntity.ok().build()
   }
 

@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
 
+data class DeliveryLineQuantity(val purchaseLineId: UUID, val qty: BigDecimal)
+
 @Service
 class DeliveryHandlerForPurchase(
     private val purchaseRepository: PurchaseRepository,
@@ -46,13 +48,14 @@ class DeliveryHandlerForPurchase(
     }
     
     @TransactionalOnLocationSchema
-    fun commitDelivery(purchaseId: UUID, deliveries: List<Pair<UUID, BigDecimal>>): PurchaseResponseDto {
+    fun commitDelivery(purchaseId: UUID, deliveries: List<DeliveryLineQuantity>): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         val lineById = purchaseLines.associateBy { it.id!! }
         val toSave = deliveries.map { (lineId, qty) ->
-            lineById[lineId]?.also { it.quantityDelivered = it.quantityDelivered.add(qty) }
-                ?: throw RtsGenericException("Purchase line $lineId not found")
+            lineById[lineId]?.also {
+                it.quantityDelivered = it.quantityDelivered.add(qty)
+            } ?: throw RtsGenericException("Purchase line $lineId not found")
         }
         purchaseLineRepository.saveAll(toSave)
         purchase.purchaseStatus = resolveDeliveryStatus(purchaseLines)
@@ -61,9 +64,7 @@ class DeliveryHandlerForPurchase(
     }
 
     private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
-        val fullyDelivered = purchaseLines.all {
-            it.getExpectedQuantity() - it.quantityDelivered <= BigDecimal.ZERO
-        }
+        val fullyDelivered = purchaseLines.all { it.getRemainingQuantity() <= BigDecimal.ZERO }
         return if (fullyDelivered) PurchaseStatus.FULLY_DELIVERED else PurchaseStatus.PARTIALLY_DELIVERED
     }
 }

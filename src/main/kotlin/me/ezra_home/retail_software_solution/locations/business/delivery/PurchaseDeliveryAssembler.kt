@@ -5,14 +5,12 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 class PurchaseDeliveryAssembler(
   private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
-  private val unitValueService: UnitValueService
 ) {
 
   fun buildResponses(
@@ -36,7 +34,6 @@ class PurchaseDeliveryAssembler(
     purchaseLineById: Map<UUID, PurchaseLineDto>,
     productSummaries: Map<UUID, LocationProductSummaryDto>
   ): PurchaseDeliveryResponseDto {
-    val unitNamesById = unitValueService.getUnitNamesById()
     return PurchaseDeliveryResponseDto(
       id = delivery.id!!,
       referenceNumber = delivery.referenceNumber!!,
@@ -51,13 +48,14 @@ class PurchaseDeliveryAssembler(
           id = dl.id!!,
           referenceNumber = dl.referenceNumber!!,
           quantityDelivered = dl.quantityDelivered,
+          unitId = dl.unitId,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
           locationProduct = PurchaseLineProductDto(
             referenceNumber = product.referenceNumber,
             productName = product.productName,
             productGroupName = product.productGroupName,
-            baseUnit = unitNamesById[product.baseUnitId]
+            baseUnitId = product.baseUnitId
           )
         )
       }

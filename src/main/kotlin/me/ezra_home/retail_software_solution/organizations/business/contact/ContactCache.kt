@@ -37,6 +37,11 @@ class ContactCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun save(contactEntity: ContactEntity) {
+        contactRepository.save(contactEntity)
+    }
+
+    @CacheEvict(allEntries = true)
     fun deleteContact(id: UUID) {
         contactRepository.deleteById(id)
     }

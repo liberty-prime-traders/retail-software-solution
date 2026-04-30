@@ -19,3 +19,24 @@ databaseChangeLog:
         - dropForeignKeyConstraint:
             baseTableName: stock_movement
             constraintName: fk_stock_movement_stock_entry
+
+  - changeSet:
+      id: add-foreign-key-stock-movement-location-product
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_stock_movement_location_product
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_movement
+            baseColumnNames: location_product_id
+            referencedTableName: location_product
+            referencedColumnNames: id
+            constraintName: fk_stock_movement_location_product
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_movement
+            constraintName: fk_stock_movement_location_product

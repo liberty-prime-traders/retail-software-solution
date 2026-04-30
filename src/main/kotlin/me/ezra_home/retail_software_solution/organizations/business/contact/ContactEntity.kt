@@ -51,7 +51,10 @@ class ContactEntity(
 
     @Convert(converter = ContactStatusConverter::class)
     @Column(name = "status", nullable = false)
-    var status: ContactStatus = ContactStatus.ACTIVE
+    var status: ContactStatus = ContactStatus.ACTIVE,
+
+    @Column(name = "system_defined", nullable = false, updatable = false)
+    var systemDefined: Boolean = false
 
 ): HasReferenceEntity() {
 

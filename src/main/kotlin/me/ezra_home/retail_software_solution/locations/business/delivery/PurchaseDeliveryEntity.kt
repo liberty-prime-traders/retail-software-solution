@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Audited
@@ -28,7 +28,7 @@ class PurchaseDeliveryEntity(
   var status: PurchaseDeliveryStatus = PurchaseDeliveryStatus.PROCESSING,
 
   @Column(name = "delivered_at")
-  var deliveredAt: Instant,
+  var deliveredAt: OffsetDateTime,
 
   @Column(name = "notes")
   var notes: String? = null
