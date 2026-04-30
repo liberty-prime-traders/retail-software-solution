@@ -11,5 +11,6 @@ data class PurchaseUpdateDto(
   val notes: Optional<String>? = null,
   val dateOrdered: Optional<OffsetDateTime>? = null,
   val orderedById: Optional<UUID>? = null,
-  val lines: List<PurchaseLineUpdateDto>
+  val linesToAdd: List<PurchaseLineCreateDto> = emptyList(),
+  val linesToUpdate: List<PurchaseLineUpdateDto> = emptyList()
 ) : Serializable

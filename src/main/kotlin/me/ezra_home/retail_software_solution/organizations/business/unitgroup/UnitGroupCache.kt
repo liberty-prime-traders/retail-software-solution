@@ -37,6 +37,11 @@ class UnitGroupCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun saveAll(entities: Collection<UnitGroupEntity>) {
+        unitGroupRepository.saveAll(entities)
+    }
+
+    @CacheEvict(allEntries = true)
     fun deleteUnitGroup(id: UUID) {
         unitGroupRepository.deleteById(id)
     }

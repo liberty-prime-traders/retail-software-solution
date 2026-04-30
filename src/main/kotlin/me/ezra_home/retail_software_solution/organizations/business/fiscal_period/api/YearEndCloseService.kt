@@ -50,7 +50,8 @@ class YearEndCloseService(
             stub = dto.stub,
             closedAt = dto.closedAt,
             closedBy = userFullNameQualifier.getUserFullName(dto.closedBy),
-            closable = false
+            closable = false,
+            current = false
         )
     }
 }

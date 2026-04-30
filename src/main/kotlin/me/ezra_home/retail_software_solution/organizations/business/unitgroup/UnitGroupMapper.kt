@@ -15,6 +15,8 @@ interface UnitGroupMapper {
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)
+    @Mapping(target = "code", ignore = true)
+    @Mapping(target = "systemDefined", constant = "false")
     fun toEntity(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupEntity
 
     fun toDomainDto(unitGroupEntity: UnitGroupEntity): UnitGroupDto

@@ -14,7 +14,7 @@ import java.util.UUID
 @EntityListeners(AuditingEntityListener::class)
 abstract class HasCreatorEntity(
     @CreatedBy
-    @Column(name = "created_by_id", nullable = false, updatable = false)
+    @Column(name = "created_by_id", updatable = false)
     var createdById: UUID? = null,
 
     @CreationTimestamp(source = SourceType.VM)

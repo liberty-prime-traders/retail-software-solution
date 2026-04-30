@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.fiscal_perio
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.FiscalPeriodRepository
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.FiscalPeriodUtils
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.PeriodCloseValidator
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -106,7 +107,8 @@ class FiscalPeriodService(
             stub = dto.stub,
             closedAt = dto.closedAt,
             closedBy = userFullNameQualifier.getUserFullName(dto.closedBy),
-            closable = closable
+            closable = closable,
+            current = DateTimes.todayIsInRange(DateTimes.DateRange(dto.startDate, dto.endDate))
         )
     }
 }

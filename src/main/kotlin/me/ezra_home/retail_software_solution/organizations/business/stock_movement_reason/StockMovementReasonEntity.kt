@@ -13,16 +13,16 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 @HasReference(tableName = TableName.STOCK_MOVEMENT_REASON)
 class StockMovementReasonEntity(
 
-  @Column(name = "code", nullable = false, length = 20, unique = true, updatable = false)
-  var code: String,
+  @Column(name = "code", length = 20, updatable = false)
+  var code: String? = null,
 
   @Column(name = "name", nullable = false, length = 100)
   var name: String,
 
-  @Column(name = "description", columnDefinition = "TEXT")
+  @Column(name = "description")
   var description: String? = null,
 
   @Column(name = "system_defined", nullable = false, updatable = false)
-  val systemDefined: Boolean = false
+  var systemDefined: Boolean = false
 
 ) : HasReferenceEntity()

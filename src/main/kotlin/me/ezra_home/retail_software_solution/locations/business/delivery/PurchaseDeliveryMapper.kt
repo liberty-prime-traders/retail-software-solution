@@ -22,7 +22,8 @@ object PurchaseDeliveryMapper {
         purchaseDeliveryId = deliveryId,
         purchaseLineId = lineDto.purchaseLineId,
         quantityDelivered = lineDto.quantityDelivered,
-        unitCost = lineDto.unitCost
+        unitCost = lineDto.unitCost,
+        unitId = lineDto.unitId
       )
     }
 
@@ -49,6 +50,7 @@ object PurchaseDeliveryMapper {
         lineReferenceNumber = dl.referenceNumber!!,
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
+        unitId = dl.unitId,
         unitCost = dl.unitCost
       )
     }

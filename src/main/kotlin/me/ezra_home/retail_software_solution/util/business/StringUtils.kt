@@ -5,6 +5,10 @@ import java.util.Optional
 
 object StringUtils {
 
+    fun getValueOrNull(str: Optional<String>?): String? {
+        return getValueOrNull(str?.orElse(null))
+    }
+
     fun getValueOrNull(str: String?): String? {
         return if (hasValue(str)) {
             normalize(str!!)

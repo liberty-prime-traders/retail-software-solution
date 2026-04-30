@@ -18,7 +18,8 @@ data class ContactDto(
     val address: String? = null,
     val creditLimit: BigDecimal? = null,
     val notes: String? = null,
-    val status: ContactStatus = ContactStatus.ACTIVE
+    val status: ContactStatus = ContactStatus.ACTIVE,
+    val systemDefined: Boolean = false
 ) {
     val identity: ContactIdentity
         get() = if (!companyName.isNullOrBlank()) {
