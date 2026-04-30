@@ -5,6 +5,7 @@ import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.greaterThanOrEqualTo
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -49,6 +50,11 @@ class ResponseSteps(
   @Then("the response should contain {int} items")
   fun verifyListSize(size: Int) {
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(size))
+  }
+
+  @Then("the response should contain at least {int} items")
+  fun verifyListHasAtLeastSize(size: Int) {
+    responseContext.lastResponse?.then()?.body("size()", greaterThanOrEqualTo(size))
   }
 
   @Then("the response should be an empty list")

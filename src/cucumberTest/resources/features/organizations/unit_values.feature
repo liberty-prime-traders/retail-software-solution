@@ -73,7 +73,7 @@ Feature: Unit Values
     When I send a POST request to "/secured/unitvalues" with body:
       """
       {
-        "name": "Test Unit Value",
+        "name": "Test Unit",
         "code": "TUV",
         "unitGroupId": "#unitGroup->0"
       }
