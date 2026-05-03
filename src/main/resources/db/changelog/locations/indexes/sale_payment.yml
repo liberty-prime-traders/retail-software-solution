@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-sale-payment-sale-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_payment_sale_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_payment_sale_id
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: sale_id
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_payment_sale_id
+            tableName: sale_payment

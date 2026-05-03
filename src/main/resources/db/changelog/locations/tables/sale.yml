@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale
+      changes:
+        - createTable:
+            tableName: sale
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: sale_reference_number_unique
+
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_contact_id_notnull
+
+              - column:
+                  name: sold_by
+                  type: uuid
+
+              - column:
+                  name: date_sold
+                  type: timestamptz
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_status_notnull
+
+              - column:
+                  name: payment_status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale

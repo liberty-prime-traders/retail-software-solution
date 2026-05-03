@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-line-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_line
+      changes:
+        - createTable:
+            tableName: sale_line
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: sale_line_reference_number_unique
+
+              - column:
+                  name: sale_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_sale_id_notnull
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_location_product_id_notnull
+
+              - column:
+                  name: quantity
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_quantity_notnull
+
+              - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_unit_id_notnull
+
+              - column:
+                  name: unit_price
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_unit_price_notnull
+
+              - column:
+                  name: conversion_factor
+                  type: decimal(19,10)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_conversion_factor_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_line

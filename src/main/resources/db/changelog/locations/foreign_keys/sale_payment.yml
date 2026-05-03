@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-payment-sale
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_payment_sale
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_payment
+            baseColumnNames: sale_id
+            referencedTableName: sale
+            referencedColumnNames: id
+            constraintName: fk_sale_payment_sale
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_payment
+            constraintName: fk_sale_payment_sale

@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-payment-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_payment
+      changes:
+        - createTable:
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: sale_payment_reference_number_unique
+
+              - column:
+                  name: sale_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_sale_id_notnull
+
+              - column:
+                  name: payment_method_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_payment_method_id_notnull
+
+              - column:
+                  name: amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_amount_notnull
+
+              - column:
+                  name: reference
+                  type: text
+
+              - column:
+                  name: payment_date
+                  type: timestamptz
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_payment
