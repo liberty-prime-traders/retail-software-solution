@@ -22,8 +22,8 @@ import java.math.BigDecimal
 class ContactEntity(
 
     @Convert(converter = ContactTypeConverter::class)
-    @Column(name = "contact_type", nullable = false)
-    var contactType: ContactType,
+    @Column(name = "contact_types", nullable = false)
+    var contactTypes: Set<ContactType>,
 
     @Column(name = "first_name", length = 255)
     var firstName: String? = null,

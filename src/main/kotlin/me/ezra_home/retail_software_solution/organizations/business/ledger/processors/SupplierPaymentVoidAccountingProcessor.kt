@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
@@ -27,13 +28,16 @@ class SupplierPaymentVoidAccountingProcessor(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     override fun shouldProcess(event: SupplierPaymentVoidedEvent): Boolean {
-        val paymentWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceType(
+        val locationId = SessionContextProvider.getLocationId()
+        val paymentWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
             event.paymentReferenceNumber,
-            LedgerSourceType.SUPPLIER_PAYMENT
+            LedgerSourceType.SUPPLIER_PAYMENT,
+            locationId
         )
-        return paymentWasPosted && ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceType(
+        return paymentWasPosted && ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
             event.paymentReferenceNumber,
-            LedgerSourceType.SUPPLIER_PAYMENT_VOID
+            LedgerSourceType.SUPPLIER_PAYMENT_VOID,
+            locationId
         ).not()
     }
 

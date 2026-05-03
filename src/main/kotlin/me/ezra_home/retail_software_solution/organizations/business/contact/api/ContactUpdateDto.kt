@@ -7,7 +7,7 @@ import java.util.UUID
 
 data class ContactUpdateDto(
     val id: UUID,
-    val contactType: Optional<ContactType>? = null,
+    val contactTypes: Optional<Set<ContactType>>? = null,
     val identityType: Optional<IdentityType>? = null,
     val firstName: Optional<String>? = null,
     val lastName: Optional<String>? = null,
@@ -21,7 +21,7 @@ data class ContactUpdateDto(
 ): Serializable {
 
     fun applyTo(existing: ContactDto): ContactDto = existing.copy(
-        contactType = contactType?.orElse(existing.contactType) ?: existing.contactType,
+        contactTypes = contactTypes?.orElse(existing.contactTypes) ?: existing.contactTypes,
         firstName = firstName?.orElse(existing.firstName) ?: existing.firstName,
         lastName = lastName?.orElse(existing.lastName) ?: existing.lastName,
         companyName = companyName?.orElse(existing.companyName) ?: existing.companyName,

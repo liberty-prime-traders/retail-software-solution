@@ -32,6 +32,7 @@ class ContactService(
     }
 
     fun createContact(contactInsertDto: ContactInsertDto): ContactResponseDto {
+        contactValidator.validateContactTypes(contactInsertDto.contactTypes)
         contactValidator.validateIdentity(
             contactInsertDto.identityType,
             contactInsertDto.firstName,
@@ -64,6 +65,7 @@ class ContactService(
         if (existing.systemDefined) throw RtsGenericException("System-defined contacts cannot be modified")
 
         var updated = contactUpdateDto.applyTo(existing)
+        contactValidator.validateContactTypes(updated.contactTypes)
 
         val identityType = contactUpdateDto.identityType
             ?.let { it.orElseGet { determineIdentityType(updated) } }

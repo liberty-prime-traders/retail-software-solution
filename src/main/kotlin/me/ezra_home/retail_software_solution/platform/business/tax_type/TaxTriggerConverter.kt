@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.platform.business.tax_type
 
 import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
-import me.ezra_home.retail_software_solution.util.enums.EnumListConverter
+import me.ezra_home.retail_software_solution.util.enums.EnumSetConverter
 
 @Converter(autoApply = true)
-class TaxTriggerConverter : EnumListConverter<TaxTrigger>(TaxTrigger::class.java)
+class TaxTriggerConverter : EnumSetConverter<TaxTrigger>(TaxTrigger::class.java)

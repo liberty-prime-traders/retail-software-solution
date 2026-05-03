@@ -16,7 +16,7 @@ class ContactSeeder(
     override fun seed() {
         if (contactCache.getAllContacts().find { it.id == SystemContact.WALK_IN.id} != null ) return
         val entity = ContactEntity(
-            contactType = ContactType.CUSTOMER,
+            contactTypes = setOf(ContactType.CUSTOMER),
             firstName = "Walk-In Customer",
             status = ContactStatus.ACTIVE,
             systemDefined = true

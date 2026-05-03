@@ -20,11 +20,11 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: contact_type
-                  type: nvarchar2(5)
+                  name: contact_types
+                  type: text
                   constraints:
                     nullable: false
-                    notNullConstraintName: contact_contact_type_notnull
+                    notNullConstraintName: contact_contact_types_notnull
 
               - column:
                   name: first_name

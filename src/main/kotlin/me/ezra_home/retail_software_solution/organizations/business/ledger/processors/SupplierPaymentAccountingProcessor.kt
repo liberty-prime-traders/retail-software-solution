@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
@@ -27,9 +28,11 @@ class SupplierPaymentAccountingProcessor(
     override val eventType: KClass<SupplierPaymentRecordedEvent> = SupplierPaymentRecordedEvent::class
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: SupplierPaymentRecordedEvent): Boolean {
-        return ledgerEntryGroupRepository.existsBySourceReferenceNumber(event.paymentReferenceNumber).not()
-    }
+    override fun shouldProcess(event: SupplierPaymentRecordedEvent): Boolean =
+        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceLocationId(
+            event.paymentReferenceNumber,
+            SessionContextProvider.getLocationId()
+        ).not()
 
     override fun prepareLedgerRequest(event: SupplierPaymentRecordedEvent): LedgerPostingRequest {
         val supplier = contactService.getContactById(event.supplierId)

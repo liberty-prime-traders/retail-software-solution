@@ -9,7 +9,7 @@ data class ContactDto(
     val createdById: UUID,
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
-    val contactType: ContactType,
+    val contactTypes: Set<ContactType>,
     val firstName: String? = null,
     val lastName: String? = null,
     val companyName: String? = null,
