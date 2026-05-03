@@ -6,6 +6,6 @@ import java.util.UUID
 
 @Repository
 interface LedgerEntryGroupRepository : JpaRepository<LedgerEntryGroupEntity, UUID> {
-    fun existsBySourceReferenceNumber(reference: String): Boolean
-    fun existsBySourceReferenceNumberAndSourceType(reference: String, sourceType: LedgerSourceType): Boolean
+    fun existsBySourceReferenceNumberAndSourceLocationId(reference: String, locationId: UUID): Boolean
+    fun existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(reference: String, sourceType: LedgerSourceType, locationId: UUID): Boolean
 }

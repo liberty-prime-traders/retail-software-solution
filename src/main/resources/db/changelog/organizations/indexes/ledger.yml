@@ -8,16 +8,16 @@ databaseChangeLog:
         - not:
             - uniqueConstraintExists:
                 tableName: ledger_entry_group
-                constraintName: uq_ledger_entry_group_source_ref_type
+                constraintName: uq_ledger_entry_grp_ref_type_loc
       changes:
         - addUniqueConstraint:
             tableName: ledger_entry_group
-            constraintName: uq_ledger_entry_group_source_ref_type
-            columnNames: source_reference_number, source_type
+            constraintName: uq_ledger_entry_grp_ref_type_loc
+            columnNames: source_reference_number, source_type, source_location_id
       rollback:
         - dropUniqueConstraint:
             tableName: ledger_entry_group
-            constraintName: uq_ledger_entry_group_source_ref_type
+            constraintName: uq_ledger_entry_grp_ref_type_loc
 
   - changeSet:
       id: create-index-ledger-entry-group-source-ref
@@ -27,18 +27,20 @@ databaseChangeLog:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_ledger_entry_group_source_ref
+                indexName: idx_ledger_entry_grp_src_ref_loc
       changes:
         - createIndex:
             tableName: ledger_entry_group
-            indexName: idx_ledger_entry_group_source_ref
+            indexName: idx_ledger_entry_grp_src_ref_loc
             columns:
               - column:
                   name: source_reference_number
+              - column:
+                  name: source_location_id
       rollback:
         - dropIndex:
             tableName: ledger_entry_group
-            indexName: idx_ledger_entry_group_source_ref
+            indexName: idx_ledger_entry_grp_src_ref_loc
 
   - changeSet:
       id: create-index-ledger-entry-group-ref

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
@@ -107,7 +106,8 @@ class PurchaseAssembler(
         quantityYetToBeDelivered = line.getRemainingQuantity(),
         quantityCanceled = line.quantityCanceled,
         quantityExpected = line.getExpectedQuantity(),
-        locationProduct = PurchaseLineProductDto(
+        locationProduct = LocationProductSummaryDto(
+          id = product.id,
           referenceNumber = product.referenceNumber,
           productName = product.productName,
           productGroupName = product.productGroupName,

@@ -31,14 +31,14 @@ class PurchaseDeliveryService(
     val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
     purchaseDeliveryValidator.validate(dto, context.purchaseLineById)
 
-    val deliveries = dto.lines.map { line ->
+    val deliveryLines = dto.lines.map { line ->
       val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
       val factor = unitConversionGraphFacade.getFactor(line.unitId, purchaseLine.unitId)
       DeliveryLineQuantity(line.purchaseLineId, Decimals.multiplyScale4(line.quantityDelivered, factor))
     }
 
-    val response = deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveries)
     val deliveryRecord = persistDelivery(dto)
+    val response = deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveryLines)
     deliveryHandlerForKafka.publish(context, deliveryRecord)
     return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(dto.purchaseId))
   }

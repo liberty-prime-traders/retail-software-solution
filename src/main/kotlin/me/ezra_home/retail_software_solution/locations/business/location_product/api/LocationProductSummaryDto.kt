@@ -9,6 +9,5 @@ data class LocationProductSummaryDto(
     val productGroupName: String,
     val baseUnitId: UUID
 ) {
-    val label: String
-        get() = "$referenceNumber - $productName"
+    val label: String = "$referenceNumber - $productName"
 }

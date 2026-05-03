@@ -48,11 +48,11 @@ class DeliveryHandlerForPurchase(
     }
     
     @TransactionalOnLocationSchema
-    fun commitDelivery(purchaseId: UUID, deliveries: List<DeliveryLineQuantity>): PurchaseResponseDto {
+    fun commitDelivery(purchaseId: UUID, deliveryLines: List<DeliveryLineQuantity>): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         val lineById = purchaseLines.associateBy { it.id!! }
-        val toSave = deliveries.map { (lineId, qty) ->
+        val toSave = deliveryLines.map { (lineId, qty) ->
             lineById[lineId]?.also {
                 it.quantityDelivered = it.quantityDelivered.add(qty)
             } ?: throw RtsGenericException("Purchase line $lineId not found")
