@@ -10,7 +10,7 @@ data class ContactResponseDto(
     val createdBy: String?,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String,
-    val contactType: ContactType,
+    val contactTypes: Set<ContactType>,
     val identityType: IdentityType,
     val firstName: String? = null,
     val lastName: String? = null,

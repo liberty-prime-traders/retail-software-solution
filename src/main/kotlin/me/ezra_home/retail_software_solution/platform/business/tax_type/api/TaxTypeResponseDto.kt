@@ -13,5 +13,5 @@ data class TaxTypeResponseDto(
     val calculationMethod: CalculationMethod,
     val taxRecoveryType: TaxRecoveryType,
     val taxApplicationLevel: TaxApplicationLevel,
-    val taxTriggers: List<TaxTrigger>
+    val taxTriggers: Set<TaxTrigger>
 ) : Serializable

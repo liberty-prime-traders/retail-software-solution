@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductInsertDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
@@ -25,7 +24,6 @@ interface LocationProductMapper {
     @Mapping(target = "stockBalance", ignore = true)
     fun toEntity(insertDto: LocationProductInsertDto): LocationProductEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(target = "baseUnit", expression = "java(ctx.getUnitName())")
     @Mapping(target = "stockBalance", expression = "java(ctx.getBalance())")
     fun toResponseDto(dto: LocationProductDto, @Context ctx: LocationProductContext): LocationProductResponseDto

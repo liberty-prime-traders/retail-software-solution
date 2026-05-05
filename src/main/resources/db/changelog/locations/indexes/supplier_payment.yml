@@ -19,3 +19,23 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_supplier_payment_purchase_id
             tableName: supplier_payment
+
+  - changeSet:
+      id: create-index-supplier-payment-delivery-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_supplier_payment_delivery_id
+      changes:
+        - createIndex:
+            indexName: idx_supplier_payment_delivery_id
+            tableName: supplier_payment
+            columns:
+              - column:
+                  name: delivery_id
+      rollback:
+        - dropIndex:
+            indexName: idx_supplier_payment_delivery_id
+            tableName: supplier_payment

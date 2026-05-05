@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
@@ -27,9 +28,11 @@ class PurchaseDeliveryAccountingProcessor(
     override val eventType: KClass<PurchaseDeliveredEvent> = PurchaseDeliveredEvent::class
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: PurchaseDeliveredEvent): Boolean {
-        return ledgerEntryGroupRepository.existsBySourceReferenceNumber(event.deliveryReferenceNumber).not()
-    }
+    override fun shouldProcess(event: PurchaseDeliveredEvent): Boolean =
+        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceLocationId(
+            event.deliveryReferenceNumber,
+            SessionContextProvider.getLocationId()
+        ).not()
 
     override fun prepareLedgerRequest(event: PurchaseDeliveredEvent): LedgerPostingRequest {
         val postingDate = DateTimes.Local.atOrganizationZone(event.deliveredAt)

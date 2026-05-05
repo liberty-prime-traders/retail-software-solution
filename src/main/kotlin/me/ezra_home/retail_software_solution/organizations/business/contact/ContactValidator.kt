@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
-import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactIdentity
 
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactIdentity
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.IdentityType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -10,6 +11,17 @@ import java.util.UUID
 class ContactValidator(
     private val contactCache: ContactCache
 ) {
+
+    fun validateContactTypes(types: Set<ContactType>) {
+        if(types.isEmpty()) {
+            throw RtsGenericException("At least one contact type required")
+        }
+        if (ContactType.OTHER in types) {
+            if(types.size > 1) {
+                throw RtsGenericException("OTHER cannot be combined with other contact types")
+            }
+        }
+    }
 
     fun validateIdentity(
         identityType: IdentityType,

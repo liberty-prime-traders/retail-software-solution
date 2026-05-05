@@ -4,7 +4,7 @@ import java.io.Serializable
 import java.math.BigDecimal
 
 data class ContactInsertDto(
-    val contactType: ContactType,
+    val contactTypes: Set<ContactType>,
     val identityType: IdentityType,
     val firstName: String? = null,
     val lastName: String? = null,

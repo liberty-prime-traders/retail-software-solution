@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-sale-line-stock-reservation-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: sale_line_stock_reservation
+              - column:
+                  name: default_prefix
+                  value: SLSR
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Sale Line Stock Reservation
+              - column:
+                  name: description
+                  value: Stock reservations associated with sale line items
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

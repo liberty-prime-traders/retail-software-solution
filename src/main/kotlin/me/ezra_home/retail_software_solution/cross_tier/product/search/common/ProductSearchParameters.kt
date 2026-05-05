@@ -10,6 +10,7 @@ data class ProductSearchParameters(
     val referenceNumber: String? = null,
     val categoryIds: Set<UUID> = emptySet(),
     val tagIds: Set<UUID> = emptySet(),
+    val excludeIds: Set<UUID> = emptySet(),
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
     override val searchStrategy: SearchStrategy = SearchStrategy.NONE
 ): HasSearchStrategy<ProductSearchParameters> {

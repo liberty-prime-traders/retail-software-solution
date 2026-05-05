@@ -28,8 +28,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: contact_type
-                  type: nvarchar2(5)
+                  name: contact_types
+                  type: text
               - column:
                   name: first_name
                   type: nvarchar2(255)

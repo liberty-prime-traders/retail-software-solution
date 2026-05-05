@@ -5,15 +5,15 @@ import jakarta.persistence.Converter
 import java.util.EnumSet
 
 @Converter
-open class EnumListConverter<ENUM>(private val enumClass: Class<ENUM>) : AttributeConverter<List<ENUM>, String?>
+open class EnumSetConverter<ENUM>(private val enumClass: Class<ENUM>) : AttributeConverter<Set<ENUM>, String?>
         where ENUM : Enum<ENUM>, ENUM : HasCode {
 
-    override fun convertToDatabaseColumn(values: List<ENUM>?): String? =
+    override fun convertToDatabaseColumn(values: Set<ENUM>?): String? =
         values?.joinToString(",") { it.code }
 
-    override fun convertToEntityAttribute(value: String?): List<ENUM>? {
+    override fun convertToEntityAttribute(value: String?): Set<ENUM>? {
         if (value.isNullOrBlank()) return null
         val all = EnumSet.allOf(enumClass)
-        return value.split(",").map { code -> all.first { it.code == code } }
+        return value.split(",").mapTo(LinkedHashSet()) { code -> all.first { it.code == code } }
     }
 }

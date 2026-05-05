@@ -10,7 +10,7 @@ data class TaxTypeUpdateDto(
     val description: Optional<String>? = null,
     val taxRecoveryType: Optional<TaxRecoveryType>? = null,
     val taxApplicationLevel: Optional<TaxApplicationLevel>? = null,
-    val taxTriggers: Optional<List<TaxTrigger>>? = null
+    val taxTriggers: Optional<Set<TaxTrigger>>? = null
 ) : Serializable {
 
     fun applyTo(existing: TaxTypeDto): TaxTypeDto = existing.copy(

@@ -36,7 +36,7 @@ class TaxTypeService(
             ?: throw UpdatingNonExistingRecordException()
         val effectiveName = dto.name?.orElse(existing.name) ?: existing.name
         StringUtils.requireHasValue(effectiveName, "Name must not be blank")
-        if (dto.taxTriggers != null && dto.taxTriggers.orElse(emptyList())?.isEmpty() == true)
+        if (dto.taxTriggers != null && dto.taxTriggers.orElse(emptySet())?.isEmpty() == true)
             throw RtsGenericException("At least one tax trigger is required")
         if (taxTypeCache.getAll().any { StringUtils.isEquivalent(it.name, effectiveName) && it.id != existing.id })
             throw RtsGenericException("A tax type named '$effectiveName' already exists")

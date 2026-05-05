@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineProductDto
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -51,7 +50,8 @@ class PurchaseDeliveryAssembler(
           unitId = dl.unitId,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
-          locationProduct = PurchaseLineProductDto(
+          locationProduct = LocationProductSummaryDto(
+            id = product.id,
             referenceNumber = product.referenceNumber,
             productName = product.productName,
             productGroupName = product.productGroupName,

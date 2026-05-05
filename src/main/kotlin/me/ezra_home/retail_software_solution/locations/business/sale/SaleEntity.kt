@@ -1,0 +1,44 @@
+package me.ezra_home.retail_software_solution.locations.business.sale
+
+import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.purchase.PaymentStatusConverter
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
+import me.ezra_home.retail_software_solution.util.model.TableName
+import me.ezra_home.retail_software_solution.util.model.TableNames
+import org.hibernate.envers.Audited
+import java.time.OffsetDateTime
+import java.util.UUID
+
+@Audited
+@Entity
+@Table(name = TableNames.SALE)
+@HasReference(tableName = TableName.SALE)
+class SaleEntity(
+
+    @Column(name = "contact_id", nullable = false)
+    var contactId: UUID,
+
+    @Column(name = "sold_by")
+    var soldBy: UUID? = null,
+
+    @Column(name = "date_sold")
+    var dateSold: OffsetDateTime? = null,
+
+    @Column(name = "notes")
+    var notes: String? = null,
+
+    @Convert(converter = SaleStatusConverter::class)
+    @Column(name = "status", nullable = false, length = 5)
+    var status: SaleStatus = SaleStatus.DRAFT,
+
+    @Convert(converter = PaymentStatusConverter::class)
+    @Column(name = "payment_status", nullable = false, length = 5)
+    var paymentStatus: PaymentStatus = PaymentStatus.UNPAID
+
+) : HasReferenceEntity()

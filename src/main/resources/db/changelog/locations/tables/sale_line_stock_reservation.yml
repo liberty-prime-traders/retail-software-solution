@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-line-stock-reservation-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_line_stock_reservation
+      changes:
+        - createTable:
+            tableName: sale_line_stock_reservation
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: sale_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_stock_reservation_sale_id_notnull
+
+              - column:
+                  name: sale_line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_stock_reservation_sale_line_id_notnull
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_stock_reservation_location_product_id_notnull
+
+              - column:
+                  name: quantity_reserved
+                  type: numeric(15, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_stock_reservation_quantity_reserved_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_stock_reservation_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_line_stock_reservation

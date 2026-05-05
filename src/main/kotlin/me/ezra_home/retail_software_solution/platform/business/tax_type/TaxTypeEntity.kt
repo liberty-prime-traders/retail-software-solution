@@ -40,6 +40,6 @@ class TaxTypeEntity(
 
     @Convert(converter = TaxTriggerConverter::class)
     @Column(name = "tax_triggers", nullable = false)
-    var taxTriggers: List<TaxTrigger>
+    var taxTriggers: Set<TaxTrigger>
 
 ) : HasReferenceEntity()

@@ -64,6 +64,10 @@ class PaymentMethodService(
         return paymentMethodMapper.toResponseDto(saved, accountNamesByCode[saved.accountCode])
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getNamesById(): Map<UUID, String> =
+        paymentMethodCache.getAllPaymentMethods().mapNotNull { it.name?.let { name -> it.id to name } }.toMap()
+
     fun deletePaymentMethod(id: UUID) {
         paymentMethodCache.deletePaymentMethod(id)
     }
