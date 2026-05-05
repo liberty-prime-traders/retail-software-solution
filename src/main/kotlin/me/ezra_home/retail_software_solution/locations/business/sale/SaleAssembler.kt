@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
+import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -78,6 +79,7 @@ class SaleAssembler(
             id = sale.id!!,
             referenceNumber = sale.referenceNumber!!,
             contactId = sale.contactId,
+            walkInCustomer = sale.contactId == SystemContact.WALK_IN.id,
             contactName = contactNameMap[sale.contactId] ?: "",
             soldById = sale.soldBy,
             soldBy = userQualifier.getUserFullName(sale.soldBy),

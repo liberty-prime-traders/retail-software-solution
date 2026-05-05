@@ -7,6 +7,7 @@ object ParameterNames {
   const val REFERENCE_NUMBER = "referenceNumber"
   const val CATEGORY_IDS = "categoryIds"
   const val TAG_IDS = "tagIds"
+  const val EXCLUDE_IDS = "excludeIds"
   const val TAG_IDS_COUNT = "tagIdsCount"
   const val PAGE_SIZE = "pageSize"
 }

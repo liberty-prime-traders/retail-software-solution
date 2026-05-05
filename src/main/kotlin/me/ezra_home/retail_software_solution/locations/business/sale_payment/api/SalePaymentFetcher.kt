@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
@@ -12,7 +13,8 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class SalePaymentFetcher(
     private val salePaymentRepository: SalePaymentRepository,
-    private val salePaymentVoidRepository: SalePaymentVoidRepository
+    private val salePaymentVoidRepository: SalePaymentVoidRepository,
+    private val paymentMethodService: PaymentMethodService
 ) {
 
     fun calculatePaidAmount(saleId: UUID): BigDecimal {
@@ -32,8 +34,13 @@ class SalePaymentFetcher(
         val voidsBySalePaymentId = salePaymentVoidRepository
             .findBySalePaymentIdIn(payments.map { it.id!! })
             .associateBy { it.salePaymentId }
+        val paymentMethodNamesById = paymentMethodService.getNamesById()
         return payments.groupBy({ it.saleId }) { payment ->
-            SalePaymentMapper.toResponseDto(payment, voidsBySalePaymentId[payment.id!!]?.reason, null)
+            SalePaymentMapper.toResponseDto(
+                payment,
+                voidsBySalePaymentId[payment.id!!]?.reason,
+                paymentMethodNamesById
+            )
         }
     }
 

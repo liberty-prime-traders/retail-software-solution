@@ -39,6 +39,16 @@ class SaleEndpoint(
         return saleCreator.updateDraft(dto)
     }
 
+    @PutMapping("complete")
+    fun convertDraftToSale(@RequestBody dto: SaleUpdateDto): SaleResponseDto {
+        return saleCreator.convertDraftToSale(dto)
+    }
+
+    @PostMapping("complete")
+    fun createSale(@RequestBody dto: SaleCreateDto): SaleResponseDto {
+        return saleCreator.createSale(dto)
+    }
+
     @PutMapping("{saleId}/void")
     fun voidSale(@PathVariable saleId: UUID): SaleResponseDto {
         return saleUpdater.voidSale(saleId)

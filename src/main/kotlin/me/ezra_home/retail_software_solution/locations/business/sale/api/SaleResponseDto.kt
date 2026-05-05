@@ -10,6 +10,7 @@ data class SaleResponseDto(
     val id: UUID,
     val referenceNumber: String,
     val contactId: UUID,
+    val walkInCustomer: Boolean,
     val contactName: String,
     val soldById: UUID?,
     val soldBy: String?,

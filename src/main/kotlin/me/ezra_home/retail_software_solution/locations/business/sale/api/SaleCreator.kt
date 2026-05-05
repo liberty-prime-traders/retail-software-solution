@@ -19,7 +19,6 @@ import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -54,7 +53,7 @@ class SaleCreator(
         saleStockReserver.reserve(sale.id!!, lines, resolvedQuantities)
         if (dto.payments.isNotEmpty()) {
             val saleTotal = lines.sumOf { Decimals.multiplyScale4(it.quantity, it.unitPrice) }
-            salePaymentService.recordPaymentsForNewSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
+            salePaymentService.recordPaymentsSubmittedWithSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
         }
         return saleAssembler.buildResponse(sale, lines)
     }
@@ -86,7 +85,7 @@ class SaleCreator(
         val (lines, _) = saleLinesUpdater.applyLineUpdates(sale.id!!, dto)
         if (dto.payments.isNotEmpty()) {
             val saleTotal = lines.sumOf { Decimals.multiplyScale4(it.quantity, it.unitPrice) }
-            salePaymentService.recordPaymentsForNewSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
+            salePaymentService.recordPaymentsSubmittedWithSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
         }
         return saleAssembler.buildResponse(sale, lines)
     }
@@ -107,7 +106,7 @@ class SaleCreator(
         saleLineRepository.saveAll(lines)
         if (dto.payments.isNotEmpty()) {
             val saleTotal = lines.sumOf { Decimals.multiplyScale4(it.quantity, it.unitPrice) }
-            salePaymentService.recordPaymentsForNewSale(sale.id!!, contactId, dto.payments, saleTotal)
+            salePaymentService.recordPaymentsSubmittedWithSale(sale.id!!, contactId, dto.payments, saleTotal)
         }
         runFifoConsumption(lines, resolvedQuantities, sale.referenceNumber!!)
         saleHandlerForKafka.publish(sale, lines)
@@ -132,7 +131,7 @@ class SaleCreator(
     }
 
     fun convertDraftToSale(dto: SaleUpdateDto): SaleResponseDto {
-        val sale = saleRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
+        val sale = saleRepository.getReferenceById(dto.id)
         SaleValidator.guardIsDraft(sale)
         applyContactId(sale, dto)
         sale.soldBy = dto.soldBy ?: sale.soldBy ?: SessionContextProvider.getUserId()
@@ -142,7 +141,7 @@ class SaleCreator(
         SaleValidator.guardHasLines(lines)
         val saleTotal = lines.sumOf { Decimals.multiplyScale4(it.quantity, it.unitPrice) }
         if (dto.payments.isNotEmpty()) {
-            salePaymentService.recordPaymentsForNewSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
+            salePaymentService.recordPaymentsSubmittedWithSale(sale.id!!, sale.contactId, dto.payments, saleTotal)
         }
         if (sale.contactId == SystemContact.WALK_IN.id) {
             saleValidator.guardWalkInPaymentCoverage(dto.id, saleTotal)

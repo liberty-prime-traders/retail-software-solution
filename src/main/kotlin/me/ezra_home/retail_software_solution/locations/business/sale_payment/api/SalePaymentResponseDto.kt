@@ -9,11 +9,10 @@ data class SalePaymentResponseDto(
     val id: UUID,
     val referenceNumber: String,
     val saleId: UUID,
-    val paymentMethodId: UUID,
     val amount: BigDecimal,
     val reference: String?,
     val paymentDate: OffsetDateTime?,
-    val createdOn: String,
+    val paymentMethodName: String,
     val voidedReason: String? = null,
     val updatedSalePaymentStatus: PaymentStatus? = null
 )
