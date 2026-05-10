@@ -100,6 +100,20 @@ class EventProcessingLogService(
         return existing?.status == EventProcessingLogStatus.RETRYING
     }
 
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun isProcessorCompleted(eventId: UUID, consumerGroup: String, processorName: String): Boolean {
+        val existing = repository.findLatestByEventIdAndConsumerGroup(eventId, consumerGroup) ?: return false
+        return processorName in existing.completedProcessors
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun markProcessorCompleted(eventId: UUID, consumerGroup: String, processorName: String) {
+        val entry = repository.findLatestByEventIdAndConsumerGroup(eventId, consumerGroup) ?: return
+        if (processorName in entry.completedProcessors) return
+        entry.completedProcessors += processorName
+        repository.save(entry)
+    }
+
     private fun publishToDlt(event: TransactionEvent, consumerGroup: String, entry: EventProcessingLogEntity) {
         val dltTopic = "${KafkaConstants.Topics.TRANSACTION_EVENTS}.$consumerGroup.DLT"
         try {

@@ -63,3 +63,23 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_stock_movement_location_product_id_created_on
             tableName: stock_movement
+
+  - changeSet:
+      id: add-unique-constraint-stock-movement-ext-ref-type-product
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - uniqueConstraintExists:
+                tableName: stock_movement
+                constraintName: uq_stock_movement_ext_ref_type_product
+      changes:
+        - addUniqueConstraint:
+            tableName: stock_movement
+            constraintName: uq_stock_movement_ext_ref_type_product
+            columnNames: external_reference_number, movement_type, location_product_id
+      rollback:
+        - dropUniqueConstraint:
+            tableName: stock_movement
+            constraintName: uq_stock_movement_ext_ref_type_product

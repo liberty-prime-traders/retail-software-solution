@@ -61,6 +61,14 @@ databaseChangeLog:
               - column:
                   name: recoverable_account_code
                   type: nvarchar2(50)
+
+              - column:
+                  name: tax_inclusive
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_jurisdiction_tax_type_tax_inclusive_notnull
       rollback:
         - dropTable:
             tableName: org_jurisdiction_tax_type

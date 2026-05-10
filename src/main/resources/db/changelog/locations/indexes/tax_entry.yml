@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-unique-constraint-tax-entry-source-ref-type-tax-type
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - uniqueConstraintExists:
+                tableName: tax_entry
+                constraintName: uq_tax_entry_src_ref_type_tax_type
+      changes:
+        - addUniqueConstraint:
+            tableName: tax_entry
+            constraintName: uq_tax_entry_src_ref_type_tax_type
+            columnNames: source_reference_number, source_type, tax_type_id
+      rollback:
+        - dropUniqueConstraint:
+            tableName: tax_entry
+            constraintName: uq_tax_entry_src_ref_type_tax_type

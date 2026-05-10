@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.util.enums.HasCode
 enum class LedgerSourceType(override val code: String) : HasCode {
     PURCHASE_DELIVERY("PD"),
     SALE("SL"),
+    SALE_VOID("SLV"),
     SALE_PAYMENT("SLP"),
     SALE_PAYMENT_VOID("SLPV"),
     SUPPLIER_PAYMENT("SP"),

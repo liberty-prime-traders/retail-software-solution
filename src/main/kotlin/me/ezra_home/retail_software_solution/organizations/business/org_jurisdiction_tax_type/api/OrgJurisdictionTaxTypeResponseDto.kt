@@ -16,5 +16,6 @@ data class OrgJurisdictionTaxTypeResponseDto(
     val payableAccountCode: String?,
     val payableAccount: String?,
     val recoverableAccountCode: String?,
-    val recoverableAccount: String?
+    val recoverableAccount: String?,
+    val taxInclusive: Boolean
 ) : Serializable

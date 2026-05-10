@@ -21,7 +21,8 @@ class LocationProductDataFetcher(
                 referenceNumber = entity.referenceNumber!!,
                 productName = entity.productName,
                 productGroupName = entity.productGroupName,
-                baseUnitId = entity.baseUnitId
+                baseUnitId = entity.baseUnitId,
+                unitPrice = entity.defaultSalePrice
             )
         }
 

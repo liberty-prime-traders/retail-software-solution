@@ -85,6 +85,10 @@ databaseChangeLog:
                   type: bigint
 
               - column:
+                  name: completed_processors
+                  type: text
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
