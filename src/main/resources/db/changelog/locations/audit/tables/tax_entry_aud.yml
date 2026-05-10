@@ -1,16 +1,16 @@
 databaseChangeLog:
   - changeSet:
-      id: create-org-jurisdiction-tax-type-aud-table
+      id: create-tax-entry-aud-table
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
-            tableExists:
-              tableName: org_jurisdiction_tax_type_aud
+            - tableExists:
+                tableName: tax_entry_aud
       changes:
         - createTable:
-            tableName: org_jurisdiction_tax_type_aud
+            tableName: tax_entry_aud
             columns:
               - column:
                   name: id
@@ -31,24 +31,40 @@ databaseChangeLog:
                     nullable: false
 
               - column:
-                  name: jurisdiction_tax_type_id
+                  name: source_reference_number
+                  type: varchar(5)
+
+              - column:
+                  name: source_type
+                  type: varchar(30)
+
+              - column:
+                  name: tax_type_id
                   type: uuid
 
               - column:
-                  name: status
-                  type: nvarchar2(5)
+                  name: fiscal_period_id
+                  type: uuid
 
               - column:
-                  name: payable_account_code
-                  type: nvarchar2(50)
+                  name: calculation_method
+                  type: varchar(5)
 
               - column:
-                  name: recoverable_account_code
-                  type: nvarchar2(50)
+                  name: rate
+                  type: numeric(19, 4)
 
               - column:
                   name: tax_inclusive
                   type: boolean
+
+              - column:
+                  name: taxable_amount
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_amount
+                  type: numeric(19, 4)
 
               - column:
                   name: revend
@@ -59,9 +75,10 @@ databaseChangeLog:
                   type: timestamp
 
         - addPrimaryKey:
-            tableName: org_jurisdiction_tax_type_aud
+            tableName: tax_entry_aud
             columnNames: id, rev
-            constraintName: pk_org_jurisdiction_tax_type_aud
+            constraintName: pk_tax_entry_aud
+
       rollback:
         - dropTable:
-            tableName: org_jurisdiction_tax_type_aud
+            tableName: tax_entry_aud

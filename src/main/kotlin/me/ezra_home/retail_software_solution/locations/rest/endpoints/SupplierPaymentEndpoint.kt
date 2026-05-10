@@ -20,7 +20,7 @@ class SupplierPaymentEndpoint(private val supplierPaymentService: SupplierPaymen
     fun recordPayment(@RequestBody dto: SupplierPaymentCreateDto): SupplierPaymentResponseDto =
         supplierPaymentService.recordPayment(dto)
 
-    @PostMapping("/void")
+    @PostMapping("void")
     fun voidPayment(@RequestBody dto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto =
         supplierPaymentService.voidPayment(dto)
 

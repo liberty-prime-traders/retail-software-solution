@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.kafka_log
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Repository
@@ -15,4 +16,9 @@ interface EventProcessingLogRepository : JpaRepository<EventProcessingLogEntity,
     fun findLatestByEventIdAndConsumerGroup(eventId: UUID, consumerGroup: String): EventProcessingLogEntity?
 
     fun findBySourceDocumentId(sourceDocumentId: UUID): List<EventProcessingLogEntity>
+
+    fun findByStatusAndCreatedOnBefore(
+        status: EventProcessingLogStatus,
+        before: OffsetDateTime
+    ): List<EventProcessingLogEntity>
 }

@@ -13,7 +13,7 @@ class ProductTagValidator(
     fun validateTagsExist(tagIds: Set<UUID>) {
         if (tagIds.isEmpty()) return
 
-        val existingTagIds = tagService.getAllTagDtos().mapNotNull { it.id }.toSet()
+        val existingTagIds = tagService.getAllTagDtos().map { it.id }.toSet()
         val missingTagIds = tagIds - existingTagIds
         if (missingTagIds.isNotEmpty()) {
             throw RtsGenericException(

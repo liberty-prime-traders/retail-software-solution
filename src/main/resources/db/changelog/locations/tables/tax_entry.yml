@@ -1,0 +1,107 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax-entry-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tax_entry
+      changes:
+        - createTable:
+            tableName: tax_entry
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: tax_entry_reference_number_unique
+
+              - column:
+                  name: source_reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_source_reference_number_notnull
+
+              - column:
+                  name: source_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_source_type_notnull
+
+              - column:
+                  name: tax_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_tax_type_id_notnull
+
+              - column:
+                  name: fiscal_period_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_fiscal_period_id_notnull
+
+              - column:
+                  name: calculation_method
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_calculation_method_notnull
+
+              - column:
+                  name: rate
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_rate_notnull
+
+              - column:
+                  name: tax_inclusive
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_tax_inclusive_notnull
+
+              - column:
+                  name: taxable_amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_taxable_amount_notnull
+
+              - column:
+                  name: tax_amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_tax_amount_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: tax_entry

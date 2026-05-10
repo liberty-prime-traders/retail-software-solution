@@ -66,9 +66,12 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_PAYMENT_VOID(TableNames.SUPPLIER_PAYMENT_VOID, SchemaLevel.LOCATION),
   SALE(TableNames.SALE, SchemaLevel.LOCATION),
   SALE_LINE(TableNames.SALE_LINE, SchemaLevel.LOCATION),
+  SALE_DISCOUNT(TableNames.SALE_DISCOUNT, SchemaLevel.LOCATION),
   SALE_PAYMENT(TableNames.SALE_PAYMENT, SchemaLevel.LOCATION),
   SALE_PAYMENT_VOID(TableNames.SALE_PAYMENT_VOID, SchemaLevel.LOCATION),
+  SALE_VOID(TableNames.SALE_VOID, SchemaLevel.LOCATION),
   SALE_LINE_STOCK_RESERVATION(TableNames.SALE_LINE_STOCK_RESERVATION, SchemaLevel.LOCATION),
+  TAX_ENTRY(TableNames.TAX_ENTRY, SchemaLevel.LOCATION),
 
   // Platform-level audit tables
   ORGANIZATION_AUDIT(TableNames.ORGANIZATION_AUDIT, SchemaLevel.PLATFORM),
@@ -106,7 +109,9 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   STOCK_MOVEMENT_AUDIT(TableNames.STOCK_MOVEMENT_AUDIT, SchemaLevel.LOCATION),
   SUPPLIER_RETURN_AUDIT(TableNames.SUPPLIER_RETURN_AUDIT, SchemaLevel.LOCATION),
   SALE_AUDIT(TableNames.SALE_AUDIT, SchemaLevel.LOCATION),
-  SALE_LINE_AUDIT(TableNames.SALE_LINE_AUDIT, SchemaLevel.LOCATION);
+  SALE_LINE_AUDIT(TableNames.SALE_LINE_AUDIT, SchemaLevel.LOCATION),
+  SALE_DISCOUNT_AUDIT(TableNames.SALE_DISCOUNT_AUDIT, SchemaLevel.LOCATION),
+  TAX_ENTRY_AUDIT(TableNames.TAX_ENTRY_AUDIT, SchemaLevel.LOCATION);
 
   val tableName: String
     get() = code
