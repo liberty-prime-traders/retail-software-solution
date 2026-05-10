@@ -49,6 +49,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.google.code.gson:gson:2.10.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("org.jetbrains:annotations:24.0.0")
 
 	implementation("org.liquibase:liquibase-core")
 	runtimeOnly("org.postgresql:postgresql")

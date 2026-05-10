@@ -29,6 +29,9 @@ class OrgJurisdictionTaxTypeEntity(
     var payableAccountCode: String,
 
     @Column(name = "recoverable_account_code", length = 50)
-    var recoverableAccountCode: String? = null
+    var recoverableAccountCode: String? = null,
+
+    @Column(name = "tax_inclusive", nullable = false)
+    var taxInclusive: Boolean = true
 
 ) : HasReferenceEntity()

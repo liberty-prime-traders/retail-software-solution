@@ -28,7 +28,7 @@ class TransactionEventConsumerSupport(
         processors: List<TransactionEventProcessor<*>>
     ) {
         @Suppress("UNCHECKED_CAST")
-        val processorsForEvent = processors.filter { it.eventType == event::class } as List<TransactionEventProcessor<EVENT>>
+        val processorsForEvent = processors.filter { it.eventType.isInstance(event) } as List<TransactionEventProcessor<EVENT>>
 
         if (processorsForEvent.isEmpty()) {
             return
@@ -58,13 +58,19 @@ class TransactionEventConsumerSupport(
         consumerGroup: String,
         processors: List<TransactionEventProcessor<EVENT>>
     ) {
-        val toProcess = processors.filter { it.shouldProcess(event) }
+        val toProcess = processors.filter { processor ->
+            !logService.isProcessorCompleted(event.eventId, consumerGroup, processor::class.java.simpleName)
+                    && processor.shouldProcess(event)
+        }
         if (toProcess.isEmpty()) {
             handleNothingToProcess(event, consumerGroup)
             return
         }
         insertPendingLog(event, consumerGroup)
-        toProcess.forEach { it.handle(event) }
+        toProcess.forEach { processor ->
+            processor.handle(event)
+            logService.markProcessorCompleted(event.eventId, consumerGroup, processor::class.java.simpleName)
+        }
         markProcessedLog(event, consumerGroup)
     }
 

@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.util.StringSetConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -49,6 +50,10 @@ class EventProcessingLogEntity(
     var dltPartition: Int? = null,
 
     @Column(name = "dlt_offset")
-    var dltOffset: Long? = null
+    var dltOffset: Long? = null,
+
+    @Convert(converter = StringSetConverter::class)
+    @Column(name = "completed_processors", columnDefinition = "text")
+    var completedProcessors: Set<String> = emptySet()
 
 ) : HasReferenceEntity()

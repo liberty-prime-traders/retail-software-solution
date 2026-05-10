@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction
 
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.withSession
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
@@ -19,15 +21,19 @@ class TransactionEventProducer(
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onTransactionEvent(event: TransactionEvent) {
-        try {
-            kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, event.sourceContext.locationSchema, event).get()
-        } catch (e: Exception) {
-            log.error("Failed to publish event ${event.eventId}", e)
-            try {
-                logService.insertPublishFailed(event, e.message ?: e.javaClass.simpleName)
-            } catch (logException: Exception) {
-                log.error("Failed to record publish failure for event ${event.eventId}", logException)
+        val session = SessionContextProvider.getSession().copy()
+        kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, event.sourceContext.locationSchema, event)
+            .whenComplete { _, throwable ->
+                if (throwable != null) {
+                    log.error("Failed to publish event ${event.eventId}", throwable)
+                    runCatching {
+                        withSession(session) {
+                            logService.insertPublishFailed(event, throwable.message ?: throwable.javaClass.simpleName)
+                        }
+                    }.onFailure {
+                        log.error("Failed to record publish failure for event ${event.eventId}", it)
+                    }
+                }
             }
-        }
     }
 }
