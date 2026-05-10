@@ -5,22 +5,18 @@ import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventP
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogRepository
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogResolutionType
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogStatus
-import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.slf4j.LoggerFactory
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import java.time.Instant
 import java.util.UUID
 
+// Every method runs in REQUIRES_NEW so the log persists even when the caller's transaction rolls back.
 @Service
 class EventProcessingLogService(
-    private val repository: EventProcessingLogRepository,
-    private val kafkaTemplate: KafkaTemplate<String, TransactionEvent>
+    private val repository: EventProcessingLogRepository
 ) {
-    private val log = LoggerFactory.getLogger(EventProcessingLogService::class.java)
 
     @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
     fun insertPending(event: TransactionEvent, consumerGroup: String) {
@@ -61,13 +57,28 @@ class EventProcessingLogService(
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
-    fun markFailed(event: TransactionEvent, consumerGroup: String, reason: String) {
-        val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return
+    fun markFailed(event: TransactionEvent, consumerGroup: String, reason: String): UUID? {
+        val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return null
         entry.status = EventProcessingLogStatus.FAILED
         entry.failedOn = Instant.now()
         entry.failureReason = reason
+        return repository.save(entry).id
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun recordDltPublished(logId: UUID, partition: Int, offset: Long) {
+        val entry = repository.findById(logId).orElse(null) ?: return
+        entry.dltPartition = partition
+        entry.dltOffset = offset
         repository.save(entry)
-        publishToDlt(event, consumerGroup, entry)
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun markDltPublishFailed(logId: UUID, reason: String) {
+        val entry = repository.findById(logId).orElse(null) ?: return
+        entry.status = EventProcessingLogStatus.DLT_PUBLISH_FAILED
+        entry.failureReason = "DLT publish failed: $reason | original: ${entry.failureReason}"
+        repository.save(entry)
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
@@ -114,15 +125,24 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    private fun publishToDlt(event: TransactionEvent, consumerGroup: String, entry: EventProcessingLogEntity) {
-        val dltTopic = "${KafkaConstants.Topics.TRANSACTION_EVENTS}.$consumerGroup.DLT"
-        try {
-            val result = kafkaTemplate.send(dltTopic, event.sourceContext.locationSchema, event).get()
-            entry.dltPartition = result.recordMetadata.partition()
-            entry.dltOffset = result.recordMetadata.offset()
-            repository.save(entry)
-        } catch (e: Exception) {
-            log.error("Failed to publish event ${event.eventId} to DLT $dltTopic", e)
-        }
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun markRaceLost(event: TransactionEvent, consumerGroup: String, reason: String) {
+        val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return
+        entry.status = EventProcessingLogStatus.PROCESSED
+        entry.processedOn = Instant.now()
+        entry.failedOn = null
+        entry.failureReason = reason
+        entry.resolutionType = EventProcessingLogResolutionType.RACE_LOST
+        repository.save(entry)
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    fun markPendingTimedOut(logId: UUID) {
+        val entry = repository.findById(logId).orElse(null) ?: return
+        if (entry.status != EventProcessingLogStatus.PENDING) return
+        entry.status = EventProcessingLogStatus.FAILED
+        entry.failedOn = Instant.now()
+        entry.failureReason = "Stuck in PENDING — likely consumer crash before completion"
+        repository.save(entry)
     }
 }

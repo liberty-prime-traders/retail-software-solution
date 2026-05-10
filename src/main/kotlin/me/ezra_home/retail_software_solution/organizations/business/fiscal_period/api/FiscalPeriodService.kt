@@ -40,6 +40,11 @@ class FiscalPeriodService(
         repository.findOpenContaining(date)
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun requireOpenForDate(date: LocalDate): UUID {
+        return findOpenForDate(date) ?: throw RtsGenericException("No open fiscal period for date $date")
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAll(): List<FiscalPeriodResponseDto> {
         val config = requireConfig()
         val dtos = repository.findAll().map { mapper.toDomainDto(it) }

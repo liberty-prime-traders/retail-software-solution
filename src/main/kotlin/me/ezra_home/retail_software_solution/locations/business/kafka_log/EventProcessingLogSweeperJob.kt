@@ -27,8 +27,12 @@ class EventProcessingLogSweeperJob(
                     locationService.getAllLocationDtos().forEach { location ->
                         SessionContextProvider.initLocation(location)
                         try {
-                            val ids = sweepService.findFailedToSweep(FAILED_AGE_MINUTES)
-                            sweepService.retryAll(ids)
+                            sweepService.reclaimStalePending(
+                                sweepService.findStalePending(STALE_PENDING_AGE_MINUTES)
+                            )
+                            sweepService.retryAll(
+                                sweepService.findRetryableToSweep(RETRYABLE_AGE_MINUTES)
+                            )
                         } catch (e: Exception) {
                             log.error("Sweep failed for org {} location {}", org.id, location.id, e)
                         }
@@ -40,6 +44,7 @@ class EventProcessingLogSweeperJob(
     }
 
     companion object {
-        private const val FAILED_AGE_MINUTES = 1L
+        private const val RETRYABLE_AGE_MINUTES = 1L
+        private const val STALE_PENDING_AGE_MINUTES = 10L
     }
 }

@@ -11,7 +11,9 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Del
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
+import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 
@@ -24,10 +26,12 @@ class PurchaseDeliveryService(
   private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
   private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
   private val unitConversionGraphFacade: UnitConversionGraphFacade,
-  private val purchasePaymentStatusService: PurchasePaymentStatusService
+  private val purchasePaymentStatusService: PurchasePaymentStatusService,
+  private val fiscalPeriodService: FiscalPeriodService
 ) {
 
   fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
+    fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))
     val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
     purchaseDeliveryValidator.validate(dto, context.purchaseLineById)
 

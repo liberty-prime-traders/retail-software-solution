@@ -7,5 +7,6 @@ enum class EventProcessingLogStatus(override val code: String) : HasCode {
     PROCESSED("PRC"),
     FAILED("FAI"),
     RETRYING("RTR"),
-    PUBLISH_FAILED("PBF")
+    PUBLISH_FAILED("PBF"),
+    DLT_PUBLISH_FAILED("DPF")
 }
