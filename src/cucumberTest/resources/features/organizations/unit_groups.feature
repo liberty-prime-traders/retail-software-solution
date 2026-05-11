@@ -15,11 +15,16 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
+    And the response should contain field "id"
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
         "name": "Volume",
-        "description": "Measurement of volume"
+        "description": "Measurement of volume",
+        "systemDefined": false
       }
       """
 
@@ -28,11 +33,17 @@ Feature: Unit Groups
     Given a unit group exists
     When I send a GET request to "/secured/unitgroups"
     Then the response status should be 200
+    And the response should contain field "0.createdBy"
+    And the response should contain field "0.createdOn"
+    And the response should contain field "0.referenceNumber"
     And the response should match json:
       """
       [
         {
-          "id": "#unitGroup->0"
+          "id": "#unitGroup->0",
+          "name": "Test Unit Group",
+          "description": null,
+          "systemDefined": false
         }
       ]
       """
@@ -49,12 +60,16 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
         "id": "#unitGroup->0",
         "name": "Updated Unit Group Name",
-        "description": "Updated Description"
+        "description": "Updated Description",
+        "systemDefined": false
       }
       """
 
@@ -78,6 +93,14 @@ Feature: Unit Groups
       """
     Then the response status should be 400
     And the response error message should be "An UnitGroup using the name 'Test Unit Group' already exists"
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "An UnitGroup using the name 'Test Unit Group' already exists",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Unauthenticated user cannot view unit groups
