@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
@@ -14,6 +16,7 @@ class ResponseSteps(
   private val responseContext: ResponseContext,
   private val injectContext: InjectContext
 ) {
+  private val objectMapper = jacksonObjectMapper()
 
   @Then("the response status should be {int}")
   fun verifyStatus(expectedStatus: Int) {
@@ -32,6 +35,16 @@ class ResponseSteps(
   @Then("the response field {string} should be {string}")
   fun verifyFieldValue(fieldName: String, expectedValue: String) {
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
+  }
+
+  @Then("the response should match json:")
+  fun verifyResponseMatchesJson(expectedJson: String) {
+    val responseBody = checkNotNull(responseContext.lastResponse?.asString()) {
+      "Expected a response body but no response was captured"
+    }
+    val expectedNode = objectMapper.readTree(injectContext.inject(expectedJson))
+    val actualNode = objectMapper.readTree(responseBody)
+    assertJsonSubset(expectedNode, actualNode, "$")
   }
 
   @Then("the response should contain:")
@@ -62,6 +75,18 @@ class ResponseSteps(
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(0))
   }
 
+  @Then("the response error message should be {string}")
+  fun verifyErrorMessage(expectedMessage: String) {
+    assertNotNull(responseContext.lastError, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
+    val actualMessage = responseContext.lastResponse?.jsonPath()?.getString("message")
+    val injectedExpectedMessage = injectContext.inject(expectedMessage)
+    assertEquals(
+      injectedExpectedMessage,
+      actualMessage,
+      "Expected error message '$injectedExpectedMessage' but got '$actualMessage'"
+    )
+  }
+
   @Then("the response error should contain {string}")
   fun verifyErrorContains(expectedMessage: String) {
     val error = responseContext.lastError
@@ -75,4 +100,31 @@ class ResponseSteps(
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
   }
 
+  private fun assertJsonSubset(expected: JsonNode, actual: JsonNode, path: String) {
+    when {
+      expected.isObject -> {
+        assertTrue(actual.isObject, "Expected object at $path but got ${actual.nodeType}")
+        expected.fields().forEach { (fieldName, expectedChild) ->
+          val actualChild = actual.get(fieldName)
+          assertNotNull(actualChild, "Expected field '$fieldName' at $path but it was missing")
+          assertJsonSubset(expectedChild, actualChild, "$path.$fieldName")
+        }
+      }
+
+      expected.isArray -> {
+        assertTrue(actual.isArray, "Expected array at $path but got ${actual.nodeType}")
+        assertTrue(
+          actual.size() >= expected.size(),
+          "Expected at least ${expected.size()} items at $path but got ${actual.size()}"
+        )
+        expected.forEachIndexed { index, expectedChild ->
+          assertJsonSubset(expectedChild, actual[index], "$path[$index]")
+        }
+      }
+
+      else -> {
+        assertEquals(expected, actual, "Mismatch at $path")
+      }
+    }
+  }
 }
