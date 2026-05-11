@@ -20,15 +20,26 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
+    And the response should contain field "id"
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
+        "contactType": "CUSTOMER",
+        "identityType": "INDIVIDUAL",
         "firstName": "Jane",
         "lastName": "Smith",
         "companyName": null,
+        "fullName": "Jane Smith",
         "email": "jane.smith@example.com",
         "phone": "0987654321",
-        "address": "456 Jane St"
+        "address": "456 Jane St",
+        "creditLimit": null,
+        "notes": null,
+        "status": "ACTIVE",
+        "systemDefined": false
       }
       """
 
@@ -46,14 +57,26 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
+    And the response should contain field "id"
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
+        "contactType": "SUPPLIER",
+        "identityType": "ORGANIZATION",
         "companyName": "Tech Corp",
         "firstName": null,
+        "lastName": null,
+        "fullName": "Tech Corp",
         "email": "contact@techcorp.com",
         "phone": "1112223333",
-        "address": "Innovate Ave"
+        "address": "Innovate Ave",
+        "creditLimit": null,
+        "notes": null,
+        "status": "ACTIVE",
+        "systemDefined": false
       }
       """
 
@@ -62,7 +85,30 @@ Feature: Contacts
     Given a contact exists
     When I send a GET request to "/secured/contacts"
     Then the response status should be 200
-    And the response should contain at least 1 items
+    And the response should contain field "0.createdBy"
+    And the response should contain field "0.createdOn"
+    And the response should contain field "0.referenceNumber"
+    And the response should match json:
+      """
+      [
+        {
+          "id": "#contact->0",
+          "contactType": "CUSTOMER",
+          "identityType": "INDIVIDUAL",
+          "firstName": "John",
+          "lastName": "Doe",
+          "companyName": null,
+          "fullName": "John Doe",
+          "email": "john.doe@example.com",
+          "phone": "1234567890",
+          "address": "123 Test St",
+          "creditLimit": null,
+          "notes": null,
+          "status": "ACTIVE",
+          "systemDefined": false
+        }
+      ]
+      """
 
   @regression
   Scenario: Authenticated user updates a contact
@@ -76,12 +122,26 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
         "id": "#contact->0",
+        "contactType": "CUSTOMER",
+        "identityType": "INDIVIDUAL",
         "firstName": "John Updated",
-        "notes": "Some updated notes"
+        "lastName": "Doe",
+        "companyName": null,
+        "fullName": "John Updated Doe",
+        "email": "john.doe@example.com",
+        "phone": "1234567890",
+        "address": "123 Test St",
+        "creditLimit": null,
+        "notes": "Some updated notes",
+        "status": "ACTIVE",
+        "systemDefined": false
       }
       """
 
@@ -105,6 +165,14 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "A Contact with person 'John Doe' already exists"
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "A Contact with person 'John Doe' already exists",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: INDIVIDUAL contact requires first name
@@ -118,6 +186,14 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "Identity type INDIVIDUAL requires first name"
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "Identity type INDIVIDUAL requires first name",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: ORGANIZATION contact requires company name
@@ -130,6 +206,14 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "Identity type ORGANIZATION requires company name"
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "Identity type ORGANIZATION requires company name",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Unauthenticated user cannot view contacts
