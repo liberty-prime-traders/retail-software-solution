@@ -72,6 +72,22 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+              - column:
+                  name: subtotal
+                  type: numeric(19, 4)
+
+              - column:
+                  name: discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: grand_total
+                  type: numeric(19, 4)
       rollback:
         - dropTable:
             tableName: sale

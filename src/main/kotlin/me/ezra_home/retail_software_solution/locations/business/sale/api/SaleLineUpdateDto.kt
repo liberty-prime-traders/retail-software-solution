@@ -8,5 +8,4 @@ data class SaleLineUpdateDto(
     val locationProductId: UUID,
     val quantity: BigDecimal,
     val unitId: UUID,
-    val unitPrice: BigDecimal
 )

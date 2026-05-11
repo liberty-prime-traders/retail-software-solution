@@ -7,5 +7,4 @@ data class SaleLineCreateDto(
     val locationProductId: UUID,
     val quantity: BigDecimal,
     val unitId: UUID,
-    val unitPrice: BigDecimal
 )

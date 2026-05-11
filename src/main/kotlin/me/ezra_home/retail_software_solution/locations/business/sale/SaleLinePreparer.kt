@@ -6,8 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
-import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -18,41 +16,31 @@ class SaleLinePreparer(
     private val locationProductService: LocationProductService,
     private val saleValidator: SaleValidator,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
-    private val locationProductDataFetcher: LocationProductDataFetcher
+    private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
-    fun prepareForCreate(dto: SaleCreateDto): Map<UUID, BigDecimal> {
+    fun prepareForCreate(dto: SaleCreateDto): ValidatedSaleLines {
         SaleValidator.guardHasLines(dto.linesToAdd)
-        val resolvedQuantities = prepareForInsert(dto.linesToAdd)
-        if (dto.walkInCustomer) {
-            val saleTotal = dto.linesToAdd.sumOf { Decimals.multiplyScale4(it.quantity, it.unitPrice) }
-            if (dto.payments.sumOf { it.amount } < saleTotal) {
-                throw RtsGenericException("Walk-in sales require full payment coverage")
-            }
-        }
-        return resolvedQuantities
+        val validated = prepareForInsert(dto.linesToAdd)
+        SaleValidator.guardWalkInPaymentCoverage(dto, validated.productSummaries)
+        return validated
     }
 
-    fun prepareForInsert(dtoLines: List<SaleLineCreateDto>): Map<UUID, BigDecimal> {
-        val locationProductIds = dtoLines.map { it.locationProductId }
+    fun prepareForInsert(saleLinesForCreate: List<SaleLineCreateDto>): ValidatedSaleLines {
+        val locationProductIds = saleLinesForCreate.map { it.locationProductId }
         SaleValidator.guardNoDuplicateProducts(locationProductIds)
         locationProductService.guardAllActive(locationProductIds)
         val productSummaries = locationProductDataFetcher.findSummaryByIds(locationProductIds)
-        val resolvedQuantities = dtoLines.associate { line ->
-            line.locationProductId to unitConversionGraphFacade.convert(
-                line.unitId, productSummaries[line.locationProductId]!!.baseUnitId, line.quantity
-            )
-        }
-        saleValidator.ensureSufficientStockForLines(resolvedQuantities, productSummaries)
-        return resolvedQuantities
-    }
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
+        val factorByProductId = mutableMapOf<UUID, BigDecimal>()
 
-    fun resolveFactors(dtoLines: List<SaleLineCreateDto>): Map<UUID, BigDecimal> {
-        val baseUnitsByLocationProductId = locationProductDataFetcher.getBaseUnitIds(dtoLines.map { it.locationProductId })
-        val graph = unitConversionGraphFacade.getOrLoad()
-        return dtoLines.associate { line ->
-            val baseUnitId = baseUnitsByLocationProductId[line.locationProductId]!!
-            line.locationProductId to (graph[line.unitId]?.get(baseUnitId)?.factor!!)
+        val resolvedBaseQuantitiesPerProduct = saleLinesForCreate.associate { line ->
+            val targetUnitId = productSummaries.getValue(line.locationProductId).baseUnitId
+            val target = unitConversionGraph.getTarget(line.unitId, targetUnitId)
+            factorByProductId[line.locationProductId] = target.factor
+            line.locationProductId to target.applyTo(line.quantity)
         }
+        saleValidator.ensureSufficientStockForLines(resolvedBaseQuantitiesPerProduct, productSummaries)
+        return ValidatedSaleLines(productSummaries, factorByProductId)
     }
 }

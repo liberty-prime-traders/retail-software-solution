@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
@@ -16,12 +18,28 @@ import java.util.UUID
 class SaleValidator(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
-    private val saleStockReserver: SaleStockReserver
+    private val saleStockReserver: SaleStockReserver,
+    private val productReservationLock: ProductReservationLock,
 ) {
 
     companion object {
-        fun guardHasLines(lines: List<*>) {
+        fun guardHasLines(lines: Collection<*>) {
             if (lines.isEmpty()) throw RtsGenericException("Sale must have at least one line")
+        }
+
+        fun guardWalkInPaymentCoverage(
+            dto: SaleCreateDto,
+            productSummaries: Map<UUID, LocationProductSummaryDto>,
+        ) {
+            if (!dto.walkInCustomer) return
+            val saleTotal = dto.linesToAdd.sumOf { line ->
+                val unitPrice = productSummaries.getValue(line.locationProductId).unitPrice
+                    ?: throw RtsGenericException("Product ${line.locationProductId} has no unit price")
+                Decimals.multiplyScale4(line.quantity, unitPrice)
+            }
+            if (dto.payments.sumOf { it.amount } < saleTotal) {
+                throw RtsGenericException("Walk-in sales require full payment coverage")
+            }
         }
 
         fun guardNoDuplicateProducts(productIds: List<UUID>) {
@@ -35,7 +53,6 @@ class SaleValidator(
                 throw RtsGenericException("Sale ${sale.referenceNumber} is not in DRAFT status")
             }
         }
-
 
     }
 
@@ -56,10 +73,11 @@ class SaleValidator(
         productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
         val locationProductIds = resolvedQuantities.keys.toList()
+        productReservationLock.acquire(locationProductIds)
         val balances = stockBalanceFetcher.getLatestBalances(locationProductIds)
-        val reserved = saleStockReserver.getOrLoadFromDbBulk(locationProductIds)
+        val reserved = saleStockReserver.loadReservedTotals(locationProductIds)
         resolvedQuantities.forEach { (locationProductId, quantity) ->
-            val available = (balances[locationProductId] ?: BigDecimal.ZERO).subtract(reserved[locationProductId] ?: BigDecimal.ZERO)
+            val available = balances.getValue(locationProductId).subtract(reserved[locationProductId] ?: BigDecimal.ZERO)
             throwIfOverSelling(available, quantity, locationProductId, productSummaries)
         }
     }
@@ -79,18 +97,18 @@ class SaleValidator(
     }
 
     fun guardStockForDraftUpdates(
+        saleId: UUID,
         requested: Map<UUID, BigDecimal>,
-        alreadyReserved: Map<UUID, BigDecimal>,
-        summaries: Map<UUID, LocationProductSummaryDto>
+        productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
         if (requested.isEmpty()) return
+        productReservationLock.acquire(requested.keys)
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
-        val reserved = saleStockReserver.getOrLoadFromDbBulk(requested.keys)
+        val reservations = saleStockReserver.loadReservationBreakdown(requested.keys)
         requested.forEach { (locationProductId, quantity) ->
-            val available = (balances[locationProductId] ?: BigDecimal.ZERO)
-                .subtract(reserved[locationProductId] ?: BigDecimal.ZERO)
-                .add(alreadyReserved[locationProductId] ?: BigDecimal.ZERO)
-            throwIfOverSelling(available, quantity, locationProductId, summaries)
+            val reservedByOthers = reservations.getValue(locationProductId).excludingSale(saleId)
+            val available = balances.getValue(locationProductId).subtract(reservedByOthers)
+            throwIfOverSelling(available, quantity, locationProductId, productSummaries)
         }
     }
 

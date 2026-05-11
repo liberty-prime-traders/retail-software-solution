@@ -67,8 +67,8 @@ class SaleDiscountService(
         saleDiscountRepository.deleteByIdIn(discountIds)
     }
 
-    fun removeDiscountsByLineId(saleLineId: UUID) {
-        saleDiscountRepository.deleteBySaleLineId(saleLineId)
+    fun removeDiscountsByLineIds(saleLineIds: Collection<UUID>) {
+        saleDiscountRepository.deleteBySaleLineIdIn(saleLineIds)
     }
 
     fun getDiscountSummaries(saleId: UUID): List<SaleDiscountSummaryDto> =

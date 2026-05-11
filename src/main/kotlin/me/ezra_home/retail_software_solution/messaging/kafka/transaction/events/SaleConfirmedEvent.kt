@@ -14,9 +14,11 @@ data class SaleConfirmedEvent(
     override val sourceDocumentId: UUID,
     val contactId: UUID,
     val saleReferenceNumber: String,
-    val saleTotal: BigDecimal,
+    val subtotal: BigDecimal,
+    val discountTotal: BigDecimal,
     val dateSold: LocalDate,
-    val lines: List<SaleLineEventDto>
+    val lines: List<SaleLineEventDto>,
+    val discounts: List<SaleDiscountEventDto>
 ) : TransactionEvent()
 
 data class SaleLineEventDto(
@@ -24,4 +26,9 @@ data class SaleLineEventDto(
     val quantity: BigDecimal,
     val unitPrice: BigDecimal,
     val unitId: UUID
+)
+
+data class SaleDiscountEventDto(
+    val calculatedAmount: BigDecimal,
+    val saleLineId: UUID?
 )

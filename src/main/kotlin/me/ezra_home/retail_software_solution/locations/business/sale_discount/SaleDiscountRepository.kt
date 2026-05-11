@@ -6,6 +6,6 @@ import java.util.UUID
 interface SaleDiscountRepository : JpaRepository<SaleDiscountEntity, UUID> {
     fun findBySaleId(saleId: UUID): List<SaleDiscountEntity>
     fun findBySaleIdIn(saleIds: List<UUID>): List<SaleDiscountEntity>
-    fun deleteBySaleLineId(saleLineId: UUID)
+    fun deleteBySaleLineIdIn(saleLineIds: Collection<UUID>)
     fun deleteByIdIn(ids: List<UUID>)
 }

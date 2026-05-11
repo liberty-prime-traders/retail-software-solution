@@ -27,10 +27,11 @@ class PurchaseDeliveryStockUpdater(
     fun recordPurchaseDelivery(event: PurchaseDeliveredEvent) {
         val baseUnitsByProductId = locationProductDataFetcher.getBaseUnitIds(event.lines.map { it.locationProductId })
         val sourceTypeId = stockItemSourceService.findSourceId(StockItemSource.PURCHASE)
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
 
         val entriesByLineId = event.lines.associate { line ->
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
-            val baseQty = unitConversionGraphFacade.convert(line.unitId, baseUnitId, line.quantityDelivered)
+            val baseQty = unitConversionGraph.getTarget(line.unitId, baseUnitId).applyTo(line.quantityDelivered)
             val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantityDelivered), baseQty)
             line.deliveryLineId to StockEntryEntity(
                 purchaseDeliveryLineId = line.deliveryLineId,

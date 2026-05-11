@@ -55,6 +55,22 @@ databaseChangeLog:
                   type: varchar(5)
 
               - column:
+                  name: subtotal
+                  type: numeric(19, 4)
+
+              - column:
+                  name: discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: grand_total
+                  type: numeric(19, 4)
+
+              - column:
                   name: revend
                   type: bigint
 

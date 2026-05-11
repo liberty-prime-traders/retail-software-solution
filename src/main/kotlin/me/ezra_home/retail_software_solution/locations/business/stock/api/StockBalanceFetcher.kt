@@ -10,7 +10,11 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class StockBalanceFetcher(private val stockMovementRepository: StockMovementRepository) {
 
-    fun getLatestBalances(locationProductIds: List<UUID>): Map<UUID, BigDecimal> =
-        stockMovementRepository.findLatestBalances(locationProductIds)
-            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+    fun getLatestBalances(locationProductIds: List<UUID>): Map<UUID, BigDecimal> {
+        val balancesByProduct = stockMovementRepository.findLatestBalances(locationProductIds)
+            .associateBy { it.getLocationProductId() }
+        return locationProductIds.associateWith {
+            balancesByProduct[it]?.getRemainingQuantity() ?: BigDecimal.ZERO
+        }
+    }
 }

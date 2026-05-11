@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger.proc
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
@@ -18,42 +18,50 @@ import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
-class SaleConfirmedEventProcessor(
+class SaleVoidedEventProcessor(
     private val contactService: ContactService,
     private val ledgerEntryGroupRepository: LedgerEntryGroupRepository,
     private val saleTaxLedgerEntriesBuilder: SaleTaxLedgerEntriesBuilder,
     ledgerPostingService: LedgerPostingService
-) : AccountingEventProcessor<SaleConfirmedEvent>(ledgerPostingService) {
+) : AccountingEventProcessor<SaleVoidedEvent>(ledgerPostingService) {
 
-    override val eventType: KClass<SaleConfirmedEvent> = SaleConfirmedEvent::class
+    override val eventType: KClass<SaleVoidedEvent> = SaleVoidedEvent::class
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: SaleConfirmedEvent): Boolean =
-        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceLocationId(event.saleReferenceNumber, SessionContextProvider.getLocationId()).not()
+    override fun shouldProcess(event: SaleVoidedEvent): Boolean {
+        val locationId = SessionContextProvider.getLocationId()
+        val saleWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
+            event.saleReferenceNumber, LedgerSourceType.SALE, locationId
+        )
+        if (!saleWasPosted) return false
+        val alreadyReversed = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
+            event.saleReferenceNumber, LedgerSourceType.SALE_VOID, locationId
+        )
+        return !alreadyReversed
+    }
 
-    override fun prepareLedgerRequest(event: SaleConfirmedEvent): LedgerPostingRequest {
+    override fun prepareLedgerRequest(event: SaleVoidedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
         val netAmount = event.subtotal - event.discountTotal
 
-        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, netAmount)
+        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelReversalEntries(event.dateSold, netAmount)
         val saleEntries = listOf(
-            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, netAmount),
-            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, netAmount)
+            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.CREDIT, netAmount),
+            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.DEBIT, netAmount)
         )
 
         return LedgerPostingRequest(
             sourceReferenceNumber = event.saleReferenceNumber,
-            sourceType = LedgerSourceType.SALE,
-            postingDate = event.dateSold,
+            sourceType = LedgerSourceType.SALE_VOID,
+            postingDate = event.dateVoided,
             entries = saleEntries + taxEntries,
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = netAmount,
-                    payableAmount = BigDecimal.ZERO
+                    receivableAmount = BigDecimal.ZERO,
+                    payableAmount = netAmount
                 )
             )
         )
     }
-
 }

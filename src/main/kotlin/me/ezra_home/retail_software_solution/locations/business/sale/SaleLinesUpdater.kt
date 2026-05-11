@@ -3,19 +3,16 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.ConversionTargetDto
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
-
-data class SaleLineUpdateResult(
-    val lines: List<SaleLineEntity>,
-    val baseQtyByProductId: Map<UUID, BigDecimal>
-)
 
 @Service
 @TransactionalOnLocationSchema
@@ -25,97 +22,74 @@ class SaleLinesUpdater(
     private val locationProductService: LocationProductService,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleStockReserver: SaleStockReserver,
-    private val saleLineRepository: SaleLineRepository
+    private val saleLineRepository: SaleLineRepository,
 ) {
 
     fun applyLineUpdates(saleId: UUID, dto: SaleUpdateDto): SaleLineUpdateResult {
         val existing = saleLineRepository.findBySaleId(saleId).associateBy { it.id!! }
-        val allProductIds = dto.linesToAdd.map { it.locationProductId } + dto.linesToUpdate.map { it.locationProductId }
-        val productSummaries = locationProductDataFetcher.findSummaryByIds(allProductIds)
+        val allProductIds = dto.linesToAdd.map { it.locationProductId } +
+                dto.linesToUpdate.map { it.locationProductId } +
+                existing.values.map { it.locationProductId }
+        val productSummaries = locationProductDataFetcher.findSummaryByIds(allProductIds.toHashSet())
         val baseUnitsByLocationProductId = productSummaries.values.associate { it.id to it.baseUnitId }
-        val graph = unitConversionGraphFacade.getOrLoad()
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
 
-        val additions = computeAdditions(saleId, dto.linesToAdd, baseUnitsByLocationProductId, graph)
-        val updates: UpdateResult = computeUpdates(dto.linesToUpdate, existing, baseUnitsByLocationProductId, graph)
+        val newLines = buildAdditions(saleId, dto.linesToAdd, productSummaries, baseUnitsByLocationProductId, unitConversionGraph)
+        val updatedLines = applyUpdates(dto.linesToUpdate, existing, baseUnitsByLocationProductId, unitConversionGraph)
 
-        val newLines = additions.map { (entity, _) -> entity }
-        val deletedIds = updates.toDelete.mapTo(HashSet()) { it.id }
-        val updatedIds = updates.toUpdate.mapTo(HashSet()) { it.id }
-        val resultingLines = existing.values.filter { it.id !in deletedIds && it.id !in updatedIds } + updates.toUpdate + newLines
+        val updatedIds = updatedLines.mapTo(HashSet()) { it.id }
+        val resultingLines = existing.values.filter { it.id !in updatedIds } + updatedLines + newLines
         SaleValidator.guardNoDuplicateProducts(resultingLines.map { it.locationProductId })
 
-        val baseQuantitiesForSurvivingLines = (additions + updates.updatedWithNewBaseQty).associate {
-            (entity, qty) -> entity.locationProductId to qty
-        }
-        val alreadyReserved = updates.toUpdate.associate {
-            it.locationProductId to saleStockReserver.getReserved(it.locationProductId)
-        }
-        saleValidator.guardStockForDraftUpdates(baseQuantitiesForSurvivingLines, alreadyReserved, productSummaries)
+        val baseQuantityRequestedByProductId = (newLines + updatedLines).associate { it.locationProductId to it.baseQty() }
+        saleValidator.guardStockForDraftUpdates(saleId, baseQuantityRequestedByProductId, productSummaries)
 
-        updates.toDelete.forEach { saleStockReserver.clearByLines(listOf(it.id!!), it.locationProductId) }
-        saleLineRepository.deleteAll(updates.toDelete)
-        saleLineRepository.saveAll(updates.toUpdate + newLines)
-        saleStockReserver.syncUpdatedReservations(
-            updates.updatedWithNewBaseQty,
-            newLines,
-            baseQuantitiesForSurvivingLines,
-            saleId
-        )
+        saleLineRepository.saveAll(updatedLines + newLines)
+        saleStockReserver.syncUpdatedReservations(updatedLines, newLines, saleId)
 
-        return SaleLineUpdateResult(saleLineRepository.findBySaleId(saleId), baseQuantitiesForSurvivingLines)
+        return SaleLineUpdateResult(resultingLines, productSummaries)
     }
 
-    private fun computeAdditions(
+    private fun buildAdditions(
         saleId: UUID,
         linesToAdd: List<SaleLineCreateDto>,
+        productSummaries: Map<UUID, LocationProductSummaryDto>,
         baseUnitsByLocationProductId: Map<UUID, UUID>,
-        graph: Map<UUID, Map<UUID, ConversionTargetDto>>
-    ): List<Pair<SaleLineEntity, BigDecimal>> {
+        unitConversionGraph: UnitConversionGraph,
+    ): List<SaleLineEntity> {
         if (linesToAdd.isEmpty()) return emptyList()
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
         return linesToAdd.map { lineDto ->
-            val baseUnitId = baseUnitsByLocationProductId[lineDto.locationProductId]!!
-            val baseQty = unitConversionGraphFacade.convert(lineDto.unitId, baseUnitId, lineDto.quantity)
-            val factor = graph[lineDto.unitId]?.get(baseUnitId)?.factor!!
-            SaleLineEntity(saleId, lineDto.locationProductId, lineDto.quantity, lineDto.unitId, lineDto.unitPrice, factor) to baseQty
+            val baseUnitId = baseUnitsByLocationProductId.getValue(lineDto.locationProductId)
+            val factor = unitConversionGraph.getFactor(lineDto.unitId, baseUnitId)
+            val unitPrice = productSummaries.getValue(lineDto.locationProductId).unitPrice
+                ?: throw RtsGenericException("Product ${lineDto.locationProductId} has no unit price")
+            SaleLineEntity(saleId, lineDto.locationProductId, lineDto.quantity, lineDto.unitId, unitPrice, factor)
         }
     }
 
-    private data class UpdateResult(
-        val toDelete: List<SaleLineEntity>,
-        val toUpdate: List<SaleLineEntity>,
-        val updatedWithNewBaseQty: List<Pair<SaleLineEntity, BigDecimal>>
-    )
-
-    private fun computeUpdates(
+    private fun applyUpdates(
         linesToUpdate: List<SaleLineUpdateDto>,
         existing: Map<UUID, SaleLineEntity>,
         baseUnitsByLocationProductId: Map<UUID, UUID>,
-        graph: Map<UUID, Map<UUID, ConversionTargetDto>>
-    ): UpdateResult {
-        val toDelete = mutableListOf<SaleLineEntity>()
-        val toUpdate = mutableListOf<SaleLineEntity>()
-        val updatedWithNewBaseQty = mutableListOf<Pair<SaleLineEntity, BigDecimal>>()
+        unitConversionGraph: UnitConversionGraph,
+    ): List<SaleLineEntity> {
+        val updated = mutableListOf<SaleLineEntity>()
 
         for (lineDto in linesToUpdate) {
             val entity = existing[lineDto.id] ?: continue
-            val baseUnitId = baseUnitsByLocationProductId[lineDto.locationProductId]!!
-            val baseQty = unitConversionGraphFacade.convert(lineDto.unitId, baseUnitId, lineDto.quantity)
-
-            if (baseQty <= BigDecimal.ZERO) {
-                toDelete.add(entity)
-            } else {
-                entity.quantity = lineDto.quantity
-                entity.unitPrice = lineDto.unitPrice
-                if (entity.unitId != lineDto.unitId) {
-                    entity.unitId = lineDto.unitId
-                    entity.conversionFactor = graph[lineDto.unitId]?.get(baseUnitId)?.factor!!
-                }
-                toUpdate.add(entity)
-                updatedWithNewBaseQty.add(entity to baseQty)
+            val baseUnitId = baseUnitsByLocationProductId.getValue(lineDto.locationProductId)
+            entity.quantity = lineDto.quantity
+            if (entity.unitId != lineDto.unitId) {
+                entity.unitId = lineDto.unitId
+                entity.conversionFactor = unitConversionGraph.getFactor(lineDto.unitId, baseUnitId)
             }
+            if (entity.baseQty().signum() <= 0) {
+                throw RtsGenericException("Line quantity must be positive; use linesToRemove to delete a line")
+            }
+            updated.add(entity)
         }
 
-        return UpdateResult(toDelete, toUpdate, updatedWithNewBaseQty)
+        return updated
     }
 }

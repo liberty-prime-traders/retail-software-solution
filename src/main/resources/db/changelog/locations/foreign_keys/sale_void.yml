@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-void-sale
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_void_sale
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_void
+            baseColumnNames: sale_id
+            referencedTableName: sale
+            referencedColumnNames: id
+            constraintName: fk_sale_void_sale
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_void
+            constraintName: fk_sale_void_sale

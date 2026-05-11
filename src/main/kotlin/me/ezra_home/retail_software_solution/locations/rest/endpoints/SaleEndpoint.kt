@@ -1,11 +1,15 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleConfirmationHandler
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreator
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDraftHandler
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidCreateDto
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,38 +23,45 @@ import java.util.UUID
 @RestController
 @RequestMapping("secured/sales")
 class SaleEndpoint(
-    private val saleCreator: SaleCreator,
+    private val saleDraftHandler: SaleDraftHandler,
+    private val saleConfirmationHandler: SaleConfirmationHandler,
     private val saleDataFetcher: SaleDataFetcher,
     private val saleUpdater: SaleUpdater,
 ) {
 
     @GetMapping
-    fun fetchTopN(@RequestParam n: Int?): List<SaleResponseDto> {
-        return saleDataFetcher.fetchTopN(n)
+    fun fetchRecent(@RequestParam n: Int?): List<SaleResponseDto> {
+        return saleDataFetcher.fetchRecent(n)
     }
 
     @PostMapping("draft")
     fun createDraft(@RequestBody dto: SaleCreateDto): SaleResponseDto {
-        return saleCreator.createDraft(dto)
+        return saleDraftHandler.createDraft(dto)
     }
 
     @PutMapping("draft")
     fun updateDraft(@RequestBody dto: SaleUpdateDto): SaleResponseDto {
-        return saleCreator.updateDraft(dto)
+        return saleDraftHandler.updateDraft(dto)
     }
 
     @PutMapping("complete")
     fun convertDraftToSale(@RequestBody dto: SaleUpdateDto): SaleResponseDto {
-        return saleCreator.convertDraftToSale(dto)
+        return saleConfirmationHandler.convertDraftToSale(dto)
     }
 
     @PostMapping("complete")
     fun createSale(@RequestBody dto: SaleCreateDto): SaleResponseDto {
-        return saleCreator.createSale(dto)
+        return saleConfirmationHandler.createSale(dto)
     }
 
-    @PutMapping("{saleId}/void")
-    fun voidSale(@PathVariable saleId: UUID): SaleResponseDto {
-        return saleUpdater.voidSale(saleId)
+    @PutMapping("void")
+    fun voidSale(@RequestBody dto: SaleVoidCreateDto): SaleResponseDto {
+        return saleUpdater.voidSale(dto)
+    }
+
+    @PutMapping("{saleId}/notes")
+    fun updateNotes(@PathVariable saleId: UUID, @RequestBody dto: SaleNotesUpdateDto): ResponseEntity<Unit> {
+        saleUpdater.updateNotes(saleId, dto.notes)
+        return ResponseEntity.ok().build()
     }
 }

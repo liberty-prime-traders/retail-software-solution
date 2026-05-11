@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_discount.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 import java.util.UUID
@@ -19,7 +19,7 @@ object SaleDiscountValidator {
 
     fun validateNewDiscounts(
         discountDtos: List<SaleDiscountCreateDto>,
-        lines: List<LinePricing>,
+        lines: List<ProductLineWithPrice>,
         existingDiscounts: List<SaleDiscountEntity> = emptyList(),
         productByLineId: Map<UUID, UUID> = emptyMap()
     ) {
@@ -49,7 +49,7 @@ object SaleDiscountValidator {
     private fun guardLineTotals(
         newDiscounts: List<DiscountAmount>,
         existingDiscounts: List<DiscountAmount>,
-        lines: List<LinePricing>
+        lines: List<ProductLineWithPrice>
     ) {
         val lineByProductId = lines.associateBy { it.locationProductId }
         val existingDiscountsByProductId = existingDiscounts.filter { it.isLineLevelDiscount }
@@ -72,7 +72,7 @@ object SaleDiscountValidator {
     private fun guardOrderTotal(
         newDiscounts: List<DiscountAmount>,
         existingDiscounts: List<DiscountAmount>,
-        lines: List<LinePricing>
+        lines: List<ProductLineWithPrice>
     ) {
         val incomingOrderDiscountsTotal = newDiscounts.filter { !it.isLineLevelDiscount }.sumOf { it.calculatedAmount }
         if (incomingOrderDiscountsTotal == BigDecimal.ZERO) return
@@ -90,11 +90,3 @@ data class DiscountAmount(
     val calculatedAmount: BigDecimal,
     val isLineLevelDiscount: Boolean = locationProductId != null
 )
-
-interface LinePricing {
-    val locationProductId: UUID
-    val quantity: BigDecimal
-    val unitPrice: BigDecimal
-
-    fun lineTotal(): BigDecimal = Decimals.multiplyScale4(quantity, unitPrice)
-}

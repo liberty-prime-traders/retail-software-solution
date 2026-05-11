@@ -18,10 +18,17 @@ class SalePaymentFetcher(
 ) {
 
     fun calculatePaidAmount(saleId: UUID): BigDecimal {
-        val payments = salePaymentRepository.findBySaleId(saleId)
-        if (payments.isEmpty()) return BigDecimal.ZERO
+        return calculatePaidAmounts(listOf(saleId))[saleId] ?: BigDecimal.ZERO
+    }
+
+    fun calculatePaidAmounts(saleIds: List<UUID>): Map<UUID, BigDecimal> {
+        val payments = salePaymentRepository.findBySaleIdIn(saleIds)
+        if (payments.isEmpty()) return emptyMap()
         val voidedIds = voidedPaymentIds(payments.map { it.id!! })
-        return payments.filter { it.id !in voidedIds }.sumOf { it.amount }
+        return payments
+            .filter { it.id !in voidedIds }
+            .groupBy { it.saleId }
+            .mapValues { (_, activePayments) -> activePayments.sumOf { it.amount } }
     }
 
     fun getPaymentsBySaleId(saleId: UUID): List<SalePaymentResponseDto> {

@@ -10,7 +10,13 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
 
-data class SaleLineStockRequest(val saleLineId: UUID, val locationProductId: UUID, val quantity: BigDecimal, val unitId: UUID, val conversionFactor: BigDecimal)
+data class SaleLineStockRequest(
+    val saleLineId: UUID,
+    val locationProductId: UUID,
+    val baseQuantity: BigDecimal,
+    val unitId: UUID,
+    val conversionFactor: BigDecimal
+)
 
 private data class BatchAllocation(val stockEntryId: UUID, val quantityTaken: BigDecimal)
 
@@ -21,8 +27,8 @@ class SaleStockUpdater(
     private val stockMovementRepository: StockMovementRepository
 ) {
 
-    fun consumeStock(lines: List<SaleLineStockRequest>, saleRefNumber: String) {
-        lines.forEach { consumeLine(it, saleRefNumber) }
+    fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
+        saleLineStockRequests.forEach { consumeLine(it, saleRefNumber) }
     }
 
     private fun consumeLine(line: SaleLineStockRequest, saleRefNumber: String) {
@@ -31,7 +37,7 @@ class SaleStockUpdater(
     }
 
     private fun allocateBatches(line: SaleLineStockRequest): List<BatchAllocation> {
-        var remaining = line.quantity
+        var remaining = line.baseQuantity
         val batches = mutableListOf<BatchAllocation>()
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         for (entry in stockEntryRepository.findFifoEntriesForProduct(line.locationProductId)) {
