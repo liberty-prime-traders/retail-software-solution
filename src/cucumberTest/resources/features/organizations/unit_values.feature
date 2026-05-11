@@ -18,9 +18,13 @@ Feature: Unit Values
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "name" should be "Liter"
-    And the response field "code" should be "L"
+    And the response should match json:
+      """
+      {
+        "name": "Liter",
+        "code": "L"
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of all unit values
@@ -52,9 +56,15 @@ Feature: Unit Values
       }
       """
     Then the response status should be 200
-    And the response field "name" should be "Updated Unit Name"
-    And the response field "code" should be "UUN"
-    And the response field "description" should be "Updated Description"
+    And the response should match json:
+      """
+      {
+        "id": "#unitValue->0",
+        "name": "Updated Unit Name",
+        "code": "UUN",
+        "description": "Updated Description"
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a unit value
@@ -79,7 +89,7 @@ Feature: Unit Values
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A unit value with the name Test Unit already exists"
 
   @regression
   Scenario: Unit value requires a conversion factor when base unit is provided
@@ -95,7 +105,7 @@ Feature: Unit Values
       }
       """
     Then the response status should be 400
-    And the response error should contain "conversion factor"
+    And the response error message should be "A unit value with a base unit must have a conversion factor"
 
   @regression
   Scenario: Unit value requires a base unit when conversion factor is provided
@@ -111,7 +121,7 @@ Feature: Unit Values
       }
       """
     Then the response status should be 400
-    And the response error should contain "base unit"
+    And the response error message should be "A unit value with a conversion factor must have a base unit"
 
   @regression
   Scenario: Unauthenticated user cannot view unit values
