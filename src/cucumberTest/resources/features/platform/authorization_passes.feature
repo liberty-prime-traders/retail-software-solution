@@ -109,7 +109,16 @@ Feature: Authorization Passes
     Given I am not authenticated
     When I send a GET request to "/secured/authorization-passes"
     Then the response status should be 403
-    And the response body should be empty
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Access Denied",
+        "path": "/secured/authorization-passes"
+      }
+      """
 
   @regression
   Scenario: Organization user cannot view authorization passes
