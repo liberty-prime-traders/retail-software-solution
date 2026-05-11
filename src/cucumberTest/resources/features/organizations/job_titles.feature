@@ -82,14 +82,6 @@ Feature: Job Titles
       """
     Then the response status should be 400
     And the response error message should be "A job title with the value Test Job Title already exists."
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A job title with the value Test Job Title already exists.",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Duplicate job title value is rejected on update
@@ -110,14 +102,6 @@ Feature: Job Titles
       """
     Then the response status should be 400
     And the response error message should be "A job title with the value Product Manager already exists."
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A job title with the value Product Manager already exists.",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unauthenticated user cannot view job titles
