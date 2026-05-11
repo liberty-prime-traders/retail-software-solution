@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountService
+import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountSummaryDto
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
@@ -20,7 +20,7 @@ import java.util.UUID
 class SaleConfirmedHandlerForKafka(
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
-    private val saleDiscountService: SaleDiscountService,
+    private val saleDiscountFetcher: SaleDiscountFetcher,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -29,7 +29,7 @@ class SaleConfirmedHandlerForKafka(
     override fun reissue(sourceDocumentId: UUID) {
         val sale = saleRepository.getReferenceById(sourceDocumentId)
         val lines = saleLineRepository.findBySaleId(sourceDocumentId)
-        val discounts = saleDiscountService.getDiscountSummaries(sourceDocumentId)
+        val discounts = saleDiscountFetcher.getDiscountSummaries(sourceDocumentId)
         publish(sale, lines, discounts)
     }
 

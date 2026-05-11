@@ -1,92 +1,76 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_discount.api
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
+import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountRepository
+import me.ezra_home.retail_software_solution.util.business.Currencies
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import java.math.BigDecimal
+import org.springframework.stereotype.Service
 import java.util.UUID
 
-object SaleDiscountValidator {
+@Service
+class SaleDiscountValidator(
+    private val saleDiscountRepository: SaleDiscountRepository,
+) {
 
-    fun guardIsDraft(sale: SaleEntity) {
-        if (sale.status != SaleStatus.DRAFT) {
-            throw RtsGenericException("Discounts can only be modified on DRAFT sales")
+    fun guardDiscountsBelongToSale(saleId: UUID, discountIds: Collection<UUID>) {
+        if (discountIds.isEmpty()) return
+        val owned = saleDiscountRepository.findIdsBySaleIdAndIdIn(saleId, discountIds).toSet()
+        val invalid = discountIds.filterNot { it in owned }
+        if (invalid.isNotEmpty()) {
+            throw RtsGenericException("Discount ids do not belong to this sale: $invalid")
         }
     }
 
-    fun validateNewDiscounts(
-        discountDtos: List<SaleDiscountCreateDto>,
-        lines: List<ProductLineWithPrice>,
-        existingDiscounts: List<SaleDiscountEntity> = emptyList(),
-        productByLineId: Map<UUID, UUID> = emptyMap()
+    fun guardDiscountsStillFitAfterLineChanges(
+        existing: List<SaleDiscountEntity>,
+        lines: List<SaleLineEntity>,
+        productSummaries: Map<UUID, LocationProductSummaryDto>,
     ) {
-        if (discountDtos.isEmpty()) return
-        val lineByProductId = lines.associateBy { it.locationProductId }
-        val newAmounts = discountDtos.map { dto ->
-            dto.locationProductId?.let {
-                if (!lineByProductId.containsKey(it)) {
-                    throw RtsGenericException("No sale line found for product $it")
+        val lineById = lines.filter { it.id != null }.associateBy { it.id!! }
+        existing.filter { it.saleLineId != null }
+            .groupBy { it.saleLineId!! }
+            .forEach { (lineId, discountsForLine) ->
+                val line = lineById[lineId]
+                    ?: throw RtsGenericException("Discount references sale line $lineId which is not in the surviving set")
+                val totalDiscount = discountsForLine.sumOf { it.calculatedAmount }
+                val lineTotal = line.lineTotal()
+                if (totalDiscount > lineTotal) {
+                    throw RtsGenericException(
+                        "Discount of ${Currencies.format(totalDiscount)} on ${labelFor(line.locationProductId, productSummaries)} " +
+                                "exceeds new line total ${Currencies.format(lineTotal)} after the quantity change. " +
+                                "Remove or adjust the discount and resubmit."
+                    )
                 }
             }
-            DiscountAmount(
-                locationProductId = dto.locationProductId,
-                calculatedAmount = DiscountAmountCalculator.calculateAmount(dto, lines)
+        val orderLevelTotal = existing.filter { it.saleLineId == null }.sumOf { it.calculatedAmount }
+        if (orderLevelTotal.signum() == 0) return
+        val lineLevelTotal = existing.filter { it.saleLineId != null }.sumOf { it.calculatedAmount }
+        val subtotal = lines.sumOf { it.lineTotal() }
+        val remaining = subtotal - lineLevelTotal
+        if (orderLevelTotal > remaining) {
+            throw RtsGenericException(
+                "Order-level discount of ${Currencies.format(orderLevelTotal)} exceeds remaining subtotal " +
+                        "${Currencies.format(remaining)} (subtotal ${Currencies.format(subtotal)} " +
+                        "minus line discounts ${Currencies.format(lineLevelTotal)}) after the line changes. " +
+                        "Remove or adjust the discount and resubmit."
             )
         }
-        val existingAmounts = existingDiscounts.map { discount ->
-            DiscountAmount(
-                locationProductId = discount.saleLineId?.let { productByLineId[it] },
-                calculatedAmount = discount.calculatedAmount
-            )
-        }
-        guardLineTotals(newAmounts, existingAmounts, lines)
-        guardOrderTotal(newAmounts, existingAmounts, lines)
     }
 
-    private fun guardLineTotals(
-        newDiscounts: List<DiscountAmount>,
-        existingDiscounts: List<DiscountAmount>,
-        lines: List<ProductLineWithPrice>
-    ) {
-        val lineByProductId = lines.associateBy { it.locationProductId }
-        val existingDiscountsByProductId = existingDiscounts.filter { it.isLineLevelDiscount }
-            .groupBy { it.locationProductId!! }
-            .mapValues { (_, discounts) -> discounts.sumOf { it.calculatedAmount } }
+    private fun labelFor(
+        locationProductId: UUID,
+        productSummaries: Map<UUID, LocationProductSummaryDto>,
+    ): String = productSummaries[locationProductId]?.label ?: locationProductId.toString()
 
-        newDiscounts.filter { it.isLineLevelDiscount }
-            .groupBy { it.locationProductId!! }
-            .forEach { (locationProductId, newDiscountsForLine) ->
-                val line = lineByProductId.getValue(locationProductId)
-                val saleLineTotal = line.lineTotal()
-                val existingLineDiscountsTotal = existingDiscountsByProductId[locationProductId] ?: BigDecimal.ZERO
-                val incomingLineDiscountsTotal = newDiscountsForLine.sumOf { it.calculatedAmount }
-                if (existingLineDiscountsTotal + incomingLineDiscountsTotal > saleLineTotal) {
-                    throw RtsGenericException("Discount total exceeds line total")
-                }
+    companion object {
+        fun guardIsDraft(sale: SaleEntity) {
+            if (sale.status != SaleStatus.DRAFT) {
+                throw RtsGenericException("Discounts can only be modified on DRAFT sales")
             }
-    }
-
-    private fun guardOrderTotal(
-        newDiscounts: List<DiscountAmount>,
-        existingDiscounts: List<DiscountAmount>,
-        lines: List<ProductLineWithPrice>
-    ) {
-        val incomingOrderDiscountsTotal = newDiscounts.filter { !it.isLineLevelDiscount }.sumOf { it.calculatedAmount }
-        if (incomingOrderDiscountsTotal == BigDecimal.ZERO) return
-        val saleSubtotal = lines.sumOf { it.lineTotal() }
-        val existingLineDiscountTotal = existingDiscounts.filter { it.isLineLevelDiscount }.sumOf { it.calculatedAmount }
-        val existingOrderDiscountTotal = existingDiscounts.filter { !it.isLineLevelDiscount }.sumOf { it.calculatedAmount }
-        if (existingOrderDiscountTotal + incomingOrderDiscountsTotal > saleSubtotal - existingLineDiscountTotal) {
-            throw RtsGenericException("Order-level discount total exceeds order subtotal after line discounts")
         }
     }
 }
-
-data class DiscountAmount(
-    val locationProductId: UUID?,
-    val calculatedAmount: BigDecimal,
-    val isLineLevelDiscount: Boolean = locationProductId != null
-)

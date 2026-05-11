@@ -49,9 +49,17 @@ class SaleStockReserver(
         newLines: List<SaleLineEntity>,
         saleId: UUID,
     ) {
-        if (updatedLines.isNotEmpty()) {
-            reservationRepository.deleteBySaleLineIdIn(updatedLines.map { it.id!! })
+        val updatedLinesWithQuantityChanges = if (updatedLines.isEmpty()) emptyList() else {
+            val existingBySaleLineId = reservationRepository
+                .findBySaleLineIdIn(updatedLines.map { it.id!! })
+                .associateBy { it.saleLineId }
+            updatedLines.filter {
+                existingBySaleLineId[it.id!!]?.quantityReserved?.compareTo(it.baseQty()) != 0
+            }
         }
-        reserve(saleId, updatedLines + newLines)
+        if (updatedLinesWithQuantityChanges.isNotEmpty()) {
+            reservationRepository.deleteBySaleLineIdIn(updatedLinesWithQuantityChanges.map { it.id!! })
+        }
+        reserve(saleId, updatedLinesWithQuantityChanges + newLines)
     }
 }

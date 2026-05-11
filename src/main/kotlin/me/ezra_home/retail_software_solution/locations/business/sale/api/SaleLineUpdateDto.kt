@@ -5,7 +5,6 @@ import java.util.UUID
 
 data class SaleLineUpdateDto(
     val id: UUID,
-    val locationProductId: UUID,
     val quantity: BigDecimal,
     val unitId: UUID,
 )

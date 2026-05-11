@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineResponseDto
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.util.UUID
 
 object SaleLineMapper {

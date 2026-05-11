@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_discount.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountRepository
-import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -14,7 +14,7 @@ import java.util.UUID
 @TransactionalOnLocationSchema
 class SaleDiscountService(
     private val saleDiscountRepository: SaleDiscountRepository,
-    private val userQualifier: UserQualifier
+    private val newSaleDiscountValidator: NewSaleDiscountValidator
 ) {
 
     fun applyValidatedDiscounts(
@@ -47,13 +47,14 @@ class SaleDiscountService(
     fun addDiscounts(
         sale: SaleEntity,
         discountDtos: List<SaleDiscountCreateDto>,
-        lines: List<SaleLineEntity>
+        lines: List<SaleLineEntity>,
+        productSummaries: Map<UUID, LocationProductSummaryDto>,
     ): List<SaleDiscountSummaryDto> {
         SaleDiscountValidator.guardIsDraft(sale)
         if (discountDtos.isEmpty()) return existingSummaries(sale.id!!)
         val existing = saleDiscountRepository.findBySaleId(sale.id!!)
         val productByLineId = lines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
-        SaleDiscountValidator.validateNewDiscounts(discountDtos, lines, existing, productByLineId)
+        newSaleDiscountValidator.validateNewDiscounts(discountDtos, lines, productSummaries, existing, productByLineId)
         val newSummaries = applyValidatedDiscounts(sale, discountDtos, lines)
         return existing.map {
             SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
@@ -68,38 +69,14 @@ class SaleDiscountService(
     fun removeDiscounts(sale: SaleEntity, discountIds: List<UUID>) {
         SaleDiscountValidator.guardIsDraft(sale)
         if (discountIds.isEmpty()) return
-        saleDiscountRepository.deleteByIdIn(discountIds)
+        val entities = saleDiscountRepository.findAllById(discountIds)
+        saleDiscountRepository.deleteAll(entities)
     }
 
     fun removeDiscountsByLineIds(saleLineIds: Collection<UUID>) {
-        saleDiscountRepository.deleteBySaleLineIdIn(saleLineIds)
+        if (saleLineIds.isEmpty()) return
+        val entities = saleDiscountRepository.findBySaleLineIdIn(saleLineIds)
+        saleDiscountRepository.deleteAll(entities)
     }
-
-    fun getDiscountSummaries(saleId: UUID): List<SaleDiscountSummaryDto> =
-        saleDiscountRepository.findBySaleId(saleId).map { entity ->
-            SaleDiscountSummaryDto(
-                saleLineId = entity.saleLineId,
-                calculatedAmount = entity.calculatedAmount
-            )
-        }
-
-    fun getDiscountsBySaleId(saleId: UUID): List<SaleDiscountResponseDto> =
-        saleDiscountRepository.findBySaleId(saleId).map { toResponseDto(it) }
-
-    fun getDiscountsBySaleIds(saleIds: List<UUID>): Map<UUID, List<SaleDiscountResponseDto>> =
-        saleDiscountRepository.findBySaleIdIn(saleIds)
-            .groupBy { it.saleId }
-            .mapValues { (_, entities) -> entities.map { toResponseDto(it) } }
-
-    private fun toResponseDto(entity: SaleDiscountEntity) = SaleDiscountResponseDto(
-        id = entity.id!!,
-        saleLineId = entity.saleLineId,
-        calculationMethod = entity.discountType,
-        value = entity.value,
-        calculatedAmount = entity.calculatedAmount,
-        description = entity.description,
-        approvedById = entity.approvedById,
-        approvedBy = userQualifier.getUserFullName(entity.approvedById)
-    )
 
 }

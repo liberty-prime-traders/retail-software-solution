@@ -13,9 +13,9 @@ data class SaleUpdateDto(
     val id: UUID,
     val contactId: Optional<UUID>? = null,
     val walkInCustomer: Boolean = false,
-    val soldBy: UUID? = null,
-    val dateSold: OffsetDateTime? = null,
-    val notes: String? = null,
+    val soldBy: Optional<UUID>? = null,
+    val dateSold: Optional<OffsetDateTime>? = null,
+    val notes: Optional<String>? = null,
     val linesToAdd: List<SaleLineCreateDto> = emptyList(),
     val linesToUpdate: List<SaleLineUpdateDto> = emptyList(),
     val linesToRemove: List<UUID> = emptyList(),
@@ -24,11 +24,18 @@ data class SaleUpdateDto(
     val discountsToRemove: List<UUID> = emptyList()
 ) {
 
-    fun applyContactId(sale: SaleEntity) {
+    fun applyTo(sale: SaleEntity) {
+        applyContactId(sale)
+        soldBy?.let { sale.soldBy = it.orElse(null) }
+        dateSold?.let { sale.dateSold = it.orElse(null) }
+        notes?.let { sale.notes = it.orElse(null) }
+    }
+
+    private fun applyContactId(sale: SaleEntity) {
         when {
             walkInCustomer -> sale.contactId = SystemContact.WALK_IN.id
             contactId != null -> sale.contactId = contactId.orElseThrow {
-                RtsGenericException("contactId cannot be null")
+                RtsGenericException("ContactId cannot be null for non-walk-in sales")
             }
         }
     }

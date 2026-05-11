@@ -9,6 +9,7 @@ import java.util.UUID
 interface SaleLineStockReservationRepository : JpaRepository<SaleLineStockReservationEntity, UUID> {
     fun deleteBySaleId(saleId: UUID)
     fun deleteBySaleLineIdIn(saleLineIds: List<UUID>)
+    fun findBySaleLineIdIn(saleLineIds: Collection<UUID>): List<SaleLineStockReservationEntity>
 
     @Query(
         "SELECT new me.ezra_home.retail_software_solution.locations.business.sale.ProductSaleReservationRow(" +
@@ -18,10 +19,4 @@ interface SaleLineStockReservationRepository : JpaRepository<SaleLineStockReserv
                 "GROUP BY r.locationProductId, r.saleId"
     )
     fun findProductSaleReservations(ids: Collection<UUID>): List<ProductSaleReservationRow>
-
-    @Query(
-        value = "SELECT pg_advisory_xact_lock(hashtextextended(CAST(:productId AS text), 0))",
-        nativeQuery = true
-    )
-    fun acquireProductReservationLock(productId: UUID)
 }

@@ -2,9 +2,10 @@ package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
-import me.ezra_home.retail_software_solution.locations.business.sale.ProductReservationLock
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
@@ -31,7 +32,7 @@ class SaleUpdater(
     private val saleValidator: SaleValidator,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleVoidRepository: SaleVoidRepository,
-    private val productReservationLock: ProductReservationLock,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
     private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
@@ -49,7 +50,7 @@ class SaleUpdater(
         val sale = saleRepository.getReferenceById(dto.saleId)
         saleValidator.guardCanVoid(sale)
         val lines = saleLineRepository.findBySaleId(dto.saleId)
-        productReservationLock.acquire(lines.map { it.locationProductId })
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, lines.map { it.locationProductId })
         if (sale.status == SaleStatus.DRAFT) {
             saleStockReserver.clearBySale(dto.saleId)
             sale.status = SaleStatus.DISCARDED

@@ -2,8 +2,11 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.util.business.Decimals
@@ -18,7 +21,7 @@ class SaleValidator(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
     private val saleStockReserver: SaleStockReserver,
-    private val productReservationLock: ProductReservationLock,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     companion object {
@@ -53,6 +56,24 @@ class SaleValidator(
             }
         }
 
+        fun guardLineIdsBelongToSale(dto: SaleUpdateDto, existingLineIds: Set<UUID>) {
+            val invalidRemoves = dto.linesToRemove.filterNot { it in existingLineIds }
+            if (invalidRemoves.isNotEmpty()) {
+                throw RtsGenericException("Sale line ids to remove do not belong to this sale: $invalidRemoves")
+            }
+            val updateIds = dto.linesToUpdate.map { it.id }
+            val invalidUpdates = updateIds.filterNot { it in existingLineIds }
+            if (invalidUpdates.isNotEmpty()) {
+                throw RtsGenericException("Sale line ids to update do not belong to this sale: $invalidUpdates")
+            }
+            val removeSet = dto.linesToRemove.toHashSet()
+            val conflicting = updateIds.filter { it in removeSet }
+            if (conflicting.isNotEmpty()) {
+                throw RtsGenericException("Sale line ids cannot be both updated and removed: $conflicting")
+            }
+        }
+
+
     }
 
     fun guardCanVoid(sale: SaleEntity) {
@@ -72,7 +93,7 @@ class SaleValidator(
         productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
         val locationProductIds = resolvedQuantities.keys.toList()
-        productReservationLock.acquire(locationProductIds)
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds)
         val balances = stockBalanceFetcher.getLatestBalances(locationProductIds)
         val reserved = saleStockReserver.loadReservedTotals(locationProductIds)
         resolvedQuantities.forEach { (locationProductId, quantity) ->
@@ -101,7 +122,7 @@ class SaleValidator(
         productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
         if (requested.isEmpty()) return
-        productReservationLock.acquire(requested.keys)
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, requested.keys)
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
         val reservations = saleStockReserver.loadReservationBreakdown(requested.keys)
         requested.forEach { (locationProductId, quantity) ->

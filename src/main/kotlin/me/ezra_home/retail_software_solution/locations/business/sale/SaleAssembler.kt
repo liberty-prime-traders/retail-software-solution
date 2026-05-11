@@ -3,8 +3,8 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleResponseDto
+import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountResponseDto
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountService
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
@@ -21,7 +21,7 @@ class SaleAssembler(
     private val userQualifier: UserQualifier,
     private val saleLineRepository: SaleLineRepository,
     private val salePaymentFetcher: SalePaymentFetcher,
-    private val saleDiscountService: SaleDiscountService,
+    private val saleDiscountFetcher: SaleDiscountFetcher
 ) {
 
     fun buildResponses(sales: List<SaleEntity>): List<SaleResponseDto> {
@@ -32,7 +32,7 @@ class SaleAssembler(
         val productSummaries = locationProductDataFetcher.findSummaryByIds(allLines.map { it.locationProductId })
         val paymentsBySaleId = salePaymentFetcher.getPaymentsBySaleIds(saleIds)
         val paidAmountBySaleId = salePaymentFetcher.calculatePaidAmounts(saleIds)
-        val discountsBySaleId = saleDiscountService.getDiscountsBySaleIds(saleIds)
+        val discountsBySaleId = saleDiscountFetcher.getDiscountsBySaleIds(saleIds)
         return sales.map { sale ->
             val lines = linesBySaleId[sale.id] ?: emptyList()
             val discounts = discountsBySaleId[sale.id!!] ?: emptyList()
@@ -54,7 +54,7 @@ class SaleAssembler(
     ): SaleResponseDto {
         val contactNameMap = getContactNames()
         val payments = salePaymentFetcher.getPaymentsBySaleId(sale.id!!)
-        val discounts = saleDiscountService.getDiscountsBySaleId(sale.id!!)
+        val discounts = saleDiscountFetcher.getDiscountsBySaleId(sale.id!!)
         val totalPaid = salePaymentFetcher.calculatePaidAmount(sale.id!!)
         return buildResponse(sale, lines, contactNameMap, productSummaries, payments, discounts, totalPaid)
     }

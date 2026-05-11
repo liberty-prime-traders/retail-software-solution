@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLinePreparer
@@ -19,6 +21,7 @@ class SaleDraftHandler(
     private val saleLinePreparer: SaleLinePreparer,
     private val saleMutator: SaleMutator,
     private val contactService: ContactService,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     fun createDraft(dto: SaleCreateDto): SaleResponseDto {
@@ -37,14 +40,11 @@ class SaleDraftHandler(
     }
 
     fun updateDraft(dto: SaleUpdateDto): SaleResponseDto {
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, listOf(dto.id))
         val sale = saleRepository.getReferenceById(dto.id)
         SaleValidator.guardIsDraft(sale)
-        dto.applyContactId(sale)
-        sale.soldBy = dto.soldBy
-        sale.dateSold = dto.dateSold
-        sale.notes = dto.notes
+        dto.applyTo(sale)
         val outcome = saleMutator.update(dto, sale)
-        val survivingLines = outcome.updateResult.survivingSaleLines
-        return saleAssembler.buildResponse(sale, survivingLines, outcome.updateResult.productSummaries)
+        return saleAssembler.buildResponse(sale, outcome.survivingLines, outcome.productSummaries)
     }
 }

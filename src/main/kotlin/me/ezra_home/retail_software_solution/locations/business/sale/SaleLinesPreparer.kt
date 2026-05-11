@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
@@ -14,39 +13,32 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-@TransactionalOnLocationSchema
-class SaleLinesUpdater(
+class SaleLinesPreparer(
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
-    private val saleValidator: SaleValidator,
     private val locationProductService: LocationProductService,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val saleStockReserver: SaleStockReserver,
-    private val saleLineRepository: SaleLineRepository,
 ) {
 
-    fun applyLineUpdates(saleId: UUID, dto: SaleUpdateDto): SaleLineUpdateResult {
-        val existing = saleLineRepository.findBySaleId(saleId).associateBy { it.id!! }
+    fun prepare(saleId: UUID, dto: SaleUpdateDto, existingLines: List<SaleLineEntity>): PreparedLineUpdate {
+        val removedIds = dto.linesToRemove.toHashSet()
+        val survivingExistingById = existingLines.filter { it.id !in removedIds }.associateBy { it.id!! }
+
         val allProductIds = dto.linesToAdd.map { it.locationProductId } +
-                dto.linesToUpdate.map { it.locationProductId } +
-                existing.values.map { it.locationProductId }
+                survivingExistingById.values.map { it.locationProductId }
         val productSummaries = locationProductDataFetcher.findSummaryByIds(allProductIds.toHashSet())
         val baseUnitsByLocationProductId = productSummaries.values.associate { it.id to it.baseUnitId }
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
 
         val newLines = buildAdditions(saleId, dto.linesToAdd, productSummaries, baseUnitsByLocationProductId, unitConversionGraph)
-        val updatedLines = applyUpdates(dto.linesToUpdate, existing, baseUnitsByLocationProductId, unitConversionGraph)
+        val updatedLines = applyUpdates(dto.linesToUpdate, survivingExistingById, baseUnitsByLocationProductId, unitConversionGraph)
 
         val updatedIds = updatedLines.mapTo(HashSet()) { it.id }
-        val resultingLines = existing.values.filter { it.id !in updatedIds } + updatedLines + newLines
-        SaleValidator.guardNoDuplicateProducts(resultingLines.map { it.locationProductId })
+        val survivingExisting = survivingExistingById.values.filter { it.id !in updatedIds }
+        SaleValidator.guardNoDuplicateProducts(
+            (survivingExisting + updatedLines + newLines).map { it.locationProductId }
+        )
 
-        val baseQuantityRequestedByProductId = (newLines + updatedLines).associate { it.locationProductId to it.baseQty() }
-        saleValidator.guardStockForDraftUpdates(saleId, baseQuantityRequestedByProductId, productSummaries)
-
-        saleLineRepository.saveAll(updatedLines + newLines)
-        saleStockReserver.syncUpdatedReservations(updatedLines, newLines, saleId)
-
-        return SaleLineUpdateResult(resultingLines, productSummaries)
+        return PreparedLineUpdate(newLines, updatedLines, survivingExisting, productSummaries)
     }
 
     private fun buildAdditions(
@@ -74,10 +66,9 @@ class SaleLinesUpdater(
         unitConversionGraph: UnitConversionGraph,
     ): List<SaleLineEntity> {
         val updated = mutableListOf<SaleLineEntity>()
-
         for (lineDto in linesToUpdate) {
-            val entity = existing[lineDto.id] ?: continue
-            val baseUnitId = baseUnitsByLocationProductId.getValue(lineDto.locationProductId)
+            val entity = existing.getValue(lineDto.id)
+            val baseUnitId = baseUnitsByLocationProductId.getValue(entity.locationProductId)
             entity.quantity = lineDto.quantity
             if (entity.unitId != lineDto.unitId) {
                 entity.unitId = lineDto.unitId
@@ -88,7 +79,6 @@ class SaleLinesUpdater(
             }
             updated.add(entity)
         }
-
         return updated
     }
 }
