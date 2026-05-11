@@ -89,11 +89,6 @@ class ResponseSteps(
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(0))
   }
 
-  @Then("the response body should be empty")
-  fun verifyEmptyBody() {
-    assertEquals("", responseContext.lastResponse?.asString() ?: "", "Expected an empty response body")
-  }
-
   @Then("the response error message should be {string}")
   fun verifyErrorMessage(expectedMessage: String) {
     assertNotNull(responseContext.lastError, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
