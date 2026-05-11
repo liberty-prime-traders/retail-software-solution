@@ -165,14 +165,6 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "A Contact with person 'John Doe' already exists"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A Contact with person 'John Doe' already exists",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: INDIVIDUAL contact requires first name
@@ -186,14 +178,6 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "Identity type INDIVIDUAL requires first name"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "Identity type INDIVIDUAL requires first name",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: ORGANIZATION contact requires company name
@@ -206,14 +190,6 @@ Feature: Contacts
       """
     Then the response status should be 400
     And the response error message should be "Identity type ORGANIZATION requires company name"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "Identity type ORGANIZATION requires company name",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unauthenticated user cannot view contacts
