@@ -15,19 +15,27 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "name" should be "Volume"
-    And the response field "description" should be "Measurement of volume"
+    And the response should match json:
+      """
+      {
+        "name": "Volume",
+        "description": "Measurement of volume"
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of unit groups
     Given a unit group exists
     When I send a GET request to "/secured/unitgroups"
     Then the response status should be 200
-    And the response should contain 1 items
-    And the response should contain:
-      | field   | value           |
-      | [0].id    | #unitGroup->0   |
+    And the response should match json:
+      """
+      [
+        {
+          "id": "#unitGroup->0"
+        }
+      ]
+      """
 
   @regression
   Scenario: Authenticated user updates a unit group
@@ -41,8 +49,14 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response field "name" should be "Updated Unit Group Name"
-    And the response field "description" should be "Updated Description"
+    And the response should match json:
+      """
+      {
+        "id": "#unitGroup->0",
+        "name": "Updated Unit Group Name",
+        "description": "Updated Description"
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a unit group
@@ -63,7 +77,7 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "An UnitGroup using the name 'Test Unit Group' already exists"
 
   @regression
   Scenario: Unauthenticated user cannot view unit groups

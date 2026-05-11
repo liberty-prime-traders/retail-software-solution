@@ -84,13 +84,6 @@ class ResponseSteps(
     )
   }
 
-  @Then("the response error should contain {string}")
-  fun verifyErrorContains(expectedMessage: String) {
-    val error = responseContext.lastError
-    assertNotNull(error, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
-    assertTrue(error.contains(expectedMessage, ignoreCase = true), "Expected error containing '$expectedMessage' but got: $error")
-  }
-
   @Then("the response error field {string} should be {string}")
   fun verifyErrorField(fieldName: String, expectedValue: String) {
     assertNotNull(responseContext.lastError, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
