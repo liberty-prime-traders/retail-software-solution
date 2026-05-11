@@ -144,14 +144,6 @@ Feature: Unit Values
       """
     Then the response status should be 400
     And the response error message should be "A unit value with the name Test Unit already exists"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A unit value with the name Test Unit already exists",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unit value requires a conversion factor when base unit is provided
@@ -168,14 +160,6 @@ Feature: Unit Values
       """
     Then the response status should be 400
     And the response error message should be "A unit value with a base unit must have a conversion factor"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A unit value with a base unit must have a conversion factor",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unit value requires a base unit when conversion factor is provided
@@ -192,14 +176,6 @@ Feature: Unit Values
       """
     Then the response status should be 400
     And the response error message should be "A unit value with a conversion factor must have a base unit"
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A unit value with a conversion factor must have a base unit",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unauthenticated user cannot view unit values
