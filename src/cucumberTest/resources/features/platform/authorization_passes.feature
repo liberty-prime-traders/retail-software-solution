@@ -109,9 +109,11 @@ Feature: Authorization Passes
     Given I am not authenticated
     When I send a GET request to "/secured/authorization-passes"
     Then the response status should be 403
+    And the response body should be empty
 
   @regression
   Scenario: Organization user cannot view authorization passes
     Given I am authenticated as an organization user
     When I send a GET request to "/secured/authorization-passes"
     Then the response status should be 403
+    And the response body should be empty
