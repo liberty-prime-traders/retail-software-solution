@@ -15,16 +15,27 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "categoryName" should be "Electronics"
-    And the response field "description" should be "Electronic goods and accessories"
+    And the response should match json:
+      """
+      {
+        "categoryName": "Electronics",
+        "description": "Electronic goods and accessories"
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of product categories
     Given a category exists
     When I send a GET request to "/secured/product-category"
     Then the response status should be 200
-    And the response should contain 1 items
+    And the response should match json:
+      """
+      [
+        {
+          "id": "#category->0"
+        }
+      ]
+      """
 
   @regression
   Scenario: Authenticated user updates a product category
@@ -38,8 +49,14 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
-    And the response field "categoryName" should be "Updated Category Name"
-    And the response field "description" should be "Updated description"
+    And the response should match json:
+      """
+      {
+        "id": "#category->0",
+        "categoryName": "Updated Category Name",
+        "description": "Updated description"
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a product category
@@ -57,7 +74,7 @@ Feature: Product Categories
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A category with the name Test Category already exists."
 
   @regression
   Scenario: Duplicate category name is rejected on update
@@ -77,7 +94,7 @@ Feature: Product Categories
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A category with the name Clothing already exists."
 
   @regression
   Scenario: Unauthenticated user cannot view product categories
