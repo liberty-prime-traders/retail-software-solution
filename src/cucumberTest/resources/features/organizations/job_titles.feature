@@ -14,15 +14,26 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "value" should be "Software Engineer"
+    And the response should match json:
+      """
+      {
+        "value": "Software Engineer"
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of job titles
     Given a job title exists
     When I send a GET request to "/secured/job-title"
     Then the response status should be 200
-    And the response should contain 1 items
+    And the response should match json:
+      """
+      [
+        {
+          "id": "#jobTitle->0"
+        }
+      ]
+      """
 
   @regression
   Scenario: Authenticated user updates a job title
@@ -35,7 +46,13 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
-    And the response field "value" should be "Senior Engineer"
+    And the response should match json:
+      """
+      {
+        "id": "#jobTitle->0",
+        "value": "Senior Engineer"
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a job title
@@ -53,7 +70,7 @@ Feature: Job Titles
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A job title with the value Test Job Title already exists."
 
   @regression
   Scenario: Duplicate job title value is rejected on update
@@ -73,7 +90,7 @@ Feature: Job Titles
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A job title with the value Product Manager already exists."
 
   @regression
   Scenario: Unauthenticated user cannot view job titles
