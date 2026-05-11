@@ -75,7 +75,7 @@ class UnitConversionGraphBuilder(
 
             startUnit.id to conversions
         }
-        return UnitConversionGraph(map)
+        return UnitConversionGraph(map, allUnits.associate { it.id to it.name })
     }
 }
 

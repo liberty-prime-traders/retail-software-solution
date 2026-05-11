@@ -69,7 +69,7 @@ class PurchaseAssembler(
     val deliveredTotal = deliveries.fold(BigDecimal.ZERO) { acc, d -> acc.add(d.deliveryTotal) }
     return PurchaseResponseDto(
       id = purchase.id!!,
-      referenceNumber = purchase.referenceNumber!!,
+      referenceNumber = purchase.requiredReference(),
       supplierId = purchase.supplierId,
       supplierName = supplierNameMap[purchase.supplierId],
       purchaseStatus = purchase.purchaseStatus,
@@ -96,7 +96,7 @@ class PurchaseAssembler(
       val product = productSummaries[line.locationProductId]!!
       PurchaseLineResponseDto(
         id = line.id!!,
-        referenceNumber = line.referenceNumber!!,
+        referenceNumber = line.requiredReference(),
         quantityOrdered = line.quantityOrdered,
         unitId = line.unitId,
         conversionFactor = line.conversionFactor,

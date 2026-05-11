@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher

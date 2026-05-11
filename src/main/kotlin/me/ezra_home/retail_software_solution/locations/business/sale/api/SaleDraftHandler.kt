@@ -7,6 +7,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleLinePre
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleMutator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
 @Service
@@ -16,15 +18,19 @@ class SaleDraftHandler(
     private val saleAssembler: SaleAssembler,
     private val saleLinePreparer: SaleLinePreparer,
     private val saleMutator: SaleMutator,
+    private val contactService: ContactService,
 ) {
 
     fun createDraft(dto: SaleCreateDto): SaleResponseDto {
+        if (dto.walkInCustomer) throw RtsGenericException("Walk-in sales cannot be drafted")
+        val contactId = dto.resolveContactId().also { contactService.getContactById(it) }
         val validated = saleLinePreparer.prepareForInsert(dto.linesToAdd)
         val sale = SaleEntity(
-            contactId = dto.resolveContactId(),
+            contactId = contactId,
             soldBy = dto.soldBy,
             dateSold = dto.dateSold,
             notes = dto.notes,
+            status = SaleStatus.DRAFT,
         )
         val outcome = saleMutator.create(dto, sale, validated)
         return saleAssembler.buildResponse(sale, outcome.lines, validated.productSummaries)

@@ -23,16 +23,25 @@ data class ConversionTargetDto(
 typealias ConversionTargets = Map<UUID, ConversionTargetDto>
 
 data class UnitConversionGraph(
-    val fromUnitToTargets: Map<UUID, ConversionTargets>
+    private val fromUnitToTargets: Map<UUID, ConversionTargets>,
+    private val unitNamesById: Map<UUID, String> = emptyMap()
 ) {
 
+    fun getFullGraph(): Map<UUID, ConversionTargets> = fromUnitToTargets
+
     fun getTarget(fromUnitId: UUID, toUnitId: UUID): ConversionTargetDto {
-        val targets = fromUnitToTargets[fromUnitId] ?: throw RtsGenericException("No conversion targets found for unit $fromUnitId")
-        return targets[toUnitId] ?: throw RtsGenericException("No conversion target found from unit $fromUnitId to unit $toUnitId")
+        val fromName = label(fromUnitId)
+        val targets = fromUnitToTargets[fromUnitId]
+            ?: throw RtsGenericException("No conversion targets found for unit $fromName")
+        return targets[toUnitId]
+            ?: throw RtsGenericException("No conversion target found from $fromName to ${label(toUnitId)}")
     }
 
     fun getFactor(fromUnitId: UUID, toUnitId: UUID): BigDecimal {
         if (fromUnitId == toUnitId) return BigDecimal.ONE
         return getTarget(fromUnitId, toUnitId).factor
     }
+
+    private fun label(unitId: UUID): String =
+        unitNamesById[unitId] ?: throw RtsGenericException("Unit name not found for id $unitId")
 }

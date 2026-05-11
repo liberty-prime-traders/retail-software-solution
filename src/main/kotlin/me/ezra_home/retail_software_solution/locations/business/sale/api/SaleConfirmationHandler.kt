@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleMutator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
@@ -30,6 +31,7 @@ class SaleConfirmationHandler(
     private val saleStockUpdater: SaleStockUpdater,
     private val saleConfirmedHandlerForKafka: SaleConfirmedHandlerForKafka,
     private val fiscalPeriodService: FiscalPeriodService,
+    private val salePaymentService: SalePaymentService,
 ) {
 
     fun createSale(dto: SaleCreateDto): SaleResponseDto {
@@ -44,7 +46,7 @@ class SaleConfirmationHandler(
             status = SaleStatus.CONFIRMED,
         )
         val outcome = saleMutator.create(dto, sale, validated)
-        runFifoConsumption(outcome.lines, sale.referenceNumber!!)
+        runFifoConsumption(outcome.lines, sale.requiredReference())
         saleConfirmedHandlerForKafka.publish(sale, outcome.lines, outcome.discounts)
         return saleAssembler.buildResponse(sale, outcome.lines, validated.productSummaries)
     }
@@ -58,14 +60,16 @@ class SaleConfirmationHandler(
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(sale.dateSold!!))
         sale.notes = dto.notes ?: sale.notes
         val outcome = saleMutator.update(dto, sale) { lines -> SaleValidator.guardHasLines(lines) }
-        val survivingLines = outcome.updateResult.survivingSaleLines
         if (sale.contactId == SystemContact.WALK_IN.id) {
             saleValidator.guardWalkInPaymentCoverage(dto.id, sale.subtotal!!)
         }
         sale.status = SaleStatus.CONFIRMED
         saleStockReserver.clearBySale(dto.id)
-        runFifoConsumption(survivingLines, sale.referenceNumber!!)
+
+        val survivingLines = outcome.updateResult.survivingSaleLines
+        runFifoConsumption(survivingLines, sale.requiredReference())
         saleConfirmedHandlerForKafka.publish(sale, survivingLines, outcome.discounts)
+        salePaymentService.publishKafkaForExistingPayments(dto.id)
         return saleAssembler.buildResponse(sale, survivingLines, outcome.updateResult.productSummaries)
     }
 

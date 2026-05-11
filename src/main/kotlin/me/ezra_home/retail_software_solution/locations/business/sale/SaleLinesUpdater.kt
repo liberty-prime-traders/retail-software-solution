@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.ConversionTargetDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

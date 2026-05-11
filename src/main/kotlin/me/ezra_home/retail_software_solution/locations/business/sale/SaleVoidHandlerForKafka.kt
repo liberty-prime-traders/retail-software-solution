@@ -45,7 +45,7 @@ class SaleVoidHandlerForKafka(
                 correlationId = null,
                 sourceDocumentId = sale.id!!,
                 contactId = sale.contactId,
-                saleReferenceNumber = sale.referenceNumber!!,
+                saleReferenceNumber = sale.requiredReference(),
                 subtotal = sale.subtotal!!,
                 discountTotal = sale.discountTotal!!,
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),

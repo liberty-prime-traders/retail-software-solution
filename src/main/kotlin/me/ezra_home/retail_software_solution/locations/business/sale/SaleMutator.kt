@@ -53,7 +53,7 @@ class SaleMutator(
         if (sale.status == SaleStatus.DRAFT) {
             saleStockReserver.reserve(sale.id!!, saleLineEntities)
         }
-        val discounts = saleDiscountService.applyDiscounts(sale, dto.discounts, saleLineEntities)
+        val discounts = saleDiscountService.applyValidatedDiscounts(sale, dto.discounts, saleLineEntities)
         applyTotals(sale, saleLineEntities, discounts)
         recordPayments(dto.payments, sale)
         return SaleCreateOutcome(saleLineEntities, validated, discounts)
@@ -96,7 +96,9 @@ class SaleMutator(
 
     private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity) {
         if (payments.isEmpty()) return
-        salePaymentService.recordPaymentsSubmittedWithSale(sale.id!!, sale.contactId, payments, sale.subtotal!!)
+        salePaymentService.recordPaymentsSubmittedWithSale(
+            sale.id!!, sale.contactId, payments, sale.subtotal!!, sale.status
+        )
     }
     
 }

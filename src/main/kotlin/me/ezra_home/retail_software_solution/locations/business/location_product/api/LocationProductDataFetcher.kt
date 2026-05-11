@@ -18,7 +18,7 @@ class LocationProductDataFetcher(
         locationProductRepository.findAllById(ids).associate { entity ->
             entity.id!! to LocationProductSummaryDto(
                 id = entity.id!!,
-                referenceNumber = entity.referenceNumber!!,
+                referenceNumber = entity.requiredReference(),
                 productName = entity.productName,
                 productGroupName = entity.productGroupName,
                 baseUnitId = entity.baseUnitId,

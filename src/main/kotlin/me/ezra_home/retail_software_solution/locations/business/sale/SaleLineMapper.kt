@@ -14,8 +14,7 @@ object SaleLineMapper {
         validatedSaleLines: ValidatedSaleLines,
     ): List<SaleLineEntity> =
         dtoLines.map { line ->
-            val unitPrice = validatedSaleLines.productSummaries.getValue(line.locationProductId).unitPrice
-                ?: throw RtsGenericException("Product ${line.locationProductId} has no unit price")
+            val unitPrice = validatedSaleLines.productSummaries.getValue(line.locationProductId).unitPrice!!
             SaleLineEntity(
                 saleId,
                 line.locationProductId,
@@ -33,7 +32,7 @@ object SaleLineMapper {
         return saleLineEntities.map { line ->
             SaleLineResponseDto(
                 id = line.id!!,
-                referenceNumber = line.referenceNumber!!,
+                referenceNumber = line.requiredReference(),
                 locationProductId = line.locationProductId,
                 quantity = line.quantity,
                 unitId = line.unitId,

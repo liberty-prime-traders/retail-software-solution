@@ -29,8 +29,9 @@ class LedgerPostingService(
     fun post(request: LedgerPostingRequest) {
         LedgerEntriesValidator.validate(request.entries)
         val group = saveLedgerGroup(request)
-        val entries = saveLedgerEntries(group.referenceNumber!!, request)
-        saveSubledgerEntries(group.referenceNumber!!, request)
+        val groupReference = group.requiredReference()
+        val entries = saveLedgerEntries(groupReference, request)
+        saveSubledgerEntries(groupReference, request)
         patchRunningBalances(entries)
     }
 

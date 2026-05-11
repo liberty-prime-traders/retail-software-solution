@@ -71,7 +71,7 @@ class SaleAssembler(
         val lineResponses = SaleLineMapper.toResponseLines(lines, productSummaries)
         return SaleResponseDto(
             id = sale.id!!,
-            referenceNumber = sale.referenceNumber!!,
+            referenceNumber = sale.requiredReference(),
             contactId = sale.contactId,
             walkInCustomer = sale.contactId == SystemContact.WALK_IN.id,
             contactName = contactNameMap[sale.contactId] ?: "",

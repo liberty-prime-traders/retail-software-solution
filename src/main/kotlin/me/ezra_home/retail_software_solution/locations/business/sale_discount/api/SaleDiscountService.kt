@@ -17,15 +17,12 @@ class SaleDiscountService(
     private val userQualifier: UserQualifier
 ) {
 
-    fun applyDiscounts(
+    fun applyValidatedDiscounts(
         sale: SaleEntity,
         discountDtos: List<SaleDiscountCreateDto>,
-        saleLines: List<SaleLineEntity>,
-        existingDiscounts: List<SaleDiscountEntity> = emptyList()
+        saleLines: List<SaleLineEntity>
     ): List<SaleDiscountSummaryDto> {
         if (discountDtos.isEmpty()) return emptyList()
-        val productByLineId = saleLines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
-        SaleDiscountValidator.validateNewDiscounts(discountDtos, saleLines, existingDiscounts, productByLineId)
         val lineByProductId = saleLines.associateBy { it.locationProductId }
         val newDiscounts = discountDtos.associate { dto ->
             val saleLineId = dto.locationProductId?.let { lineByProductId[it]?.id }
@@ -53,13 +50,20 @@ class SaleDiscountService(
         lines: List<SaleLineEntity>
     ): List<SaleDiscountSummaryDto> {
         SaleDiscountValidator.guardIsDraft(sale)
+        if (discountDtos.isEmpty()) return existingSummaries(sale.id!!)
         val existing = saleDiscountRepository.findBySaleId(sale.id!!)
-        val newSummaries = applyDiscounts(sale, discountDtos, lines, existing)
-        val existingSummaries = existing.map {
+        val productByLineId = lines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
+        SaleDiscountValidator.validateNewDiscounts(discountDtos, lines, existing, productByLineId)
+        val newSummaries = applyValidatedDiscounts(sale, discountDtos, lines)
+        return existing.map {
+            SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
+        } + newSummaries
+    }
+
+    private fun existingSummaries(saleId: UUID): List<SaleDiscountSummaryDto> =
+        saleDiscountRepository.findBySaleId(saleId).map {
             SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
         }
-        return existingSummaries + newSummaries
-    }
 
     fun removeDiscounts(sale: SaleEntity, discountIds: List<UUID>) {
         SaleDiscountValidator.guardIsDraft(sale)

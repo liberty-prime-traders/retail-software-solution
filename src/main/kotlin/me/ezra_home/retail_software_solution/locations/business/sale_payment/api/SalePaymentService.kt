@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.ap
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
@@ -36,7 +37,8 @@ class SalePaymentService(
         saleId: UUID,
         contactId: UUID,
         payments: List<SalePaymentCreateDto>,
-        saleTotal: BigDecimal
+        saleTotal: BigDecimal,
+        saleStatus: SaleStatus
     ) {
         if (payments.isEmpty()) return
         payments.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
@@ -54,13 +56,20 @@ class SalePaymentService(
         }
         salePaymentRepository.saveAll(entities)
         saleUpdater.updatePaymentStatus(saleId, resolvePaymentStatus(totalPaid, saleTotal))
-        salePaymentHandlerForKafka.publish(saleId, contactId, entities)
+        if (saleStatus != SaleStatus.DRAFT) {
+            salePaymentHandlerForKafka.publish(saleId, contactId, entities)
+        }
+    }
+
+    fun publishKafkaForExistingPayments(saleId: UUID) {
+        salePaymentHandlerForKafka.publishExistingForSale(saleId)
     }
 
     fun recordPayment(dto: SalePaymentCreateDto): SalePaymentResponseDto {
         val saleId = dto.saleId ?: throw RtsGenericException("saleId is required")
         SalePaymentValidator.guardPositiveAmount(dto.amount)
-        val (contactId, saleTotal) = saleDataFetcher.getSaleContext(saleId)
+        val (contactId, saleTotal, saleStatus) = saleDataFetcher.getSaleContext(saleId)
+        SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         SalePaymentValidator.guardNotExceedingBalance(dto.amount, saleTotal.subtract(alreadyPaid))
         val entity = SalePaymentEntity(
@@ -86,7 +95,7 @@ class SalePaymentService(
         val payment = salePaymentRepository.getReferenceById(dto.salePaymentId)
         SalePaymentValidator.guardNotAlreadyVoided(
             salePaymentVoidRepository.existsBySalePaymentId(dto.salePaymentId),
-            payment.referenceNumber!!
+            payment.requiredReference()
         )
 
         val (contactId, saleTotal, saleStatus) = saleDataFetcher.getSaleContext(payment.saleId)

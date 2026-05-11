@@ -58,7 +58,7 @@ class SaleUpdater(
             val requests = lines.map {
                 SaleLineStockRequest(it.id!!, it.locationProductId, it.quantity, it.unitId, it.conversionFactor)
             }
-            saleStockUpdater.restoreStock(requests, sale.referenceNumber!!)
+            saleStockUpdater.restoreStock(requests, sale.requiredReference())
             sale.status = SaleStatus.VOIDED
             val voidEntity = saleVoidRepository.save(SaleVoidEntity(saleId = dto.saleId, reason = dto.reason))
             saleVoidHandlerForKafka.publishVoid(sale, lines, voidEntity)

@@ -13,7 +13,7 @@ object SalePaymentMapper {
         updatedStatus: PaymentStatus? = null
     ) = SalePaymentResponseDto(
         id = payment.id!!,
-        referenceNumber = payment.referenceNumber!!,
+        referenceNumber = payment.requiredReference(),
         saleId = payment.saleId,
         amount = payment.amount,
         reference = payment.reference,

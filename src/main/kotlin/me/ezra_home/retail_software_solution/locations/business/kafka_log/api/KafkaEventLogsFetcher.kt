@@ -14,7 +14,7 @@ class KafkaEventLogsFetcher(private val eventProcessingLogRepository: EventProce
             KafkaEventLogDto(
                 id = it.id!!,
                 sourceDocumentId = it.sourceDocumentId,
-                referenceNumber = it.referenceNumber!!,
+                referenceNumber = it.requiredReference(),
                 processor = it.consumerGroup,
                 status = it.status,
                 processedOn = it.processedOn,
