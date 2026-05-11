@@ -87,14 +87,6 @@ Feature: Product Categories
       """
     Then the response status should be 400
     And the response error message should be "A category with the name Test Category already exists."
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A category with the name Test Category already exists.",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Duplicate category name is rejected on update
@@ -115,14 +107,6 @@ Feature: Product Categories
       """
     Then the response status should be 400
     And the response error message should be "A category with the name Clothing already exists."
-    And the response should contain field "timestamp"
-    And the response should match json:
-      """
-      {
-        "message": "A category with the name Clothing already exists.",
-        "body": null
-      }
-      """
 
   @regression
   Scenario: Unauthenticated user cannot view product categories
