@@ -14,6 +14,10 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
+    And the response should contain field "id"
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
@@ -26,11 +30,15 @@ Feature: Job Titles
     Given a job title exists
     When I send a GET request to "/secured/job-title"
     Then the response status should be 200
+    And the response should contain field "0.createdBy"
+    And the response should contain field "0.createdOn"
+    And the response should contain field "0.referenceNumber"
     And the response should match json:
       """
       [
         {
-          "id": "#jobTitle->0"
+          "id": "#jobTitle->0",
+          "value": "Test Job Title"
         }
       ]
       """
@@ -46,6 +54,9 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
@@ -71,6 +82,14 @@ Feature: Job Titles
       """
     Then the response status should be 400
     And the response error message should be "A job title with the value Test Job Title already exists."
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "A job title with the value Test Job Title already exists.",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Duplicate job title value is rejected on update
@@ -91,6 +110,14 @@ Feature: Job Titles
       """
     Then the response status should be 400
     And the response error message should be "A job title with the value Product Manager already exists."
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "A job title with the value Product Manager already exists.",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Unauthenticated user cannot view job titles
