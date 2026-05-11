@@ -15,6 +15,10 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
+    And the response should contain field "id"
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
@@ -28,11 +32,16 @@ Feature: Product Categories
     Given a category exists
     When I send a GET request to "/secured/product-category"
     Then the response status should be 200
+    And the response should contain field "0.createdBy"
+    And the response should contain field "0.createdOn"
+    And the response should contain field "0.referenceNumber"
     And the response should match json:
       """
       [
         {
-          "id": "#category->0"
+          "id": "#category->0",
+          "categoryName": "Test Category",
+          "description": null
         }
       ]
       """
@@ -49,6 +58,9 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
+    And the response should contain field "createdBy"
+    And the response should contain field "createdOn"
+    And the response should contain field "referenceNumber"
     And the response should match json:
       """
       {
@@ -75,6 +87,14 @@ Feature: Product Categories
       """
     Then the response status should be 400
     And the response error message should be "A category with the name Test Category already exists."
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "A category with the name Test Category already exists.",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Duplicate category name is rejected on update
@@ -95,6 +115,14 @@ Feature: Product Categories
       """
     Then the response status should be 400
     And the response error message should be "A category with the name Clothing already exists."
+    And the response should contain field "timestamp"
+    And the response should match json:
+      """
+      {
+        "message": "A category with the name Clothing already exists.",
+        "body": null
+      }
+      """
 
   @regression
   Scenario: Unauthenticated user cannot view product categories
