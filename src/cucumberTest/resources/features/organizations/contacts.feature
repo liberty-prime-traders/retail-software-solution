@@ -20,9 +20,17 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "firstName" should be "Jane"
-    And the response field "companyName" should be null
+    And the response should match json:
+      """
+      {
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "companyName": null,
+        "email": "jane.smith@example.com",
+        "phone": "0987654321",
+        "address": "456 Jane St"
+      }
+      """
 
   @regression
   Scenario: Authenticated user creates an ORGANIZATION contact successfully
@@ -38,9 +46,16 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response field "companyName" should be "Tech Corp"
-    And the response field "firstName" should be null
+    And the response should match json:
+      """
+      {
+        "companyName": "Tech Corp",
+        "firstName": null,
+        "email": "contact@techcorp.com",
+        "phone": "1112223333",
+        "address": "Innovate Ave"
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of contacts
@@ -61,8 +76,14 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response field "firstName" should be "John Updated"
-    And the response field "notes" should be "Some updated notes"
+    And the response should match json:
+      """
+      {
+        "id": "#contact->0",
+        "firstName": "John Updated",
+        "notes": "Some updated notes"
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a contact
@@ -83,7 +104,7 @@ Feature: Contacts
       }
       """
     Then the response status should be 400
-    And the response error should contain "already exists"
+    And the response error message should be "A Contact with person 'John Doe' already exists"
 
   @regression
   Scenario: INDIVIDUAL contact requires first name
@@ -96,7 +117,7 @@ Feature: Contacts
       }
       """
     Then the response status should be 400
-    And the response error should contain "requires first name"
+    And the response error message should be "Identity type INDIVIDUAL requires first name"
 
   @regression
   Scenario: ORGANIZATION contact requires company name
@@ -108,7 +129,7 @@ Feature: Contacts
       }
       """
     Then the response status should be 400
-    And the response error should contain "requires company name"
+    And the response error message should be "Identity type ORGANIZATION requires company name"
 
   @regression
   Scenario: Unauthenticated user cannot view contacts
