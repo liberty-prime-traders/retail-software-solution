@@ -35,7 +35,20 @@ class ResponseSteps(
 
   @Then("the response field {string} should be {string}")
   fun verifyFieldValue(fieldName: String, expectedValue: String) {
-    assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
+    val injectedValue = injectContext.inject(expectedValue)
+    assertEquals(injectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
+  }
+
+  @Then("the response field {string} should be null")
+  fun verifyFieldIsNull(fieldName: String) {
+    val value = responseContext.lastResponse?.jsonPath()?.get<Any>(fieldName)
+    assertTrue(value == null, "Expected field '$fieldName' to be null but was $value")
+  }
+
+  @Then("the response field {string} should not be null")
+  fun verifyFieldIsNotNull(fieldName: String) {
+    val value = responseContext.lastResponse?.jsonPath()?.get<Any>(fieldName)
+    assertNotNull(value, "Expected field '$fieldName' to be not null")
   }
 
   @Then("the response should match json:")
@@ -85,6 +98,13 @@ class ResponseSteps(
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(size))
   }
 
+  @Then("the response should contain at least {int} items")
+  fun verifyAtLeastListSize(size: Int) {
+    val list = responseContext.lastResponse?.jsonPath()?.getList<Any>("$")
+    assertNotNull(list)
+    assertTrue(list.size >= size, "Expected at least $size items but got ${list.size}")
+  }
+
   @Then("the response should be an empty list")
   fun verifyEmptyList() {
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(0))
@@ -100,13 +120,6 @@ class ResponseSteps(
       actualMessage,
       "Expected error message '$injectedExpectedMessage' but got '$actualMessage'"
     )
-  }
-
-  @Then("the response error should contain {string}")
-  fun verifyErrorContains(expectedMessage: String) {
-    val error = responseContext.lastError
-    assertNotNull(error, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
-    assertTrue(error.contains(expectedMessage, ignoreCase = true), "Expected error containing '$expectedMessage' but got: $error")
   }
 
   @Then("the response error field {string} should be {string}")

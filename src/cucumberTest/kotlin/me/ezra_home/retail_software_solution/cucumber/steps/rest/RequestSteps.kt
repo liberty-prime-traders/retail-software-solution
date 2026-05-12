@@ -29,6 +29,11 @@ class RequestSteps(
     apiClient.put(injectContext.inject(endpoint), injectContext.inject(body))
   }
 
+  @When("I send a PUT request to {string}")
+  fun sendPut(endpoint: String) {
+    apiClient.put(injectContext.inject(endpoint))
+  }
+
   @When("I send a DELETE request to {string}")
   fun sendDelete(endpoint: String) {
     apiClient.delete(injectContext.inject(endpoint))
