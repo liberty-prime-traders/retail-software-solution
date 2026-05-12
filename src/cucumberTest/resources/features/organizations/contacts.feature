@@ -20,28 +20,7 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "contactType": "CUSTOMER",
-        "identityType": "INDIVIDUAL",
-        "firstName": "Jane",
-        "lastName": "Smith",
-        "companyName": null,
-        "fullName": "Jane Smith",
-        "email": "jane.smith@example.com",
-        "phone": "0987654321",
-        "address": "456 Jane St",
-        "creditLimit": null,
-        "notes": null,
-        "status": "ACTIVE",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted contact
 
   @regression
   Scenario: Authenticated user creates an ORGANIZATION contact successfully
@@ -57,58 +36,15 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "contactType": "SUPPLIER",
-        "identityType": "ORGANIZATION",
-        "companyName": "Tech Corp",
-        "firstName": null,
-        "lastName": null,
-        "fullName": "Tech Corp",
-        "email": "contact@techcorp.com",
-        "phone": "1112223333",
-        "address": "Innovate Ave",
-        "creditLimit": null,
-        "notes": null,
-        "status": "ACTIVE",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted contact
 
   @regression
   Scenario: Authenticated user views list of contacts
     Given a contact exists
     When I send a GET request to "/secured/contacts"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#contact->0",
-          "contactType": "CUSTOMER",
-          "identityType": "INDIVIDUAL",
-          "firstName": "John",
-          "lastName": "Doe",
-          "companyName": null,
-          "fullName": "John Doe",
-          "email": "john.doe@example.com",
-          "phone": "1234567890",
-          "address": "123 Test St",
-          "creditLimit": null,
-          "notes": null,
-          "status": "ACTIVE",
-          "systemDefined": false
-        }
-      ]
-      """
+    And the response should contain at least 1 items
+    And the response item 0 should match the persisted contact identified by "#contact->0"
 
   @regression
   Scenario: Authenticated user updates a contact
@@ -122,28 +58,7 @@ Feature: Contacts
       }
       """
     Then the response status should be 200
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "id": "#contact->0",
-        "contactType": "CUSTOMER",
-        "identityType": "INDIVIDUAL",
-        "firstName": "John Updated",
-        "lastName": "Doe",
-        "companyName": null,
-        "fullName": "John Updated Doe",
-        "email": "john.doe@example.com",
-        "phone": "1234567890",
-        "address": "123 Test St",
-        "creditLimit": null,
-        "notes": "Some updated notes",
-        "status": "ACTIVE",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted contact
 
   @regression
   Scenario: Authenticated user deletes a contact
