@@ -15,38 +15,15 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "name": "Volume",
-        "description": "Measurement of volume",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted unitGroup
 
   @regression
   Scenario: Authenticated user views list of unit groups
     Given a unit group exists
     When I send a GET request to "/secured/unitgroups"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#unitGroup->0",
-          "name": "Test Unit Group",
-          "description": null,
-          "systemDefined": false
-        }
-      ]
-      """
+    And the response should contain 1 items
+    And the response item 0 should match the persisted unitGroup identified by "#unitGroup->0"
 
   @regression
   Scenario: Authenticated user updates a unit group
@@ -60,18 +37,7 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "id": "#unitGroup->0",
-        "name": "Updated Unit Group Name",
-        "description": "Updated Description",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted unitGroup
 
   @regression
   Scenario: Authenticated user deletes a unit group
