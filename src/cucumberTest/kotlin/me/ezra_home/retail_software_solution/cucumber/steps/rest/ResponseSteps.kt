@@ -38,6 +38,12 @@ class ResponseSteps(
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
   }
 
+  @Then("the response field {string} should be null")
+  fun verifyFieldIsNull(fieldName: String) {
+    val value = responseContext.lastResponse?.jsonPath()?.get<Any>(fieldName)
+    assertTrue(value == null, "Expected field '$fieldName' to be null but was $value")
+  }
+
   @Then("the response should match json:")
   fun verifyResponseMatchesJson(expectedJson: String) {
     val responseBody = checkNotNull(responseContext.lastResponse?.asString()) {
@@ -85,6 +91,12 @@ class ResponseSteps(
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(size))
   }
 
+  @Then("the response should contain at least {int} items")
+  fun verifyAtLeastListSize(size: Int) {
+    val actualSize = responseContext.lastResponse?.jsonPath()?.getList<Any>("$")?.size ?: 0
+    assertTrue(actualSize >= size, "Expected at least $size items but got $actualSize")
+  }
+
   @Then("the response should be an empty list")
   fun verifyEmptyList() {
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(0))
@@ -100,13 +112,6 @@ class ResponseSteps(
       actualMessage,
       "Expected error message '$injectedExpectedMessage' but got '$actualMessage'"
     )
-  }
-
-  @Then("the response error should contain {string}")
-  fun verifyErrorContains(expectedMessage: String) {
-    val error = responseContext.lastError
-    assertNotNull(error, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
-    assertTrue(error.contains(expectedMessage, ignoreCase = true), "Expected error containing '$expectedMessage' but got: $error")
   }
 
   @Then("the response error field {string} should be {string}")
