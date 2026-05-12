@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.cucumber.support.assertions.Persist
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.greaterThanOrEqualTo
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -85,6 +86,11 @@ class ResponseSteps(
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(size))
   }
 
+  @Then("the response should contain at least {int} items")
+  fun verifyListHasAtLeastSize(size: Int) {
+    responseContext.lastResponse?.then()?.body("size()", greaterThanOrEqualTo(size))
+  }
+
   @Then("the response should be an empty list")
   fun verifyEmptyList() {
     responseContext.lastResponse?.then()?.body("$", hasSize<Any>(0))
@@ -100,13 +106,6 @@ class ResponseSteps(
       actualMessage,
       "Expected error message '$injectedExpectedMessage' but got '$actualMessage'"
     )
-  }
-
-  @Then("the response error should contain {string}")
-  fun verifyErrorContains(expectedMessage: String) {
-    val error = responseContext.lastError
-    assertNotNull(error, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
-    assertTrue(error.contains(expectedMessage, ignoreCase = true), "Expected error containing '$expectedMessage' but got: $error")
   }
 
   @Then("the response error field {string} should be {string}")
