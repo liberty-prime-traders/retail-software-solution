@@ -4,15 +4,16 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
@@ -29,18 +30,11 @@ class SaleValidator(
             if (lines.isEmpty()) throw RtsGenericException("Sale must have at least one line")
         }
 
-        fun guardWalkInPaymentCoverage(
-            dto: SaleCreateDto,
-            productSummaries: Map<UUID, LocationProductSummaryDto>,
-        ) {
-            if (!dto.walkInCustomer) return
-            val saleTotal = dto.linesToAdd.sumOf { line ->
-                val unitPrice = productSummaries.getValue(line.locationProductId).unitPrice
-                    ?: throw RtsGenericException("Product ${line.locationProductId} has no unit price")
-                Decimals.multiplyScale4(line.quantity, unitPrice)
-            }
-            if (dto.payments.sumOf { it.amount } < saleTotal) {
-                throw RtsGenericException("Walk-in sales require full payment coverage")
+        fun guardDateSoldIsNotFuture(dateSold: OffsetDateTime) {
+            val orgToday = DateTimes.Local.Now.organization()
+            val saleLocalDate = DateTimes.Local.atOrganizationZone(dateSold)
+            if (saleLocalDate > orgToday) {
+                throw RtsGenericException("Sale date must be today or in the past. Provided date: $saleLocalDate")
             }
         }
 
@@ -62,6 +56,10 @@ class SaleValidator(
                 throw RtsGenericException("Sale line ids to remove do not belong to this sale: $invalidRemoves")
             }
             val updateIds = dto.linesToUpdate.map { it.id }
+            val duplicateUpdates = updateIds.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+            if (duplicateUpdates.isNotEmpty()) {
+                throw RtsGenericException("Duplicate sale line ids in linesToUpdate: $duplicateUpdates")
+            }
             val invalidUpdates = updateIds.filterNot { it in existingLineIds }
             if (invalidUpdates.isNotEmpty()) {
                 throw RtsGenericException("Sale line ids to update do not belong to this sale: $invalidUpdates")
@@ -89,30 +87,16 @@ class SaleValidator(
     }
 
     fun ensureSufficientStockForLines(
-        resolvedQuantities: Map<UUID, BigDecimal>,
+        resolvedBaseQuantitiesPerProduct: Map<UUID, BigDecimal>,
         productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
-        val locationProductIds = resolvedQuantities.keys.toList()
+        val locationProductIds = resolvedBaseQuantitiesPerProduct.keys.toList()
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds)
         val balances = stockBalanceFetcher.getLatestBalances(locationProductIds)
         val reserved = saleStockReserver.loadReservedTotals(locationProductIds)
-        resolvedQuantities.forEach { (locationProductId, quantity) ->
+        resolvedBaseQuantitiesPerProduct.forEach { (locationProductId, quantity) ->
             val available = balances.getValue(locationProductId).subtract(reserved[locationProductId] ?: BigDecimal.ZERO)
             throwIfOverSelling(available, quantity, locationProductId, productSummaries)
-        }
-    }
-
-    fun throwIfOverSelling(
-        available: BigDecimal,
-        quantity: BigDecimal,
-        locationProductId: UUID,
-        productSummaries: Map<UUID, LocationProductSummaryDto>
-    ) {
-        if (available < quantity) {
-            val label = productSummaries[locationProductId]?.label ?: locationProductId.toString()
-            val formattedAvailable = Decimals.stripZeroesAndRound(available)
-            val formattedRequested = Decimals.stripZeroesAndRound(quantity)
-            throw RtsGenericException("Insufficient stock for $label. Available: $formattedAvailable, Requested: $formattedRequested")
         }
     }
 
@@ -131,6 +115,21 @@ class SaleValidator(
             throwIfOverSelling(available, quantity, locationProductId, productSummaries)
         }
     }
+
+    fun throwIfOverSelling(
+        available: BigDecimal,
+        quantity: BigDecimal,
+        locationProductId: UUID,
+        productSummaries: Map<UUID, LocationProductSummaryDto>
+    ) {
+        if (available < quantity) {
+            val label = productSummaries[locationProductId]?.label ?: locationProductId.toString()
+            val formattedAvailable = Decimals.stripZeroesAndRound(available)
+            val formattedRequested = Decimals.stripZeroesAndRound(quantity)
+            throw RtsGenericException("Insufficient stock for $label. Available: $formattedAvailable, Requested: $formattedRequested")
+        }
+    }
+
 
     fun guardWalkInPaymentCoverage(saleId: UUID, saleTotal: BigDecimal) {
         val paid = salePaymentFetcher.calculatePaidAmount(saleId)

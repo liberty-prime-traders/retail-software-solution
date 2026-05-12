@@ -13,7 +13,7 @@ data class SaleUpdateDto(
     val id: UUID,
     val contactId: Optional<UUID>? = null,
     val walkInCustomer: Boolean = false,
-    val soldBy: Optional<UUID>? = null,
+    val soldById: Optional<UUID>? = null,
     val dateSold: Optional<OffsetDateTime>? = null,
     val notes: Optional<String>? = null,
     val linesToAdd: List<SaleLineCreateDto> = emptyList(),
@@ -26,7 +26,7 @@ data class SaleUpdateDto(
 
     fun applyTo(sale: SaleEntity) {
         applyContactId(sale)
-        soldBy?.let { sale.soldBy = it.orElse(null) }
+        soldById?.let { sale.soldById = it.orElse(null) }
         dateSold?.let { sale.dateSold = it.orElse(null) }
         notes?.let { sale.notes = it.orElse(null) }
     }

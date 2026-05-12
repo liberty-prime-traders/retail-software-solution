@@ -67,15 +67,15 @@ class SaleLinesPreparer(
     ): List<SaleLineEntity> {
         val updated = mutableListOf<SaleLineEntity>()
         for (lineDto in linesToUpdate) {
+            if (lineDto.quantity.signum() <= 0) {
+                throw RtsGenericException("Line quantity must be positive; use linesToRemove to delete a line")
+            }
             val entity = existing.getValue(lineDto.id)
-            val baseUnitId = baseUnitsByLocationProductId.getValue(entity.locationProductId)
             entity.quantity = lineDto.quantity
             if (entity.unitId != lineDto.unitId) {
+                val baseUnitId = baseUnitsByLocationProductId.getValue(entity.locationProductId)
                 entity.unitId = lineDto.unitId
                 entity.conversionFactor = unitConversionGraph.getFactor(lineDto.unitId, baseUnitId)
-            }
-            if (entity.baseQty().signum() <= 0) {
-                throw RtsGenericException("Line quantity must be positive; use linesToRemove to delete a line")
             }
             updated.add(entity)
         }

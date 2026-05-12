@@ -12,4 +12,8 @@ class EntityAdvisoryLock(
     fun acquire(namespace: String, ids: Collection<UUID>) {
         ids.toSortedSet().forEach { entityAdvisoryLockRepository.acquire("$namespace:$it") }
     }
+
+    fun acquire(namespace: String, id: UUID) {
+        acquire(namespace, listOf(id))
+    }
 }

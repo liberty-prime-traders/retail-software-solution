@@ -13,9 +13,9 @@ class SaleLinesApplier(
 ) {
 
     fun apply(saleId: UUID, prepared: PreparedLineUpdate) {
-        val requested = (prepared.newLines + prepared.updatedLines)
+        val resolvedBaseQuantitiesPerProduct = (prepared.newLines + prepared.updatedLines)
             .associate { it.locationProductId to it.baseQty() }
-        saleValidator.guardStockForDraftUpdates(saleId, requested, prepared.productSummaries)
+        saleValidator.guardStockForDraftUpdates(saleId, resolvedBaseQuantitiesPerProduct, prepared.productSummaries)
         saleLineRepository.saveAll(prepared.updatedLines + prepared.newLines)
         saleStockReserver.syncUpdatedReservations(prepared.updatedLines, prepared.newLines, saleId)
     }

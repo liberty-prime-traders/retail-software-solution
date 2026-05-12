@@ -35,14 +35,22 @@ class SalePaymentService(
 
     fun recordPaymentsSubmittedWithSale(
         saleId: UUID,
-        contactId: UUID,
         payments: List<SalePaymentCreateDto>,
         saleTotal: BigDecimal,
-        saleStatus: SaleStatus
+        isNewSale: Boolean
     ) {
         if (payments.isEmpty()) return
+        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
+        doRecordPayments(saleId, payments, saleTotal, alreadyPaid)
+    }
+
+    private fun doRecordPayments(
+        saleId: UUID,
+        payments: List<SalePaymentCreateDto>,
+        saleTotal: BigDecimal,
+        alreadyPaid: BigDecimal,
+    ) {
         payments.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
-        val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         val totalPaid = alreadyPaid + payments.sumOf { it.amount }
         SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, saleTotal)
         val entities = payments.map { dto ->
@@ -56,9 +64,6 @@ class SalePaymentService(
         }
         salePaymentRepository.saveAll(entities)
         saleUpdater.updatePaymentStatus(saleId, resolvePaymentStatus(totalPaid, saleTotal))
-        if (saleStatus != SaleStatus.DRAFT) {
-            salePaymentHandlerForKafka.publish(saleId, contactId, entities)
-        }
     }
 
     fun publishKafkaForExistingPayments(saleId: UUID) {

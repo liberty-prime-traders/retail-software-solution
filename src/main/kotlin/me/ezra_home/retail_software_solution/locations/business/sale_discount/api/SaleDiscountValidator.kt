@@ -25,7 +25,7 @@ class SaleDiscountValidator(
         }
     }
 
-    fun guardDiscountsStillFitAfterLineChanges(
+    fun assertDiscountsStillFitAfterLineChanges(
         existing: List<SaleDiscountEntity>,
         lines: List<SaleLineEntity>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,

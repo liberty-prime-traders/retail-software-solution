@@ -26,11 +26,12 @@ class SaleDraftHandler(
 
     fun createDraft(dto: SaleCreateDto): SaleResponseDto {
         if (dto.walkInCustomer) throw RtsGenericException("Walk-in sales cannot be drafted")
-        val contactId = dto.resolveContactId().also { contactService.getContactById(it) }
+        val contactId = dto.resolveContactId()
+        contactService.guardExists(contactId)
         val validated = saleLinePreparer.prepareForInsert(dto.linesToAdd)
         val sale = SaleEntity(
             contactId = contactId,
-            soldBy = dto.soldBy,
+            soldById = dto.soldById,
             dateSold = dto.dateSold,
             notes = dto.notes,
             status = SaleStatus.DRAFT,
@@ -40,7 +41,8 @@ class SaleDraftHandler(
     }
 
     fun updateDraft(dto: SaleUpdateDto): SaleResponseDto {
-        entityAdvisoryLock.acquire(LockNamespaces.SALE, listOf(dto.id))
+        if (dto.walkInCustomer) throw RtsGenericException("Walk-in sales cannot be drafted")
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, dto.id)
         val sale = saleRepository.getReferenceById(dto.id)
         SaleValidator.guardIsDraft(sale)
         dto.applyTo(sale)

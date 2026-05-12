@@ -19,12 +19,13 @@ class SaleDiscountReconciler(
         saleId: UUID,
         lines: List<SaleLineEntity>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
-    ) {
+    ): List<SaleDiscountEntity> {
         val existing = saleDiscountRepository.findBySaleId(saleId)
-        if (existing.isEmpty()) return
+        if (existing.isEmpty()) return emptyList()
         val productByLineId = lines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
         val effectiveDiscounts = replaceStalePercentageDiscounts(saleId, existing, lines, productByLineId)
-        saleDiscountValidator.guardDiscountsStillFitAfterLineChanges(effectiveDiscounts, lines, productSummaries)
+        saleDiscountValidator.assertDiscountsStillFitAfterLineChanges(effectiveDiscounts, lines, productSummaries)
+        return effectiveDiscounts
     }
 
     private fun replaceStalePercentageDiscounts(

@@ -46,25 +46,21 @@ class SaleDiscountService(
 
     fun addDiscounts(
         sale: SaleEntity,
+        existing: List<SaleDiscountEntity>,
         discountDtos: List<SaleDiscountCreateDto>,
         lines: List<SaleLineEntity>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
     ): List<SaleDiscountSummaryDto> {
         SaleDiscountValidator.guardIsDraft(sale)
-        if (discountDtos.isEmpty()) return existingSummaries(sale.id!!)
-        val existing = saleDiscountRepository.findBySaleId(sale.id!!)
+        val existingSummaries = existing.map {
+            SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
+        }
+        if (discountDtos.isEmpty()) return existingSummaries
         val productByLineId = lines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
         newSaleDiscountValidator.validateNewDiscounts(discountDtos, lines, productSummaries, existing, productByLineId)
         val newSummaries = applyValidatedDiscounts(sale, discountDtos, lines)
-        return existing.map {
-            SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
-        } + newSummaries
+        return existingSummaries + newSummaries
     }
-
-    private fun existingSummaries(saleId: UUID): List<SaleDiscountSummaryDto> =
-        saleDiscountRepository.findBySaleId(saleId).map {
-            SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
-        }
 
     fun removeDiscounts(sale: SaleEntity, discountIds: List<UUID>) {
         SaleDiscountValidator.guardIsDraft(sale)

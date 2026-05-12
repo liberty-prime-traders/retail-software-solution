@@ -10,8 +10,8 @@ import java.util.UUID
 data class SaleCreateDto(
     val contactId: UUID? = null,
     val walkInCustomer: Boolean = false,
-    val soldBy: UUID? = null,
-    val dateSold: OffsetDateTime? = null,
+    val soldById: UUID?,
+    val dateSold: OffsetDateTime?,
     val notes: String? = null,
     val linesToAdd: List<SaleLineCreateDto>,
     val payments: List<SalePaymentCreateDto>,

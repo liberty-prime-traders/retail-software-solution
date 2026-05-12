@@ -36,7 +36,7 @@ databaseChangeLog:
                     notNullConstraintName: sale_contact_id_notnull
 
               - column:
-                  name: sold_by
+                  name: sold_by_id
                   type: uuid
 
               - column:

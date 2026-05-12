@@ -47,6 +47,7 @@ class SaleUpdater(
     }
 
     fun voidSale(dto: SaleVoidCreateDto): SaleResponseDto {
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, dto.saleId)
         val sale = saleRepository.getReferenceById(dto.saleId)
         saleValidator.guardCanVoid(sale)
         val lines = saleLineRepository.findBySaleId(dto.saleId)

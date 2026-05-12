@@ -21,9 +21,16 @@ class ContactService(
     fun getAllContactDtos(): Collection<ContactDto> = contactCache.getAllContacts()
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-        fun getContactById(id: UUID): ContactDto {
+    fun getContactById(id: UUID): ContactDto {
         return contactCache.getAllContacts().find { it.id == id }
             ?: throw UpdatingNonExistingRecordException()
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun guardExists(id: UUID) {
+        if (contactCache.getAllContacts().none { it.id == id }) {
+            throw UpdatingNonExistingRecordException()
+        }
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)

@@ -18,8 +18,6 @@ data class SaleLineStockRequest(
     val conversionFactor: BigDecimal
 )
 
-private data class BatchAllocation(val stockEntryId: UUID, val quantityTaken: BigDecimal)
-
 @Service
 @TransactionalOnLocationSchema
 class SaleStockUpdater(
@@ -28,48 +26,44 @@ class SaleStockUpdater(
 ) {
 
     fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
-        saleLineStockRequests.forEach { consumeLine(it, saleRefNumber) }
-    }
+        if (saleLineStockRequests.isEmpty()) return
+        val productIds = saleLineStockRequests.map { it.locationProductId }
+        val fifoByProduct = stockEntryRepository.findFifoEntriesForProducts(productIds)
+            .groupBy { it.locationProductId }
+        val balanceByProduct = stockMovementRepository.findLatestBalances(productIds)
+            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
 
-    private fun consumeLine(line: SaleLineStockRequest, saleRefNumber: String) {
-        val batches = allocateBatches(line)
-        recordSaleMovements(line, batches, saleRefNumber)
-    }
-
-    private fun allocateBatches(line: SaleLineStockRequest): List<BatchAllocation> {
-        var remaining = line.baseQuantity
-        val batches = mutableListOf<BatchAllocation>()
         val modifiedEntries = mutableListOf<StockEntryEntity>()
-        for (entry in stockEntryRepository.findFifoEntriesForProduct(line.locationProductId)) {
-            if (remaining <= BigDecimal.ZERO) break
-            val taken = remaining.min(entry.quantityRemaining)
-            entry.quantityRemaining = entry.quantityRemaining.subtract(taken)
-            modifiedEntries.add(entry)
-            batches.add(BatchAllocation(entry.id!!, taken))
-            remaining = remaining.subtract(taken)
-        }
-        if (remaining > BigDecimal.ZERO) {
-            throw RtsGenericException("Insufficient stock for product ${line.locationProductId}")
+        val movements = mutableListOf<StockMovementEntity>()
+        saleLineStockRequests.forEach { line ->
+            val entries = fifoByProduct[line.locationProductId].orEmpty()
+            var runningBalance = balanceByProduct[line.locationProductId] ?: BigDecimal.ZERO
+            var remaining = line.baseQuantity
+            for (entry in entries) {
+                if (remaining <= BigDecimal.ZERO) break
+                val taken = remaining.min(entry.quantityRemaining)
+                entry.quantityRemaining = entry.quantityRemaining.subtract(taken)
+                modifiedEntries.add(entry)
+                runningBalance = runningBalance.subtract(taken)
+                movements.add(
+                    StockMovementEntity(
+                        stockEntryId = entry.id!!,
+                        locationProductId = line.locationProductId,
+                        movementType = MovementType.SALE,
+                        movedQuantity = taken,
+                        remainingQuantity = runningBalance,
+                        externalReferenceNumber = saleRefNumber,
+                        unitId = line.unitId,
+                        conversionFactor = line.conversionFactor
+                    )
+                )
+                remaining = remaining.subtract(taken)
+            }
+            if (remaining > BigDecimal.ZERO) {
+                throw RtsGenericException("Insufficient stock for product ${line.locationProductId}")
+            }
         }
         stockEntryRepository.saveAll(modifiedEntries)
-        return batches
-    }
-
-    private fun recordSaleMovements(line: SaleLineStockRequest, batches: List<BatchAllocation>, saleRefNumber: String) {
-        var runningBalance = stockMovementRepository.findLatestBalance(line.locationProductId) ?: BigDecimal.ZERO
-        val movements = batches.map { batch ->
-            runningBalance = runningBalance.subtract(batch.quantityTaken)
-            StockMovementEntity(
-                stockEntryId = batch.stockEntryId,
-                locationProductId = line.locationProductId,
-                movementType = MovementType.SALE,
-                movedQuantity = batch.quantityTaken,
-                remainingQuantity = runningBalance,
-                externalReferenceNumber = saleRefNumber,
-                unitId = line.unitId,
-                conversionFactor = line.conversionFactor
-            )
-        }
         stockMovementRepository.saveAll(movements)
     }
 

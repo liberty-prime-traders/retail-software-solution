@@ -64,7 +64,7 @@ class SaleMutator(
         }
         val discounts = saleDiscountService.applyValidatedDiscounts(sale, dto.discounts, saleLineEntities)
         applyTotals(sale, saleLineEntities, discounts)
-        recordPayments(dto.payments, sale)
+        recordPayments(dto.payments, sale, true)
         return SaleCreateOutcome(saleLineEntities, validated, discounts)
     }
 
@@ -93,10 +93,10 @@ class SaleMutator(
         saleLinesApplier.apply(saleId, prepared)
         val survivingLines = prepared.survivingLines
         saleDiscountService.removeDiscounts(sale, dto.discountsToRemove)
-        saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, prepared.productSummaries)
-        val discounts = saleDiscountService.addDiscounts(sale, dto.discountsToAdd, survivingLines, prepared.productSummaries)
+        val reconciled = saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, prepared.productSummaries)
+        val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, prepared.productSummaries)
         applyTotals(sale, survivingLines, discounts)
-        recordPayments(dto.payments, sale)
+        recordPayments(dto.payments, sale, false)
         return SaleUpdateOutcome(survivingLines, prepared.productSummaries, discounts)
     }
 
@@ -106,10 +106,9 @@ class SaleMutator(
         saleLineRepository.deleteAllById(lineIds)
     }
 
-    private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity) {
-        if (payments.isEmpty()) return
+    private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity, isNewSale: Boolean) {
         salePaymentService.recordPaymentsSubmittedWithSale(
-            sale.id!!, sale.contactId, payments, sale.subtotal!!, sale.status
+            sale.id!!, payments, sale.saleTotalAfterDiscounts(), isNewSale
         )
     }
     

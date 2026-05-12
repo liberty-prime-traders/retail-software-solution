@@ -25,11 +25,11 @@ class SaleEntity(
     @Column(name = "contact_id", nullable = false)
     var contactId: UUID,
 
-    @Column(name = "sold_by")
-    var soldBy: UUID? = null,
+    @Column(name = "sold_by_id")
+    var soldById: UUID?,
 
     @Column(name = "date_sold")
-    var dateSold: OffsetDateTime? = null,
+    var dateSold: OffsetDateTime?,
 
     @Column(name = "notes")
     var notes: String? = null,
@@ -54,4 +54,8 @@ class SaleEntity(
     @Column(name = "grand_total", precision = 19, scale = 4)
     var grandTotal: BigDecimal? = null
 
-) : HasReferenceEntity()
+) : HasReferenceEntity() {
+
+    fun saleTotalAfterDiscounts(): BigDecimal =
+        (subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO)
+}

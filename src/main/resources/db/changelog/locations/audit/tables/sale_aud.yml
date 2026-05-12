@@ -35,7 +35,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: sold_by
+                  name: sold_by_id
                   type: uuid
 
               - column:
