@@ -14,34 +14,15 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "value": "Software Engineer"
-      }
-      """
+    And the response should match the persisted jobTitle
 
   @regression
   Scenario: Authenticated user views list of job titles
     Given a job title exists
     When I send a GET request to "/secured/job-title"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#jobTitle->0",
-          "value": "Test Job Title"
-        }
-      ]
-      """
+    And the response should contain 1 items
+    And the response item 0 should match the persisted jobTitle identified by "#jobTitle->0"
 
   @regression
   Scenario: Authenticated user updates a job title
@@ -54,16 +35,7 @@ Feature: Job Titles
       }
       """
     Then the response status should be 200
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "id": "#jobTitle->0",
-        "value": "Senior Engineer"
-      }
-      """
+    And the response should match the persisted jobTitle
 
   @regression
   Scenario: Authenticated user deletes a job title
