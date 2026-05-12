@@ -28,7 +28,6 @@ class OrganizationCache(
         val entity = mapper.toEntity(insertDto).apply {
             this.schemaName = schemaName
             this.creationPassId = passId
-            this.subdomain = insertDto.subdomain
         }
         val saved = organizationRepository.saveAndFlush(entity)
         return mapper.toDomainDto(saved)
