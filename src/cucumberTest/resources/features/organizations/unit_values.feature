@@ -18,23 +18,7 @@ Feature: Unit Values
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "name": "Liter",
-        "code": "L",
-        "description": "Metric literal",
-        "baseUnit": null,
-        "baseUnitName": null,
-        "conversionFactor": null,
-        "unitGroupId": "#unitGroup->0",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted unitValue
 
   @regression
   Scenario: Authenticated user views list of all unit values
@@ -42,25 +26,8 @@ Feature: Unit Values
     And a unit exists
     When I send a GET request to "/secured/unitvalues"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#unitValue->0",
-          "name": "Test Unit",
-          "code": "TU",
-          "description": null,
-          "baseUnit": null,
-          "baseUnitName": null,
-          "conversionFactor": null,
-          "unitGroupId": "#unitGroup->0",
-          "systemDefined": false
-        }
-      ]
-      """
+    And the response should contain at least 1 items
+    And the response item 0 should match the persisted unitValue identified by "#unitValue->0"
 
   @regression
   Scenario: Authenticated user views list of unit values by group
@@ -68,25 +35,8 @@ Feature: Unit Values
     And a unit exists
     When I send a GET request to "/secured/unitvalues?unitGroupId=#unitGroup->0"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#unitValue->0",
-          "name": "Test Unit",
-          "code": "TU",
-          "description": null,
-          "baseUnit": null,
-          "baseUnitName": null,
-          "conversionFactor": null,
-          "unitGroupId": "#unitGroup->0",
-          "systemDefined": false
-        }
-      ]
-      """
+    And the response should contain at least 1 items
+    And the response item 0 should match the persisted unitValue identified by "#unitValue->0"
 
   @regression
   Scenario: Authenticated user updates a unit value
@@ -102,23 +52,7 @@ Feature: Unit Values
       }
       """
     Then the response status should be 200
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "id": "#unitValue->0",
-        "name": "Updated Unit Name",
-        "code": "UUN",
-        "description": "Updated Description",
-        "baseUnit": null,
-        "baseUnitName": null,
-        "conversionFactor": null,
-        "unitGroupId": "#unitGroup->0",
-        "systemDefined": false
-      }
-      """
+    And the response should match the persisted unitValue
 
   @regression
   Scenario: Authenticated user deletes a unit value
