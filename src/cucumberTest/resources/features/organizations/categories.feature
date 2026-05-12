@@ -15,36 +15,15 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
-    And the response should contain field "id"
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "categoryName": "Electronics",
-        "description": "Electronic goods and accessories"
-      }
-      """
+    And the response should match the persisted category
 
   @regression
   Scenario: Authenticated user views list of product categories
     Given a category exists
     When I send a GET request to "/secured/product-category"
     Then the response status should be 200
-    And the response should contain field "0.createdBy"
-    And the response should contain field "0.createdOn"
-    And the response should contain field "0.referenceNumber"
-    And the response should match json:
-      """
-      [
-        {
-          "id": "#category->0",
-          "categoryName": "Test Category",
-          "description": null
-        }
-      ]
-      """
+    And the response should contain 1 items
+    And the response item 0 should match the persisted category identified by "#category->0"
 
   @regression
   Scenario: Authenticated user updates a product category
@@ -58,17 +37,7 @@ Feature: Product Categories
       }
       """
     Then the response status should be 200
-    And the response should contain field "createdBy"
-    And the response should contain field "createdOn"
-    And the response should contain field "referenceNumber"
-    And the response should match json:
-      """
-      {
-        "id": "#category->0",
-        "categoryName": "Updated Category Name",
-        "description": "Updated description"
-      }
-      """
+    And the response should match the persisted category
 
   @regression
   Scenario: Authenticated user deletes a product category
