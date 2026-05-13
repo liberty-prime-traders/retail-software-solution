@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleMutator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
@@ -33,7 +32,6 @@ class SaleConfirmationHandler(
     private val saleStockUpdater: SaleStockUpdater,
     private val saleConfirmedHandlerForKafka: SaleConfirmedHandlerForKafka,
     private val fiscalPeriodService: FiscalPeriodService,
-    private val salePaymentService: SalePaymentService,
     private val contactService: ContactService,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
@@ -87,7 +85,6 @@ class SaleConfirmationHandler(
 
         runFifoConsumption(outcome.survivingLines, sale.requiredReference())
         saleConfirmedHandlerForKafka.publish(sale, outcome.survivingLines, outcome.discounts)
-        salePaymentService.publishKafkaForExistingPayments(dto.id)
         return saleAssembler.buildResponse(sale, outcome.survivingLines, outcome.productSummaries)
     }
 

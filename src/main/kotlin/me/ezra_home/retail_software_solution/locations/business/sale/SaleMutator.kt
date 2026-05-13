@@ -117,9 +117,8 @@ class SaleMutator(
     }
 
     private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity, isNewSale: Boolean) {
-        val publishKafka = isNewSale && sale.status == SaleStatus.CONFIRMED
         val newStatus = salePaymentService.recordPaymentsSubmittedWithSale(
-            sale.id!!, sale.contactId, payments, sale.saleTotalAfterDiscounts(), isNewSale, publishKafka
+            sale.id!!, sale.contactId, payments, sale.saleTotalAfterDiscounts(), isNewSale
         )
         if (newStatus != null) sale.paymentStatus = newStatus
     }
