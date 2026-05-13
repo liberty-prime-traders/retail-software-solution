@@ -1,11 +1,17 @@
 package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Then
+import io.restassured.response.Response
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.rest.JsonSubsetMatcher
+import me.ezra_home.retail_software_solution.cucumber.support.rest.OrderOption
+import me.ezra_home.retail_software_solution.cucumber.support.rest.RestVerificationOption
+import me.ezra_home.retail_software_solution.cucumber.support.rest.SubsetOptions
 import org.hamcrest.Matchers.hasSize
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -38,12 +44,9 @@ class ResponseSteps(
 
   @Then("the response should match json:")
   fun verifyResponseMatchesJson(expectedJson: String) {
-    val responseBody = checkNotNull(responseContext.lastResponse?.asString()) {
-      "Expected a response body but no response was captured"
-    }
-    val expectedNode = objectMapper.readTree(injectContext.inject(expectedJson))
-    val actualNode = objectMapper.readTree(responseBody)
-    assertJsonSubset(expectedNode, actualNode, "$")
+    val expected = objectMapper.readTree(injectContext.inject(expectedJson))
+    val actual = responseBodyAsJson()
+    JsonSubsetMatcher.assertJsonSubset(expected, actual)
   }
 
   @Then("the response should contain:")
@@ -94,31 +97,95 @@ class ResponseSteps(
     assertEquals(expectedValue, responseContext.lastResponse?.jsonPath()?.getString(fieldName))
   }
 
-  private fun assertJsonSubset(expected: JsonNode, actual: JsonNode, path: String) {
-    when {
-      expected.isObject -> {
-        assertTrue(actual.isObject, "Expected object at $path but got ${actual.nodeType}")
-        expected.fields().forEach { (fieldName, expectedChild) ->
-          val actualChild = actual.get(fieldName)
-          assertNotNull(actualChild, "Expected field '$fieldName' at $path but it was missing")
-          assertJsonSubset(expectedChild, actualChild, "$path.$fieldName")
-        }
-      }
+  @Then("response returns with status {int}")
+  fun checkResponseStatus(expected: Int) {
+    assertStatus(expected, null)
+  }
 
-      expected.isArray -> {
-        assertTrue(actual.isArray, "Expected array at $path but got ${actual.nodeType}")
-        assertTrue(
-          actual.size() >= expected.size(),
-          "Expected at least ${expected.size()} items at $path but got ${actual.size()}"
-        )
-        expected.forEachIndexed { index, expectedChild ->
-          assertJsonSubset(expectedChild, actual[index], "$path[$index]")
-        }
-      }
+  @Then("response returns with status {int} with message: {}")
+  fun checkResponseStatusWithMessage(expected: Int, message: String) {
+    assertStatus(expected, injectContext.inject(message))
+  }
 
-      else -> {
-        assertEquals(expected, actual, "Mismatch at $path")
-      }
+  @Then("response returns with status {int} without message: {}")
+  fun checkResponseStatusWithoutMessage(expected: Int) {
+    assertStatus(expected, null)
+  }
+
+  @Then("response list size is {int}")
+  fun checkResponseListSize(size: Int) {
+    val actual = responseBodyAsJson()
+    assertTrue(actual is ArrayNode, "Response is not a collection: $actual")
+    assertEquals(size, actual.size(), "Response size is not $size")
+  }
+
+  @Then("response contains{restVerificationOption}details:")
+  fun verifyDetails(option: RestVerificationOption, payload: String) {
+    verifyDetails(option, payload, exactLists = false, inOrder = false)
+  }
+
+  @Then("response contains{restVerificationOption}details with exact lists{orderOption}:")
+  fun verifyDetailsExactLists(option: RestVerificationOption, order: OrderOption, payload: String) {
+    verifyDetails(option, payload, exactLists = true, inOrder = order.inOrder())
+  }
+
+  private fun verifyDetails(option: RestVerificationOption, payload: String, exactLists: Boolean, inOrder: Boolean) {
+    val expected = objectMapper.readTree(injectContext.inject(payload))
+    val actual = responseBodyAsJson()
+    val options = SubsetOptions(
+      exactLists = exactLists,
+      inOrder = inOrder,
+    )
+
+    val matched = if (actual is ArrayNode && !expected.isArray) {
+      anyArrayItemMatches(actual, expected, options)
+    } else {
+      JsonSubsetMatcher.isJsonSubset(expected, actual, options)
     }
+
+    when (option) {
+      RestVerificationOption.DEFAULT, RestVerificationOption.ITEM_WITH -> assertTrue(
+        matched,
+        "Detail did not match response.\n\nDetail: $expected\n\nResponse: $actual",
+      )
+      RestVerificationOption.NO_ITEM_WITH -> assertTrue(
+        !matched,
+        "Detail matched response when it should not.\n\nDetail: $expected\n\nResponse: $actual",
+      )
+    }
+  }
+
+  private fun anyArrayItemMatches(
+    array: ArrayNode,
+    expected: JsonNode,
+    options: SubsetOptions,
+  ): Boolean = (0 until array.size()).any { JsonSubsetMatcher.isJsonSubset(expected, array[it], options) }
+
+  private fun responseBodyAsJson(): JsonNode {
+    val body = checkNotNull(responseContext.lastResponse?.asString()) {
+      "Expected a response body but no response was captured"
+    }
+    return objectMapper.readTree(body)
+  }
+
+  private fun assertStatus(expectedCode: Int, message: String?) {
+    val response: Response = checkNotNull(responseContext.lastResponse) { "no response" }
+    assertEquals(
+      expectedCode,
+      response.statusCode,
+      "Status was ${response.statusCode} not $expectedCode. Body: ${response.asString()}",
+    )
+    if (!message.isNullOrBlank()) assertMessageMatches(message, response)
+  }
+
+  private fun assertMessageMatches(expected: String, response: Response) {
+    val responseMessage = response.jsonPath().getString("message")?.trim()
+      ?: response.asString()?.trim().orEmpty()
+    val escaped = expected.replace("{", "\\{").replace("\"", "")
+    val matchesRegex = runCatching { Regex(escaped).containsMatchIn(responseMessage) }.getOrDefault(false)
+    assertTrue(
+      matchesRegex || responseMessage == expected,
+      "Unexpected error message: $responseMessage should be: $expected",
+    )
   }
 }
