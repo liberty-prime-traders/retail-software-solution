@@ -28,7 +28,9 @@ class ContainerInitializer : ApplicationContextInitializer<ConfigurableApplicati
   }
 
   override fun initialize(context: ConfigurableApplicationContext) {
-    System.setProperty("api.version", "1.40")
+    // Docker Desktop 29 reports a minimum supported API version of 1.44.
+    // Testcontainers 1.x / docker-java can fail Docker environment discovery if this is pinned lower.
+    System.setProperty("api.version", "1.44")
     val jdbcUrl = "jdbc:postgresql://${postgres.host}:${postgres.getMappedPort(5432)}/${postgres.databaseName}"
     TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
       context,
