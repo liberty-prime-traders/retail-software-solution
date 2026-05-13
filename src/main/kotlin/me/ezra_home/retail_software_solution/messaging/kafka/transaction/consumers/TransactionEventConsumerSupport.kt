@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.consumers
 
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
+import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.DltPublisher
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSessionSetup
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.ConsumerFailureEvent
@@ -9,6 +10,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.TransactionEventProcessor
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
@@ -17,7 +19,8 @@ import java.util.UUID
 class TransactionEventConsumerSupport(
     private val eventSessionSetup: EventSessionSetup,
     private val notificationProducer: NotificationEventProducer,
-    private val logService: EventProcessingLogService
+    private val logService: EventProcessingLogService,
+    private val dltPublisher: DltPublisher
 ) {
     private val logger = LoggerFactory.getLogger(TransactionEventConsumerSupport::class.java)
 
@@ -38,10 +41,21 @@ class TransactionEventConsumerSupport(
             eventSessionSetup.initFromEvent(event)
             try {
                 dispatch(event, consumerGroup, processorsForEvent)
+            } catch (e: DataIntegrityViolationException) {
+                logger.info("Event ${event.eventId} lost a unique-constraint race in $consumerGroup — marking PROCESSED with RACE_LOST", e)
+                markRaceLostLog(event, consumerGroup, e)
             } catch (e: Exception) {
                 markFailedLog(event, consumerGroup, e)
                 publishNotification(event, consumerGroup, e)
             }
+        }
+    }
+
+    private fun markRaceLostLog(event: TransactionEvent, consumerGroup: String, e: Exception) {
+        try {
+            logService.markRaceLost(event, consumerGroup, e.message ?: e.javaClass.simpleName)
+        } catch (logException: Exception) {
+            logger.error("Failed to mark event ${event.eventId} as race-lost in log", logException)
         }
     }
 
@@ -90,10 +104,16 @@ class TransactionEventConsumerSupport(
     }
 
     private fun markFailedLog(event: TransactionEvent, consumerGroup: String, e: Exception) {
-        try {
+        val logId = try {
             logService.markFailed(event, consumerGroup, e.message ?: e.javaClass.simpleName)
         } catch (logException: Exception) {
             logger.error("Failed to mark event ${event.eventId} as failed in log", logException)
+            null
+        } ?: return
+        try {
+            dltPublisher.publish(event, consumerGroup, logId)
+        } catch (dltException: Exception) {
+            logger.error("Failed to dispatch event ${event.eventId} to DLT", dltException)
         }
     }
 

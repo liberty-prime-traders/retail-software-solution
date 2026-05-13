@@ -47,7 +47,7 @@ class SupplierPaymentHandlerForKafka(
                 paymentMethodAccountCode = paymentMethodAccountCode,
                 amount = payment.amount,
                 paymentDate = payment.paymentDate,
-                paymentReferenceNumber = payment.referenceNumber!!
+                paymentReferenceNumber = payment.requiredReference()
             )
         )
     }

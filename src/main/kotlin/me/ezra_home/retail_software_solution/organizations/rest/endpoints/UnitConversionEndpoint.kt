@@ -32,7 +32,7 @@ class UnitConversionEndpoint(
     fun getAll(): List<UnitConversionDto> = unitConversionService.getAll()
 
     @GetMapping("graph")
-    fun getGraph(): Map<UUID, Map<UUID, ConversionTargetDto>> = unitConversionGraphFacade.getOrLoad()
+    fun getGraph(): Map<UUID, Map<UUID, ConversionTargetDto>> = unitConversionGraphFacade.getOrLoad().getFullGraph()
 
     @PostMapping
     fun insert(@RequestBody dto: UnitConversionInsertDto): UnitConversionDto = unitConversionService.insert(dto)

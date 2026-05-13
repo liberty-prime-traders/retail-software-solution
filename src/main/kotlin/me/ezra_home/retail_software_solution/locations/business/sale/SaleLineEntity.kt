@@ -3,7 +3,9 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -21,18 +23,21 @@ class SaleLineEntity(
     var saleId: UUID,
 
     @Column(name = "location_product_id", nullable = false)
-    var locationProductId: UUID,
+    override var locationProductId: UUID,
 
     @Column(name = "quantity", nullable = false, precision = 19, scale = 4)
-    var quantity: BigDecimal,
+    override var quantity: BigDecimal,
 
     @Column(name = "unit_id", nullable = false)
     var unitId: UUID,
 
     @Column(name = "unit_price", nullable = false, precision = 19, scale = 4)
-    var unitPrice: BigDecimal,
+    override var unitPrice: BigDecimal,
 
     @Column(name = "conversion_factor", nullable = false, precision = 19, scale = 10)
     var conversionFactor: BigDecimal
 
-) : HasReferenceEntity()
+) : HasReferenceEntity(), ProductLineWithPrice {
+
+    fun baseQty(): BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
+}

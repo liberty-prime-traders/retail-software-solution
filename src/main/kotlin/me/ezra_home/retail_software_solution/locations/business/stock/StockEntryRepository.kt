@@ -10,9 +10,9 @@ interface StockEntryRepository : JpaRepository<StockEntryEntity, UUID> {
 
     @Query(
         "SELECT e FROM StockEntryEntity e " +
-            "WHERE e.locationProductId = :locationProductId " +
+            "WHERE e.locationProductId IN :locationProductIds " +
             "AND e.quantityRemaining > 0 " +
-            "ORDER BY e.createdOn ASC"
+            "ORDER BY e.locationProductId, e.createdOn ASC"
     )
-    fun findFifoEntriesForProduct(locationProductId: UUID): List<StockEntryEntity>
+    fun findFifoEntriesForProducts(locationProductIds: Collection<UUID>): List<StockEntryEntity>
 }

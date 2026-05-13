@@ -17,8 +17,8 @@ interface EventProcessingLogRepository : JpaRepository<EventProcessingLogEntity,
 
     fun findBySourceDocumentId(sourceDocumentId: UUID): List<EventProcessingLogEntity>
 
-    fun findByStatusAndCreatedOnBefore(
-        status: EventProcessingLogStatus,
+    fun findByStatusInAndCreatedOnBefore(
+        statuses: Collection<EventProcessingLogStatus>,
         before: OffsetDateTime
     ): List<EventProcessingLogEntity>
 }

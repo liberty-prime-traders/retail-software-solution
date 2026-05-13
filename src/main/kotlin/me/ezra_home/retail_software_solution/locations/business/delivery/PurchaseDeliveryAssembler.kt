@@ -35,7 +35,7 @@ class PurchaseDeliveryAssembler(
   ): PurchaseDeliveryResponseDto {
     return PurchaseDeliveryResponseDto(
       id = delivery.id!!,
-      referenceNumber = delivery.referenceNumber!!,
+      referenceNumber = delivery.requiredReference(),
       purchaseId = delivery.purchaseId,
       status = delivery.status,
       deliveredAt = delivery.deliveredAt,
@@ -45,7 +45,7 @@ class PurchaseDeliveryAssembler(
         val product = productSummaries[purchaseLine.locationProductId]!!
         PurchaseDeliveryLineResponseDto(
           id = dl.id!!,
-          referenceNumber = dl.referenceNumber!!,
+          referenceNumber = dl.requiredReference(),
           quantityDelivered = dl.quantityDelivered,
           unitId = dl.unitId,
           unitCost = dl.unitCost,

@@ -35,7 +35,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: sold_by
+                  name: sold_by_id
                   type: uuid
 
               - column:
@@ -53,6 +53,22 @@ databaseChangeLog:
               - column:
                   name: payment_status
                   type: varchar(5)
+
+              - column:
+                  name: subtotal
+                  type: numeric(19, 4)
+
+              - column:
+                  name: discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: grand_total
+                  type: numeric(19, 4)
 
               - column:
                   name: revend

@@ -64,7 +64,7 @@ class SalePaymentVoidHandlerForKafka(
                 correlationId = null,
                 sourceDocumentId = payment.saleId,
                 contactId = contactId,
-                paymentReferenceNumber = payment.referenceNumber!!,
+                paymentReferenceNumber = payment.requiredReference(),
                 paymentMethodAccountCode = accountCode,
                 amount = payment.amount,
                 voidedOn = voidEntity.createdOn?.toLocalDate() ?: DateTimes.Local.Now.organization()

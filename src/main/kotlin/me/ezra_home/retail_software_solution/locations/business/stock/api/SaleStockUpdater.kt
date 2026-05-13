@@ -10,9 +10,13 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
 
-data class SaleLineStockRequest(val saleLineId: UUID, val locationProductId: UUID, val quantity: BigDecimal, val unitId: UUID, val conversionFactor: BigDecimal)
-
-private data class BatchAllocation(val stockEntryId: UUID, val quantityTaken: BigDecimal)
+data class SaleLineStockRequest(
+    val saleLineId: UUID,
+    val locationProductId: UUID,
+    val baseQuantity: BigDecimal,
+    val unitId: UUID,
+    val conversionFactor: BigDecimal
+)
 
 @Service
 @TransactionalOnLocationSchema
@@ -21,79 +25,86 @@ class SaleStockUpdater(
     private val stockMovementRepository: StockMovementRepository
 ) {
 
-    fun consumeStock(lines: List<SaleLineStockRequest>, saleRefNumber: String) {
-        lines.forEach { consumeLine(it, saleRefNumber) }
-    }
+    fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
+        if (saleLineStockRequests.isEmpty()) return
+        val productIds = saleLineStockRequests.map { it.locationProductId }
+        val fifoByProduct = stockEntryRepository.findFifoEntriesForProducts(productIds)
+            .groupBy { it.locationProductId }
+        val balanceByProduct = stockMovementRepository.findLatestBalances(productIds)
+            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
 
-    private fun consumeLine(line: SaleLineStockRequest, saleRefNumber: String) {
-        val batches = allocateBatches(line)
-        recordSaleMovements(line, batches, saleRefNumber)
-    }
-
-    private fun allocateBatches(line: SaleLineStockRequest): List<BatchAllocation> {
-        var remaining = line.quantity
-        val batches = mutableListOf<BatchAllocation>()
         val modifiedEntries = mutableListOf<StockEntryEntity>()
-        for (entry in stockEntryRepository.findFifoEntriesForProduct(line.locationProductId)) {
-            if (remaining <= BigDecimal.ZERO) break
-            val taken = remaining.min(entry.quantityRemaining)
-            entry.quantityRemaining = entry.quantityRemaining.subtract(taken)
-            modifiedEntries.add(entry)
-            batches.add(BatchAllocation(entry.id!!, taken))
-            remaining = remaining.subtract(taken)
-        }
-        if (remaining > BigDecimal.ZERO) {
-            throw RtsGenericException("Insufficient stock for product ${line.locationProductId}")
+        val movements = mutableListOf<StockMovementEntity>()
+        saleLineStockRequests.forEach { line ->
+            val entries = fifoByProduct[line.locationProductId].orEmpty()
+            var runningBalance = balanceByProduct[line.locationProductId] ?: BigDecimal.ZERO
+            var remaining = line.baseQuantity
+            for (entry in entries) {
+                if (remaining <= BigDecimal.ZERO) break
+                val taken = remaining.min(entry.quantityRemaining)
+                entry.quantityRemaining = entry.quantityRemaining.subtract(taken)
+                modifiedEntries.add(entry)
+                runningBalance = runningBalance.subtract(taken)
+                movements.add(
+                    StockMovementEntity(
+                        stockEntryId = entry.id!!,
+                        locationProductId = line.locationProductId,
+                        movementType = MovementType.SALE,
+                        movedQuantity = taken,
+                        remainingQuantity = runningBalance,
+                        externalReferenceNumber = saleRefNumber,
+                        unitId = line.unitId,
+                        conversionFactor = line.conversionFactor
+                    )
+                )
+                remaining = remaining.subtract(taken)
+            }
+            if (remaining > BigDecimal.ZERO) {
+                throw RtsGenericException("Insufficient stock for product ${line.locationProductId}")
+            }
         }
         stockEntryRepository.saveAll(modifiedEntries)
-        return batches
-    }
-
-    private fun recordSaleMovements(line: SaleLineStockRequest, batches: List<BatchAllocation>, saleRefNumber: String) {
-        var runningBalance = stockMovementRepository.findLatestBalance(line.locationProductId) ?: BigDecimal.ZERO
-        val movements = batches.map { batch ->
-            runningBalance = runningBalance.subtract(batch.quantityTaken)
-            StockMovementEntity(
-                stockEntryId = batch.stockEntryId,
-                locationProductId = line.locationProductId,
-                movementType = MovementType.SALE,
-                movedQuantity = batch.quantityTaken,
-                remainingQuantity = runningBalance,
-                externalReferenceNumber = saleRefNumber,
-                unitId = line.unitId,
-                conversionFactor = line.conversionFactor
-            )
-        }
         stockMovementRepository.saveAll(movements)
     }
 
     fun restoreStock(lines: List<SaleLineStockRequest>, saleRefNumber: String) {
+        if (lines.isEmpty()) return
         val saleMovements = stockMovementRepository.findByExternalReferenceNumberAndMovementType(saleRefNumber, MovementType.SALE)
+        if (saleMovements.isEmpty()) return
         val movementsByProduct = saleMovements.groupBy { it.locationProductId }
+        val productIds = lines.map { it.locationProductId }
+        val stockEntriesById = stockEntryRepository.findAllById(saleMovements.map { it.stockEntryId }.distinct())
+            .associateBy { it.id!! }
+        val runningBalances = stockMovementRepository.findLatestBalances(productIds)
+            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+            .toMutableMap()
+
+        val modifiedEntries = mutableListOf<StockEntryEntity>()
+        val newMovements = mutableListOf<StockMovementEntity>()
         lines.forEach { line ->
             val batchMovements = movementsByProduct[line.locationProductId] ?: return@forEach
-            val stockEntriesById = stockEntryRepository.findAllById(batchMovements.map { it.stockEntryId })
-                .associateBy { it.id!! }
-            var runningBalance = stockMovementRepository.findLatestBalance(line.locationProductId) ?: BigDecimal.ZERO
+            var runningBalance = runningBalances[line.locationProductId] ?: BigDecimal.ZERO
             batchMovements.forEach { movement ->
-                stockEntriesById[movement.stockEntryId]!!.quantityRemaining =
-                    stockEntriesById[movement.stockEntryId]!!.quantityRemaining.add(movement.movedQuantity)
-            }
-            stockEntryRepository.saveAll(stockEntriesById.values)
-            val movements = batchMovements.map { movement ->
+                val entry = stockEntriesById[movement.stockEntryId]!!
+                entry.quantityRemaining = entry.quantityRemaining.add(movement.movedQuantity)
+                modifiedEntries.add(entry)
                 runningBalance = runningBalance.add(movement.movedQuantity)
-                StockMovementEntity(
-                    stockEntryId = movement.stockEntryId,
-                    locationProductId = line.locationProductId,
-                    movementType = MovementType.SALE_VOID,
-                    movedQuantity = movement.movedQuantity,
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = saleRefNumber,
-                    unitId = movement.unitId,
-                    conversionFactor = movement.conversionFactor
+                newMovements.add(
+                    StockMovementEntity(
+                        stockEntryId = movement.stockEntryId,
+                        locationProductId = line.locationProductId,
+                        movementType = MovementType.SALE_VOID,
+                        movedQuantity = movement.movedQuantity,
+                        remainingQuantity = runningBalance,
+                        externalReferenceNumber = saleRefNumber,
+                        unitId = movement.unitId,
+                        conversionFactor = movement.conversionFactor
+                    )
                 )
             }
-            stockMovementRepository.saveAll(movements)
+            runningBalances[line.locationProductId] = runningBalance
         }
+        stockEntryRepository.saveAll(modifiedEntries)
+        stockMovementRepository.saveAll(newMovements)
     }
 }

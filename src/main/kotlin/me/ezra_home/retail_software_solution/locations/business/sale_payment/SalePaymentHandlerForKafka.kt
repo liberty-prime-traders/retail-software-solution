@@ -27,9 +27,11 @@ class SalePaymentHandlerForKafka(
 
     override val eventType = SalePaymentRecordedEvent::class
 
-    override fun reissue(sourceDocumentId: UUID) {
-        val contactId = saleDataFetcher.getSaleContactId(sourceDocumentId)
-        val payments = salePaymentRepository.findBySaleId(sourceDocumentId)
+    override fun reissue(sourceDocumentId: UUID) = publishExistingForSale(sourceDocumentId)
+
+    fun publishExistingForSale(saleId: UUID) {
+        val contactId = saleDataFetcher.getSaleContactId(saleId)
+        val payments = salePaymentRepository.findBySaleId(saleId)
         if (payments.isEmpty()) return
         val voidedIds = salePaymentVoidRepository.findBySalePaymentIdIn(payments.map { it.id!! })
             .mapTo(HashSet()) { it.salePaymentId }
@@ -37,14 +39,14 @@ class SalePaymentHandlerForKafka(
             val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
             if (!StringUtils.hasValue(accountCode)) return@mapNotNull null
             SalePaymentLineDto(
-                paymentReferenceNumber = payment.referenceNumber!!,
+                paymentReferenceNumber = payment.requiredReference(),
                 paymentMethodAccountCode = accountCode!!,
                 amount = payment.amount,
                 paymentDate = payment.paymentDate
             )
         }
         if (lines.isEmpty()) return
-        publishEvent(sourceDocumentId, contactId, lines)
+        publishEvent(saleId, contactId, lines)
     }
 
     fun publish(saleId: UUID, contactId: UUID, payments: List<SalePaymentEntity>) {
@@ -60,7 +62,7 @@ class SalePaymentHandlerForKafka(
             }
 
             SalePaymentLineDto(
-                paymentReferenceNumber = payment.referenceNumber!!,
+                paymentReferenceNumber = payment.requiredReference(),
                 paymentMethodAccountCode = accountCode!!,
                 amount = payment.amount,
                 paymentDate = payment.paymentDate

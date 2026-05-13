@@ -40,14 +40,14 @@ object PurchaseDeliveryMapper {
     correlationId = null,
     purchaseId = purchaseId,
     deliveryId = deliveryRecord.delivery.id!!,
-    deliveryReferenceNumber = deliveryRecord.delivery.referenceNumber!!,
+    deliveryReferenceNumber = deliveryRecord.delivery.requiredReference(),
     deliveredAt = deliveryRecord.delivery.deliveredAt,
     supplierId = supplierId,
     lines = deliveryRecord.lines.map { dl ->
       val pl = purchaseLineById[dl.purchaseLineId]!!
       PurchaseDeliveredLineDto(
         deliveryLineId = dl.id!!,
-        lineReferenceNumber = dl.referenceNumber!!,
+        lineReferenceNumber = dl.requiredReference(),
         locationProductId = pl.locationProductId,
         quantityDelivered = dl.quantityDelivered,
         unitId = dl.unitId,

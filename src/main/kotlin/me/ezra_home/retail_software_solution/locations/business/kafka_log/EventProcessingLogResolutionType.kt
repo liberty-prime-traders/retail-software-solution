@@ -4,5 +4,6 @@ import me.ezra_home.retail_software_solution.util.enums.HasCode
 
 enum class EventProcessingLogResolutionType(override val code: String) : HasCode {
     DLT_REPLAY("RPL"),
-    REISSUED("RIS")
+    REISSUED("RIS"),
+    RACE_LOST("RCL")
 }

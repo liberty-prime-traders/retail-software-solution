@@ -36,7 +36,7 @@ databaseChangeLog:
                     notNullConstraintName: sale_contact_id_notnull
 
               - column:
-                  name: sold_by
+                  name: sold_by_id
                   type: uuid
 
               - column:
@@ -72,6 +72,22 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+              - column:
+                  name: subtotal
+                  type: numeric(19, 4)
+
+              - column:
+                  name: discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: grand_total
+                  type: numeric(19, 4)
       rollback:
         - dropTable:
             tableName: sale

@@ -18,7 +18,7 @@ class LocationProductDataFetcher(
         locationProductRepository.findAllById(ids).associate { entity ->
             entity.id!! to LocationProductSummaryDto(
                 id = entity.id!!,
-                referenceNumber = entity.referenceNumber!!,
+                referenceNumber = entity.requiredReference(),
                 productName = entity.productName,
                 productGroupName = entity.productGroupName,
                 baseUnitId = entity.baseUnitId,
@@ -38,14 +38,14 @@ class LocationProductDataFetcher(
     private fun populateConversionInfo(productUnitRequests: List<LocationProductUnitRequestDto>): List<LocationProductUnitDto> {
         if (productUnitRequests.isEmpty()) return emptyList()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })
-        val graph = unitConversionGraphFacade.getOrLoad()
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return productUnitRequests.map { (locationProductId, unitId) ->
             val baseUnitId = baseUnitIds[locationProductId]!!
             LocationProductUnitDto(
                 locationProductId = locationProductId,
                 unitId = unitId,
                 baseUnitId = baseUnitId,
-                conversionFactor = graph.getValue(unitId).getValue(baseUnitId).factor
+                conversionFactor = unitConversionGraph.getFactor(unitId, baseUnitId)
             )
         }
     }

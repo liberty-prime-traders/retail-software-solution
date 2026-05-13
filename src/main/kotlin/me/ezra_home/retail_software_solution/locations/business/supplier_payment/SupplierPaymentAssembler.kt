@@ -65,7 +65,7 @@ class SupplierPaymentAssembler(
         paymentStatus: PaymentStatus?
     ) = SupplierPaymentResponseDto(
         id = payment.id!!,
-        referenceNumber = payment.referenceNumber!!,
+        referenceNumber = payment.requiredReference(),
         purchaseId = payment.purchaseId,
         purchaseReferenceNumber = purchaseRef,
         deliveryReferenceNumber = deliveryRef,

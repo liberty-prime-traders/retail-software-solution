@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitconvers
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.ConversionTargetDto
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -14,9 +15,9 @@ class UnitConversionGraphBuilder(
     private val unitConversionRepository: UnitConversionRepository
 ) {
 
-    private val cache = ConcurrentHashMap<String, Map<UUID, Map<UUID, ConversionTargetDto>>>()
+    private val cache = ConcurrentHashMap<String, UnitConversionGraph>()
 
-    fun getOrLoad(): Map<UUID, Map<UUID, ConversionTargetDto>> {
+    fun getOrLoad(): UnitConversionGraph {
         val orgSchema = SessionContextProvider.getOrganizationSchema()
         return cache.getOrPut(orgSchema) { buildGraph() }
     }
@@ -26,7 +27,7 @@ class UnitConversionGraphBuilder(
         cache.remove(orgSchema)
     }
 
-    private fun buildGraph(): Map<UUID, Map<UUID, ConversionTargetDto>> {
+    private fun buildGraph(): UnitConversionGraph {
         val allUnits = unitValueFetcher.getAllUnitValues().toList()
         val unitById = allUnits.associateBy { it.id }
         val manualConversions = unitConversionRepository.findAll()
@@ -48,7 +49,7 @@ class UnitConversionGraphBuilder(
             addEdge(conversion.fromUnitId, conversion.toUnitId, n, d)
         }
 
-        return allUnits.associate { startUnit ->
+        val map = allUnits.associate { startUnit ->
             val reachable = mutableMapOf<UUID, Pair<Long, Long>>()
             val queue = ArrayDeque<RationalNode>()
             queue.add(RationalNode(startUnit.id, 1L, 1L))
@@ -74,6 +75,7 @@ class UnitConversionGraphBuilder(
 
             startUnit.id to conversions
         }
+        return UnitConversionGraph(map, allUnits.associate { it.id to it.name })
     }
 }
 

@@ -14,7 +14,9 @@ data class SaleVoidedEvent(
     override val sourceDocumentId: UUID,
     val contactId: UUID,
     val saleReferenceNumber: String,
-    val saleTotal: BigDecimal,
+    val subtotal: BigDecimal,
+    val discountTotal: BigDecimal,
     val dateSold: LocalDate,
+    val dateVoided: LocalDate,
     val lines: List<SaleLineEventDto>
 ) : TransactionEvent()

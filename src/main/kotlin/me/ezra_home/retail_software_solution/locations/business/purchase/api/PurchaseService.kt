@@ -4,6 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.LineUpdateResult
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
@@ -24,7 +26,8 @@ class PurchaseService(
   private val locationProductService: LocationProductService,
   private val locationProductDataFetcher: LocationProductDataFetcher,
   private val purchaseAssembler: PurchaseAssembler,
-  private val purchaseLinesResolver: PurchaseLinesResolver
+  private val purchaseLinesResolver: PurchaseLinesResolver,
+  private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
@@ -46,6 +49,7 @@ class PurchaseService(
   }
 
   fun updateDraft(dto: PurchaseUpdateDto): PurchaseResponseDto {
+    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, dto.id)
     val purchase = purchaseRepository.getReferenceById(dto.id)
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.applyDraftUpdate(purchase, dto)
@@ -71,6 +75,7 @@ class PurchaseService(
   }
 
   fun convertDraftToOrder(dto: PurchaseUpdateDto): PurchaseResponseDto {
+    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, dto.id)
     val purchase = purchaseRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.convertDraftToOrder(purchase, dto)

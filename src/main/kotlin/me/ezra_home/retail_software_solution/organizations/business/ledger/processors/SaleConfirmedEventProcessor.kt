@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import kotlin.reflect.KClass
@@ -22,7 +21,7 @@ import kotlin.reflect.KClass
 class SaleConfirmedEventProcessor(
     private val contactService: ContactService,
     private val ledgerEntryGroupRepository: LedgerEntryGroupRepository,
-    private val taxLedgerEntriesBuilder: TaxLedgerEntriesBuilder,
+    private val saleTaxLedgerEntriesBuilder: SaleTaxLedgerEntriesBuilder,
     ledgerPostingService: LedgerPostingService
 ) : AccountingEventProcessor<SaleConfirmedEvent>(ledgerPostingService) {
 
@@ -34,11 +33,12 @@ class SaleConfirmedEventProcessor(
 
     override fun prepareLedgerRequest(event: SaleConfirmedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
+        val netAmount = event.subtotal - event.discountTotal
 
-        val taxEntries = taxLedgerEntriesBuilder.buildTransactionLevelTaxEntries(event.dateSold, event.saleTotal, TaxTrigger.SALE)
+        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, netAmount)
         val saleEntries = listOf(
-            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, event.saleTotal),
-            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, event.saleTotal)
+            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, netAmount),
+            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, netAmount)
         )
 
         return LedgerPostingRequest(
@@ -49,7 +49,7 @@ class SaleConfirmedEventProcessor(
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = event.saleTotal,
+                    receivableAmount = netAmount,
                     payableAmount = BigDecimal.ZERO
                 )
             )

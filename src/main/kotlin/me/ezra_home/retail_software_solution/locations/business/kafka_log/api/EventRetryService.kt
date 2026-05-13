@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.DltReader
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
-import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
@@ -39,7 +38,7 @@ class EventRetryService(
             return
         }
 
-        val handler = reissueHandlers.find { StringUtils.isEquivalent(it.eventType.simpleName, entry.eventType) }
+        val handler = reissueHandlers.find { it.eventType.simpleName == entry.eventType }
         if (handler == null) {
             log.error("No reissue handler for event type '${entry.eventType}' — manual intervention required for log entry $logId")
             throw RtsGenericException("No reissue handler registered for event type '${entry.eventType}'")
@@ -51,7 +50,7 @@ class EventRetryService(
     private fun findOnDlt(entry: EventProcessingLogEntity): ConsumerRecord<String, TransactionEvent>? {
         val partition = entry.dltPartition ?: return null
         val offset = entry.dltOffset ?: return null
-        val dltTopic = "${KafkaConstants.Topics.TRANSACTION_EVENTS}.${entry.consumerGroup}.DLT"
+        val dltTopic = KafkaConstants.Topics.transactionDlt(entry.consumerGroup!!)
         return try {
             dltReader.fetchAt(dltTopic, partition, offset)
         } catch (e: Exception) {

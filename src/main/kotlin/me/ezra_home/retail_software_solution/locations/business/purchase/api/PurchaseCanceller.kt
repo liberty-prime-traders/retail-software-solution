@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
@@ -17,10 +19,12 @@ class PurchaseCanceller(
     private val purchaseRepository: PurchaseRepository,
     private val purchaseLineRepository: PurchaseLineRepository,
     private val purchaseAssembler: PurchaseAssembler,
-    private val purchasePaymentStatusService: PurchasePaymentStatusService
+    private val purchasePaymentStatusService: PurchasePaymentStatusService,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     fun cancel(purchaseId: UUID, lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto {
+        entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, purchaseId)
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         PurchaseValidator.guardCanCancelLines(purchase)
         val existingLines = purchaseLineRepository.findByPurchaseId(purchaseId)
@@ -41,6 +45,7 @@ class PurchaseCanceller(
         }
         purchaseLineRepository.saveAll(toSave)
     }
+
     private fun resolvePurchaseStatus(lines: List<PurchaseLineEntity>): PurchaseStatus? {
         val allAccountedFor = lines.all { (it.quantityDelivered + it.quantityCanceled).compareTo(it.quantityOrdered) == 0 }
         val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }

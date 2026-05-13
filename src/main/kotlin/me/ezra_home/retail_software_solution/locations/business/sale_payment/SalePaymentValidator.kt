@@ -39,4 +39,15 @@ object SalePaymentValidator {
         if (saleStatus == SaleStatus.VOIDED)
             throw RtsGenericException("Cannot void a payment on a voided sale")
     }
+
+    fun guardOpenForPayment(saleStatus: SaleStatus) {
+        when (saleStatus) {
+            SaleStatus.DRAFT -> throw RtsGenericException(
+                "Draft sales do not accept standalone payments; submit payments with the draft itself"
+            )
+            SaleStatus.VOIDED -> throw RtsGenericException("Cannot pay a voided sale")
+            SaleStatus.DISCARDED -> throw RtsGenericException("Cannot pay a discarded sale")
+            SaleStatus.CONFIRMED -> Unit
+        }
+    }
 }

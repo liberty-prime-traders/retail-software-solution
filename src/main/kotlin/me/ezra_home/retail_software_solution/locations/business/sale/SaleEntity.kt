@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -24,21 +25,37 @@ class SaleEntity(
     @Column(name = "contact_id", nullable = false)
     var contactId: UUID,
 
-    @Column(name = "sold_by")
-    var soldBy: UUID? = null,
+    @Column(name = "sold_by_id")
+    var soldById: UUID?,
 
     @Column(name = "date_sold")
-    var dateSold: OffsetDateTime? = null,
+    var dateSold: OffsetDateTime?,
 
     @Column(name = "notes")
     var notes: String? = null,
 
     @Convert(converter = SaleStatusConverter::class)
     @Column(name = "status", nullable = false, length = 5)
-    var status: SaleStatus = SaleStatus.DRAFT,
+    var status: SaleStatus,
 
     @Convert(converter = PaymentStatusConverter::class)
     @Column(name = "payment_status", nullable = false, length = 5)
-    var paymentStatus: PaymentStatus = PaymentStatus.UNPAID
+    var paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
 
-) : HasReferenceEntity()
+    @Column(name = "subtotal", precision = 19, scale = 4)
+    var subtotal: BigDecimal? = null,
+
+    @Column(name = "discount_total", precision = 19, scale = 4)
+    var discountTotal: BigDecimal? = null,
+
+    @Column(name = "tax_total", precision = 19, scale = 4)
+    var taxTotal: BigDecimal? = null,
+
+    @Column(name = "grand_total", precision = 19, scale = 4)
+    var grandTotal: BigDecimal? = null
+
+) : HasReferenceEntity() {
+
+    fun saleTotalAfterDiscounts(): BigDecimal =
+        (subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO)
+}

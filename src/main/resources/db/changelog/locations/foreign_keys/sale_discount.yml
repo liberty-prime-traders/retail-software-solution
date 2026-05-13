@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-discount-sale
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_discount_sale
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_discount
+            baseColumnNames: sale_id
+            referencedTableName: sale
+            referencedColumnNames: id
+            constraintName: fk_sale_discount_sale
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_discount
+            constraintName: fk_sale_discount_sale
+
+  - changeSet:
+      id: add-foreign-key-sale-discount-sale-line
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_discount_sale_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_discount
+            baseColumnNames: sale_line_id
+            referencedTableName: sale_line
+            referencedColumnNames: id
+            constraintName: fk_sale_discount_sale_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_discount
+            constraintName: fk_sale_discount_sale_line

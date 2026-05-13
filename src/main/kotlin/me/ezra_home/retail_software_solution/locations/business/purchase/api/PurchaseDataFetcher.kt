@@ -39,7 +39,7 @@ class PurchaseDataFetcher(
 
   fun findPurchaseInfoByIds(purchaseIds: List<UUID>): Map<UUID, PurchaseInfo> {
     return purchaseRepository.findAllById(purchaseIds)
-      .associateBy({ it.id!! }, { PurchaseInfo(it.referenceNumber!!, it.supplierId, it.paymentStatus) })
+      .associateBy({ it.id!! }, { PurchaseInfo(it.requiredReference(), it.supplierId, it.paymentStatus) })
   }
 
 
