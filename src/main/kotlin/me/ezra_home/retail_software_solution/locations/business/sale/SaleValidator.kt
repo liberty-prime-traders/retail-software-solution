@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -23,6 +24,7 @@ class SaleValidator(
     private val salePaymentFetcher: SalePaymentFetcher,
     private val saleStockReserver: SaleStockReserver,
     private val entityAdvisoryLock: EntityAdvisoryLock,
+    private val saleLineRepository: SaleLineRepository,
 ) {
 
     companion object {
@@ -71,7 +73,20 @@ class SaleValidator(
             }
         }
 
+        fun guardNotReassigningToWalkIn(dto: SaleUpdateDto) {
+            val incoming = dto.contactId?.orElse(null) ?: return
+            if (incoming == SystemContact.WALK_IN.id) {
+                throw RtsGenericException("A draft sale cannot be reassigned to a walk-in customer")
+            }
+        }
+    }
 
+    fun guardSurvivingLinesNotEmpty(dto: SaleUpdateDto) {
+        if (dto.linesToAdd.isNotEmpty()) return
+        val existingCount = saleLineRepository.countBySaleId(dto.id)
+        if (existingCount <= dto.linesToRemove.size.toLong()) {
+            throw RtsGenericException("Cannot confirm a sale with no lines")
+        }
     }
 
     fun guardCanVoid(sale: SaleEntity) {

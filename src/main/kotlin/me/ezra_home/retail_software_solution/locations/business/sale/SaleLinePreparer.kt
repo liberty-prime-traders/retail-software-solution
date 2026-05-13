@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -26,6 +25,7 @@ class SaleLinePreparer(
     }
 
     fun prepareForInsert(saleLinesForCreate: List<SaleLineCreateDto>): ValidatedSaleLines {
+        if (saleLinesForCreate.isEmpty()) return ValidatedSaleLines(emptyMap(), emptyMap())
         val locationProductIds = saleLinesForCreate.map { it.locationProductId }
         SaleValidator.guardNoDuplicateProducts(locationProductIds)
         locationProductService.guardAllActive(locationProductIds)

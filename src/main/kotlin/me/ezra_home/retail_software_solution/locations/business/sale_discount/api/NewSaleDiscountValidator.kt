@@ -36,7 +36,7 @@ class NewSaleDiscountValidator {
         val existingAmounts = existingDiscounts.map { discount ->
             val productId = discount.saleLineId?.let {
                 productByLineId[it]
-                    ?: throw RtsGenericException("Discount references sale line $it which is not in the surviving set")
+                    ?: throw RtsGenericException("Discount references sale line $it which is not on the current sale")
             }
             DiscountAmount(locationProductId = productId, calculatedAmount = discount.calculatedAmount)
         }

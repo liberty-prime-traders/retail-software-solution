@@ -44,6 +44,11 @@ class SaleStockReserver(
         reservationRepository.deleteBySaleId(saleId)
     }
 
+    fun clearByLineIds(saleLineIds: List<UUID>) {
+        if (saleLineIds.isEmpty()) return
+        reservationRepository.deleteBySaleLineIdIn(saleLineIds)
+    }
+
     fun syncUpdatedReservations(
         updatedLines: List<SaleLineEntity>,
         newLines: List<SaleLineEntity>,

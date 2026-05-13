@@ -8,7 +8,6 @@ import java.util.UUID
 @TransactionalOnLocationSchema
 class SaleLinesApplier(
     private val saleValidator: SaleValidator,
-    private val saleStockReserver: SaleStockReserver,
     private val saleLineRepository: SaleLineRepository,
 ) {
 
@@ -17,6 +16,5 @@ class SaleLinesApplier(
             .associate { it.locationProductId to it.baseQty() }
         saleValidator.guardStockForDraftUpdates(saleId, resolvedBaseQuantitiesPerProduct, prepared.productSummaries)
         saleLineRepository.saveAll(prepared.updatedLines + prepared.newLines)
-        saleStockReserver.syncUpdatedReservations(prepared.updatedLines, prepared.newLines, saleId)
     }
 }

@@ -36,7 +36,7 @@ class SaleEntity(
 
     @Convert(converter = SaleStatusConverter::class)
     @Column(name = "status", nullable = false, length = 5)
-    var status: SaleStatus = SaleStatus.DRAFT,
+    var status: SaleStatus,
 
     @Convert(converter = PaymentStatusConverter::class)
     @Column(name = "payment_status", nullable = false, length = 5)

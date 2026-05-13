@@ -68,32 +68,43 @@ class SaleStockUpdater(
     }
 
     fun restoreStock(lines: List<SaleLineStockRequest>, saleRefNumber: String) {
+        if (lines.isEmpty()) return
         val saleMovements = stockMovementRepository.findByExternalReferenceNumberAndMovementType(saleRefNumber, MovementType.SALE)
+        if (saleMovements.isEmpty()) return
         val movementsByProduct = saleMovements.groupBy { it.locationProductId }
+        val productIds = lines.map { it.locationProductId }
+        val stockEntriesById = stockEntryRepository.findAllById(saleMovements.map { it.stockEntryId }.distinct())
+            .associateBy { it.id!! }
+        val runningBalances = stockMovementRepository.findLatestBalances(productIds)
+            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+            .toMutableMap()
+
+        val modifiedEntries = mutableListOf<StockEntryEntity>()
+        val newMovements = mutableListOf<StockMovementEntity>()
         lines.forEach { line ->
             val batchMovements = movementsByProduct[line.locationProductId] ?: return@forEach
-            val stockEntriesById = stockEntryRepository.findAllById(batchMovements.map { it.stockEntryId })
-                .associateBy { it.id!! }
-            var runningBalance = stockMovementRepository.findLatestBalance(line.locationProductId) ?: BigDecimal.ZERO
+            var runningBalance = runningBalances[line.locationProductId] ?: BigDecimal.ZERO
             batchMovements.forEach { movement ->
-                stockEntriesById[movement.stockEntryId]!!.quantityRemaining =
-                    stockEntriesById[movement.stockEntryId]!!.quantityRemaining.add(movement.movedQuantity)
-            }
-            stockEntryRepository.saveAll(stockEntriesById.values)
-            val movements = batchMovements.map { movement ->
+                val entry = stockEntriesById[movement.stockEntryId]!!
+                entry.quantityRemaining = entry.quantityRemaining.add(movement.movedQuantity)
+                modifiedEntries.add(entry)
                 runningBalance = runningBalance.add(movement.movedQuantity)
-                StockMovementEntity(
-                    stockEntryId = movement.stockEntryId,
-                    locationProductId = line.locationProductId,
-                    movementType = MovementType.SALE_VOID,
-                    movedQuantity = movement.movedQuantity,
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = saleRefNumber,
-                    unitId = movement.unitId,
-                    conversionFactor = movement.conversionFactor
+                newMovements.add(
+                    StockMovementEntity(
+                        stockEntryId = movement.stockEntryId,
+                        locationProductId = line.locationProductId,
+                        movementType = MovementType.SALE_VOID,
+                        movedQuantity = movement.movedQuantity,
+                        remainingQuantity = runningBalance,
+                        externalReferenceNumber = saleRefNumber,
+                        unitId = movement.unitId,
+                        conversionFactor = movement.conversionFactor
+                    )
                 )
             }
-            stockMovementRepository.saveAll(movements)
+            runningBalances[line.locationProductId] = runningBalance
         }
+        stockEntryRepository.saveAll(modifiedEntries)
+        stockMovementRepository.saveAll(newMovements)
     }
 }

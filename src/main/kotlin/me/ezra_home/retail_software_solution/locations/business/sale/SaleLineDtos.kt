@@ -9,6 +9,5 @@ data class PreparedLineUpdate(
     val survivingExisting: List<SaleLineEntity>,
     val productSummaries: Map<UUID, LocationProductSummaryDto>,
 ) {
-    val survivingLines: List<SaleLineEntity>
-        get() = survivingExisting + updatedLines + newLines
+    fun survivingLines(): List<SaleLineEntity> = survivingExisting + updatedLines + newLines
 }

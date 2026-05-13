@@ -10,4 +10,6 @@ interface SaleLineRepository : JpaRepository<SaleLineEntity, UUID> {
     fun findBySaleIdIn(saleIds: Collection<UUID>): List<SaleLineEntity>
 
     fun findBySaleId(saleId: UUID): List<SaleLineEntity>
+
+    fun countBySaleId(saleId: UUID): Long
 }

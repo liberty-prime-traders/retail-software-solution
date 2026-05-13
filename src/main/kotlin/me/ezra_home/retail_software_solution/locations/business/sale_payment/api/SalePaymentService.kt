@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.ap
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
@@ -35,21 +34,25 @@ class SalePaymentService(
 
     fun recordPaymentsSubmittedWithSale(
         saleId: UUID,
+        contactId: UUID,
         payments: List<SalePaymentCreateDto>,
         saleTotal: BigDecimal,
-        isNewSale: Boolean
-    ) {
-        if (payments.isEmpty()) return
+        isNewSale: Boolean,
+        publishKafka: Boolean,
+    ): PaymentStatus? {
+        if (payments.isEmpty()) return null
         val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        doRecordPayments(saleId, payments, saleTotal, alreadyPaid)
+        return doRecordPayments(saleId, contactId, payments, saleTotal, alreadyPaid, publishKafka)
     }
 
     private fun doRecordPayments(
         saleId: UUID,
+        contactId: UUID,
         payments: List<SalePaymentCreateDto>,
         saleTotal: BigDecimal,
         alreadyPaid: BigDecimal,
-    ) {
+        publishKafka: Boolean,
+    ): PaymentStatus {
         payments.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
         val totalPaid = alreadyPaid + payments.sumOf { it.amount }
         SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, saleTotal)
@@ -63,7 +66,8 @@ class SalePaymentService(
             )
         }
         salePaymentRepository.saveAll(entities)
-        saleUpdater.updatePaymentStatus(saleId, resolvePaymentStatus(totalPaid, saleTotal))
+        if (publishKafka) salePaymentHandlerForKafka.publish(saleId, contactId, entities)
+        return resolvePaymentStatus(totalPaid, saleTotal)
     }
 
     fun publishKafkaForExistingPayments(saleId: UUID) {

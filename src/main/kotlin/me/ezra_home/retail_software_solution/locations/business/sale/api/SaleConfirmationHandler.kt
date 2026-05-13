@@ -19,10 +19,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleSt
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.enums.SystemContact
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
@@ -61,34 +58,31 @@ class SaleConfirmationHandler(
         }
         runFifoConsumption(outcome.lines, sale.requiredReference())
         saleConfirmedHandlerForKafka.publish(sale, outcome.lines, outcome.discounts)
-        salePaymentService.publishKafkaForExistingPayments(sale.id!!)
         return saleAssembler.buildResponse(sale, outcome.lines, validatedSaleLines.productSummaries)
     }
 
     fun convertDraftToSale(dto: SaleUpdateDto): SaleResponseDto {
-        entityAdvisoryLock.acquire(LockNamespaces.SALE, dto.id)
-        val sale = saleRepository.findById(dto.id)
-            .orElseThrow { RtsGenericException("Sale ${dto.id} not found") }
+        SaleValidator.guardNotReassigningToWalkIn(dto)
+        val sale = saleRepository.getReferenceById(dto.id)
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, sale.id!!)
         SaleValidator.guardIsDraft(sale)
+        saleValidator.guardSurvivingLinesNotEmpty(dto)
         dto.applyTo(sale)
         if (sale.soldById == null) {
             sale.soldById = SessionContextProvider.getUserId()
         }
-        if (sale.dateSold == null) {
-            sale.dateSold = DateTimes.Offset.Now.organization()
-        }
-        SaleValidator.guardDateSoldIsNotFuture(sale.dateSold!!)
-        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(sale.dateSold!!))
-        if (sale.contactId != SystemContact.WALK_IN.id) {
-            contactService.guardExists(sale.contactId)
-        }
+        val dateSold = sale.dateSold ?: DateTimes.Offset.Now.organization()
+        sale.dateSold = dateSold
+        SaleValidator.guardDateSoldIsNotFuture(dateSold)
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dateSold))
+        contactService.guardExists(sale.contactId)
 
-        val outcome = saleMutator.update(dto, sale)
+        val outcome = saleMutator.updateWithoutSyncingReservations(dto, sale)
         SaleValidator.guardHasLines(outcome.survivingLines)
-        if (sale.contactId == SystemContact.WALK_IN.id) {
-            saleValidator.guardWalkInPaymentCoverage(dto.id, sale.saleTotalAfterDiscounts())
-        }
         sale.status = SaleStatus.CONFIRMED
+
+        val productIds = outcome.survivingLines.mapTo(HashSet()) { it.locationProductId }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)
         saleStockReserver.clearBySale(dto.id)
 
         runFifoConsumption(outcome.survivingLines, sale.requiredReference())

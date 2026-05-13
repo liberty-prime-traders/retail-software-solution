@@ -82,7 +82,13 @@ class SaleMutator(
         sale.discountTotal = discounts.sumOf { it.calculatedAmount }
     }
 
-    fun update(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome {
+    fun updateAndSyncReservations(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome =
+        doUpdate(dto, sale, syncReservations = true)
+
+    fun updateWithoutSyncingReservations(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome =
+        doUpdate(dto, sale, syncReservations = false)
+
+    private fun doUpdate(dto: SaleUpdateDto, sale: SaleEntity, syncReservations: Boolean): SaleUpdateOutcome {
         val saleId = sale.id!!
         val existingLines = saleLineRepository.findBySaleId(saleId)
         SaleValidator.guardLineIdsBelongToSale(dto, existingLines.mapTo(HashSet()) { it.id!! })
@@ -91,7 +97,10 @@ class SaleMutator(
         removeLines(dto.linesToRemove)
         val prepared = saleLinesPreparer.prepare(saleId, dto, existingLines)
         saleLinesApplier.apply(saleId, prepared)
-        val survivingLines = prepared.survivingLines
+        if (syncReservations) {
+            saleStockReserver.syncUpdatedReservations(prepared.updatedLines, prepared.newLines, saleId)
+        }
+        val survivingLines = prepared.survivingLines()
         saleDiscountService.removeDiscounts(sale, dto.discountsToRemove)
         val reconciled = saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, prepared.productSummaries)
         val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, prepared.productSummaries)
@@ -103,13 +112,16 @@ class SaleMutator(
     private fun removeLines(lineIds: List<UUID>) {
         if (lineIds.isEmpty()) return
         saleDiscountService.removeDiscountsByLineIds(lineIds)
+        saleStockReserver.clearByLineIds(lineIds)
         saleLineRepository.deleteAllById(lineIds)
     }
 
     private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity, isNewSale: Boolean) {
-        salePaymentService.recordPaymentsSubmittedWithSale(
-            sale.id!!, payments, sale.saleTotalAfterDiscounts(), isNewSale
+        val publishKafka = isNewSale && sale.status == SaleStatus.CONFIRMED
+        val newStatus = salePaymentService.recordPaymentsSubmittedWithSale(
+            sale.id!!, sale.contactId, payments, sale.saleTotalAfterDiscounts(), isNewSale, publishKafka
         )
+        if (newStatus != null) sale.paymentStatus = newStatus
     }
     
 }

@@ -41,12 +41,13 @@ class SaleDraftHandler(
     }
 
     fun updateDraft(dto: SaleUpdateDto): SaleResponseDto {
-        if (dto.walkInCustomer) throw RtsGenericException("Walk-in sales cannot be drafted")
-        entityAdvisoryLock.acquire(LockNamespaces.SALE, dto.id)
+        SaleValidator.guardNotReassigningToWalkIn(dto)
         val sale = saleRepository.getReferenceById(dto.id)
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, sale.id!!)
         SaleValidator.guardIsDraft(sale)
+        val outcome = saleMutator.updateAndSyncReservations(dto, sale)
         dto.applyTo(sale)
-        val outcome = saleMutator.update(dto, sale)
+        contactService.guardExists(sale.contactId)
         return saleAssembler.buildResponse(sale, outcome.survivingLines, outcome.productSummaries)
     }
 }
