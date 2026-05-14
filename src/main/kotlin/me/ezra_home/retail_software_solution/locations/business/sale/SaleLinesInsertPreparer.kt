@@ -12,20 +12,20 @@ import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
-class SaleLinePreparer(
+class SaleLinesInsertPreparer(
     private val locationProductService: LocationProductService,
     private val saleValidator: SaleValidator,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
     private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
-    fun prepareForCreate(dto: SaleCreateDto): ValidatedSaleLines {
+    fun prepareForSaleConfirmation(dto: SaleCreateDto): SaleLinesInsertContext {
         SaleValidator.guardHasLines(dto.linesToAdd)
-        return prepareForInsert(dto.linesToAdd)
+        return prepareForSaleCreation(dto.linesToAdd)
     }
 
-    fun prepareForInsert(saleLinesForCreate: List<SaleLineCreateDto>): ValidatedSaleLines {
-        if (saleLinesForCreate.isEmpty()) return ValidatedSaleLines(emptyMap(), emptyMap())
+    fun prepareForSaleCreation(saleLinesForCreate: List<SaleLineCreateDto>): SaleLinesInsertContext {
+        if (saleLinesForCreate.isEmpty()) return SaleLinesInsertContext(emptyMap(), emptyMap())
         val locationProductIds = saleLinesForCreate.map { it.locationProductId }
         SaleValidator.guardNoDuplicateProducts(locationProductIds)
         locationProductService.guardAllActive(locationProductIds)
@@ -40,6 +40,6 @@ class SaleLinePreparer(
             line.locationProductId to target.applyTo(line.quantity)
         }
         saleValidator.ensureSufficientStockForLines(resolvedBaseQuantitiesPerProduct, productSummaries)
-        return ValidatedSaleLines(productSummaries, factorByProductId)
+        return SaleLinesInsertContext(productSummaries, factorByProductId)
     }
 }

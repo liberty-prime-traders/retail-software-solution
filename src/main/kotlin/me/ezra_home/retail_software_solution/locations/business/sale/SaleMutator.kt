@@ -20,7 +20,7 @@ import java.util.UUID
 
 data class SaleCreateOutcome(
     val lines: List<SaleLineEntity>,
-    val validated: ValidatedSaleLines,
+    val insertContext: SaleLinesInsertContext,
     val discounts: List<SaleDiscountSummaryDto>,
 )
 
@@ -40,8 +40,8 @@ private data class PricedSaleLine(
 class SaleMutator(
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
-    private val saleLinesPreparer: SaleLinesPreparer,
-    private val saleLinesApplier: SaleLinesApplier,
+    private val saleLinesUpdatePreparer: SaleLinesUpdatePreparer,
+    private val saleLinesUpdateApplier: SaleLinesUpdateApplier,
     private val salePaymentService: SalePaymentService,
     private val saleStockReserver: SaleStockReserver,
     private val saleDiscountService: SaleDiscountService,
@@ -50,14 +50,14 @@ class SaleMutator(
     private val saleDiscountReconciler: SaleDiscountReconciler
 ) {
 
-    fun create(dto: SaleCreateDto, sale: SaleEntity, validated: ValidatedSaleLines): SaleCreateOutcome {
+    fun create(dto: SaleCreateDto, sale: SaleEntity, insertContext: SaleLinesInsertContext): SaleCreateOutcome {
         newSaleDiscountValidator.validateNewDiscounts(
             dto.discounts,
-            attachUnitPrices(dto.linesToAdd, validated.productSummaries),
-            validated.productSummaries,
+            attachUnitPrices(dto.linesToAdd, insertContext.productSummaries),
+            insertContext.productSummaries,
         )
         saleRepository.save(sale)
-        val saleLineEntities = SaleLineMapper.toLineEntities(sale.id!!, dto.linesToAdd, validated)
+        val saleLineEntities = SaleLineMapper.toLineEntities(sale.id!!, dto.linesToAdd, insertContext)
         saleLineRepository.saveAll(saleLineEntities)
         if (sale.status == SaleStatus.DRAFT) {
             saleStockReserver.reserve(sale.id!!, saleLineEntities)
@@ -65,7 +65,7 @@ class SaleMutator(
         val discounts = saleDiscountService.applyValidatedDiscounts(sale, dto.discounts, saleLineEntities)
         applyTotals(sale, saleLineEntities, discounts)
         recordPayments(dto.payments, sale, true)
-        return SaleCreateOutcome(saleLineEntities, validated, discounts)
+        return SaleCreateOutcome(saleLineEntities, insertContext, discounts)
     }
 
     private fun attachUnitPrices(
@@ -95,18 +95,18 @@ class SaleMutator(
         saleDiscountValidator.guardDiscountsBelongToSale(saleId, dto.discountsToRemove)
 
         removeLines(dto.linesToRemove)
-        val prepared = saleLinesPreparer.prepare(saleId, dto, existingLines)
-        saleLinesApplier.apply(saleId, prepared)
+        val updateContext = saleLinesUpdatePreparer.prepareForUpdate(saleId, dto, existingLines)
+        saleLinesUpdateApplier.apply(saleId, updateContext)
         if (syncReservations) {
-            saleStockReserver.syncUpdatedReservations(prepared.updatedLines, prepared.newLines, saleId)
+            saleStockReserver.syncUpdatedReservations(updateContext.updatedLines, updateContext.newLines, saleId)
         }
-        val survivingLines = prepared.survivingLines()
+        val survivingLines = updateContext.survivingLines()
         saleDiscountService.removeDiscounts(sale, dto.discountsToRemove)
-        val reconciled = saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, prepared.productSummaries)
-        val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, prepared.productSummaries)
+        val reconciled = saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, updateContext.productSummaries)
+        val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, updateContext.productSummaries)
         applyTotals(sale, survivingLines, discounts)
         recordPayments(dto.payments, sale, false)
-        return SaleUpdateOutcome(survivingLines, prepared.productSummaries, discounts)
+        return SaleUpdateOutcome(survivingLines, updateContext.productSummaries, discounts)
     }
 
     private fun removeLines(lineIds: List<UUID>) {

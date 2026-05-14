@@ -30,7 +30,7 @@ class LocationProductService(
         val inactive = locationProductRepository.findAllById(ids)
             .filter { it.status != ProductStatus.ACTIVE }
         if (inactive.isNotEmpty()) throw RtsGenericException(
-            "Inactive products are not allowed: ${inactive.map { it.id }}"
+            "Inactive products are not allowed: ${inactive.joinToString { "${it.referenceNumber}/${it.productName}" }}"
         )
     }
 

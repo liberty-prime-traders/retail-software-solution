@@ -10,17 +10,17 @@ object SaleLineMapper {
     fun toLineEntities(
         saleId: UUID,
         dtoLines: List<SaleLineCreateDto>,
-        validatedSaleLines: ValidatedSaleLines,
+        insertContext: SaleLinesInsertContext,
     ): List<SaleLineEntity> =
         dtoLines.map { line ->
-            val unitPrice = validatedSaleLines.productSummaries.getValue(line.locationProductId).unitPrice!!
+            val unitPrice = insertContext.productSummaries.getValue(line.locationProductId).unitPrice!!
             SaleLineEntity(
                 saleId,
                 line.locationProductId,
                 line.quantity,
                 line.unitId,
                 unitPrice,
-                validatedSaleLines.factorByProductId.getValue(line.locationProductId),
+                insertContext.factorByProductId.getValue(line.locationProductId),
             )
         }
 

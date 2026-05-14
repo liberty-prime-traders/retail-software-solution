@@ -6,15 +6,15 @@ import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
-class SaleLinesApplier(
+class SaleLinesUpdateApplier(
     private val saleValidator: SaleValidator,
     private val saleLineRepository: SaleLineRepository,
 ) {
 
-    fun apply(saleId: UUID, prepared: PreparedLineUpdate) {
-        val resolvedBaseQuantitiesPerProduct = (prepared.newLines + prepared.updatedLines)
+    fun apply(saleId: UUID, updateContext: SaleLinesUpdateContext) {
+        val resolvedBaseQuantitiesPerProduct = (updateContext.newLines + updateContext.updatedLines)
             .associate { it.locationProductId to it.baseQty() }
-        saleValidator.guardStockForDraftUpdates(saleId, resolvedBaseQuantitiesPerProduct, prepared.productSummaries)
-        saleLineRepository.saveAll(prepared.updatedLines + prepared.newLines)
+        saleValidator.guardStockForDraftUpdates(saleId, resolvedBaseQuantitiesPerProduct, updateContext.productSummaries)
+        saleLineRepository.saveAll(updateContext.updatedLines + updateContext.newLines)
     }
 }

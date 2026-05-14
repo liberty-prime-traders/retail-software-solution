@@ -13,13 +13,17 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-class SaleLinesPreparer(
+class SaleLinesUpdatePreparer(
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
     private val locationProductService: LocationProductService,
     private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
-    fun prepare(saleId: UUID, dto: SaleUpdateDto, existingLines: List<SaleLineEntity>): PreparedLineUpdate {
+    fun prepareForUpdate(
+        saleId: UUID,
+        dto: SaleUpdateDto,
+        existingLines: List<SaleLineEntity>
+    ): SaleLinesUpdateContext {
         val removedIds = dto.linesToRemove.toHashSet()
         val survivingExistingById = existingLines.filter { it.id !in removedIds }.associateBy { it.id!! }
 
@@ -38,7 +42,7 @@ class SaleLinesPreparer(
             (survivingExisting + updatedLines + newLines).map { it.locationProductId }
         )
 
-        return PreparedLineUpdate(newLines, updatedLines, survivingExisting, productSummaries)
+        return SaleLinesUpdateContext(newLines, updatedLines, survivingExisting, productSummaries)
     }
 
     private fun buildAdditions(
