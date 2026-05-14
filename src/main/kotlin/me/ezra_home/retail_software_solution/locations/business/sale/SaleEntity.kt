@@ -56,6 +56,6 @@ class SaleEntity(
 
 ) : HasReferenceEntity() {
 
-    fun saleTotalAfterDiscounts(): BigDecimal =
-        (subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO)
+    fun payableTotal(): BigDecimal =
+        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO))
 }

@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountRepository
@@ -69,10 +70,14 @@ class SaleDiscountService(
         saleDiscountRepository.deleteAll(entities)
     }
 
-    fun removeDiscountsByLineIds(saleLineIds: Collection<UUID>) {
+    fun removeDiscountsByLineIds(saleStatus: SaleStatus, saleLineIds: Collection<UUID>) {
+        SaleDiscountValidator.guardIsDraft(saleStatus)
         if (saleLineIds.isEmpty()) return
         val entities = saleDiscountRepository.findBySaleLineIdIn(saleLineIds)
         saleDiscountRepository.deleteAll(entities)
     }
+
+    fun findBySaleId(saleId: UUID): List<SaleDiscountEntity> =
+        saleDiscountRepository.findBySaleId(saleId)
 
 }

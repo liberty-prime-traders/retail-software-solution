@@ -1,22 +1,27 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import java.math.BigDecimal
 import java.util.UUID
 
-data class SaleContext(val contactId: UUID, val grandTotal: BigDecimal, val status: SaleStatus)
+data class SaleContext(val contactId: UUID, val payableTotal: BigDecimal, val status: SaleStatus)
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
 class SaleDataFetcher(
     private val saleRepository: SaleRepository,
-    private val saleAssembler: SaleAssembler
+    private val saleAssembler: SaleAssembler,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     fun fetchRecent(n: Int?): List<SaleResponseDto> {
@@ -29,11 +34,16 @@ class SaleDataFetcher(
         )
     }
 
-    fun getSaleContext(saleId: UUID): SaleContext {
-        val sale = saleRepository.getReferenceById(saleId)
-        val grandTotal = sale.grandTotal
-            ?: throw RtsGenericException("Sale ${sale.referenceNumber} has no grand total yet")
-        return SaleContext(sale.contactId, grandTotal, sale.status)
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+    fun lockAndGetSaleContext(saleId: UUID): SaleContext {
+        val sale = lockAndGetSale(saleId)
+        return SaleContext(sale.contactId, sale.payableTotal(), sale.status)
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+    fun lockAndGetSale(saleId: UUID): SaleEntity {
+        entityAdvisoryLock.acquire(LockNamespaces.SALE, saleId)
+        return saleRepository.getReferenceById(saleId)
     }
 
     fun getSaleContactId(saleId: UUID): UUID {

@@ -49,7 +49,8 @@ class SaleVoidHandlerForKafka(
                 subtotal = sale.subtotal!!,
                 discountTotal = sale.discountTotal!!,
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
-                dateVoided = voidEntity.createdOn?.toLocalDate() ?: DateTimes.Local.Now.organization(),
+                dateVoided = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
+                    ?: DateTimes.Local.Now.organization(),
                 lines = lineEventDtos
             )
         )

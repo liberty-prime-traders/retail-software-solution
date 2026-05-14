@@ -3,13 +3,11 @@ package me.ezra_home.retail_software_solution.locations.business.sale.api
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SaleCreateDto(
     val contactId: UUID? = null,
-    val walkInCustomer: Boolean = false,
     val soldById: UUID?,
     val dateSold: OffsetDateTime?,
     val notes: String? = null,
@@ -18,11 +16,9 @@ data class SaleCreateDto(
     val discounts: List<SaleDiscountCreateDto> = emptyList()
 ) {
 
+    fun walkInCustomer(): Boolean = resolveContactId() == SystemContact.WALK_IN.id
+
     fun resolveContactId(): UUID {
-        return if (walkInCustomer) {
-            SystemContact.WALK_IN.id
-        } else {
-            contactId ?: throw RtsGenericException("Customer is required for non-walk-in sales")
-        }
+        return contactId?.takeIf { it != SystemContact.WALK_IN.id } ?: SystemContact.WALK_IN.id
     }
 }

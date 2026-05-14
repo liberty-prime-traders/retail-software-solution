@@ -67,8 +67,10 @@ class SaleDiscountValidator(
     ): String = productSummaries[locationProductId]?.label ?: locationProductId.toString()
 
     companion object {
-        fun guardIsDraft(sale: SaleEntity) {
-            if (sale.status != SaleStatus.DRAFT) {
+        fun guardIsDraft(sale: SaleEntity) = guardIsDraft(sale.status)
+
+        fun guardIsDraft(status: SaleStatus) {
+            if (status != SaleStatus.DRAFT) {
                 throw RtsGenericException("Discounts can only be modified on DRAFT sales")
             }
         }

@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLinesInsertPreparer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleMutator
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Service
 @Service
 @TransactionalOnLocationSchema
 class SaleConfirmationHandler(
-    private val saleRepository: SaleRepository,
+    private val saleDataFetcher: SaleDataFetcher,
     private val saleAssembler: SaleAssembler,
     private val saleLinesInsertPreparer: SaleLinesInsertPreparer,
     private val saleMutator: SaleMutator,
@@ -38,7 +37,7 @@ class SaleConfirmationHandler(
 
     fun createSale(dto: SaleCreateDto): SaleResponseDto {
         val contactId = dto.resolveContactId()
-        if (!dto.walkInCustomer) contactService.guardExists(contactId)
+        if (!dto.walkInCustomer()) contactService.guardExists(contactId)
         val dateSold = dto.dateSold ?: DateTimes.Offset.Now.organization()
         SaleValidator.guardDateSoldIsNotFuture(dateSold)
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dateSold))
@@ -51,9 +50,6 @@ class SaleConfirmationHandler(
             status = SaleStatus.CONFIRMED,
         )
         val outcome = saleMutator.create(dto, sale, insertContext)
-        if (dto.walkInCustomer) {
-            saleValidator.guardWalkInPaymentCoverage(sale.id!!, sale.saleTotalAfterDiscounts())
-        }
         runFifoConsumption(outcome.lines, sale.requiredReference())
         saleConfirmedHandlerForKafka.publish(sale, outcome.lines, outcome.discounts)
         return saleAssembler.buildResponse(sale, outcome.lines, insertContext.productSummaries)
@@ -61,8 +57,7 @@ class SaleConfirmationHandler(
 
     fun convertDraftToSale(dto: SaleUpdateDto): SaleResponseDto {
         SaleValidator.guardNotReassigningToWalkIn(dto)
-        val sale = saleRepository.getReferenceById(dto.id)
-        entityAdvisoryLock.acquire(LockNamespaces.SALE, sale.id!!)
+        val sale = saleDataFetcher.lockAndGetSale(dto.id)
         SaleValidator.guardIsDraft(sale)
         saleValidator.guardSurvivingLinesNotEmpty(dto)
         dto.applyTo(sale)
@@ -76,7 +71,6 @@ class SaleConfirmationHandler(
         contactService.guardExists(sale.contactId)
 
         val outcome = saleMutator.updateWithoutSyncingReservations(dto, sale)
-        SaleValidator.guardHasLines(outcome.survivingLines)
         sale.status = SaleStatus.CONFIRMED
 
         val productIds = outcome.survivingLines.mapTo(HashSet()) { it.locationProductId }

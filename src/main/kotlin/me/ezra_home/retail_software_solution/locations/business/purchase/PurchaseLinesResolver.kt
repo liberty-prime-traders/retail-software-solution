@@ -39,6 +39,7 @@ class PurchaseLinesResolver(
     }
 
     private fun computeAdditions(purchaseId: UUID, linesToAdd: List<PurchaseLineCreateDto>): List<PurchaseLineEntity> {
+        PurchaseValidator.guardPositiveLineQuantities(linesToAdd)
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
         val factors = locationProductDataFetcher.getConversionFactors(
             linesToAdd.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
@@ -73,6 +74,7 @@ class PurchaseLinesResolver(
 
         for (lineDto in linesToUpdate) {
             val existing = existingLinesById[lineDto.id] ?: continue
+            PurchaseValidator.guardNonNegativeUpdateQuantity(lineDto.quantityOrdered)
             if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
                 toDelete.add(existing)
             } else {

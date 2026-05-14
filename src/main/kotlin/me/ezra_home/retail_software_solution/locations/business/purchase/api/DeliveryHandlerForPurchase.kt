@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -18,16 +19,14 @@ data class DeliveryLineQuantity(val purchaseLineId: UUID, val qty: BigDecimal)
 class DeliveryHandlerForPurchase(
     private val purchaseRepository: PurchaseRepository,
     private val purchaseLineRepository: PurchaseLineRepository,
-    private val purchaseAssembler: PurchaseAssembler
+    private val purchaseAssembler: PurchaseAssembler,
+    private val purchaseDataFetcher: PurchaseDataFetcher,
 ) {
 
-    @TransactionalOnLocationSchema(readOnly = true)
+    @TransactionalOnLocationSchema
     fun prepareForDelivery(purchaseId: UUID): PurchaseDeliveryContext {
-        val purchase = purchaseRepository.getReferenceById(purchaseId)
-        if (purchase.purchaseStatus == PurchaseStatus.CANCELED)
-            throw RtsGenericException("Cannot record a delivery on a canceled purchase.")
-        if (purchase.purchaseStatus == PurchaseStatus.FULLY_DELIVERED)
-            throw RtsGenericException("Cannot record a delivery on a fully delivered purchase.")
+        val purchase = purchaseDataFetcher.lockAndGetPurchase(purchaseId)
+        PurchaseValidator.guardCanReceiveDelivery(purchase)
         return buildContext(purchase)
     }
 

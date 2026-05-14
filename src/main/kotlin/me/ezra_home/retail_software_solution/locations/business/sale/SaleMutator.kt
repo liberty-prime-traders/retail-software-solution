@@ -13,6 +13,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_discount.ap
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
+import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -51,11 +52,12 @@ class SaleMutator(
 ) {
 
     fun create(dto: SaleCreateDto, sale: SaleEntity, insertContext: SaleLinesInsertContext): SaleCreateOutcome {
-        newSaleDiscountValidator.validateNewDiscounts(
-            dto.discounts,
-            attachUnitPrices(dto.linesToAdd, insertContext.productSummaries),
-            insertContext.productSummaries,
-        )
+        val pricedLines = attachUnitPrices(dto.linesToAdd, insertContext.productSummaries)
+        newSaleDiscountValidator.validateNewDiscounts(dto.discounts, pricedLines, insertContext.productSummaries)
+        val enforceTotals = sale.status != SaleStatus.DRAFT
+        if (enforceTotals) {
+            newSaleDiscountValidator.guardDiscountTotals(dto.discounts, pricedLines, insertContext.productSummaries)
+        }
         saleRepository.save(sale)
         val saleLineEntities = SaleLineMapper.toLineEntities(sale.id!!, dto.linesToAdd, insertContext)
         saleLineRepository.saveAll(saleLineEntities)
@@ -64,6 +66,13 @@ class SaleMutator(
         }
         val discounts = saleDiscountService.applyValidatedDiscounts(sale, dto.discounts, saleLineEntities)
         applyTotals(sale, saleLineEntities, discounts)
+        if (enforceTotals) {
+            val payableTotal = sale.payableTotal()
+            salePaymentService.guardPaymentsWithinSaleTotal(sale.id!!, dto.payments, payableTotal, isNewSale = true)
+            if (sale.contactId == SystemContact.WALK_IN.id) {
+                salePaymentService.guardFullPaymentCoverage(sale.id!!, dto.payments, payableTotal, isNewSale = true)
+            }
+        }
         recordPayments(dto.payments, sale, true)
         return SaleCreateOutcome(saleLineEntities, insertContext, discounts)
     }
@@ -83,42 +92,66 @@ class SaleMutator(
     }
 
     fun updateAndSyncReservations(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome =
-        doUpdate(dto, sale, syncReservations = true)
+        doUpdate(dto, sale, syncReservations = true, enforceTotals = false)
 
     fun updateWithoutSyncingReservations(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome =
-        doUpdate(dto, sale, syncReservations = false)
+        doUpdate(dto, sale, syncReservations = false, enforceTotals = true)
 
-    private fun doUpdate(dto: SaleUpdateDto, sale: SaleEntity, syncReservations: Boolean): SaleUpdateOutcome {
+    private fun doUpdate(
+        dto: SaleUpdateDto,
+        sale: SaleEntity,
+        syncReservations: Boolean,
+        enforceTotals: Boolean,
+    ): SaleUpdateOutcome {
         val saleId = sale.id!!
         val existingLines = saleLineRepository.findBySaleId(saleId)
         SaleValidator.guardLineIdsBelongToSale(dto, existingLines.mapTo(HashSet()) { it.id!! })
         saleDiscountValidator.guardDiscountsBelongToSale(saleId, dto.discountsToRemove)
 
-        removeLines(dto.linesToRemove)
+        removeLines(sale.status, dto.linesToRemove)
         val updateContext = saleLinesUpdatePreparer.prepareForUpdate(saleId, dto, existingLines)
         saleLinesUpdateApplier.apply(saleId, updateContext)
         if (syncReservations) {
+            saleStockReserver.clearByLineIds(dto.linesToRemove)
             saleStockReserver.syncUpdatedReservations(updateContext.updatedLines, updateContext.newLines, saleId)
         }
         val survivingLines = updateContext.survivingLines()
         saleDiscountService.removeDiscounts(sale, dto.discountsToRemove)
-        val reconciled = saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines, updateContext.productSummaries)
+        val linesChanged = dto.linesToAdd.isNotEmpty() || dto.linesToUpdate.isNotEmpty() || dto.linesToRemove.isNotEmpty()
+        val reconciled = if (linesChanged) {
+            saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines)
+        } else {
+            saleDiscountService.findBySaleId(saleId)
+        }
+        if (enforceTotals) {
+            saleDiscountValidator.assertDiscountsStillFitAfterLineChanges(reconciled, survivingLines, updateContext.productSummaries)
+        }
         val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, updateContext.productSummaries)
+        if (enforceTotals) {
+            val productByLineId = survivingLines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
+            newSaleDiscountValidator.guardDiscountTotals(
+                dto.discountsToAdd, survivingLines, updateContext.productSummaries, reconciled, productByLineId,
+            )
+        }
         applyTotals(sale, survivingLines, discounts)
+        if (enforceTotals) {
+            salePaymentService.guardPaymentsWithinSaleTotal(
+                saleId, dto.payments, sale.payableTotal(), isNewSale = false,
+            )
+        }
         recordPayments(dto.payments, sale, false)
         return SaleUpdateOutcome(survivingLines, updateContext.productSummaries, discounts)
     }
 
-    private fun removeLines(lineIds: List<UUID>) {
+    private fun removeLines(saleStatus: SaleStatus, lineIds: List<UUID>) {
         if (lineIds.isEmpty()) return
-        saleDiscountService.removeDiscountsByLineIds(lineIds)
-        saleStockReserver.clearByLineIds(lineIds)
+        saleDiscountService.removeDiscountsByLineIds(saleStatus, lineIds)
         saleLineRepository.deleteAllById(lineIds)
     }
 
     private fun recordPayments(payments: List<SalePaymentCreateDto>, sale: SaleEntity, isNewSale: Boolean) {
         val newStatus = salePaymentService.recordPaymentsSubmittedWithSale(
-            sale.id!!, sale.contactId, payments, sale.saleTotalAfterDiscounts(), isNewSale
+            sale.id!!, sale.contactId, payments, sale.payableTotal(), isNewSale,
         )
         if (newStatus != null) sale.paymentStatus = newStatus
     }

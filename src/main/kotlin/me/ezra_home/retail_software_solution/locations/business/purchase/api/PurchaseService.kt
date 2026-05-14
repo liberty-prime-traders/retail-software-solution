@@ -4,8 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
-import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.LineUpdateResult
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
@@ -13,7 +11,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
-import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -27,11 +24,12 @@ class PurchaseService(
   private val locationProductDataFetcher: LocationProductDataFetcher,
   private val purchaseAssembler: PurchaseAssembler,
   private val purchaseLinesResolver: PurchaseLinesResolver,
-  private val entityAdvisoryLock: EntityAdvisoryLock,
+  private val purchaseDataFetcher: PurchaseDataFetcher,
 ) {
 
   fun createDraft(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardNoDuplicateProducts(dto.linesToAdd)
+    PurchaseValidator.guardPositiveLineQuantities(dto.linesToAdd)
     locationProductService.guardAllActive(dto.linesToAdd.map { it.locationProductId })
     val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.saveAndFlush(it) }
     val lines = PurchaseMapper.toLineEntities(
@@ -49,8 +47,7 @@ class PurchaseService(
   }
 
   fun updateDraft(dto: PurchaseUpdateDto): PurchaseResponseDto {
-    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, dto.id)
-    val purchase = purchaseRepository.getReferenceById(dto.id)
+    val purchase = purchaseDataFetcher.lockAndGetPurchase(dto.id)
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.applyDraftUpdate(purchase, dto)
     val lineUpdates = purchaseLinesResolver.detanglePurchaseLines(purchase.id!!, dto)
@@ -63,6 +60,7 @@ class PurchaseService(
   fun createOrder(dto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardHasLines(dto.linesToAdd)
     PurchaseValidator.guardNoDuplicateProducts(dto.linesToAdd)
+    PurchaseValidator.guardPositiveLineQuantities(dto.linesToAdd)
     locationProductService.guardAllActive(dto.linesToAdd.map { it.locationProductId })
     val purchase = PurchaseMapper.toOrderEntity(dto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(
@@ -75,8 +73,7 @@ class PurchaseService(
   }
 
   fun convertDraftToOrder(dto: PurchaseUpdateDto): PurchaseResponseDto {
-    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, dto.id)
-    val purchase = purchaseRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
+    val purchase = purchaseDataFetcher.lockAndGetPurchase(dto.id)
     PurchaseValidator.guardIsDraft(purchase)
     PurchaseMapper.convertDraftToOrder(purchase, dto)
     val lineUpdates = purchaseLinesResolver.detanglePurchaseLines(purchase.id!!, dto)

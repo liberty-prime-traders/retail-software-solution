@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
@@ -46,6 +47,12 @@ class SaleValidator(
             }
         }
 
+        fun guardPositiveLineQuantities(lines: List<SaleLineCreateDto>) {
+            if (lines.any { it.quantity.signum() <= 0 }) {
+                throw RtsGenericException("Line quantity must be positive")
+            }
+        }
+
         fun guardIsDraft(sale: SaleEntity) {
             if (sale.status != SaleStatus.DRAFT) {
                 throw RtsGenericException("Sale ${sale.referenceNumber} is not in DRAFT status")
@@ -84,7 +91,7 @@ class SaleValidator(
     fun guardSurvivingLinesNotEmpty(dto: SaleUpdateDto) {
         if (dto.linesToAdd.isNotEmpty()) return
         val existingCount = saleLineRepository.countBySaleId(dto.id)
-        if (existingCount <= dto.linesToRemove.size.toLong()) {
+        if (existingCount <= dto.linesToRemove.toHashSet().size.toLong()) {
             throw RtsGenericException("Cannot confirm a sale with no lines")
         }
     }
@@ -145,9 +152,4 @@ class SaleValidator(
         }
     }
 
-
-    fun guardWalkInPaymentCoverage(saleId: UUID, saleTotal: BigDecimal) {
-        val paid = salePaymentFetcher.calculatePaidAmount(saleId)
-        if (paid < saleTotal) throw RtsGenericException("Walk-in sales require full payment coverage")
-    }
 }

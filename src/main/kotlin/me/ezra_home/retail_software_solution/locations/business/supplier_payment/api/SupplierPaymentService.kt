@@ -58,6 +58,7 @@ class SupplierPaymentService(
         if (dto.amount <= BigDecimal.ZERO) {
             throw RtsGenericException("Payment amount must be greater than zero")
         }
+        purchaseDataFetcher.lockAndGetPurchase(dto.purchaseId)
         validateDeliveryLevelPayment(dto)
         val ceiling = purchasePaymentCeilingService.computeCeiling(dto.purchaseId)
         val alreadyPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(dto.purchaseId)
@@ -96,6 +97,7 @@ class SupplierPaymentService(
     fun voidPayment(dto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto {
         val paymentEntity = supplierPaymentRepository.findById(dto.supplierPaymentId)
             .orElseThrow { UpdatingNonExistingRecordException() }
+        purchaseDataFetcher.lockAndGetPurchase(paymentEntity.purchaseId)
 
         if (supplierPaymentVoidRepository.existsBySupplierPaymentId(dto.supplierPaymentId)) {
             throw RtsGenericException("Payment ${paymentEntity.referenceNumber} has already been voided")

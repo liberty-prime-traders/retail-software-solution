@@ -26,6 +26,7 @@ class SaleLinesInsertPreparer(
 
     fun prepareForSaleCreation(saleLinesForCreate: List<SaleLineCreateDto>): SaleLinesInsertContext {
         if (saleLinesForCreate.isEmpty()) return SaleLinesInsertContext(emptyMap(), emptyMap())
+        SaleValidator.guardPositiveLineQuantities(saleLinesForCreate)
         val locationProductIds = saleLinesForCreate.map { it.locationProductId }
         SaleValidator.guardNoDuplicateProducts(locationProductIds)
         locationProductService.guardAllActive(locationProductIds)

@@ -44,16 +44,40 @@ class SalePaymentService(
         return doRecordPayments(saleId, contactId, payments, saleTotal, alreadyPaid)
     }
 
+    fun guardPaymentsWithinSaleTotal(
+        saleId: UUID,
+        payments: List<SalePaymentCreateDto>,
+        payableTotal: BigDecimal,
+        isNewSale: Boolean,
+    ) {
+        if (payments.isEmpty()) return
+        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
+        val totalPaid = alreadyPaid + payments.sumOf { it.amount }
+        SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, payableTotal)
+    }
+
+    fun guardFullPaymentCoverage(
+        saleId: UUID,
+        payments: List<SalePaymentCreateDto>,
+        payableTotal: BigDecimal,
+        isNewSale: Boolean,
+    ) {
+        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
+        val totalPaid = alreadyPaid + payments.sumOf { it.amount }
+        if (totalPaid < payableTotal) {
+            throw RtsGenericException("Walk-in sales require full payment coverage")
+        }
+    }
+
     private fun doRecordPayments(
         saleId: UUID,
         contactId: UUID,
         payments: List<SalePaymentCreateDto>,
-        saleTotal: BigDecimal,
+        payableTotal: BigDecimal,
         alreadyPaid: BigDecimal,
     ): PaymentStatus {
         payments.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
         val totalPaid = alreadyPaid + payments.sumOf { it.amount }
-        SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, saleTotal)
         val entities = payments.map { dto ->
             SalePaymentEntity(
                 saleId = saleId,
@@ -65,13 +89,13 @@ class SalePaymentService(
         }
         salePaymentRepository.saveAll(entities)
         salePaymentHandlerForKafka.publish(saleId, contactId, entities)
-        return resolvePaymentStatus(totalPaid, saleTotal)
+        return resolvePaymentStatus(totalPaid, payableTotal)
     }
 
     fun recordPayment(dto: SalePaymentCreateDto): SalePaymentResponseDto {
         val saleId = dto.saleId ?: throw RtsGenericException("saleId is required")
         SalePaymentValidator.guardPositiveAmount(dto.amount)
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.getSaleContext(saleId)
+        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         SalePaymentValidator.guardNotExceedingBalance(dto.amount, saleTotal.subtract(alreadyPaid))
@@ -101,7 +125,7 @@ class SalePaymentService(
             payment.requiredReference()
         )
 
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.getSaleContext(payment.saleId)
+        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
         SalePaymentValidator.guardSaleNotVoided(saleStatus)
 
         val voidEntity = SalePaymentVoidEntity(salePaymentId = dto.salePaymentId, reason = dto.reason)
@@ -119,10 +143,10 @@ class SalePaymentService(
         )
     }
 
-    fun resolvePaymentStatus(paid: BigDecimal, total: BigDecimal): PaymentStatus = when {
+    fun resolvePaymentStatus(paid: BigDecimal, payableTotal: BigDecimal): PaymentStatus = when {
         paid.compareTo(BigDecimal.ZERO) == 0 -> PaymentStatus.UNPAID
-        paid > total -> PaymentStatus.OVERPAID
-        paid < total -> PaymentStatus.PARTIALLY_SETTLED
+        paid > payableTotal -> PaymentStatus.OVERPAID
+        paid < payableTotal -> PaymentStatus.PARTIALLY_SETTLED
         else -> PaymentStatus.FULLY_SETTLED
     }
 }

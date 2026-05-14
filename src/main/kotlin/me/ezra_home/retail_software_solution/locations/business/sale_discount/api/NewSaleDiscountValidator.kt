@@ -18,26 +18,41 @@ class NewSaleDiscountValidator {
         lines: List<ProductLineWithPrice>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
         existingDiscounts: List<SaleDiscountEntity> = emptyList(),
-        productByLineId: Map<UUID, UUID> = emptyMap()
+        productByLineId: Map<UUID, UUID> = emptyMap(),
     ) {
         if (discountDtos.isEmpty()) return
         val lineByProductId = lines.associateBy { it.locationProductId }
-        val newAmounts = discountDtos.map { dto ->
+        discountDtos.forEach { dto ->
             dto.locationProductId?.let {
                 if (!lineByProductId.containsKey(it)) {
                     throw RtsGenericException("No sale line found for product ${labelFor(it, productSummaries)}")
                 }
             }
+        }
+        existingDiscounts.forEach { discount ->
+            discount.saleLineId?.let {
+                productByLineId[it]
+                    ?: throw RtsGenericException("Discount references sale line $it which is not on the current sale")
+            }
+        }
+    }
+
+    fun guardDiscountTotals(
+        discountDtos: List<SaleDiscountCreateDto>,
+        lines: List<ProductLineWithPrice>,
+        productSummaries: Map<UUID, LocationProductSummaryDto>,
+        existingDiscounts: List<SaleDiscountEntity> = emptyList(),
+        productByLineId: Map<UUID, UUID> = emptyMap(),
+    ) {
+        if (discountDtos.isEmpty()) return
+        val newAmounts = discountDtos.map { dto ->
             DiscountAmount(
                 locationProductId = dto.locationProductId,
                 calculatedAmount = DiscountAmountCalculator.calculateAmount(dto, lines)
             )
         }
         val existingAmounts = existingDiscounts.map { discount ->
-            val productId = discount.saleLineId?.let {
-                productByLineId[it]
-                    ?: throw RtsGenericException("Discount references sale line $it which is not on the current sale")
-            }
+            val productId = discount.saleLineId?.let { productByLineId[it] }
             DiscountAmount(locationProductId = productId, calculatedAmount = discount.calculatedAmount)
         }
         guardLineTotals(newAmounts, existingAmounts, lines, productSummaries)
