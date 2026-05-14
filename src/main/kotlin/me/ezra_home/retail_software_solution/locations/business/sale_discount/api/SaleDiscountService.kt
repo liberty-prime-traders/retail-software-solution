@@ -2,8 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_discount.a
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
@@ -19,9 +18,9 @@ class SaleDiscountService(
 ) {
 
     fun applyValidatedDiscounts(
-        sale: SaleEntity,
+        saleId: UUID,
         discountDtos: List<SaleDiscountCreateDto>,
-        saleLines: List<SaleLineEntity>
+        saleLines: List<SaleLineSummaryDto>
     ): List<SaleDiscountSummaryDto> {
         if (discountDtos.isEmpty()) return emptyList()
         val lineByProductId = saleLines.associateBy { it.locationProductId }
@@ -32,7 +31,7 @@ class SaleDiscountService(
             SaleDiscountSummaryDto(saleLineId = saleLineId, calculatedAmount = calculatedAmount) to
 
             SaleDiscountEntity(
-                saleId = sale.id!!,
+                saleId = saleId,
                 saleLineId = saleLineId,
                 discountType = dto.calculationMethod,
                 value = dto.value,
@@ -46,25 +45,26 @@ class SaleDiscountService(
     }
 
     fun addDiscounts(
-        sale: SaleEntity,
+        saleId: UUID,
+        saleStatus: SaleStatus,
         existing: List<SaleDiscountEntity>,
         discountDtos: List<SaleDiscountCreateDto>,
-        lines: List<SaleLineEntity>,
+        lines: List<SaleLineSummaryDto>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
     ): List<SaleDiscountSummaryDto> {
-        SaleDiscountValidator.guardIsDraft(sale)
+        SaleDiscountValidator.guardIsDraft(saleStatus)
         val existingSummaries = existing.map {
             SaleDiscountSummaryDto(saleLineId = it.saleLineId, calculatedAmount = it.calculatedAmount)
         }
         if (discountDtos.isEmpty()) return existingSummaries
         val productByLineId = lines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
         newSaleDiscountValidator.validateNewDiscounts(discountDtos, lines, productSummaries, existing, productByLineId)
-        val newSummaries = applyValidatedDiscounts(sale, discountDtos, lines)
+        val newSummaries = applyValidatedDiscounts(saleId, discountDtos, lines)
         return existingSummaries + newSummaries
     }
 
-    fun removeDiscounts(sale: SaleEntity, discountIds: List<UUID>) {
-        SaleDiscountValidator.guardIsDraft(sale)
+    fun removeDiscounts(saleStatus: SaleStatus, discountIds: List<UUID>) {
+        SaleDiscountValidator.guardIsDraft(saleStatus)
         if (discountIds.isEmpty()) return
         val entities = saleDiscountRepository.findAllById(discountIds)
         saleDiscountRepository.deleteAll(entities)

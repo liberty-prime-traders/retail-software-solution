@@ -64,7 +64,7 @@ class SaleMutator(
         if (sale.status == SaleStatus.DRAFT) {
             saleStockReserver.reserve(sale.id!!, saleLineEntities)
         }
-        val discounts = saleDiscountService.applyValidatedDiscounts(sale, dto.discounts, saleLineEntities)
+        val discounts = saleDiscountService.applyValidatedDiscounts(sale.id!!, dto.discounts, saleLineEntities)
         applyTotals(sale, saleLineEntities, discounts)
         if (enforceTotals) {
             val payableTotal = sale.payableTotal()
@@ -116,7 +116,7 @@ class SaleMutator(
             saleStockReserver.syncUpdatedReservations(updateContext.updatedLines, updateContext.newLines, saleId)
         }
         val survivingLines = updateContext.survivingLines()
-        saleDiscountService.removeDiscounts(sale, dto.discountsToRemove)
+        saleDiscountService.removeDiscounts(sale.status, dto.discountsToRemove)
         val linesChanged = dto.linesToAdd.isNotEmpty() || dto.linesToUpdate.isNotEmpty() || dto.linesToRemove.isNotEmpty()
         val reconciled = if (linesChanged) {
             saleDiscountReconciler.reconcileDiscountsAfterLineChanges(saleId, survivingLines)
@@ -126,7 +126,7 @@ class SaleMutator(
         if (enforceTotals) {
             saleDiscountValidator.assertDiscountsStillFitAfterLineChanges(reconciled, survivingLines, updateContext.productSummaries)
         }
-        val discounts = saleDiscountService.addDiscounts(sale, reconciled, dto.discountsToAdd, survivingLines, updateContext.productSummaries)
+        val discounts = saleDiscountService.addDiscounts(saleId, sale.status, reconciled, dto.discountsToAdd, survivingLines, updateContext.productSummaries)
         if (enforceTotals) {
             val productByLineId = survivingLines.filter { it.id != null }.associate { it.id!! to it.locationProductId }
             newSaleDiscountValidator.guardDiscountTotals(

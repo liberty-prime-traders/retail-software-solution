@@ -1,8 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_discount.api
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountRepository
@@ -27,7 +26,7 @@ class SaleDiscountValidator(
 
     fun assertDiscountsStillFitAfterLineChanges(
         existing: List<SaleDiscountEntity>,
-        lines: List<SaleLineEntity>,
+        lines: List<SaleLineSummaryDto>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
     ) {
         val lineById = lines.filter { it.id != null }.associateBy { it.id!! }
@@ -67,8 +66,6 @@ class SaleDiscountValidator(
     ): String = productSummaries[locationProductId]?.label ?: locationProductId.toString()
 
     companion object {
-        fun guardIsDraft(sale: SaleEntity) = guardIsDraft(sale.status)
-
         fun guardIsDraft(status: SaleStatus) {
             if (status != SaleStatus.DRAFT) {
                 throw RtsGenericException("Discounts can only be modified on DRAFT sales")

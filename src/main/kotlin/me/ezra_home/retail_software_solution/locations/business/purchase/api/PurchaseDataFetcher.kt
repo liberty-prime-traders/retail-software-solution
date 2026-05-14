@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
@@ -44,6 +44,11 @@ class PurchaseDataFetcher(
   fun findPurchaseInfoByIds(purchaseIds: List<UUID>): Map<UUID, PurchaseInfo> {
     return purchaseRepository.findAllById(purchaseIds)
       .associateBy({ it.id!! }, { PurchaseInfo(it.requiredReference(), it.supplierId, it.paymentStatus) })
+  }
+
+  @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+  fun lockPurchase(purchaseId: UUID) {
+    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, purchaseId)
   }
 
   @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)

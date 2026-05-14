@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxEntryEntity
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxSourceType
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryService
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 @Service
 class SaleTaxReversalProcessor(
-    private val taxEntryRepository: TaxEntryRepository,
+    private val taxEntryService: TaxEntryService,
     private val fiscalPeriodService: FiscalPeriodService
 ) : InventoryEventProcessor<SaleVoidedEvent> {
 
@@ -20,10 +20,10 @@ class SaleTaxReversalProcessor(
 
     @TransactionalOnLocationSchema(readOnly = true)
     override fun shouldProcess(event: SaleVoidedEvent): Boolean {
-        val originalsExist = taxEntryRepository.existsBySourceReferenceNumberAndSourceType(
+        val originalsExist = taxEntryService.existsBySourceReference(
             event.saleReferenceNumber, TaxSourceType.SALE
         )
-        val reversalsExist = taxEntryRepository.existsBySourceReferenceNumberAndSourceType(
+        val reversalsExist = taxEntryService.existsBySourceReference(
             event.saleReferenceNumber, TaxSourceType.SALE_VOID
         )
         return originalsExist && !reversalsExist
@@ -31,7 +31,7 @@ class SaleTaxReversalProcessor(
 
     @TransactionalOnLocationSchema
     override fun handle(event: SaleVoidedEvent) {
-        val originals = taxEntryRepository.findBySourceReferenceNumberAndSourceType(
+        val originals = taxEntryService.findBySourceReference(
             event.saleReferenceNumber, TaxSourceType.SALE
         )
 
@@ -40,7 +40,7 @@ class SaleTaxReversalProcessor(
         val fiscalPeriodId = fiscalPeriodService.requireOpenForDate(event.dateVoided)
 
         val reversals = originals.map { source ->
-            TaxEntryEntity(
+            TaxEntryCreateDto(
                 sourceReferenceNumber = source.sourceReferenceNumber,
                 sourceType = TaxSourceType.SALE_VOID,
                 taxTypeId = source.taxTypeId,
@@ -52,6 +52,6 @@ class SaleTaxReversalProcessor(
                 taxAmount = source.taxAmount.negate()
             )
         }
-        taxEntryRepository.saveAll(reversals)
+        taxEntryService.createAll(reversals)
     }
 }

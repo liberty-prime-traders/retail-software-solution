@@ -34,19 +34,19 @@ rather than under `api/` only because nothing outside the purchase
 domain needs it — internally all three write services and
 `PurchaseDataFetcher` route their responses through it.
 
-| Class                              | Purpose                                                      |
-|------------------------------------|--------------------------------------------------------------|
-| `PurchaseService`                  | Create / update draft, create order, convert draft → order   |
-| `PurchaseUpdater`                  | Update notes; patch payment status (intra-domain only)       |
-| `PurchaseCanceller`                | Cancel quantities on existing lines                          |
-| `PurchaseDataFetcher`              | Read purchases (recent list, lookups, info-by-ids)           |
-| `PurchaseAssembler`                | Build `PurchaseResponseDto` from entities                    |
-| `DeliveryHandlerForPurchase`       | Prepare a delivery context; commit a delivery to lines       |
-| `PurchasePaymentCeilingService`    | Compute the payable ceiling for a purchase                   |
-| `PurchaseDeliveryService`          | Record a delivery (with Kafka event + payment status patch)  |
-| `PurchaseDeliveryDataFetcher`      | Read deliveries by purchase/delivery id                      |
-| `SupplierPaymentService`           | Record / void supplier payments                              |
-| `PurchasePaymentStatusService`     | Recompute and persist payment status                         |
+| Class                           | Purpose                                                          |
+|---------------------------------|------------------------------------------------------------------|
+| `PurchaseService`               | Create / update draft, create order, convert draft → order       |
+| `PurchaseUpdater`               | Update notes (REST-exposed); patch payment status (intra-domain) |
+| `PurchaseCanceller`             | Cancel quantities on existing lines                              |
+| `PurchaseDataFetcher`           | Read purchases (recent list, lookups, info-by-ids)               |
+| `PurchaseAssembler`             | Build `PurchaseResponseDto` from entities                        |
+| `DeliveryHandlerForPurchase`    | Prepare a delivery context; commit a delivery to lines           |
+| `PurchasePaymentCeilingService` | Compute the payable ceiling for a purchase                       |
+| `PurchaseDeliveryService`       | Record a delivery (with Kafka event + payment status patch)      |
+| `PurchaseDeliveryDataFetcher`   | Read deliveries by purchase/delivery id                          |
+| `SupplierPaymentService`        | Record / void supplier payments                                  |
+| `PurchasePaymentStatusService`  | Recompute and persist payment status                             |
 
 Direct use of `PurchaseRepository`, `PurchaseEntity`, etc. is reserved for
 code inside the purchase package itself.
@@ -317,9 +317,10 @@ Two distinct flavors of "cancel" exist; do not confuse them.
   line's `quantityCanceled` to that exact value — there is no "cancel an
   additional N" operation. Callers should always send the cumulative
   total they want recorded.
-- `guardCancelQuantity` rejects `quantityCanceled > (quantityOrdered − quantityDelivered)`.
-  Because the value is absolute and capped by what is still uncanceled,
-  reducing a prior cancellation is also legal — pass a smaller number.
+- `guardCancelQuantity` rejects `quantityCanceled > (quantityOrdered − quantityDelivered)`
+  — already-delivered units cannot be canceled. The DTO value replaces the prior
+  `quantityCanceled` outright, so reducing a prior cancellation is also legal — pass
+  a smaller number.
 - After applying cancellations, the purchase status is recomputed by
   `resolvePurchaseStatus`:
   - All lines accounted for (`delivered + canceled == ordered`) **and at
@@ -418,7 +419,16 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
 `PurchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseId)` is
 the **single source of truth** for recomputing a purchase's payment
 status. Call it after any flow that changes lines, deliveries, or
-payments (deliveries and cancellations already do).
+payments. `recordDelivery`, `PurchaseCanceller.cancel`, and
+`voidPayment` all do.
+
+⚠ **`recordPayment` is the one deliberate exception.** It already
+fetched the ceiling and `alreadyPaid` for the over-payment guard, so
+it inlines `resolvePaymentStatus(alreadyPaid + amount, ceiling)` and
+calls `PurchaseUpdater.updatePaymentStatus` directly instead of
+re-fetching everything in `patchThenReturnPaymentStatus`. If you add a
+new payment-related flow, prefer `patchThenReturnPaymentStatus` unless
+you have the same "already fetched, don't re-query" justification.
 
 `PaymentStatus` is shared with the sale domain (same converter on
 `PurchaseEntity` and `SaleEntity`) and is persisted as a 5-char code:
@@ -453,21 +463,29 @@ payments (deliveries and cancellations already do).
 ## 9. Locking
 
 Every flow that mutates anything keyed to a purchase (header, lines,
-deliveries, payments) goes through the single helper
-`PurchaseDataFetcher.lockAndGetPurchase(purchaseId)`, which combines
-`EntityAdvisoryLock.acquire(LockNamespaces.PURCHASE, purchaseId)` with
-a `getReferenceById` lookup. The call sites are
-`PurchaseService.updateDraft`, `PurchaseService.convertDraftToOrder`,
-`PurchaseCanceller.cancel`, `DeliveryHandlerForPurchase.prepareForDelivery`
-(invoked by `PurchaseDeliveryService.recordDelivery`), and
-`SupplierPaymentService.recordPayment` / `voidPayment`. Concurrent
-operations on the same purchase therefore serialize at the application
-layer instead of racing on `quantityDelivered` / `quantityCanceled` /
-`purchaseStatus` / `paymentStatus` or on the ceiling-vs-paid-total
-read used by the payment guards. Don't acquire the lock manually
-elsewhere — go through the helper.
+deliveries, payments) goes through `PurchaseDataFetcher`, which exposes
+two helpers over `EntityAdvisoryLock.acquire(LockNamespaces.PURCHASE, ...)`:
 
-`lockAndGetPurchase` declares `Propagation.MANDATORY` so it can only run
+- `lockAndGetPurchase(purchaseId)` — lock + `getReferenceById` for
+  flows that immediately mutate the `PurchaseEntity`. Used by
+  `PurchaseService.updateDraft`, `PurchaseService.convertDraftToOrder`,
+  `PurchaseCanceller.cancel`, and
+  `DeliveryHandlerForPurchase.prepareForDelivery` (invoked by
+  `PurchaseDeliveryService.recordDelivery`).
+- `lockPurchase(purchaseId)` — lock only, no entity load. Used by
+  `SupplierPaymentService.recordPayment` / `voidPayment`, which need
+  the serialization but mutate `SupplierPaymentEntity` /
+  `SupplierPaymentVoidEntity` rather than the purchase header
+  directly (`paymentStatus` updates funnel through
+  `PurchaseUpdater.updatePaymentStatus`).
+
+Concurrent operations on the same purchase therefore serialize at the
+application layer instead of racing on `quantityDelivered` /
+`quantityCanceled` / `purchaseStatus` / `paymentStatus` or on the
+ceiling-vs-paid-total read used by the payment guards. Don't acquire
+the lock manually elsewhere — go through one of these helpers.
+
+Both helpers declare `Propagation.MANDATORY` so they can only run
 inside an existing writable transaction. That keeps the lock bound to
 the same transaction as the subsequent mutations.
 
@@ -529,10 +547,14 @@ field:
   `non-null` = set. Clearing is not legal (the column is non-null), so
   the three-state form would be misleading here.
 
-`convertDraftToOrder` differs again: missing `dateOrdered` / `orderedById`
-are **backfilled** instead of cleared (an empty Optional defaults to
-`DateTimes.Offset.Now.organization()` / `SessionContextProvider.getUserId()`
-because an order cannot land without those fields).
+`convertDraftToOrder` differs again: `dateOrdered` and `orderedById`
+are **unconditionally rewritten** on the entity using
+`dto.dateOrdered?.orElse(null) ?: DateTimes.Offset.Now.organization()`
+(same shape for `orderedById`). The DTO is the source of truth at
+convert time — if the user had set `dateOrdered` while the purchase was
+in `DRAFT` and then converts without resending it, the previously-stored
+draft value is **clobbered** with NOW. This is intentional: convert is
+the moment the order is actually placed.
 
 ### Reference numbers
 
@@ -543,9 +565,10 @@ reference.
 
 ### Serializable
 
-Purchase API DTOs are `Serializable` (used by remote/RPC layers and some
-cache paths). Sale API DTOs are not. Keep the existing convention when
-adding new DTOs.
+DTOs in `purchase/api/` are `Serializable` (used by remote/RPC layers and
+some cache paths). DTOs in `delivery/api/` and `supplier_payment/api/` are
+**not**, and neither are sale API DTOs. Match the existing convention of
+whichever `api/` package you are adding to.
 
 ---
 
@@ -553,11 +576,11 @@ adding new DTOs.
 
 Events produced by this domain:
 
-| Event                         | Trigger                                                            | Handler(s)                           |
-|-------------------------------|--------------------------------------------------------------------|--------------------------------------|
-| `PurchaseDeliveredEvent`      | `PurchaseDeliveryService.recordDelivery`                           | `PurchaseDeliveryInventoryProcessor` |
-| `SupplierPaymentRecordedEvent`| `SupplierPaymentService.recordPayment` (if account code present)   | accounting/ledger                    |
-| `SupplierPaymentVoidedEvent`  | `SupplierPaymentService.voidPayment` (if account code present)     | accounting/ledger                    |
+| Event                          | Trigger                                                          | Handler(s)                           |
+|--------------------------------|------------------------------------------------------------------|--------------------------------------|
+| `PurchaseDeliveredEvent`       | `PurchaseDeliveryService.recordDelivery`                         | `PurchaseDeliveryInventoryProcessor` |
+| `SupplierPaymentRecordedEvent` | `SupplierPaymentService.recordPayment` (if account code present) | accounting/ledger                    |
+| `SupplierPaymentVoidedEvent`   | `SupplierPaymentService.voidPayment` (if account code present)   | accounting/ledger                    |
 
 Rules every new processor must follow:
 
@@ -628,8 +651,10 @@ Add new guards as early as the data they need is in scope.
 ### `PurchaseService.createDraft(PurchaseCreateDto)`
 - Rejects duplicate products.
 - Requires all products to be active.
-- Does **not** enforce "at least one line" (drafts may start empty) or
-  "positive quantities" — see §13.
+- Does **not** enforce "at least one line" — drafts may start with an
+  empty `linesToAdd`. When `linesToAdd` is non-empty, every line must
+  have a strictly positive `quantityOrdered` (`guardPositiveLineQuantities`
+  iterates with `any{}`, so an empty list passes vacuously).
 - Creates `PurchaseEntity` at `DRAFT`, lines with resolved conversion
   factors.
 
@@ -643,9 +668,11 @@ Add new guards as early as the data they need is in scope.
 - Rejects duplicate products on the resulting set.
 
 ### `PurchaseService.createOrder(PurchaseCreateDto)`
-- Requires ≥1 line, all products active, no duplicates.
-- Creates `PurchaseEntity` at `ORDERED`, backfilling `dateOrdered` and
-  `orderedById`.
+- Requires ≥1 line, all products active, no duplicates, every quantity
+  positive.
+- Creates `PurchaseEntity` at `ORDERED`, defaulting `dateOrdered` to
+  `DateTimes.Offset.Now.organization()` and `orderedById` to
+  `SessionContextProvider.getUserId()` when the DTO omits them.
 
 ### `PurchaseService.convertDraftToOrder(PurchaseUpdateDto)`
 - Loads the purchase via `PurchaseDataFetcher.lockAndGetPurchase`.
@@ -677,17 +704,36 @@ Add new guards as early as the data they need is in scope.
 - Stock and `lastPurchasePrice` update asynchronously; delivery row
   flips to `RECEIVED` when the processor succeeds.
 
-### `SupplierPaymentService.recordPayment(SupplierPaymentCreateDto)` / `voidPayment(...)`
+### `SupplierPaymentService.recordPayment(SupplierPaymentCreateDto)`
+- Locks the purchase via `PurchaseDataFetcher.lockPurchase`.
 - Amount must be `> 0`.
-- Delivery-level guard when `deliveryId` is set.
-- Fully-delivered guard once `isFullyDelivered`.
-- Recomputes purchase payment status.
+- Delivery-level guard when `deliveryId` is set (sum of payments tagged
+  with that delivery ≤ that delivery's `lineTotal` sum).
+- Fully-delivered guard once `ceiling.isFullyDelivered` (running total
+  paid + this amount ≤ `deliveredTotal`).
+- Persists `SupplierPaymentEntity`, then **inlines** the status update:
+  calls `purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid +
+  amount, ceiling)` and `purchaseUpdater.updatePaymentStatus` directly,
+  reusing the already-fetched ceiling and total. It does NOT call
+  `patchThenReturnPaymentStatus` — see §7 for why this is the one
+  exception to that rule.
 - Kafka event emitted only if the payment method has an account code.
 
+### `SupplierPaymentService.voidPayment(SupplierPaymentVoidCreateDto)`
+- Locks the purchase via `PurchaseDataFetcher.lockPurchase` (resolved
+  from the payment's `purchaseId`).
+- Rejects an already-voided payment via
+  `supplierPaymentVoidRepository.existsBySupplierPaymentId`.
+- Persists `SupplierPaymentVoidEntity` and recomputes the purchase
+  payment status via `patchThenReturnPaymentStatus`.
+- Kafka void event emitted only if the payment method has an account code.
+
 ### `PurchaseUpdater.updateNotes(id, Optional<String>?)` / `updatePaymentStatus(id, status)`
-- Direct field updates by id; no business validation. Reserved for
-  intra-domain use; payment status is driven by
-  `PurchasePaymentStatusService`.
+- Direct field updates by id; no business validation.
+- `updateNotes` is REST-exposed via `PurchaseEndpoint`. `updatePaymentStatus`
+  is intra-domain — only `PurchasePaymentStatusService` and
+  `SupplierPaymentService.recordPayment` call it, and both arrive with the
+  purchase lock already held.
 - `updateNotes` uses the same `Optional<String>?` partial-update
   convention as `PurchaseUpdateDto`: outer `null` = no-op, empty
   Optional = clear, present Optional = set. The empty/present case is
@@ -714,7 +760,7 @@ Add new guards as early as the data they need is in scope.
 | Payments                       | `supplier_payment/` package                                                                       |
 | Payment status (single source) | `PurchasePaymentStatusService`                                                                    |
 | Payment ceiling                | `PurchasePaymentCeilingService`                                                                   |
-| Returns (scaffolding, no svc)  | `supplier_return/SupplierReturnEntity`, `SupplierReturnRepository`                                |
+| Returns (scaffolding, no svc)  | `supplier_return/SupplierReturnEntity`; repo at `purchase/SupplierReturnRepository`               |
 | Kafka publish/republish        | `DeliveryHandlerForKafka`, `SupplierPaymentHandlerForKafka`, `SupplierPaymentVoidHandlerForKafka` |
 | Read APIs                      | `PurchaseDataFetcher`, `PurchaseAssembler`, `PurchaseDeliveryDataFetcher`                         |
 

@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.tax_entry
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity

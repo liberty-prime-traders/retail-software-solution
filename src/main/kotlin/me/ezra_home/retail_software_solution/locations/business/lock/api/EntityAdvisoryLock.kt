@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.lock
+package me.ezra_home.retail_software_solution.locations.business.lock.api
 
+import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLockRepository
 import org.springframework.stereotype.Component
 import java.util.UUID
 

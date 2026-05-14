@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_discount.api
 
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.DiscountAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_discount.SaleDiscountRepository
@@ -15,7 +15,7 @@ class SaleDiscountReconciler(
 
     fun reconcileDiscountsAfterLineChanges(
         saleId: UUID,
-        lines: List<SaleLineEntity>,
+        lines: List<SaleLineSummaryDto>,
     ): List<SaleDiscountEntity> {
         val existing = saleDiscountRepository.findBySaleId(saleId)
         if (existing.isEmpty()) return emptyList()
@@ -26,7 +26,7 @@ class SaleDiscountReconciler(
     private fun replaceStalePercentageDiscounts(
         saleId: UUID,
         existing: List<SaleDiscountEntity>,
-        lines: List<SaleLineEntity>,
+        lines: List<SaleLineSummaryDto>,
         productByLineId: Map<UUID, UUID>,
     ): List<SaleDiscountEntity> {
         val stale = existing

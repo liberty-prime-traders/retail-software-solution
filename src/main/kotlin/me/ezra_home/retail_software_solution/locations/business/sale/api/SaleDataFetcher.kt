@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.LockNamespaces
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository

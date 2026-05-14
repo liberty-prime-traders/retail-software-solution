@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxEntryEntity
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.tax_entry.TaxSourceType
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryService
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 @Service
 class SaleTaxFinalizationProcessor(
     private val saleRepository: SaleRepository,
-    private val taxEntryRepository: TaxEntryRepository,
+    private val taxEntryService: TaxEntryService,
     private val orgJurisdictionTaxTypeFetcher: OrgJurisdictionTaxTypeFetcher,
     private val jurisdictionTaxTypeFetcher: JurisdictionTaxTypeFetcher,
     private val taxRateService: TaxRateService,
@@ -36,9 +36,7 @@ class SaleTaxFinalizationProcessor(
 
     @TransactionalOnLocationSchema(readOnly = true)
     override fun shouldProcess(event: SaleConfirmedEvent): Boolean {
-        return !taxEntryRepository.existsBySourceReferenceNumberAndSourceType(
-            event.saleReferenceNumber, TaxSourceType.SALE
-        )
+        return !taxEntryService.existsBySourceReference(event.saleReferenceNumber, TaxSourceType.SALE)
     }
 
     @TransactionalOnLocationSchema
@@ -49,7 +47,7 @@ class SaleTaxFinalizationProcessor(
         val fiscalPeriodId = fiscalPeriodService.requireOpenForDate(event.dateSold)
         val rates = taxRateService.findActiveRateForDate(event.dateSold)
 
-        val taxEntries = mutableListOf<TaxEntryEntity>()
+        val taxEntries = mutableListOf<TaxEntryCreateDto>()
         var totalTaxAmount = BigDecimal.ZERO
         var grandTotal = taxableAmount
 
@@ -62,7 +60,7 @@ class SaleTaxFinalizationProcessor(
             val taxAmount = computeTaxAmount(taxType.calculationMethod, rate, taxableAmount, orgTaxType.taxInclusive)
             val effectiveRate = rate.ratePercentage ?: rate.rateFlatAmount ?: BigDecimal.ZERO
 
-            taxEntries += TaxEntryEntity(
+            taxEntries += TaxEntryCreateDto(
                 sourceReferenceNumber = event.saleReferenceNumber,
                 sourceType = TaxSourceType.SALE,
                 taxTypeId = orgTaxType.jurisdictionTaxTypeId,
@@ -78,7 +76,7 @@ class SaleTaxFinalizationProcessor(
             if (!orgTaxType.taxInclusive) grandTotal += taxAmount
         }
 
-        taxEntryRepository.saveAll(taxEntries)
+        taxEntryService.createAll(taxEntries)
 
         val sale = saleRepository.getReferenceById(event.sourceDocumentId)
         sale.taxTotal = totalTaxAmount
