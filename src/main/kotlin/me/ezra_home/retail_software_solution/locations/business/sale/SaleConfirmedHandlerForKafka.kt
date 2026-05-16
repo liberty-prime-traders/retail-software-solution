@@ -49,7 +49,7 @@ class SaleConfirmedHandlerForKafka(
                 contactId = sale.contactId,
                 saleReferenceNumber = sale.requiredReference(),
                 subtotal = sale.subtotal!!,
-                discountTotal = sale.discountTotal!!,
+                discountTotal = sale.discountTotal(),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
                 lines = lineEventDtos,
                 discounts = discountEventDtos

@@ -35,5 +35,6 @@ class CacheNames {
         const val ACCOUNT = "Account"
         const val ORG_ACCOUNTING_CONFIG = "OrgAccountingConfig"
         const val STOCK_MOVEMENT_REASON = "StockMovementReason"
+        const val ADJUSTMENT_REASON = "AdjustmentReason"
     }
 }

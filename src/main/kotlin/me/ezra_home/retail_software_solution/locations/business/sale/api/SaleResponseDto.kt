@@ -23,7 +23,8 @@ data class SaleResponseDto(
     val discounts: List<SaleDiscountResponseDto>,
     val payments: List<SalePaymentResponseDto>,
     val subtotal: BigDecimal?,
-    val discountTotal: BigDecimal?,
+    val lineLevelDiscountTotal: BigDecimal?,
+    val orderLevelDiscountTotal: BigDecimal?,
     val taxTotal: BigDecimal?,
     val grandTotal: BigDecimal?,
     val totalPaid: BigDecimal

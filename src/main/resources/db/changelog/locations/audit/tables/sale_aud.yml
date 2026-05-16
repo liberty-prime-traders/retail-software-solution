@@ -59,7 +59,11 @@ databaseChangeLog:
                   type: numeric(19, 4)
 
               - column:
-                  name: discount_total
+                  name: line_level_discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_discount_total
                   type: numeric(19, 4)
 
               - column:

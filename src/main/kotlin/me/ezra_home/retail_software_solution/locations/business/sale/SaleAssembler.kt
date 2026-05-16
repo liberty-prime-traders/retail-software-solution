@@ -85,7 +85,8 @@ class SaleAssembler(
             discounts = discounts,
             payments = payments,
             subtotal = sale.subtotal,
-            discountTotal = sale.discountTotal,
+            lineLevelDiscountTotal = sale.lineLevelDiscountTotal,
+            orderLevelDiscountTotal = sale.orderLevelDiscountTotal,
             taxTotal = sale.taxTotal,
             grandTotal = sale.grandTotal,
             totalPaid = totalPaid

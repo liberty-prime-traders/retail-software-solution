@@ -60,7 +60,15 @@ Rules:
 - A sale **starts** at `DRAFT` (via `SaleDraftHandler.createDraft`) or jumps
   straight to `CONFIRMED` (via `SaleConfirmationHandler.createSale`).
 - A `DRAFT` can be **mutated** via `SaleDraftHandler.updateDraft` — header,
-  lines, discounts, payments. Mutations on any non-draft sale are forbidden.
+  lines, discounts, payments. `updateDraft` itself is the only entry point
+  that touches lines/discounts on a sale and it is `DRAFT`-gated. Other
+  mutation paths **do** exist for non-draft sales and are intentional:
+  `SaleUpdater.updateNotes` on any status, `voidSale` on `DRAFT` or
+  `CONFIRMED`, `SalePaymentService.recordPayment` / `voidPayment` on
+  `CONFIRMED` (with their own status guards), `updatePaymentStatus` driven
+  internally by the payment service, and the async
+  `SaleTaxFinalizationProcessor` / `SaleTaxReversalProcessor` which write
+  `taxTotal` / `grandTotal` after the fact.
 - A `DRAFT` becomes `CONFIRMED` only through
   `SaleConfirmationHandler.convertDraftToSale`.
 - Voiding a `DRAFT` transitions it to `DISCARDED` (reservations are released,
@@ -208,9 +216,13 @@ Discounts live in the `sale_discount` package but are orchestrated by
   `lineTotal()` (`guardLineTotals`).
 - Sum of order-level discounts must not exceed
   `subtotal − Σ(existing line-level discounts)` (`guardOrderTotal`).
-- These ceiling checks are **only enforced when the sale is non-draft**
-  (`enforceTotals = sale.status != DRAFT`). Drafts may temporarily go
-  upside-down because totals are still being assembled.
+- These ceiling checks are **only enforced on non-draft paths** — i.e.
+  `SaleConfirmationHandler.createSale` and `convertDraftToSale`. In
+  `SaleMutator.create` the gate is literally `enforceTotals = sale.status
+  != DRAFT`; in `SaleMutator.doUpdate` it is a parameter
+  (`updateAndSyncReservations` passes `false`,
+  `updateWithoutSyncingReservations` passes `true`). Drafts may
+  temporarily go upside-down because totals are still being assembled.
 
 ### Modifications
 
@@ -240,18 +252,30 @@ Fixed-value discounts are left untouched.
 
 After reconciliation, `assertDiscountsStillFitAfterLineChanges` ensures the
 remaining discounts still fit under the new totals; otherwise the update is
-rejected with an actionable message naming the offending line.
+rejected with an actionable message naming the offending line. **This
+assertion is gated on the same `enforceTotals` flag** — it fires on the
+`convertDraftToSale` path but **not** on plain draft updates, which may
+intentionally leave discounts upside-down until conversion.
 
 ### Totals contribution
 
 Discounts **never modify `sale_line.unitPrice`**. They live as separate
-`SaleDiscountEntity` rows whose frozen `calculatedAmount` is summed:
+`SaleDiscountEntity` rows whose frozen `calculatedAmount` is summed into
+two persisted buckets on `SaleEntity`:
 
-`SaleEntity.discountTotal = Σ(discounts.calculatedAmount)`. The
-`payableTotal()` used for payment ceilings is
-`grandTotal ?: subtotal − discountTotal` — `grandTotal` is set after taxes
-finalize (see §7). The price drop emerges at the sale level via
-`payableTotal()`, not at the line level.
+- `lineLevelDiscountTotal = Σ(discounts where saleLineId != null)`
+- `orderLevelDiscountTotal = Σ(discounts where saleLineId == null)`
+
+Both are populated together by `SaleMutator.applyTotals`. The helper
+`SaleEntity.discountTotal()` returns the sum of the two (treating nulls as
+zero) and is what `payableTotal()` and the Kafka publishers consume:
+`payableTotal() = grandTotal ?: subtotal − discountTotal()`. `grandTotal`
+is set after taxes finalize (see §7). The price drop emerges at the sale
+level via `payableTotal()`, not at the line level.
+
+`SaleResponseDto` surfaces both buckets (`lineLevelDiscountTotal`,
+`orderLevelDiscountTotal`) separately so callers can render the breakdown
+without re-aggregating the discount list.
 
 ---
 
@@ -354,7 +378,7 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 ### Idempotency rules (Kafka)
 
 - `SaleTaxFinalizationProcessor.shouldProcess` checks
-  `existsBySourceReferenceNumberAndSourceType(refNum, SALE)`.
+  `taxEntryService.existsBySourceReference(refNum, SALE)`.
 - `SaleTaxReversalProcessor.shouldProcess` requires originals to exist
   **and** no reversal to exist yet.
 - Database guard: the unique constraint
@@ -446,8 +470,8 @@ convention, no `@MappingTarget`, entity rules) live in
 `.claude/instructions.md`. Sale-package specifics only:
 
 - Entity helpers in this package: `SaleEntity.payableTotal()`,
-  `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal()`. No business
-  logic beyond these.
+  `SaleEntity.discountTotal()`, `SaleLineEntity.baseQty()`,
+  `SaleLineEntity.lineTotal()`. No business logic beyond these.
 - Domain DTOs (`SaleResponseDto`, `SaleLineResponseDto`) abstract DB
   details and are what cross package boundaries.
 - API DTOs (`SaleCreateDto`, `SaleUpdateDto`, `SaleLine*Dto`,
@@ -569,8 +593,13 @@ run** — i.e. as soon as the data it needs is in scope.
   status guard is somehow bypassed.
 
 ### `SaleUpdater.updateNotes(id, notes)` / `updatePaymentStatus(id, status)`
-- Direct field updates by id; no extra validation. Reserved for
-  intra-package use; payment status is driven by `SalePaymentService`.
+- Both take the SALE advisory lock via `lockAndGetSale` and then assign
+  the field directly; no extra validation.
+- `updateNotes` is **REST-exposed** (`PUT /secured/sales/{saleId}/notes`
+  in `SaleEndpoint`).
+- `updatePaymentStatus` is **intra-domain only** — driven by
+  `SalePaymentService` (`recordPayment`, `voidPayment`); not wired to any
+  REST endpoint.
 
 ### `SaleDataFetcher.fetchRecent(n?)`
 - Defaults to 10; rejects `n <= 0` and `n > 1000`.
@@ -596,13 +625,16 @@ run** — i.e. as soon as the data it needs is in scope.
   the leading source of oversell bugs.
 - **Publishing Kafka events outside the sale transaction.** Always go
   through `ApplicationEventPublisher` so the event is bound to commit.
-- **Kafka publishers bang (`!!`) on `subtotal`, `discountTotal`, and
-  `dateSold`** in both `SaleConfirmedHandlerForKafka.publish` and
-  `SaleVoidHandlerForKafka.publishVoid`. Confirmation/void paths always
-  set these before publish, so the asserts hold in normal flow. Stay aware
-  of the contract when introducing new mutation paths or admin tools —
-  anything that produces a sale entity without those three fields
-  populated will NPE on publish/republish.
+- **Kafka publishers bang (`!!`) on `subtotal` and `dateSold`** in both
+  `SaleConfirmedHandlerForKafka.publish` and
+  `SaleVoidHandlerForKafka.publishVoid`. The discount total is sourced via
+  `sale.discountTotal()` (which treats both bucket columns as zero when
+  null), so a sale with no discounts publishes `0` rather than NPE-ing.
+  Confirmation/void paths always set subtotal and dateSold before publish,
+  so those asserts hold in normal flow. Stay aware of the contract when
+  introducing new mutation paths or admin tools — anything that produces a
+  sale entity without subtotal/dateSold populated will NPE on
+  publish/republish.
 
 ---
 

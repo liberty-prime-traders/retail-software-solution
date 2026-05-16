@@ -88,7 +88,8 @@ class SaleMutator(
 
     private fun applyTotals(sale: SaleEntity, lines: List<SaleLineEntity>, discounts: List<SaleDiscountSummaryDto>) {
         sale.subtotal = lines.sumOf { it.lineTotal() }
-        sale.discountTotal = discounts.sumOf { it.calculatedAmount }
+        sale.lineLevelDiscountTotal = discounts.filter { it.saleLineId != null }.sumOf { it.calculatedAmount }
+        sale.orderLevelDiscountTotal = discounts.filter { it.saleLineId == null }.sumOf { it.calculatedAmount }
     }
 
     fun updateAndSyncReservations(dto: SaleUpdateDto, sale: SaleEntity): SaleUpdateOutcome =

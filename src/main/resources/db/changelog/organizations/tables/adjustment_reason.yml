@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-adjustment-reason-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: adjustment_reason
+      changes:
+        - createTable:
+            tableName: adjustment_reason
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: adjustment_reason_name_notnull
+
+              - column:
+                  name: code
+                  type: varchar(5)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: adjustment_reason_code_unique
+
+              - column:
+                  name: direction
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: adjustment_reason_direction_notnull
+
+              - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: adjustment_reason_system_defined_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: adjustment_reason_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}

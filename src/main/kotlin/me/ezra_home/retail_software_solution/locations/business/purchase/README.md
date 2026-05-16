@@ -89,7 +89,15 @@ Rules:
   jumps straight to `ORDERED` (via `PurchaseService.createOrder`).
 - A `DRAFT` can be **mutated** freely via `PurchaseService.updateDraft` —
   supplier, notes, dateOrdered, orderedBy, lines added/updated/deleted.
-  Mutations on any non-draft purchase are forbidden by `guardIsDraft`.
+  `updateDraft` (and only `updateDraft`) is gated by `guardIsDraft`; other
+  mutation paths **do** exist for non-draft purchases and are intentional:
+  `PurchaseUpdater.updateNotes` on any status,
+  `PurchaseCanceller.cancel` on `ORDERED` / `PARTIALLY_DELIVERED`,
+  delivery flows that advance status to `PARTIALLY_DELIVERED` /
+  `FULLY_DELIVERED`, `SupplierPaymentService.recordPayment` /
+  `voidPayment` on non-draft purchases, and
+  `PurchaseUpdater.updatePaymentStatus` driven internally by the payment
+  service.
 - A `DRAFT` becomes `ORDERED` only through
   `PurchaseService.convertDraftToOrder`, which requires ≥1 surviving line.
 - Once `ORDERED`, deliveries move the purchase to `PARTIALLY_DELIVERED`

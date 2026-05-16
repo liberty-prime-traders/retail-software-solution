@@ -45,8 +45,11 @@ class SaleEntity(
     @Column(name = "subtotal", precision = 19, scale = 4)
     var subtotal: BigDecimal? = null,
 
-    @Column(name = "discount_total", precision = 19, scale = 4)
-    var discountTotal: BigDecimal? = null,
+    @Column(name = "line_level_discount_total", precision = 19, scale = 4)
+    var lineLevelDiscountTotal: BigDecimal? = null,
+
+    @Column(name = "order_level_discount_total", precision = 19, scale = 4)
+    var orderLevelDiscountTotal: BigDecimal? = null,
 
     @Column(name = "tax_total", precision = 19, scale = 4)
     var taxTotal: BigDecimal? = null,
@@ -56,6 +59,9 @@ class SaleEntity(
 
 ) : HasReferenceEntity() {
 
+    fun discountTotal(): BigDecimal =
+        (lineLevelDiscountTotal ?: BigDecimal.ZERO) + (orderLevelDiscountTotal ?: BigDecimal.ZERO)
+
     fun payableTotal(): BigDecimal =
-        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO))
+        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - discountTotal())
 }
