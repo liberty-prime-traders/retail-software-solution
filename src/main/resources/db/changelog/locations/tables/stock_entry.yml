@@ -29,10 +29,6 @@ databaseChangeLog:
                     uniqueConstraintName: stock_entry_reference_number_unique
 
               - column:
-                  name: purchase_delivery_line_id
-                  type: uuid
-
-              - column:
                   name: location_product_id
                   type: uuid
                   constraints:
@@ -64,6 +60,9 @@ databaseChangeLog:
               - column:
                   name: priority
                   type: integer
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_priority_notnull
 
               - column:
                   name: unit_cost

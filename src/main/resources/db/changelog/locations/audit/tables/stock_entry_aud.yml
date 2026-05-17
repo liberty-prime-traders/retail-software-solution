@@ -31,10 +31,6 @@ databaseChangeLog:
                     nullable: false
 
               - column:
-                  name: purchase_delivery_line_id
-                  type: uuid
-
-              - column:
                   name: location_product_id
                   type: uuid
 

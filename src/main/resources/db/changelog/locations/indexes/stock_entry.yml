@@ -38,7 +38,7 @@ databaseChangeLog:
             tableName: stock_entry
 
   - changeSet:
-      id: add-unique-constraint-stock-entry-purchase-delivery-line
+      id: add-unique-constraint-stock-entry-ext-ref-type-product
       author: ezra
       labels: 1.0.0
       preConditions:
@@ -46,13 +46,13 @@ databaseChangeLog:
         - not:
             - uniqueConstraintExists:
                 tableName: stock_entry
-                constraintName: uq_stock_entry_purchase_delivery_line
+                constraintName: uq_stock_entry_ext_ref_type_product
       changes:
         - addUniqueConstraint:
             tableName: stock_entry
-            constraintName: uq_stock_entry_purchase_delivery_line
-            columnNames: purchase_delivery_line_id
+            constraintName: uq_stock_entry_ext_ref_type_product
+            columnNames: external_reference_number, source_type, location_product_id
       rollback:
         - dropUniqueConstraint:
             tableName: stock_entry
-            constraintName: uq_stock_entry_purchase_delivery_line
+            constraintName: uq_stock_entry_ext_ref_type_product

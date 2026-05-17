@@ -17,9 +17,6 @@ import java.util.UUID
 @HasReference(tableName = TableName.STOCK_ENTRY)
 class StockEntryEntity(
 
-  @Column(name = "purchase_delivery_line_id")
-  var purchaseDeliveryLineId: UUID? = null,
-
   @Column(name = "location_product_id", nullable = false)
   var locationProductId: UUID,
 

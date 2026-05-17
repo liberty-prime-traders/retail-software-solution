@@ -31,7 +31,6 @@ class PurchaseDeliveryStockUpdater(
             val baseQty = unitConversionGraph.getTarget(line.unitId, baseUnitId).applyTo(line.quantityDelivered)
             val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantityDelivered), baseQty)
             line.deliveryLineId to StockEntryEntity(
-                purchaseDeliveryLineId = line.deliveryLineId,
                 locationProductId = line.locationProductId,
                 sourceType = StockItemSource.PURCHASE.code,
                 externalReferenceNumber = line.lineReferenceNumber,
