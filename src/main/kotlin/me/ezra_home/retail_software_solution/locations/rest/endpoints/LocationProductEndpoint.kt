@@ -2,9 +2,12 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductSearchService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleSearchService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.SaleProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementHistoryBuilder
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementResponse
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
@@ -24,6 +27,7 @@ import java.util.UUID
 class LocationProductEndpoint(
   private val locationProductService: LocationProductService,
   private val locationProductSearchService: LocationProductSearchService,
+  private val locationProductForSaleSearchService: LocationProductForSaleSearchService,
   private val stockMovementHistoryBuilder: StockMovementHistoryBuilder
 ) {
 
@@ -32,6 +36,12 @@ class LocationProductEndpoint(
     @RequestBody pageRequest: PageRequest<ProductSearchParameters, String>
   ): PageResponse<LocationProductResponseDto, String> =
     locationProductSearchService.searchWithParameters(pageRequest)
+
+  @PostMapping("search-for-sale")
+  fun searchForSale(
+    @RequestBody pageRequest: PageRequest<SaleProductSearchParameters, String>
+  ): PageResponse<LocationProductForSaleDto, String> =
+    locationProductForSaleSearchService.search(pageRequest)
 
   @PostMapping("search/debug-query")
   fun debugSearchQuery(

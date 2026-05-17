@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-adjustment-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: sale_adjustment_aud
+      changes:
+        - createTable:
+            tableName: sale_adjustment_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: sale_id
+                  type: uuid
+
+              - column:
+                  name: sale_line_id
+                  type: uuid
+
+              - column:
+                  name: direction
+                  type: varchar(5)
+
+              - column:
+                  name: calculation_method
+                  type: varchar(5)
+
+              - column:
+                  name: value
+                  type: numeric(19, 4)
+
+              - column:
+                  name: calculated_amount
+                  type: numeric(19, 4)
+
+              - column:
+                  name: adjustment_reason_id
+                  type: uuid
+
+              - column:
+                  name: note
+                  type: text
+
+              - column:
+                  name: approved_by_id
+                  type: uuid
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: sale_adjustment_aud
+            columnNames: id, rev
+            constraintName: pk_sale_adjustment_aud
+
+      rollback:
+        - dropTable:
+            tableName: sale_adjustment_aud

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-adjustment-sale
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_adjustment_sale
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_adjustment
+            baseColumnNames: sale_id
+            referencedTableName: sale
+            referencedColumnNames: id
+            constraintName: fk_sale_adjustment_sale
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_adjustment
+            constraintName: fk_sale_adjustment_sale
+
+  - changeSet:
+      id: add-foreign-key-sale-adjustment-sale-line
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_adjustment_sale_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_adjustment
+            baseColumnNames: sale_line_id
+            referencedTableName: sale_line
+            referencedColumnNames: id
+            constraintName: fk_sale_adjustment_sale_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_adjustment
+            constraintName: fk_sale_adjustment_sale_line
