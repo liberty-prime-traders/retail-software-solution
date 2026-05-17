@@ -29,6 +29,15 @@ class AdjustmentReasonService(
         }
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun requireCanApply(reasonId: UUID, direction: AdjustmentDirection) {
+        requireCanApply(getById(reasonId), direction)
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getReasonNamesById(): Map<UUID, String> =
+        adjustmentReasonCache.getAll().associate { it.id to it.name }
+
     fun create(dto: AdjustmentReasonInsertDto): AdjustmentReasonDto {
         if (dto.direction == AdjustmentDirection.BOTH) {
             throw RtsGenericException(

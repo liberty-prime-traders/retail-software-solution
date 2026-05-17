@@ -42,6 +42,7 @@ dependencies {
 	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
 	implementation("com.okta.spring:okta-spring-sdk")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.hibernate.orm:hibernate-envers:6.5.3.Final")
 	implementation("org.springframework.kafka:spring-kafka")

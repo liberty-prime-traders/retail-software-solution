@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import me.ezra_home.retail_software_solution.locations.business.purchase.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
@@ -61,7 +62,11 @@ class SaleEntity(
     var taxTotal: BigDecimal? = null,
 
     @Column(name = "grand_total", precision = 19, scale = 4)
-    var grandTotal: BigDecimal? = null
+    var grandTotal: BigDecimal? = null,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    var version: Long = 0
 
 ) : HasReferenceEntity() {
 

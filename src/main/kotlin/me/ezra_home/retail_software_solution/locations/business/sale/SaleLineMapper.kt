@@ -1,28 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineResponseDto
 import java.util.UUID
 
 object SaleLineMapper {
-
-    fun toLineEntities(
-        saleId: UUID,
-        dtoLines: List<SaleLineCreateDto>,
-        insertContext: SaleLinesInsertContext,
-    ): List<SaleLineEntity> =
-        dtoLines.map { line ->
-            val unitPrice = insertContext.productSummaries.getValue(line.locationProductId).unitPrice!!
-            SaleLineEntity(
-                saleId,
-                line.locationProductId,
-                line.quantity,
-                line.unitId,
-                unitPrice,
-                insertContext.factorByProductId.getValue(line.locationProductId),
-            )
-        }
 
     fun toResponseLines(
         saleLineEntities: List<SaleLineEntity>,

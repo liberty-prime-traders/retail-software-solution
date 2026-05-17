@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_adjustment
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.AdjustmentAmountCalculator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.AdjustmentAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.SaleAdjustmentEntity
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService

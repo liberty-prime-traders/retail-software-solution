@@ -22,21 +22,21 @@ locations/business/sale/api/
 Only the `api/` sub-package is considered the public surface. Other packages
 must call into sale through one of these classes:
 
-| Class                           | Purpose                                                      |
-|---------------------------------|--------------------------------------------------------------|
-| `SaleDraftHandler`              | Create / update draft sales                                  |
-| `SaleConfirmationHandler`       | Create a sale directly (confirmed), or convert a draft       |
-| `SaleUpdater`                   | Void a sale; update payment status; update notes             |
-| `SaleDataFetcher`               | Read sales (recent list, context lookup, contact lookup)     |
+| Class                  | Purpose                                                                    |
+|------------------------|----------------------------------------------------------------------------|
+| `SaleDraftCommitter`   | Persist a sale at `DRAFT` from a `SaleCommitInput` (called by sale_session) |
+| `SaleConfirmCommitter` | Persist a sale at `CONFIRMED` from a `SaleCommitInput` (FIFO + Kafka)       |
+| `SaleUpdater`          | Void a sale; update payment status; update notes                            |
+| `SaleDataFetcher`      | Read sales (recent list, context lookup, header/line snapshots, contact)    |
+
+Creating and confirming a sale is **only** possible via a session — see
+`sale_session/README.md`. The committers are the seams the session layer calls
+into; they do not have REST endpoints of their own.
 
 Sellable product lookup (product + per‑product FIFO stock batch previews
 for the sale entry screen) lives on the **product** package, not here —
 see `location_product/api/LocationProductForSaleSearchService` and the
 `POST /secured/location-products/search-for-sale` endpoint.
-
-`SaleAssembler` builds `SaleResponseDto` from entities but lives at
-`sale/SaleAssembler.kt`, not `sale/api/` — it is an internal helper used by
-the four handlers above and is **not** a cross-package surface.
 
 Cross‑package callers **MUST** use the `api/` package; direct use of
 `SaleRepository`, `SaleEntity`, etc. is reserved for code inside the sale
@@ -62,26 +62,22 @@ A sale lives in one of four states (`SaleStatus`):
 
 Rules:
 
-- A sale **starts** at `DRAFT` (via `SaleDraftHandler.createDraft`) or jumps
-  straight to `CONFIRMED` (via `SaleConfirmationHandler.createSale`).
-- A `DRAFT` can be **mutated** via `SaleDraftHandler.updateDraft` — header,
-  lines, discounts, payments. `updateDraft` itself is the only entry point
-  that touches lines/discounts on a sale and it is `DRAFT`-gated. Other
-  mutation paths **do** exist for non-draft sales and are intentional:
-  `SaleUpdater.updateNotes` on any status, `voidSale` on `DRAFT` or
-  `CONFIRMED`, `SalePaymentService.recordPayment` / `voidPayment` on
-  `CONFIRMED` (with their own status guards), `updatePaymentStatus` driven
-  internally by the payment service, and the async
-  `SaleTaxFinalizationProcessor` / `SaleTaxReversalProcessor` which write
-  `taxTotal` / `grandTotal` after the fact.
+- A sale **starts** at `DRAFT` (via `SaleDraftCommitter.saveDraft`) or jumps
+  straight to `CONFIRMED` (via `SaleConfirmCommitter.confirm`). Both are
+  called by `SaleSessionCommitHandler` and are **never** invoked by REST
+  directly.
+- Mutation of a `DRAFT` happens through a sale session — header changes,
+  line/adjustment/payment changes, then `POST /sale-sessions/{id}/draft`
+  re-persists the existing draft. Optimistic version check (`@Version` on
+  `SaleEntity`) rejects concurrent saves.
 - A `DRAFT` becomes `CONFIRMED` only through
-  `SaleConfirmationHandler.convertDraftToSale`.
+  `SaleConfirmCommitter.confirm`.
 - Voiding a `DRAFT` transitions it to `DISCARDED` (reservations are released,
   no stock movement, no Kafka void event — the sale never affected stock).
 - Voiding a `CONFIRMED` sale transitions it to `VOIDED` (stock is restored,
   tax entries reversed via Kafka, `SaleVoidEntity` recorded).
-- `VOIDED` and `DISCARDED` are terminal. `guardCanVoid` rejects both, and
-  also rejects voiding when there are active (non-voided) payments.
+- `VOIDED` and `DISCARDED` are terminal. `SaleValidator.guardCanVoid` rejects
+  both, and also rejects voiding when there are active (non-voided) payments.
 
 `SaleStatus` is persisted as a 5-char code via `SaleStatusConverter`
 (`DFT`, `CFM`, `VD`, `DSC`). Never `@Enumerated`.
@@ -94,16 +90,11 @@ Rules:
 
 - A sale is always tied to **exactly one contact**. Walk-in sales use
   `SystemContact.WALK_IN.id`.
-- `SaleCreateDto.resolveContactId()` falls back to walk-in when the incoming
-  `contactId` is null or `WALK_IN.id` — this is the intended design for the
-  create-sale path. `walkInCustomer()` is computed off `resolveContactId()`,
-  so both forms (`null` and explicit `WALK_IN.id`) are treated identically.
-- **Drafts cannot be walk-in.** `SaleDraftHandler.createDraft` rejects every
-  walk-in payload via `walkInCustomer()` — including the null-contact case.
-  `SaleValidator.guardNotReassigningToWalkIn` blocks updates that *reassign*
-  an existing draft to walk-in.
-- A confirmed walk-in sale **must** be fully paid at confirmation time
-  (`SalePaymentService.guardFullPaymentCoverage`).
+- A draft can be reassigned via `SaleSessionHeaderHandler.update`, which calls
+  `ContactService.guardExists` for any non-walk-in contact. There is no
+  hard reassignment rule against walk-in for drafts, but **a walk-in must be
+  fully paid at confirm time** (`SaleConfirmCommitter` calls
+  `SalePaymentCommitter.guardFullCoverage`).
 - For any non-walk-in sale, `ContactService.guardExists` must succeed before
   persistence. The check is skipped entirely for walk-in (no DB lookup),
   which is why `SystemContact.WALK_IN.id` is not required to exist as a
@@ -111,15 +102,15 @@ Rules:
 
 ### soldById
 
-- Optional on `DRAFT`. On confirmation (or direct create) it is auto-filled
-  from `SessionContextProvider.getUserId()` if absent.
+- Optional on `DRAFT`. On confirmation, it is auto-filled from
+  `SessionContextProvider.getUserId()` if absent.
 - Stored on the sale; surfaced via `userQualifier.getUserFullName` in
   responses.
 
 ### dateSold
 
 - Optional on `DRAFT`.
-- On confirmation / direct create, missing `dateSold` defaults to
+- On confirmation, missing `dateSold` defaults to
   `DateTimes.Offset.Now.organization()`.
 - A non-null `dateSold` is **guarded against the future** at the org's local
   date (`SaleValidator.guardDateSoldIsNotFuture`) and **must** fall inside a
@@ -147,173 +138,109 @@ Rules:
   helper (`quantity * conversionFactor`). What gets *persisted* as base qty
   is `sale_line_stock_reservation.quantity_reserved` and the FIFO stock
   requests — never the sale line itself.
-- `unitPrice` is **captured from the product at line creation** and is
-  immutable thereafter — a price change on the product does not retro-affect
-  existing lines.
+- `unitPrice` is **captured from the product at line add time** (when the
+  user adds the line to a session) and frozen for the life of that line —
+  a price change on the product does not retro-affect existing lines.
 - `lineTotal() = quantity * unitPrice` (scale 4, half-up via `Decimals`).
 - `baseQty() = quantity * conversionFactor` (scale 4).
 
 ### Per-line invariants
 
-1. `quantity` must be **strictly positive** at create
-   (`guardPositiveLineQuantities`) and at update
-   (`SaleLinesUpdatePreparer.applyUpdates` rejects `<= 0` and instructs
-   callers to use `linesToRemove` instead).
-2. **No duplicate products** in the same sale — checked at create
-   (`guardNoDuplicateProducts(productIds)`) and after the merged update set
-   (`SaleLinesUpdatePreparer.prepareForUpdate`).
-3. `locationProductId` must be **active**
-   (`LocationProductService.guardAllActive`) at create and on every newly
-   added line during update.
+1. `quantity` must be **strictly positive** (guarded by `SaleSessionValidator`
+   on every mutation).
+2. **No duplicate products** in the same sale — guarded on every session
+   mutation.
+3. `locationProductId` must be **active** (`LocationProductService.guardAllActive`)
+   when adding a line to a session and again at commit time.
 4. `unitId` must be a valid unit reachable in the `UnitConversionGraph` to
-   the product's base unit; otherwise `getFactor`/`getTarget` throws.
-5. `unitPrice` must be set on the product summary; lines whose product has
-   no `unitPrice` are rejected with `"Product X has no unit price"`. The
-   create path raises this from `SaleMutator.attachUnitPrices`; the update
-   path raises it from `SaleLinesUpdatePreparer.buildAdditions`.
-   `SaleLineMapper.toLineEntities` uses `!!` and would only fire if those
-   earlier guards were bypassed.
+   the product's base unit; otherwise `getFactor` throws.
+5. `unitPrice` must be set on the product summary at add time; the session
+   line handler rejects with `"Product X has no unit price"` otherwise.
 
-### Update DTO contract
+### Sync semantics at commit
 
-`SaleUpdateDto` is **always partial**:
+`SaleCommitLineSync.sync` synchronises the persisted line set against the
+session's line set:
 
-- `linesToAdd`: new lines (same shape as create).
-- `linesToUpdate`: existing line ids with new `quantity` / `unitId`. The
-  duplicate check is by *line id*, not product. Cannot also be in
-  `linesToRemove`, must belong to the sale.
-- `linesToRemove`: existing line ids to delete. Must belong to the sale.
+- `existingId == null` → INSERT new line entity, return mapping
+  `clientKey → newId`.
+- `existingId != null` and present in DB → UPDATE in place.
+- Existing line not in incoming set → DELETE (cascade: reservations were
+  cleared for the whole sale first).
 
-`SaleValidator.guardLineIdsBelongToSale` enforces all of the above.
-`updateAndSyncReservations` (drafts) keeps stock reservations in sync;
-`updateWithoutSyncingReservations` (during confirmation) skips that work
-because reservations are about to be cleared wholesale anyway.
-
-### "Surviving lines"
-
-After an update, the **surviving line set** is
-`survivingExisting + updatedLines + newLines`. Confirmation requires at
-least one surviving line (`guardSurvivingLinesNotEmpty`). The same set
-drives discount reconciliation, totals, and Kafka payloads.
+After sync, fresh reservations are issued for the surviving line set.
 
 ---
 
 ## 5. Adjustments (Discounts + Surcharges)
 
-Adjustments live in the `sale_adjustment` package but are orchestrated by
-`SaleMutator` and are part of the sale contract. An adjustment is either a
+Adjustments live in the `sale_adjustment` package. An adjustment is either a
 **discount** (`direction = DISCOUNT`, code `DISC`) or a **surcharge**
-(`direction = SURCHARGE`, code `SRCH`). The two share the same entity
-shape, persistence model, lifecycle, and reconciliation logic.
+(`direction = SURCHARGE`, code `SRCH`). The two share the same entity shape,
+persistence model, lifecycle, and reconciliation logic.
 
 ### Shape
 
-- Either **line-level** (`locationProductId != null`) — applies to one line
-  identified by product — or **order-level** (`locationProductId == null`).
-- `direction`: `DISC` (reduces the payable) or `SRCH` (adds to the
-  payable).
+- Either **line-level** (references a `SessionIdentity` of a session line —
+  carries through to a `sale_line_id` after commit) or **order-level**
+  (no `lineId`).
+- `direction`: `DISC` (reduces the payable) or `SRCH` (adds to the payable).
 - `calculationMethod`: `FIXED_VALUE` (currency amount) or `PERCENTAGE`
   (percent of the line total or the sale subtotal).
-- Every adjustment references an `adjustment_reason_id` (org-schema
-  lookup). The service validates the reason exists and that
-  `AdjustmentReason.canApply(reason, direction)` is true — i.e. a
-  `DISCOUNT`-only reason cannot be applied as a surcharge, and vice
-  versa. Reasons whose direction is `BOTH` are system-only.
+- Every adjustment references an `adjustment_reason_id` (org-schema lookup).
+  The session validator validates the reason exists and that
+  `AdjustmentReasonService.requireCanApply(reasonId, direction)` succeeds.
 - `note` — optional free text. `approvedById` — user reference, stored
   but not yet permission-gated.
-- Frozen amounts: every adjustment entity stores the `calculatedAmount`
-  at the time of application. The entity is immutable.
+- Frozen amounts: `calculatedAmount` is recomputed by the session totals
+  calculator after every mutation but only **persisted** to the entity at
+  commit.
 
 ### Validation
 
-- **Line-level adjustments must reference a product that has a line on
-  this sale.** `NewSaleAdjustmentValidator.validateNewAdjustments`
-  enforces this for incoming and pre-existing adjustments.
+- **Line-level adjustments must reference a session line.**
+  `SaleSessionValidator.guardAdjustmentReferences` enforces this on every
+  mutation.
 - The `AdjustmentReason` must exist and `canApply(reason, direction)`
-  must be true (cross-schema lookup via `AdjustmentReasonService`).
-- **Discount ceilings** (`guardAdjustmentCeilings`, only enforced when
-  `enforceTotals = true`):
+  must be true — `requireCanApply(reasonId, direction)` overload keeps
+  cross-domain `AdjustmentReasonDto` access out of the session layer.
+- **Discount ceilings are enforced on every mutation**:
   - Sum of line-level discounts on a single line must not exceed that
-    line's `lineTotal()` (`guardLineTotals`).
+    line's `lineTotal()`.
   - Sum of order-level discounts must not exceed
-    `subtotal − Σ(existing line-level discounts)` (`guardOrderTotal`).
-- **Surcharge ceilings are not enforced in phase 1** — left as
-  `TODO(phase 2)` in `NewSaleAdjustmentValidator` and
-  `SaleAdjustmentValidator`.
-- Ceiling checks fire **only on non-draft paths** — i.e.
-  `SaleConfirmationHandler.createSale` and `convertDraftToSale`. In
-  `SaleMutator.create` the gate is `enforceTotals = sale.status !=
-  DRAFT`; in `SaleMutator.doUpdate` it is a parameter
-  (`updateAndSyncReservations` passes `false`,
-  `updateWithoutSyncingReservations` passes `true`). Drafts may
-  temporarily go upside-down on discounts because totals are still
-  being assembled.
+    `subtotal − Σ(line-level discounts)`.
+- **Surcharge ceilings are not enforced in phase 1**.
 
-### Modifications
+### Sync semantics at commit
 
-- Adjustments can be **included** in a `SaleCreateDto` that starts the
-  sale in either `DRAFT` or `CONFIRMED` —
-  `SaleAdjustmentService.applyValidatedAdjustments` is unguarded and
-  runs as part of the create transaction.
-- After creation, adjustments can only be added/removed while the sale
-  is in `DRAFT` (`SaleAdjustmentValidator.guardIsDraft` on
-  `addAdjustments`, `removeAdjustments`, `removeAdjustmentsByLineIds`).
-  Once `CONFIRMED`, adjustments are frozen. Note: `guardIsDraft` reads
-  the in-memory `sale.status`, so during `convertDraftToSale` the
-  mutator's adjustment add/remove still passes —
-  `SaleConfirmationHandler` only flips the status to `CONFIRMED` *after*
-  the mutator returns.
-- `adjustmentsToRemove` ids must belong to the sale
-  (`guardAdjustmentsBelongToSale`).
-- Removing a sale line cascades: all adjustments attached to that line
-  are removed (`removeAdjustmentsByLineIds`). Because that helper guards
-  `DRAFT`-only, **removing a line on any non-draft path is implicitly
-  blocked** — there is no flow that mutates lines on a CONFIRMED sale.
+`SaleAdjustmentCommitter.sync` replaces the adjustment set wholesale:
 
-### Percentage staleness
-
-If line quantities/units change during a draft update, percentage
-adjustments (both discounts and surcharges) whose `calculatedAmount` no
-longer matches the recomputed amount are **replaced**
-(`SaleAdjustmentReconciler.reconcileAdjustmentsAfterLineChanges`).
-Fixed-value adjustments are left untouched.
-
-After reconciliation, `assertAdjustmentsStillFitAfterLineChanges`
-ensures the remaining DISCOUNTS still fit under the new totals;
-otherwise the update is rejected with an actionable message naming the
-offending line. (Surcharges are not bound by ceilings in phase 1, so
-they are not re-checked.) **This assertion is gated on the same
-`enforceTotals` flag** — it fires on the `convertDraftToSale` path but
-**not** on plain draft updates, which may intentionally leave discounts
-upside-down until conversion.
+- Existing adjustments not in the incoming set → DELETE.
+- Existing adjustments in the incoming set → kept (entities are immutable;
+  no UPDATE happens).
+- New adjustments (`existingId == null`) → INSERT, with `calculatedAmount`
+  recomputed against the **persisted** lines so the frozen amount matches
+  the post-commit truth.
 
 ### Totals contribution
 
 Adjustments **never modify `sale_line.unitPrice`**. They live as separate
-`SaleAdjustmentEntity` rows whose frozen `calculatedAmount` is summed
-into **four persisted buckets** on `SaleEntity`:
+`SaleAdjustmentEntity` rows whose frozen `calculatedAmount` is summed into
+**four persisted buckets** on `SaleEntity` (populated by
+`SaleTotalsApplier`):
 
-- `lineLevelDiscountTotal  = Σ(adjustments where direction = DISCOUNT  and saleLineId != null)`
-- `orderLevelDiscountTotal = Σ(adjustments where direction = DISCOUNT  and saleLineId == null)`
-- `lineLevelSurchargeTotal = Σ(adjustments where direction = SURCHARGE and saleLineId != null)`
-- `orderLevelSurchargeTotal= Σ(adjustments where direction = SURCHARGE and saleLineId == null)`
+- `lineLevelDiscountTotal  = Σ(direction = DISCOUNT  and saleLineId != null)`
+- `orderLevelDiscountTotal = Σ(direction = DISCOUNT  and saleLineId == null)`
+- `lineLevelSurchargeTotal = Σ(direction = SURCHARGE and saleLineId != null)`
+- `orderLevelSurchargeTotal= Σ(direction = SURCHARGE and saleLineId == null)`
 
-All four are populated together by `SaleMutator.applyTotals`.
-`SaleEntity.discountTotal()` returns the sum of the two discount
-buckets; `SaleEntity.surchargeTotal()` returns the sum of the two
-surcharge buckets (both treating nulls as zero). `payableTotal()`
-becomes:
+`SaleEntity.payableTotal()` becomes:
 
 ```
 payableTotal() = grandTotal ?: subtotal − discountTotal() + surchargeTotal()
 ```
 
-`grandTotal` is set after taxes finalize (see §7). The price drop /
-markup emerges at the sale level via `payableTotal()`, not at the line
-level.
-
-`SaleResponseDto` surfaces all four buckets separately so callers can
-render the breakdown without re-aggregating the adjustment list.
+`grandTotal` is set after taxes finalize (see §7).
 
 ---
 
@@ -324,32 +251,27 @@ Two distinct mechanisms protect inventory:
 ### Reservations (drafts only)
 
 - `SaleLineStockReservationEntity` holds **`quantity_reserved`** per sale
-  line (always written as `line.baseQty()` — i.e. in the product's base
-  unit), scoped to a single `locationProductId`.
-- A reservation is created when a draft line is created
-  (`SaleStockReserver.reserve`), kept in sync on draft updates
-  (`syncUpdatedReservations` — only writes when the new `baseQty()` differs
-  from the persisted one), and cleared on:
-  - Draft confirmation (`clearBySale` before FIFO consumption).
-  - Discarding a draft (`SaleUpdater.voidSale` → `DISCARDED` branch).
-  - Removing a draft line (`clearByLineIds`).
-- Three points guard available stock:
-  1. **At create** (draft or direct-confirm), `SaleLinesInsertPreparer`
-     calls `SaleValidator.ensureSufficientStockForLines`, which subtracts
-     `Σ(all reservations)` from the latest balance. The sale has no
-     reservation of its own yet, so no self-exclusion is needed.
-  2. **On draft update**, `SaleLinesUpdateApplier` calls
-     `SaleValidator.guardStockForDraftUpdates`, which subtracts
-     `Σ(reservations from OTHER sales)` so a quantity bump on an existing
-     draft line does not double-count its own outstanding reservation.
-  3. **On confirmation** (direct or convert-from-draft), FIFO consumption
-     itself fails fast if a layer can't be filled.
+  line (always written as `line.baseQty()`).
+- On every `SaleDraftCommitter.saveDraft` invocation, the committer first
+  clears all reservations for the sale (`clearBySale`), then re-issues
+  reservations for the current line set. This avoids hand-rolled diffing.
+- Reservations are also cleared when:
+  - A draft is voided (`SaleUpdater.voidSale` → `DISCARDED` branch).
+  - The sale is confirmed (`SaleConfirmCommitter.confirm` clears under the
+    PRODUCT advisory lock before FIFO consumption).
+- Stock guards run at:
+  1. **Add line to session** — `SaleSessionLineHandler.addLine` calls
+     `LocationProductService.guardAllActive` (live stock is NOT pre-checked
+     here; it gets checked at the next commit).
+  2. **Save draft commit** — `SaleValidator.guardStockForDraftUpdates` runs
+     after reservations were cleared and lines persisted; computes available
+     stock excluding *this* sale's reservations, then issues new ones.
+  3. **Confirm** — FIFO consumption fails fast if a layer cannot fill.
 
 ### FIFO Consumption (confirmation only)
 
-- On confirmation / direct create, `SaleStockUpdater.consumeStock` runs FIFO
-  against actual stock layers, keyed by `SaleLineStockRequest(saleLineId,
-  locationProductId, baseQuantity, unitId, conversionFactor)`.
+- On confirmation, `SaleStockUpdater.consumeStock` runs FIFO against actual
+  stock layers, keyed by `SaleLineStockRequest`.
 - The sale reference number is passed as the movement source so audits can
   trace stock out → sale.
 - On `VOIDED`, `SaleStockUpdater.restoreStock` reverses the FIFO consumption
@@ -358,26 +280,20 @@ Two distinct mechanisms protect inventory:
 ### Locking discipline
 
 - `EntityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)` is taken
-  before reading balances / reservations and before FIFO consumption /
-  restoration. This prevents two concurrent transactions on the **same
-  product** from each seeing identical "available" stock and oversellling.
-  `convertDraftToSale` re-acquires the PRODUCT lock after the mutator
-  returns and before `clearBySale` + FIFO, since the mutator's own
-  `guardStockForDraftUpdates` runs against the *old* reservation snapshot.
+  inside `SaleConfirmCommitter` before clearing reservations + FIFO. The
+  draft path lets the validator's own product-scoped lock cover stock
+  reads + writes.
 - `EntityAdvisoryLock.acquire(LockNamespaces.SALE, saleId)` is acquired by
   `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext`, which every
-  flow that touches an *existing* sale (`updateDraft`,
-  `convertDraftToSale`, `voidSale`, `updateNotes`, `updatePaymentStatus`,
-  and the standalone payment / payment-void paths) calls first. The two
-  *create* entry points (`createDraft`, `createSale`) do not acquire it —
-  there is no sale to lock.
+  flow that touches an *existing* sale (`voidSale`, `updateNotes`,
+  `updatePaymentStatus`, and the standalone payment / payment-void paths)
+  calls first.
 
 ### Insufficient stock
 
 Both reservation and consumption paths surface insufficient-stock errors
-with the **product label**, available qty (stripped zeros), and requested
-qty (`SaleValidator.throwIfOverSelling`). Never expose raw UUIDs to the
-user when a label is available.
+with the **product label** (when available), available qty (stripped zeros),
+and requested qty (`SaleValidator.throwIfOverSelling`).
 
 ---
 
@@ -387,8 +303,7 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 
 1. On confirmation, `SaleConfirmedHandlerForKafka.publish` emits
    `SaleConfirmedEvent(subtotal, discountTotal, surchargeTotal, payableTotal,
-   lines, adjustments, dateSold,
-   saleReferenceNumber, …)`.
+   lines, adjustments, dateSold, saleReferenceNumber, …)`.
 2. `SaleTaxFinalizationProcessor.handle` consumes the event in a separate
    transaction:
    - Looks up active `OrgJurisdictionTaxType` rows (status = ACTIVE).
@@ -398,21 +313,15 @@ Taxes are **never computed in the sale transaction itself.** Instead:
      keyed by `orgJurisdictionTaxTypeId` (org-row id)** — i.e. lookup is
      `rates[orgTaxType.id]`. The id stored on `TaxEntryEntity` below is
      different: it's the platform-level `jurisdictionTaxTypeId`.
-   - Computes `taxAmount` per type (where `rate = ratePercentage / 100` —
-     the stored `ratePercentage` is e.g. `7` for 7%, not `0.07`):
+   - Computes `taxAmount` per type (where `rate = ratePercentage / 100`):
      - `PERCENTAGE` + exclusive → `taxableAmount * rate`.
      - `PERCENTAGE` + inclusive → `taxableAmount − taxableAmount / (1+rate)`.
-     - `FIXED_VALUE` → `flatAmount` (scale 4, half-up).
+     - `FIXED_VALUE` → `flatAmount`.
    - Persists `TaxEntryEntity` rows keyed by `(sourceReferenceNumber,
-     sourceType=SALE, taxTypeId)`. The stored `taxTypeId` is the
-     **platform-level** `jurisdictionTaxTypeId` (not the org-jurisdiction
-     row id) — that's the value the unique constraint and idempotency
-     checks both key on.
-   - Updates `sale.taxTotal` and `sale.grandTotal` (= `taxableAmount +
-     non-inclusive taxes`).
+     sourceType=SALE, taxTypeId)`.
+   - Updates `sale.taxTotal` and `sale.grandTotal`.
 3. On void, `SaleTaxReversalProcessor.handle` writes negated tax entries
-   under `sourceType = SALE_VOID`, keyed to the fiscal period of the void
-   date.
+   under `sourceType = SALE_VOID`.
 
 ### Idempotency rules (Kafka)
 
@@ -426,26 +335,30 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 
 ### Consequences for callers
 
-- `SaleEntity.taxTotal` / `grandTotal` are **null at the end of the create
+- `SaleEntity.taxTotal` / `grandTotal` are **null at the end of the commit
   transaction** and become populated **after the Kafka event lands**. Code
   that needs the final total must call `payableTotal()` (which gracefully
-  falls back to `subtotal − discountTotal + surchargeTotal` when `grandTotal` is null).
+  falls back to `subtotal − discountTotal + surchargeTotal` when `grandTotal`
+  is null).
 
 ---
 
 ## 8. Payments
 
-Payments live in the `sale_payment` package; the sale package interacts
-with `SalePaymentService` only.
+Payments live in the `sale_payment` package; the sale package interacts with
+`SalePaymentCommitter` (sale_payment/api) at commit time and with
+`SalePaymentService` for standalone payments after confirmation.
 
-### Submitted with the sale
+### Submitted with the commit
 
-`SaleMutator.recordPayments` runs **inside the same transaction** as the
-sale create/update for payments sent in the DTO. Behavior:
+`SalePaymentCommitter.appendNew` runs **inside the same transaction** as the
+sale commit:
 
 - Empty payments list → no-op, sale `paymentStatus` left as-is.
 - Each amount must be positive (`SalePaymentValidator.guardPositiveAmount`).
-- New status is computed from `paid` vs `total`:
+- New `SalePaymentEntity` rows are inserted only for payments whose
+  `existingId == null`. Persisted payments cannot be removed via session.
+- Resulting status is computed from `paid` vs `total`:
   - `0` → `UNPAID`
   - `paid > total` → `OVERPAID`
   - `paid < total` → `PARTIALLY_SETTLED`
@@ -454,18 +367,18 @@ sale create/update for payments sent in the DTO. Behavior:
 
 ### Ceilings
 
-- **For non-draft sales (create/confirm/convert), payments cannot exceed
-  the sale total** (`guardPaymentsWithinSaleTotal`). Drafts allow over-paid
-  amounts temporarily because totals can still change.
-- **For walk-in sales (always non-draft), payments must fully cover the
-  total** (`guardFullPaymentCoverage`).
-- `payableTotal()` is used as the ceiling. Prior to tax finalization,
-  this is `subtotal − discountTotal + surchargeTotal`; after, it is `grandTotal`.
+- **At commit (draft and confirm), payments cannot exceed payable total**
+  (`SalePaymentCommitter.guardWithinTotal`). At session-mutation time, the
+  validator currently lets payments slide so the user can still see what
+  they've staged.
+- **For walk-in sales (always non-draft at the time of confirm), payments
+  must fully cover the total** (`SalePaymentCommitter.guardFullCoverage`,
+  called by `SaleConfirmCommitter`).
 
 ### Standalone payment recording
 
-`SalePaymentService.recordPayment` (post-sale) runs through the
-`SaleDataFetcher.lockAndGetSaleContext` lookup, checks `guardOpenForPayment`
+`SalePaymentService.recordPayment` (post-confirm) runs through
+`SaleDataFetcher.lockAndGetSaleContext`, checks `guardOpenForPayment`
 (only `CONFIRMED` accepts standalone payments — `DRAFT` is rejected with
 "submit payments with the draft itself"; `VOIDED` and `DISCARDED` are also
 rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
@@ -475,7 +388,7 @@ rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
 - Cannot void a payment whose sale is already `VOIDED`.
 - A payment can only be voided once (`guardNotAlreadyVoided`).
 - After voiding, the sale's `paymentStatus` is recomputed from
-  `salePaymentFetcher.calculatePaidAmount` (which excludes voids).
+  `salePaymentFetcher.calculatePaidAmount`.
 
 ---
 
@@ -487,8 +400,7 @@ rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
   `reissue` path) declare `readOnly = true`. The lock-acquiring lookups
   `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext` are annotated
   `Propagation.MANDATORY` — they must join an already-open writable
-  transaction from the caller, and the class-level `readOnly` flag does
-  not apply to them.
+  transaction from the caller.
 - Sale lines, reservations, discounts, and payments are persisted **in the
   same transaction** as the sale itself. If any guard throws, nothing is
   committed.
@@ -499,6 +411,9 @@ rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
   `@Audited` (Hibernate Envers). `SaleVoidEntity` and
   `SaleLineStockReservationEntity` are not — they are
   append-only/transient by nature.
+- `SaleEntity.version` is `@Version`-managed; the session captures it on
+  load and `SaleDraftCommitter` / `SaleConfirmCommitter` verify it before
+  saving.
 
 ---
 
@@ -509,16 +424,13 @@ convention, no `@MappingTarget`, entity rules) live in
 `.claude/instructions.md`. Sale-package specifics only:
 
 - Entity helpers in this package: `SaleEntity.payableTotal()`,
-  `SaleEntity.discountTotal()`, `SaleEntity.surchargeTotal()`,
   `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal()`. No business
   logic beyond these.
 - Domain DTOs (`SaleResponseDto`, `SaleLineResponseDto`) abstract DB
-  details and are what cross package boundaries.
-- API DTOs (`SaleCreateDto`, `SaleUpdateDto`, `SaleLine*Dto`,
-  `SaleVoidCreateDto`, `SaleNotesUpdateDto`) are request shapes.
-- **`SaleUpdateDto.applyTo` throws on `contactId == Optional.empty()`** —
-  a null contact is not legal, so the standard "empty = clear" semantics
-  do not apply to that one field.
+  details and are what cross package boundaries on the read path.
+- Commit-input DTOs (`SaleCommitInput`, `SaleCommitLine`, etc.) abstract
+  what the session passes into the committers. They are the only request
+  shape committers accept.
 - Reference numbers are surfaced through `sale.requiredReference()` once
   persisted. The Kafka publishers depend on this — **never publish an
   event with a null reference**.
@@ -529,12 +441,12 @@ convention, no `@MappingTarget`, entity rules) live in
 
 Events produced by this package:
 
-| Event                       | Trigger                                           | Handlers                       |
-|-----------------------------|---------------------------------------------------|--------------------------------|
-| `SaleConfirmedEvent`        | `createSale`, `convertDraftToSale`                | `SaleTaxFinalizationProcessor` |
-| `SaleVoidedEvent`           | `voidSale` (only when CONFIRMED→VOIDED)           | `SaleTaxReversalProcessor`     |
-| `SalePaymentRecordedEvent`  | Any payment recorded with the sale or stand-alone | accounting/external systems    |
-| `SalePaymentVoidedEvent`    | `SalePaymentService.voidPayment`                  | accounting/external systems    |
+| Event                       | Trigger                                                | Handlers                       |
+|-----------------------------|--------------------------------------------------------|--------------------------------|
+| `SaleConfirmedEvent`        | `SaleConfirmCommitter.confirm`                         | `SaleTaxFinalizationProcessor` |
+| `SaleVoidedEvent`           | `voidSale` (only when CONFIRMED→VOIDED)                | `SaleTaxReversalProcessor`     |
+| `SalePaymentRecordedEvent`  | Any payment recorded with the commit or stand-alone    | accounting/external systems    |
+| `SalePaymentVoidedEvent`    | `SalePaymentService.voidPayment`                       | accounting/external systems    |
 
 The two payment events are **conditional on the payment method carrying an
 `accountCode`**. `SalePaymentHandlerForKafka.publish` drops payment lines
@@ -561,18 +473,18 @@ sale-package implementation of those rules is:
 
 ## 12. Validation Ordering (Performance + UX)
 
-The flows in this package intentionally validate **before** running
-expensive operations. When extending them, preserve that ordering:
+`SaleSessionValidator` runs structural validation on every mutation. The
+committers run only **live-state** guards because they race against
+real-world change that has happened since the session was populated. When
+extending either side, preserve the priority order:
 
-1. **Pure DTO guards first** (free): walk-in check, "not reassigning to
-   walk-in", positive quantities, no duplicate products, no overlap
-   between `linesToUpdate` and `linesToRemove`.
-2. **Cheap status guards next** (single FK by id):
-   `guardIsDraft`, `guardCanVoid`.
-3. **Single-row lookups** (contact exists, sale exists).
+1. **Pure DTO / session-state guards** (free): positive quantities, no
+   duplicate products, line refs valid, payment positivity, discount ceilings.
+2. **Cheap status guards** (single FK by id): walk-in coverage at confirm,
+   payment ceilings at commit.
+3. **Single-row lookups** (contact exists, fiscal period open).
 4. **Bulk fetches** (product summaries, unit conversion graph, balances,
-   reservations) — these are the expensive ones and should run only after
-   the above pass.
+   reservations).
 5. **Stock guards** (advisory lock + balances + reservations).
 6. **Persist** (entities, reservations, discounts, payments).
 7. **Publish Kafka events** (last, so the transaction is shaped correctly).
@@ -584,43 +496,20 @@ run** — i.e. as soon as the data it needs is in scope.
 
 ## 13. Quick Reference: Each Public Entry Point
 
-### `SaleDraftHandler.createDraft(SaleCreateDto)`
-- Rejects walk-in payloads.
-- Requires contact to exist.
-- Guards date/fiscal period only if payments are present.
-- Creates `SaleEntity` at `DRAFT`, lines, reservations, adjustments
-  (no ceiling enforcement), payments.
+### `SaleDraftCommitter.saveDraft(SaleCommitInput): SaleCommitOutcome`
+- Guards products active.
+- Guards fiscal period + future-date only when payments are present.
+- Optimistic version check against `SaleEntity.version`.
+- Persists `SaleEntity` at `DRAFT`, syncs lines/adjustments, appends new
+  payments, clears + re-issues reservations.
 
-### `SaleDraftHandler.updateDraft(SaleUpdateDto)`
-- Sale must be `DRAFT`.
-- Cannot reassign to walk-in.
-- Requires contact to exist (after applying header changes).
-- Date/fiscal guard only if payments are present.
-- Syncs reservations to the new surviving line set.
-- Adds/removes adjustments; reconciles percentage adjustments; does
-  **not** enforce ceilings (drafts can be upside-down on discounts).
-
-### `SaleConfirmationHandler.createSale(SaleCreateDto)`
-- Walk-in is allowed (in fact, walk-in requires this path).
-- Contact must exist if non-walk-in.
-- `dateSold` defaults to now-org; future date rejected; fiscal period must
-  be open.
-- Requires ≥1 line (`SaleValidator.guardHasLines` in
-  `prepareForSaleConfirmation`).
-- Creates `SaleEntity` at `CONFIRMED`, lines, adjustments (discount
-  ceilings enforced; no surcharge ceiling in phase 1), payments (within
-  total; walk-in requires full coverage).
-- Runs FIFO consumption.
+### `SaleConfirmCommitter.confirm(SaleCommitInput): SaleCommitOutcome`
+- Walk-in is allowed (and required to be fully paid).
+- Requires ≥1 line.
+- Defaults `dateSold` to now-org if absent; future-date rejected; fiscal
+  period must be open.
+- Acquires PRODUCT lock, clears reservations, runs FIFO consumption.
 - Publishes `SaleConfirmedEvent` → taxes finalize asynchronously.
-
-### `SaleConfirmationHandler.convertDraftToSale(SaleUpdateDto)`
-- Sale must be `DRAFT`; cannot reassign to walk-in.
-- Must end with ≥1 surviving line.
-- Backfills `soldById` / `dateSold` if missing.
-- Fiscal period must be open for the final `dateSold`.
-- Skips reservation sync (clears reservations after locking products),
-  enforces adjustment (discount) + payment ceilings on the surviving lines, runs FIFO
-  consumption, publishes `SaleConfirmedEvent`.
 
 ### `SaleUpdater.voidSale(SaleVoidCreateDto)`
 - DRAFT → DISCARDED (releases reservations only).
@@ -646,20 +535,15 @@ run** — i.e. as soon as the data it needs is in scope.
 - Defaults to 10; rejects `n <= 0` and `n > 1000`.
 - Sorted by `createdOn DESC`.
 
+### `SaleDataFetcher.getHeaderSnapshot(saleId)` / `getLineSnapshots(saleId)`
+- Used by `SaleSessionLoader` to map an existing draft into a session.
+- Snapshots are plain data classes in `sale/api/` — they do not leak
+  `SaleEntity` / `SaleLineEntity` across the package boundary.
+
 ### Sellable product lookup (now on the product package)
 - Lives at `location_product/api/LocationProductForSaleSearchService`,
   REST-exposed as `POST /secured/location-products/search-for-sale` on
-  `LocationProductEndpoint`. The sale package no longer hosts this surface.
-- Request body is `PageRequest<SaleProductSearchParameters, String>` —
-  the parameter type only exposes `searchText` + `excludeIds` (the wider
-  `ProductSearchParameters` filters are intentionally not surfaced).
-  Status is forced to `ACTIVE` internally.
-- Each row is enriched with `stockBatches`: `StockEntryEntity` rows with
-  `quantityRemaining > 0`, sorted by `priority ASC` (nulls last) — the
-  FIFO preview order the cashier UI walks as quantities are entered.
-- This is an **estimate at query time, not a reservation**. The lookup
-  takes no advisory locks; consumption still happens through
-  `SaleStockUpdater` at confirmation time under `Propagation.MANDATORY`.
+  `LocationProductEndpoint`.
 
 ---
 
@@ -673,27 +557,20 @@ run** — i.e. as soon as the data it needs is in scope.
   span many zones.
 - **Adding a guard after a bulk fetch.** Move it earlier. The fetch is
   often the expensive part — fail fast.
-- **Mutating a non-draft sale's lines, adjustments, or contact.** All such
-  mutations are blocked at the validator layer; do not try to bypass.
-- **Forgetting reservation lifecycle on a draft.** If you change line
-  base-quantities, you must call `syncUpdatedReservations` (or rely on
-  the existing `updateAndSyncReservations` path). Stale reservations are
-  the leading source of oversell bugs.
+- **Bypassing the session for line / adjustment edits.** All such edits
+  must go through a session — there is no REST surface to mutate a draft
+  directly anymore.
+- **Forgetting to clear reservations before re-issuing them at commit.**
+  `SaleDraftCommitter` always `clearBySale` first; relying on diff-based
+  reservation logic is the leading source of oversell bugs.
 - **Publishing Kafka events outside the sale transaction.** Always go
   through `ApplicationEventPublisher` so the event is bound to commit.
 - **Kafka publishers bang (`!!`) on `subtotal` and `dateSold`** in both
   `SaleConfirmedHandlerForKafka.publish` and
-  `SaleVoidHandlerForKafka.publishVoid`. The discount and surcharge
-  totals are sourced via `sale.discountTotal()` / `sale.surchargeTotal()`
-  (each treating both of its bucket columns as zero when null), and
-  `payableTotal()` falls back to `subtotal − discountTotal +
-  surchargeTotal` when `grandTotal` is null — so a sale with no
-  adjustments publishes `0` for the bucket totals rather than NPE-ing.
-  Confirmation/void paths always set subtotal and dateSold before
-  publish, so those asserts hold in normal flow. Stay aware of the
-  contract when introducing new mutation paths or admin tools — anything
-  that produces a sale entity without subtotal/dateSold populated will
-  NPE on publish/republish.
+  `SaleVoidHandlerForKafka.publishVoid`. Confirmation/void paths always
+  set subtotal and dateSold before publish, so those asserts hold in
+  normal flow. Stay aware of the contract when introducing new mutation
+  paths.
 
 ---
 
@@ -701,17 +578,19 @@ run** — i.e. as soon as the data it needs is in scope.
 
 | Topic                      | Class(es)                                                                                               |
 |----------------------------|---------------------------------------------------------------------------------------------------------|
-| State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`                                                       |
-| Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleLines*Preparer`, `SaleLines*Context`, `SaleLinesUpdateApplier` |
+| State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                  |
+| Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleCommitLineSync`                                                |
 | Validation                 | `SaleValidator`, `SaleAdjustmentValidator`, `NewSaleAdjustmentValidator`, `SaleAdjustmentReconciler`    |
+| Commit primitives          | `SaleCommitInput`, `SaleDraftCommitter`, `SaleConfirmCommitter`                                         |
 | Stock reservation          | `SaleStockReserver`, `SaleLineStockReservationEntity`, `StockReservationDtos`                           |
-| Adjustments (disc + srch)  | `sale_adjustment/` package (entity, repo, service, validators, reconciler, fetcher, calculator)         |
+| Adjustments (disc + srch)  | `sale_adjustment/` package (entity, repo, service, validators, reconciler, fetcher, calculator, `SaleAdjustmentCommitter`) |
 | Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)    |
-| Payments                   | `sale_payment/` package                                                                                 |
+| Payments                   | `sale_payment/` package (`SalePaymentCommitter` for commit-time inserts)                                |
 | Taxes (async finalization) | `SaleTaxFinalizationProcessor`, `SaleTaxReversalProcessor`, `tax_entry/` package                        |
 | Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                               |
 | Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                          |
 | Read APIs                  | `SaleDataFetcher`, `SaleAssembler`                                                                      |
+| Session orchestration      | `sale_session/` package (see `sale_session/README.md`)                                                  |
 
 Keep this table accurate as the package evolves — it is the entry point
 for anyone (or any agent) doing a first-pass investigation.

@@ -4,14 +4,11 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -25,14 +22,9 @@ class SaleValidator(
     private val salePaymentFetcher: SalePaymentFetcher,
     private val saleStockReserver: SaleStockReserver,
     private val entityAdvisoryLock: EntityAdvisoryLock,
-    private val saleLineRepository: SaleLineRepository,
 ) {
 
     companion object {
-        fun guardHasLines(lines: Collection<*>) {
-            if (lines.isEmpty()) throw RtsGenericException("Sale must have at least one line")
-        }
-
         fun guardDateSoldIsNotFuture(dateSold: OffsetDateTime) {
             val orgToday = DateTimes.Local.Now.organization()
             val saleLocalDate = DateTimes.Local.atOrganizationZone(dateSold)
@@ -45,54 +37,6 @@ class SaleValidator(
             if (productIds.size != productIds.toSet().size) {
                 throw RtsGenericException("Duplicate products are not allowed in a sale")
             }
-        }
-
-        fun guardPositiveLineQuantities(lines: List<SaleLineCreateDto>) {
-            if (lines.any { it.quantity.signum() <= 0 }) {
-                throw RtsGenericException("Line quantity must be positive")
-            }
-        }
-
-        fun guardIsDraft(sale: SaleEntity) {
-            if (sale.status != SaleStatus.DRAFT) {
-                throw RtsGenericException("Sale ${sale.referenceNumber} is not in DRAFT status")
-            }
-        }
-
-        fun guardLineIdsBelongToSale(dto: SaleUpdateDto, existingLineIds: Set<UUID>) {
-            val invalidRemoves = dto.linesToRemove.filterNot { it in existingLineIds }
-            if (invalidRemoves.isNotEmpty()) {
-                throw RtsGenericException("Sale line ids to remove do not belong to this sale: $invalidRemoves")
-            }
-            val updateIds = dto.linesToUpdate.map { it.id }
-            val duplicateUpdates = updateIds.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
-            if (duplicateUpdates.isNotEmpty()) {
-                throw RtsGenericException("Duplicate sale line ids in linesToUpdate: $duplicateUpdates")
-            }
-            val invalidUpdates = updateIds.filterNot { it in existingLineIds }
-            if (invalidUpdates.isNotEmpty()) {
-                throw RtsGenericException("Sale line ids to update do not belong to this sale: $invalidUpdates")
-            }
-            val removeSet = dto.linesToRemove.toHashSet()
-            val conflicting = updateIds.filter { it in removeSet }
-            if (conflicting.isNotEmpty()) {
-                throw RtsGenericException("Sale line ids cannot be both updated and removed: $conflicting")
-            }
-        }
-
-        fun guardNotReassigningToWalkIn(dto: SaleUpdateDto) {
-            val incoming = dto.contactId?.orElse(null) ?: return
-            if (incoming == SystemContact.WALK_IN.id) {
-                throw RtsGenericException("A draft sale cannot be reassigned to a walk-in customer")
-            }
-        }
-    }
-
-    fun guardSurvivingLinesNotEmpty(dto: SaleUpdateDto) {
-        if (dto.linesToAdd.isNotEmpty()) return
-        val existingCount = saleLineRepository.countBySaleId(dto.id)
-        if (existingCount <= dto.linesToRemove.toHashSet().size.toLong()) {
-            throw RtsGenericException("Cannot confirm a sale with no lines")
         }
     }
 
@@ -132,7 +76,7 @@ class SaleValidator(
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
         val reservations = saleStockReserver.loadReservationBreakdown(requested.keys)
         requested.forEach { (locationProductId, quantity) ->
-            val reservedByOthers = reservations.getValue(locationProductId).excludingSale(saleId)
+            val reservedByOthers = reservations[locationProductId]?.excludingSale(saleId) ?: BigDecimal.ZERO
             val available = balances.getValue(locationProductId).subtract(reservedByOthers)
             throwIfOverSelling(available, quantity, locationProductId, productSummaries)
         }

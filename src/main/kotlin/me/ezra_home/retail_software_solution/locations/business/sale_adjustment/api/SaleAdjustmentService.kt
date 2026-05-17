@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.AdjustmentAmountCalculator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.AdjustmentAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.SaleAdjustmentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.SaleAdjustmentRepository
 import org.springframework.stereotype.Service

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.AdjustmentAmountCalculator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.AdjustmentAmountCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.SaleAdjustmentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.SaleAdjustmentRepository
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod

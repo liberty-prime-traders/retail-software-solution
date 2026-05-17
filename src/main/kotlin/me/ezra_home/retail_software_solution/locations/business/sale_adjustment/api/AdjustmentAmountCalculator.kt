@@ -1,7 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.sale_adjustment
+package me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentCreateDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal

@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.domain.PageRequest
@@ -16,11 +18,23 @@ import java.util.UUID
 
 data class SaleContext(val contactId: UUID, val payableTotal: BigDecimal, val status: SaleStatus)
 
+data class SaleHeaderSnapshot(
+    val id: UUID,
+    val version: Long,
+    val status: SaleStatus,
+    val contactId: UUID,
+    val soldById: UUID?,
+    val dateSold: java.time.OffsetDateTime?,
+    val notes: String?,
+)
+
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
 class SaleDataFetcher(
     private val saleRepository: SaleRepository,
+    private val saleLineRepository: SaleLineRepository,
     private val saleAssembler: SaleAssembler,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -49,4 +63,47 @@ class SaleDataFetcher(
     fun getSaleContactId(saleId: UUID): UUID {
         return saleRepository.getReferenceById(saleId).contactId
     }
+
+    fun getHeaderSnapshot(saleId: UUID): SaleHeaderSnapshot {
+        val sale = saleRepository.findById(saleId).orElseThrow {
+            RtsGenericException("Sale $saleId not found")
+        }
+        return SaleHeaderSnapshot(
+            id = sale.id!!,
+            version = sale.version,
+            status = sale.status,
+            contactId = sale.contactId,
+            soldById = sale.soldById,
+            dateSold = sale.dateSold,
+            notes = sale.notes,
+        )
+    }
+
+    fun getLineSnapshots(saleId: UUID): List<SaleLineSnapshot> {
+        val lines = saleLineRepository.findBySaleId(saleId)
+        if (lines.isEmpty()) return emptyList()
+        val productSummaries = locationProductDataFetcher
+            .findSummaryByIds(lines.map { it.locationProductId })
+        return lines.map { line ->
+            SaleLineSnapshot(
+                id = line.id!!,
+                locationProductId = line.locationProductId,
+                productLabel = productSummaries[line.locationProductId]?.label ?: line.locationProductId.toString(),
+                quantity = line.quantity,
+                unitId = line.unitId,
+                conversionFactor = line.conversionFactor,
+                unitPrice = line.unitPrice,
+            )
+        }
+    }
 }
+
+data class SaleLineSnapshot(
+    val id: UUID,
+    val locationProductId: UUID,
+    val productLabel: String,
+    val quantity: BigDecimal,
+    val unitId: UUID,
+    val conversionFactor: BigDecimal,
+    val unitPrice: BigDecimal,
+)

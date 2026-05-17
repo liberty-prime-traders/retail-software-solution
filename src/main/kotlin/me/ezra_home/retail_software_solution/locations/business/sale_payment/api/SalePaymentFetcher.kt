@@ -7,7 +7,16 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 import java.util.UUID
+
+data class SalePaymentSnapshot(
+    val id: UUID,
+    val paymentMethodId: UUID,
+    val amount: BigDecimal,
+    val reference: String?,
+    val paymentDate: OffsetDateTime?,
+)
 
 @Component
 @TransactionalOnLocationSchema(readOnly = true)
@@ -49,6 +58,23 @@ class SalePaymentFetcher(
                 paymentMethodNamesById
             )
         }
+    }
+
+    fun getPaymentSnapshots(saleId: UUID): List<SalePaymentSnapshot> {
+        val payments = salePaymentRepository.findBySaleId(saleId)
+        if (payments.isEmpty()) return emptyList()
+        val voidedIds = voidedPaymentIds(payments.map { it.id!! })
+        return payments
+            .filter { it.id !in voidedIds }
+            .map { entity ->
+                SalePaymentSnapshot(
+                    id = entity.id!!,
+                    paymentMethodId = entity.paymentMethodId,
+                    amount = entity.amount,
+                    reference = entity.reference,
+                    paymentDate = entity.paymentDate,
+                )
+            }
     }
 
     fun hasActivePayments(saleId: UUID): Boolean {
