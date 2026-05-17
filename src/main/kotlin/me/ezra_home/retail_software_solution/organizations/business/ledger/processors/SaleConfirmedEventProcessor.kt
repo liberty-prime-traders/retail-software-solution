@@ -33,12 +33,12 @@ class SaleConfirmedEventProcessor(
 
     override fun prepareLedgerRequest(event: SaleConfirmedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
-        val netAmount = event.subtotal - event.discountTotal
+        val payableTotal = event.payableTotal
 
-        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, netAmount)
+        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, payableTotal)
         val saleEntries = listOf(
-            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, netAmount),
-            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, netAmount)
+            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, payableTotal),
+            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, payableTotal)
         )
 
         return LedgerPostingRequest(
@@ -49,7 +49,7 @@ class SaleConfirmedEventProcessor(
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = netAmount,
+                    receivableAmount = payableTotal,
                     payableAmount = BigDecimal.ZERO
                 )
             )

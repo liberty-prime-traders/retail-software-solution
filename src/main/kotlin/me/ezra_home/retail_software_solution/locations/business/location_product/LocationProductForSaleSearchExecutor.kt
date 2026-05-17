@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryPreviewFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
@@ -12,12 +12,13 @@ import org.springframework.stereotype.Component
 class LocationProductForSaleSearchExecutor(
     @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
     emf: LocalContainerEntityManagerFactoryBean,
-    private val stockEntryPreviewFetcher: StockEntryPreviewFetcher
+    private val stockEntryFetcher: StockEntryFetcher
 ) : ProductSearchExecutor<LocationProductEntity, LocationProductForSaleDto>(emf, LocationProductEntity::class.java) {
 
     override fun map(entities: List<LocationProductEntity>): List<LocationProductForSaleDto> {
-        val entriesByProductId = stockEntryPreviewFetcher
-            .fetchAvailableEntriesByProductIds(entities.mapNotNull { it.id })
+        val entriesByProductId = stockEntryFetcher.fetchAvailableEntriesByProductIds(
+            entities.mapNotNull { it.id }
+        )
         return entities.map {
             LocationProductForSaleDto(
                 id = it.id!!,

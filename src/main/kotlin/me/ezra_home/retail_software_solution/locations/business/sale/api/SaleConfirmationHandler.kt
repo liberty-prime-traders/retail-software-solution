@@ -51,7 +51,7 @@ class SaleConfirmationHandler(
         )
         val outcome = saleMutator.create(dto, sale, insertContext)
         runFifoConsumption(outcome.lines, sale.requiredReference())
-        saleConfirmedHandlerForKafka.publish(sale, outcome.lines, outcome.discounts)
+        saleConfirmedHandlerForKafka.publish(sale)
         return saleAssembler.buildResponse(sale, outcome.lines, insertContext.productSummaries)
     }
 
@@ -78,7 +78,7 @@ class SaleConfirmationHandler(
         saleStockReserver.clearBySale(dto.id)
 
         runFifoConsumption(outcome.survivingLines, sale.requiredReference())
-        saleConfirmedHandlerForKafka.publish(sale, outcome.survivingLines, outcome.discounts)
+        saleConfirmedHandlerForKafka.publish(sale)
         return saleAssembler.buildResponse(sale, outcome.survivingLines, outcome.productSummaries)
     }
 

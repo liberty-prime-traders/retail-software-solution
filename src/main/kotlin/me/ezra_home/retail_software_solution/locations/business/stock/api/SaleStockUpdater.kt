@@ -30,6 +30,7 @@ class SaleStockUpdater(
         val productIds = saleLineStockRequests.map { it.locationProductId }
         val fifoByProduct = stockEntryRepository.findFifoEntriesForProducts(productIds)
             .groupBy { it.locationProductId }
+            .mapValues { (_, entries) -> entries.sortedWith(stockEntryFifoComparator) }
         val balanceByProduct = stockMovementRepository.findLatestBalances(productIds)
             .associate { it.getLocationProductId() to it.getRemainingQuantity() }
 

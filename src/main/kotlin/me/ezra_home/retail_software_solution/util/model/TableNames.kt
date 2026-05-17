@@ -63,7 +63,7 @@ object TableNames {
     const val SUPPLIER_PAYMENT_VOID = "supplier_payment_void"
     const val SALE = "sale"
     const val SALE_LINE = "sale_line"
-    const val SALE_DISCOUNT = "sale_discount"
+    const val SALE_ADJUSTMENT = "sale_adjustment"
     const val SALE_PAYMENT = "sale_payment"
     const val SALE_PAYMENT_VOID = "sale_payment_void"
     const val SALE_VOID = "sale_void"
@@ -108,6 +108,6 @@ object TableNames {
     const val SUPPLIER_RETURN_AUDIT = "supplier_return_aud"
     const val SALE_AUDIT = "sale_aud"
     const val SALE_LINE_AUDIT = "sale_line_aud"
-    const val SALE_DISCOUNT_AUDIT = "sale_discount_aud"
+    const val SALE_ADJUSTMENT_AUDIT = "sale_adjustment_aud"
     const val TAX_ENTRY_AUDIT = "tax_entry_aud"
 }

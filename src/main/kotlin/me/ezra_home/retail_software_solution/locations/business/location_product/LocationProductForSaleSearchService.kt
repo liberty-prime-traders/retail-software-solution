@@ -3,14 +3,14 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryPreviewFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
 import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class LocationProductForSaleQuerySearchService(
+class LocationProductForSaleSearchService(
     private val locationProductCache: LocationProductCache,
-    private val stockEntryPreviewFetcher: StockEntryPreviewFetcher,
+    private val stockEntryFetcher: StockEntryFetcher,
     locationProductForSaleFetcher: LocationProductForSaleFetcher
 ) : ProductSearchService<LocationProductForSaleDto>(
     locationProductForSaleFetcher,
@@ -21,7 +21,7 @@ class LocationProductForSaleQuerySearchService(
 
     override fun findAllProducts(): List<LocationProductForSaleDto> {
         val dtos = locationProductCache.findAllLocationProducts()
-        val entriesByProductId = stockEntryPreviewFetcher.fetchAvailableEntriesByProductIds(dtos.map { it.id })
+        val entriesByProductId = stockEntryFetcher.fetchAvailableEntriesByProductIds(dtos.map { it.id })
         return dtos.map {
             LocationProductForSaleDto(
                 id = it.id,

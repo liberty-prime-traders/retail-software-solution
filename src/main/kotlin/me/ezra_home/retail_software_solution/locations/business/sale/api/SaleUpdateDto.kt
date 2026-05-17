@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountCreateDto
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.time.OffsetDateTime
@@ -18,8 +18,8 @@ data class SaleUpdateDto(
     val linesToUpdate: List<SaleLineUpdateDto> = emptyList(),
     val linesToRemove: List<UUID> = emptyList(),
     val payments: List<SalePaymentCreateDto> = emptyList(),
-    val discountsToAdd: List<SaleDiscountCreateDto> = emptyList(),
-    val discountsToRemove: List<UUID> = emptyList()
+    val adjustmentsToAdd: List<SaleAdjustmentCreateDto> = emptyList(),
+    val adjustmentsToRemove: List<UUID> = emptyList()
 ) {
 
     fun applyTo(sale: SaleEntity) {

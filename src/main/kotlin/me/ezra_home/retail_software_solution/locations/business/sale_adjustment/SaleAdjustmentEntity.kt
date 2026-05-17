@@ -20,30 +20,30 @@ import java.util.UUID
 class SaleAdjustmentEntity(
 
     @Column(name = "sale_id", nullable = false, updatable = false)
-    val saleId: UUID,
+    var saleId: UUID,
 
     @Column(name = "sale_line_id", updatable = false)
-    val saleLineId: UUID?,
+    var saleLineId: UUID?,
 
     @Column(name = "direction", nullable = false, length = 5, updatable = false)
-    val direction: AdjustmentDirection,
+    var direction: AdjustmentDirection,
 
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
-    val calculationMethod: CalculationMethod,
+    var calculationMethod: CalculationMethod,
 
     @Column(name = "value", nullable = false, precision = 19, scale = 4, updatable = false)
-    val value: BigDecimal,
+    var value: BigDecimal,
 
     @Column(name = "calculated_amount", nullable = false, precision = 19, scale = 4, updatable = false)
-    val calculatedAmount: BigDecimal,
+    var calculatedAmount: BigDecimal,
 
     @Column(name = "adjustment_reason_id", nullable = false, updatable = false)
-    val adjustmentReasonId: UUID,
+    var adjustmentReasonId: UUID,
 
     @Column(name = "note", updatable = false)
-    val note: String? = null,
+    var note: String? = null,
 
     @Column(name = "approved_by_id", updatable = false)
-    val approvedById: UUID? = null
+    var approvedById: UUID? = null
 
 ) : ImmutableEntity()

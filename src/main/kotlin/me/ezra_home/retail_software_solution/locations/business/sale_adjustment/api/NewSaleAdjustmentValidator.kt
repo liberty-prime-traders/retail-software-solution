@@ -22,7 +22,7 @@ class NewSaleAdjustmentValidator(
         lines: List<ProductLineWithPrice>,
         productSummaries: Map<UUID, LocationProductSummaryDto>,
         existingAdjustments: List<SaleAdjustmentEntity> = emptyList(),
-        productByLineId: Map<UUID, UUID> = emptyMap(),
+        productBySaleLineId: Map<UUID, UUID> = emptyMap(),
     ) {
         if (adjustmentDtos.isEmpty() && existingAdjustments.isEmpty()) return
         val lineByProductId = lines.associateBy { it.locationProductId }
@@ -39,7 +39,7 @@ class NewSaleAdjustmentValidator(
         }
         existingAdjustments.forEach { adjustment ->
             adjustment.saleLineId?.let {
-                productByLineId[it]
+                productBySaleLineId[it]
                     ?: throw RtsGenericException(
                         "Adjustment references sale line $it which is not on the current sale"
                     )
@@ -71,7 +71,6 @@ class NewSaleAdjustmentValidator(
             }
         guardLineTotals(newDiscountAmounts, existingDiscountAmounts, lines, productSummaries)
         guardOrderTotal(newDiscountAmounts, existingDiscountAmounts, lines)
-        // SURCHARGE ceilings intentionally skipped for phase 1. TODO(phase 2).
     }
 
     private fun guardLineTotals(
@@ -98,7 +97,7 @@ class NewSaleAdjustmentValidator(
                         "On ${labelFor(locationProductId, productSummaries)}, total discounts of " +
                                 "${Currencies.format(total)} exceed line total of " +
                                 "${Currencies.format(saleLineTotal)}. " +
-                                "Remove or adjust the discounts and resubmit."
+                                "Remove or adjust the discounts then resubmit."
                     )
                 }
             }

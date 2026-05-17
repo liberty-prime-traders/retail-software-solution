@@ -67,6 +67,14 @@ databaseChangeLog:
                   type: numeric(19, 4)
 
               - column:
+                  name: line_level_surcharge_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_surcharge_total
+                  type: numeric(19, 4)
+
+              - column:
                   name: tax_total
                   type: numeric(19, 4)
 

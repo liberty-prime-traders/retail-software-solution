@@ -40,15 +40,12 @@ databaseChangeLog:
                     notNullConstraintName: stock_entry_location_product_id_notnull
 
               - column:
-                  name: source_type_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_entry_source_type_id_notnull
+                  name: source_type
+                  type: varchar(10)
 
               - column:
-                  name: source_id
-                  type: uuid
+                  name: external_reference_number
+                  type: varchar(30)
 
               - column:
                   name: batch_size

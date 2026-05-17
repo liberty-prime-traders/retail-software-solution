@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
-import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSourceService
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
@@ -19,14 +18,12 @@ import java.math.BigDecimal
 class PurchaseDeliveryStockUpdater(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
-    private val stockItemSourceService: StockItemSourceService,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
     fun recordPurchaseDelivery(event: PurchaseDeliveredEvent) {
         val baseUnitsByProductId = locationProductDataFetcher.getBaseUnitIds(event.lines.map { it.locationProductId })
-        val sourceTypeId = stockItemSourceService.findSourceId(StockItemSource.PURCHASE)
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
 
         val entriesByLineId = event.lines.associate { line ->
@@ -36,7 +33,8 @@ class PurchaseDeliveryStockUpdater(
             line.deliveryLineId to StockEntryEntity(
                 purchaseDeliveryLineId = line.deliveryLineId,
                 locationProductId = line.locationProductId,
-                sourceTypeId = sourceTypeId,
+                sourceType = StockItemSource.PURCHASE.code,
+                externalReferenceNumber = line.lineReferenceNumber,
                 batchSize = baseQty,
                 quantityRemaining = baseQty,
                 unitCost = baseCost,

@@ -23,11 +23,11 @@ class StockEntryEntity(
   @Column(name = "location_product_id", nullable = false)
   var locationProductId: UUID,
 
-  @Column(name = "source_type_id", nullable = false)
-  var sourceTypeId: UUID,
+  @Column(name = "source_type", length = 10)
+  var sourceType: String? = null,
 
-  @Column(name = "source_id")
-  var sourceId: UUID? = null,
+  @Column(name = "external_reference_number", length = 30)
+  var externalReferenceNumber: String? = null,
 
   @Column(name = "batch_size", nullable = false, precision = 15, scale = 3, updatable = false)
   var batchSize: BigDecimal,
@@ -36,7 +36,7 @@ class StockEntryEntity(
   var quantityRemaining: BigDecimal,
 
   @Column(name = "priority")
-  var priority: Int? = null,
+  var priority: Int,
 
   @Column(name = "unit_cost", precision = 15, scale = 2)
   var unitCost: BigDecimal? = null

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountResponseDto
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentResponseDto
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -20,11 +20,13 @@ data class SaleResponseDto(
     val status: SaleStatus,
     val paymentStatus: PaymentStatus,
     val lines: List<SaleLineResponseDto>,
-    val discounts: List<SaleDiscountResponseDto>,
+    val adjustments: List<SaleAdjustmentResponseDto>,
     val payments: List<SalePaymentResponseDto>,
     val subtotal: BigDecimal?,
     val lineLevelDiscountTotal: BigDecimal?,
     val orderLevelDiscountTotal: BigDecimal?,
+    val lineLevelSurchargeTotal: BigDecimal?,
+    val orderLevelSurchargeTotal: BigDecimal?,
     val taxTotal: BigDecimal?,
     val grandTotal: BigDecimal?,
     val totalPaid: BigDecimal

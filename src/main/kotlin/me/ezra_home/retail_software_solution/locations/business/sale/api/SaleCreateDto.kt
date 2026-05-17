@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
-import me.ezra_home.retail_software_solution.locations.business.sale_discount.api.SaleDiscountCreateDto
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import java.time.OffsetDateTime
@@ -13,7 +13,7 @@ data class SaleCreateDto(
     val notes: String? = null,
     val linesToAdd: List<SaleLineCreateDto>,
     val payments: List<SalePaymentCreateDto>,
-    val discounts: List<SaleDiscountCreateDto> = emptyList()
+    val adjustments: List<SaleAdjustmentCreateDto> = emptyList()
 ) {
 
     fun walkInCustomer(): Boolean = resolveContactId() == SystemContact.WALK_IN.id

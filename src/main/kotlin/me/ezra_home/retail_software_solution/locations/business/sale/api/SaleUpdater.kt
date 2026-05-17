@@ -57,7 +57,7 @@ class SaleUpdater(
             saleStockUpdater.restoreStock(sale.requiredReference())
             sale.status = SaleStatus.VOIDED
             val voidEntity = saleVoidRepository.save(SaleVoidEntity(saleId = dto.saleId, reason = dto.reason))
-            saleVoidHandlerForKafka.publishVoid(sale, lines, voidEntity)
+            saleVoidHandlerForKafka.publishVoid(sale, voidEntity)
         }
         val productSummaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId })
         return saleAssembler.buildResponse(sale, lines, productSummaries)

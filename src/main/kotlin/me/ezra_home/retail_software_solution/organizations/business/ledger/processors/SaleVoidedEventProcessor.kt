@@ -42,7 +42,7 @@ class SaleVoidedEventProcessor(
 
     override fun prepareLedgerRequest(event: SaleVoidedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
-        val netAmount = event.subtotal - event.discountTotal
+        val netAmount = event.payableTotal
 
         val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelReversalEntries(event.dateSold, netAmount)
         val saleEntries = listOf(

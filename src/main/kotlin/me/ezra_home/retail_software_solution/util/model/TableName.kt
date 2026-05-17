@@ -67,7 +67,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_PAYMENT_VOID(TableNames.SUPPLIER_PAYMENT_VOID, SchemaLevel.LOCATION),
   SALE(TableNames.SALE, SchemaLevel.LOCATION),
   SALE_LINE(TableNames.SALE_LINE, SchemaLevel.LOCATION),
-  SALE_DISCOUNT(TableNames.SALE_DISCOUNT, SchemaLevel.LOCATION),
+  SALE_ADJUSTMENT(TableNames.SALE_ADJUSTMENT, SchemaLevel.LOCATION),
   SALE_PAYMENT(TableNames.SALE_PAYMENT, SchemaLevel.LOCATION),
   SALE_PAYMENT_VOID(TableNames.SALE_PAYMENT_VOID, SchemaLevel.LOCATION),
   SALE_VOID(TableNames.SALE_VOID, SchemaLevel.LOCATION),
@@ -112,7 +112,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_RETURN_AUDIT(TableNames.SUPPLIER_RETURN_AUDIT, SchemaLevel.LOCATION),
   SALE_AUDIT(TableNames.SALE_AUDIT, SchemaLevel.LOCATION),
   SALE_LINE_AUDIT(TableNames.SALE_LINE_AUDIT, SchemaLevel.LOCATION),
-  SALE_DISCOUNT_AUDIT(TableNames.SALE_DISCOUNT_AUDIT, SchemaLevel.LOCATION),
+  SALE_ADJUSTMENT_AUDIT(TableNames.SALE_ADJUSTMENT_AUDIT, SchemaLevel.LOCATION),
   TAX_ENTRY_AUDIT(TableNames.TAX_ENTRY_AUDIT, SchemaLevel.LOCATION);
 
   val tableName: String

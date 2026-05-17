@@ -41,7 +41,7 @@ class SaleTaxFinalizationProcessor(
 
     @TransactionalOnLocationSchema
     override fun handle(event: SaleConfirmedEvent) {
-        val taxableAmount = event.subtotal - event.discountTotal
+        val taxableAmount = event.payableTotal
         val activeTaxTypes = orgJurisdictionTaxTypeFetcher.getAllDtos()
             .filter { it.status == OrgJurisdictionTaxTypeStatus.ACTIVE }
         val fiscalPeriodId = fiscalPeriodService.requireOpenForDate(event.dateSold)

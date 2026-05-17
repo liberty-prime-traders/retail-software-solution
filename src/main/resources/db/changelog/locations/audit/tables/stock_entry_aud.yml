@@ -39,12 +39,12 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: source_type_id
-                  type: uuid
+                  name: source_type
+                  type: varchar(10)
 
               - column:
-                  name: source_id
-                  type: uuid
+                  name: external_reference_number
+                  type: varchar(30)
 
               - column:
                   name: batch_size

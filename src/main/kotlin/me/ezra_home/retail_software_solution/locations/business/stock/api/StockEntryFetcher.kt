@@ -4,32 +4,29 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.UUID
 
 @Component
 @TransactionalOnLocationSchema(readOnly = true)
-class StockEntryPreviewFetcher(private val stockEntryRepository: StockEntryRepository) {
+class StockEntryFetcher(private val stockEntryRepository: StockEntryRepository) {
 
-    fun fetchAvailableEntriesByProductIds(locationProductIds: Collection<UUID>): Map<UUID, List<StockEntryPreview>> {
+    fun fetchAvailableEntriesByProductIds(locationProductIds: Collection<UUID>): Map<UUID, List<StockEntryDto>> {
         if (locationProductIds.isEmpty()) return emptyMap()
         return stockEntryRepository
-            .findByLocationProductIdInAndQuantityRemainingGreaterThan(locationProductIds, BigDecimal.ZERO)
-            .map { it.toPreview() }
+            .findFifoEntriesForProducts(locationProductIds)
             .groupBy { it.locationProductId }
-            .mapValues { (_, entries) -> entries.sortedWith(fifoComparator()) }
+            .mapValues { (_, entries) ->
+                entries.sortedWith(stockEntryFifoComparator)
+                    .mapIndexed { index, entity -> entity.toDto(order = index) }
+            }
     }
 
-    private fun StockEntryEntity.toPreview(): StockEntryPreview = StockEntryPreview(
+    private fun StockEntryEntity.toDto(order: Int): StockEntryDto = StockEntryDto(
         id = id!!,
         locationProductId = locationProductId,
         externalReferenceNumber = externalReferenceNumber,
-        priority = priority,
+        order = order,
         availableBaseQty = quantityRemaining,
         unitCost = unitCost
     )
-
-    // FIFO: priority ascending, nulls last.
-    private fun fifoComparator(): Comparator<StockEntryPreview> =
-        compareBy(nullsLast()) { it.priority }
 }
