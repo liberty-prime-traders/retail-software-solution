@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustmentAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustmentHandler
-import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionCommitHandler
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPersister
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderUpdateDto
@@ -36,12 +36,12 @@ class SaleSessionEndpoint(
     private val saleSessionLineHandler: SaleSessionLineHandler,
     private val saleSessionAdjustmentHandler: SaleSessionAdjustmentHandler,
     private val saleSessionPaymentHandler: SaleSessionPaymentHandler,
-    private val saleSessionCommitHandler: SaleSessionCommitHandler,
+    private val saleSessionPersister: SaleSessionPersister,
 ) {
 
     @PostMapping
-    fun start(@RequestBody dto: SaleSessionStartDto): SaleSessionResponseDto =
-        saleSessionHandler.start(dto)
+    fun start(@RequestBody sessionStartDto: SaleSessionStartDto): SaleSessionResponseDto =
+        saleSessionHandler.start(sessionStartDto)
 
     @GetMapping
     fun listOpenSessions(): List<SaleSessionSummaryDto> = saleSessionHandler.listOpenSessions()
@@ -59,56 +59,56 @@ class SaleSessionEndpoint(
     @PostMapping("{sessionId}/lines")
     fun addLine(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionLineAddDto,
-    ): SaleSessionResponseDto = saleSessionLineHandler.addLine(sessionId, dto)
+        @RequestBody lineAddDto: SaleSessionLineAddDto,
+    ): SaleSessionResponseDto = saleSessionLineHandler.addLine(sessionId, lineAddDto)
 
     @PutMapping("{sessionId}/lines")
     fun updateLine(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionLineUpdateDto,
-    ): SaleSessionResponseDto = saleSessionLineHandler.updateLine(sessionId, dto)
+        @RequestBody lineUpdateDto: SaleSessionLineUpdateDto,
+    ): SaleSessionResponseDto = saleSessionLineHandler.updateLine(sessionId, lineUpdateDto)
 
     @DeleteMapping("{sessionId}/lines")
     fun removeLine(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionRowIdentityDto,
-    ): SaleSessionResponseDto = saleSessionLineHandler.removeLine(sessionId, dto)
+        @RequestBody rowIdentityDto: SaleSessionRowIdentityDto,
+    ): SaleSessionResponseDto = saleSessionLineHandler.removeLine(sessionId, rowIdentityDto)
 
     @PostMapping("{sessionId}/adjustments")
     fun addAdjustment(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionAdjustmentAddDto,
-    ): SaleSessionResponseDto = saleSessionAdjustmentHandler.add(sessionId, dto)
+        @RequestBody adjustmentAddDto: SaleSessionAdjustmentAddDto,
+    ): SaleSessionResponseDto = saleSessionAdjustmentHandler.add(sessionId, adjustmentAddDto)
 
     @DeleteMapping("{sessionId}/adjustments")
     fun removeAdjustment(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionRowIdentityDto,
-    ): SaleSessionResponseDto = saleSessionAdjustmentHandler.remove(sessionId, dto)
+        @RequestBody rowIdentityDto: SaleSessionRowIdentityDto,
+    ): SaleSessionResponseDto = saleSessionAdjustmentHandler.remove(sessionId, rowIdentityDto)
 
     @PostMapping("{sessionId}/payments")
     fun addPayment(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionPaymentAddDto,
-    ): SaleSessionResponseDto = saleSessionPaymentHandler.add(sessionId, dto)
+        @RequestBody paymentAddDto: SaleSessionPaymentAddDto,
+    ): SaleSessionResponseDto = saleSessionPaymentHandler.add(sessionId, paymentAddDto)
 
     @DeleteMapping("{sessionId}/payments")
     fun removePayment(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionPaymentRemoveDto,
-    ): SaleSessionResponseDto = saleSessionPaymentHandler.remove(sessionId, dto)
+        @RequestBody paymentRemoveDto: SaleSessionPaymentRemoveDto,
+    ): SaleSessionResponseDto = saleSessionPaymentHandler.remove(sessionId, paymentRemoveDto)
 
     @PatchMapping("{sessionId}/header")
     fun updateHeader(
         @PathVariable sessionId: UUID,
-        @RequestBody dto: SaleSessionHeaderUpdateDto,
-    ): SaleSessionResponseDto = saleSessionHeaderHandler.update(sessionId, dto)
+        @RequestBody headerUpdateDto: SaleSessionHeaderUpdateDto,
+    ): SaleSessionResponseDto = saleSessionHeaderHandler.update(sessionId, headerUpdateDto)
 
     @PostMapping("{sessionId}/draft")
     fun saveDraft(@PathVariable sessionId: UUID): SaleSessionResponseDto =
-        saleSessionCommitHandler.saveDraft(sessionId)
+        saleSessionPersister.saveDraft(sessionId)
 
     @PostMapping("{sessionId}/confirm")
     fun confirm(@PathVariable sessionId: UUID): SaleSessionResponseDto =
-        saleSessionCommitHandler.confirm(sessionId)
+        saleSessionPersister.confirm(sessionId)
 }

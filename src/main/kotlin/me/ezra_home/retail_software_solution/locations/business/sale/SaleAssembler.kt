@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleResponseDto
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSummary
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
@@ -15,13 +15,13 @@ class SaleAssembler(
     private val salePaymentFetcher: SalePaymentFetcher,
 ) {
 
-    fun buildResponses(sales: List<SaleEntity>): List<SaleResponseDto> {
-        val saleIds = sales.map { it.id!! }
+    fun buildSummaries(saleEntities: List<SaleEntity>): List<SaleSummary> {
+        val saleIds = saleEntities.map { it.id!! }
         val contactNameMap = getContactNames()
         val paidAmountBySaleId = salePaymentFetcher.calculatePaidAmounts(saleIds)
-        return sales.map { sale ->
-            val totalPaid = paidAmountBySaleId[sale.id!!] ?: BigDecimal.ZERO
-            buildResponse(sale, contactNameMap, totalPaid)
+        return saleEntities.map { saleEntity ->
+            val totalPaid = paidAmountBySaleId[saleEntity.id!!] ?: BigDecimal.ZERO
+            buildSummary(saleEntity, contactNameMap, totalPaid)
         }
     }
 
@@ -31,27 +31,27 @@ class SaleAssembler(
         )
     }
 
-    fun buildResponse(sale: SaleEntity): SaleResponseDto {
+    fun buildSummary(saleEntity: SaleEntity): SaleSummary {
         val contactNameMap = getContactNames()
-        val totalPaid = salePaymentFetcher.calculatePaidAmount(sale.id!!)
-        return buildResponse(sale, contactNameMap, totalPaid)
+        val totalPaid = salePaymentFetcher.calculatePaidAmount(saleEntity.id!!)
+        return buildSummary(saleEntity, contactNameMap, totalPaid)
     }
 
-    private fun buildResponse(
-        sale: SaleEntity,
+    private fun buildSummary(
+        saleEntity: SaleEntity,
         contactNameMap: Map<UUID, String>,
         totalPaid: BigDecimal
-    ): SaleResponseDto {
-        return SaleResponseDto(
-            id = sale.id!!,
-            referenceNumber = sale.requiredReference(),
-            contactName = contactNameMap[sale.contactId] ?: "",
-            soldBy = userQualifier.getUserFullName(sale.soldById),
-            dateSold = sale.dateSold,
-            status = sale.status,
-            paymentStatus = sale.paymentStatus,
-            subtotal = sale.subtotal,
-            grandTotal = sale.grandTotal,
+    ): SaleSummary {
+        return SaleSummary(
+            id = saleEntity.id!!,
+            referenceNumber = saleEntity.requiredReference(),
+            contactName = contactNameMap[saleEntity.contactId] ?: "",
+            soldBy = userQualifier.getUserFullName(saleEntity.soldById),
+            dateSold = saleEntity.dateSold,
+            status = saleEntity.status,
+            paymentStatus = saleEntity.paymentStatus,
+            subtotal = saleEntity.subtotal,
+            grandTotal = saleEntity.grandTotal,
             totalPaid = totalPaid
         )
     }

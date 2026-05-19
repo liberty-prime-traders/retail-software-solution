@@ -23,66 +23,71 @@ class SaleSessionLineHandler(
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun addLine(sessionId: UUID, dto: SaleSessionLineAddDto): SaleSessionResponseDto {
-        val session = saleSessionStore.load(sessionId)
-        saleSessionValidator.guardMutable(session)
-        locationProductService.guardAllActive(listOf(dto.locationProductId))
-        val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(dto.locationProductId))
-            .getValue(dto.locationProductId)
+    fun addLine(sessionId: UUID, lineAddDto: SaleSessionLineAddDto): SaleSessionResponseDto {
+        val saleSession = saleSessionStore.load(sessionId)
+        saleSessionValidator.guardMutable(saleSession)
+        locationProductService.guardAllActive(listOf(lineAddDto.locationProductId))
+        val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(lineAddDto.locationProductId))
+            .getValue(lineAddDto.locationProductId)
         val unitPrice = productSummary.unitPrice
             ?: throw RtsGenericException("Product ${productSummary.label} has no unit price")
-        val factor = unitConversionGraphFacade.getFactor(dto.unitId, productSummary.baseUnitId)
+        val conversionFactor = unitConversionGraphFacade.getFactor(lineAddDto.unitId, productSummary.baseUnitId)
 
-        val newLine = SaleSessionLine(
+        val newSaleSessionLine = SaleSessionLine(
             identity = SessionIdentity.mintFreshIdentity(),
-            locationProductId = dto.locationProductId,
+            locationProductId = lineAddDto.locationProductId,
             productLabel = productSummary.label,
-            quantity = dto.quantity,
-            unitId = dto.unitId,
-            conversionFactor = factor,
+            quantity = lineAddDto.quantity,
+            unitId = lineAddDto.unitId,
+            conversionFactor = conversionFactor,
             unitPrice = unitPrice,
         )
-        val updated = session.copy(lines = session.lines + newLine)
-        return saleSessionUpdateFinalizer.finalize(updated)
+        val updatedSaleSession = saleSession.copy(saleLines = saleSession.saleLines + newSaleSessionLine)
+        return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
     }
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun updateLine(sessionId: UUID, dto: SaleSessionLineUpdateDto): SaleSessionResponseDto {
-        val session = saleSessionStore.load(sessionId)
-        saleSessionValidator.guardMutable(session)
-        val targetKey = dto.identity.key()
-        val target = session.lines.firstOrNull { it.identity.key() == targetKey }
+    fun updateLine(sessionId: UUID, lineUpdateDto: SaleSessionLineUpdateDto): SaleSessionResponseDto {
+        val saleSession = saleSessionStore.load(sessionId)
+        saleSessionValidator.guardMutable(saleSession)
+        val targetLineKey = lineUpdateDto.identity.key()
+        val targetSaleSessionLine = saleSession.saleLines.firstOrNull { it.identity.key() == targetLineKey }
             ?: throw RtsGenericException("Line not found on session")
-        val factor = if (target.unitId != dto.unitId) {
-            val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(target.locationProductId))
-                .getValue(target.locationProductId)
-            unitConversionGraphFacade.getFactor(dto.unitId, productSummary.baseUnitId)
+        val conversionFactor = if (targetSaleSessionLine.unitId != lineUpdateDto.unitId) {
+            val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(targetSaleSessionLine.locationProductId))
+                .getValue(targetSaleSessionLine.locationProductId)
+            unitConversionGraphFacade.getFactor(lineUpdateDto.unitId, productSummary.baseUnitId)
         } else {
-            target.conversionFactor
+            targetSaleSessionLine.conversionFactor
         }
-        val updated = session.copy(
-            lines = session.lines.map { line ->
-                if (line.identity.key() == targetKey) {
-                    line.copy(quantity = dto.quantity, unitId = dto.unitId, conversionFactor = factor)
-                } else line
+        val updatedSaleSession = saleSession.copy(
+            saleLines = saleSession.saleLines.map { saleSessionLine ->
+                if (saleSessionLine.identity.key() == targetLineKey) {
+                    saleSessionLine.copy(
+                        quantity = lineUpdateDto.quantity,
+                        unitId = lineUpdateDto.unitId,
+                        conversionFactor = conversionFactor,
+                    )
+                } else saleSessionLine
             }
         )
-        return saleSessionUpdateFinalizer.finalize(updated)
+        return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
     }
 
-    fun removeLine(sessionId: UUID, dto: SaleSessionRowIdentityDto): SaleSessionResponseDto {
-        val session = saleSessionStore.load(sessionId)
-        saleSessionValidator.guardMutable(session)
-        val targetKey = dto.identity.key()
-        val survivingLines = session.lines.filter { it.identity.key() != targetKey }
-        if (survivingLines.size == session.lines.size) {
+    fun removeLine(sessionId: UUID, rowIdentityDto: SaleSessionRowIdentityDto): SaleSessionResponseDto {
+        val saleSession = saleSessionStore.load(sessionId)
+        saleSessionValidator.guardMutable(saleSession)
+        val targetLineKey = rowIdentityDto.identity.key()
+        val survivingSaleLines = saleSession.saleLines.filter { it.identity.key() != targetLineKey }
+        if (survivingSaleLines.size == saleSession.saleLines.size) {
             throw RtsGenericException("Line not found on session")
         }
-        val survivingAdjustments = session.adjustments.filter { adj ->
-            adj.lineIdentity == null || adj.lineIdentity.key() != targetKey
+        val survivingSaleAdjustments = saleSession.saleAdjustments.filter { saleSessionAdjustment ->
+            saleSessionAdjustment.relatedSaleLineIdentity == null ||
+                saleSessionAdjustment.relatedSaleLineIdentity.key() != targetLineKey
         }
-        val updated = session.copy(lines = survivingLines, adjustments = survivingAdjustments)
-        return saleSessionUpdateFinalizer.finalize(updated)
+        val updatedSaleSession = saleSession.copy(saleLines = survivingSaleLines, saleAdjustments = survivingSaleAdjustments)
+        return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
     }
 
 }

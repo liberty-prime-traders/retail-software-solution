@@ -10,21 +10,21 @@ class SaleTotalsApplier {
 
     fun applyTotals(
         sale: SaleEntity,
-        lines: List<SaleLineEntity>,
-        adjustments: List<SaleAdjustmentSummaryDto>,
+        saleLines: List<SaleLineEntity>,
+        adjustmentSummaries: List<SaleAdjustmentSummaryDto>,
     ) {
-        sale.subtotal = lines.sumOf { it.lineTotal() }
-        sale.lineLevelDiscountTotal = sumOf(adjustments, AdjustmentDirection.DISCOUNT, lineLevel = true)
-        sale.orderLevelDiscountTotal = sumOf(adjustments, AdjustmentDirection.DISCOUNT, lineLevel = false)
-        sale.lineLevelSurchargeTotal = sumOf(adjustments, AdjustmentDirection.SURCHARGE, lineLevel = true)
-        sale.orderLevelSurchargeTotal = sumOf(adjustments, AdjustmentDirection.SURCHARGE, lineLevel = false)
+        sale.subtotal = saleLines.sumOf { it.lineTotal() }
+        sale.lineLevelDiscountTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.DISCOUNT, lineLevel = true)
+        sale.orderLevelDiscountTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.DISCOUNT, lineLevel = false)
+        sale.lineLevelSurchargeTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.SURCHARGE, lineLevel = true)
+        sale.orderLevelSurchargeTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.SURCHARGE, lineLevel = false)
     }
 
-    private fun sumOf(
-        adjustments: List<SaleAdjustmentSummaryDto>,
+    private fun sumAdjustmentAmounts(
+        adjustmentSummaries: List<SaleAdjustmentSummaryDto>,
         direction: AdjustmentDirection,
         lineLevel: Boolean,
-    ): BigDecimal = adjustments
+    ): BigDecimal = adjustmentSummaries
         .filter { it.direction == direction && (it.saleLineId != null) == lineLevel }
         .sumOf { it.calculatedAmount }
 }

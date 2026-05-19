@@ -17,126 +17,133 @@ class SaleSessionValidator(
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
 ) {
 
-    fun validate(session: SaleSession) {
-        guardPositiveLineQuantities(session.lines)
-        guardNoDuplicateProducts(session.lines)
-        guardAdjustmentReferences(session)
-        guardAdjustmentReasons(session.adjustments)
-        guardPositivePayments(session.payments.map { it.amount })
-        guardDiscountCeilings(session)
+    fun validate(saleSession: SaleSession) {
+        guardPositiveLineQuantities(saleSession.saleLines)
+        guardNoDuplicateProducts(saleSession.saleLines)
+        guardAdjustmentReferences(saleSession)
+        guardAdjustmentReasons(saleSession.saleAdjustments)
+        guardPositivePayments(saleSession.salePayments.map { it.amount })
+        guardDiscountCeilings(saleSession)
     }
 
-    fun guardMutable(session: SaleSession) {
-        if (!session.mutable()) {
+    fun guardMutable(saleSession: SaleSession) {
+        if (!saleSession.mutable()) {
             throw RtsGenericException(
-                "Sale session is read-only because the underlying sale is ${session.originalStatus}"
+                "Sale session is read-only because the underlying sale is ${saleSession.originalStatus}"
             )
         }
     }
 
-    fun canAddPayments(session: SaleSession) {
-        if (!session.canAddPayments()) {
+    fun canAddPayments(saleSession: SaleSession) {
+        if (!saleSession.canAddPayments()) {
             throw RtsGenericException(
-                "Cannot add a payment because the sale is ${session.originalStatus}"
+                "Cannot add a payment because the sale is ${saleSession.originalStatus}"
             )
         }
     }
 
-    fun canDiscardPayments(session: SaleSession) {
-        if (!session.canDiscardPayments()) {
+    fun canDiscardPayments(saleSession: SaleSession) {
+        if (!saleSession.canDiscardPayments()) {
             throw RtsGenericException(
-                "Cannot discard a payment because the sale is ${session.originalStatus}"
+                "Cannot discard a payment because the sale is ${saleSession.originalStatus}"
             )
         }
     }
 
-    fun guardNonEmptyLines(session: SaleSession) {
-        if (session.lines.isEmpty()) {
+    fun guardNonEmptyLines(saleSession: SaleSession) {
+        if (saleSession.saleLines.isEmpty()) {
             throw RtsGenericException("Sale must have at least one line")
         }
     }
 
-    fun guardWalkInFullyCovered(session: SaleSession) {
-        if (session.header.contactId != SystemContact.WALK_IN.id) return
-        if (session.totals.paymentTotal < session.totals.payableTotal) {
+    fun guardWalkInFullyCovered(saleSession: SaleSession) {
+        if (saleSession.header.contactId != SystemContact.WALK_IN.id) return
+        if (saleSession.totals.paymentTotal < saleSession.totals.payableTotal) {
             throw RtsGenericException("Walk-in sales require full payment coverage")
         }
     }
 
-    fun guardPaymentsWithinTotal(session: SaleSession) {
-        if (session.totals.payableTotal.signum() <= 0) return
-        if (session.totals.paymentTotal > session.totals.payableTotal) {
+    fun guardPaymentsWithinTotal(saleSession: SaleSession) {
+        if (saleSession.totals.payableTotal.signum() <= 0) return
+        if (saleSession.totals.paymentTotal > saleSession.totals.payableTotal) {
             throw RtsGenericException(
-                "Payments of ${Currencies.format(session.totals.paymentTotal)} exceed payable total " +
-                        Currencies.format(session.totals.payableTotal)
+                "Payments of ${Currencies.format(saleSession.totals.paymentTotal)} exceed payable total " +
+                        Currencies.format(saleSession.totals.payableTotal)
             )
         }
     }
 
-    private fun guardPositiveLineQuantities(lines: List<SaleSessionLine>) {
-        if (lines.any { it.quantity.signum() <= 0 }) {
+    private fun guardPositiveLineQuantities(saleSessionLines: List<SaleSessionLine>) {
+        if (saleSessionLines.any { it.quantity.signum() <= 0 }) {
             throw RtsGenericException("Line quantity must be positive")
         }
     }
 
-    private fun guardNoDuplicateProducts(lines: List<SaleSessionLine>) {
-        val productIds = lines.map { it.locationProductId }
-        if (productIds.size != productIds.toSet().size) {
+    private fun guardNoDuplicateProducts(saleSessionLines: List<SaleSessionLine>) {
+        val locationProductIds = saleSessionLines.map { it.locationProductId }
+        if (locationProductIds.size != locationProductIds.toSet().size) {
             throw RtsGenericException("Duplicate products are not allowed in a sale")
         }
     }
 
-    private fun guardAdjustmentReferences(session: SaleSession) {
-        val lineKeys = session.lines.mapTo(HashSet()) { it.identity.key() }
-        session.adjustments.forEach { adj ->
-            val lineKey = adj.lineIdentity?.key() ?: return@forEach
-            if (lineKey !in lineKeys) {
+    private fun guardAdjustmentReferences(saleSession: SaleSession) {
+        val saleSessionLineKeys = saleSession.saleLines.mapTo(HashSet()) { it.identity.key() }
+        saleSession.saleAdjustments.forEach { saleSessionAdjustment ->
+            val targetLineKey = saleSessionAdjustment.relatedSaleLineIdentity?.key() ?: return@forEach
+            if (targetLineKey !in saleSessionLineKeys) {
                 throw RtsGenericException("Adjustment references a line that is not on the sale")
             }
         }
     }
 
-    private fun guardAdjustmentReasons(adjustments: List<SaleSessionAdjustment>) {
-        adjustments.forEach { adj ->
-            adjustmentReasonService.requireCanApply(adj.adjustmentReasonId, adj.direction)
+    private fun guardAdjustmentReasons(saleSessionAdjustments: List<SaleSessionAdjustment>) {
+        saleSessionAdjustments.forEach { saleSessionAdjustment ->
+            adjustmentReasonService.requireCanApply(
+                saleSessionAdjustment.adjustmentReasonId,
+                saleSessionAdjustment.direction,
+            )
         }
     }
 
-    private fun guardPositivePayments(amounts: List<BigDecimal>) {
-        if (amounts.any { it.signum() <= 0 }) {
+    private fun guardPositivePayments(paymentAmounts: List<BigDecimal>) {
+        if (paymentAmounts.any { it.signum() <= 0 }) {
             throw RtsGenericException("Payment amount must be positive")
         }
     }
 
-    private fun guardDiscountCeilings(session: SaleSession) {
+    private fun guardDiscountCeilings(saleSession: SaleSession) {
         val totals = saleSessionTotalsCalculator.compute(
-            session.lines, session.adjustments, session.totalPaid()
+            saleSession.saleLines, saleSession.saleAdjustments, saleSession.totalPaid()
         )
-        guardLineDiscountCeilings(session)
+        guardLineDiscountCeilings(saleSession)
         val subtotal = totals.subtotal
-        val remaining = subtotal - totals.lineLevelDiscountTotal
-        if (totals.orderLevelDiscountTotal > remaining) {
+        val remainingSubtotalAfterLineDiscounts = subtotal - totals.lineLevelDiscountTotal
+        if (totals.orderLevelDiscountTotal > remainingSubtotalAfterLineDiscounts) {
             throw RtsGenericException(
                 "Order-level discount total of ${Currencies.format(totals.orderLevelDiscountTotal)} exceeds " +
-                        "remaining subtotal ${Currencies.format(remaining)} (subtotal ${Currencies.format(subtotal)} " +
+                        "remaining subtotal ${Currencies.format(remainingSubtotalAfterLineDiscounts)} " +
+                        "(subtotal ${Currencies.format(subtotal)} " +
                         "minus line discounts ${Currencies.format(totals.lineLevelDiscountTotal)})."
             )
         }
     }
 
-    private fun guardLineDiscountCeilings(session: SaleSession) {
-        val linesByKey = session.lines.associateBy { it.identity.key() }
-        val discountsByLine = session.adjustments
-            .filter { it.direction == AdjustmentDirection.DISCOUNT && it.lineIdentity != null }
-            .groupBy { it.lineIdentity!!.key() }
-        discountsByLine.forEach { (lineKey, discounts) ->
-            val line = linesByKey[lineKey]
+    private fun guardLineDiscountCeilings(saleSession: SaleSession) {
+        val saleSessionLinesByKey = saleSession.saleLines.associateBy { it.identity.key() }
+        val lineDiscountsByLineKey = saleSession.saleAdjustments
+            .filter { it.direction == AdjustmentDirection.DISCOUNT && it.relatedSaleLineIdentity != null }
+            .groupBy { it.relatedSaleLineIdentity!!.key() }
+        lineDiscountsByLineKey.forEach { (targetLineKey, lineDiscounts) ->
+            val targetSaleSessionLine = saleSessionLinesByKey[targetLineKey]
                 ?: throw RtsGenericException("Adjustment references a line that is not on the sale")
-            val totalDiscount = discounts.sumOf { saleSessionTotalsCalculator.calculatedAmount(it, session.lines) }
-            val lineTotal = line.lineTotal()
-            if (totalDiscount > lineTotal) {
+            val totalDiscountAmount = lineDiscounts.sumOf {
+                saleSessionTotalsCalculator.calculatedAmount(it, saleSession.saleLines)
+            }
+            val lineTotal = targetSaleSessionLine.lineTotal()
+            if (totalDiscountAmount > lineTotal) {
                 throw RtsGenericException(
-                    "On ${line.productLabel}, total discounts of ${Currencies.format(totalDiscount)} exceed " +
+                    "On ${targetSaleSessionLine.productLabel}, total discounts of " +
+                            "${Currencies.format(totalDiscountAmount)} exceed " +
                             "line total of ${Currencies.format(lineTotal)}."
                 )
             }

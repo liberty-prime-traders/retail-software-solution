@@ -7,7 +7,7 @@ import java.util.UUID
 
 data class SaleSessionAdjustment(
     val identity: SessionIdentity,
-    val lineIdentity: SessionIdentity?,
+    val relatedSaleLineIdentity: SessionIdentity?,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
     val calculationMethod: CalculationMethod,

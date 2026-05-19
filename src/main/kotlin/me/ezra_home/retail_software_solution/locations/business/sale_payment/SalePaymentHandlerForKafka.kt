@@ -35,7 +35,7 @@ class SalePaymentHandlerForKafka(
         if (payments.isEmpty()) return
         val voidedIds = salePaymentVoidRepository.findBySalePaymentIdIn(payments.map { it.id!! })
             .mapTo(HashSet()) { it.salePaymentId }
-        val lines = payments.filter { it.id !in voidedIds }.mapNotNull { payment ->
+        val saleLines = payments.filter { it.id !in voidedIds }.mapNotNull { payment ->
             val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
             if (!StringUtils.hasValue(accountCode)) return@mapNotNull null
             SalePaymentLineDto(
@@ -45,12 +45,12 @@ class SalePaymentHandlerForKafka(
                 paymentDate = payment.paymentDate
             )
         }
-        if (lines.isEmpty()) return
-        publishEvent(saleId, contactId, lines)
+        if (saleLines.isEmpty()) return
+        publishEvent(saleId, contactId, saleLines)
     }
 
     fun publish(saleId: UUID, contactId: UUID, payments: List<SalePaymentEntity>) {
-        val lines = payments.mapNotNull { payment ->
+        val saleLines = payments.mapNotNull { payment ->
             val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
 
             if (!StringUtils.hasValue(accountCode)) {
@@ -69,8 +69,8 @@ class SalePaymentHandlerForKafka(
             )
         }
 
-        if (lines.isNotEmpty()) {
-            publishEvent(saleId, contactId, lines)
+        if (saleLines.isNotEmpty()) {
+            publishEvent(saleId, contactId, saleLines)
         }
     }
 

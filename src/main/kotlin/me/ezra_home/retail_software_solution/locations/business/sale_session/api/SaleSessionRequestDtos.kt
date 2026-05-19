@@ -29,7 +29,7 @@ data class SaleSessionRowIdentityDto(
 )
 
 data class SaleSessionAdjustmentAddDto(
-    val lineIdentity: SessionIdentity? = null,
+    val relatedSaleLineIdentity: SessionIdentity? = null,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
     val calculationMethod: CalculationMethod,

@@ -17,39 +17,39 @@ class SaleSessionAdjustmentHandler(
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun add(sessionId: UUID, dto: SaleSessionAdjustmentAddDto): SaleSessionResponseDto {
-        val session = saleSessionStore.load(sessionId)
-        saleSessionValidator.guardMutable(session)
-        if (dto.lineIdentity != null) {
-            val targetKey = dto.lineIdentity.key()
-            if (session.lines.none { it.identity.key() == targetKey }) {
+    fun add(sessionId: UUID, adjustmentAddDto: SaleSessionAdjustmentAddDto): SaleSessionResponseDto {
+        val saleSession = saleSessionStore.load(sessionId)
+        saleSessionValidator.guardMutable(saleSession)
+        if (adjustmentAddDto.relatedSaleLineIdentity != null) {
+            val targetLineKey = adjustmentAddDto.relatedSaleLineIdentity.key()
+            if (saleSession.saleLines.none { it.identity.key() == targetLineKey }) {
                 throw RtsGenericException("Adjustment references a line that is not on the sale")
             }
         }
-        val adjustment = SaleSessionAdjustment(
+        val newSaleSessionAdjustment = SaleSessionAdjustment(
             identity = SessionIdentity.mintFreshIdentity(),
-            lineIdentity = dto.lineIdentity,
-            adjustmentReasonId = dto.adjustmentReasonId,
-            direction = dto.direction,
-            calculationMethod = dto.calculationMethod,
-            value = dto.value,
-            note = dto.note,
-            approvedById = dto.approvedById,
+            relatedSaleLineIdentity = adjustmentAddDto.relatedSaleLineIdentity,
+            adjustmentReasonId = adjustmentAddDto.adjustmentReasonId,
+            direction = adjustmentAddDto.direction,
+            calculationMethod = adjustmentAddDto.calculationMethod,
+            value = adjustmentAddDto.value,
+            note = adjustmentAddDto.note,
+            approvedById = adjustmentAddDto.approvedById,
         )
-        val updated = session.copy(adjustments = session.adjustments + adjustment)
-        return saleSessionUpdateFinalizer.finalize(updated)
+        val updatedSaleSession = saleSession.copy(saleAdjustments = saleSession.saleAdjustments + newSaleSessionAdjustment)
+        return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
     }
 
-    fun remove(sessionId: UUID, dto: SaleSessionRowIdentityDto): SaleSessionResponseDto {
-        val session = saleSessionStore.load(sessionId)
-        saleSessionValidator.guardMutable(session)
-        val targetKey = dto.identity.key()
-        val survivors = session.adjustments.filter { it.identity.key() != targetKey }
-        if (survivors.size == session.adjustments.size) {
+    fun remove(sessionId: UUID, rowIdentityDto: SaleSessionRowIdentityDto): SaleSessionResponseDto {
+        val saleSession = saleSessionStore.load(sessionId)
+        saleSessionValidator.guardMutable(saleSession)
+        val targetAdjustmentKey = rowIdentityDto.identity.key()
+        val survivingSaleAdjustments = saleSession.saleAdjustments.filter { it.identity.key() != targetAdjustmentKey }
+        if (survivingSaleAdjustments.size == saleSession.saleAdjustments.size) {
             throw RtsGenericException("Adjustment not found on session")
         }
-        val updated = session.copy(adjustments = survivors)
-        return saleSessionUpdateFinalizer.finalize(updated)
+        val updatedSaleSession = saleSession.copy(saleAdjustments = survivingSaleAdjustments)
+        return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
     }
 
 }

@@ -31,7 +31,7 @@ class SaleSessionLoader(
         userId: UUID,
     ): SaleSession {
         val now = DateTimes.Offset.Now.organization()
-        val session = SaleSession(
+        val saleSession = SaleSession(
             sessionId = sessionId,
             locationId = locationId,
             saleId = null,
@@ -48,80 +48,80 @@ class SaleSessionLoader(
                 dateSold = null,
                 notes = null,
             ),
-            lines = emptyList(),
-            adjustments = emptyList(),
-            payments = emptyList(),
+            saleLines = emptyList(),
+            saleAdjustments = emptyList(),
+            salePayments = emptyList(),
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(session)
+        return saleSessionTotalsCalculator.recompute(saleSession)
     }
 
     fun loadFromSale(sessionId: UUID, saleId: UUID): SaleSession {
         val now = DateTimes.Offset.Now.organization()
         val userId = SessionContextProvider.getUserId()
         val locationId = SessionContextProvider.getLocationId()
-        val header = saleDataFetcher.getSaleHeader(saleId)
-        val lineSnapshots = saleDataFetcher.getSaleLines(saleId)
-        val adjustmentSnapshots = saleAdjustmentFetcher.getAdjustments(saleId)
-        val paymentSnapshots = salePaymentFetcher.getPaymentSnapshots(saleId)
+        val saleHeader = saleDataFetcher.getSaleHeader(saleId)
+        val saleLineSnapshots = saleDataFetcher.getSaleLines(saleId)
+        val saleAdjustmentSnapshots = saleAdjustmentFetcher.getAdjustments(saleId)
+        val salePaymentSnapshots = salePaymentFetcher.getPaymentSnapshots(saleId)
 
-        val lines = lineSnapshots.map {
+        val saleSessionLines = saleLineSnapshots.map { lineSnapshot ->
             SaleSessionLine(
-                identity = SessionIdentity.persisted(it.id),
-                locationProductId = it.locationProductId,
-                productLabel = it.productLabel,
-                quantity = it.quantity,
-                unitId = it.unitId,
-                conversionFactor = it.conversionFactor,
-                unitPrice = it.unitPrice,
+                identity = SessionIdentity.persisted(lineSnapshot.id),
+                locationProductId = lineSnapshot.locationProductId,
+                productLabel = lineSnapshot.productLabel,
+                quantity = lineSnapshot.quantity,
+                unitId = lineSnapshot.unitId,
+                conversionFactor = lineSnapshot.conversionFactor,
+                unitPrice = lineSnapshot.unitPrice,
             )
         }
-        val identityByLineId = lines.associate { it.identity.id!! to it.identity }
-        val adjustments = adjustmentSnapshots.map { snapshot ->
+        val relatedSaleLineIdentityBySaleLineId = saleSessionLines.associate { it.identity.id!! to it.identity }
+        val saleSessionAdjustments = saleAdjustmentSnapshots.map { adjustmentSnapshot ->
             SaleSessionAdjustment(
-                identity = SessionIdentity.persisted(snapshot.id),
-                lineIdentity = snapshot.saleLineId?.let { identityByLineId[it] },
-                adjustmentReasonId = snapshot.adjustmentReasonId,
-                direction = snapshot.direction,
-                calculationMethod = snapshot.calculationMethod,
-                value = snapshot.value,
-                note = snapshot.note,
-                approvedById = snapshot.approvedById,
+                identity = SessionIdentity.persisted(adjustmentSnapshot.id),
+                relatedSaleLineIdentity = adjustmentSnapshot.saleLineId?.let { relatedSaleLineIdentityBySaleLineId[it] },
+                adjustmentReasonId = adjustmentSnapshot.adjustmentReasonId,
+                direction = adjustmentSnapshot.direction,
+                calculationMethod = adjustmentSnapshot.calculationMethod,
+                value = adjustmentSnapshot.value,
+                note = adjustmentSnapshot.note,
+                approvedById = adjustmentSnapshot.approvedById,
             )
         }
-        val payments = paymentSnapshots.map { snapshot ->
+        val saleSessionPayments = salePaymentSnapshots.map { paymentSnapshot ->
             SaleSessionPayment(
-                identity = SessionIdentity.persisted(snapshot.id),
-                paymentMethodId = snapshot.paymentMethodId,
-                amount = snapshot.amount,
-                reference = snapshot.reference,
-                paymentDate = snapshot.paymentDate,
-                voidedReason = snapshot.voidedReason,
+                identity = SessionIdentity.persisted(paymentSnapshot.id),
+                paymentMethodId = paymentSnapshot.paymentMethodId,
+                amount = paymentSnapshot.amount,
+                reference = paymentSnapshot.reference,
+                paymentDate = paymentSnapshot.paymentDate,
+                voidedReason = paymentSnapshot.voidedReason,
             )
         }
 
-        val session = SaleSession(
+        val saleSession = SaleSession(
             sessionId = sessionId,
             locationId = locationId,
-            saleId = header.id,
-            saleVersion = header.version,
-            originalStatus = header.status,
+            saleId = saleHeader.id,
+            saleVersion = saleHeader.version,
+            originalStatus = saleHeader.status,
             createdById = userId,
             createdAt = now,
             lastUpdatedAt = now,
             lastAccessedById = userId,
             lastAccessedAt = now,
             header = SaleSessionHeader(
-                contactId = header.contactId,
-                soldById = header.soldById,
-                dateSold = header.dateSold,
-                notes = header.notes,
+                contactId = saleHeader.contactId,
+                soldById = saleHeader.soldById,
+                dateSold = saleHeader.dateSold,
+                notes = saleHeader.notes,
             ),
-            lines = lines,
-            adjustments = adjustments,
-            payments = payments,
+            saleLines = saleSessionLines,
+            saleAdjustments = saleSessionAdjustments,
+            salePayments = saleSessionPayments,
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(session)
+        return saleSessionTotalsCalculator.recompute(saleSession)
     }
 }

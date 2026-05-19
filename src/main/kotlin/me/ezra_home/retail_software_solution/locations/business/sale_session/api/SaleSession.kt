@@ -17,19 +17,19 @@ data class SaleSession(
     val lastAccessedById: UUID,
     val lastAccessedAt: OffsetDateTime,
     val header: SaleSessionHeader,
-    val lines: List<SaleSessionLine>,
-    val adjustments: List<SaleSessionAdjustment>,
-    val payments: List<SaleSessionPayment>,
+    val saleLines: List<SaleSessionLine>,
+    val saleAdjustments: List<SaleSessionAdjustment>,
+    val salePayments: List<SaleSessionPayment>,
     val totals: SaleSessionTotals,
 ) {
 
     fun mutable(): Boolean =
         originalStatus == SaleStatus.DRAFT
 
-    fun totalPaid() = payments.filter { it.voidedReason == null }.sumOf { it.amount }
+    fun totalPaid() =
+        salePayments.filter { it.voidedReason == null }.sumOf { it.amount }
 
-    fun canDiscardPayments(): Boolean = originalStatus ==
-            SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED
+    fun canDiscardPayments(): Boolean = originalStatus == SaleStatus.DRAFT
 
     fun canAddPayments(): Boolean = originalStatus ==
             SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED

@@ -6,19 +6,19 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-data class SaleCommitInput(
+data class SaleSaveRequest(
     val saleId: UUID?,
     val expectedVersion: Long?,
     val contactId: UUID,
     val soldById: UUID?,
     val dateSold: OffsetDateTime?,
     val notes: String?,
-    val lines: List<SaleCommitLine>,
-    val adjustments: List<SaleCommitAdjustment>,
-    val payments: List<SaleCommitPayment>,
+    val saleLines: List<SaleLineSaveRequest>,
+    val saleAdjustments: List<SaleAdjustmentSaveRequest>,
+    val salePayments: List<SalePaymentSaveRequest>,
 )
 
-data class SaleCommitLine(
+data class SaleLineSaveRequest(
     val clientKey: UUID,
     val existingId: UUID?,
     val locationProductId: UUID,
@@ -28,10 +28,10 @@ data class SaleCommitLine(
     val unitPrice: BigDecimal,
 )
 
-data class SaleCommitAdjustment(
+data class SaleAdjustmentSaveRequest(
     val clientKey: UUID,
     val existingId: UUID?,
-    val lineClientKey: UUID?,
+    val relatedSaleLineClientKey: UUID?,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
     val calculationMethod: CalculationMethod,
@@ -40,7 +40,7 @@ data class SaleCommitAdjustment(
     val approvedById: UUID?,
 )
 
-data class SaleCommitPayment(
+data class SalePaymentSaveRequest(
     val clientKey: UUID,
     val existingId: UUID?,
     val paymentMethodId: UUID,
@@ -49,11 +49,11 @@ data class SaleCommitPayment(
     val paymentDate: OffsetDateTime?,
 )
 
-data class SaleCommitOutcome(
+data class SaleSaveResult(
     val saleId: UUID,
     val saleReferenceNumber: String,
     val newVersion: Long,
-    val lineIdsByClientKey: Map<UUID, UUID>,
-    val adjustmentIdsByClientKey: Map<UUID, UUID>,
-    val paymentIdsByClientKey: Map<UUID, UUID>,
+    val saleLineIdsByClientKey: Map<UUID, UUID>,
+    val saleAdjustmentIdsByClientKey: Map<UUID, UUID>,
+    val salePaymentIdsByClientKey: Map<UUID, UUID>,
 )

@@ -4,8 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleCommitFinalizer
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleCommitLineSync
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleConfirmedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
@@ -30,70 +30,70 @@ class ConfirmedSalePersister(
     private val saleDataFetcher: SaleDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
     private val entityAdvisoryLock: EntityAdvisoryLock,
-    private val saleCommitFinalizer: SaleCommitFinalizer,
+    private val saleSaveFinalizer: SaleSaveFinalizer,
 ) {
 
-    fun confirm(input: SaleCommitInput): SaleCommitOutcome {
-        val effectiveDate = input.dateSold ?: DateTimes.Offset.Now.organization()
-        SaleValidator.guardDateSoldIsNotFuture(effectiveDate)
-        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectiveDate))
+    fun confirm(saleSaveRequest: SaleSaveRequest): SaleSaveResult {
+        val effectiveDateSold = saleSaveRequest.dateSold ?: DateTimes.Offset.Now.organization()
+        SaleValidator.guardDateSoldIsNotFuture(effectiveDateSold)
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectiveDateSold))
 
-        val sale = loadOrCreate(input, effectiveDate)
-        sale.contactId = input.contactId
-        sale.soldById = input.soldById ?: SessionContextProvider.getUserId()
-        sale.dateSold = effectiveDate
-        sale.notes = input.notes
-        saleRepository.save(sale)
+        val saleEntity = loadOrCreate(saleSaveRequest, effectiveDateSold)
+        saleEntity.contactId = saleSaveRequest.contactId
+        saleEntity.soldById = saleSaveRequest.soldById ?: SessionContextProvider.getUserId()
+        saleEntity.dateSold = effectiveDateSold
+        saleEntity.notes = saleSaveRequest.notes
+        saleRepository.save(saleEntity)
 
-        val lineSyncResult = SaleCommitLineSync.sync(sale, input, saleLineRepository)
-        val productIds = lineSyncResult.persistedLines.mapTo(HashSet()) { it.locationProductId }
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)
-        saleStockReserver.clearBySale(sale.id!!)
+        val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
+        val locationProductIdsToLock = lineSyncResult.persistedSaleLines.mapTo(HashSet()) { it.locationProductId }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIdsToLock)
+        saleStockReserver.clearBySale(saleEntity.id!!)
 
-        sale.status = SaleStatus.CONFIRMED
-        val finalization = saleCommitFinalizer.finalize(
-            sale = sale,
-            input = input,
+        saleEntity.status = SaleStatus.CONFIRMED
+        val saleUpdateResult = saleSaveFinalizer.finalize(
+            saleEntity = saleEntity,
+            saleSaveRequest = saleSaveRequest,
             lineSyncResult = lineSyncResult,
         )
 
-        runFifoConsumption(sale, lineSyncResult.persistedLines)
-        saleConfirmedHandlerForKafka.publish(sale)
+        runFifoConsumption(saleEntity, lineSyncResult.persistedSaleLines)
+        saleConfirmedHandlerForKafka.publish(saleEntity)
 
-        return SaleCommitOutcome(
-            saleId = sale.id!!,
-            saleReferenceNumber = sale.requiredReference(),
-            newVersion = sale.version,
-            lineIdsByClientKey = lineSyncResult.saleLineIdByClientKey,
-            adjustmentIdsByClientKey = finalization.adjustmentIdsByClientKey,
-            paymentIdsByClientKey = finalization.paymentIdsByClientKey,
+        return SaleSaveResult(
+            saleId = saleEntity.id!!,
+            saleReferenceNumber = saleEntity.requiredReference(),
+            newVersion = saleEntity.version,
+            saleLineIdsByClientKey = lineSyncResult.saleLineIdsByClientKey,
+            saleAdjustmentIdsByClientKey = saleUpdateResult.saleAdjustmentIdsByClientKey,
+            salePaymentIdsByClientKey = saleUpdateResult.salePaymentIdsByClientKey,
         )
     }
 
     private fun runFifoConsumption(
-        sale: SaleEntity,
-        lines: List<SaleLineEntity>,
+        saleEntity: SaleEntity,
+        saleLineEntities: List<SaleLineEntity>,
     ) {
-        val requests = lines.map { line ->
+        val saleLineStockRequests = saleLineEntities.map { saleLineEntity ->
             SaleLineStockRequest(
-                saleLineId = line.id!!,
-                locationProductId = line.locationProductId,
-                baseQuantity = line.baseQty(),
-                unitId = line.unitId,
-                conversionFactor = line.conversionFactor,
+                saleLineId = saleLineEntity.id!!,
+                locationProductId = saleLineEntity.locationProductId,
+                baseQuantity = saleLineEntity.baseQty(),
+                unitId = saleLineEntity.unitId,
+                conversionFactor = saleLineEntity.conversionFactor,
             )
         }
-        saleStockUpdater.consumeStock(requests, sale.requiredReference())
+        saleStockUpdater.consumeStock(saleLineStockRequests, saleEntity.requiredReference())
     }
 
-    private fun loadOrCreate(input: SaleCommitInput, effectiveDate: java.time.OffsetDateTime): SaleEntity {
-        val saleId = input.saleId ?: return SaleEntity(
-            contactId = input.contactId,
-            soldById = input.soldById,
-            dateSold = effectiveDate,
-            notes = input.notes,
+    private fun loadOrCreate(saleSaveRequest: SaleSaveRequest, effectiveDateSold: java.time.OffsetDateTime): SaleEntity {
+        val saleId = saleSaveRequest.saleId ?: return SaleEntity(
+            contactId = saleSaveRequest.contactId,
+            soldById = saleSaveRequest.soldById,
+            dateSold = effectiveDateSold,
+            notes = saleSaveRequest.notes,
             status = SaleStatus.CONFIRMED,
         )
-        return saleDataFetcher.loadDraftAtVersion(saleId, input.expectedVersion)
+        return saleDataFetcher.loadDraftAtVersion(saleId, saleSaveRequest.expectedVersion)
     }
 }

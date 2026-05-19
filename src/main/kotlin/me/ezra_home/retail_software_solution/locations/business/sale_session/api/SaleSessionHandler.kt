@@ -18,19 +18,19 @@ class SaleSessionHandler(
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun start(dto: SaleSessionStartDto): SaleSessionResponseDto {
-        dto.saleId?.let { saleId ->
-            saleSessionStore.findOpenSessionForSale(saleId)?.let { existing ->
-                return saleSessionAssembler.buildResponse(existing)
+    fun start(sessionStartDto: SaleSessionStartDto): SaleSessionResponseDto {
+        sessionStartDto.saleId?.let { saleId ->
+            saleSessionStore.findOpenSessionForSale(saleId)?.let { existingSession ->
+                return saleSessionAssembler.buildResponse(existingSession)
             }
         }
         val sessionId = UUID.randomUUID()
-        val session = if (dto.saleId != null) {
-            saleSessionLoader.loadFromSale(sessionId, dto.saleId)
+        val session = if (sessionStartDto.saleId != null) {
+            saleSessionLoader.loadFromSale(sessionId, sessionStartDto.saleId)
         } else {
             val locationId = SessionContextProvider.getLocationId()
             val userId = SessionContextProvider.getUserId()
-            saleSessionLoader.newSession(sessionId, locationId, dto.contactId, userId)
+            saleSessionLoader.newSession(sessionId, locationId, sessionStartDto.contactId, userId)
         }
         saleSessionValidator.validate(session)
         saleSessionStore.save(session)
@@ -42,13 +42,13 @@ class SaleSessionHandler(
     }
 
     fun listOpenSessions(): List<SaleSessionSummaryDto> {
-        return saleSessionAssembler.buildSummaries( saleSessionStore.listOpenSessions())
+        return saleSessionAssembler.buildSummaries(saleSessionStore.listOpenSessions())
     }
 
     fun acquireSession(sessionId: UUID): SaleSessionResponseDto {
         val session = saleSessionStore.load(sessionId)
-        val visited = session.markVisited(SessionContextProvider.getUserId())
-        saleSessionStore.save(visited)
-        return saleSessionAssembler.buildResponse(visited)
+        val visitedSession = session.markVisited(SessionContextProvider.getUserId())
+        saleSessionStore.save(visitedSession)
+        return saleSessionAssembler.buildResponse(visitedSession)
     }
 }

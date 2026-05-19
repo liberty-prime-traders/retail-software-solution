@@ -14,25 +14,37 @@ import java.util.UUID
 @Component
 class SaleSessionTotalsCalculator {
 
-    fun recompute(session: SaleSession): SaleSession {
-        val totals = compute(session.lines, session.adjustments, session.totalPaid())
-        return session.copy(totals = totals)
+    fun recompute(saleSession: SaleSession): SaleSession {
+        val totals = compute(saleSession.saleLines, saleSession.saleAdjustments, saleSession.totalPaid())
+        return saleSession.copy(totals = totals)
     }
 
     fun compute(
-        lines: List<SaleSessionLine>,
-        adjustments: List<SaleSessionAdjustment>,
+        saleSessionLines: List<SaleSessionLine>,
+        saleSessionAdjustments: List<SaleSessionAdjustment>,
         paymentTotal: BigDecimal,
     ): SaleSessionTotals {
-        val subtotal = lines.sumOf { it.lineTotal() }
-        val productByLineKey = lines.associate { it.identity.key() to it.locationProductId }
-        val amountsByAdjustment = adjustments.associate { adj ->
-            adj.identity.key() to calculateAmount(adj, productByLineKey, lines)
+        val subtotal = saleSessionLines.sumOf { it.lineTotal() }
+        val locationProductIdBySaleSessionLineKey = saleSessionLines.associate { it.identity.key() to it.locationProductId }
+        val calculatedAmountByAdjustmentKey = saleSessionAdjustments.associate { saleSessionAdjustment ->
+            saleSessionAdjustment.identity.key() to calculateAdjustmentAmount(
+                saleSessionAdjustment,
+                locationProductIdBySaleSessionLineKey,
+                saleSessionLines,
+            )
         }
-        val lineLevelDiscount = sumOf(adjustments, AdjustmentDirection.DISCOUNT, lineLevel = true, amountsByAdjustment)
-        val orderLevelDiscount = sumOf(adjustments, AdjustmentDirection.DISCOUNT, lineLevel = false, amountsByAdjustment)
-        val lineLevelSurcharge = sumOf(adjustments, AdjustmentDirection.SURCHARGE, lineLevel = true, amountsByAdjustment)
-        val orderLevelSurcharge = sumOf(adjustments, AdjustmentDirection.SURCHARGE, lineLevel = false, amountsByAdjustment)
+        val lineLevelDiscount = sumAdjustmentAmounts(
+            saleSessionAdjustments, AdjustmentDirection.DISCOUNT, lineLevel = true, calculatedAmountByAdjustmentKey
+        )
+        val orderLevelDiscount = sumAdjustmentAmounts(
+            saleSessionAdjustments, AdjustmentDirection.DISCOUNT, lineLevel = false, calculatedAmountByAdjustmentKey
+        )
+        val lineLevelSurcharge = sumAdjustmentAmounts(
+            saleSessionAdjustments, AdjustmentDirection.SURCHARGE, lineLevel = true, calculatedAmountByAdjustmentKey
+        )
+        val orderLevelSurcharge = sumAdjustmentAmounts(
+            saleSessionAdjustments, AdjustmentDirection.SURCHARGE, lineLevel = false, calculatedAmountByAdjustmentKey
+        )
         val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount + lineLevelSurcharge + orderLevelSurcharge
         return SaleSessionTotals(
             subtotal = subtotal,
@@ -46,35 +58,40 @@ class SaleSessionTotalsCalculator {
         )
     }
 
-    fun calculatedAmount(adjustment: SaleSessionAdjustment, lines: List<SaleSessionLine>): BigDecimal {
-        val productByLineKey = lines.associate { it.identity.key() to it.locationProductId }
-        return calculateAmount(adjustment, productByLineKey, lines)
-    }
-
-    private fun calculateAmount(
-        adjustment: SaleSessionAdjustment,
-        productByLineKey: Map<UUID, UUID>,
-        lines: List<SaleSessionLine>,
+    fun calculatedAmount(
+        saleSessionAdjustment: SaleSessionAdjustment,
+        saleSessionLines: List<SaleSessionLine>,
     ): BigDecimal {
-        val productId = adjustment.lineIdentity?.let { productByLineKey[it.key()] }
-        val adjustmentCreateDto = SaleAdjustmentCreateDto(
-            locationProductId = productId,
-            direction = adjustment.direction,
-            calculationMethod = adjustment.calculationMethod,
-            value = adjustment.value,
-            adjustmentReasonId = adjustment.adjustmentReasonId,
-            note = adjustment.note,
-            approvedById = adjustment.approvedById,
-        )
-        return AdjustmentAmountCalculator.calculateAmount(adjustmentCreateDto, lines)
+        val locationProductIdBySaleSessionLineKey = saleSessionLines.associate { it.identity.key() to it.locationProductId }
+        return calculateAdjustmentAmount(saleSessionAdjustment, locationProductIdBySaleSessionLineKey, saleSessionLines)
     }
 
-    private fun sumOf(
-        adjustments: List<SaleSessionAdjustment>,
+    private fun calculateAdjustmentAmount(
+        saleSessionAdjustment: SaleSessionAdjustment,
+        locationProductIdBySaleSessionLineKey: Map<UUID, UUID>,
+        saleSessionLines: List<SaleSessionLine>,
+    ): BigDecimal {
+        val locationProductId = saleSessionAdjustment.relatedSaleLineIdentity?.let {
+            locationProductIdBySaleSessionLineKey[it.key()]
+        }
+        val adjustmentCreateDto = SaleAdjustmentCreateDto(
+            locationProductId = locationProductId,
+            direction = saleSessionAdjustment.direction,
+            calculationMethod = saleSessionAdjustment.calculationMethod,
+            value = saleSessionAdjustment.value,
+            adjustmentReasonId = saleSessionAdjustment.adjustmentReasonId,
+            note = saleSessionAdjustment.note,
+            approvedById = saleSessionAdjustment.approvedById,
+        )
+        return AdjustmentAmountCalculator.calculateAmount(adjustmentCreateDto, saleSessionLines)
+    }
+
+    private fun sumAdjustmentAmounts(
+        saleSessionAdjustments: List<SaleSessionAdjustment>,
         direction: AdjustmentDirection,
         lineLevel: Boolean,
-        amounts: Map<UUID, BigDecimal>,
-    ): BigDecimal = adjustments
-        .filter { it.direction == direction && (it.lineIdentity != null) == lineLevel }
-        .sumOf { amounts.getValue(it.identity.key()) }
+        calculatedAmountByAdjustmentKey: Map<UUID, BigDecimal>,
+    ): BigDecimal = saleSessionAdjustments
+        .filter { it.direction == direction && (it.relatedSaleLineIdentity != null) == lineLevel }
+        .sumOf { calculatedAmountByAdjustmentKey.getValue(it.identity.key()) }
 }

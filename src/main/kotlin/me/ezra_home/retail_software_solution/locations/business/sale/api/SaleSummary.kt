@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-data class SaleResponseDto(
+data class SaleSummary(
     val id: UUID,
     val referenceNumber: String,
     val contactName: String,

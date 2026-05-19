@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleNotesUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleResponseDto
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSummary
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidCreateDto
 import org.springframework.http.ResponseEntity
@@ -23,12 +23,12 @@ class SaleEndpoint(
 ) {
 
     @GetMapping
-    fun fetchRecent(@RequestParam n: Int?): List<SaleResponseDto> {
+    fun fetchRecent(@RequestParam n: Int?): List<SaleSummary> {
         return saleDataFetcher.fetchRecent(n)
     }
 
     @PutMapping("void")
-    fun voidSale(@RequestBody dto: SaleVoidCreateDto): SaleResponseDto {
+    fun voidSale(@RequestBody dto: SaleVoidCreateDto): SaleSummary {
         return saleUpdater.voidSale(dto)
     }
 

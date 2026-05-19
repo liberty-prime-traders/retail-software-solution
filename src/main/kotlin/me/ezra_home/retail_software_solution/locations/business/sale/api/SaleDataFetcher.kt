@@ -29,12 +29,12 @@ class SaleDataFetcher(
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
-    fun fetchRecent(n: Int?): List<SaleResponseDto> {
+    fun fetchRecent(n: Int?): List<SaleSummary> {
         val recordCount = n ?: 10
         if (recordCount <= 0) throw RtsGenericException("Limit must be positive")
         if (recordCount > 1000) throw RtsGenericException("Limit exceeds maximum of 1000")
         val sort = Sort.by(Sort.Order.desc("createdOn"))
-        return saleAssembler.buildResponses(
+        return saleAssembler.buildSummaries(
             saleRepository.findAll(PageRequest.of(0, recordCount, sort)).content
         )
     }

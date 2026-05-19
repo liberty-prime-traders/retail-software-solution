@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCommitInput
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
@@ -11,7 +11,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @Service
-class SalePaymentCommitter(
+class SalePaymentAppender(
     private val salePaymentRepository: SalePaymentRepository,
     private val salePaymentFetcher: SalePaymentFetcher,
     private val salePaymentHandlerForKafka: SalePaymentHandlerForKafka,
@@ -21,29 +21,32 @@ class SalePaymentCommitter(
         saleId: UUID,
         contactId: UUID,
         payableTotal: BigDecimal,
-        input: SaleCommitInput,
+        saleSaveRequest: SaleSaveRequest,
     ): AppendResult {
-        val newOnes = input.payments.filter { it.existingId == null }
-        if (newOnes.isEmpty()) {
+        val newSalePaymentSaveRequests = saleSaveRequest.salePayments.filter { it.existingId == null }
+        if (newSalePaymentSaveRequests.isEmpty()) {
             val totalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
             return AppendResult(emptyMap(), resolvePaymentStatus(totalPaid, payableTotal))
         }
-        val entities = newOnes.map { dto ->
+        val newSalePaymentEntities = newSalePaymentSaveRequests.map { salePaymentSaveRequest ->
             SalePaymentEntity(
                 saleId = saleId,
-                paymentMethodId = dto.paymentMethodId,
-                amount = dto.amount,
-                reference = dto.reference,
-                paymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization(),
+                paymentMethodId = salePaymentSaveRequest.paymentMethodId,
+                amount = salePaymentSaveRequest.amount,
+                reference = salePaymentSaveRequest.reference,
+                paymentDate = salePaymentSaveRequest.paymentDate ?: DateTimes.Offset.Now.organization(),
             )
         }
-        val saved = salePaymentRepository.saveAll(entities).toList()
-        val newIdByClientKey = newOnes.mapIndexed { index, dto -> dto.clientKey to saved[index].id!! }.toMap()
-        salePaymentHandlerForKafka.publish(saleId, contactId, saved)
+        val savedSalePayments = salePaymentRepository.saveAll(newSalePaymentEntities).toList()
+        val newSalePaymentIdsByClientKey = newSalePaymentSaveRequests
+            .mapIndexed { salePaymentIndex, salePaymentSaveRequest ->
+                salePaymentSaveRequest.clientKey to savedSalePayments[salePaymentIndex].id!!
+            }.toMap()
+        salePaymentHandlerForKafka.publish(saleId, contactId, savedSalePayments)
         val freshTotalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         return AppendResult(
-            idsByClientKey = newIdByClientKey,
-            newStatus = resolvePaymentStatus(freshTotalPaid, payableTotal),
+            salePaymentIdsByClientKey = newSalePaymentIdsByClientKey,
+            newPaymentStatus = resolvePaymentStatus(freshTotalPaid, payableTotal),
         )
     }
 
@@ -55,7 +58,7 @@ class SalePaymentCommitter(
     }
 
     data class AppendResult(
-        val idsByClientKey: Map<UUID, UUID>,
-        val newStatus: PaymentStatus,
+        val salePaymentIdsByClientKey: Map<UUID, UUID>,
+        val newPaymentStatus: PaymentStatus,
     )
 }

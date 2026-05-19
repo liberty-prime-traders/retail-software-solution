@@ -46,23 +46,25 @@ class SaleUpdater(
         saleRepository.save(sale)
     }
 
-    fun voidSale(dto: SaleVoidCreateDto): SaleResponseDto {
-        val sale = saleDataFetcher.lockAndGetSale(dto.saleId)
+    fun voidSale(saleVoidCreateDto: SaleVoidCreateDto): SaleSummary {
+        val sale = saleDataFetcher.lockAndGetSale(saleVoidCreateDto.saleId)
         saleValidator.guardCanVoid(sale)
-        val lines = saleLineRepository.findBySaleId(dto.saleId)
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, lines.map { it.locationProductId })
+        val saleLines = saleLineRepository.findBySaleId(saleVoidCreateDto.saleId)
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleLines.map { it.locationProductId })
         if (sale.status == SaleStatus.DRAFT) {
-            saleStockReserver.clearBySale(dto.saleId)
+            saleStockReserver.clearBySale(saleVoidCreateDto.saleId)
             sale.status = SaleStatus.DISCARDED
         } else {
             fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
             saleStockUpdater.restoreStock(sale.requiredReference())
             sale.status = SaleStatus.VOIDED
-            val voidEntity = saleVoidRepository.save(SaleVoidEntity(saleId = dto.saleId, reason = dto.reason))
-            saleVoidHandlerForKafka.publishVoid(sale, voidEntity)
+            val saleVoidEntity = saleVoidRepository.save(
+                SaleVoidEntity(saleId = saleVoidCreateDto.saleId, reason = saleVoidCreateDto.reason)
+            )
+            saleVoidHandlerForKafka.publishVoid(sale, saleVoidEntity)
         }
         saleRepository.save(sale)
-        return saleAssembler.buildResponse(sale)
+        return saleAssembler.buildSummary(sale)
     }
 
 }

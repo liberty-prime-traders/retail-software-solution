@@ -15,11 +15,6 @@ data class SaleSessionSummaryDto(
     val saleId: UUID?,
     val lineCount: Int,
     val payableTotal: BigDecimal,
-    val activeUser: ActiveSessionUser?,
-)
-
-data class ActiveSessionUser(
-    val userId: UUID,
-    val userLabel: String?,
-    val lastSeenAt: OffsetDateTime,
+    val lastAccessedBy: String,
+    val lastAccessedAt: OffsetDateTime,
 )
