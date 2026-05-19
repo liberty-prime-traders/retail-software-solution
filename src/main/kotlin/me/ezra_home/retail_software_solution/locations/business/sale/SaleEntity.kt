@@ -27,10 +27,10 @@ class SaleEntity(
     var contactId: UUID,
 
     @Column(name = "sold_by_id")
-    var soldById: UUID?,
+    var soldById: UUID? = null,
 
     @Column(name = "date_sold")
-    var dateSold: OffsetDateTime?,
+    var dateSold: OffsetDateTime? = null,
 
     @Column(name = "notes")
     var notes: String? = null,

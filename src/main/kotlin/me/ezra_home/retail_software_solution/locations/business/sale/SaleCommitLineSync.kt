@@ -2,21 +2,27 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCommitInput
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCommitLine
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PersistedCommitLine
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.util.UUID
 
 object SaleCommitLineSync {
 
     data class Result(
-        val lineIdByClientKey: Map<UUID, UUID>,
+        val saleLineIdByClientKey: Map<UUID, UUID>,
         val persistedLines: List<SaleLineEntity>,
-    )
+    ) {
+        fun toPersistedCommitLines(): List<PersistedCommitLine> = persistedLines.map { line ->
+            PersistedCommitLine(
+                id = line.id!!,
+                locationProductId = line.locationProductId,
+                quantity = line.quantity,
+                unitPrice = line.unitPrice,
+            )
+        }
+    }
 
-    fun sync(
-        sale: SaleEntity,
-        input: SaleCommitInput,
-        saleLineRepository: SaleLineRepository,
-    ): Result {
+    fun sync(sale: SaleEntity, input: SaleCommitInput, saleLineRepository: SaleLineRepository): Result {
         val saleId = sale.id!!
         val existing = saleLineRepository.findBySaleId(saleId).associateBy { it.id!! }
         val incomingIds = input.lines.mapNotNull { it.existingId }.toHashSet()

@@ -19,17 +19,17 @@ data class SaleSessionLineAddDto(
 )
 
 data class SaleSessionLineUpdateDto(
-    val id: SessionIdentity,
+    val identity: SessionIdentity,
     val quantity: BigDecimal,
     val unitId: UUID,
 )
 
 data class SaleSessionRowIdentityDto(
-    val id: SessionIdentity,
+    val identity: SessionIdentity,
 )
 
 data class SaleSessionAdjustmentAddDto(
-    val lineId: SessionIdentity? = null,
+    val lineIdentity: SessionIdentity? = null,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
     val calculationMethod: CalculationMethod,
@@ -45,7 +45,13 @@ data class SaleSessionPaymentAddDto(
     val paymentDate: OffsetDateTime? = null,
 )
 
+data class SaleSessionPaymentRemoveDto(
+    val identity: SessionIdentity,
+    val voidReason: String? = null,
+)
+
 data class SaleSessionHeaderUpdateDto(
+    val sessionId: UUID,
     val contactId: Optional<UUID>? = null,
     val soldById: Optional<UUID>? = null,
     val dateSold: Optional<OffsetDateTime>? = null,

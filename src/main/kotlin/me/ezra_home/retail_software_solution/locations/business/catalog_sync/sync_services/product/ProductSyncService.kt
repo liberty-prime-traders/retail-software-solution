@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sy
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncService
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSyncService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductFetcher
 import me.ezra_home.retail_software_solution.util.model.TableName

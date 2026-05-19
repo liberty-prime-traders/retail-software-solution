@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services
+package me.ezra_home.retail_software_solution.locations.business.catalog_sync.api
 
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncCursor
 import me.ezra_home.retail_software_solution.util.model.TableName

@@ -25,20 +25,20 @@ class ArchitectureTest {
     }
 
     private fun onlyBeAccessedFromOwnDomainOrOutsideBusiness() = object : ArchCondition<JavaClass>(
-        "only be accessed from within the same domain or outside the business layer"
+        "only be referenced from within the same domain"
     ) {
         override fun check(javaClass: JavaClass, events: ConditionEvents) {
             val classDomain = domainOf(javaClass.packageName) ?: return
-            javaClass.accessesToSelf
-                .filter { access ->
-                    val originDomain = domainOf(access.originOwner.packageName)
-                    originDomain != null && originDomain != classDomain
-                }
-                .forEach { access ->
+            val origins = javaClass.accessesToSelf.map { it.originOwner } +
+                    javaClass.directDependenciesToSelf.map { it.originClass }
+            origins
+                .distinct()
+                .filter { origin -> domainOf(origin.packageName) != classDomain }
+                .forEach { origin ->
                     events.add(SimpleConditionEvent.violated(
                         javaClass,
-                        "${access.originOwner.name} (domain: ${domainOf(access.originOwner.packageName)}) " +
-                        "accesses ${javaClass.name} (domain: $classDomain)"
+                        "${origin.name} (domain: ${domainOf(origin.packageName) ?: "<non-business>"}) " +
+                        "references ${javaClass.name} (domain: $classDomain) — go through the .api package"
                     ))
                 }
         }

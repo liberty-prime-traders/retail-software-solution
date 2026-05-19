@@ -19,7 +19,7 @@ data class SessionIdentity(
     fun isPersisted(): Boolean = id != null
 
     companion object {
-        fun fresh(): SessionIdentity = SessionIdentity(transientId = UUID.randomUUID())
+        fun mintFreshIdentity(): SessionIdentity = SessionIdentity(transientId = UUID.randomUUID())
         fun persisted(id: UUID): SessionIdentity = SessionIdentity(id = id)
     }
 }

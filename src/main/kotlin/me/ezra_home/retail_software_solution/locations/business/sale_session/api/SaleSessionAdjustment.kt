@@ -6,8 +6,8 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class SaleSessionAdjustment(
-    val id: SessionIdentity,
-    val lineId: SessionIdentity?,
+    val identity: SessionIdentity,
+    val lineIdentity: SessionIdentity?,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
     val calculationMethod: CalculationMethod,

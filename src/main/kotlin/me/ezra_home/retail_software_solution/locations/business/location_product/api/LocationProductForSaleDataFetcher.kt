@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class LocationProductForSaleSearchService(
+class LocationProductForSaleDataFetcher(
     private val locationProductForSaleSearchService: LocationProductForSaleSearchService,
 ) {
 

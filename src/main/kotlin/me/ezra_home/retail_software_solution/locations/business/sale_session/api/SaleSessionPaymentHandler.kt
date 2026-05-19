@@ -1,50 +1,77 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionAssembler
+import java.util.UUID
+
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentVoidCreateDto
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionTotalsCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
-import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
 @Service
 class SaleSessionPaymentHandler(
     private val saleSessionStore: SaleSessionStore,
-    private val saleSessionAssembler: SaleSessionAssembler,
     private val saleSessionValidator: SaleSessionValidator,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
+    private val saleSessionUpdateFinalizer: SaleSessionUpdateFinalizer,
+    private val salePaymentService: SalePaymentService,
 ) {
 
-    fun add(sessionId: String, dto: SaleSessionPaymentAddDto): SaleSessionResponseDto {
+    fun add(sessionId: UUID, dto: SaleSessionPaymentAddDto): SaleSessionResponseDto {
         val session = saleSessionStore.load(sessionId)
+        saleSessionValidator.canAddPayments(session)
+        val identity = if (session.originalStatus == SaleStatus.CONFIRMED) {
+            val saleId = session.saleId ?: throw RtsGenericException("CONFIRMED session is missing a saleId")
+            persistPayment(saleId, dto)
+        } else {
+            SessionIdentity.mintFreshIdentity()
+        }
         val payment = SaleSessionPayment(
-            id = SessionIdentity.fresh(),
+            identity = identity,
             paymentMethodId = dto.paymentMethodId,
             amount = dto.amount,
             reference = dto.reference,
             paymentDate = dto.paymentDate,
         )
-        return finish(session.copy(payments = session.payments + payment))
+        return saleSessionUpdateFinalizer.finalize(session.copy(payments = session.payments + payment))
     }
 
-    fun remove(sessionId: String, dto: SaleSessionRowIdentityDto): SaleSessionResponseDto {
+    private fun persistPayment(saleId: UUID,  dto: SaleSessionPaymentAddDto): SessionIdentity {
+        val response = salePaymentService.recordPayment(
+            SalePaymentCreateDto(
+                saleId = saleId,
+                paymentMethodId = dto.paymentMethodId,
+                amount = dto.amount,
+                reference = dto.reference,
+                paymentDate = dto.paymentDate,
+            )
+        )
+        return SessionIdentity.persisted(response.id)
+    }
+
+    fun remove(sessionId: UUID, dto: SaleSessionPaymentRemoveDto): SaleSessionResponseDto {
         val session = saleSessionStore.load(sessionId)
-        val targetKey = dto.id.key()
-        val survivors = session.payments.filter { it.id.key() != targetKey }
-        if (survivors.size == session.payments.size) {
-            throw RtsGenericException("Payment not found on session")
+        val targetKey = dto.identity.key()
+        val target = session.payments.firstOrNull { it.identity.key() == targetKey }
+            ?: throw RtsGenericException("Payment not found on session")
+        val persistedId = target.identity.id
+        val refreshedPayments = if (persistedId == null) {
+            saleSessionValidator.canDiscardPayments(session)
+            session.payments.filter { it.identity.key() != targetKey }
+        } else {
+            val reason = dto.voidReason
+                ?: throw RtsGenericException("voidReason is required when voiding a recorded payment")
+            val response = salePaymentService.voidPayment(
+                SalePaymentVoidCreateDto(salePaymentId = persistedId, reason = reason)
+            )
+            session.payments.map {
+                if (it.identity.key() == targetKey) it.copy(voidedReason = response.voidedReason) else it
+            }
         }
-        return finish(session.copy(payments = survivors))
+        return saleSessionUpdateFinalizer.finalize(session.copy(payments = refreshedPayments))
     }
 
-    private fun finish(updated: SaleSession): SaleSessionResponseDto {
-        val now = DateTimes.Offset.Now.organization()
-        val touched = updated.touched(SessionContextProvider.getUserId(), now)
-        val withTotals = saleSessionTotalsCalculator.recompute(touched)
-        saleSessionValidator.validate(withTotals)
-        saleSessionStore.save(withTotals)
-        return saleSessionAssembler.buildResponse(withTotals)
-    }
 }

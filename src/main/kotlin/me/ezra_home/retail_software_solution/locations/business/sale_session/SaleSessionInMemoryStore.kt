@@ -8,23 +8,23 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-@Profile("sessionInMemory")
+@Profile("!redis-active")
 class SaleSessionInMemoryStore : SaleSessionStore {
 
-    private val sessions = ConcurrentHashMap<String, SaleSession>()
-    private val bySale = ConcurrentHashMap<UUID, String>()
+    private val sessions = ConcurrentHashMap<UUID, SaleSession>()
+    private val bySale = ConcurrentHashMap<UUID, UUID>()
 
     override fun save(session: SaleSession) {
         sessions[session.sessionId] = session
         session.saleId?.let { bySale[it] = session.sessionId }
     }
 
-    override fun load(sessionId: String): SaleSession =
+    override fun load(sessionId: UUID): SaleSession =
         loadOrNull(sessionId) ?: throw RtsGenericException("Sale session $sessionId not found or expired")
 
-    override fun loadOrNull(sessionId: String): SaleSession? = sessions[sessionId]
+    override fun loadOrNull(sessionId: UUID): SaleSession? = sessions[sessionId]
 
-    override fun delete(sessionId: String) {
+    override fun delete(sessionId: UUID) {
         val removed = sessions.remove(sessionId)
         removed?.saleId?.let { bySale.remove(it) }
     }
@@ -34,5 +34,5 @@ class SaleSessionInMemoryStore : SaleSessionStore {
         return sessions[sessionId]
     }
 
-    override fun listOpen(): List<SaleSession> = sessions.values.toList()
+    override fun listOpenSessions(): List<SaleSession> = sessions.values.toList()
 }

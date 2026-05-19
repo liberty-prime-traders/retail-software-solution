@@ -27,7 +27,7 @@ must call into sale through one of these classes:
 | `SaleDraftCommitter`   | Persist a sale at `DRAFT` from a `SaleCommitInput` (called by sale_session) |
 | `SaleConfirmCommitter` | Persist a sale at `CONFIRMED` from a `SaleCommitInput` (FIFO + Kafka)       |
 | `SaleUpdater`          | Void a sale; update payment status; update notes                            |
-| `SaleDataFetcher`      | Read sales (recent list, context lookup, header/line snapshots, contact)    |
+| `SaleDataFetcher`      | Read sales (recent list, context lookup, header/line snapshots, contact, commit-time draft+version load) |
 
 Creating and confirming a sale is **only** possible via a session — see
 `sale_session/README.md`. The committers are the seams the session layer calls
@@ -35,8 +35,9 @@ into; they do not have REST endpoints of their own.
 
 Sellable product lookup (product + per‑product FIFO stock batch previews
 for the sale entry screen) lives on the **product** package, not here —
-see `location_product/api/LocationProductForSaleSearchService` and the
-`POST /secured/location-products/search-for-sale` endpoint.
+see `location_product/api/LocationProductForSaleDataFetcher` and the
+`POST /secured/location-products/search-for-sale` endpoint on
+`LocationProductEndpoint`.
 
 Cross‑package callers **MUST** use the `api/` package; direct use of
 `SaleRepository`, `SaleEntity`, etc. is reserved for code inside the sale
@@ -67,9 +68,10 @@ Rules:
   called by `SaleSessionCommitHandler` and are **never** invoked by REST
   directly.
 - Mutation of a `DRAFT` happens through a sale session — header changes,
-  line/adjustment/payment changes, then `POST /sale-sessions/{id}/draft`
-  re-persists the existing draft. Optimistic version check (`@Version` on
-  `SaleEntity`) rejects concurrent saves.
+  line/adjustment/payment changes, then
+  `POST /secured/sale-sessions/{sessionId}/draft` re-persists the existing
+  draft. Optimistic version check (`@Version` on `SaleEntity`) rejects
+  concurrent saves.
 - A `DRAFT` becomes `CONFIRMED` only through
   `SaleConfirmCommitter.confirm`.
 - Voiding a `DRAFT` transitions it to `DISCARDED` (reservations are released,
@@ -79,8 +81,9 @@ Rules:
 - `VOIDED` and `DISCARDED` are terminal. `SaleValidator.guardCanVoid` rejects
   both, and also rejects voiding when there are active (non-voided) payments.
 
-`SaleStatus` is persisted as a 5-char code via `SaleStatusConverter`
-(`DFT`, `CFM`, `VD`, `DSC`). Never `@Enumerated`.
+`SaleStatus` is persisted as a short code via `SaleStatusConverter`
+(`DFT`, `CFM`, `VD`, `DSC`); the `status` column is `length = 5`. Never
+`@Enumerated`.
 
 ---
 
@@ -93,8 +96,8 @@ Rules:
 - A draft can be reassigned via `SaleSessionHeaderHandler.update`, which calls
   `ContactService.guardExists` for any non-walk-in contact. There is no
   hard reassignment rule against walk-in for drafts, but **a walk-in must be
-  fully paid at confirm time** (`SaleConfirmCommitter` calls
-  `SalePaymentCommitter.guardFullCoverage`).
+  fully paid at confirm time** (`SaleSessionCommitHandler.confirm` calls
+  `SaleSessionValidator.guardWalkInFullyCovered`).
 - For any non-walk-in sale, `ContactService.guardExists` must succeed before
   persistence. The check is skipped entirely for walk-in (no DB lookup),
   which is why `SystemContact.WALK_IN.id` is not required to exist as a
@@ -151,7 +154,9 @@ Rules:
 2. **No duplicate products** in the same sale — guarded on every session
    mutation.
 3. `locationProductId` must be **active** (`LocationProductService.guardAllActive`)
-   when adding a line to a session and again at commit time.
+   when adding a line to a session. A product deactivated after it has been
+   put on the cart does **not** block subsequent draft saves or confirm —
+   the line stays valid once it has been accepted.
 4. `unitId` must be a valid unit reachable in the `UnitConversionGraph` to
    the product's base unit; otherwise `getFactor` throws.
 5. `unitPrice` must be set on the product summary at add time; the session
@@ -213,14 +218,23 @@ persistence model, lifecycle, and reconciliation logic.
 
 ### Sync semantics at commit
 
-`SaleAdjustmentCommitter.sync` replaces the adjustment set wholesale:
+`SaleAdjustmentCommitter.sync` reconciles the adjustment set against the
+incoming input:
 
 - Existing adjustments not in the incoming set → DELETE.
-- Existing adjustments in the incoming set → kept (entities are immutable;
-  no UPDATE happens).
+- Existing adjustments in the incoming set → UPDATE in place:
+  `calculatedAmount` and `saleLineId` are recomputed against the
+  just-persisted lines so a kept percentage adjustment reflects the
+  current subtotal / line total, not the value it was first inserted
+  with. All other fields (`value`, `direction`, `calculationMethod`,
+  `adjustmentReasonId`, `note`, `approvedById`) remain `updatable = false`
+  at the column level and never change after insert.
 - New adjustments (`existingId == null`) → INSERT, with `calculatedAmount`
-  recomputed against the **persisted** lines so the frozen amount matches
-  the post-commit truth.
+  computed against the persisted lines.
+
+Row IDs are stable across saves — kept adjustments retain their original
+id, so the session's `existingId`/`adjustmentIdsByClientKey` mapping
+survives any number of draft saves.
 
 ### Totals contribution
 
@@ -252,9 +266,10 @@ Two distinct mechanisms protect inventory:
 
 - `SaleLineStockReservationEntity` holds **`quantity_reserved`** per sale
   line (always written as `line.baseQty()`).
-- On every `SaleDraftCommitter.saveDraft` invocation, the committer first
-  clears all reservations for the sale (`clearBySale`), then re-issues
-  reservations for the current line set. This avoids hand-rolled diffing.
+- Every `SaleDraftCommitter.saveDraft` invocation clears all reservations
+  for the sale (`clearBySale`, immediately after the line sync) and then
+  re-issues fresh reservations for the surviving line set. This avoids
+  hand-rolled diffing.
 - Reservations are also cleared when:
   - A draft is voided (`SaleUpdater.voidSale` → `DISCARDED` branch).
   - The sale is confirmed (`SaleConfirmCommitter.confirm` clears under the
@@ -302,8 +317,11 @@ and requested qty (`SaleValidator.throwIfOverSelling`).
 Taxes are **never computed in the sale transaction itself.** Instead:
 
 1. On confirmation, `SaleConfirmedHandlerForKafka.publish` emits
-   `SaleConfirmedEvent(subtotal, discountTotal, surchargeTotal, payableTotal,
-   lines, adjustments, dateSold, saleReferenceNumber, …)`.
+   `SaleConfirmedEvent(sourceDocumentId, contactId, saleReferenceNumber,
+   payableTotal, dateSold)`. The event carries `payableTotal` only —
+   line/adjustment detail is not on the wire, so the downstream tax
+   processor cannot reach back into line breakdowns; it computes against
+   `payableTotal` as the taxable amount.
 2. `SaleTaxFinalizationProcessor.handle` consumes the event in a separate
    transaction:
    - Looks up active `OrgJurisdictionTaxType` rows (status = ACTIVE).
@@ -367,13 +385,16 @@ sale commit:
 
 ### Ceilings
 
-- **At commit (draft and confirm), payments cannot exceed payable total**
-  (`SalePaymentCommitter.guardWithinTotal`). At session-mutation time, the
-  validator currently lets payments slide so the user can still see what
-  they've staged.
-- **For walk-in sales (always non-draft at the time of confirm), payments
-  must fully cover the total** (`SalePaymentCommitter.guardFullCoverage`,
-  called by `SaleConfirmCommitter`).
+- **At confirm, payments cannot exceed payable total** — enforced by
+  `SaleSessionValidator.guardPaymentsWithinTotal`, called from
+  `SaleSessionCommitHandler.confirm` before the commit transaction opens.
+  **Drafts intentionally permit overpayment** (prepayment is legitimate
+  before goods are issued).
+- **For walk-in sales, payments must fully cover the total at confirm**
+  (`SaleSessionValidator.guardWalkInFullyCovered`, also called from the
+  session commit handler).
+- At session-mutation time the validator lets payments slide so the user
+  can still see what they've staged; both ceilings only apply at confirm.
 
 ### Standalone payment recording
 
@@ -398,7 +419,8 @@ rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
   search path is correctly set per location. Read-only flows
   (`SaleDataFetcher.fetchRecent` / `getSaleContactId`, the Kafka handlers'
   `reissue` path) declare `readOnly = true`. The lock-acquiring lookups
-  `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext` are annotated
+  `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext` and the
+  commit-time `SaleDataFetcher.loadDraftAtVersion` are annotated
   `Propagation.MANDATORY` — they must join an already-open writable
   transaction from the caller.
 - Sale lines, reservations, discounts, and payments are persisted **in the
@@ -500,8 +522,9 @@ run** — i.e. as soon as the data it needs is in scope.
 - Guards products active.
 - Guards fiscal period + future-date only when payments are present.
 - Optimistic version check against `SaleEntity.version`.
-- Persists `SaleEntity` at `DRAFT`, syncs lines/adjustments, appends new
-  payments, clears + re-issues reservations.
+- Persists `SaleEntity` at `DRAFT`, syncs lines, clears + re-issues
+  reservations (with `guardStockForDraftUpdates` in between), syncs
+  adjustments, applies totals, then appends new payments.
 
 ### `SaleConfirmCommitter.confirm(SaleCommitInput): SaleCommitOutcome`
 - Walk-in is allowed (and required to be fully paid).
@@ -541,7 +564,7 @@ run** — i.e. as soon as the data it needs is in scope.
   `SaleEntity` / `SaleLineEntity` across the package boundary.
 
 ### Sellable product lookup (now on the product package)
-- Lives at `location_product/api/LocationProductForSaleSearchService`,
+- Lives at `location_product/api/LocationProductForSaleDataFetcher`,
   REST-exposed as `POST /secured/location-products/search-for-sale` on
   `LocationProductEndpoint`.
 
@@ -565,12 +588,11 @@ run** — i.e. as soon as the data it needs is in scope.
   reservation logic is the leading source of oversell bugs.
 - **Publishing Kafka events outside the sale transaction.** Always go
   through `ApplicationEventPublisher` so the event is bound to commit.
-- **Kafka publishers bang (`!!`) on `subtotal` and `dateSold`** in both
-  `SaleConfirmedHandlerForKafka.publish` and
+- **Kafka publishers bang (`!!`) on `sale.id` and `sale.dateSold`** in
+  both `SaleConfirmedHandlerForKafka.publish` and
   `SaleVoidHandlerForKafka.publishVoid`. Confirmation/void paths always
-  set subtotal and dateSold before publish, so those asserts hold in
-  normal flow. Stay aware of the contract when introducing new mutation
-  paths.
+  set `dateSold` before publish, so the assert holds in normal flow.
+  Stay aware of the contract when introducing new mutation paths.
 
 ---
 
@@ -580,10 +602,10 @@ run** — i.e. as soon as the data it needs is in scope.
 |----------------------------|---------------------------------------------------------------------------------------------------------|
 | State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                  |
 | Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleCommitLineSync`                                                |
-| Validation                 | `SaleValidator`, `SaleAdjustmentValidator`, `NewSaleAdjustmentValidator`, `SaleAdjustmentReconciler`    |
-| Commit primitives          | `SaleCommitInput`, `SaleDraftCommitter`, `SaleConfirmCommitter`                                         |
+| Validation                 | `SaleValidator`                                                                                         |
+| Commit primitives          | `SaleCommitInput`, `SaleDraftCommitter`, `SaleConfirmCommitter`, `SaleCommitFinalizer`                  |
 | Stock reservation          | `SaleStockReserver`, `SaleLineStockReservationEntity`, `StockReservationDtos`                           |
-| Adjustments (disc + srch)  | `sale_adjustment/` package (entity, repo, service, validators, reconciler, fetcher, calculator, `SaleAdjustmentCommitter`) |
+| Adjustments (disc + srch)  | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentCommitter`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`) |
 | Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)    |
 | Payments                   | `sale_payment/` package (`SalePaymentCommitter` for commit-time inserts)                                |
 | Taxes (async finalization) | `SaleTaxFinalizationProcessor`, `SaleTaxReversalProcessor`, `tax_entry/` package                        |

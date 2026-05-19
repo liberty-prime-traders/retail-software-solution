@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
@@ -24,7 +25,7 @@ class SaleSessionLoader(
 ) {
 
     fun newSession(
-        sessionId: String,
+        sessionId: UUID,
         locationId: UUID,
         contactId: UUID,
         userId: UUID,
@@ -35,6 +36,7 @@ class SaleSessionLoader(
             locationId = locationId,
             saleId = null,
             saleVersion = null,
+            originalStatus = SaleStatus.DRAFT,
             createdById = userId,
             createdAt = now,
             lastUpdatedAt = now,
@@ -54,18 +56,18 @@ class SaleSessionLoader(
         return saleSessionTotalsCalculator.recompute(session)
     }
 
-    fun loadFromSale(sessionId: String, saleId: UUID): SaleSession {
+    fun loadFromSale(sessionId: UUID, saleId: UUID): SaleSession {
         val now = DateTimes.Offset.Now.organization()
         val userId = SessionContextProvider.getUserId()
         val locationId = SessionContextProvider.getLocationId()
-        val header = saleDataFetcher.getHeaderSnapshot(saleId)
-        val lineSnapshots = saleDataFetcher.getLineSnapshots(saleId)
-        val adjustmentSnapshots = saleAdjustmentFetcher.getAdjustmentSnapshots(saleId)
+        val header = saleDataFetcher.getSaleHeader(saleId)
+        val lineSnapshots = saleDataFetcher.getSaleLines(saleId)
+        val adjustmentSnapshots = saleAdjustmentFetcher.getAdjustments(saleId)
         val paymentSnapshots = salePaymentFetcher.getPaymentSnapshots(saleId)
 
         val lines = lineSnapshots.map {
             SaleSessionLine(
-                id = SessionIdentity.persisted(it.id),
+                identity = SessionIdentity.persisted(it.id),
                 locationProductId = it.locationProductId,
                 productLabel = it.productLabel,
                 quantity = it.quantity,
@@ -74,11 +76,11 @@ class SaleSessionLoader(
                 unitPrice = it.unitPrice,
             )
         }
-        val lineIdToSessionId = lines.associate { it.id.id!! to it.id }
+        val identityByLineId = lines.associate { it.identity.id!! to it.identity }
         val adjustments = adjustmentSnapshots.map { snapshot ->
             SaleSessionAdjustment(
-                id = SessionIdentity.persisted(snapshot.id),
-                lineId = snapshot.saleLineId?.let { lineIdToSessionId[it] },
+                identity = SessionIdentity.persisted(snapshot.id),
+                lineIdentity = snapshot.saleLineId?.let { identityByLineId[it] },
                 adjustmentReasonId = snapshot.adjustmentReasonId,
                 direction = snapshot.direction,
                 calculationMethod = snapshot.calculationMethod,
@@ -89,11 +91,12 @@ class SaleSessionLoader(
         }
         val payments = paymentSnapshots.map { snapshot ->
             SaleSessionPayment(
-                id = SessionIdentity.persisted(snapshot.id),
+                identity = SessionIdentity.persisted(snapshot.id),
                 paymentMethodId = snapshot.paymentMethodId,
                 amount = snapshot.amount,
                 reference = snapshot.reference,
                 paymentDate = snapshot.paymentDate,
+                voidedReason = snapshot.voidedReason,
             )
         }
 
@@ -102,6 +105,7 @@ class SaleSessionLoader(
             locationId = locationId,
             saleId = header.id,
             saleVersion = header.version,
+            originalStatus = header.status,
             createdById = userId,
             createdAt = now,
             lastUpdatedAt = now,

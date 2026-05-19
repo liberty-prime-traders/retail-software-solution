@@ -21,6 +21,9 @@ class OrgTableRegistryService(
     fun getAll(): Collection<OrgTableRegistryResponseDto> =
         orgTableRegistryCache.getAllTables().map { orgTableRegistryMapper.toDto(it) }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAllOrgTableDtos(): Collection<OrgTableRegistryDto> = orgTableRegistryCache.getAllTables()
+
     fun update(updateDto: OrgTableRegistryUpdateDto): OrgTableRegistryResponseDto {
         val allTables = orgTableRegistryCache.getAllTables()
         val existing = allTables.find { it.id == updateDto.id } ?: throw RtsGenericException("Org Table not found")

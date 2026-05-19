@@ -2,13 +2,11 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session.ap
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLoader
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -18,7 +16,6 @@ class SaleSessionHandler(
     private val saleSessionLoader: SaleSessionLoader,
     private val saleSessionAssembler: SaleSessionAssembler,
     private val saleSessionValidator: SaleSessionValidator,
-    private val saleDataFetcher: SaleDataFetcher,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -28,13 +25,12 @@ class SaleSessionHandler(
                 return saleSessionAssembler.buildResponse(existing)
             }
         }
-        val sessionId = UUID.randomUUID().toString()
-        val locationId = SessionContextProvider.getLocationId()
-        val userId = SessionContextProvider.getUserId()
+        val sessionId = UUID.randomUUID()
         val session = if (dto.saleId != null) {
-            requireDraftStatus(dto.saleId)
             saleSessionLoader.loadFromSale(sessionId, dto.saleId)
         } else {
+            val locationId = SessionContextProvider.getLocationId()
+            val userId = SessionContextProvider.getUserId()
             saleSessionLoader.newSession(sessionId, locationId, dto.contactId, userId)
         }
         saleSessionValidator.validate(session)
@@ -42,26 +38,18 @@ class SaleSessionHandler(
         return saleSessionAssembler.buildResponse(session)
     }
 
-    fun abandon(sessionId: String) {
+    fun abandon(sessionId: UUID) {
         saleSessionStore.delete(sessionId)
     }
 
-    fun listOpen(): List<SaleSessionSummaryDto> {
-        val open = saleSessionStore.listOpen()
-        return saleSessionAssembler.buildSummaries(open)
+    fun listOpenSessions(): List<SaleSessionSummaryDto> {
+        return saleSessionAssembler.buildSummaries( saleSessionStore.listOpenSessions())
     }
 
-    fun get(sessionId: String): SaleSessionResponseDto {
+    fun acquireSession(sessionId: UUID): SaleSessionResponseDto {
         val session = saleSessionStore.load(sessionId)
-        val visited = session.visited(SessionContextProvider.getUserId(), java.time.OffsetDateTime.now())
+        val visited = session.markVisited(SessionContextProvider.getUserId())
         saleSessionStore.save(visited)
         return saleSessionAssembler.buildResponse(visited)
-    }
-
-    private fun requireDraftStatus(saleId: UUID) {
-        val header = saleDataFetcher.getHeaderSnapshot(saleId)
-        if (header.status != SaleStatus.DRAFT) {
-            throw RtsGenericException("Only DRAFT sales can be loaded into a session; sale is ${header.status}")
-        }
     }
 }

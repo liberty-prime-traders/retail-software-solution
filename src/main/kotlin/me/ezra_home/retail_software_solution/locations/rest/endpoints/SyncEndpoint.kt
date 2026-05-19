@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogUpdater
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogUpdater
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncInitiateType
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncInitiator
 import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher

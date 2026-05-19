@@ -32,12 +32,6 @@ class SaleValidator(
                 throw RtsGenericException("Sale date must be today or in the past. Provided date: $saleLocalDate")
             }
         }
-
-        fun guardNoDuplicateProducts(productIds: List<UUID>) {
-            if (productIds.size != productIds.toSet().size) {
-                throw RtsGenericException("Duplicate products are not allowed in a sale")
-            }
-        }
     }
 
     fun guardCanVoid(sale: SaleEntity) {
@@ -49,20 +43,6 @@ class SaleValidator(
         }
         if (salePaymentFetcher.hasActivePayments(sale.id!!)) {
             throw RtsGenericException("Cannot void a sale with active payments")
-        }
-    }
-
-    fun ensureSufficientStockForLines(
-        resolvedBaseQuantitiesPerProduct: Map<UUID, BigDecimal>,
-        productSummaries: Map<UUID, LocationProductSummaryDto>
-    ) {
-        val locationProductIds = resolvedBaseQuantitiesPerProduct.keys.toList()
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds)
-        val balances = stockBalanceFetcher.getLatestBalances(locationProductIds)
-        val reserved = saleStockReserver.loadReservedTotals(locationProductIds)
-        resolvedBaseQuantitiesPerProduct.forEach { (locationProductId, quantity) ->
-            val available = balances.getValue(locationProductId).subtract(reserved[locationProductId] ?: BigDecimal.ZERO)
-            throwIfOverSelling(available, quantity, locationProductId, productSummaries)
         }
     }
 

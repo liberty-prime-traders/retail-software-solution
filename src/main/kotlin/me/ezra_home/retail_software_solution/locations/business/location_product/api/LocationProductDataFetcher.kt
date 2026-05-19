@@ -1,8 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductSearchService
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
@@ -11,8 +15,19 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class LocationProductDataFetcher(
     private val locationProductRepository: LocationProductRepository,
-    private val unitConversionGraphFacade: UnitConversionGraphFacade
-) {
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
+    private val locationProductSearchService: LocationProductSearchService,
+    ) {
+
+    fun searchWithParameters(
+        pageRequest: PageRequest<ProductSearchParameters, String>
+    ): PageResponse<LocationProductResponseDto, String> {
+        return locationProductSearchService.searchWithParameters(pageRequest)
+    }
+
+    fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
+        return locationProductSearchService.generateFormattedQuery(pageRequest)
+    }
 
     fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> =
         locationProductRepository.findAllById(ids).associate { entity ->

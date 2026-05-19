@@ -26,6 +26,36 @@ class SaleSessionValidator(
         guardDiscountCeilings(session)
     }
 
+    fun guardMutable(session: SaleSession) {
+        if (!session.mutable()) {
+            throw RtsGenericException(
+                "Sale session is read-only because the underlying sale is ${session.originalStatus}"
+            )
+        }
+    }
+
+    fun canAddPayments(session: SaleSession) {
+        if (!session.canAddPayments()) {
+            throw RtsGenericException(
+                "Cannot add a payment because the sale is ${session.originalStatus}"
+            )
+        }
+    }
+
+    fun canDiscardPayments(session: SaleSession) {
+        if (!session.canDiscardPayments()) {
+            throw RtsGenericException(
+                "Cannot discard a payment because the sale is ${session.originalStatus}"
+            )
+        }
+    }
+
+    fun guardNonEmptyLines(session: SaleSession) {
+        if (session.lines.isEmpty()) {
+            throw RtsGenericException("Sale must have at least one line")
+        }
+    }
+
     fun guardWalkInFullyCovered(session: SaleSession) {
         if (session.header.contactId != SystemContact.WALK_IN.id) return
         if (session.totals.paymentTotal < session.totals.payableTotal) {
@@ -38,7 +68,7 @@ class SaleSessionValidator(
         if (session.totals.paymentTotal > session.totals.payableTotal) {
             throw RtsGenericException(
                 "Payments of ${Currencies.format(session.totals.paymentTotal)} exceed payable total " +
-                        "${Currencies.format(session.totals.payableTotal)}"
+                        Currencies.format(session.totals.payableTotal)
             )
         }
     }
@@ -57,9 +87,9 @@ class SaleSessionValidator(
     }
 
     private fun guardAdjustmentReferences(session: SaleSession) {
-        val lineKeys = session.lines.mapTo(HashSet()) { it.id.key() }
+        val lineKeys = session.lines.mapTo(HashSet()) { it.identity.key() }
         session.adjustments.forEach { adj ->
-            val lineKey = adj.lineId?.key() ?: return@forEach
+            val lineKey = adj.lineIdentity?.key() ?: return@forEach
             if (lineKey !in lineKeys) {
                 throw RtsGenericException("Adjustment references a line that is not on the sale")
             }
@@ -80,7 +110,7 @@ class SaleSessionValidator(
 
     private fun guardDiscountCeilings(session: SaleSession) {
         val totals = saleSessionTotalsCalculator.compute(
-            session.lines, session.adjustments, session.payments.sumOf { it.amount },
+            session.lines, session.adjustments, session.totalPaid()
         )
         guardLineDiscountCeilings(session)
         val subtotal = totals.subtotal
@@ -95,10 +125,10 @@ class SaleSessionValidator(
     }
 
     private fun guardLineDiscountCeilings(session: SaleSession) {
-        val linesByKey = session.lines.associateBy { it.id.key() }
+        val linesByKey = session.lines.associateBy { it.identity.key() }
         val discountsByLine = session.adjustments
-            .filter { it.direction == AdjustmentDirection.DISCOUNT && it.lineId != null }
-            .groupBy { it.lineId!!.key() }
+            .filter { it.direction == AdjustmentDirection.DISCOUNT && it.lineIdentity != null }
+            .groupBy { it.lineIdentity!!.key() }
         discountsByLine.forEach { (lineKey, discounts) ->
             val line = linesByKey[lineKey]
                 ?: throw RtsGenericException("Adjustment references a line that is not on the sale")

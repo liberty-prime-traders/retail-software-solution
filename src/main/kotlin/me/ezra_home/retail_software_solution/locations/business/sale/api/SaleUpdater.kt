@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidEntity
@@ -22,13 +22,13 @@ import java.util.UUID
 @TransactionalOnLocationSchema
 class SaleUpdater(
     private val saleDataFetcher: SaleDataFetcher,
+    private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
     private val saleStockReserver: SaleStockReserver,
     private val saleAssembler: SaleAssembler,
     private val saleStockUpdater: SaleStockUpdater,
     private val saleVoidHandlerForKafka: SaleVoidHandlerForKafka,
     private val saleValidator: SaleValidator,
-    private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleVoidRepository: SaleVoidRepository,
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val fiscalPeriodService: FiscalPeriodService,
@@ -37,11 +37,13 @@ class SaleUpdater(
     fun updatePaymentStatus(id: UUID, status: PaymentStatus) {
         val sale = saleDataFetcher.lockAndGetSale(id)
         sale.paymentStatus = status
+        saleRepository.save(sale)
     }
 
     fun updateNotes(id: UUID, notes: String?) {
         val sale = saleDataFetcher.lockAndGetSale(id)
         sale.notes = notes
+        saleRepository.save(sale)
     }
 
     fun voidSale(dto: SaleVoidCreateDto): SaleResponseDto {
@@ -59,8 +61,8 @@ class SaleUpdater(
             val voidEntity = saleVoidRepository.save(SaleVoidEntity(saleId = dto.saleId, reason = dto.reason))
             saleVoidHandlerForKafka.publishVoid(sale, voidEntity)
         }
-        val productSummaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId })
-        return saleAssembler.buildResponse(sale, lines, productSummaries)
+        saleRepository.save(sale)
+        return saleAssembler.buildResponse(sale)
     }
 
 }

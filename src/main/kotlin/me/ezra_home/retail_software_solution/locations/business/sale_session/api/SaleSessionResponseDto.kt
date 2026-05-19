@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SaleSessionResponseDto(
-    val sessionId: String,
+    val sessionId: UUID,
     val saleId: UUID?,
     val saleVersion: Long?,
     val locationId: UUID,
@@ -32,7 +32,7 @@ data class SaleSessionResponseDto(
 )
 
 data class SaleSessionLineDto(
-    val id: SessionIdentity,
+    val identity: SessionIdentity,
     val locationProductId: UUID,
     val productLabel: String,
     val quantity: BigDecimal,
@@ -43,8 +43,8 @@ data class SaleSessionLineDto(
 )
 
 data class SaleSessionAdjustmentDto(
-    val id: SessionIdentity,
-    val lineId: SessionIdentity?,
+    val identity: SessionIdentity,
+    val lineIdentity: SessionIdentity?,
     val adjustmentReasonId: UUID,
     val adjustmentReasonLabel: String?,
     val direction: AdjustmentDirection,
@@ -57,10 +57,10 @@ data class SaleSessionAdjustmentDto(
 )
 
 data class SaleSessionPaymentDto(
-    val id: SessionIdentity,
-    val paymentMethodId: UUID,
-    val paymentMethodLabel: String?,
+    val identity: SessionIdentity,
+    val paymentMethod: String?,
     val amount: BigDecimal,
     val reference: String?,
     val paymentDate: OffsetDateTime?,
+    val voidedReason: String?,
 )

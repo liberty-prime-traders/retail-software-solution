@@ -5,9 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCom
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentValidator
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -26,14 +24,10 @@ class SalePaymentCommitter(
         input: SaleCommitInput,
     ): AppendResult {
         val newOnes = input.payments.filter { it.existingId == null }
-        val existingIdByClientKey = input.payments
-            .filter { it.existingId != null }
-            .associate { it.clientKey to it.existingId!! }
         if (newOnes.isEmpty()) {
             val totalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-            return AppendResult(existingIdByClientKey, resolvePaymentStatus(totalPaid, payableTotal))
+            return AppendResult(emptyMap(), resolvePaymentStatus(totalPaid, payableTotal))
         }
-        newOnes.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
         val entities = newOnes.map { dto ->
             SalePaymentEntity(
                 saleId = saleId,
@@ -48,36 +42,9 @@ class SalePaymentCommitter(
         salePaymentHandlerForKafka.publish(saleId, contactId, saved)
         val freshTotalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         return AppendResult(
-            idsByClientKey = newIdByClientKey + existingIdByClientKey,
+            idsByClientKey = newIdByClientKey,
             newStatus = resolvePaymentStatus(freshTotalPaid, payableTotal),
         )
-    }
-
-    fun guardWithinTotal(saleId: UUID, payableTotal: BigDecimal, input: SaleCommitInput) {
-        val newOnes = input.payments.filter { it.existingId == null }
-        if (newOnes.isEmpty()) return
-        val alreadyPaid = if (input.saleId == null) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        val totalPaid = alreadyPaid + newOnes.sumOf { it.amount }
-        SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, payableTotal)
-    }
-
-    fun guardFullCoverage(saleId: UUID, payableTotal: BigDecimal, input: SaleCommitInput) {
-        val newOnes = input.payments.filter { it.existingId == null }
-        val alreadyPaid = if (input.saleId == null) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        val totalPaid = alreadyPaid + newOnes.sumOf { it.amount }
-        if (totalPaid < payableTotal) {
-            throw RtsGenericException("Walk-in sales require full payment coverage")
-        }
-    }
-
-    fun ensureRemovalsRejected(input: SaleCommitInput) {
-        val saleId = input.saleId ?: return
-        val existingIds = salePaymentRepository.findBySaleId(saleId).mapNotNull { it.id }.toHashSet()
-        val incomingIds = input.payments.mapNotNull { it.existingId }.toHashSet()
-        val missing = existingIds - incomingIds
-        if (missing.isNotEmpty()) {
-            throw RtsGenericException("Existing payments cannot be removed via a sale session: $missing")
-        }
     }
 
     private fun resolvePaymentStatus(paid: BigDecimal, payableTotal: BigDecimal): PaymentStatus = when {

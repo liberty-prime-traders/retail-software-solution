@@ -1,8 +1,9 @@
-package me.ezra_home.retail_software_solution.locations.business.catalog_sync
+package me.ezra_home.retail_software_solution.locations.business.catalog_sync.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncLogFetcher
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncStatus
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogEntity
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncLogRepository
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.SyncProgressUpdate
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.util.UUID

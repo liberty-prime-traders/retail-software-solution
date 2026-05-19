@@ -11,5 +11,5 @@ data class LocationProductSummaryDto(
     val baseUnitId: UUID,
     val unitPrice: BigDecimal? = null
 ) {
-    val label: String = "$referenceNumber - $productName"
+    val label: String = "$referenceNumber - $productGroupName - $productName"
 }

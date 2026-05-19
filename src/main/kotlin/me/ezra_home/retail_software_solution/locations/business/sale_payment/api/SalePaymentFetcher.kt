@@ -16,6 +16,7 @@ data class SalePaymentSnapshot(
     val amount: BigDecimal,
     val reference: String?,
     val paymentDate: OffsetDateTime?,
+    val voidedReason: String?,
 )
 
 @Component
@@ -63,18 +64,19 @@ class SalePaymentFetcher(
     fun getPaymentSnapshots(saleId: UUID): List<SalePaymentSnapshot> {
         val payments = salePaymentRepository.findBySaleId(saleId)
         if (payments.isEmpty()) return emptyList()
-        val voidedIds = voidedPaymentIds(payments.map { it.id!! })
-        return payments
-            .filter { it.id !in voidedIds }
-            .map { entity ->
-                SalePaymentSnapshot(
-                    id = entity.id!!,
-                    paymentMethodId = entity.paymentMethodId,
-                    amount = entity.amount,
-                    reference = entity.reference,
-                    paymentDate = entity.paymentDate,
-                )
-            }
+        val voidReasonsById = salePaymentVoidRepository
+            .findBySalePaymentIdIn(payments.map { it.id!! })
+            .associate { it.salePaymentId to it.reason }
+        return payments.map { entity ->
+            SalePaymentSnapshot(
+                id = entity.id!!,
+                paymentMethodId = entity.paymentMethodId,
+                amount = entity.amount,
+                reference = entity.reference,
+                paymentDate = entity.paymentDate,
+                voidedReason = voidReasonsById[entity.id!!],
+            )
+        }
     }
 
     fun hasActivePayments(saleId: UUID): Boolean {

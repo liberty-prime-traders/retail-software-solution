@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class SaleSessionSummaryDto(
-    val sessionId: String,
+    val sessionId: UUID,
     val createdById: UUID,
     val createdByLabel: String?,
     val createdAt: OffsetDateTime,

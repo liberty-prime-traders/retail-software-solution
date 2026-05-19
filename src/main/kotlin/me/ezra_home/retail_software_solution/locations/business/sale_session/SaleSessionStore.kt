@@ -7,13 +7,13 @@ interface SaleSessionStore {
 
     fun save(session: SaleSession)
 
-    fun load(sessionId: String): SaleSession
+    fun load(sessionId: UUID): SaleSession
 
-    fun loadOrNull(sessionId: String): SaleSession?
+    fun loadOrNull(sessionId: UUID): SaleSession?
 
-    fun delete(sessionId: String)
+    fun delete(sessionId: UUID)
 
     fun findOpenSessionForSale(saleId: UUID): SaleSession?
 
-    fun listOpen(): List<SaleSession>
+    fun listOpenSessions(): List<SaleSession>
 }

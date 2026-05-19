@@ -11,22 +11,13 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleReposit
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import java.math.BigDecimal
 import java.util.UUID
 
 data class SaleContext(val contactId: UUID, val payableTotal: BigDecimal, val status: SaleStatus)
-
-data class SaleHeaderSnapshot(
-    val id: UUID,
-    val version: Long,
-    val status: SaleStatus,
-    val contactId: UUID,
-    val soldById: UUID?,
-    val dateSold: java.time.OffsetDateTime?,
-    val notes: String?,
-)
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
@@ -64,11 +55,27 @@ class SaleDataFetcher(
         return saleRepository.getReferenceById(saleId).contactId
     }
 
-    fun getHeaderSnapshot(saleId: UUID): SaleHeaderSnapshot {
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+    fun loadDraftAtVersion(saleId: UUID, expectedVersion: Long?): SaleEntity {
+        val sale = saleRepository.findById(saleId).orElseThrow {
+            RtsGenericException("Sale $saleId no longer exists")
+        }
+        if (sale.status != SaleStatus.DRAFT) {
+            throw RtsGenericException("Sale ${sale.requiredReference()} is not a draft")
+        }
+        val expected = expectedVersion
+            ?: throw RtsGenericException("Expected version must be supplied when committing an existing sale")
+        if (sale.version != expected) {
+            throw ObjectOptimisticLockingFailureException(SaleEntity::class.java, saleId)
+        }
+        return sale
+    }
+
+    fun getSaleHeader(saleId: UUID): SaleHeaderDto {
         val sale = saleRepository.findById(saleId).orElseThrow {
             RtsGenericException("Sale $saleId not found")
         }
-        return SaleHeaderSnapshot(
+        return SaleHeaderDto(
             id = sale.id!!,
             version = sale.version,
             status = sale.status,
@@ -79,13 +86,12 @@ class SaleDataFetcher(
         )
     }
 
-    fun getLineSnapshots(saleId: UUID): List<SaleLineSnapshot> {
+    fun getSaleLines(saleId: UUID): List<SaleLineDto> {
         val lines = saleLineRepository.findBySaleId(saleId)
         if (lines.isEmpty()) return emptyList()
-        val productSummaries = locationProductDataFetcher
-            .findSummaryByIds(lines.map { it.locationProductId })
+        val productSummaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId })
         return lines.map { line ->
-            SaleLineSnapshot(
+            SaleLineDto(
                 id = line.id!!,
                 locationProductId = line.locationProductId,
                 productLabel = productSummaries[line.locationProductId]?.label ?: line.locationProductId.toString(),
@@ -98,12 +104,3 @@ class SaleDataFetcher(
     }
 }
 
-data class SaleLineSnapshot(
-    val id: UUID,
-    val locationProductId: UUID,
-    val productLabel: String,
-    val quantity: BigDecimal,
-    val unitId: UUID,
-    val conversionFactor: BigDecimal,
-    val unitPrice: BigDecimal,
-)

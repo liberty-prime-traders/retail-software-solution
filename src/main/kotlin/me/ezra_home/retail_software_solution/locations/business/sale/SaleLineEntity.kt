@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
@@ -37,7 +37,7 @@ class SaleLineEntity(
     @Column(name = "conversion_factor", nullable = false, precision = 19, scale = 10)
     var conversionFactor: BigDecimal
 
-) : HasReferenceEntity(), SaleLineSummaryDto {
+) : HasReferenceEntity(), ProductLineWithPrice {
 
     fun baseQty(): BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
 }
