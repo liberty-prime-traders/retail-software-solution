@@ -46,6 +46,6 @@ class ProductSearchValidatorTest {
     val exception = assertThrows<RtsGenericException> {
       ProductSearchValidator.validateArraySizes(params.categoryIds, params.statusList, params.tagIds)
     }
-    assertEquals(exception.message?.contains("tagIds exceeds maximum size of 50"), true)
+    assertEquals(exception.message.contains("tagIds exceeds maximum size of 50"), true)
   }
 }

@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLoader
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
-import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.util.UUID
 
