@@ -7,7 +7,7 @@ Feature: Unit Groups
 
   @regression
   Scenario: Authenticated user creates a unit group successfully
-    When I send a POST request to "/secured/unitgroups" with body:
+    When I POST to secured/unitgroups with payload:
       """
       {
         "name": "Volume",
@@ -20,7 +20,7 @@ Feature: Unit Groups
   @regression
   Scenario: Authenticated user views list of unit groups
     Given a unit group exists
-    When I send a GET request to "/secured/unitgroups"
+    When I GET from secured/unitgroups
     Then the response status should be 200
     And the response should contain 1 items
     And the response item 0 should match the persisted unitGroup identified by "#unitGroup->0"
@@ -28,7 +28,7 @@ Feature: Unit Groups
   @regression
   Scenario: Authenticated user updates a unit group
     Given a unit group exists
-    When I send a PUT request to "/secured/unitgroups" with body:
+    When I PUT to secured/unitgroups with payload:
       """
       {
         "id": "#unitGroup->0",
@@ -42,16 +42,16 @@ Feature: Unit Groups
   @regression
   Scenario: Authenticated user deletes a unit group
     Given a unit group exists
-    When I send a DELETE request to "/secured/unitgroups/#unitGroup->0"
+    When I DELETE from secured/unitgroups/#unitGroup->0
     Then the response status should be 204
-    When I send a GET request to "/secured/unitgroups"
+    When I GET from secured/unitgroups
     Then the response status should be 200
     And the response should be an empty list
 
   @regression
   Scenario: Duplicate unit group name is rejected
     Given a unit group exists
-    When I send a POST request to "/secured/unitgroups" with body:
+    When I POST to secured/unitgroups with payload:
       """
       {
         "name": "Test Unit Group"
@@ -63,5 +63,5 @@ Feature: Unit Groups
   @regression
   Scenario: Unauthenticated user cannot view unit groups
     Given I am not authenticated
-    When I send a GET request to "/secured/unitgroups"
+    When I GET from secured/unitgroups
     Then the response status should be 403
