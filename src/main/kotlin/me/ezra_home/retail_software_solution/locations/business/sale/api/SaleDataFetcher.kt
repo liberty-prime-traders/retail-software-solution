@@ -77,6 +77,7 @@ class SaleDataFetcher(
         }
         return SaleHeaderDto(
             id = sale.id!!,
+            referenceNumber = sale.requiredReference(),
             version = sale.version,
             status = sale.status,
             contactId = sale.contactId,

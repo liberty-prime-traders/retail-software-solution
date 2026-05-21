@@ -41,8 +41,16 @@ class SaleSessionHandler(
         saleSessionStore.delete(sessionId)
     }
 
-    fun listOpenSessions(): List<SaleSessionSummaryDto> {
-        return saleSessionAssembler.buildSummaries(saleSessionStore.listOpenSessions())
+    fun listOpenSessions(mineOnly: Boolean): List<SaleSessionSummaryDto> {
+        return saleSessionStore.listOpenSessions()
+            .filter { session ->
+                if (mineOnly) {
+                    session.createdById == SessionContextProvider.getUserId()
+                } else {
+                    true
+                }
+            }
+            .let { saleSessionAssembler.buildSummaries(it) }
     }
 
     fun acquireSession(sessionId: UUID): SaleSessionResponseDto {

@@ -1,0 +1,13 @@
+services:
+  rtss-redis:
+    image: redis:${REDIS_VERSION}
+    restart: unless-stopped
+    ports:
+      - "${REDIS_EXTERNAL_PORT}:${REDIS_INTERNAL_PORT}"
+    volumes:
+      - rtss-redis-data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+
+volumes:
+  rtss-redis-data:
+    driver: local

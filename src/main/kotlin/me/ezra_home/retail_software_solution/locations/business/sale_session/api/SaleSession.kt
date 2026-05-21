@@ -29,8 +29,6 @@ data class SaleSession(
     fun totalPaid() =
         salePayments.filter { it.voidedReason == null }.sumOf { it.amount }
 
-    fun canDiscardPayments(): Boolean = originalStatus == SaleStatus.DRAFT
-
     fun canAddPayments(): Boolean = originalStatus ==
             SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED
 

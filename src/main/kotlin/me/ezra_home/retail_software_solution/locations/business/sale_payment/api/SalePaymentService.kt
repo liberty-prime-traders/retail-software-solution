@@ -1,11 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentValidator
@@ -13,11 +10,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
-import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
-import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -27,70 +21,10 @@ class SalePaymentService(
     private val saleDataFetcher: SaleDataFetcher,
     private val saleUpdater: SaleUpdater,
     private val salePaymentFetcher: SalePaymentFetcher,
-    private val salePaymentHandlerForKafka: SalePaymentHandlerForKafka,
+    private val salePaymentWriter: SalePaymentWriter,
     private val salePaymentVoidHandlerForKafka: SalePaymentVoidHandlerForKafka,
-    private val paymentMethodService: PaymentMethodService
+    private val paymentMethodService: PaymentMethodService,
 ) {
-
-    fun recordPaymentsSubmittedWithSale(
-        saleId: UUID,
-        contactId: UUID,
-        payments: List<SalePaymentCreateDto>,
-        saleTotal: BigDecimal,
-        isNewSale: Boolean,
-    ): PaymentStatus? {
-        if (payments.isEmpty()) return null
-        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        return doRecordPayments(saleId, contactId, payments, saleTotal, alreadyPaid)
-    }
-
-    fun guardPaymentsWithinSaleTotal(
-        saleId: UUID,
-        payments: List<SalePaymentCreateDto>,
-        payableTotal: BigDecimal,
-        isNewSale: Boolean,
-    ) {
-        if (payments.isEmpty()) return
-        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        val totalPaid = alreadyPaid + payments.sumOf { it.amount }
-        SalePaymentValidator.guardNotExceedingSaleTotal(totalPaid, payableTotal)
-    }
-
-    fun guardFullPaymentCoverage(
-        saleId: UUID,
-        payments: List<SalePaymentCreateDto>,
-        payableTotal: BigDecimal,
-        isNewSale: Boolean,
-    ) {
-        val alreadyPaid = if (isNewSale) BigDecimal.ZERO else salePaymentFetcher.calculatePaidAmount(saleId)
-        val totalPaid = alreadyPaid + payments.sumOf { it.amount }
-        if (totalPaid < payableTotal) {
-            throw RtsGenericException("Walk-in sales require full payment coverage")
-        }
-    }
-
-    private fun doRecordPayments(
-        saleId: UUID,
-        contactId: UUID,
-        payments: List<SalePaymentCreateDto>,
-        payableTotal: BigDecimal,
-        alreadyPaid: BigDecimal,
-    ): PaymentStatus {
-        payments.forEach { SalePaymentValidator.guardPositiveAmount(it.amount) }
-        val totalPaid = alreadyPaid + payments.sumOf { it.amount }
-        val entities = payments.map { dto ->
-            SalePaymentEntity(
-                saleId = saleId,
-                paymentMethodId = dto.paymentMethodId,
-                amount = dto.amount,
-                reference = dto.reference,
-                paymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization()
-            )
-        }
-        salePaymentRepository.saveAll(entities)
-        salePaymentHandlerForKafka.publish(saleId, contactId, entities)
-        return resolvePaymentStatus(totalPaid, payableTotal)
-    }
 
     fun recordPayment(dto: SalePaymentCreateDto): SalePaymentResponseDto {
         val saleId = dto.saleId ?: throw RtsGenericException("saleId is required")
@@ -99,22 +33,26 @@ class SalePaymentService(
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         SalePaymentValidator.guardNotExceedingBalance(dto.amount, saleTotal.subtract(alreadyPaid))
-        val entity = SalePaymentEntity(
+        val writeResult = salePaymentWriter.write(
             saleId = saleId,
-            paymentMethodId = dto.paymentMethodId,
-            amount = dto.amount,
-            reference = dto.reference,
-            paymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization()
+            contactId = contactId,
+            payableTotal = saleTotal,
+            newSalePayments = listOf(
+                SalePaymentWriter.NewSalePayment(
+                    paymentMethodId = dto.paymentMethodId,
+                    amount = dto.amount,
+                    reference = dto.reference,
+                    paymentDate = dto.paymentDate,
+                )
+            ),
         )
-        salePaymentRepository.save(entity)
-        val newStatus = resolvePaymentStatus(alreadyPaid + dto.amount, saleTotal)
-        saleUpdater.updatePaymentStatus(saleId, newStatus)
-        salePaymentHandlerForKafka.publish(saleId, contactId, listOf(entity))
+        val savedSalePayment = writeResult.savedSalePayments.single()
+        saleUpdater.updatePaymentStatus(saleId, writeResult.newPaymentStatus)
         return SalePaymentMapper.toResponseDto(
-            entity,
+            savedSalePayment,
             null,
             paymentMethodService.getNamesById(),
-            newStatus
+            writeResult.newPaymentStatus,
         )
     }
 
@@ -132,7 +70,7 @@ class SalePaymentService(
         salePaymentVoidRepository.save(voidEntity)
 
         val totalPaidAfterVoid = salePaymentFetcher.calculatePaidAmount(payment.saleId)
-        val newStatus = resolvePaymentStatus(totalPaidAfterVoid, saleTotal)
+        val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, saleTotal)
         saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
         salePaymentVoidHandlerForKafka.publish(payment, voidEntity, contactId)
         return SalePaymentMapper.toResponseDto(
@@ -141,12 +79,5 @@ class SalePaymentService(
             paymentMethodService.getNamesById(),
             newStatus
         )
-    }
-
-    fun resolvePaymentStatus(paid: BigDecimal, payableTotal: BigDecimal): PaymentStatus = when {
-        paid.compareTo(BigDecimal.ZERO) == 0 -> PaymentStatus.UNPAID
-        paid > payableTotal -> PaymentStatus.OVERPAID
-        paid < payableTotal -> PaymentStatus.PARTIALLY_SETTLED
-        else -> PaymentStatus.FULLY_SETTLED
     }
 }

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
@@ -18,25 +19,23 @@ class SaleSessionAssembler(
     private val paymentMethodService: PaymentMethodService,
     private val adjustmentReasonService: AdjustmentReasonService,
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
-    private val saleSessionMapper: SaleSessionMapper,
+    private val sessionToResponseMapper: SessionToResponseMapper,
 ) {
 
     private val activeWarningSeconds: Long = 300
 
     fun buildResponse(saleSession: SaleSession): SaleSessionResponseDto {
-        val now = DateTimes.Offset.Now.organization()
-        val warningThreshold = Duration.ofSeconds(activeWarningSeconds)
         val sessionMappingContext = SaleSessionMappingContext(
             contactLabel = contactNameFor(saleSession.header.contactId),
             walkInCustomer = saleSession.header.contactId == SystemContact.WALK_IN.id,
-            showActiveUserWarning = Duration.between(saleSession.lastAccessedAt, now) <= warningThreshold
+            showActiveUserWarning = showActiveUserWarning(saleSession)
         )
         val adjustmentMappingContext = AdjustmentMappingContext(
             adjustmentReasonNamesById = adjustmentReasonService.getReasonNamesById(),
             saleSessionTotalsCalculator = saleSessionTotalsCalculator,
             saleSessionLines = saleSession.saleLines,
         )
-        return saleSessionMapper.toResponseDto(
+        return sessionToResponseMapper.toResponseDto(
             saleSession,
             sessionMappingContext,
             adjustmentMappingContext,
@@ -44,10 +43,17 @@ class SaleSessionAssembler(
         )
     }
 
+    private fun showActiveUserWarning(saleSession: SaleSession): Boolean {
+        if (saleSession.lastAccessedById == SessionContextProvider.getUserId()) return false
+        val now = DateTimes.Offset.Now.organization()
+        val warningThreshold = Duration.ofSeconds(activeWarningSeconds)
+        return Duration.between(saleSession.lastAccessedAt, now) <= warningThreshold
+    }
+
     fun buildSummaries(saleSessions: List<SaleSession>): List<SaleSessionSummaryDto> {
         if (saleSessions.isEmpty()) return emptyList()
         return saleSessions.map { session ->
-            saleSessionMapper.toSummaryDto(session, contactNameFor(session.header.contactId))
+            sessionToResponseMapper.toSummaryDto(session, contactNameFor(session.header.contactId))
         }
     }
 

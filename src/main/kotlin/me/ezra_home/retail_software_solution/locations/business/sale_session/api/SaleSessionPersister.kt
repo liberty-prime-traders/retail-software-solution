@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSav
 import me.ezra_home.retail_software_solution.locations.business.sale.api.ConfirmedSalePersister
 import me.ezra_home.retail_software_solution.locations.business.sale.api.DraftSalePersister
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionAssembler
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSaveRequestMapper
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SessionToSaveRequestMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionTotalsCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
@@ -19,14 +19,14 @@ class SaleSessionPersister(
     private val saleSessionAssembler: SaleSessionAssembler,
     private val saleSessionValidator: SaleSessionValidator,
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
-    private val saleSaveRequestMapper: SaleSaveRequestMapper,
+    private val sessionToSaveRequestMapper: SessionToSaveRequestMapper,
     private val draftSalePersister: DraftSalePersister,
     private val confirmedSalePersister: ConfirmedSalePersister,
 ) {
 
     fun saveDraft(sessionId: UUID): SaleSessionResponseDto {
         val saleSession = loadAndValidate(sessionId)
-        val saleSaveRequest = saleSaveRequestMapper.toSaleSaveRequest(saleSession)
+        val saleSaveRequest = sessionToSaveRequestMapper.toSaleSaveRequest(saleSession)
         val saleSaveResult = draftSalePersister.saveDraft(saleSaveRequest)
         val saleSessionAfterSave = applySaleSaveResult(saleSession, saleSaveResult)
         val saleSessionWithTotals = saleSessionTotalsCalculator.recompute(saleSessionAfterSave)
@@ -39,7 +39,7 @@ class SaleSessionPersister(
         saleSessionValidator.guardNonEmptyLines(saleSession)
         saleSessionValidator.guardWalkInFullyCovered(saleSession)
         saleSessionValidator.guardPaymentsWithinTotal(saleSession)
-        val saleSaveRequest = saleSaveRequestMapper.toSaleSaveRequest(saleSession)
+        val saleSaveRequest = sessionToSaveRequestMapper.toSaleSaveRequest(saleSession)
         val saleSaveResult = confirmedSalePersister.confirm(saleSaveRequest)
         val saleSessionAfterSave = applySaleSaveResult(saleSession, saleSaveResult)
         val saleSessionResponseDto = saleSessionAssembler.buildResponse(saleSessionAfterSave)

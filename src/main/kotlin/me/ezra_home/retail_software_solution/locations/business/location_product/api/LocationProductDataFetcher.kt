@@ -37,9 +37,12 @@ class LocationProductDataFetcher(
                 productName = entity.productName,
                 productGroupName = entity.productGroupName,
                 baseUnitId = entity.baseUnitId,
-                unitPrice = entity.defaultSalePrice
             )
         }
+
+    fun getDefaultSalePrices(locationProductIds: Collection<UUID>): Map<UUID, BigDecimal?> =
+        locationProductRepository.findAllById(locationProductIds)
+            .associate { it.id!! to it.defaultSalePrice }
 
     fun getBaseUnitIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
         locationProductRepository.findAllById(locationProductIds)

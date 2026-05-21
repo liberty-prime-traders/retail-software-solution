@@ -12,8 +12,8 @@ import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConf
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
-@Mapper(config = RtsMapperConfig::class, uses = [SaleSessionQualifier::class])
-interface SaleSaveRequestMapper {
+@Mapper(config = RtsMapperConfig::class, uses = [SaleSessionQualifierUtil::class])
+interface SessionToSaveRequestMapper {
 
     @Mapping(source = "saleVersion", target = "expectedVersion")
     @Mapping(source = "header.contactId", target = "contactId")

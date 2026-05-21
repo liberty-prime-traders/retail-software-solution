@@ -4,6 +4,7 @@ import java.util.UUID
 
 data class SaleHeaderDto(
     val id: UUID,
+    val referenceNumber: String,
     val version: Long,
     val status: SaleStatus,
     val contactId: UUID,

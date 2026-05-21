@@ -34,8 +34,10 @@ class SaleSaveFinalizer(
             saleAdjustmentFetcher.getAdjustmentSummaries(saleId),
         )
         val salePaymentAppendResult = salePaymentAppender.appendNew(
-            saleId = saleId, contactId = saleEntity.contactId,
-            payableTotal = saleEntity.payableTotal(), saleSaveRequest = saleSaveRequest,
+            saleId = saleId,
+            contactId = saleEntity.contactId,
+            payableTotal = saleEntity.payableTotal(),
+            saleSaveRequest = saleSaveRequest,
         )
         saleEntity.paymentStatus = salePaymentAppendResult.newPaymentStatus
         saleRepository.save(saleEntity)

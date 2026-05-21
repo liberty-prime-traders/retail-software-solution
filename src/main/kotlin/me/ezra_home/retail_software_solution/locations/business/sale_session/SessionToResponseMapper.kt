@@ -16,9 +16,10 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import java.util.UUID
 
-@Mapper(config = RtsMapperConfig::class, uses = [SaleSessionQualifier::class])
-interface SaleSessionMapper {
+@Mapper(config = RtsMapperConfig::class, uses = [SaleSessionQualifierUtil::class])
+interface SessionToResponseMapper {
 
+    @Mapping(source = "header.referenceNumber", target = "referenceNumber")
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [FullName::class])
     @Mapping(source = "header.contactId", target = "contactId")
@@ -29,6 +30,9 @@ interface SaleSessionMapper {
     @Mapping(source = "header.soldById", target = "soldBy", qualifiedBy = [FullName::class])
     @Mapping(source = "header.dateSold", target = "dateSold")
     @Mapping(source = "header.notes", target = "notes")
+    @Mapping(source = "originalStatus", target = "saleStatus")
+    @Mapping(source = ".", target = "paymentStatus", qualifiedBy = [SaleSessionPaymentStatus::class])
+    @Mapping(source = ".", target = "uiOptions", qualifiedBy = [SaleSessionUiOptionsBuild::class])
     fun toResponseDto(
         saleSession: SaleSession,
         @Context sessionMappingContext: SaleSessionMappingContext,
@@ -53,8 +57,8 @@ interface SaleSessionMapper {
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): SaleSessionPaymentResponse
 
-
     @Mapping(source = "createdById", target = "createdByLabel", qualifiedBy = [FullName::class])
+    @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [FullName::class])
     @Mapping(source = "header.contactId", target = "contactId")
     @Mapping(target = "contactLabel", expression = "java(contactLabel)")
     @Mapping(source = ".", target = "lineCount", qualifiedBy = [SaleSessionLineCount::class])

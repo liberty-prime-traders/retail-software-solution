@@ -301,8 +301,8 @@ Two distinct mechanisms protect inventory:
 - `EntityAdvisoryLock.acquire(LockNamespaces.SALE, saleId)` is acquired by
   `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext`, which every
   flow that touches an *existing* sale (`voidSale`, `updateNotes`,
-  `updatePaymentStatus`, and the standalone payment / payment-void paths)
-  calls first.
+  `updatePaymentStatus`, and the CONFIRMED-session payment-record /
+  payment-void paths) calls first.
 
 ### Insufficient stock
 
@@ -365,23 +365,38 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 
 Payments live in the `sale_payment` package; the sale package interacts with
 `SalePaymentAppender` (sale_payment/api) at commit time and with
-`SalePaymentService` for standalone payments after confirmation.
+`SalePaymentService.recordPayment` for the CONFIRMED-session short-circuit
+(no longer REST-exposed; only `SaleSessionPaymentHandler.add` calls it). Both
+paths delegate the actual row insert + Kafka publish to `SalePaymentWriter.write`
+— the single place where a payment becomes a DB row — and the status formula
+to `PaymentStatusResolver.resolve`.
 
 ### Submitted with the commit
 
 `SalePaymentAppender.appendNew` runs **inside the same transaction** as the
 sale commit:
 
+- Filters `saleSaveRequest.salePayments` to entries with `existingId == null`
+  (persisted payments cannot be removed via session) and forwards them to
+  `SalePaymentWriter.write`.
+- Returns `(salePaymentIdsByClientKey, newPaymentStatus)` so
+  `SaleSaveFinalizer` can wire the IDs back into the response and apply the
+  new `paymentStatus` as part of its single `saleRepository.save` call.
 - Empty payments list → no-op, sale `paymentStatus` left as-is.
-- Each amount must be positive (`SalePaymentValidator.guardPositiveAmount`).
-- New `SalePaymentEntity` rows are inserted only for payments whose
-  `existingId == null`. Persisted payments cannot be removed via session.
-- Resulting status is computed from `paid` vs `total`:
+- Amount positivity, balance ceiling, and session mutability are all enforced
+  upstream by `SaleSessionValidator` (via `SaleSessionPersister`) before
+  control reaches the appender — see `SaleSessionValidator.guardPositivePayments`
+  (delegates to `SalePaymentValidator.guardPositiveAmount`) and
+  `SaleSessionValidator.guardPaymentsWithinTotal` (delegates to
+  `SalePaymentValidator.guardNotExceedingSaleTotal`).
+- Status is computed by `PaymentStatusResolver.resolve` (single source of truth
+  used by `SalePaymentWriter`, `SalePaymentService.voidPayment`, and the session
+  response mapper):
   - `0` → `UNPAID`
   - `paid > total` → `OVERPAID`
   - `paid < total` → `PARTIALLY_SETTLED`
   - else → `FULLY_SETTLED`
-- A Kafka `SalePaymentRecordedEvent` is published per call.
+- A Kafka `SalePaymentRecordedEvent` is published per write.
 
 ### Ceilings
 
@@ -396,13 +411,18 @@ sale commit:
 - At session-mutation time the validator lets payments slide so the user
   can still see what they've staged; both ceilings only apply at confirm.
 
-### Standalone payment recording
+### Post-confirm payment recording
 
-`SalePaymentService.recordPayment` (post-confirm) runs through
-`SaleDataFetcher.lockAndGetSaleContext`, checks `guardOpenForPayment`
-(only `CONFIRMED` accepts standalone payments — `DRAFT` is rejected with
-"submit payments with the draft itself"; `VOIDED` and `DISCARDED` are also
-rejected), and enforces the `amount ≤ saleTotal − alreadyPaid` ceiling.
+`SalePaymentService.recordPayment` is **not REST-exposed** — its sole caller is
+`SaleSessionPaymentHandler.add` for the CONFIRMED-session short-circuit. It
+runs through `SaleDataFetcher.lockAndGetSaleContext`, checks
+`guardOpenForPayment` (only `CONFIRMED` accepts payments at this layer —
+`DRAFT` is rejected with "submit payments with the draft itself"; `VOIDED`
+and `DISCARDED` are also rejected), enforces the `amount ≤ saleTotal −
+alreadyPaid` ceiling (`guardNotExceedingBalance`), then delegates the actual
+write to `SalePaymentWriter.write`. Since this path has no orchestrator above
+it, it calls `saleUpdater.updatePaymentStatus` itself with the returned
+status.
 
 ### Voiding payments
 
@@ -608,7 +628,7 @@ run** — i.e. as soon as the data it needs is in scope.
 | Stock reservation          | `SaleStockReserver`, `SaleLineStockReservationEntity`, `StockReservationDtos`                           |
 | Adjustments (disc + srch)  | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`) |
 | Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)    |
-| Payments                   | `sale_payment/` package (`SalePaymentAppender` for commit-time inserts)                                |
+| Payments                   | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper) |
 | Taxes (async finalization) | `SaleTaxFinalizationProcessor`, `SaleTaxReversalProcessor`, `tax_entry/` package                        |
 | Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                               |
 | Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                          |

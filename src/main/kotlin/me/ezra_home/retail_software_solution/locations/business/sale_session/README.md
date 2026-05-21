@@ -34,9 +34,10 @@ Internal collaborators (do not call from outside `sale_session`):
   (`redis-active` profile) or `SaleSessionInMemoryStore` (default —
   `!redis-active`)
 - `SaleSessionLoader` — `loadFromSale` rehydrates an existing `SaleEntity` into
-  the session shape; `newSession` mints a fresh empty session
+  the session shape via `DomainToSessionMapper`; `newSession` mints a fresh
+  empty session
 - `SaleSessionAssembler` — orchestrates response/summary DTO assembly;
-  delegates per-bean translation to `SaleSessionMapper` (MapStruct)
+  delegates per-bean translation to `SessionToResponseMapper` (MapStruct)
 - `SaleSessionValidator` — runs structural validation on every mutation
 - `SaleSessionTotalsCalculator` — recomputes totals after every mutation
 - `SaleSessionUpdateFinalizer` — touch → recompute → validate → save → buildResponse
@@ -98,24 +99,26 @@ handlers allow:
 |------------------|------------------------------|----------------------------------|----------------------------------------------------------------------|------------------------|
 | `DRAFT`          | ✅ allowed                    | ✅ allowed (buffered)             | ✅ transient: dropped; persisted: voided (row stays, marked)          | `saveDraft`, `confirm` |
 | `CONFIRMED`      | ❌ rejected                   | ✅ allowed (recorded immediately) | ✅ persisted only: voided (row stays, marked)                         | none (no commit step)  |
-| `VOIDED`         | ❌ rejected                   | ❌ rejected                       | ❌ transient: rejected; persisted: rejected (`guardSaleNotVoided`)    | none (view-only)       |
-| `DISCARDED`      | ❌ rejected                   | ❌ rejected                       | transient: ❌ rejected; persisted: ⚠️ leaks through (see prose below) | none (view-only)       |
+| `VOIDED`         | ❌ rejected                   | ❌ rejected                       | transient: n/a (unreachable); persisted: rejected (`guardSaleNotVoided`) | none (view-only)       |
+| `DISCARDED`      | ❌ rejected                   | ❌ rejected                       | transient: n/a (unreachable); persisted: ⚠️ leaks through (see prose below) | none (view-only)       |
 
-`SaleSessionValidator.guardMutable` enforces the line/adjustment/header rules;
-`SaleSessionValidator.canAddPayments` gates add-payment and
-`SaleSessionValidator.canDiscardPayments` gates remove-payment. The commit
-handler calls `guardMutable` before either commit path.
+`SaleSessionValidator.guardMutable` enforces the line/adjustment/header rules
+and `SaleSessionValidator.canAddPayments` gates add-payment. The commit
+handler calls `guardMutable` before either commit path. There is no status
+guard on the transient-discard branch: transient payments only exist on
+DRAFT sessions by construction (CONFIRMED-session adds short-circuit to
+`persisted` identities, and VOIDED/DISCARDED sessions reject `add` outright),
+so the transient drop branch is only reachable on DRAFT.
 
 The single `DELETE /payments` endpoint handles both removal cases: when the
-payment's `SessionIdentity` is `transient` the handler runs
-`SaleSessionValidator.canDiscardPayments` (which permits only DRAFT) and drops it; when it's `persisted` the handler
-forwards to `SalePaymentService.voidPayment` (a `voidReason` is required in
-that case), which in turn calls `SalePaymentValidator.guardSaleNotVoided`.
-That keeps the frontend wire-protocol uniform — server decides which side to
-take based on the payment's identity. Note `guardSaleNotVoided` only checks
-the VOIDED status; DISCARDED is not blocked there, so removing a persisted
-payment from a DISCARDED-loaded session is not currently rejected on the
-service side.
+payment's `SessionIdentity` is `transient` the handler drops it from the
+session in-place; when it's `persisted` the handler forwards to
+`SalePaymentService.voidPayment` (a `voidReason` is required in that case),
+which in turn calls `SalePaymentValidator.guardSaleNotVoided`. That keeps the
+frontend wire-protocol uniform — server decides which side to take based on
+the payment's identity. Note `guardSaleNotVoided` only checks the VOIDED
+status; DISCARDED is not blocked there, so removing a persisted payment from
+a DISCARDED-loaded session is not currently rejected on the service side.
 
 For new sales (no `saleId`), `originalStatus` is seeded to `DRAFT`.
 
@@ -150,9 +153,10 @@ SessionIdentity
   - `id != null`:
     - **lines** are updated in place — `SaleLineSync` writes the
       current session values for `locationProductId`, `quantity`, `unitId`,
-      `unitPrice`, `conversionFactor` onto the existing entity. In practice
-      `locationProductId` and `unitPrice` never change (no session handler
-      mutates them), so only quantity / unit / factor effectively differ.
+      `unitPrice`, `conversionFactor` onto the existing entity.
+      `locationProductId` never changes (no session handler mutates it);
+      `unitPrice` is recalculated by `SaleSessionLineHandler.updateLine`
+      whenever the line is edited (see Pitfalls §8).
     - **adjustments** and **payments** are kept untouched — there are no
       "update" handlers for these in-session, so existing rows can only be
       retained or removed/voided, never mutated
@@ -220,7 +224,7 @@ product gets deactivated).
 1. SaleSessionPersister.saveDraft
 2. `guardMutable`, recompute totals, run full structural `validate`
    (`loadAndValidate`)
-3. transform SaleSession → SaleSaveRequest (`SaleSaveRequestMapper`)
+3. transform SaleSession → SaleSaveRequest (`SessionToSaveRequestMapper`)
 4. DraftSalePersister.saveDraft:
      - if payments present: guard date-not-future + fiscal period open
        (`guardFiscalIfPayments`)
@@ -249,7 +253,7 @@ product gets deactivated).
 2. `guardMutable`, recompute totals, run full structural `validate`
    (`loadAndValidate`)
 3. `guardNonEmptyLines`, `guardWalkInFullyCovered`, `guardPaymentsWithinTotal`
-4. transform SaleSession → SaleSaveRequest (`SaleSaveRequestMapper`)
+4. transform SaleSession → SaleSaveRequest (`SessionToSaveRequestMapper`)
 5. ConfirmedSalePersister.confirm:
      - guard date-not-future + fiscal period open (always, not gated on
        payments-present like the draft path)
@@ -280,7 +284,7 @@ endpoint — each add is durable when the handler returns.
 
 The persisters live in `sale/api/` but operate on a `SaleSaveRequest` DTO —
 they do not know about `SaleSession`. The translation `SaleSession →
-SaleSaveRequest` happens through `SaleSaveRequestMapper`, called from
+SaleSaveRequest` happens through `SessionToSaveRequestMapper`, called from
 `SaleSessionPersister`. This keeps the package boundary intact.
 
 ---
@@ -318,11 +322,17 @@ flush-time conflict.
 - **`SaleSessionRedisStore` is the only class that touches Redis.** Nothing
   else in the app imports `RedisTemplate` / `StringRedisTemplate` — Redis
   access is fully encapsulated behind the `SaleSessionStore` interface.
-- **Line `unitPrice` is frozen for the life of the session** — captured at
-  add time for transient lines, and at load time (from the DB snapshot) for
-  persisted lines. `SaleSessionLineHandler.updateLine` does not re-fetch
-  `unitPrice`, so changing the product price on the location_product table
-  has no effect on already-added session lines.
+- **Line `unitPrice` is a derived, unit-aware property.**
+  `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured at
+  `addLine` from `location_product.default_sale_price`) and `conversionFactor`
+  (line unit → base unit). `unitPrice` is a computed getter:
+  `defaultSalePrice * conversionFactor`, so the per-line-unit price tracks
+  the unit automatically — `addLine` and `updateLine` only have to set
+  `defaultSalePrice` / `conversionFactor`. `updateLine` does **not** re-fetch
+  `defaultSalePrice`; the value is held on the line for the life of the
+  session. `DomainToSessionMapper` rehydrates `defaultSalePrice` for persisted
+  lines via `unitPrice / conversionFactor`, so the DB price flows back in
+  unchanged on session reload.
 
 ---
 
@@ -335,11 +345,11 @@ flush-time conflict.
 | Storage                         | `SaleSessionStore`, `SaleSessionRedisStore`, `SaleSessionInMemoryStore`                                                                                                                          |
 | Validation                      | `SaleSessionValidator`                                                                                                                                                                           |
 | Totals                          | `SaleSessionTotalsCalculator`                                                                                                                                                                    |
-| Load / mint                     | `SaleSessionLoader`                                                                                                                                                                              |
-| Build response/summary          | `SaleSessionAssembler`, `SaleSessionMapper`                                                                                                                                                      |
+| Load / mint                     | `SaleSessionLoader`, `DomainToSessionMapper`                                                                                                                                                     |
+| Build response/summary          | `SaleSessionAssembler`, `SessionToResponseMapper`                                                                                                                                                |
 | Post-mutation pipeline          | `SaleSessionUpdateFinalizer`                                                                                                                                                                     |
 | Session orchestration           | `SaleSessionHandler`, `SaleSession{Header,Line,Adjustment,Payment}Handler`, `SaleSessionPersister`                                                                                               |
 | Save primitives (in sale/api)   | `SaleSaveRequest`, `SaleSaveResult`, `DraftSalePersister`, `ConfirmedSalePersister`                                                                                                              |
-| Save sub-pieces                 | `SaleLineSync` (sale internal), `SaleSaveFinalizer` (sale internal), `SaleAdjustmentSyncer` (sale_adjustment/api), `SalePaymentAppender` (sale_payment/api), `SaleTotalsApplier` (sale internal) |
-| Session→SaleSaveRequest mapping | `SaleSaveRequestMapper`                                                                                                                                                                          |
+| Save sub-pieces                 | `SaleLineSync` (sale internal), `SaleSaveFinalizer` (sale internal), `SaleAdjustmentSyncer` (sale_adjustment/api), `SalePaymentAppender` (sale_payment/api, delegates to `SalePaymentWriter`), `SaleTotalsApplier` (sale internal) |
+| Session→SaleSaveRequest mapping | `SessionToSaveRequestMapper`                                                                                                                                                                     |
 | REST entry point                | `SaleSessionEndpoint` at `/secured/sale-sessions`                                                                                                                                                |

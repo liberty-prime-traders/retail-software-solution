@@ -61,7 +61,6 @@ class SaleSessionPaymentHandler(
             ?: throw RtsGenericException("Payment not found on session")
         val persistedPaymentId = targetSaleSessionPayment.identity.id
         val refreshedSalePayments = if (persistedPaymentId == null) {
-            saleSessionValidator.canDiscardPayments(saleSession)
             saleSession.salePayments.filter { it.identity.key() != targetPaymentKey }
         } else {
             val voidReason = paymentRemoveDto.voidReason

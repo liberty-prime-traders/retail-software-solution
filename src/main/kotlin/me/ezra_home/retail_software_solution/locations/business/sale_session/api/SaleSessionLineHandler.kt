@@ -29,8 +29,9 @@ class SaleSessionLineHandler(
         locationProductService.guardAllActive(listOf(lineAddDto.locationProductId))
         val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(lineAddDto.locationProductId))
             .getValue(lineAddDto.locationProductId)
-        val unitPrice = productSummary.unitPrice
-            ?: throw RtsGenericException("Product ${productSummary.label} has no unit price")
+        val defaultSalePrice = locationProductDataFetcher.getDefaultSalePrices(listOf(lineAddDto.locationProductId))
+            .getValue(lineAddDto.locationProductId)
+            ?: throw RtsGenericException("Product ${productSummary.label} has no default sale price")
         val conversionFactor = unitConversionGraphFacade.getFactor(lineAddDto.unitId, productSummary.baseUnitId)
 
         val newSaleSessionLine = SaleSessionLine(
@@ -40,7 +41,7 @@ class SaleSessionLineHandler(
             quantity = lineAddDto.quantity,
             unitId = lineAddDto.unitId,
             conversionFactor = conversionFactor,
-            unitPrice = unitPrice,
+            defaultSalePrice = defaultSalePrice,
         )
         val updatedSaleSession = saleSession.copy(saleLines = saleSession.saleLines + newSaleSessionLine)
         return saleSessionUpdateFinalizer.finalize(updatedSaleSession)
@@ -54,9 +55,9 @@ class SaleSessionLineHandler(
         val targetSaleSessionLine = saleSession.saleLines.firstOrNull { it.identity.key() == targetLineKey }
             ?: throw RtsGenericException("Line not found on session")
         val conversionFactor = if (targetSaleSessionLine.unitId != lineUpdateDto.unitId) {
-            val productSummary = locationProductDataFetcher.findSummaryByIds(listOf(targetSaleSessionLine.locationProductId))
+            val baseUnitId = locationProductDataFetcher.getBaseUnitIds(listOf(targetSaleSessionLine.locationProductId))
                 .getValue(targetSaleSessionLine.locationProductId)
-            unitConversionGraphFacade.getFactor(lineUpdateDto.unitId, productSummary.baseUnitId)
+            unitConversionGraphFacade.getFactor(lineUpdateDto.unitId, baseUnitId)
         } else {
             targetSaleSessionLine.conversionFactor
         }

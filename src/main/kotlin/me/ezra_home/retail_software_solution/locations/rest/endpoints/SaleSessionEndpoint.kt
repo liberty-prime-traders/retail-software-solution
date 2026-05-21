@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustmentAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustmentHandler
-import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPersister
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderUpdateDto
@@ -12,6 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentRemoveDto
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPersister
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionRowIdentityDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionStartDto
@@ -19,12 +19,12 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -44,7 +44,9 @@ class SaleSessionEndpoint(
         saleSessionHandler.start(sessionStartDto)
 
     @GetMapping
-    fun listOpenSessions(): List<SaleSessionSummaryDto> = saleSessionHandler.listOpenSessions()
+    fun listOpenSessions(
+        @RequestParam(required = false, defaultValue = "false") mineOnly: Boolean
+    ): List<SaleSessionSummaryDto> = saleSessionHandler.listOpenSessions(mineOnly)
 
     @GetMapping("{sessionId}")
     fun acquireSession(@PathVariable sessionId: UUID): SaleSessionResponseDto =
@@ -98,7 +100,7 @@ class SaleSessionEndpoint(
         @RequestBody paymentRemoveDto: SaleSessionPaymentRemoveDto,
     ): SaleSessionResponseDto = saleSessionPaymentHandler.remove(sessionId, paymentRemoveDto)
 
-    @PatchMapping("{sessionId}/header")
+    @PutMapping("{sessionId}/header")
     fun updateHeader(
         @PathVariable sessionId: UUID,
         @RequestBody headerUpdateDto: SaleSessionHeaderUpdateDto,

@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import java.math.BigDecimal
@@ -8,16 +10,17 @@ import java.util.UUID
 
 data class SaleSessionResponseDto(
     val id: UUID,
-    val createdBy: String?,
-    val createdAt: OffsetDateTime,
+    val referenceNumber: String,
+    val createdBy: String,
     val lastUpdatedAt: OffsetDateTime,
-    val lastAccessedById: UUID,
-    val lastAccessedBy: String?,
+    val lastAccessedBy: String,
     val lastAccessedAt: OffsetDateTime,
     val contactId: UUID,
     val contactLabel: String,
     val walkInCustomer: Boolean,
     val soldBy: String?,
+    val saleStatus: SaleStatus,
+    val paymentStatus: PaymentStatus,
     val dateSold: OffsetDateTime?,
     val notes: String?,
     val showActiveUserWarning: Boolean,
@@ -25,6 +28,12 @@ data class SaleSessionResponseDto(
     val saleAdjustments: List<SaleSessionAdjustmentResponse>,
     val salePayments: List<SaleSessionPaymentResponse>,
     val totals: SaleSessionTotals,
+    val uiOptions: SaleSessionUiOptions,
+)
+
+data class SaleSessionUiOptions(
+    val canMakeChangesToTheSale: Boolean,
+    val canAddPaymentsToSale: Boolean,
 )
 
 data class SaleSessionLineResponse(

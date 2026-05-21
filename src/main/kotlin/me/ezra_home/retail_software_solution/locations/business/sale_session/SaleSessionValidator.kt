@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
@@ -42,14 +43,6 @@ class SaleSessionValidator(
         }
     }
 
-    fun canDiscardPayments(saleSession: SaleSession) {
-        if (!saleSession.canDiscardPayments()) {
-            throw RtsGenericException(
-                "Cannot discard a payment because the sale is ${saleSession.originalStatus}"
-            )
-        }
-    }
-
     fun guardNonEmptyLines(saleSession: SaleSession) {
         if (saleSession.saleLines.isEmpty()) {
             throw RtsGenericException("Sale must have at least one line")
@@ -65,12 +58,10 @@ class SaleSessionValidator(
 
     fun guardPaymentsWithinTotal(saleSession: SaleSession) {
         if (saleSession.totals.payableTotal.signum() <= 0) return
-        if (saleSession.totals.paymentTotal > saleSession.totals.payableTotal) {
-            throw RtsGenericException(
-                "Payments of ${Currencies.format(saleSession.totals.paymentTotal)} exceed payable total " +
-                        Currencies.format(saleSession.totals.payableTotal)
-            )
-        }
+        SalePaymentValidator.guardNotExceedingSaleTotal(
+            totalSubmitted = saleSession.totals.paymentTotal,
+            saleTotal = saleSession.totals.payableTotal,
+        )
     }
 
     private fun guardPositiveLineQuantities(saleSessionLines: List<SaleSessionLine>) {
@@ -106,9 +97,7 @@ class SaleSessionValidator(
     }
 
     private fun guardPositivePayments(paymentAmounts: List<BigDecimal>) {
-        if (paymentAmounts.any { it.signum() <= 0 }) {
-            throw RtsGenericException("Payment amount must be positive")
-        }
+        paymentAmounts.forEach { SalePaymentValidator.guardPositiveAmount(it) }
     }
 
     private fun guardDiscountCeilings(saleSession: SaleSession) {

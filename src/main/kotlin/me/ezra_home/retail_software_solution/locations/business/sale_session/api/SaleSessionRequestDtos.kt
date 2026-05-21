@@ -51,7 +51,6 @@ data class SaleSessionPaymentRemoveDto(
 )
 
 data class SaleSessionHeaderUpdateDto(
-    val sessionId: UUID,
     val contactId: Optional<UUID>? = null,
     val soldById: Optional<UUID>? = null,
     val dateSold: Optional<OffsetDateTime>? = null,
