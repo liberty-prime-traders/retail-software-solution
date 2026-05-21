@@ -57,6 +57,7 @@ services:
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls=true"
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
       - "traefik.http.services.rtss-kafka-ui-${ENV}.loadbalancer.server.port=8080"
+      - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
 
     networks:
       - ezra-home
