@@ -8,7 +8,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-@Profile("!redis-active")
+@Profile("no-redis")
 class SaleSessionInMemoryStore : SaleSessionStore {
 
     private val sessions = ConcurrentHashMap<UUID, SaleSession>()

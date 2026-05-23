@@ -37,6 +37,7 @@ spring:
   cache:
     caffeine:
       spec: maximumSize=100
+    type: caffeine
 
   data:
     redis:

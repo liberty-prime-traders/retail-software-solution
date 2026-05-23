@@ -34,10 +34,10 @@ class SaleUpdater(
     private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
-    fun updatePaymentStatus(id: UUID, status: PaymentStatus) {
+    fun updatePaymentStatus(id: UUID, status: PaymentStatus): Long {
         val sale = saleDataFetcher.lockAndGetSale(id)
         sale.paymentStatus = status
-        saleRepository.save(sale)
+        return saleRepository.saveAndFlush(sale).version
     }
 
     fun updateNotes(id: UUID, notes: String?) {

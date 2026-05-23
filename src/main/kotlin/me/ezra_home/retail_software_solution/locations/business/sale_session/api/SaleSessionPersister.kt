@@ -64,6 +64,11 @@ class SaleSessionPersister(
             lastUpdatedAt = now,
             lastAccessedAt = now,
             lastAccessedById = userId,
+            header = saleSession.header.copy(
+                referenceNumber = saleSaveResult.saleReferenceNumber,
+                dateSold = saleSaveResult.dateSold,
+                soldById = saleSaveResult.soldById,
+            ),
             saleLines = saleSession.saleLines.map { saleSessionLine ->
                 val newSaleLineId = saleSaveResult.saleLineIdsByClientKey[saleSessionLine.identity.key()]
                 if (newSaleLineId != null && !saleSessionLine.identity.isPersisted()) {
@@ -77,9 +82,12 @@ class SaleSessionPersister(
                 } else saleSessionAdjustment
             },
             salePayments = saleSession.salePayments.map { saleSessionPayment ->
-                val newSalePaymentId = saleSaveResult.salePaymentIdsByClientKey[saleSessionPayment.identity.key()]
-                if (newSalePaymentId != null && !saleSessionPayment.identity.isPersisted()) {
-                    saleSessionPayment.copy(identity = SessionIdentity.persisted(newSalePaymentId))
+                val persistedSalePayment = saleSaveResult.persistedSalePaymentsByClientKey[saleSessionPayment.identity.key()]
+                if (persistedSalePayment != null && !saleSessionPayment.identity.isPersisted()) {
+                    saleSessionPayment.copy(
+                        identity = SessionIdentity.persisted(persistedSalePayment.id),
+                        paymentDate = persistedSalePayment.paymentDate,
+                    )
                 } else saleSessionPayment
             },
         )

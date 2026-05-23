@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentWriter
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -47,12 +48,13 @@ class SalePaymentService(
             ),
         )
         val savedSalePayment = writeResult.savedSalePayments.single()
-        saleUpdater.updatePaymentStatus(saleId, writeResult.newPaymentStatus)
+        val updatedSaleVersion = saleUpdater.updatePaymentStatus(saleId, writeResult.newPaymentStatus)
         return SalePaymentMapper.toResponseDto(
             savedSalePayment,
             null,
             paymentMethodService.getNamesById(),
             writeResult.newPaymentStatus,
+            updatedSaleVersion,
         )
     }
 
@@ -71,13 +73,14 @@ class SalePaymentService(
 
         val totalPaidAfterVoid = salePaymentFetcher.calculatePaidAmount(payment.saleId)
         val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, saleTotal)
-        saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
+        val updatedSaleVersion = saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
         salePaymentVoidHandlerForKafka.publish(payment, voidEntity, contactId)
         return SalePaymentMapper.toResponseDto(
             payment,
             voidEntity.reason,
             paymentMethodService.getNamesById(),
-            newStatus
+            newStatus,
+            updatedSaleVersion,
         )
     }
 }

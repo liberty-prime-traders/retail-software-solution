@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.ap
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentWriter
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -27,18 +28,22 @@ class SalePaymentAppender(
             )
         }
         val writeResult = salePaymentWriter.write(saleId, contactId, payableTotal, newSalePayments)
-        val salePaymentIdsByClientKey = newSalePaymentSaveRequests
+        val persistedSalePaymentsByClientKey = newSalePaymentSaveRequests
             .mapIndexed { paymentIndex, salePaymentSaveRequest ->
-                salePaymentSaveRequest.clientKey to writeResult.savedSalePayments[paymentIndex].id!!
+                val savedSalePayment = writeResult.savedSalePayments[paymentIndex]
+                salePaymentSaveRequest.clientKey to PersistedSalePayment(
+                    id = savedSalePayment.id!!,
+                    paymentDate = savedSalePayment.paymentDate,
+                )
             }.toMap()
         return AppendResult(
-            salePaymentIdsByClientKey = salePaymentIdsByClientKey,
+            persistedSalePaymentsByClientKey = persistedSalePaymentsByClientKey,
             newPaymentStatus = writeResult.newPaymentStatus,
         )
     }
 
     data class AppendResult(
-        val salePaymentIdsByClientKey: Map<UUID, UUID>,
+        val persistedSalePaymentsByClientKey: Map<UUID, PersistedSalePayment>,
         val newPaymentStatus: PaymentStatus,
     )
 }

@@ -40,7 +40,6 @@ interface SessionToResponseMapper {
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): SaleSessionResponseDto
 
-    @Mapping(source = ".", target = "lineTotal", qualifiedBy = [SaleSessionLineTotal::class])
     fun toLineDto(saleSessionLine: SaleSessionLine): SaleSessionLineResponse
 
     @Mapping(source = "adjustmentReasonId", target = "adjustmentReason", qualifiedBy = [AdjustmentReasonLabel::class])
@@ -57,12 +56,11 @@ interface SessionToResponseMapper {
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): SaleSessionPaymentResponse
 
-    @Mapping(source = "createdById", target = "createdByLabel", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
     @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [FullName::class])
-    @Mapping(source = "header.contactId", target = "contactId")
     @Mapping(target = "contactLabel", expression = "java(contactLabel)")
-    @Mapping(source = ".", target = "lineCount", qualifiedBy = [SaleSessionLineCount::class])
     @Mapping(source = "totals.payableTotal", target = "payableTotal")
+    @Mapping(source = "sessionId", target = "id")
     fun toSummaryDto(
         saleSession: SaleSession,
         @Context contactLabel: String,

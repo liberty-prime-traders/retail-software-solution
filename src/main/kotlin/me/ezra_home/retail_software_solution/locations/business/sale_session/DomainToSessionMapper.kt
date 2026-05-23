@@ -22,7 +22,11 @@ interface DomainToSessionMapper {
 
     @Mapping(source = "id", target = "identity", qualifiedBy = [PersistedSessionIdentity::class])
     @Mapping(source = ".", target = "defaultSalePrice", qualifiedBy = [SaleLineDefaultSalePrice::class])
-    fun toSaleSessionLine(saleLineDto: SaleLineDto): SaleSessionLine
+    @Mapping(source = "locationProductId", target = "baseUnitId", qualifiedBy = [SaleLineBaseUnitId::class])
+    fun toSaleSessionLine(
+        saleLineDto: SaleLineDto,
+        @Context baseUnitIdsByLocationProductId: Map<UUID, UUID>,
+    ): SaleSessionLine
 
     @Mapping(source = "id", target = "identity", qualifiedBy = [PersistedSessionIdentity::class])
     @Mapping(

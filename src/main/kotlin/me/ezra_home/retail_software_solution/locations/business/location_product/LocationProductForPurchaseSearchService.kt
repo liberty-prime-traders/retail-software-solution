@@ -2,36 +2,34 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForPurchaseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class LocationProductForSaleSearchService(
+class LocationProductForPurchaseSearchService(
     private val locationProductCache: LocationProductCache,
-    private val stockEntryFetcher: StockEntryFetcher,
-    locationProductForSaleFetcher: LocationProductForSaleFetcher
-) : ProductSearchService<LocationProductForSaleDto>(
-    locationProductForSaleFetcher,
+    locationProductForPurchaseFetcher: LocationProductForPurchaseFetcher
+) : ProductSearchService<LocationProductForPurchaseDto>(
+    locationProductForPurchaseFetcher,
     LocationProductSearchQueryBuilder::buildSearchQuery
 ) {
 
     override fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
 
-    override fun findAllProducts(): List<LocationProductForSaleDto> {
+    override fun findAllProducts(): List<LocationProductForPurchaseDto> {
         val dtos = locationProductCache.findAllLocationProducts()
-            .filter { it.status == ProductStatus.ACTIVE && it.defaultSalePrice != null }
-        val entriesByProductId = stockEntryFetcher.fetchAvailableEntriesByProductIds(dtos.map { it.id })
+            .filter { it.status == ProductStatus.ACTIVE }
         return dtos.map {
-            LocationProductForSaleDto(
+            LocationProductForPurchaseDto(
                 id = it.id,
                 referenceNumber = it.referenceNumber,
                 productName = it.productName!!,
                 productGroupName = it.productGroupName!!,
-                defaultSalePrice = it.defaultSalePrice,
-                stockBatches = entriesByProductId[it.id].orEmpty()
+                baseUnitId = it.baseUnitId!!,
+                lastPurchasePrice = it.lastPurchasePrice ?: BigDecimal.ZERO
             )
         }
     }

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.Moveme
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -20,15 +19,6 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     )
   """)
   fun findLatestBalances(ids: Collection<UUID>): List<StockBalanceProjection>
-
-  @Query("""
-    SELECT sm.remainingQuantity FROM StockMovementEntity sm
-    WHERE sm.locationProductId = :locationProductId
-    AND sm.createdOn = (
-      SELECT MAX(sm2.createdOn) FROM StockMovementEntity sm2 WHERE sm2.locationProductId = :locationProductId
-    )
-  """)
-  fun findLatestBalance(locationProductId: UUID): BigDecimal?
 
   fun findByExternalReferenceNumberAndMovementType(
     externalReferenceNumber: String,

@@ -23,25 +23,27 @@ class SaleSessionPaymentHandler(
     fun add(sessionId: UUID, paymentAddDto: SaleSessionPaymentAddDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.canAddPayments(saleSession)
-        val paymentIdentity = if (saleSession.originalStatus == SaleStatus.CONFIRMED) {
+        val persistedPaymentOutcome = if (saleSession.originalStatus == SaleStatus.CONFIRMED) {
             val saleId = saleSession.saleId ?: throw RtsGenericException("CONFIRMED session is missing a saleId")
             persistPayment(saleId, paymentAddDto)
         } else {
-            SessionIdentity.mintFreshIdentity()
+            PersistedPaymentOutcome(SessionIdentity.mintFreshIdentity(), null)
         }
         val newSaleSessionPayment = SaleSessionPayment(
-            identity = paymentIdentity,
+            identity = persistedPaymentOutcome.identity,
             paymentMethodId = paymentAddDto.paymentMethodId,
             amount = paymentAddDto.amount,
             reference = paymentAddDto.reference,
             paymentDate = paymentAddDto.paymentDate,
         )
-        return saleSessionUpdateFinalizer.finalize(
-            saleSession.copy(salePayments = saleSession.salePayments + newSaleSessionPayment)
+        val updatedSession = saleSession.copy(
+            saleVersion = persistedPaymentOutcome.updatedSaleVersion ?: saleSession.saleVersion,
+            salePayments = saleSession.salePayments + newSaleSessionPayment,
         )
+        return saleSessionUpdateFinalizer.finalize(updatedSession)
     }
 
-    private fun persistPayment(saleId: UUID, paymentAddDto: SaleSessionPaymentAddDto): SessionIdentity {
+    private fun persistPayment(saleId: UUID, paymentAddDto: SaleSessionPaymentAddDto): PersistedPaymentOutcome {
         val recordPaymentResponse = salePaymentService.recordPayment(
             SalePaymentCreateDto(
                 saleId = saleId,
@@ -51,8 +53,16 @@ class SaleSessionPaymentHandler(
                 paymentDate = paymentAddDto.paymentDate,
             )
         )
-        return SessionIdentity.persisted(recordPaymentResponse.id)
+        return PersistedPaymentOutcome(
+            SessionIdentity.persisted(recordPaymentResponse.id),
+            recordPaymentResponse.updatedSaleVersion,
+        )
     }
+
+    private data class PersistedPaymentOutcome(
+        val identity: SessionIdentity,
+        val updatedSaleVersion: Long?,
+    )
 
     fun remove(sessionId: UUID, paymentRemoveDto: SaleSessionPaymentRemoveDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
@@ -60,21 +70,26 @@ class SaleSessionPaymentHandler(
         val targetSaleSessionPayment = saleSession.salePayments.firstOrNull { it.identity.key() == targetPaymentKey }
             ?: throw RtsGenericException("Payment not found on session")
         val persistedPaymentId = targetSaleSessionPayment.identity.id
-        val refreshedSalePayments = if (persistedPaymentId == null) {
-            saleSession.salePayments.filter { it.identity.key() != targetPaymentKey }
+        val refreshedSession = if (persistedPaymentId == null) {
+            saleSession.copy(
+                salePayments = saleSession.salePayments.filter { it.identity.key() != targetPaymentKey }
+            )
         } else {
             val voidReason = paymentRemoveDto.voidReason
                 ?: throw RtsGenericException("voidReason is required when voiding a recorded payment")
             val voidPaymentResponse = salePaymentService.voidPayment(
                 SalePaymentVoidCreateDto(salePaymentId = persistedPaymentId, reason = voidReason)
             )
-            saleSession.salePayments.map { saleSessionPayment ->
-                if (saleSessionPayment.identity.key() == targetPaymentKey) {
-                    saleSessionPayment.copy(voidedReason = voidPaymentResponse.voidedReason)
-                } else saleSessionPayment
-            }
+            saleSession.copy(
+                saleVersion = voidPaymentResponse.updatedSaleVersion ?: saleSession.saleVersion,
+                salePayments = saleSession.salePayments.map { saleSessionPayment ->
+                    if (saleSessionPayment.identity.key() == targetPaymentKey) {
+                        saleSessionPayment.copy(voidedReason = voidPaymentResponse.voidedReason)
+                    } else saleSessionPayment
+                },
+            )
         }
-        return saleSessionUpdateFinalizer.finalize(saleSession.copy(salePayments = refreshedSalePayments))
+        return saleSessionUpdateFinalizer.finalize(refreshedSession)
     }
 
 }

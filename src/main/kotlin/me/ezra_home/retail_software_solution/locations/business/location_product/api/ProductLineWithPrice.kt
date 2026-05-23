@@ -9,5 +9,6 @@ interface ProductLineWithPrice {
     val quantity: BigDecimal
     val unitPrice: BigDecimal
 
-    fun lineTotal(): BigDecimal = Decimals.multiplyScale4(quantity, unitPrice)
+    val lineTotal: BigDecimal
+        get() = Decimals.multiplyScale4(quantity, unitPrice)
 }

@@ -1,9 +1,8 @@
-package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
+package me.ezra_home.retail_software_solution.locations.business.sale_payment
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentEntity
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentHandlerForKafka
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PaymentStatusResolver
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.math.BigDecimal

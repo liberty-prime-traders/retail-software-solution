@@ -11,7 +11,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleReposit
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import java.math.BigDecimal
@@ -48,7 +47,9 @@ class SaleDataFetcher(
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun lockAndGetSale(saleId: UUID): SaleEntity {
         entityAdvisoryLock.acquire(LockNamespaces.SALE, saleId)
-        return saleRepository.getReferenceById(saleId)
+        return saleRepository.findById(saleId).orElseThrow {
+            RtsGenericException("Sale $saleId no longer exists")
+        }
     }
 
     fun getSaleContactId(saleId: UUID): UUID {
@@ -57,16 +58,14 @@ class SaleDataFetcher(
 
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun loadDraftAtVersion(saleId: UUID, expectedVersion: Long?): SaleEntity {
-        val sale = saleRepository.findById(saleId).orElseThrow {
-            RtsGenericException("Sale $saleId no longer exists")
-        }
+        val sale = lockAndGetSale(saleId)
         if (sale.status != SaleStatus.DRAFT) {
             throw RtsGenericException("Sale ${sale.requiredReference()} is not a draft")
         }
         val expected = expectedVersion
             ?: throw RtsGenericException("Expected version must be supplied when committing an existing sale")
         if (sale.version != expected) {
-            throw ObjectOptimisticLockingFailureException(SaleEntity::class.java, saleId)
+            throw RtsGenericException("Sale ${sale.requiredReference()} has been modified since you opened it — please reload and try again")
         }
         return sale
     }

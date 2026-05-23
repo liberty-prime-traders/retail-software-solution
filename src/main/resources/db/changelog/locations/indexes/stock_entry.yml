@@ -5,20 +5,19 @@ databaseChangeLog:
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
-        - not:
-            - indexExists:
-                indexName: idx_stock_entry_location_product_id
+        - indexExists:
+            indexName: idx_stock_entry_location_product_id
       changes:
+        - dropIndex:
+            indexName: idx_stock_entry_location_product_id
+            tableName: stock_entry
+      rollback:
         - createIndex:
             indexName: idx_stock_entry_location_product_id
             tableName: stock_entry
             columns:
               - column:
                   name: location_product_id
-      rollback:
-        - dropIndex:
-            indexName: idx_stock_entry_location_product_id
-            tableName: stock_entry
 
   - changeSet:
       id: create-index-stock-entry-location-product-id-available

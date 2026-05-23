@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentFetcher
@@ -19,6 +20,7 @@ class SaleSessionLoader(
     private val salePaymentFetcher: SalePaymentFetcher,
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val domainToSessionMapper: DomainToSessionMapper,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
     fun newSession(
@@ -63,7 +65,12 @@ class SaleSessionLoader(
         val saleAdjustmentSnapshots = saleAdjustmentFetcher.getAdjustments(saleId)
         val salePaymentSnapshots = salePaymentFetcher.getPaymentSnapshots(saleId)
 
-        val saleSessionLines = saleLineSnapshots.map(domainToSessionMapper::toSaleSessionLine)
+        val baseUnitIdsByLocationProductId = locationProductDataFetcher.getBaseUnitIds(
+            saleLineSnapshots.map { it.locationProductId }
+        )
+        val saleSessionLines = saleLineSnapshots.map { saleLineDto ->
+            domainToSessionMapper.toSaleSessionLine(saleLineDto, baseUnitIdsByLocationProductId)
+        }
         val relatedSaleLineIdentityBySaleLineId = saleSessionLines.associate { it.identity.id!! to it.identity }
         val saleSessionAdjustments = saleAdjustmentSnapshots.map { adjustmentSnapshot ->
             domainToSessionMapper.toSaleSessionAdjustment(adjustmentSnapshot, relatedSaleLineIdentityBySaleLineId)

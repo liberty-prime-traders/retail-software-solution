@@ -16,16 +16,16 @@ class LocationProductForSaleSearchExecutor(
 ) : ProductSearchExecutor<LocationProductEntity, LocationProductForSaleDto>(emf, LocationProductEntity::class.java) {
 
     override fun map(entities: List<LocationProductEntity>): List<LocationProductForSaleDto> {
+        val sellable = entities.filter { it.defaultSalePrice != null }
         val entriesByProductId = stockEntryFetcher.fetchAvailableEntriesByProductIds(
-            entities.mapNotNull { it.id }
+            sellable.mapNotNull { it.id }
         )
-        return entities.map {
+        return sellable.map {
             LocationProductForSaleDto(
                 id = it.id!!,
                 referenceNumber = it.requiredReference(),
                 productName = it.productName,
                 productGroupName = it.productGroupName,
-                baseUnitId = it.baseUnitId,
                 defaultSalePrice = it.defaultSalePrice,
                 stockBatches = entriesByProductId[it.id].orEmpty()
             )

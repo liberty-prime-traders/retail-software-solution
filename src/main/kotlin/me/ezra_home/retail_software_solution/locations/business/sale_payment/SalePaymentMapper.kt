@@ -10,7 +10,8 @@ object SalePaymentMapper {
         payment: SalePaymentEntity,
         voidedReason: String?,
         paymentMethodNamesById: Map<UUID, String> = emptyMap(),
-        updatedStatus: PaymentStatus? = null
+        updatedStatus: PaymentStatus? = null,
+        updatedSaleVersion: Long? = null,
     ) = SalePaymentResponseDto(
         id = payment.id!!,
         referenceNumber = payment.requiredReference(),
@@ -20,6 +21,7 @@ object SalePaymentMapper {
         paymentDate = payment.paymentDate,
         paymentMethodName = paymentMethodNamesById[payment.paymentMethodId] ?: "",
         voidedReason = voidedReason,
-        updatedSalePaymentStatus = updatedStatus
+        updatedSalePaymentStatus = updatedStatus,
+        updatedSaleVersion = updatedSaleVersion,
     )
 }

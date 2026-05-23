@@ -3,14 +3,12 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session
 import com.fasterxml.jackson.databind.ObjectMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.context.annotation.Profile
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.UUID
 
 @Component
-@Profile("redis-active")
 class SaleSessionRedisStore(
     private val redisTemplate: StringRedisTemplate,
     private val objectMapper: ObjectMapper,

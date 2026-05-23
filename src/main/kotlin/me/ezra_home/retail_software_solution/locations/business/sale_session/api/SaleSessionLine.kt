@@ -11,9 +11,10 @@ data class SaleSessionLine(
     val productLabel: String,
     override val quantity: BigDecimal,
     val unitId: UUID,
+    val baseUnitId: UUID,
     val conversionFactor: BigDecimal,
     val defaultSalePrice: BigDecimal,
+
 ) : ProductLineWithPrice {
-    override val unitPrice: BigDecimal
-        get() = Decimals.multiplyScale4(defaultSalePrice, conversionFactor)
+    override val unitPrice: BigDecimal = Decimals.multiplyScale4(defaultSalePrice, conversionFactor)
 }

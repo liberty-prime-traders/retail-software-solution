@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import java.math.BigDecimal
 import java.util.UUID
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
@@ -32,15 +33,15 @@ class SaleSessionLineHandler(
         val defaultSalePrice = locationProductDataFetcher.getDefaultSalePrices(listOf(lineAddDto.locationProductId))
             .getValue(lineAddDto.locationProductId)
             ?: throw RtsGenericException("Product ${productSummary.label} has no default sale price")
-        val conversionFactor = unitConversionGraphFacade.getFactor(lineAddDto.unitId, productSummary.baseUnitId)
 
         val newSaleSessionLine = SaleSessionLine(
             identity = SessionIdentity.mintFreshIdentity(),
             locationProductId = lineAddDto.locationProductId,
             productLabel = productSummary.label,
             quantity = lineAddDto.quantity,
-            unitId = lineAddDto.unitId,
-            conversionFactor = conversionFactor,
+            unitId = productSummary.baseUnitId,
+            baseUnitId = productSummary.baseUnitId,
+            conversionFactor = BigDecimal.ONE,
             defaultSalePrice = defaultSalePrice,
         )
         val updatedSaleSession = saleSession.copy(saleLines = saleSession.saleLines + newSaleSessionLine)

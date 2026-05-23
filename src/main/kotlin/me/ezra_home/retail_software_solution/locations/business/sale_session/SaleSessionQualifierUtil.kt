@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLin
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
-import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionUiOptions
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
 import me.ezra_home.retail_software_solution.util.business.Decimals
@@ -32,12 +31,6 @@ object SaleSessionQualifierUtil {
         saleLineId: UUID?,
         @Context relatedSaleLineIdentityBySaleLineId: Map<UUID, SessionIdentity>,
     ): SessionIdentity? = saleLineId?.let { relatedSaleLineIdentityBySaleLineId[it] }
-
-    @SaleSessionLineTotal
-    fun toSaleSessionLineTotal(saleSessionLine: SaleSessionLine): BigDecimal = saleSessionLine.lineTotal()
-
-    @SaleSessionLineCount
-    fun toSaleSessionLineCount(saleSession: SaleSession): Int = saleSession.saleLines.size
 
     @SaleSessionUiOptionsBuild
     fun toSaleSessionUiOptions(saleSession: SaleSession): SaleSessionUiOptions = SaleSessionUiOptions(
@@ -70,4 +63,10 @@ object SaleSessionQualifierUtil {
     @SaleLineDefaultSalePrice
     fun deriveDefaultSalePrice(saleLineDto: SaleLineDto): BigDecimal =
         Decimals.divideScale4(saleLineDto.unitPrice, saleLineDto.conversionFactor)
+
+    @SaleLineBaseUnitId
+    fun resolveBaseUnitId(
+        locationProductId: UUID,
+        @Context baseUnitIdsByLocationProductId: Map<UUID, UUID>,
+    ): UUID = baseUnitIdsByLocationProductId.getValue(locationProductId)
 }

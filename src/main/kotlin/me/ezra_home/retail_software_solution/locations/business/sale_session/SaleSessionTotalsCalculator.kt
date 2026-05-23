@@ -24,7 +24,7 @@ class SaleSessionTotalsCalculator {
         saleSessionAdjustments: List<SaleSessionAdjustment>,
         paymentTotal: BigDecimal,
     ): SaleSessionTotals {
-        val subtotal = saleSessionLines.sumOf { it.lineTotal() }
+        val subtotal = saleSessionLines.sumOf { it.lineTotal }
         val locationProductIdBySaleSessionLineKey = saleSessionLines.associate { it.identity.key() to it.locationProductId }
         val calculatedAmountByAdjustmentKey = saleSessionAdjustments.associate { saleSessionAdjustment ->
             saleSessionAdjustment.identity.key() to calculateAdjustmentAmount(

@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductForSaleSearchService
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductForPurchaseSearchService
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductTypedDataFetcher
 import org.springframework.stereotype.Service
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
-class LocationProductForSaleDataFetcher(
-    locationProductForSaleSearchService: LocationProductForSaleSearchService,
-) : LocationProductTypedDataFetcher<LocationProductForSaleDto>(locationProductForSaleSearchService)
+class LocationProductForPurchaseDataFetcher(
+    locationProductForPurchaseSearchService: LocationProductForPurchaseSearchService,
+) : LocationProductTypedDataFetcher<LocationProductForPurchaseDto>(locationProductForPurchaseSearchService)

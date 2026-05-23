@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PersistedSalePayment
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import java.math.BigDecimal
@@ -53,7 +54,9 @@ data class SaleSaveResult(
     val saleId: UUID,
     val saleReferenceNumber: String,
     val newVersion: Long,
+    val dateSold: OffsetDateTime?,
+    val soldById: UUID?,
     val saleLineIdsByClientKey: Map<UUID, UUID>,
     val saleAdjustmentIdsByClientKey: Map<UUID, UUID>,
-    val salePaymentIdsByClientKey: Map<UUID, UUID>,
+    val persistedSalePaymentsByClientKey: Map<UUID, PersistedSalePayment>,
 )

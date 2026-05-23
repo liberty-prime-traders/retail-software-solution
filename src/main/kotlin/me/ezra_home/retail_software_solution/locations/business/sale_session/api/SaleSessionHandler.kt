@@ -30,7 +30,7 @@ class SaleSessionHandler(
         } else {
             val locationId = SessionContextProvider.getLocationId()
             val userId = SessionContextProvider.getUserId()
-            saleSessionLoader.newSession(sessionId, locationId, sessionStartDto.contactId, userId)
+            saleSessionLoader.newSession(sessionId, locationId, sessionStartDto.contactId!!, userId)
         }
         saleSessionValidator.validate(session)
         saleSessionStore.save(session)

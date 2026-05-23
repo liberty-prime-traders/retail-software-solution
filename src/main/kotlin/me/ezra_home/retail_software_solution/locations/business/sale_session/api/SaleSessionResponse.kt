@@ -10,7 +10,7 @@ import java.util.UUID
 
 data class SaleSessionResponseDto(
     val id: UUID,
-    val referenceNumber: String,
+    val referenceNumber: String?,
     val createdBy: String,
     val lastUpdatedAt: OffsetDateTime,
     val lastAccessedBy: String,
@@ -42,10 +42,11 @@ data class SaleSessionLineResponse(
     val productLabel: String,
     val quantity: BigDecimal,
     val unitId: UUID,
+    val baseUnitId: UUID,
     val conversionFactor: BigDecimal,
     val unitPrice: BigDecimal,
     val lineTotal: BigDecimal,
-)
+) { val snapshotUnitId: UUID = unitId }
 
 data class SaleSessionAdjustmentResponse(
     val identity: SessionIdentity,

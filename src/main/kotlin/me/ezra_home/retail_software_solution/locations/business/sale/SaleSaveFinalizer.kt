@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentFetcher
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PersistedSalePayment
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentAppender
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -40,12 +41,15 @@ class SaleSaveFinalizer(
             saleSaveRequest = saleSaveRequest,
         )
         saleEntity.paymentStatus = salePaymentAppendResult.newPaymentStatus
-        saleRepository.save(saleEntity)
-        return SaleSaveFinalizeResult(saleAdjustmentIdsByClientKey, salePaymentAppendResult.salePaymentIdsByClientKey)
+        saleRepository.saveAndFlush(saleEntity)
+        return SaleSaveFinalizeResult(
+            saleAdjustmentIdsByClientKey = saleAdjustmentIdsByClientKey,
+            persistedSalePaymentsByClientKey = salePaymentAppendResult.persistedSalePaymentsByClientKey,
+        )
     }
 
     data class SaleSaveFinalizeResult(
         val saleAdjustmentIdsByClientKey: Map<UUID, UUID>,
-        val salePaymentIdsByClientKey: Map<UUID, UUID>,
+        val persistedSalePaymentsByClientKey: Map<UUID, PersistedSalePayment>,
     )
 }

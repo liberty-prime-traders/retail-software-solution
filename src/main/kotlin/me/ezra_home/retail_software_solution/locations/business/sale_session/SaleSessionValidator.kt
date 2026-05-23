@@ -128,7 +128,7 @@ class SaleSessionValidator(
             val totalDiscountAmount = lineDiscounts.sumOf {
                 saleSessionTotalsCalculator.calculatedAmount(it, saleSession.saleLines)
             }
-            val lineTotal = targetSaleSessionLine.lineTotal()
+            val lineTotal = targetSaleSessionLine.lineTotal
             if (totalDiscountAmount > lineTotal) {
                 throw RtsGenericException(
                     "On ${targetSaleSessionLine.productLabel}, total discounts of " +

@@ -242,7 +242,9 @@ product gets deactivated).
          - append new payments only (`SalePaymentAppender.appendNew`)
          - set `paymentStatus`, save sale
 5. apply outcome to session (`SaleSessionPersister.applySaleSaveResult`):
-   saleId, version, flip transient→id where applicable, bump
+   saleId, version, sync header (`referenceNumber`, `dateSold`, `soldById`
+   from the persisted entity), flip transient→id where applicable, copy the
+   resolved `paymentDate` onto each new session payment, bump
    `lastUpdatedAt` / `lastAccessedAt` / `lastAccessedById`
 6. recompute totals, save session back
 ```
@@ -271,9 +273,10 @@ product gets deactivated).
          - set `paymentStatus`, save sale
      - run FIFO consumption via `SaleStockUpdater.consumeStock`
      - publish `SaleConfirmedEvent` via `SaleConfirmedHandlerForKafka`
-6. apply outcome to session (`applySaleSaveResult` — new ids,
-   `lastUpdated*` / `lastAccessed*` bumped), build response, delete the
-   session
+6. apply outcome to session (`applySaleSaveResult` — new ids, header
+   sync from persisted entity (`referenceNumber`, `dateSold`, `soldById`),
+   `paymentDate` copied onto each new session payment, `lastUpdated*` /
+   `lastAccessed*` bumped), build response, delete the session
 ```
 
 ### CONFIRMED-session payments (no commit step)
@@ -298,6 +301,16 @@ reloads the entity, asserts status is still DRAFT, and throws
 `ObjectOptimisticLockingFailureException` upfront when the captured version
 doesn't match — fail-fast at load time, rather than waiting for Hibernate's
 flush-time conflict.
+
+Mid-session operations that hit the sale row out-of-band must refresh
+`SaleSession.saleVersion` so the next commit doesn't trip the check. Today
+that means `SaleSessionPaymentHandler.add` (when `originalStatus == CONFIRMED`
+and `SalePaymentService.recordPayment` runs) and `SaleSessionPaymentHandler.remove`
+(when the payment was already persisted and routes through
+`SalePaymentService.voidPayment`). Both bump `SaleEntity.version` via
+`SaleUpdater.updatePaymentStatus`; the new version rides back on
+`SalePaymentResponseDto.updatedSaleVersion` and the handlers copy it onto the
+session before finalize.
 
 ---
 
@@ -324,15 +337,22 @@ flush-time conflict.
   access is fully encapsulated behind the `SaleSessionStore` interface.
 - **Line `unitPrice` is a derived, unit-aware property.**
   `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured at
-  `addLine` from `location_product.default_sale_price`) and `conversionFactor`
-  (line unit → base unit). `unitPrice` is a computed getter:
-  `defaultSalePrice * conversionFactor`, so the per-line-unit price tracks
-  the unit automatically — `addLine` and `updateLine` only have to set
-  `defaultSalePrice` / `conversionFactor`. `updateLine` does **not** re-fetch
-  `defaultSalePrice`; the value is held on the line for the life of the
-  session. `DomainToSessionMapper` rehydrates `defaultSalePrice` for persisted
-  lines via `unitPrice / conversionFactor`, so the DB price flows back in
-  unchanged on session reload.
+  `addLine` from `location_product.default_sale_price`), `baseUnitId`
+  (snapshotted from `location_product.base_unit_id` at `addLine` / on
+  hydration), and `conversionFactor` (line unit → base unit). `unitPrice`
+  is a computed getter: `defaultSalePrice * conversionFactor`, so the
+  per-line-unit price tracks the unit automatically — `addLine` and
+  `updateLine` only have to set `defaultSalePrice` / `conversionFactor`.
+  `addLine` does not accept a `unitId`: new lines always start at the
+  product's base unit (`unitId = baseUnitId`, `conversionFactor = 1`).
+  Switching the line to a non-base unit is `updateLine`'s job.
+  `updateLine` does **not** re-fetch `defaultSalePrice`; the value is held
+  on the line for the life of the session. `DomainToSessionMapper`
+  rehydrates `defaultSalePrice` for persisted lines via
+  `unitPrice / conversionFactor`, and `baseUnitId` via a one-shot batch
+  lookup (`LocationProductDataFetcher.getBaseUnitIds`) supplied by
+  `SaleSessionLoader.loadFromSale`, so the DB price and base unit flow
+  back in unchanged on session reload.
 
 ---
 

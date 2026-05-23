@@ -144,7 +144,7 @@ Rules:
 - `unitPrice` is **captured from the product at line add time** (when the
   user adds the line to a session) and frozen for the life of that line —
   a price change on the product does not retro-affect existing lines.
-- `lineTotal() = quantity * unitPrice` (scale 4, half-up via `Decimals`).
+- `lineTotal = quantity * unitPrice` (scale 4, half-up via `Decimals`).
 - `baseQty() = quantity * conversionFactor` (scale 4).
 
 ### Per-line invariants
@@ -211,7 +211,7 @@ persistence model, lifecycle, and reconciliation logic.
   cross-domain `AdjustmentReasonDto` access out of the session layer.
 - **Discount ceilings are enforced on every mutation**:
   - Sum of line-level discounts on a single line must not exceed that
-    line's `lineTotal()`.
+    line's `lineTotal`.
   - Sum of order-level discounts must not exceed
     `subtotal − Σ(line-level discounts)`.
 - **Surcharge ceilings are not enforced in phase 1**.
@@ -267,13 +267,16 @@ Two distinct mechanisms protect inventory:
 - `SaleLineStockReservationEntity` holds **`quantity_reserved`** per sale
   line (always written as `line.baseQty()`).
 - Every `DraftSalePersister.saveDraft` invocation clears all reservations
-  for the sale (`clearBySale`, immediately after the line sync) and then
+  for the sale (`clearBySale`) **before** running `SaleLineSync.sync`, then
   re-issues fresh reservations for the surviving line set. This avoids
-  hand-rolled diffing.
+  hand-rolled diffing, and the clear-before-sync order is required because
+  the `fk_slsr_sale_line` FK constraint on `sale_line_stock_reservation`
+  would fail when sync deletes a removed line that still has a reservation.
 - Reservations are also cleared when:
   - A draft is voided (`SaleUpdater.voidSale` → `DISCARDED` branch).
-  - The sale is confirmed (`ConfirmedSalePersister.confirm` clears under the
-    PRODUCT advisory lock before FIFO consumption).
+  - The sale is confirmed (`ConfirmedSalePersister.confirm` clears
+    reservations before line sync for the same FK-ordering reason; the
+    PRODUCT advisory lock is then taken before FIFO consumption).
 - Stock guards run at:
   1. **Add line to session** — `SaleSessionLineHandler.addLine` calls
      `LocationProductService.guardAllActive` (live stock is NOT pre-checked
@@ -302,7 +305,12 @@ Two distinct mechanisms protect inventory:
   `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext`, which every
   flow that touches an *existing* sale (`voidSale`, `updateNotes`,
   `updatePaymentStatus`, and the CONFIRMED-session payment-record /
-  payment-void paths) calls first.
+  payment-void paths) calls first. `SaleDataFetcher.loadDraftAtVersion`
+  (used by `DraftSalePersister` / `ConfirmedSalePersister` when an existing
+  draft is being re-persisted) delegates to `lockAndGetSale` under the hood,
+  so the commit paths share the same SALE-lock invariant. The optimistic
+  `@Version` check inside `loadDraftAtVersion` then catches the long
+  session-edit window that the lock can't bridge — see §9.
 
 ### Insufficient stock
 
@@ -379,9 +387,11 @@ sale commit:
 - Filters `saleSaveRequest.salePayments` to entries with `existingId == null`
   (persisted payments cannot be removed via session) and forwards them to
   `SalePaymentWriter.write`.
-- Returns `(salePaymentIdsByClientKey, newPaymentStatus)` so
-  `SaleSaveFinalizer` can wire the IDs back into the response and apply the
-  new `paymentStatus` as part of its single `saleRepository.save` call.
+- Returns `(persistedSalePaymentsByClientKey, newPaymentStatus)` so
+  `SaleSaveFinalizer` can wire the persisted id **and** the resolved
+  `paymentDate` (writer override fills in `now-org` when the session left it
+  null) back into the response, and apply the new `paymentStatus` as part of
+  its single `saleRepository.save` call.
 - Empty payments list → no-op, sale `paymentStatus` left as-is.
 - Amount positivity, balance ceiling, and session mutability are all enforced
   upstream by `SaleSessionValidator` (via `SaleSessionPersister`) before
@@ -466,7 +476,7 @@ convention, no `@MappingTarget`, entity rules) live in
 `.claude/instructions.md`. Sale-package specifics only:
 
 - Entity helpers in this package: `SaleEntity.payableTotal()`,
-  `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal()`. No business
+  `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal`. No business
   logic beyond these.
 - Domain DTOs (`SaleSummary`, `SaleLineDto`) abstract DB
   details and are what cross package boundaries on the read path.
@@ -541,7 +551,8 @@ run** — i.e. as soon as the data it needs is in scope.
 ### `DraftSalePersister.saveDraft(SaleSaveRequest): SaleSaveResult`
 - Guards products active.
 - Guards fiscal period + future-date only when payments are present.
-- Optimistic version check against `SaleEntity.version`.
+- For an existing draft: acquires the SALE advisory lock and runs the
+  optimistic `SaleEntity.version` check (both via `loadDraftAtVersion`).
 - Persists `SaleEntity` at `DRAFT`, syncs lines, clears + re-issues
   reservations (with `guardStockForDraftUpdates` in between), syncs
   adjustments, applies totals, then appends new payments.
@@ -551,6 +562,8 @@ run** — i.e. as soon as the data it needs is in scope.
 - Requires ≥1 line.
 - Defaults `dateSold` to now-org if absent; future-date rejected; fiscal
   period must be open.
+- For an existing draft: acquires the SALE advisory lock and runs the
+  optimistic `SaleEntity.version` check (both via `loadDraftAtVersion`).
 - Acquires PRODUCT lock, clears reservations, runs FIFO consumption.
 - Publishes `SaleConfirmedEvent` → taxes finalize asynchronously.
 
@@ -572,7 +585,9 @@ run** — i.e. as soon as the data it needs is in scope.
   in `SaleEndpoint`).
 - `updatePaymentStatus` is **intra-domain only** — driven by
   `SalePaymentService` (`recordPayment`, `voidPayment`); not wired to any
-  REST endpoint.
+  REST endpoint. Returns the post-flush `SaleEntity.version` so callers
+  (and the session, via `SalePaymentResponseDto.updatedSaleVersion`) can
+  keep their captured version in lockstep with the row.
 
 ### `SaleDataFetcher.fetchRecent(n?)`
 - Defaults to 10; rejects `n <= 0` and `n > 1000`.

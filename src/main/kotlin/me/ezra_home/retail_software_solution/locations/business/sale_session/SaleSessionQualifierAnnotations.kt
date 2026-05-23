@@ -15,16 +15,6 @@ annotation class SessionIdentityExistingId
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
-annotation class SaleSessionLineTotal
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.FUNCTION)
-annotation class SaleSessionLineCount
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.FUNCTION)
 annotation class AdjustmentReasonLabel
 
 @Qualifier
@@ -61,3 +51,8 @@ annotation class SaleSessionPaymentStatus
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
 annotation class SaleLineDefaultSalePrice
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class SaleLineBaseUnitId

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
@@ -20,6 +21,7 @@ class DraftSalePersister(
     private val saleStockReserver: SaleStockReserver,
     private val saleValidator: SaleValidator,
     private val saleDataFetcher: SaleDataFetcher,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
     private val saleSaveFinalizer: SaleSaveFinalizer,
 ) {
@@ -35,12 +37,18 @@ class DraftSalePersister(
         saleEntity.status = SaleStatus.DRAFT
         saleRepository.save(saleEntity)
 
-        val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         saleStockReserver.clearBySale(saleEntity.id!!)
+        val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         if (lineSyncResult.persistedSaleLines.isNotEmpty()) {
             val resolvedBaseQuantitiesByLocationProductId = lineSyncResult.persistedSaleLines
                 .associate { it.locationProductId to it.baseQty() }
-            saleValidator.guardStockForDraftUpdates(saleEntity.id!!, resolvedBaseQuantitiesByLocationProductId, emptyMap())
+            val productSummariesByLocationProductId = locationProductDataFetcher
+                .findSummaryByIds(resolvedBaseQuantitiesByLocationProductId.keys)
+            saleValidator.guardStockForDraftUpdates(
+                saleEntity.id!!,
+                resolvedBaseQuantitiesByLocationProductId,
+                productSummariesByLocationProductId,
+            )
             saleStockReserver.reserve(saleEntity.id!!, lineSyncResult.persistedSaleLines)
         }
 
@@ -54,9 +62,11 @@ class DraftSalePersister(
             saleId = saleEntity.id!!,
             saleReferenceNumber = saleEntity.requiredReference(),
             newVersion = saleEntity.version,
+            dateSold = saleEntity.dateSold,
+            soldById = saleEntity.soldById,
             saleLineIdsByClientKey = lineSyncResult.saleLineIdsByClientKey,
             saleAdjustmentIdsByClientKey = saleUpdateResult.saleAdjustmentIdsByClientKey,
-            salePaymentIdsByClientKey = saleUpdateResult.salePaymentIdsByClientKey,
+            persistedSalePaymentsByClientKey = saleUpdateResult.persistedSalePaymentsByClientKey,
         )
     }
 
