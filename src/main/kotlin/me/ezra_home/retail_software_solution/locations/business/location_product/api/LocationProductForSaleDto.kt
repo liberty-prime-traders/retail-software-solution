@@ -9,6 +9,6 @@ data class LocationProductForSaleDto(
     val referenceNumber: String,
     val productName: String,
     val productGroupName: String,
-    val defaultSalePrice: BigDecimal?,
+    val defaultSalePrice: BigDecimal,
     val stockBatches: List<StockEntryDto>
 )

@@ -12,11 +12,7 @@ class LocationProductEnricher(
     private val stockBalanceFetcher: StockBalanceFetcher
 ) {
 
-    fun provideMappingContextForEntities(entities: List<LocationProductEntity>): List<LocationProductResponseDto> {
-        return provideMappingContext(entities.map { locationProductMapper.toDomainDto(it) })
-    }
-
-    fun provideMappingContext(dtos: List<LocationProductDto>): List<LocationProductResponseDto> {
+    fun convertToResponseDto(dtos: List<LocationProductDto>): List<LocationProductResponseDto> {
         val unitNamesById = unitValueFetcher.getUnitNamesById()
         val balances = stockBalanceFetcher.getLatestBalances(dtos.map { it.id })
         return dtos.map {

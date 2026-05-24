@@ -72,6 +72,6 @@ class LocationProductService(
     }
 
     private fun convertToResponseDto(dto: LocationProductDto): LocationProductResponseDto {
-        return locationProductEnricher.provideMappingContext(listOf(dto)).first()
+        return locationProductEnricher.convertToResponseDto(listOf(dto)).first()
     }
 }

@@ -2,16 +2,15 @@ package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleConfirmedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
@@ -32,7 +31,6 @@ class ConfirmedSalePersister(
     private val fiscalPeriodService: FiscalPeriodService,
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val saleSaveFinalizer: SaleSaveFinalizer,
-    private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
     fun confirm(saleSaveRequest: SaleSaveRequest): SaleSaveResult {

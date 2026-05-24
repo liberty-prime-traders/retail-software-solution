@@ -46,7 +46,7 @@ data class SaleSessionLineResponse(
     val conversionFactor: BigDecimal,
     val unitPrice: BigDecimal,
     val lineTotal: BigDecimal,
-) { val snapshotUnitId: UUID = unitId }
+)
 
 data class SaleSessionAdjustmentResponse(
     val identity: SessionIdentity,
