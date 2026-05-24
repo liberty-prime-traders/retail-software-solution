@@ -155,8 +155,8 @@ SessionIdentity
       current session values for `locationProductId`, `quantity`, `unitId`,
       `unitPrice`, `conversionFactor` onto the existing entity.
       `locationProductId` never changes (no session handler mutates it);
-      `unitPrice` is recalculated by `SaleSessionLineHandler.updateLine`
-      whenever the line is edited (see Pitfalls §8).
+      `unitPrice` is recalculated by `SaleSessionLineHandler.applyLineChanges`
+      whenever an update entry edits the line (see Pitfalls §8).
     - **adjustments** and **payments** are kept untouched — there are no
       "update" handlers for these in-session, so existing rows can only be
       retained or removed/voided, never mutated
@@ -336,17 +336,18 @@ session before finalize.
   else in the app imports `RedisTemplate` / `StringRedisTemplate` — Redis
   access is fully encapsulated behind the `SaleSessionStore` interface.
 - **Line `unitPrice` is a derived, unit-aware property.**
-  `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured at
-  `addLine` from `location_product.default_sale_price`), `baseUnitId`
-  (snapshotted from `location_product.base_unit_id` at `addLine` / on
+  `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured on
+  addition from `location_product.default_sale_price`), `baseUnitId`
+  (snapshotted from `location_product.base_unit_id` on addition / on
   hydration), and `conversionFactor` (line unit → base unit). `unitPrice`
   is a computed getter: `defaultSalePrice * conversionFactor`, so the
-  per-line-unit price tracks the unit automatically — `addLine` and
-  `updateLine` only have to set `defaultSalePrice` / `conversionFactor`.
-  `addLine` does not accept a `unitId`: new lines always start at the
-  product's base unit (`unitId = baseUnitId`, `conversionFactor = 1`).
-  Switching the line to a non-base unit is `updateLine`'s job.
-  `updateLine` does **not** re-fetch `defaultSalePrice`; the value is held
+  per-line-unit price tracks the unit automatically —
+  `SaleSessionLineHandler.applyLineChanges` only has to set
+  `defaultSalePrice` / `conversionFactor`. Addition entries do not accept
+  a `unitId`: new lines always start at the product's base unit
+  (`unitId = baseUnitId`, `conversionFactor = 1`). Switching the line to
+  a non-base unit is the job of an update entry in `applyLineChanges`.
+  Update entries do **not** re-fetch `defaultSalePrice`; the value is held
   on the line for the life of the session. `DomainToSessionMapper`
   rehydrates `defaultSalePrice` for persisted lines via
   `unitPrice / conversionFactor`, and `baseUnitId` via a one-shot batch

@@ -278,9 +278,10 @@ Two distinct mechanisms protect inventory:
     reservations before line sync for the same FK-ordering reason; the
     PRODUCT advisory lock is then taken before FIFO consumption).
 - Stock guards run at:
-  1. **Add line to session** — `SaleSessionLineHandler.addLine` calls
-     `LocationProductService.guardAllActive` (live stock is NOT pre-checked
-     here; it gets checked at the next commit).
+  1. **Add line to session** — `SaleSessionLineHandler.applyLineChanges`
+     calls `LocationProductService.guardAllActive` on the addition entries'
+     `locationProductId`s (live stock is NOT pre-checked here; it gets
+     checked at the next commit).
   2. **Save draft commit** — `SaleValidator.guardStockForDraftUpdates` runs
      after reservations were cleared and lines persisted; computes available
      stock excluding *this* sale's reservations, then issues new ones.

@@ -30,6 +30,11 @@ data class SaleSessionLineUpdateDto(
     val unitId: UUID,
 )
 
+data class SaleSessionLineRequestDto(
+    val additions: List<SaleSessionLineAddDto> = emptyList(),
+    val updates: List<SaleSessionLineUpdateDto> = emptyList(),
+)
+
 data class SaleSessionRowIdentityDto(
     val identity: SessionIdentity,
 )

@@ -5,9 +5,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionHeaderUpdateDto
-import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineHandler
-import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineRequestDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentHandler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentRemoveDto
@@ -58,17 +57,11 @@ class SaleSessionEndpoint(
         return ResponseEntity.ok().build()
     }
 
-    @PostMapping("{sessionId}/lines")
-    fun addLine(
-        @PathVariable sessionId: UUID,
-        @RequestBody lineAddDto: SaleSessionLineAddDto,
-    ): SaleSessionResponseDto = saleSessionLineHandler.addLine(sessionId, lineAddDto)
-
     @PutMapping("{sessionId}/lines")
-    fun updateLine(
+    fun applyLineChanges(
         @PathVariable sessionId: UUID,
-        @RequestBody lineUpdateDto: SaleSessionLineUpdateDto,
-    ): SaleSessionResponseDto = saleSessionLineHandler.updateLine(sessionId, lineUpdateDto)
+        @RequestBody lineRequestDto: SaleSessionLineRequestDto,
+    ): SaleSessionResponseDto = saleSessionLineHandler.applyLineChanges(sessionId, lineRequestDto)
 
     @DeleteMapping("{sessionId}/lines")
     fun removeLine(
