@@ -61,6 +61,7 @@ class SaleSessionPersister(
         return saleSession.copy(
             saleId = saleSaveResult.saleId,
             saleVersion = saleSaveResult.newVersion,
+            originalStatus = saleSaveResult.saleStatus,
             lastUpdatedAt = now,
             lastAccessedAt = now,
             lastAccessedById = userId,

@@ -20,6 +20,9 @@ interface DomainToSessionMapper {
 
     fun toSaleSessionHeader(saleHeaderDto: SaleHeaderDto): SaleSessionHeader
 
+    @Mapping(target = "quantityOnHand", constant = "0")
+    @Mapping(target = "quantityReserved", constant = "0")
+    @Mapping(target = "quantityAvailable", constant = "0")
     @Mapping(source = "id", target = "identity", qualifiedBy = [PersistedSessionIdentity::class])
     @Mapping(source = ".", target = "defaultSalePrice", qualifiedBy = [SaleLineDefaultSalePrice::class])
     @Mapping(source = "locationProductId", target = "baseUnitId", qualifiedBy = [SaleLineBaseUnitId::class])

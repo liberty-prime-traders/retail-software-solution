@@ -46,9 +46,32 @@ Internal collaborators (do not call from outside `sale_session`):
 Architectural boundary:
 
 ```
-sale_session/ → may call sale/api/, sale_adjustment/api/, sale_payment/api/
+sale_session/ → may call sale/api/, sale_adjustment/api/, sale_payment/api/, stock/api/
 sale/         → knows nothing about sale_session (convention)
 ```
+
+`sale_session → stock/api/` is used by `SaleSessionStockOverlay` to fetch
+`StockBalanceFetcher.getLatestBalances` and `StockReserver.loadReservationBreakdown`
+when populating the three per-line quantities (`quantityOnHand`,
+`quantityReserved`, `quantityAvailable`). The overlay is advisory only — it
+never throws. Session mutations and loads run it so the UI can warn the
+cashier when a requested quantity exceeds availability; the hard reject
+happens at `saveDraft` / `confirm` via `SaleValidator.guardStockForDraftUpdates`.
+The session's own reservations are excluded via
+`ProductReservations.excludingSale(session.saleId)`, so editing a line in a
+DRAFT session does not count its own prior reservation against itself.
+
+`SaleSessionLineHandler.removeLine` is a partial exception to the buffered
+model: when a removed line is persisted (`identity.id != null`), the handler
+eagerly calls `StockReserver.clearBySaleLineIds(...)` so the stock hold is
+released immediately rather than waiting for `saveDraft`. This prevents
+phantom reservations from blocking other customers while the cashier hasn't
+yet committed the edit. The `SaleLineEntity` itself stays buffered — it
+gets dropped at `saveDraft` via `SaleLineSync`. Consequence: abandoning a
+session after `removeLine` leaves the line in DB but with no reservation;
+re-opening the sale will show the line again and `saveDraft` will re-reserve
+fresh (or fail with insufficient stock if another sale claimed it in the
+interim).
 
 `ArchitectureTest` enforces the `.api` boundary symmetrically — every domain's
 non-`api` classes are package-private to that domain. The "sale never imports

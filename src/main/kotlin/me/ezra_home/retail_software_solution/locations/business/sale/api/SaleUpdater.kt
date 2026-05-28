@@ -7,12 +7,12 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pay
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ class SaleUpdater(
     private val saleDataFetcher: SaleDataFetcher,
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
-    private val saleStockReserver: SaleStockReserver,
+    private val stockReserver: StockReserver,
     private val saleAssembler: SaleAssembler,
     private val saleStockUpdater: SaleStockUpdater,
     private val saleVoidHandlerForKafka: SaleVoidHandlerForKafka,
@@ -52,7 +52,7 @@ class SaleUpdater(
         val saleLines = saleLineRepository.findBySaleId(saleVoidCreateDto.saleId)
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleLines.map { it.locationProductId })
         if (sale.status == SaleStatus.DRAFT) {
-            saleStockReserver.clearBySale(saleVoidCreateDto.saleId)
+            stockReserver.clearBySale(saleVoidCreateDto.saleId)
             sale.status = SaleStatus.DISCARDED
         } else {
             fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())

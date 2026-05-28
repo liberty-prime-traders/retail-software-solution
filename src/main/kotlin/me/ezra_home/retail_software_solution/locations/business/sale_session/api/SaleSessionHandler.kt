@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import com.google.common.base.Predicate
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionAssembler
@@ -41,15 +42,12 @@ class SaleSessionHandler(
         saleSessionStore.delete(sessionId)
     }
 
-    fun listOpenSessions(mineOnly: Boolean): List<SaleSessionSummaryDto> {
+    fun getSessionsForUnsavedSales(mineOnly: Boolean): List<SaleSessionSummaryDto> {
+        val predicate: Predicate<SaleSession> = Predicate { saleSession ->
+            saleSession.saleId == null && (!mineOnly || saleSession.createdById == SessionContextProvider.getUserId())
+        }
         return saleSessionStore.listOpenSessions()
-            .filter { session ->
-                if (mineOnly) {
-                    session.createdById == SessionContextProvider.getUserId()
-                } else {
-                    true
-                }
-            }
+            .filter(predicate::apply)
             .let { saleSessionAssembler.buildSummaries(it) }
     }
 

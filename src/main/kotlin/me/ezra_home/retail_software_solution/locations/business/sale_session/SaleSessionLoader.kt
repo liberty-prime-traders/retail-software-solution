@@ -21,6 +21,7 @@ class SaleSessionLoader(
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val domainToSessionMapper: DomainToSessionMapper,
     private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val saleSessionStockOverlay: SaleSessionStockOverlay,
 ) {
 
     fun newSession(
@@ -53,7 +54,7 @@ class SaleSessionLoader(
             salePayments = emptyList(),
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(saleSession)
+        return saleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
     }
 
     fun loadFromSale(sessionId: UUID, saleId: UUID): SaleSession {
@@ -94,6 +95,6 @@ class SaleSessionLoader(
             salePayments = saleSessionPayments,
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(saleSession)
+        return saleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
     }
 }

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.sale
+package me.ezra_home.retail_software_solution.locations.business.stock
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = TableNames.SALE_LINE_STOCK_RESERVATION)
-class SaleLineStockReservationEntity(
+class StockReservationEntity(
 
     @Column(name = "sale_id", nullable = false)
     var saleId: UUID,
@@ -22,6 +22,6 @@ class SaleLineStockReservationEntity(
     var locationProductId: UUID,
 
     @Column(name = "quantity_reserved", nullable = false, precision = 15, scale = 4)
-    var quantityReserved: BigDecimal
+    var quantityReserved: BigDecimal,
 
 ) : HasCreatorEntity()

@@ -11,10 +11,10 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRep
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleStockReserver
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service
 class ConfirmedSalePersister(
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
-    private val saleStockReserver: SaleStockReserver,
+    private val stockReserver: StockReserver,
     private val saleStockUpdater: SaleStockUpdater,
     private val saleConfirmedHandlerForKafka: SaleConfirmedHandlerForKafka,
     private val saleDataFetcher: SaleDataFetcher,
@@ -45,7 +45,7 @@ class ConfirmedSalePersister(
         saleEntity.notes = saleSaveRequest.notes
         saleRepository.save(saleEntity)
 
-        saleStockReserver.clearBySale(saleEntity.id!!)
+        stockReserver.clearBySale(saleEntity.id!!)
         val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         val locationProductIdsToLock = lineSyncResult.persistedSaleLines.mapTo(HashSet()) { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIdsToLock)
@@ -64,6 +64,7 @@ class ConfirmedSalePersister(
             saleId = saleEntity.id!!,
             saleReferenceNumber = saleEntity.requiredReference(),
             newVersion = saleEntity.version,
+            saleStatus = saleEntity.status,
             dateSold = saleEntity.dateSold,
             soldById = saleEntity.soldById,
             saleLineIdsByClientKey = lineSyncResult.saleLineIdsByClientKey,

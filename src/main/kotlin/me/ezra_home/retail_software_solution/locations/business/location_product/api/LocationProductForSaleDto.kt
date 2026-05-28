@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -10,5 +9,7 @@ data class LocationProductForSaleDto(
     val productName: String,
     val productGroupName: String,
     val defaultSalePrice: BigDecimal,
-    val stockBatches: List<StockEntryDto>
+    val quantityOnHand: BigDecimal,
+    val quantityReserved: BigDecimal,
+    val quantityAvailable: BigDecimal,
 )

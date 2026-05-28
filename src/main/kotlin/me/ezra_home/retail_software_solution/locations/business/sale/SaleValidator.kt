@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNam
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -20,7 +21,7 @@ import java.util.UUID
 class SaleValidator(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
-    private val saleStockReserver: SaleStockReserver,
+    private val stockReserver: StockReserver,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -54,7 +55,7 @@ class SaleValidator(
         if (requested.isEmpty()) return
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, requested.keys)
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
-        val reservations = saleStockReserver.loadReservationBreakdown(requested.keys)
+        val reservations = stockReserver.loadReservationBreakdown(requested.keys)
         requested.forEach { (locationProductId, quantity) ->
             val reservedByOthers = reservations[locationProductId]?.excludingSale(saleId) ?: BigDecimal.ZERO
             val available = balances.getValue(locationProductId).subtract(reservedByOthers)

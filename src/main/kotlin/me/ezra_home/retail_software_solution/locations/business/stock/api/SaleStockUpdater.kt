@@ -71,23 +71,23 @@ class SaleStockUpdater(
         var unsatisfiedQuantity = saleLineStockRequest.baseQuantity
         for (stockEntry in fifoEntries) {
             if (unsatisfiedQuantity <= BigDecimal.ZERO) break
-            val taken = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(taken)
+            val takenQuantityInBaseUnit = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
+            stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
             modifiedEntries.add(stockEntry)
-            runningBalance = runningBalance.subtract(taken)
+            runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
             movements.add(
                 StockMovementEntity(
                     stockEntryId = stockEntry.id!!,
                     locationProductId = saleLineStockRequest.locationProductId,
                     movementType = MovementType.SALE,
-                    movedQuantity = taken,
+                    movedQuantity = Decimals.divideScale4(takenQuantityInBaseUnit, saleLineStockRequest.conversionFactor),
                     remainingQuantity = runningBalance,
                     externalReferenceNumber = saleRefNumber,
                     unitId = saleLineStockRequest.unitId,
                     conversionFactor = saleLineStockRequest.conversionFactor,
                 )
             )
-            unsatisfiedQuantity = unsatisfiedQuantity.subtract(taken)
+            unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
         }
         throwIfNotFulfilled(saleLineStockRequest, unsatisfiedQuantity, productLabel)
     }
@@ -151,9 +151,10 @@ class SaleStockUpdater(
         var runningBalance = startingBalance
         saleMovementsForProduct.forEach { saleMovement ->
             val stockEntry = stockEntriesById[saleMovement.stockEntryId]!!
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(saleMovement.movedQuantity)
+            val restoredBase = Decimals.multiplyScale4(saleMovement.movedQuantity, saleMovement.conversionFactor)
+            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBase)
             modifiedEntries.add(stockEntry)
-            runningBalance = runningBalance.add(saleMovement.movedQuantity)
+            runningBalance = runningBalance.add(restoredBase)
             newMovements.add(
                 StockMovementEntity(
                     stockEntryId = saleMovement.stockEntryId,

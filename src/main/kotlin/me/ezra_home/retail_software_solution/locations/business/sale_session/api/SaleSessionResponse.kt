@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pay
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -46,7 +47,12 @@ data class SaleSessionLineResponse(
     val conversionFactor: BigDecimal,
     val unitPrice: BigDecimal,
     val lineTotal: BigDecimal,
-)
+    val quantityOnHand: BigDecimal,
+    val quantityReserved: BigDecimal,
+    val quantityAvailable: BigDecimal,
+) {
+    val baseQuantity: BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
+}
 
 data class SaleSessionAdjustmentResponse(
     val identity: SessionIdentity,

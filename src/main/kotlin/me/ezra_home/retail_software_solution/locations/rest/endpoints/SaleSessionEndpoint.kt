@@ -42,16 +42,16 @@ class SaleSessionEndpoint(
     fun start(@RequestBody sessionStartDto: SaleSessionStartDto): SaleSessionResponseDto =
         saleSessionHandler.start(sessionStartDto)
 
-    @GetMapping
+    @GetMapping("unsaved")
     fun listOpenSessions(
         @RequestParam(required = false, defaultValue = "false") mineOnly: Boolean
-    ): List<SaleSessionSummaryDto> = saleSessionHandler.listOpenSessions(mineOnly)
+    ): List<SaleSessionSummaryDto> = saleSessionHandler.getSessionsForUnsavedSales(mineOnly)
 
     @GetMapping("{sessionId}")
     fun acquireSession(@PathVariable sessionId: UUID): SaleSessionResponseDto =
         saleSessionHandler.acquireSession(sessionId)
 
-    @DeleteMapping("{sessionId}")
+    @DeleteMapping("unsaved/{sessionId}")
     fun abandon(@PathVariable sessionId: UUID): ResponseEntity<Unit> {
         saleSessionHandler.abandon(sessionId)
         return ResponseEntity.ok().build()
