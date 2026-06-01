@@ -37,10 +37,16 @@ interface SessionToResponseMapper {
         saleSession: SaleSession,
         @Context sessionMappingContext: SaleSessionMappingContext,
         @Context adjustmentMappingContext: AdjustmentMappingContext,
+        @Context lineMappingContext: LineMappingContext,
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): SaleSessionResponseDto
 
-    fun toLineDto(saleSessionLine: SaleSessionLine): SaleSessionLineResponse
+    @Mapping(target = "unitPriceOverride", source = ".", qualifiedBy = [LineUnitPriceOverride::class])
+    @Mapping(target = "netUnitPrice", source = ".", qualifiedBy = [LineNetUnitPrice::class])
+    fun toLineDto(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): SaleSessionLineResponse
 
     @Mapping(source = "adjustmentReasonId", target = "adjustmentReason", qualifiedBy = [AdjustmentReasonLabel::class])
     @Mapping(source = ".", target = "calculatedAmount", qualifiedBy = [AdjustmentCalculatedAmount::class])

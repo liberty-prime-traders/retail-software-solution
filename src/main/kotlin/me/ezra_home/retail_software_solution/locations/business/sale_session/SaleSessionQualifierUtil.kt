@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLin
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionUiOptions
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
 import me.ezra_home.retail_software_solution.util.business.Decimals
@@ -69,4 +70,16 @@ object SaleSessionQualifierUtil {
         locationProductId: UUID,
         @Context baseUnitIdsByLocationProductId: Map<UUID, UUID>,
     ): UUID = baseUnitIdsByLocationProductId.getValue(locationProductId)
+
+    @LineUnitPriceOverride
+    fun toLineUnitPriceOverride(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = lineMappingContext.unitPriceOverrideFor(saleSessionLine)
+
+    @LineNetUnitPrice
+    fun toLineNetUnitPrice(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = lineMappingContext.netUnitPriceFor(saleSessionLine)
 }

@@ -28,6 +28,7 @@ data class SaleSessionLineUpdateDto(
     val identity: SessionIdentity,
     val quantity: BigDecimal,
     val unitId: UUID,
+    val unitPriceOverride: BigDecimal,
 )
 
 data class SaleSessionLineRequestDto(
@@ -66,4 +67,8 @@ data class SaleSessionHeaderUpdateDto(
     val soldById: Optional<UUID>? = null,
     val dateSold: Optional<OffsetDateTime>? = null,
     val notes: Optional<String>? = null,
+)
+
+data class SaleSessionVoidDto(
+    val reason: String,
 )

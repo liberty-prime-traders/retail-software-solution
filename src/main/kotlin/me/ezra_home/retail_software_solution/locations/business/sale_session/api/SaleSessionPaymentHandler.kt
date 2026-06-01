@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import java.time.OffsetDateTime
 import java.util.UUID
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
@@ -34,7 +35,7 @@ class SaleSessionPaymentHandler(
             paymentMethodId = paymentAddDto.paymentMethodId,
             amount = paymentAddDto.amount,
             reference = paymentAddDto.reference,
-            paymentDate = paymentAddDto.paymentDate,
+            paymentDate = persistedPaymentOutcome.paymentDate ?: paymentAddDto.paymentDate,
         )
         val updatedSession = saleSession.copy(
             saleVersion = persistedPaymentOutcome.updatedSaleVersion ?: saleSession.saleVersion,
@@ -54,14 +55,16 @@ class SaleSessionPaymentHandler(
             )
         )
         return PersistedPaymentOutcome(
-            SessionIdentity.persisted(recordPaymentResponse.id),
-            recordPaymentResponse.updatedSaleVersion,
+            identity = SessionIdentity.persisted(recordPaymentResponse.id),
+            updatedSaleVersion = recordPaymentResponse.updatedSaleVersion,
+            paymentDate = recordPaymentResponse.paymentDate,
         )
     }
 
     private data class PersistedPaymentOutcome(
         val identity: SessionIdentity,
         val updatedSaleVersion: Long?,
+        val paymentDate: OffsetDateTime? = null,
     )
 
     fun remove(sessionId: UUID, paymentRemoveDto: SaleSessionPaymentRemoveDto): SaleSessionResponseDto {

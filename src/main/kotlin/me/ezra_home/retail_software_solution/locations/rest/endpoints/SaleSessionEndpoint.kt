@@ -15,6 +15,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionRowIdentityDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionStartDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionVoidDto
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -106,4 +107,10 @@ class SaleSessionEndpoint(
     @PostMapping("{sessionId}/confirm")
     fun confirm(@PathVariable sessionId: UUID): SaleSessionResponseDto =
         saleSessionPersister.confirm(sessionId)
+
+    @PostMapping("{sessionId}/void")
+    fun voidSale(
+        @PathVariable sessionId: UUID,
+        @RequestBody saleSessionVoidDto: SaleSessionVoidDto,
+    ): SaleSessionResponseDto = saleSessionPersister.voidSale(sessionId, saleSessionVoidDto)
 }

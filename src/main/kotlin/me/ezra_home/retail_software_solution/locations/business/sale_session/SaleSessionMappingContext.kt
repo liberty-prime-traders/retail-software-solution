@@ -20,3 +20,14 @@ data class AdjustmentMappingContext(
     fun calculatedAmount(saleSessionAdjustment: SaleSessionAdjustment): BigDecimal =
         saleSessionTotalsCalculator.calculatedAmount(saleSessionAdjustment, saleSessionLines)
 }
+
+data class LineMappingContext(
+    private val unitPriceOverrideByLineKey: Map<UUID, BigDecimal>,
+    private val netUnitPriceByLineKey: Map<UUID, BigDecimal>,
+) {
+    fun unitPriceOverrideFor(saleSessionLine: SaleSessionLine): BigDecimal =
+        unitPriceOverrideByLineKey.getValue(saleSessionLine.identity.key())
+
+    fun netUnitPriceFor(saleSessionLine: SaleSessionLine): BigDecimal =
+        netUnitPriceByLineKey.getValue(saleSessionLine.identity.key())
+}

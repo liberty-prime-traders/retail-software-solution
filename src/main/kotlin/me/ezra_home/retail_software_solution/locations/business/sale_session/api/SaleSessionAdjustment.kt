@@ -14,4 +14,7 @@ data class SaleSessionAdjustment(
     val value: BigDecimal,
     val note: String?,
     val approvedById: UUID?,
-)
+) {
+    fun isPriceOverride(priceOverrideReasonId: UUID): Boolean =
+        adjustmentReasonId == priceOverrideReasonId && relatedSaleLineIdentity != null
+}

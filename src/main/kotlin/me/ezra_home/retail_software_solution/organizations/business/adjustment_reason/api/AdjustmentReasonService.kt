@@ -38,6 +38,11 @@ class AdjustmentReasonService(
     fun getReasonNamesById(): Map<UUID, String> =
         adjustmentReasonCache.getAll().associate { it.id to it.name }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getSystemReasonId(systemAdjustmentReason: SystemAdjustmentReason): UUID =
+        adjustmentReasonCache.getAll().firstOrNull { it.code == systemAdjustmentReason.code }?.id
+            ?: throw RtsGenericException("System adjustment reason ${systemAdjustmentReason.code} not seeded")
+
     fun create(dto: AdjustmentReasonInsertDto): AdjustmentReasonDto {
         if (dto.direction == AdjustmentDirection.BOTH) {
             throw RtsGenericException(

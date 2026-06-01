@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDat
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSummary
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidCreateDto
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -25,11 +24,6 @@ class SaleEndpoint(
     @GetMapping
     fun fetchRecent(@RequestParam n: Int?): List<SaleSummary> {
         return saleDataFetcher.fetchRecent(n)
-    }
-
-    @PutMapping("void")
-    fun voidSale(@RequestBody dto: SaleVoidCreateDto): SaleSummary {
-        return saleUpdater.voidSale(dto)
     }
 
     @PutMapping("{saleId}/notes")

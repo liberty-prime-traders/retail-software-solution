@@ -4,7 +4,10 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
+import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -35,11 +38,55 @@ class SaleSessionAssembler(
             saleSessionTotalsCalculator = saleSessionTotalsCalculator,
             saleSessionLines = saleSession.saleLines,
         )
+        val lineMappingContext = buildLineMappingContext(saleSession)
         return sessionToResponseMapper.toResponseDto(
             saleSession,
             sessionMappingContext,
             adjustmentMappingContext,
+            lineMappingContext,
             paymentMethodService.getNamesById(),
+        )
+    }
+
+    private fun buildLineMappingContext(saleSession: SaleSession): LineMappingContext {
+        val priceOverrideReasonId = adjustmentReasonService.getSystemReasonId(SystemAdjustmentReason.PRICE_OVERRIDE)
+        val saleSessionLinesByKey = saleSession.saleLines.associateBy { it.identity.key() }
+
+        val unitPriceOverrideAdjustmentsByLineKey = saleSession.saleAdjustments
+            .filter { it.isPriceOverride(priceOverrideReasonId) }
+            .associateBy { it.relatedSaleLineIdentity!!.key() }
+
+        val unitPriceOverrideByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
+            val overrideAdjustment = unitPriceOverrideAdjustmentsByLineKey[lineKey]
+            overrideAdjustment?.let {
+                when (it.direction) {
+                    AdjustmentDirection.DISCOUNT -> saleSessionLine.unitPrice - it.value
+                    AdjustmentDirection.SURCHARGE -> saleSessionLine.unitPrice + it.value
+                    AdjustmentDirection.BOTH -> null
+                }
+            } ?: saleSessionLine.unitPrice
+        }
+
+        val lineAdjustmentsByLineKey = saleSession.saleAdjustments
+            .filter { it.relatedSaleLineIdentity != null }
+            .groupBy { it.relatedSaleLineIdentity!!.key() }
+
+        val netUnitPriceByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
+            val lineAdjustments = lineAdjustmentsByLineKey[lineKey] ?: emptyList()
+            val netAdjustmentAmount = lineAdjustments.sumOf { saleSessionAdjustment ->
+                val calculatedAmount = saleSessionTotalsCalculator.calculatedAmount(saleSessionAdjustment, saleSession.saleLines)
+                when (saleSessionAdjustment.direction) {
+                    AdjustmentDirection.DISCOUNT -> calculatedAmount.negate()
+                    AdjustmentDirection.SURCHARGE -> calculatedAmount
+                    AdjustmentDirection.BOTH -> calculatedAmount.negate()
+                }
+            }
+            Decimals.divideScale4(saleSessionLine.lineTotal + netAdjustmentAmount, saleSessionLine.quantity)
+        }
+
+        return LineMappingContext(
+            unitPriceOverrideByLineKey = unitPriceOverrideByLineKey,
+            netUnitPriceByLineKey = netUnitPriceByLineKey,
         )
     }
 

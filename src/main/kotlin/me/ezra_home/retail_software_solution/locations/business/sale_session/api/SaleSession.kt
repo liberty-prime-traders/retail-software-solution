@@ -29,8 +29,10 @@ data class SaleSession(
     fun totalPaid() =
         salePayments.filter { it.voidedReason == null }.sumOf { it.amount }
 
-    fun canAddPayments(): Boolean = originalStatus ==
-            SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED
+    fun canAddPayments(): Boolean {
+        if (totals.paymentTotal >= totals.payableTotal) return false
+        return originalStatus == SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED
+    }
 
     fun markTouched(userId: UUID): SaleSession {
         val now = DateTimes.Offset.Now.organization()

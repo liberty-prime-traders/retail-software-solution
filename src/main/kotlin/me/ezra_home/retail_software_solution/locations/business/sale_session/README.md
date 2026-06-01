@@ -19,14 +19,14 @@ locations/business/sale_session/api/
 
 Public surface (everything else in this package is internal):
 
-| Class                          | Purpose                                               |
-|--------------------------------|-------------------------------------------------------|
-| `SaleSessionHandler`           | Start, abandon, list, get a session                   |
-| `SaleSessionHeaderHandler`     | Patch contactId, soldById, dateSold, notes            |
-| `SaleSessionLineHandler`       | Add, update, remove session lines                     |
-| `SaleSessionAdjustmentHandler` | Add, remove session adjustments                       |
-| `SaleSessionPaymentHandler`    | Add, remove session payments                          |
-| `SaleSessionPersister`         | `saveDraft`, `confirm` — server-side commit pipelines |
+| Class                          | Purpose                                                                      |
+|--------------------------------|------------------------------------------------------------------------------|
+| `SaleSessionHandler`           | Start, abandon, list, get a session                                          |
+| `SaleSessionHeaderHandler`     | Patch contactId, soldById, dateSold, notes                                   |
+| `SaleSessionLineHandler`       | Add, update, remove session lines                                            |
+| `SaleSessionAdjustmentHandler` | Add, remove session adjustments                                              |
+| `SaleSessionPaymentHandler`    | Add, remove session payments                                                 |
+| `SaleSessionPersister`         | `saveDraft`, `confirm`, `voidSale` — server-side commit / terminal pipelines |
 
 Internal collaborators (do not call from outside `sale_session`):
 
@@ -98,12 +98,13 @@ sale_session" direction is a convention upheld by review, not by the test.
       ┌────────────────────┬────────────────────┬────────────────────┐
       │                    │                    │                    │
       ▼                    ▼                    ▼                    ▼
-POST {id}/draft     POST {id}/confirm    POST {id}/payments     DELETE {id}
-DraftSalePersister  ConfirmedSalePersister (CONFIRMED branch:    (abandon)
-(persists at        (persists at          SalePaymentService    drops session,
- DRAFT status;       CONFIRMED status;    .recordPayment        no DB writes
- session lives on)   then deletes         per add call)
-                     session)
+POST {id}/draft     POST {id}/confirm    POST {id}/payments     POST {id}/void     DELETE {id}
+DraftSalePersister  ConfirmedSalePersister (CONFIRMED branch:    SaleUpdater.       (abandon)
+(persists at        (persists at          SalePaymentService    voidSale           drops session,
+ DRAFT status;       CONFIRMED status;    .recordPayment        (DRAFT→DISCARDED  no DB writes
+ session lives on)   then deletes         per add call)         or CONFIRMED→
+                     session)                                   VOIDED; then
+                                                                deletes session)
 ```
 
 `saveDraft` flushes pending state to the DB and keeps the session alive for
@@ -118,11 +119,11 @@ DISCARDED) can be loaded into a session for display. The session records the
 sale's status at load time as `originalStatus`, which gates what mutations the
 handlers allow:
 
-| `originalStatus` | Lines / adjustments / header | Add payment                      | Remove payment                                                       | Save path              |
-|------------------|------------------------------|----------------------------------|----------------------------------------------------------------------|------------------------|
-| `DRAFT`          | ✅ allowed                    | ✅ allowed (buffered)             | ✅ transient: dropped; persisted: voided (row stays, marked)          | `saveDraft`, `confirm` |
-| `CONFIRMED`      | ❌ rejected                   | ✅ allowed (recorded immediately) | ✅ persisted only: voided (row stays, marked)                         | none (no commit step)  |
-| `VOIDED`         | ❌ rejected                   | ❌ rejected                       | transient: n/a (unreachable); persisted: rejected (`guardSaleNotVoided`) | none (view-only)       |
+| `originalStatus` | Lines / adjustments / header | Add payment                      | Remove payment                                                              | Save path              |
+|------------------|------------------------------|----------------------------------|-----------------------------------------------------------------------------|------------------------|
+| `DRAFT`          | ✅ allowed                    | ✅ allowed (buffered)             | ✅ transient: dropped; persisted: voided (row stays, marked)                 | `saveDraft`, `confirm` |
+| `CONFIRMED`      | ❌ rejected                   | ✅ allowed (recorded immediately) | ✅ persisted only: voided (row stays, marked)                                | none (no commit step)  |
+| `VOIDED`         | ❌ rejected                   | ❌ rejected                       | transient: n/a (unreachable); persisted: rejected (`guardSaleNotVoided`)    | none (view-only)       |
 | `DISCARDED`      | ❌ rejected                   | ❌ rejected                       | transient: n/a (unreachable); persisted: ⚠️ leaks through (see prose below) | none (view-only)       |
 
 `SaleSessionValidator.guardMutable` enforces the line/adjustment/header rules
@@ -183,7 +184,10 @@ SessionIdentity
     - **adjustments** and **payments** are kept untouched — there are no
       "update" handlers for these in-session, so existing rows can only be
       retained or removed/voided, never mutated
-  - `transientId != null` → insert a new row, flip `transientId` to `id` after
+  - `transientId != null` → insert a new row, flip `transientId` to `id` after.
+    For adjustments, `applySaleSaveResult` also flips `relatedSaleLineIdentity`
+    from transient to persisted when the referenced line was newly inserted in
+    the same commit, keeping adjustment→line references consistent after save.
   - Adjustments missing from the input are deleted by `SaleAdjustmentSyncer`.
     Payments work differently: `SalePaymentAppender.appendNew` only ever
     inserts new (`existingId == null`) payments; persisted payments are
@@ -302,6 +306,17 @@ product gets deactivated).
    `lastAccessed*` bumped), build response, delete the session
 ```
 
+### Void (`POST /secured/sale-sessions/{sessionId}/void`)
+```
+1. SaleSessionPersister.voidSale(sessionId, SaleSessionVoidDto(reason))
+2. load session; reject if session has no persisted saleId
+3. delegate to SaleUpdater.voidSale(SaleVoidCreateDto(saleId, reason)):
+     - DRAFT  → DISCARDED (clears reservations)
+     - CONFIRMED → VOIDED (restores stock, writes SaleVoidEntity,
+       publishes SaleVoidedEvent; requires today's fiscal period open)
+4. reflect resulting status on the session, build response, delete session
+```
+
 ### CONFIRMED-session payments (no commit step)
 When `originalStatus == CONFIRMED`, `POST /secured/sale-sessions/{sessionId}/payments`
 forwards the payment to `SalePaymentService.recordPayment` synchronously and
@@ -380,20 +395,61 @@ session before finalize.
 
 ---
 
-## 9. Where Things Live
+## 9. Price Override
 
-| Topic                           | Class(es)                                                                                                                                                                                        |
-|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Session model                   | `SaleSession`, `SaleSessionHeader`, `SaleSessionLine`, `SaleSessionAdjustment`, `SaleSessionPayment`, `SaleSessionTotals`                                                                        |
-| Identity                        | `SessionIdentity`                                                                                                                                                                                |
-| Storage                         | `SaleSessionStore`, `SaleSessionRedisStore`, `SaleSessionInMemoryStore`                                                                                                                          |
-| Validation                      | `SaleSessionValidator`                                                                                                                                                                           |
-| Totals                          | `SaleSessionTotalsCalculator`                                                                                                                                                                    |
-| Load / mint                     | `SaleSessionLoader`, `DomainToSessionMapper`                                                                                                                                                     |
-| Build response/summary          | `SaleSessionAssembler`, `SessionToResponseMapper`                                                                                                                                                |
-| Post-mutation pipeline          | `SaleSessionUpdateFinalizer`                                                                                                                                                                     |
-| Session orchestration           | `SaleSessionHandler`, `SaleSession{Header,Line,Adjustment,Payment}Handler`, `SaleSessionPersister`                                                                                               |
-| Save primitives (in sale/api)   | `SaleSaveRequest`, `SaleSaveResult`, `DraftSalePersister`, `ConfirmedSalePersister`                                                                                                              |
+A cashier sets a custom price on a line by supplying `unitPriceOverride` in a
+`SaleSessionLineUpdateDto`. The client always sends this field (non-nullable); on line add
+the response always carries `unitPriceOverride == unitPrice`. The server owns the adjustment
+model — the client never knows about `PRICE_OVERRIDE` adjustments, it only sees and echoes
+`unitPriceOverride`.
+
+- `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
+  computes `unitDiff = unitPrice − unitPriceOverride` and upserts a
+  `PRICE_OVERRIDE` adjustment with `value = |unitDiff|` and direction
+  `DISCOUNT` / `SURCHARGE` per sign. Storage is **per-unit** — the
+  `AdjustmentAmountCalculator` scales by line `quantity` at compute time,
+  so qty changes need no recalc. If the diff is zero the override is
+  removed. **Unit change clears the override unless a new price is supplied:**
+  when a line's unit changes and the client echoes back the existing effective
+  price, `PriceOverrideReconciler` drops the `PRICE_OVERRIDE`; when the client
+  supplies a different `unitPriceOverride`, the reconciler treats it as a new
+  explicit override computed against the new unit's `unitPrice`. Non-price-override
+  line adjustments are always cleared on a unit change: `SaleSessionLineHandler.applyLineChanges`
+  filters any remaining line-level adjustment whose `relatedSaleLineIdentity` targets
+  a unit-changed line. **Echo detection:** the reconciler always derives the previous
+  effective price — `unitPrice ± storedValue` when an override exists, otherwise
+  `unitPrice` — and treats a submitted value that matches as a no-op. This keeps
+  all business logic server-side; the client echoes the full line state without
+  consequence.
+- `unitPriceOverride == 0` is allowed (cashier giveaway). Negative is
+  rejected by `SaleSessionValidator.guardNonNegativeEffectivePrices`.
+- The `PRICE_OVERRIDE` adjustment is stored in Redis just like any other
+  adjustment and persisted to the DB at `saveDraft` / `confirm` via
+  `SaleAdjustmentSyncer`.
+- `unitPriceOverride` on `SaleSessionLineResponse` is always populated:
+  `SaleSessionAssembler.buildLineMappingContext` derives it by reversing the
+  stored adjustment (`unitPrice ± value`) when an override exists, and falls
+  back to `unitPrice` otherwise — never stored in Redis or the DB directly.
+- Mutual exclusivity (a line cannot carry both a `PRICE_OVERRIDE` and any
+  other adjustment) is enforced structurally inside `validate()` via
+  `guardLineOverrideExclusivity`, so it holds regardless of which entry
+  point produced the state (line update, adjustment add, load-from-DB).
+
+## 10. Where Things Live
+
+| Topic                           | Class(es)                                                                                                                                                                                                                          |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Session model                   | `SaleSession`, `SaleSessionHeader`, `SaleSessionLine`, `SaleSessionAdjustment`, `SaleSessionPayment`, `SaleSessionTotals`                                                                                                          |
+| Identity                        | `SessionIdentity`                                                                                                                                                                                                                  |
+| Storage                         | `SaleSessionStore`, `SaleSessionRedisStore`, `SaleSessionInMemoryStore`                                                                                                                                                            |
+| Validation                      | `SaleSessionValidator`                                                                                                                                                                                                             |
+| Price override reconciliation   | `PriceOverrideReconciler`                                                                                                                                                                                                          |
+| Totals                          | `SaleSessionTotalsCalculator`                                                                                                                                                                                                      |
+| Load / mint                     | `SaleSessionLoader`, `DomainToSessionMapper`                                                                                                                                                                                       |
+| Build response/summary          | `SaleSessionAssembler`, `SessionToResponseMapper`                                                                                                                                                                                  |
+| Post-mutation pipeline          | `SaleSessionUpdateFinalizer`                                                                                                                                                                                                       |
+| Session orchestration           | `SaleSessionHandler`, `SaleSession{Header,Line,Adjustment,Payment}Handler`, `SaleSessionPersister`                                                                                                                                 |
+| Save primitives (in sale/api)   | `SaleSaveRequest`, `SaleSaveResult`, `DraftSalePersister`, `ConfirmedSalePersister`                                                                                                                                                |
 | Save sub-pieces                 | `SaleLineSync` (sale internal), `SaleSaveFinalizer` (sale internal), `SaleAdjustmentSyncer` (sale_adjustment/api), `SalePaymentAppender` (sale_payment/api, delegates to `SalePaymentWriter`), `SaleTotalsApplier` (sale internal) |
-| Session→SaleSaveRequest mapping | `SessionToSaveRequestMapper`                                                                                                                                                                     |
-| REST entry point                | `SaleSessionEndpoint` at `/secured/sale-sessions`                                                                                                                                                |
+| Session→SaleSaveRequest mapping | `SessionToSaveRequestMapper`                                                                                                                                                                                                       |
+| REST entry point                | `SaleSessionEndpoint` at `/secured/sale-sessions`                                                                                                                                                                                  |

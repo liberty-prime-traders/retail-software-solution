@@ -34,18 +34,22 @@ class SaleConfirmedEventProcessor(
     override fun prepareLedgerRequest(event: SaleConfirmedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
         val payableTotal = event.payableTotal
+        val grossRevenue = payableTotal.add(event.discountTotal)
 
-        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, payableTotal)
-        val saleEntries = listOf(
-            LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, payableTotal),
-            LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, payableTotal)
-        )
+        val ledgerEntries = buildList {
+            addAll(saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.dateSold, payableTotal))
+            add(LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, payableTotal))
+            add(LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, grossRevenue))
+            if (event.discountTotal.signum() > 0) {
+                add(LedgerEntryRequest(SystemAccount.SALES_DISCOUNTS.code, EntryType.DEBIT, event.discountTotal))
+            }
+        }
 
         return LedgerPostingRequest(
             sourceReferenceNumber = event.saleReferenceNumber,
             sourceType = LedgerSourceType.SALE,
             postingDate = event.dateSold,
-            entries = saleEntries + taxEntries,
+            entries = ledgerEntries,
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,

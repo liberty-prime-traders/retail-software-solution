@@ -70,7 +70,7 @@ class SaleEntity(
 
 ) : HasReferenceEntity() {
 
-    private fun discountTotal(): BigDecimal =
+    fun discountTotal(): BigDecimal =
         (lineLevelDiscountTotal ?: BigDecimal.ZERO) + (orderLevelDiscountTotal ?: BigDecimal.ZERO)
 
     private fun surchargeTotal(): BigDecimal =

@@ -43,6 +43,7 @@ class SaleVoidHandlerForKafka(
                 contactId = sale.contactId,
                 saleReferenceNumber = sale.requiredReference(),
                 payableTotal = sale.payableTotal(),
+                discountTotal = sale.discountTotal(),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
                 dateVoided = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
                     ?: DateTimes.Local.Now.organization()

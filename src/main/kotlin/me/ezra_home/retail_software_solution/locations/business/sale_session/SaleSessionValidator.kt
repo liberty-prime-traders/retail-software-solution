@@ -4,8 +4,10 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
+import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
+import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
 import me.ezra_home.retail_software_solution.util.business.Currencies
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -18,13 +20,41 @@ class SaleSessionValidator(
     private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
 ) {
 
+    fun guardNonNegativeEffectivePrices(updates: List<SaleSessionLineUpdateDto>) {
+        updates.forEach { saleSessionLineUpdateDto ->
+            if (saleSessionLineUpdateDto.unitPriceOverride.signum() < 0) {
+                throw RtsGenericException("Selling price cannot be negative")
+            }
+        }
+    }
+
     fun validate(saleSession: SaleSession) {
         guardPositiveLineQuantities(saleSession.saleLines)
         guardNoDuplicateProducts(saleSession.saleLines)
         guardAdjustmentReferences(saleSession)
         guardAdjustmentReasons(saleSession.saleAdjustments)
         guardPositivePayments(saleSession.salePayments.map { it.amount })
+        guardLineOverrideExclusivity(saleSession)
         guardDiscountCeilings(saleSession)
+    }
+
+    private fun guardLineOverrideExclusivity(saleSession: SaleSession) {
+        val priceOverrideReasonId = adjustmentReasonService.getSystemReasonId(SystemAdjustmentReason.PRICE_OVERRIDE)
+        val lineKeysWithOverride = saleSession.saleAdjustments
+            .filter { it.isPriceOverride(priceOverrideReasonId) }
+            .mapTo(HashSet()) { it.relatedSaleLineIdentity!!.key() }
+        if (lineKeysWithOverride.isEmpty()) return
+        val saleSessionLinesByKey = saleSession.saleLines.associateBy { it.identity.key() }
+        saleSession.saleAdjustments.forEach { saleSessionAdjustment ->
+            val targetLineKey = saleSessionAdjustment.relatedSaleLineIdentity?.key() ?: return@forEach
+            if (saleSessionAdjustment.adjustmentReasonId == priceOverrideReasonId) return@forEach
+            if (targetLineKey !in lineKeysWithOverride) return@forEach
+            val productLabel = saleSessionLinesByKey[targetLineKey]?.productLabel ?: "this line"
+            throw RtsGenericException(
+                "$productLabel has both a price override and another adjustment — " +
+                " Remove the override and use adjustments to update price"
+            )
+        }
     }
 
     fun guardMutable(saleSession: SaleSession) {

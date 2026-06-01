@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineAdjustmentReconciler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContext
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContextBuilder
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStockOverlay
@@ -22,12 +23,14 @@ class SaleSessionLineHandler(
     private val saleSessionLineChangeContextBuilder: SaleSessionLineChangeContextBuilder,
     private val saleSessionStockOverlay: SaleSessionStockOverlay,
     private val stockReserver: StockReserver,
+    private val saleSessionLineAdjustmentReconciler: SaleSessionLineAdjustmentReconciler,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun applyLineChanges(sessionId: UUID, lineRequestDto: SaleSessionLineRequestDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.guardMutable(saleSession)
+        saleSessionValidator.guardNonNegativeEffectivePrices(lineRequestDto.updates)
 
         val saleSessionLinesByKey = saleSession.saleLines.associateBy { it.identity.key() }
         guardUpdatesTargetExistingLines(lineRequestDto.updates, saleSessionLinesByKey)
@@ -44,8 +47,21 @@ class SaleSessionLineHandler(
             updates = lineRequestDto.updates,
             saleSessionLineChangeContext = saleSessionLineChangeContext,
         )
-
-        val updatedSaleSession = saleSession.copy(saleLines = mutatedExistingLines + newSaleSessionLines)
+        val effectiveSaleLines = buildList {
+            addAll(newSaleSessionLines)
+            addAll(mutatedExistingLines)
+        }
+        val effectiveSaleLinesByKey = effectiveSaleLines.associateBy { it.identity.key() }
+        val updatedSaleAdjustments = saleSessionLineAdjustmentReconciler.reconcile(
+            preUpdateSaleAdjustments = saleSession.saleAdjustments,
+            preUpdateSaleSessionLinesByKey = saleSessionLinesByKey,
+            postUpdateSaleSessionLinesByKey = effectiveSaleLinesByKey,
+            updates = lineRequestDto.updates,
+        )
+        val updatedSaleSession = saleSession.copy(
+            saleLines = effectiveSaleLines,
+            saleAdjustments = updatedSaleAdjustments,
+        )
         return saleSessionUpdateFinalizer.finalize(saleSessionStockOverlay.populate(updatedSaleSession))
     }
 

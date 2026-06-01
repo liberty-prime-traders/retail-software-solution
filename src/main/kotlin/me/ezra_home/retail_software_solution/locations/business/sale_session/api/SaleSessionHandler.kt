@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLoader
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -15,7 +15,7 @@ class SaleSessionHandler(
     private val saleSessionStore: SaleSessionStore,
     private val saleSessionLoader: SaleSessionLoader,
     private val saleSessionAssembler: SaleSessionAssembler,
-    private val saleSessionValidator: SaleSessionValidator,
+    private val saleSessionUpdateFinalizer: SaleSessionUpdateFinalizer,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -33,9 +33,7 @@ class SaleSessionHandler(
             val userId = SessionContextProvider.getUserId()
             saleSessionLoader.newSession(sessionId, locationId, sessionStartDto.contactId!!, userId)
         }
-        saleSessionValidator.validate(session)
-        saleSessionStore.save(session)
-        return saleSessionAssembler.buildResponse(session)
+        return saleSessionUpdateFinalizer.finalize(session)
     }
 
     fun abandon(sessionId: UUID) {

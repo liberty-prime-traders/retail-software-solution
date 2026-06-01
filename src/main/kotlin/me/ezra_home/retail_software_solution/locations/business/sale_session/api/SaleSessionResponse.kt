@@ -46,12 +46,14 @@ data class SaleSessionLineResponse(
     val baseUnitId: UUID,
     val conversionFactor: BigDecimal,
     val unitPrice: BigDecimal,
-    val lineTotal: BigDecimal,
+    val unitPriceOverride: BigDecimal,
+    val netUnitPrice: BigDecimal,
     val quantityOnHand: BigDecimal,
     val quantityReserved: BigDecimal,
     val quantityAvailable: BigDecimal,
 ) {
     val baseQuantity: BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
+    val lineTotal = Decimals.multiplyScale4(quantity, netUnitPrice)
 }
 
 data class SaleSessionAdjustmentResponse(

@@ -190,8 +190,15 @@ persistence model, lifecycle, and reconciliation logic.
   carries through to a `sale_line_id` after commit) or **order-level**
   (no `lineId`).
 - `direction`: `DISC` (reduces the payable) or `SRCH` (adds to the payable).
-- `calculationMethod`: `FIXED_VALUE` (currency amount) or `PERCENTAGE`
-  (percent of the line total or the sale subtotal).
+- `calculationMethod`: `FIXED_VALUE` or `PERCENTAGE`.
+  - **`value` is stored per-unit for line-level adjustments**; the calculator
+    scales by line `quantity` at compute time
+    (`AdjustmentAmountCalculator.calculateAmount`). A $2 line-level
+    `FIXED_VALUE` discount on a qty=3 line yields a `calculatedAmount` of $6.
+  - For **order-level** `FIXED_VALUE` there is no per-line concept — `value`
+    is the whole sale-wide amount and the calculator returns it as-is.
+  - `PERCENTAGE` line-level applies to the line's `lineTotal`
+    (`quantity * unitPrice`); order-level applies to the sale subtotal.
 - Every adjustment references an `adjustment_reason_id` (org-schema lookup).
   The session validator validates the reason exists and that
   `AdjustmentReasonService.requireCanApply(reasonId, direction)` succeeds.
@@ -578,6 +585,10 @@ run** — i.e. as soon as the data it needs is in scope.
 - DB defense-in-depth: `sale_void.sale_id` is `unique = true`, so a second
   void insert for the same sale fails at the constraint even if the
   status guard is somehow bypassed.
+- Not REST-exposed directly. The void flow runs through the session:
+  `SaleSessionPersister.voidSale` loads the session, requires
+  `saleId`, calls this primitive, and then deletes the session
+  (`POST /secured/sale-sessions/{sessionId}/void`).
 
 ### `SaleUpdater.updateNotes(id, notes)` / `updatePaymentStatus(id, status)`
 - Both take the SALE advisory lock via `lockAndGetSale` and then assign

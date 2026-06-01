@@ -16,5 +16,6 @@ enum class SystemAdjustmentReason(
     EARLY_PAYMENT("ELP", "Early Payment Incentive", AdjustmentDirection.DISCOUNT),
     SMALL_ORDER("SMD", "Small Order Fee", AdjustmentDirection.SURCHARGE),
     RUSH("RSH", "Rush / Priority Processing", AdjustmentDirection.SURCHARGE),
-    CUSTOM("CSTM", "Custom / Other", AdjustmentDirection.BOTH);
+    CUSTOM("CSTM", "Custom / Other", AdjustmentDirection.BOTH),
+    PRICE_OVERRIDE("PROV", "Price Override", AdjustmentDirection.BOTH);
 }

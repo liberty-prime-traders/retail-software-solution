@@ -15,6 +15,7 @@ data class SaleVoidedEvent(
     val contactId: UUID,
     val saleReferenceNumber: String,
     val payableTotal: BigDecimal,
+    val discountTotal: BigDecimal,
     val dateSold: LocalDate,
     val dateVoided: LocalDate
 ) : TransactionEvent()
