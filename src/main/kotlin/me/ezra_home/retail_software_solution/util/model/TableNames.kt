@@ -37,6 +37,7 @@ object TableNames {
     const val TAG = "tag"
     const val STOCK_MOVEMENT_REASON = "stock_movement_reason"
     const val STOCK_MOVEMENT_REASON_TYPE = "stock_movement_reason_type"
+    const val ADJUSTMENT_REASON = "adjustment_reason"
     const val STOCK_ITEM_SOURCE = "stock_item_source"
     const val TAX_RATE = "tax_rate"
     const val PRODUCT_TAX_ASSIGNMENT = "product_tax_assignment"
@@ -62,7 +63,7 @@ object TableNames {
     const val SUPPLIER_PAYMENT_VOID = "supplier_payment_void"
     const val SALE = "sale"
     const val SALE_LINE = "sale_line"
-    const val SALE_DISCOUNT = "sale_discount"
+    const val SALE_ADJUSTMENT = "sale_adjustment"
     const val SALE_PAYMENT = "sale_payment"
     const val SALE_PAYMENT_VOID = "sale_payment_void"
     const val SALE_VOID = "sale_void"
@@ -92,6 +93,7 @@ object TableNames {
     const val PRODUCT_GROUP_AUDIT = "product_group_aud"
     const val TAX_RATE_AUDIT = "tax_rate_aud"
     const val PRODUCT_TAX_ASSIGNMENT_AUDIT = "product_tax_assignment_aud"
+    const val ADJUSTMENT_REASON_AUDIT = "adjustment_reason_aud"
     const val ORG_JURISDICTION_TAX_TYPE_AUDIT = "org_jurisdiction_tax_type_aud"
     const val FISCAL_PERIOD_AUDIT = "fiscal_period_aud"
 
@@ -106,6 +108,6 @@ object TableNames {
     const val SUPPLIER_RETURN_AUDIT = "supplier_return_aud"
     const val SALE_AUDIT = "sale_aud"
     const val SALE_LINE_AUDIT = "sale_line_aud"
-    const val SALE_DISCOUNT_AUDIT = "sale_discount_aud"
+    const val SALE_ADJUSTMENT_AUDIT = "sale_adjustment_aud"
     const val TAX_ENTRY_AUDIT = "tax_entry_aud"
 }

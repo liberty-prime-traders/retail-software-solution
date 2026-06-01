@@ -6,8 +6,8 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import java.math.BigDecimal
-import java.time.OffsetDateTime
 import java.util.UUID
 
 object PurchaseMapper {
@@ -23,7 +23,7 @@ object PurchaseMapper {
     supplierId = dto.supplierId,
     notes = dto.notes,
     purchaseStatus = PurchaseStatus.ORDERED,
-    dateOrdered = dto.dateOrdered ?: OffsetDateTime.now(),
+    dateOrdered = dto.dateOrdered ?: DateTimes.Offset.Now.organization(),
     orderedById = dto.orderedById ?: SessionContextProvider.getUserId()
   )
 
@@ -37,8 +37,8 @@ object PurchaseMapper {
   fun convertDraftToOrder(purchase: PurchaseEntity, dto: PurchaseUpdateDto) {
     dto.supplierId?.let { purchase.supplierId = it }
     dto.notes?.let { purchase.notes = it.orElse(null) }
-    purchase.dateOrdered = dto.dateOrdered?.orElseGet { OffsetDateTime.now() } ?: OffsetDateTime.now()
-    purchase.orderedById = dto.orderedById?.orElseGet { SessionContextProvider.getUserId() } ?: SessionContextProvider.getUserId()
+    purchase.dateOrdered = dto.dateOrdered?.orElse(null) ?: DateTimes.Offset.Now.organization()
+    purchase.orderedById = dto.orderedById?.orElse(null) ?: SessionContextProvider.getUserId()
     purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 

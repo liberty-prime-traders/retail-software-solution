@@ -67,7 +67,8 @@ class SalePaymentVoidHandlerForKafka(
                 paymentReferenceNumber = payment.requiredReference(),
                 paymentMethodAccountCode = accountCode,
                 amount = payment.amount,
-                voidedOn = voidEntity.createdOn?.toLocalDate() ?: DateTimes.Local.Now.organization()
+                voidedOn = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
+                    ?: DateTimes.Local.Now.organization()
             )
         )
     }

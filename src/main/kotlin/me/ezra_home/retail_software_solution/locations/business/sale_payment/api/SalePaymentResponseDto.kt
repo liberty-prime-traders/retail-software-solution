@@ -14,5 +14,6 @@ data class SalePaymentResponseDto(
     val paymentDate: OffsetDateTime?,
     val paymentMethodName: String,
     val voidedReason: String? = null,
-    val updatedSalePaymentStatus: PaymentStatus? = null
+    val updatedSalePaymentStatus: PaymentStatus? = null,
+    val updatedSaleVersion: Long? = null,
 )

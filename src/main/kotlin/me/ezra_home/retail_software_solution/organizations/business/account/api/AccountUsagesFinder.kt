@@ -20,7 +20,7 @@ class AccountUsagesFinder(
     fun failOnUsagesForCode(code: String) {
         val references = findUsagesForAccountCode(code)
         if (references.isNotEmpty()) {
-            throw RtsGenericException("Account is in use and cannot have children added", references)
+            throw RtsGenericException("Account is in use and cannot have children added to it", references)
         }
     }
 }

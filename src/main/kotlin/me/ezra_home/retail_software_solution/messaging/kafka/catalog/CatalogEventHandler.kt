@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.catalog
 
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.catalog_sync.sync_services.SyncServiceRegistry
+import me.ezra_home.retail_software_solution.locations.business.catalog_sync.api.SyncServiceRegistry
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSessionSetup
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService

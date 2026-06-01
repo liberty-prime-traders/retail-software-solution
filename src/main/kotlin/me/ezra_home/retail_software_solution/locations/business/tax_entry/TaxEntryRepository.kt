@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.tax_entry
 
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 

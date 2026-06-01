@@ -19,8 +19,8 @@ enum class SystemUnitValue(
     LITRE("l", "Litre", SystemUnitGroup.VOLUME, baseUnit = MILLILITRE, conversionFactor = 1000.0),
     HALF_LITRE("hl", "Half Litre", SystemUnitGroup.VOLUME, baseUnit = LITRE, conversionFactor = 0.5),
 
-    SINGLE("pc", "Single", SystemUnitGroup.COUNTABLE),
-    DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = SINGLE, conversionFactor = 12.0),
-    CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = SINGLE, conversionFactor = 24.0),
-    TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = SINGLE, conversionFactor = 30.0)
+    PIECE("pc", "Piece", SystemUnitGroup.COUNTABLE),
+    DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, conversionFactor = 12.0),
+    CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, conversionFactor = 24.0),
+    TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, conversionFactor = 30.0)
 }

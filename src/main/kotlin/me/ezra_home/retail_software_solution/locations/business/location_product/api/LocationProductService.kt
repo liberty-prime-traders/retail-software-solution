@@ -30,7 +30,7 @@ class LocationProductService(
         val inactive = locationProductRepository.findAllById(ids)
             .filter { it.status != ProductStatus.ACTIVE }
         if (inactive.isNotEmpty()) throw RtsGenericException(
-            "Inactive products are not allowed: ${inactive.map { it.id }}"
+            "Inactive products are not allowed: ${inactive.joinToString { "${it.referenceNumber}/${it.productName}" }}"
         )
     }
 
@@ -72,6 +72,6 @@ class LocationProductService(
     }
 
     private fun convertToResponseDto(dto: LocationProductDto): LocationProductResponseDto {
-        return locationProductEnricher.provideMappingContext(listOf(dto)).first()
+        return locationProductEnricher.convertToResponseDto(listOf(dto)).first()
     }
 }

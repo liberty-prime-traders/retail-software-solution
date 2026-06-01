@@ -78,7 +78,19 @@ databaseChangeLog:
                   type: numeric(19, 4)
 
               - column:
-                  name: discount_total
+                  name: line_level_discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: line_level_surcharge_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_surcharge_total
                   type: numeric(19, 4)
 
               - column:
@@ -88,6 +100,14 @@ databaseChangeLog:
               - column:
                   name: grand_total
                   type: numeric(19, 4)
+
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_version_notnull
       rollback:
         - dropTable:
             tableName: sale

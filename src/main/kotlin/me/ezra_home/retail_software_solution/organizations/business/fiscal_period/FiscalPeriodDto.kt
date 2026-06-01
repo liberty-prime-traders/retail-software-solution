@@ -14,7 +14,7 @@ data class FiscalPeriodDto(
     val endDate: LocalDate,
     val yearEnd: Boolean,
     val stub: Boolean,
-    val closedAt: Instant?,
+val closedAt: Instant?,
     val closedBy: UUID?
 ) {
     val isClosed get() = closedAt != null

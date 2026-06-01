@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleLineEventDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -17,7 +16,6 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class SaleVoidHandlerForKafka(
     private val saleRepository: SaleRepository,
-    private val saleLineRepository: SaleLineRepository,
     private val saleVoidRepository: SaleVoidRepository,
     private val eventPublisher: ApplicationEventPublisher,
 ) : EventReissueHandler {
@@ -26,14 +24,12 @@ class SaleVoidHandlerForKafka(
 
     override fun reissue(sourceDocumentId: UUID) {
         val sale = saleRepository.getReferenceById(sourceDocumentId)
-        val lines = saleLineRepository.findBySaleId(sourceDocumentId)
         val voidEntity = saleVoidRepository.findBySaleId(sourceDocumentId)
             ?: throw RtsGenericException("No sale_void record for sale $sourceDocumentId — cannot reissue SaleVoidedEvent")
-        publishVoid(sale, lines, voidEntity)
+        publishVoid(sale, voidEntity)
     }
 
-    fun publishVoid(sale: SaleEntity, lines: List<SaleLineEntity>, voidEntity: SaleVoidEntity) {
-        val lineEventDtos = lines.map { SaleLineEventDto(it.locationProductId, it.quantity, it.unitPrice, it.unitId) }
+    fun publishVoid(sale: SaleEntity, voidEntity: SaleVoidEntity) {
         eventPublisher.publishEvent(
             SaleVoidedEvent(
                 eventId = UUID.randomUUID(),
@@ -46,11 +42,11 @@ class SaleVoidHandlerForKafka(
                 sourceDocumentId = sale.id!!,
                 contactId = sale.contactId,
                 saleReferenceNumber = sale.requiredReference(),
-                subtotal = sale.subtotal!!,
-                discountTotal = sale.discountTotal!!,
+                payableTotal = sale.payableTotal(),
+                discountTotal = sale.discountTotal(),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
-                dateVoided = voidEntity.createdOn?.toLocalDate() ?: DateTimes.Local.Now.organization(),
-                lines = lineEventDtos
+                dateVoided = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
+                    ?: DateTimes.Local.Now.organization()
             )
         )
     }

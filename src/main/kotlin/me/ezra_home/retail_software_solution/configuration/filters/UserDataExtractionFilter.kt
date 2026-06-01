@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.configuration.security.OktaIdExtractor
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.hibernate.annotations.Filter
 import org.springframework.beans.factory.annotation.Qualifier
@@ -22,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Filter(name = "UserDataExtractionFilter")
 @Order(Ordered.LOWEST_PRECEDENCE)
 class UserDataExtractionFilter(
-    private val sysUserCache: SysUserCache,
+    private val sysUserService: SysUserService,
     private val oktaIdExtractor: OktaIdExtractor,
     @param:Qualifier(DataSourceBeanNames.PLATFORM_SCHEMA_TRANSACTION_MANAGER)
     private val platformTransactionManager: JpaTransactionManager
@@ -54,7 +54,7 @@ class UserDataExtractionFilter(
 
     private fun initializeSystemUserId(sessionContext: SessionContext) {
         val platformStatus = platformTransactionManager.getTransaction(null)
-        sysUserCache.getAllUsers().find { it.oktaId == sessionContext.oktaId }
+        sysUserService.getAllUsers().find { it.oktaId == sessionContext.oktaId }
             ?.let { sessionContext.systemUserId = it.id }
         platformTransactionManager.commit(platformStatus)
     }

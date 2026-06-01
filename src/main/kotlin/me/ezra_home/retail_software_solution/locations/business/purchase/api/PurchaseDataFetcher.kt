@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
@@ -12,6 +14,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import java.util.UUID
 
 @Service
@@ -19,6 +22,7 @@ import java.util.UUID
 class PurchaseDataFetcher(
   private val purchaseRepository: PurchaseRepository,
   private val purchaseAssembler: PurchaseAssembler,
+  private val entityAdvisoryLock: EntityAdvisoryLock,
   @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   private val locationEmf: LocalContainerEntityManagerFactoryBean
 ) {
@@ -42,6 +46,16 @@ class PurchaseDataFetcher(
       .associateBy({ it.id!! }, { PurchaseInfo(it.requiredReference(), it.supplierId, it.paymentStatus) })
   }
 
+  @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+  fun lockPurchase(purchaseId: UUID) {
+    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, purchaseId)
+  }
+
+  @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+  fun lockAndGetPurchase(purchaseId: UUID): PurchaseEntity {
+    entityAdvisoryLock.acquire(LockNamespaces.PURCHASE, purchaseId)
+    return purchaseRepository.getReferenceById(purchaseId)
+  }
 
   private fun execute(sqlQuery: SqlQuery): List<PurchaseEntity> {
     locationEmf.getObject()!!.createEntityManager().use { em ->

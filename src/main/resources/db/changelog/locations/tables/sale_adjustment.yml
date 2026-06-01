@@ -1,0 +1,98 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-adjustment-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_adjustment
+      changes:
+        - createTable:
+            tableName: sale_adjustment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: sale_adjustment_reference_number_unique
+
+              - column:
+                  name: sale_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_sale_id_notnull
+
+              - column:
+                  name: sale_line_id
+                  type: uuid
+
+              - column:
+                  name: direction
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_direction_notnull
+
+              - column:
+                  name: calculation_method
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_calculation_method_notnull
+
+              - column:
+                  name: value
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_value_notnull
+
+              - column:
+                  name: calculated_amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_calculated_amount_notnull
+
+              - column:
+                  name: adjustment_reason_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_adjustment_reason_id_notnull
+
+              - column:
+                  name: note
+                  type: text
+
+              - column:
+                  name: approved_by_id
+                  type: uuid
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_adjustment_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_adjustment

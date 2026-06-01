@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-adjustment-reason-aud-rev
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_adjustment_reason_aud_rev
+      changes:
+        - createIndex:
+            indexName: idx_adjustment_reason_aud_rev
+            tableName: adjustment_reason_aud
+            columns:
+              - column:
+                  name: rev
+      rollback:
+        - dropIndex:
+            indexName: idx_adjustment_reason_aud_rev
+            tableName: adjustment_reason_aud
+
+  - changeSet:
+      id: create-index-adjustment-reason-aud-id-rev-partial
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_adjustment_reason_aud_id_rev_partial
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_adjustment_reason_aud_id_rev_partial ON adjustment_reason_aud (id, rev) WHERE revend IS NULL
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_adjustment_reason_aud_id_rev_partial

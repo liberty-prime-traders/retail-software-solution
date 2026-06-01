@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import me.ezra_home.retail_software_solution.locations.business.purchase.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
@@ -26,10 +27,10 @@ class SaleEntity(
     var contactId: UUID,
 
     @Column(name = "sold_by_id")
-    var soldById: UUID?,
+    var soldById: UUID? = null,
 
     @Column(name = "date_sold")
-    var dateSold: OffsetDateTime?,
+    var dateSold: OffsetDateTime? = null,
 
     @Column(name = "notes")
     var notes: String? = null,
@@ -45,17 +46,36 @@ class SaleEntity(
     @Column(name = "subtotal", precision = 19, scale = 4)
     var subtotal: BigDecimal? = null,
 
-    @Column(name = "discount_total", precision = 19, scale = 4)
-    var discountTotal: BigDecimal? = null,
+    @Column(name = "line_level_discount_total", precision = 19, scale = 4)
+    var lineLevelDiscountTotal: BigDecimal? = null,
+
+    @Column(name = "order_level_discount_total", precision = 19, scale = 4)
+    var orderLevelDiscountTotal: BigDecimal? = null,
+
+    @Column(name = "line_level_surcharge_total", precision = 19, scale = 4)
+    var lineLevelSurchargeTotal: BigDecimal? = null,
+
+    @Column(name = "order_level_surcharge_total", precision = 19, scale = 4)
+    var orderLevelSurchargeTotal: BigDecimal? = null,
 
     @Column(name = "tax_total", precision = 19, scale = 4)
     var taxTotal: BigDecimal? = null,
 
     @Column(name = "grand_total", precision = 19, scale = 4)
-    var grandTotal: BigDecimal? = null
+    var grandTotal: BigDecimal? = null,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    var version: Long = 0
 
 ) : HasReferenceEntity() {
 
-    fun saleTotalAfterDiscounts(): BigDecimal =
-        (subtotal ?: BigDecimal.ZERO) - (discountTotal ?: BigDecimal.ZERO)
+    fun discountTotal(): BigDecimal =
+        (lineLevelDiscountTotal ?: BigDecimal.ZERO) + (orderLevelDiscountTotal ?: BigDecimal.ZERO)
+
+    private fun surchargeTotal(): BigDecimal =
+        (lineLevelSurchargeTotal ?: BigDecimal.ZERO) + (orderLevelSurchargeTotal ?: BigDecimal.ZERO)
+
+    fun payableTotal(): BigDecimal =
+        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - discountTotal() + surchargeTotal())
 }

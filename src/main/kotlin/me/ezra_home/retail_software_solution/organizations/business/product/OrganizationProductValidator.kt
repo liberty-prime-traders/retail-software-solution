@@ -13,9 +13,6 @@ class OrganizationProductValidator(
 
     fun validateProductUpdate(productUpdateDto: OrganizationProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
-        if(productUpdateDto.baseUnitId?.isPresent != true) {
-            throw RtsGenericException("A product must have a base unit.")
-        }
         if (productUpdateDto.productGroupId != null && productUpdateDto.productGroupId.isEmpty) {
             throw RtsGenericException("If a product group is provided, it cannot be empty.")
         }

@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders.LOCATION_ID_HEADER
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.JpaTransactionManager
@@ -14,7 +14,7 @@ import java.util.UUID
 
 @Component
 class LocationSchemaInitializer(
-    private val locationCache: LocationCache,
+    private val locationService: LocationService,
     @param:Qualifier(DataSourceBeanNames.ORGANIZATION_SCHEMA_TRANSACTION_MANAGER)
     private val organizationTransactionManager: JpaTransactionManager
 ) {
@@ -32,7 +32,7 @@ class LocationSchemaInitializer(
         httpServletRequest.getHeader(LOCATION_ID_HEADER)
             ?.takeIf { StringUtils.hasValue(it) }
             ?.let { UUID.fromString(it) }
-            ?.let { locationId -> locationCache.getAllLocations().find { it.id == locationId } }
+            ?.let { locationId -> locationService.getAllLocationDtos().find { it.id == locationId } }
             ?.let { SessionContextProvider.initLocation(it) }
     }
 }

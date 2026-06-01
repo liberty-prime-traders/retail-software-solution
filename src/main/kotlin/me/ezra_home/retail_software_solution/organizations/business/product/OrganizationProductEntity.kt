@@ -32,7 +32,7 @@ class OrganizationProductEntity(
     @Column(name = "product_group_name", insertable = false, updatable = false)
     var productGroupName: String? = null,
 
-    @Column(name = "base_unit_id")
+    @Column(name = "base_unit_id", updatable = false)
     var baseUnitId: UUID,
 
     @Convert(converter = ProductStatusConverter::class)

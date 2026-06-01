@@ -7,5 +7,5 @@ enum class PurchaseStatus(override val code: String) : HasCode {
     ORDERED("ORD"),
     PARTIALLY_DELIVERED("PDL"),
     FULLY_DELIVERED("FDL"),
-    CANCELED("X");
+    CANCELED("CLD");
 }
