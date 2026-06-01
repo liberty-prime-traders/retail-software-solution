@@ -109,7 +109,7 @@ Given the following products exist:
   | Widget A    | first       |
   | Widget B    | second      |
 
-When I send a DELETE request to "/secured/products/#product->1"
+When I DELETE from /secured/products/#product->1
 ```
 
 `AuthenticatedRequestFactory` automatically attaches `X-Organization-Id` and `X-Location-Id` headers from `InjectContext` on every request — no manual header setup needed.
@@ -132,9 +132,89 @@ Given the following products exist:
 
 ## Request / Response Steps
 
-Generic HTTP steps (`RequestSteps`, `ResponseSteps`) cover GET/POST/PUT/DELETE and all standard assertions. Endpoints and bodies are resolved through `InjectContext` before the request fires. `lastError` is populated automatically when the response status is ≥ 400.
+No quotes around paths; `#injectionKey` and `<exampleVar>` resolve before the request fires. `lastError` is populated automatically when status ≥ 400.
 
-Domain-specific steps live in the `steps/organizations`, `steps/locations`, and `steps/platform` packages.
+### Requests
+
+```gherkin
+When I GET from secured/products
+When I GET from secured/products/#productId
+When I POST to secured/products with payload:
+  """
+  { "productName": "Widget", "productGroupId": "#productGroup" }
+  """
+When I GET from secured/products with query parameters:
+  | active | true |
+  | limit  | 10   |
+When I DELETE from secured/products/#productId
+```
+
+Pick `to` or `from` to read naturally for the verb — they're equivalent. Replace `query` with `matrix` for matrix parameters. Supported methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+
+### Responses
+
+```gherkin
+Then response returns with status 200
+Then response returns with status 400 with message: Product name already in use
+Then response list size is 3
+Then response contains details:
+  """
+  { "productName": "Widget", "active": true }
+  """
+Then response contains item with details:
+  """
+  { "productName": "Widget" }
+  """
+Then response contains no item with details:
+  """
+  { "productName": "Deleted" }
+  """
+Then response contains details with exact lists in order:
+  """
+  { "lines": [ {"productId": "#product->0"}, {"productId": "#product->1"} ] }
+  """
+```
+
+- Default match is **subset**: extra fields/items in the actual response are ignored.
+- `with exact lists` requires identical sizes; add `in order` to require positional match.
+- JSON values wrapped in `^...$` are treated as regex.
+- Numbers compare as `BigDecimal` floored to scale 7 (so `100` matches `100.00`).
+- Failure messages include the JSON path of the mismatch (`at $.lines[2].quantity: expected "5" but got "3"`).
+
+Domain-specific steps live in `steps/organizations`, `steps/locations`, and `steps/platform`. Add them only when behavior cannot be expressed via generic grammar (e.g. multi-call orchestration).
+
+---
+
+## Database Verification
+
+One step file (`DatabaseSteps.kt`) covers every entity. **No per-entity step file is needed.** `DataAccessHelper` auto-registers every `JpaRepository` bean at boot, deriving the lookup key from the entity class.
+
+Entity names in features use snake_case with capitalized words (`Organization_Product`, `Sale_Line`). Lookup ignores case and underscores so `OrganizationProduct` resolves to the same package.
+
+```gherkin
+Then Organization_Product should exist in database with id #productId
+Then Organization_Product should not exist in database with id #productId
+Then Organization_Product should exist in database with id #productId and options:
+  """
+  { "productName": "Widget", "isActive": true }
+  """
+Then Sale should match example:
+  """
+  { "totalAmount": "100.00", "status": "CONFIRMED" }
+  """
+Then Subledger_Entry table should have exactly 3 records in database
+Then Subledger_Entry table should have no records in database
+```
+
+Matching uses the same `JsonSubsetMatcher` as REST — same regex, numeric tolerance, subset semantics, and path-aware failure messages.
+
+Only simple IDs are supported (UUID, Long, Int, String). Composite IDs not yet supported.
+
+For repositories whose auto-derived key is ambiguous or verbose, register an alias:
+
+```kotlin
+dataAccessHelper.alias("Product", OrganizationProductRepository::class)
+```
 
 ---
 
