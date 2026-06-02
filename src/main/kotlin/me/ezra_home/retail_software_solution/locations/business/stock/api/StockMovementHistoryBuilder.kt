@@ -41,7 +41,10 @@ class StockMovementHistoryBuilder(
                 quantityMoved = "${Decimals.stripZeroesAndRound(movement.movedQuantity)} $unitCode",
                 newQuantity = "${Decimals.stripZeroesAndRound(movement.remainingQuantity)} $baseUnitCode",
                 recordedOn = movement.createdOn!!.toInstant(),
-                conversionDriftNote = conversionDescription(movement.unitId, baseUnitId, movement.conversionFactor, unitCode, baseUnitCode),
+                conversionDriftNote = conversionDescription(
+                    movement.unitId, baseUnitId,
+                    movement.conversionFactor, unitCode, baseUnitCode
+                ),
                 reason = movement.reasonId?.let { reasonNamesById[it] }
             )
         }

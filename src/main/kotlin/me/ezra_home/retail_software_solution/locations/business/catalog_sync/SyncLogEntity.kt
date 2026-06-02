@@ -44,7 +44,7 @@ class SyncLogEntity(
   var failedRecords: Int = 0,
 
   @Convert(converter = SyncStatusConverter::class)
-  @Column(name = "status", nullable = false, length = 20)
+  @Column(name = "status", nullable = false, length = 5)
   var status: SyncStatus,
 
   @Column(name = "started_at")

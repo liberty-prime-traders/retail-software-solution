@@ -32,7 +32,7 @@ class PurchaseDeliveryStockUpdater(
             val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantityDelivered), baseQty)
             line.deliveryLineId to StockEntryEntity(
                 locationProductId = line.locationProductId,
-                sourceType = StockItemSource.PURCHASE.code,
+                sourceType = StockItemSource.PURCHASE,
                 externalReferenceNumber = line.lineReferenceNumber,
                 batchSize = baseQty,
                 quantityRemaining = baseQty,
