@@ -15,7 +15,18 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response should match the persisted unitGroup
+    And response contains details:
+      """
+      {
+        "id": "^[0-9a-f-]{36}$",
+        "name": "Volume",
+        "description": "Measurement of volume",
+        "createdBy": "^.+$",
+        "createdOn": "^.+$",
+        "referenceNumber": "^UNGR\\d+$",
+        "systemDefined": false
+      }
+      """
 
   @regression
   Scenario: Authenticated user views list of unit groups
@@ -23,7 +34,17 @@ Feature: Unit Groups
     When I GET from secured/unitgroups
     Then the response status should be 200
     And the response should contain 1 items
-    And the response item 0 should match the persisted unitGroup identified by "#unitGroup->0"
+    And response contains item with details:
+      """
+      {
+        "id": "#unitGroup->0",
+        "name": "Test Unit Group",
+        "createdBy": "^.+$",
+        "createdOn": "^.+$",
+        "referenceNumber": "^UNGR\\d+$",
+        "systemDefined": false
+      }
+      """
 
   @regression
   Scenario: Authenticated user updates a unit group
@@ -37,7 +58,18 @@ Feature: Unit Groups
       }
       """
     Then the response status should be 200
-    And the response should match the persisted unitGroup
+    And response contains details:
+      """
+      {
+        "id": "#unitGroup->0",
+        "name": "Updated Unit Group Name",
+        "description": "Updated Description",
+        "createdBy": "^.+$",
+        "createdOn": "^.+$",
+        "referenceNumber": "^UNGR\\d+$",
+        "systemDefined": false
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a unit group

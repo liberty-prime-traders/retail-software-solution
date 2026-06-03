@@ -60,6 +60,7 @@ class DataAccessHelper(private val applicationContext: ApplicationContext) {
   private fun keyFor(raw: String): String =
     raw.uppercase()
       .replace(" ", "")
+      .replace("_", "")
       .replace("ENTITY", "")
       .replace("REPOSITORY", "")
 
