@@ -45,6 +45,13 @@ Feature: Unit Groups
         "systemDefined": false
       }
       """
+    And Unit_Group should exist in database with id #unitGroup->0 and options:
+      """
+      {
+        "name": "Test Unit Group",
+        "systemDefined": false
+      }
+      """
 
   @regression
   Scenario: Authenticated user updates a unit group
@@ -70,12 +77,21 @@ Feature: Unit Groups
         "systemDefined": false
       }
       """
+    And Unit_Group should exist in database with id #unitGroup->0 and options:
+      """
+      {
+        "name": "Updated Unit Group Name",
+        "description": "Updated Description",
+        "systemDefined": false
+      }
+      """
 
   @regression
   Scenario: Authenticated user deletes a unit group
     Given a unit group exists
     When I DELETE from secured/unitgroups/#unitGroup->0
     Then the response status should be 204
+    And Unit_Group should not exist in database with id #unitGroup->0
     When I GET from secured/unitgroups
     Then the response status should be 200
     And the response should be an empty list
