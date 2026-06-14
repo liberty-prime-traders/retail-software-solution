@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-stock-transfer-draft-line-aud-rev
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_stock_transfer_draft_line_aud_rev
+      changes:
+        - createIndex:
+            indexName: idx_stock_transfer_draft_line_aud_rev
+            tableName: stock_transfer_draft_line_aud
+            columns:
+              - column:
+                  name: rev
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_transfer_draft_line_aud_rev
+            tableName: stock_transfer_draft_line_aud
+
+  - changeSet:
+      id: create-index-stock-transfer-draft-line-aud-id-rev-partial
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            indexExists:
+              indexName: idx_stock_transfer_draft_line_aud_id_rev_partial
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_stock_transfer_draft_line_aud_id_rev_partial ON stock_transfer_draft_line_aud (id, rev) WHERE revend IS NULL
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_stock_transfer_draft_line_aud_id_rev_partial

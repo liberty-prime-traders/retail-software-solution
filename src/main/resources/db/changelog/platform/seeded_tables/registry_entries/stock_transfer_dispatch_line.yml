@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-stock-transfer-dispatch-line-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: stock_transfer_dispatch_line
+              - column:
+                  name: default_prefix
+                  value: STDPL
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Stock Transfer Dispatch Line
+              - column:
+                  name: description
+                  value: Line item on a stock transfer dispatch document
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

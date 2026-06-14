@@ -1,0 +1,75 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-receipt-line-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_receipt_line
+      changes:
+        - createTable:
+            tableName: stock_transfer_receipt_line
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_receipt_line_reference_number
+
+              - column:
+                  name: stock_transfer_receipt_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_stock_transfer_receipt_id_notnull
+
+              - column:
+                  name: stock_transfer_dispatch_line_ref
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_stock_transfer_dispatch_line_ref_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_receipt_line_stock_transfer_dispatch_line_ref
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_location_product_id_notnull
+
+              - column:
+                  name: quantity_received
+                  type: numeric(15,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_quantity_received_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_line_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_receipt_line

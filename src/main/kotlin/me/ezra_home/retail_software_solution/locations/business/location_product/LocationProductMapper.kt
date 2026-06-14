@@ -21,7 +21,6 @@ interface LocationProductMapper {
     @Mapping(target = "defaultSalePrice", ignore = true)
     @Mapping(target = "minStockLevel", ignore = true)
     @Mapping(target = "lastPurchasePrice", ignore = true)
-    @Mapping(target = "stockBalance", ignore = true)
     fun toEntity(insertDto: LocationProductInsertDto): LocationProductEntity
 
     @Mapping(target = "baseUnit", expression = "java(ctx.getUnitName())")

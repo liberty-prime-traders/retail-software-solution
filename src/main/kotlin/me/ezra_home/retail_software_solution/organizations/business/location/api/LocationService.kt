@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
 import java.util.Objects
+import java.util.UUID
 
 @Service
 @TransactionalOnOrganizationSchema
@@ -33,6 +34,11 @@ class LocationService(
     fun getBySchema(schema: String): LocationDto =
         locationCache.getAllLocations().find { it.schemaName == schema }
             ?: throw RtsGenericException("No location found for schema $schema.")
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getSchemaByLocationId(locationId: UUID): String =
+        locationCache.getAllLocations().find { it.id == locationId }?.schemaName
+            ?: throw RtsGenericException("Location schema not found for $locationId")
 
     fun createLocation(locationInsertDto: LocationInsertDto): LocationResponseDto {
         locationValidator.validateLocationInsert(locationInsertDto)

@@ -10,18 +10,21 @@ import java.util.UUID
 @Repository
 interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
 
-  @Query("""
-    SELECT sm.locationProductId AS locationProductId, sm.remainingQuantity AS remainingQuantity
-    FROM StockMovementEntity sm
-    WHERE sm.locationProductId IN :ids
-    AND sm.createdOn = (
-      SELECT MAX(sm2.createdOn) FROM StockMovementEntity sm2 WHERE sm2.locationProductId = sm.locationProductId
-    )
-  """)
-  fun findLatestBalances(ids: Collection<UUID>): List<StockBalanceProjection>
-
   fun findByExternalReferenceNumberAndMovementType(
     externalReferenceNumber: String,
+    movementType: MovementType
+  ): List<StockMovementEntity>
+
+  fun existsByExternalReferenceNumberAndMovementType(
+    externalReferenceNumber: String,
+    movementType: MovementType
+  ): Boolean
+
+  @Query("SELECT DISTINCT sm.externalReferenceNumber FROM StockMovementEntity sm WHERE sm.externalReferenceNumber IN :refs AND sm.movementType = :movementType")
+  fun findPresentRefs(refs: Collection<String>, movementType: MovementType): Set<String>
+
+  fun findByExternalReferenceNumberInAndMovementType(
+    externalReferenceNumbers: Collection<String>,
     movementType: MovementType
   ): List<StockMovementEntity>
 

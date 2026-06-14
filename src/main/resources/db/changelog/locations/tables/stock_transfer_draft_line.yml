@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-draft-line-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_draft_line
+      changes:
+        - createTable:
+            tableName: stock_transfer_draft_line
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_draft_line_reference_number
+
+              - column:
+                  name: stock_transfer_dispatch_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_stock_transfer_dispatch_id_notnull
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_location_product_id_notnull
+
+              - column:
+                  name: quantity
+                  type: numeric(15,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_quantity_notnull
+
+              - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_unit_id_notnull
+
+              - column:
+                  name: conversion_factor
+                  type: numeric(19,10)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_conversion_factor_notnull
+
+              - column:
+                  name: base_unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_base_unit_id_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_draft_line_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_draft_line

@@ -18,13 +18,14 @@ class SaleStockUpdater(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val stockBalanceFetcher: StockBalanceFetcher,
 ) {
 
     fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
         if (saleLineStockRequests.isEmpty()) return
         val locationProductIds = saleLineStockRequests.map { it.locationProductId }
         val fifoEntriesByLocationProductId = loadFifoEntriesByLocationProductId(locationProductIds)
-        val balancesByLocationProductId = loadLatestBalancesByLocationProductId(locationProductIds)
+        val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
 
         val productSummariesByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(saleLineStockRequests.map { it.locationProductId }.toSet())
@@ -51,11 +52,6 @@ class SaleStockUpdater(
         return stockEntryRepository.findFifoEntriesForProducts(locationProductIds)
             .groupBy { it.locationProductId }
             .mapValues { (_, stockEntries) -> stockEntries.sortedWith(stockEntryFifoComparator) }
-    }
-
-    private fun loadLatestBalancesByLocationProductId(locationProductIds: List<UUID>): Map<UUID, BigDecimal> {
-        return stockMovementRepository.findLatestBalances(locationProductIds)
-            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
     }
 
     private fun consumeStockForLine(
@@ -111,7 +107,7 @@ class SaleStockUpdater(
         if (saleMovements.isEmpty()) return
         val saleMovementsByLocationProductId = saleMovements.groupBy { it.locationProductId }
         val stockEntriesById = loadStockEntriesByMovementId(saleMovements)
-        val runningBalancesByLocationProductId = loadLatestBalancesByLocationProductId(
+        val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
             saleMovementsByLocationProductId.keys.toList()
         ).toMutableMap()
 
@@ -151,10 +147,10 @@ class SaleStockUpdater(
         var runningBalance = startingBalance
         saleMovementsForProduct.forEach { saleMovement ->
             val stockEntry = stockEntriesById[saleMovement.stockEntryId]!!
-            val restoredBase = Decimals.multiplyScale4(saleMovement.movedQuantity, saleMovement.conversionFactor)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBase)
+            val restoredBaseQuantity = Decimals.multiplyScale4(saleMovement.movedQuantity, saleMovement.conversionFactor)
+            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBaseQuantity)
             modifiedEntries.add(stockEntry)
-            runningBalance = runningBalance.add(restoredBase)
+            runningBalance = runningBalance.add(restoredBaseQuantity)
             newMovements.add(
                 StockMovementEntity(
                     stockEntryId = saleMovement.stockEntryId,

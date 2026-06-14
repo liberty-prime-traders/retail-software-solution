@@ -69,6 +69,12 @@ object TableNames {
     const val SALE_VOID = "sale_void"
     const val SALE_LINE_STOCK_RESERVATION = "sale_line_stock_reservation"
     const val TAX_ENTRY = "tax_entry"
+    const val STOCK_TRANSFER_ORDER = "stock_transfer_order"
+    const val STOCK_TRANSFER_DISPATCH = "stock_transfer_dispatch"
+    const val STOCK_TRANSFER_DRAFT_LINE = "stock_transfer_draft_line"
+    const val STOCK_TRANSFER_DISPATCH_LINE = "stock_transfer_dispatch_line"
+    const val STOCK_TRANSFER_RECEIPT = "stock_transfer_receipt"
+    const val STOCK_TRANSFER_RECEIPT_LINE = "stock_transfer_receipt_line"
 
     // Platform audit tables
     const val ORGANIZATION_AUDIT = "organization_aud"
@@ -110,4 +116,10 @@ object TableNames {
     const val SALE_LINE_AUDIT = "sale_line_aud"
     const val SALE_ADJUSTMENT_AUDIT = "sale_adjustment_aud"
     const val TAX_ENTRY_AUDIT = "tax_entry_aud"
+    const val STOCK_TRANSFER_ORDER_AUDIT = "stock_transfer_order_aud"
+    const val STOCK_TRANSFER_DISPATCH_AUDIT = "stock_transfer_dispatch_aud"
+    const val STOCK_TRANSFER_DRAFT_LINE_AUDIT = "stock_transfer_draft_line_aud"
+    const val STOCK_TRANSFER_DISPATCH_LINE_AUDIT = "stock_transfer_dispatch_line_aud"
+    const val STOCK_TRANSFER_RECEIPT_AUDIT = "stock_transfer_receipt_aud"
+    const val STOCK_TRANSFER_RECEIPT_LINE_AUDIT = "stock_transfer_receipt_line_aud"
 }

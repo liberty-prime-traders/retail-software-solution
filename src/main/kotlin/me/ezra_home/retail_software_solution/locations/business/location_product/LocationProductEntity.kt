@@ -58,8 +58,4 @@ class LocationProductEntity(
   @Column(name = "last_synced_at")
   var lastSyncedAt: OffsetDateTime? = null
 
-) : HasReferenceEntity() {
-
-  @Transient
-  var stockBalance: BigDecimal? = null
-}
+) : HasReferenceEntity()

@@ -19,7 +19,8 @@ class PurchaseDeliveryStockUpdater(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val unitConversionGraphFacade: UnitConversionGraphFacade
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
+    private val stockBalanceFetcher: StockBalanceFetcher,
 ) {
 
     fun recordPurchaseDelivery(event: PurchaseDeliveredEvent) {
@@ -43,8 +44,7 @@ class PurchaseDeliveryStockUpdater(
         stockEntryRepository.saveAll(entriesByLineId.values)
 
         val productIds = event.lines.map { it.locationProductId }
-        val previousBalances = stockMovementRepository.findLatestBalances(productIds)
-            .associate { it.getLocationProductId() to it.getRemainingQuantity() }
+        val previousBalances = stockBalanceFetcher.getLatestBalances(productIds)
 
         val movements = event.lines.map { line ->
             val entry = entriesByLineId[line.deliveryLineId]!!
