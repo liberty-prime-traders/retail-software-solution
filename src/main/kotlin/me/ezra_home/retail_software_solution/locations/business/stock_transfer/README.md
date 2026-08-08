@@ -6,13 +6,13 @@ Handles the full lifecycle of inter-location stock transfers: draft → dispatch
 
 A stock transfer spans **two** location schemas and **one** org schema:
 
-| Schema | What lives there |
-|---|---|
-| Source location schema | `stock_transfer_dispatch`, `stock_transfer_dispatch_line`, `stock_transfer_draft_line`, stock entries, stock movements |
-| Destination location schema | `stock_transfer_receipt`, `stock_transfer_receipt_line`, destination stock entries and movements |
-| Org schema | `stock_transfer_order` — the canonical status record visible to both locations |
+| Schema                      | What lives there                                                                                                       |
+|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Source location schema      | `stock_transfer_dispatch`, `stock_transfer_dispatch_line`, `stock_transfer_draft_line`, stock entries, stock movements |
+| Destination location schema | `stock_transfer_receipt`, `stock_transfer_receipt_line`, destination stock entries and movements                       |
+| Org schema                  | `stock_transfer_order` — the canonical status record visible to both locations                                         |
 
-Because each schema requires its own connection, every cross-schema read or write uses `withLocationSchema(schema) { ... }` to switch the search path, which requires `REQUIRES_NEW` (a fresh connection) on the gateway method called inside.
+Because each schema requires its own connection, every cross-schema read or write uses `locationService.withLocationSchema(schema) { ... }` to switch the search path, which requires `REQUIRES_NEW` (a fresh connection) on the gateway method called inside. `withLocationSchema` re-resolves the full location (id, schema, timezone) for the target schema via `LocationService.getBySchema` — it never carries over the caller's own location id.
 
 ## Gateway pattern
 
@@ -36,4 +36,8 @@ Both `StockTransferDispatchedInventoryProcessor` and `StockTransferCancelledInve
 
 ## Locking
 
-`StockTransferReceiptService.confirmLine` and `unconfirmLine` both acquire `LockNamespaces.STOCK_TRANSFER_ORDER` before touching receipt lines. Dispatch (when LG-4 is addressed) requires both `LockNamespaces.PRODUCT` on each draft line's product (to serialize with concurrent sales) and `LockNamespaces.STOCK_TRANSFER_ORDER` on the order (to serialize concurrent dispatch attempts).
+**Stock mutation lock (self-protecting updaters):** `SaleStockUpdater` and `StockTransferStockUpdater` acquire `LockNamespaces.PRODUCT` on the affected `locationProductId`s internally, before reading any `stock_entry` rows for modification. Callers do not need to acquire this lock — it is impossible to call these updaters without getting the protection. This covers sale confirm, sale void, transfer dispatch, and transfer cancel.
+
+**Order-level dispatch lock:** `StockTransferDispatchService.dispatch` acquires `LockNamespaces.STOCK_TRANSFER_ORDER` on the dispatch entity ID before loading draft lines. This serializes concurrent dispatch calls on the same order — both can pass the `DRAFT` status check before either holds the lock; the second will re-check after the first commits and see `DISPATCHED`, then throw.
+
+**Receipt confirmation lock:** `StockTransferReceiptService.confirmLine` and `unconfirmLine` both acquire `LockNamespaces.STOCK_TRANSFER_ORDER` before touching receipt lines.

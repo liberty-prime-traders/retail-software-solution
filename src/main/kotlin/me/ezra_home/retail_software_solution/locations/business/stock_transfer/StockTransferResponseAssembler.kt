@@ -22,11 +22,11 @@ class StockTransferResponseAssembler(
         val sourceLocationSchema = locationService.getSchemaByLocationId(orderDomainDto.sourceLocationId)
         val destinationLocationSchema = locationService.getSchemaByLocationId(orderDomainDto.destinationLocationId)
 
-        val receiptSnapshot = withLocationSchema(destinationLocationSchema) {
+        val receiptSnapshot = locationService.withLocationSchema(destinationLocationSchema) {
             stockTransferSchemaGateway.readReceiptSnapshot(orderDomainDto.referenceNumber)
         }
 
-        val dispatchWithLines = withLocationSchema(sourceLocationSchema) {
+        val dispatchWithLines = locationService.withLocationSchema(sourceLocationSchema) {
             stockTransferSchemaGateway.buildDispatchWithLines(
                 orderRef = orderDomainDto.referenceNumber,
                 isDraft = orderDomainDto.status == StockTransferStatus.DRAFT,

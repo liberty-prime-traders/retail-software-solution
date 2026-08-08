@@ -4,13 +4,11 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchEntity
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchRepository
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftDispatchFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -19,15 +17,15 @@ import java.util.UUID
 @Service
 @TransactionalOnLocationSchema
 class StockTransferDraftService(
-    private val stockTransferOrderService: StockTransferOrderService,
-    private val stockTransferDispatchRepository: StockTransferDispatchRepository,
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
+    private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val stockTransferResponseAssembler: StockTransferResponseAssembler
 ) {
 
     fun addLine(orderRef: String, stockTransferLineInsertDto: StockTransferLineInsertDto): StockTransferResponse {
-        val dispatch = requireDraftDispatch(orderRef)
+        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
         val locationProductSummary = getLocationProductSummary(stockTransferLineInsertDto.locationProductId)
         guardNoDuplicateDraftProduct(dispatch.id!!, locationProductSummary)
 
@@ -59,7 +57,7 @@ class StockTransferDraftService(
     }
 
     fun updateLine(orderRef: String, lineRef: String, stockTransferLineUpdateDto: StockTransferLineUpdateDto): StockTransferResponse {
-        val dispatch = requireDraftDispatch(orderRef)
+        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
         val draftLine = requireDraftLine(lineRef, dispatch.id!!)
 
         val newUnitId = stockTransferLineUpdateDto.unitId ?: draftLine.unitId
@@ -79,23 +77,14 @@ class StockTransferDraftService(
 
 
     fun removeLine(orderRef: String, lineRef: String): StockTransferResponse {
-        val dispatch = requireDraftDispatch(orderRef)
+        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
         val draftLine = requireDraftLine(lineRef, dispatch.id!!)
         stockTransferDraftLineRepository.delete(draftLine)
         return buildResponse(orderRef)
     }
 
     private fun buildResponse(orderRef: String): StockTransferResponse =
-        stockTransferResponseAssembler.build(stockTransferOrderService.getByReferenceNumber(orderRef))
-
-    private fun requireDraftDispatch(orderRef: String): StockTransferDispatchEntity {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
-        if (dispatch.status != StockTransferStatus.DRAFT) {
-            throw RtsGenericException("Operation only allowed in DRAFT status. Current: ${dispatch.status}")
-        }
-        return dispatch
-    }
+        stockTransferResponseAssembler.build(stockTransferOrderDataFetcher.getByReferenceNumber(orderRef))
 
     private fun requireDraftLine(lineRef: String, dispatchId: UUID): StockTransferDraftLineEntity {
         val draftLine = stockTransferDraftLineRepository.findByReferenceNumber(lineRef)

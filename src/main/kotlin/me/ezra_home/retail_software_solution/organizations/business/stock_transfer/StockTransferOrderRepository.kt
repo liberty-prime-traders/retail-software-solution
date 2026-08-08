@@ -11,6 +11,12 @@ interface StockTransferOrderRepository : JpaRepository<StockTransferOrderEntity,
 
     fun findByReferenceNumber(referenceNumber: String): StockTransferOrderEntity?
 
-    @Query("SELECT o FROM StockTransferOrderEntity o WHERE o.sourceLocationId = :locationId OR o.destinationLocationId = :locationId ORDER BY o.createdOn DESC")
+    @Query("" +
+            "SELECT o FROM StockTransferOrderEntity o" +
+            " WHERE o.sourceLocationId = :locationId " +
+            " OR o.destinationLocationId = :locationId " +
+            " ORDER BY o.createdOn DESC")
     fun findTopNByLocation(locationId: UUID, pageable: Pageable): List<StockTransferOrderEntity>
+
+    fun findAllByOrderByCreatedOnDesc(pageable: Pageable): List<StockTransferOrderEntity>
 }

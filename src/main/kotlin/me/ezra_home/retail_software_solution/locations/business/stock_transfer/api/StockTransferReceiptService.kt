@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.S
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferSchemaGateway
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDomainDto
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service
 @TransactionalOnLocationSchema
 class StockTransferReceiptService(
     private val stockTransferOrderService: StockTransferOrderService,
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
     private val stockTransferReceiptRepository: StockTransferReceiptRepository,
     private val stockTransferReceiptLineRepository: StockTransferReceiptLineRepository,
     private val stockTransferReceiptCompletedHandlerForKafka: StockTransferReceiptCompletedHandlerForKafka,
@@ -37,13 +39,13 @@ class StockTransferReceiptService(
 ) {
 
     fun confirmLine(orderRef: String, dispatchLineRef: String): StockTransferResponse {
-        val order = stockTransferOrderService.getByReferenceNumber(orderRef)
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
         if (order.status != StockTransferStatus.DISPATCHED) {
             throw RtsGenericException("Can only confirm lines on a DISPATCHED transfer. Current: ${order.status}")
         }
 
         val sourceSchema = locationService.getSchemaByLocationId(order.sourceLocationId)
-        val dispatchLine = withLocationSchema(sourceSchema) { stockTransferSchemaGateway.readDispatchLine(dispatchLineRef) }
+        val dispatchLine = locationService.withLocationSchema(sourceSchema) { stockTransferSchemaGateway.readDispatchLine(dispatchLineRef) }
         val destinationLocationProductId = locationProductDataFetcher
             .findIdentityByProductId(dispatchLine.productId).locationProductId
 
@@ -77,7 +79,7 @@ class StockTransferReceiptService(
     }
 
     fun unconfirmLine(orderRef: String, dispatchLineRef: String): StockTransferResponse {
-        val order = stockTransferOrderService.getByReferenceNumber(orderRef)
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
         entityAdvisoryLock.acquire(LockNamespaces.STOCK_TRANSFER_ORDER, order.id)
         val receipt = stockTransferReceiptRepository.findByStockTransferOrderRef(orderRef)
             ?: throw RtsGenericException("No receipt found for order $orderRef")
@@ -101,10 +103,10 @@ class StockTransferReceiptService(
         }
 
         val orderRef = receipt.stockTransferOrderRef
-        val order = stockTransferOrderService.getByReferenceNumber(orderRef)
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
         val sourceSchema = locationService.getSchemaByLocationId(order.sourceLocationId)
 
-        val allDispatchLines = withLocationSchema(sourceSchema) { stockTransferSchemaGateway.readAllDispatchLines(orderRef) }
+        val allDispatchLines = locationService.withLocationSchema(sourceSchema) { stockTransferSchemaGateway.readAllDispatchLines(orderRef) }
         val receiptLines = stockTransferReceiptLineRepository.findByStockTransferReceiptId(receipt.id!!)
         val confirmedRefs = receiptLines.map { it.stockTransferDispatchLineRef }.toSet()
         val unconfirmedCount = allDispatchLines.count { it.requiredReference() !in confirmedRefs }
@@ -115,7 +117,7 @@ class StockTransferReceiptService(
         receipt.status = StockTransferReceiptStatus.COMPLETED
         stockTransferReceiptRepository.save(receipt)
 
-        withLocationSchema(sourceSchema) { stockTransferSchemaGateway.markDispatchCompleted(orderRef) }
+        locationService.withLocationSchema(sourceSchema) { stockTransferSchemaGateway.markDispatchCompleted(orderRef) }
         stockTransferOrderService.updateStatusToCompleted(orderRef)
 
         stockTransferReceiptCompletedHandlerForKafka.publish(

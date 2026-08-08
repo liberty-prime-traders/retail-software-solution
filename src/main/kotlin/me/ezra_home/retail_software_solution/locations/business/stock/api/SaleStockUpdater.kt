@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
@@ -19,11 +21,13 @@ class SaleStockUpdater(
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val stockBalanceFetcher: StockBalanceFetcher,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
         if (saleLineStockRequests.isEmpty()) return
         val locationProductIds = saleLineStockRequests.map { it.locationProductId }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val fifoEntriesByLocationProductId = loadFifoEntriesByLocationProductId(locationProductIds)
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
 
@@ -106,6 +110,7 @@ class SaleStockUpdater(
             .findByExternalReferenceNumberAndMovementType(saleRefNumber, MovementType.SALE)
         if (saleMovements.isEmpty()) return
         val saleMovementsByLocationProductId = saleMovements.groupBy { it.locationProductId }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleMovementsByLocationProductId.keys)
         val stockEntriesById = loadStockEntriesByMovementId(saleMovements)
         val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
             saleMovementsByLocationProductId.keys.toList()

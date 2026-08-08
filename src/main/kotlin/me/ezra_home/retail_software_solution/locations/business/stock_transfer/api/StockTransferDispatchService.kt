@@ -3,29 +3,34 @@ package me.ezra_home.retail_software_solution.locations.business.stock_transfer.
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferStockUpdater
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchedHandlerForKafka
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftDispatchFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferFifoAllocator
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
 @Service
 class StockTransferDispatchService(
     private val stockTransferOrderService: StockTransferOrderService,
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
     private val stockTransferDispatchRepository: StockTransferDispatchRepository,
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
@@ -34,12 +39,16 @@ class StockTransferDispatchService(
     private val stockTransferDispatchedHandlerForKafka: StockTransferDispatchedHandlerForKafka,
     private val stockTransferResponseAssembler: StockTransferResponseAssembler,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val locationService: LocationService
+    private val locationService: LocationService,
+    private val userQualifier: UserQualifier,
+    private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
+    private val entityAdvisoryLock: EntityAdvisoryLock
 ) {
 
     @TransactionalOnLocationSchema
     fun dispatch(orderRef: String): StockTransferResponse {
-        val dispatchEntity = requireDraftDispatch(orderRef)
+        val dispatchEntity = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
+        entityAdvisoryLock.acquire(LockNamespaces.STOCK_TRANSFER_ORDER, dispatchEntity.id!!)
         val draftLines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatchEntity.id!!)
         if (draftLines.isEmpty()) throw RtsGenericException("Cannot dispatch a transfer with no lines")
 
@@ -62,10 +71,21 @@ class StockTransferDispatchService(
 
         stockTransferStockUpdater.consumeStockForDispatch(toStockRequests(dispatchLines))
 
-        dispatchEntity.dispatchedById = SessionContextProvider.getUserId()
-        dispatchEntity.dispatchedAt = DateTimes.Offset.Now.organization()
+        val dispatchedAt = DateTimes.Offset.Now.organization()
+        val dispatchedUserId = SessionContextProvider.getUserId()
+        dispatchEntity.dispatchedById = dispatchedUserId
+        dispatchEntity.dispatchedAt = dispatchedAt
         dispatchEntity.status = StockTransferStatus.DISPATCHED
         stockTransferDispatchRepository.save(dispatchEntity)
+
+        val totalDispatchedCost = dispatchLines.sumOf { Decimals.multiplyScale4(it.unitCost, it.quantityDispatched) }
+        stockTransferOrderService.setDispatchSummary(
+            referenceNumber = orderRef,
+            lineCount = dispatchLines.size,
+            totalDispatchedCost = totalDispatchedCost,
+            dispatchedAt = dispatchedAt,
+            dispatchedByName = userQualifier.getUserFullName(dispatchedUserId)
+        )
 
         val order = stockTransferOrderService.updateStatusToDispatched(orderRef)
         stockTransferDispatchedHandlerForKafka.publish(
@@ -109,15 +129,6 @@ class StockTransferDispatchService(
             )
         }
 
-    private fun requireDraftDispatch(orderRef: String): StockTransferDispatchEntity {
-        val dispatchEntity = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
-        if (dispatchEntity.status != StockTransferStatus.DRAFT) {
-            throw RtsGenericException("Operation only allowed in DRAFT status. Current: ${dispatchEntity.status}")
-        }
-        return dispatchEntity
-    }
-
     private fun buildResponse(orderRef: String): StockTransferResponse =
-        stockTransferResponseAssembler.build(stockTransferOrderService.getByReferenceNumber(orderRef))
+        stockTransferResponseAssembler.build(stockTransferOrderDataFetcher.getByReferenceNumber(orderRef))
 }

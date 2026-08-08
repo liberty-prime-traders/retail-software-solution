@@ -19,9 +19,8 @@ object StockTransferFifoAllocator {
         return draftLines.flatMap { draftLine ->
             val baseQtyNeeded = Decimals.multiplyScale4(draftLine.quantity, draftLine.conversionFactor)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
-            val productLabel = productLabelByLocationProductId[draftLine.locationProductId]
-                ?: draftLine.locationProductId.toString()
-            allocateByCostGroup(draftLine.locationProductId, fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
+            val productLabel = productLabelByLocationProductId.getValue(draftLine.locationProductId)
+            allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
                 StockTransferDispatchLineEntity(
                     stockTransferDispatchId = dispatchId,
                     productId = productIdByLocationProductId.getValue(draftLine.locationProductId),
@@ -37,7 +36,6 @@ object StockTransferFifoAllocator {
     }
 
     private fun allocateByCostGroup(
-        locationProductId: UUID,
         fifoEntries: List<StockEntryFifoDto>,
         baseQtyNeeded: BigDecimal,
         productLabel: String
@@ -48,10 +46,10 @@ object StockTransferFifoAllocator {
 
         var remaining = baseQtyNeeded
         val allocations = mutableListOf<CostGroupAllocation>()
-        for (costGroup in costGroups) {
+        for ((unitCost, baseQuantity) in costGroups) {
             if (remaining <= BigDecimal.ZERO) break
-            val taken = remaining.min(costGroup.baseQuantity)
-            allocations.add(CostGroupAllocation(unitCost = costGroup.unitCost, baseQuantity = taken))
+            val taken = remaining.min(baseQuantity)
+            allocations.add(CostGroupAllocation(unitCost = unitCost, baseQuantity = taken))
             remaining = remaining.subtract(taken)
         }
         if (remaining > BigDecimal.ZERO) {

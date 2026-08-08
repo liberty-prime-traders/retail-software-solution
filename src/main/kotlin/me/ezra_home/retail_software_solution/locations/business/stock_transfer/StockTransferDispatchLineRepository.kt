@@ -11,5 +11,4 @@ interface StockTransferDispatchLineRepository : JpaRepository<StockTransferDispa
 
     fun findByReferenceNumber(referenceNumber: String): StockTransferDispatchLineEntity?
 
-    fun existsByStockTransferDispatchIdAndLocationProductId(stockTransferDispatchId: UUID, locationProductId: UUID): Boolean
 }

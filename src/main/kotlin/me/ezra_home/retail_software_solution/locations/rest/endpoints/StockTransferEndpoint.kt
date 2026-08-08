@@ -8,6 +8,8 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.a
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferReceiptService
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferResponse
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferService
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferSummaryService
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -24,7 +26,8 @@ class StockTransferEndpoint(
     private val stockTransferService: StockTransferService,
     private val stockTransferDraftService: StockTransferDraftService,
     private val stockTransferDispatchService: StockTransferDispatchService,
-    private val stockTransferReceiptService: StockTransferReceiptService
+    private val stockTransferReceiptService: StockTransferReceiptService,
+    private val stockTransferSummaryService: StockTransferSummaryService
 ) {
 
     @PostMapping("draft")
@@ -82,4 +85,12 @@ class StockTransferEndpoint(
     @GetMapping
     fun fetchTop(@RequestParam n: Int?): List<StockTransferResponse> =
         stockTransferService.fetchTop(n ?: 50)
+
+    @GetMapping("summary")
+    fun fetchSummary(@RequestParam n: Int?): List<StockTransferSummaryDto> =
+        stockTransferSummaryService.fetchByLocation( n ?: 50)
+
+    @GetMapping("summary/for-organization")
+    fun fetchSummaryForOrganization(@RequestParam n: Int?): List<StockTransferSummaryDto> =
+        stockTransferSummaryService.fetchForOrganization(n ?: 50)
 }

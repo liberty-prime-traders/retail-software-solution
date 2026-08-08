@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_transf
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.StockTransferOrderRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
@@ -12,22 +14,6 @@ import java.util.UUID
 class StockTransferOrderService(
     private val stockTransferOrderRepository: StockTransferOrderRepository
 ) {
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getById(id: UUID): StockTransferOrderDomainDto =
-        stockTransferOrderRepository.findById(id)
-            .orElseThrow { RtsGenericException("Stock transfer order $id not found") }
-            .toDomainDto()
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getByReferenceNumber(referenceNumber: String): StockTransferOrderDomainDto =
-        findByReferenceNumberOrThrow(referenceNumber).toDomainDto()
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getTopByLocationId(locationId: UUID, limit: Int): List<StockTransferOrderDomainDto> =
-        stockTransferOrderRepository
-            .findTopNByLocation(locationId, org.springframework.data.domain.PageRequest.of(0, limit))
-            .map { it.toDomainDto() }
 
     fun createOrder(
         sourceLocationId: UUID,
@@ -42,20 +28,35 @@ class StockTransferOrderService(
         return stockTransferOrderRepository.save(entity).toDomainDto()
     }
 
-    fun updateStatus(referenceNumber: String, newStatus: StockTransferStatus): StockTransferOrderDomainDto {
+    fun updateStatusToCompleted(referenceNumber: String): StockTransferOrderDomainDto =
+        updateStatus(referenceNumber, StockTransferStatus.COMPLETED)
+
+    private fun updateStatus(referenceNumber: String, newStatus: StockTransferStatus): StockTransferOrderDomainDto {
         val entity = findByReferenceNumberOrThrow(referenceNumber)
         entity.status = newStatus
         return stockTransferOrderRepository.save(entity).toDomainDto()
     }
-
-    fun updateStatusToCompleted(referenceNumber: String): StockTransferOrderDomainDto =
-        updateStatus(referenceNumber, StockTransferStatus.COMPLETED)
 
     fun updateStatusToDispatched(referenceNumber: String): StockTransferOrderDomainDto =
         updateStatus(referenceNumber, StockTransferStatus.DISPATCHED)
 
     fun updateStatusToCancelled(referenceNumber: String): StockTransferOrderDomainDto =
         updateStatus(referenceNumber, StockTransferStatus.CANCELLED)
+
+    fun setDispatchSummary(
+        referenceNumber: String,
+        lineCount: Int,
+        totalDispatchedCost: BigDecimal,
+        dispatchedAt: OffsetDateTime,
+        dispatchedByName: String?
+    ) {
+        val entity = findByReferenceNumberOrThrow(referenceNumber)
+        entity.lineCount = lineCount
+        entity.totalDispatchedCost = totalDispatchedCost
+        entity.dispatchedAt = dispatchedAt
+        entity.dispatchedByName = dispatchedByName
+        stockTransferOrderRepository.save(entity)
+    }
 
     private fun findByReferenceNumberOrThrow(referenceNumber: String): StockTransferOrderEntity =
         stockTransferOrderRepository.findByReferenceNumber(referenceNumber)
@@ -68,6 +69,10 @@ class StockTransferOrderService(
         destinationLocationId = destinationLocationId,
         status = status,
         notes = notes,
+        lineCount = lineCount,
+        totalDispatchedCost = totalDispatchedCost,
+        dispatchedAt = dispatchedAt,
+        dispatchedByName = dispatchedByName,
         createdById = createdById!!,
         createdOn = createdOn!!
     )

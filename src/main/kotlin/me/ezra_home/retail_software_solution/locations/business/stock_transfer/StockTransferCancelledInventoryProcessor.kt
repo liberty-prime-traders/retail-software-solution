@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockT
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferCancelledEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -16,7 +16,7 @@ class StockTransferCancelledInventoryProcessor(
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
     private val stockTransferDispatchRepository: StockTransferDispatchRepository,
     private val stockTransferStockUpdater: StockTransferStockUpdater,
-    private val stockTransferOrderService: StockTransferOrderService
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher
 ) : InventoryEventProcessor<StockTransferCancelledEvent>, EventReissueHandler {
 
     private val log = LoggerFactory.getLogger(StockTransferCancelledInventoryProcessor::class.java)
@@ -26,7 +26,7 @@ class StockTransferCancelledInventoryProcessor(
     // sourceDocumentId = transfer order ID (org schema) — session must be set to source location schema by caller
     @TransactionalOnLocationSchema
     override fun reissue(sourceDocumentId: UUID) {
-        val order = stockTransferOrderService.getById(sourceDocumentId)
+        val order = stockTransferOrderDataFetcher.getById(sourceDocumentId)
         val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(order.referenceNumber)
             ?: run {
                 log.warn("Skipping reissue for cancelled transfer: no dispatch for order ${order.referenceNumber}")

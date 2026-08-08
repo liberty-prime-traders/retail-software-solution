@@ -55,6 +55,22 @@ databaseChangeLog:
                   type: text
 
               - column:
+                  name: line_count
+                  type: integer
+
+              - column:
+                  name: total_dispatched_cost
+                  type: numeric(19, 4)
+
+              - column:
+                  name: dispatched_at
+                  type: timestamptz
+
+              - column:
+                  name: dispatched_by_name
+                  type: varchar(200)
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

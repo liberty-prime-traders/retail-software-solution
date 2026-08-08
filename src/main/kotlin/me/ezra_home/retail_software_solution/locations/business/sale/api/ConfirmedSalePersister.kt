@@ -2,8 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleConfirmedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
@@ -29,7 +27,6 @@ class ConfirmedSalePersister(
     private val saleConfirmedHandlerForKafka: SaleConfirmedHandlerForKafka,
     private val saleDataFetcher: SaleDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
-    private val entityAdvisoryLock: EntityAdvisoryLock,
     private val saleSaveFinalizer: SaleSaveFinalizer,
 ) {
 
@@ -47,9 +44,6 @@ class ConfirmedSalePersister(
 
         stockReserver.clearBySale(saleEntity.id!!)
         val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
-        val locationProductIdsToLock = lineSyncResult.persistedSaleLines.mapTo(HashSet()) { it.locationProductId }
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIdsToLock)
-
         saleEntity.status = SaleStatus.CONFIRMED
         val saleUpdateResult = saleSaveFinalizer.finalize(
             saleEntity = saleEntity,

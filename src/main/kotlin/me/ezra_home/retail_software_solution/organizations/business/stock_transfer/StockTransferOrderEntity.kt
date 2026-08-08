@@ -11,6 +11,8 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.hibernate.envers.Audited
+import java.math.BigDecimal
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Audited
@@ -20,16 +22,28 @@ import java.util.UUID
 class StockTransferOrderEntity(
 
     @Column(name = "source_location_id", nullable = false, updatable = false)
-    val sourceLocationId: UUID,
+    var sourceLocationId: UUID,
 
     @Column(name = "destination_location_id", nullable = false, updatable = false)
-    val destinationLocationId: UUID,
+    var destinationLocationId: UUID,
 
     @Convert(converter = StockTransferStatusConverter::class)
     @Column(name = "status", nullable = false, length = 5)
     var status: StockTransferStatus = StockTransferStatus.DRAFT,
 
     @Column(name = "notes")
-    var notes: String? = null
+    var notes: String? = null,
+
+    @Column(name = "line_count")
+    var lineCount: Int? = null,
+
+    @Column(name = "total_dispatched_cost", precision = 19, scale = 4)
+    var totalDispatchedCost: BigDecimal? = null,
+
+    @Column(name = "dispatched_at")
+    var dispatchedAt: OffsetDateTime? = null,
+
+    @Column(name = "dispatched_by_name", length = 200)
+    var dispatchedByName: String? = null
 
 ) : HasReferenceEntity()

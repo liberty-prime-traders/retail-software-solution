@@ -15,11 +15,6 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     movementType: MovementType
   ): List<StockMovementEntity>
 
-  fun existsByExternalReferenceNumberAndMovementType(
-    externalReferenceNumber: String,
-    movementType: MovementType
-  ): Boolean
-
   @Query("SELECT DISTINCT sm.externalReferenceNumber FROM StockMovementEntity sm WHERE sm.externalReferenceNumber IN :refs AND sm.movementType = :movementType")
   fun findPresentRefs(refs: Collection<String>, movementType: MovementType): Set<String>
 

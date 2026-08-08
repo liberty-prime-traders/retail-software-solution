@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.UUID
@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 @Service
 class StockTransferDispatchedInventoryProcessor(
     private val stockTransferReceiptStockUpdater: StockTransferReceiptStockUpdater,
-    private val stockTransferOrderService: StockTransferOrderService,
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
     private val locationService: LocationService,
     private val stockTransferSchemaGateway: StockTransferSchemaGateway
 ) : InventoryEventProcessor<StockTransferDispatchedEvent>, EventReissueHandler {
@@ -29,11 +29,11 @@ class StockTransferDispatchedInventoryProcessor(
     // sourceDocumentId = transfer order ID (org schema) — session must be set to destination location schema by caller
     @TransactionalOnLocationSchema
     override fun reissue(sourceDocumentId: UUID) {
-        val order = stockTransferOrderService.getById(sourceDocumentId)
+        val order = stockTransferOrderDataFetcher.getById(sourceDocumentId)
         val sourceSchema = locationService.getSchemaByLocationId(order.sourceLocationId)
         val destinationSchema = locationService.getSchemaByLocationId(order.destinationLocationId)
 
-        val dispatchRecord = withLocationSchema(sourceSchema) {
+        val dispatchRecord = locationService.withLocationSchema(sourceSchema) {
             stockTransferSchemaGateway.readDispatchAndLines(order.referenceNumber)
         }
 

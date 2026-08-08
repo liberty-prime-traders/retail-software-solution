@@ -7,13 +7,13 @@ import java.util.Objects
 import java.util.UUID
 
 @Component
-class UserQualifier(private val sysUserService: SysUserService, ) {
+class UserQualifier(private val sysUserService: SysUserService) {
 
     @FullName
     fun getUserFullName(userId: UUID?): String? {
         if (userId == null) return null
         val userDto = sysUserService.getAllUsers().find { Objects.equals(userId, it.id) }
         if (userDto == null) return null
-        return "${userDto.firstName} ${userDto.lastName}"
+        return listOfNotNull(userDto.firstName, userDto.lastName).joinToString(" ").ifBlank { null }
     }
 }
