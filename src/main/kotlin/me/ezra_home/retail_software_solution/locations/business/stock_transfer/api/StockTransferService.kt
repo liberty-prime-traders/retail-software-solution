@@ -33,8 +33,8 @@ class StockTransferService(
             destinationLocationId = stockTransferCreateDto.destinationLocationId,
             notes = stockTransferCreateDto.notes
         )
-        stockTransferDispatchRepository.save(StockTransferDispatchEntity(order.referenceNumber))
-        return stockTransferResponseAssembler.build(order)
+        val dispatchEntity = stockTransferDispatchRepository.save(StockTransferDispatchEntity(order.referenceNumber))
+        return stockTransferResponseAssembler.buildDispatchOnly(order, dispatchEntity)
     }
 
     fun cancelTransfer(orderRef: String): StockTransferResponse {
@@ -60,5 +60,10 @@ class StockTransferService(
     fun fetchTop(limit: Int): List<StockTransferResponse> {
         return stockTransferOrderDataFetcher.getTopByLocationId(limit)
             .map { order -> stockTransferResponseAssembler.build(order) }
+    }
+
+    fun fetchByOrderRef(orderRef: String): StockTransferResponse {
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
+        return stockTransferResponseAssembler.build(order)
     }
 }

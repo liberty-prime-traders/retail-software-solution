@@ -6,10 +6,9 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_moveme
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Component
@@ -22,8 +21,7 @@ class StockMovementHistoryBuilder(
 ) {
 
     fun build(locationProductId: UUID): Collection<StockMovementResponse> {
-        val after = OffsetDateTime.now().minus(60, ChronoUnit.DAYS)
-        val movements = stockMovementRepository.findByLocationProductIdAndCreatedOnAfter(locationProductId, after)
+        val movements = stockMovementRepository.findByLocationProductId(locationProductId, Pageable.ofSize(100))
         if (movements.isEmpty()) return emptyList()
 
         val baseUnitId = locationProductDataFetcher.getBaseUnitIds(listOf(locationProductId))[locationProductId]!!

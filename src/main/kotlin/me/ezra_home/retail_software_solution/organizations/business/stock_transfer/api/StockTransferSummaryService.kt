@@ -25,15 +25,9 @@ class StockTransferSummaryService(
         val locationNameById = locationService.getAllLocationDtos()
             .associate { it.id to it.name }
         return orders.map { order ->
-            StockTransferSummaryDto(
-                referenceNumber = order.referenceNumber,
+            order.toSummaryDto(
                 sourceLocationName = locationNameById[order.sourceLocationId],
-                destinationLocationName = locationNameById[order.destinationLocationId],
-                status = order.status,
-                lineCount = order.lineCount,
-                totalDispatchedCost = order.totalDispatchedCost,
-                dispatchedAt = order.dispatchedAt,
-                dispatchedBy = order.dispatchedByName
+                destinationLocationName = locationNameById[order.destinationLocationId]
             )
         }
     }

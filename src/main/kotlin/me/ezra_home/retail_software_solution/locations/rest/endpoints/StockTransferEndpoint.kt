@@ -3,8 +3,7 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferCreateDto
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferDispatchService
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferDraftService
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferLineInsertDto
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferLineUpdateDto
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferLineRequestDto
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferReceiptService
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferResponse
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.api.StockTransferService
@@ -38,26 +37,18 @@ class StockTransferEndpoint(
     fun dispatch(@PathVariable orderRef: String): StockTransferResponse =
         stockTransferDispatchService.dispatch(orderRef)
 
-    @DeleteMapping("{orderRef}/cancel")
+    @PutMapping("{orderRef}/cancel")
     fun cancelTransfer(@PathVariable orderRef: String): StockTransferResponse =
         stockTransferService.cancelTransfer(orderRef)
 
-    @PostMapping("{orderRef}/lines")
-    fun addLine(
+    @PutMapping("{orderRef}/lines")
+    fun applyLineChanges(
         @PathVariable orderRef: String,
-        @RequestBody stockTransferLineInsertDto: StockTransferLineInsertDto
+        @RequestBody lineRequestDto: StockTransferLineRequestDto
     ): StockTransferResponse =
-        stockTransferDraftService.addLine(orderRef, stockTransferLineInsertDto)
+        stockTransferDraftService.applyLineChanges(orderRef, lineRequestDto)
 
-    @PutMapping("{orderRef}/lines/{lineRef}")
-    fun updateLine(
-        @PathVariable orderRef: String,
-        @PathVariable lineRef: String,
-        @RequestBody stockTransferLineUpdateDto: StockTransferLineUpdateDto
-    ): StockTransferResponse =
-        stockTransferDraftService.updateLine(orderRef, lineRef, stockTransferLineUpdateDto)
-
-    @DeleteMapping("{orderRef}/lines/{lineRef}")
+    @PutMapping("{orderRef}/lines/remove/{lineRef}")
     fun removeLine(
         @PathVariable orderRef: String,
         @PathVariable lineRef: String
@@ -85,6 +76,10 @@ class StockTransferEndpoint(
     @GetMapping
     fun fetchTop(@RequestParam n: Int?): List<StockTransferResponse> =
         stockTransferService.fetchTop(n ?: 50)
+
+    @GetMapping("{orderRef}")
+    fun fetchByOrderRef(@PathVariable orderRef: String): StockTransferResponse =
+        stockTransferService.fetchByOrderRef(orderRef)
 
     @GetMapping("summary")
     fun fetchSummary(@RequestParam n: Int?): List<StockTransferSummaryDto> =

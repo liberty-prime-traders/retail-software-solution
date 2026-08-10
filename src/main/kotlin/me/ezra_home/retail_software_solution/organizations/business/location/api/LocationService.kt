@@ -36,6 +36,11 @@ class LocationService(
             ?: throw RtsGenericException("No location found for schema $schema.")
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getById(locationId: UUID): LocationDto =
+        locationCache.getAllLocations().find { it.id == locationId }
+            ?: throw RtsGenericException("No location found for $locationId.")
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun getSchemaByLocationId(locationId: UUID): String =
         locationCache.getAllLocations().find { it.id == locationId }?.schemaName
             ?: throw RtsGenericException("Location schema not found for $locationId")

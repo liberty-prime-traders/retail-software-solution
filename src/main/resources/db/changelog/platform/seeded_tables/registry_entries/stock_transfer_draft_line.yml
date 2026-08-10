@@ -14,7 +14,7 @@ databaseChangeLog:
                   value: stock_transfer_draft_line
               - column:
                   name: default_prefix
-                  value: STDPL
+                  value: STDRL
               - column:
                   name: minimum_version_id
                   valueComputed: ${version_1_id}

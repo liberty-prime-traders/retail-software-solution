@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class StockTransferLineUpdateDto(
+    val lineRef: String,
     val quantityDispatched: BigDecimal?,
     val unitId: UUID?
 )

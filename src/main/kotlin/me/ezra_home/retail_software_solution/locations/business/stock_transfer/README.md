@@ -14,6 +14,12 @@ A stock transfer spans **two** location schemas and **one** org schema:
 
 Because each schema requires its own connection, every cross-schema read or write uses `locationService.withLocationSchema(schema) { ... }` to switch the search path, which requires `REQUIRES_NEW` (a fresh connection) on the gateway method called inside. `withLocationSchema` re-resolves the full location (id, schema, timezone) for the target schema via `LocationService.getBySchema` — it never carries over the caller's own location id.
 
+## Response assembly after a write
+
+`StockTransferResponseAssembler.build` is read-only and always re-reads both schemas via `REQUIRES_NEW`. It must never be called right after a write to either schema in the *same* still-open transaction — that write won't be visible yet to a `REQUIRES_NEW` connection. Every service that mutates its own ambient schema and then needs a response uses a dedicated assembler method instead, passing in the entity/lines it just touched directly: `buildDispatchOnly` (draft line add/update/remove, dispatch creation, and the draft-to-dispatch transition — all source-schema) and `buildDispatchAndReceipt` (receipt line confirm/unconfirm/complete — destination-schema; the dispatch side is still read from the foreign source schema via the gateway, which is safe since nothing was written there in the same transaction).
+
+`ReconciledTransferLineFetcher` (not `StockTransferSchemaGateway`) is what those services call for their own-schema draft/dispatch line reads. It exists specifically so `StockTransferSchemaGateway` can stay uniform: every gateway method is `REQUIRES_NEW` cross-schema access, no exceptions. `ReconciledTransferLineFetcher`'s methods are the opposite — `Propagation.MANDATORY`, meaning they refuse to run without an already-active location-schema transaction and always join it. `StockTransferSchemaGateway.buildDispatchWithLines` itself calls into `ReconciledTransferLineFetcher` (MANDATORY is happy to join the gateway's own REQUIRES_NEW transaction) to avoid duplicating the entity-to-`ReconciledTransferLine` mapping.
+
 ## Gateway pattern
 
 `StockTransferSchemaGateway` is a pure data access component for the source location schema. It must not publish Kafka events — event publishing belongs in the service layer, where transaction scope is controlled. This is the rule that prevents the Kafka event from firing before the org-schema write completes.
@@ -32,7 +38,7 @@ Dispatch lines store the **source** location's `locationProductId`. When writing
 
 ## Kafka processor conventions
 
-Both `StockTransferDispatchedInventoryProcessor` and `StockTransferCancelledInventoryProcessor` implement `EventReissueHandler`. The `sourceDocumentId` convention for both is the **transfer order ID** (org schema), matching the convention of their corresponding handler beans. The session context must be set to the correct location schema (source for cancelled, destination for dispatched) before `reissue` is called.
+Only `StockTransferDispatchedHandlerForKafka` and `StockTransferCancelledHandlerForKafka` (the producer-side beans) implement `EventReissueHandler` — matching the codebase-wide rule that each `eventType` has exactly **one** reissue handler (enforced at startup by `TransactionEventCoverageCheck`). Their `sourceDocumentId` convention is the **transfer order ID** (org schema). `StockTransferDispatchedInventoryProcessor` and `StockTransferCancelledInventoryProcessor` are consumer-only `InventoryEventProcessor`s and must **not** implement `EventReissueHandler`: `EventRetryService` already covers consumer-side recovery by re-sending the original record from the DLT back onto the topic when a consumer group is known, falling back to a reissue handler only when the event was never published at all. A second reissue handler per event type is unreachable (`EventRetryService` looks up exactly one by event type name) and fails the startup coverage check.
 
 ## Locking
 

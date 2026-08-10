@@ -11,7 +11,5 @@ interface StockTransferDraftLineRepository : JpaRepository<StockTransferDraftLin
 
     fun findByReferenceNumber(referenceNumber: String): StockTransferDraftLineEntity?
 
-    fun existsByStockTransferDispatchIdAndLocationProductId(stockTransferDispatchId: UUID, locationProductId: UUID): Boolean
-
     fun deleteByStockTransferDispatchId(stockTransferDispatchId: UUID)
 }

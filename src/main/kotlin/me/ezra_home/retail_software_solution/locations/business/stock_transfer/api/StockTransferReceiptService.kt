@@ -75,7 +75,7 @@ class StockTransferReceiptService(
             )
         }
 
-        return buildResponse(order)
+        return buildReceiptResponse(order, receipt)
     }
 
     fun unconfirmLine(orderRef: String, dispatchLineRef: String): StockTransferResponse {
@@ -92,7 +92,7 @@ class StockTransferReceiptService(
             ?: throw RtsGenericException("Receipt line for dispatch line $dispatchLineRef not found")
 
         stockTransferReceiptLineRepository.delete(receiptLine)
-        return buildResponse(order)
+        return buildReceiptResponse(order, receipt)
     }
 
     fun completeReceipt(receiptRef: String): StockTransferResponse {
@@ -126,9 +126,14 @@ class StockTransferReceiptService(
             receiptRef = receipt.requiredReference()
         )
 
-        return buildResponse(order)
+        return buildReceiptResponse(stockTransferOrderDataFetcher.getByReferenceNumber(orderRef), receipt)
     }
 
-    private fun buildResponse(order: StockTransferOrderDomainDto): StockTransferResponse =
-        stockTransferResponseAssembler.build(order)
+    private fun buildReceiptResponse(
+        order: StockTransferOrderDomainDto,
+        receipt: StockTransferReceiptEntity
+    ): StockTransferResponse {
+        val receiptLines = stockTransferReceiptLineRepository.findByStockTransferReceiptId(receipt.id!!)
+        return stockTransferResponseAssembler.buildDispatchAndReceipt(order, receipt, receiptLines)
+    }
 }

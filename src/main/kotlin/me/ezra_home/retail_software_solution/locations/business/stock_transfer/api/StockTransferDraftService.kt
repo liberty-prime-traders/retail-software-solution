@@ -4,14 +4,15 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftDispatchFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLineFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -21,70 +22,108 @@ class StockTransferDraftService(
     private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val stockTransferResponseAssembler: StockTransferResponseAssembler
+    private val stockTransferResponseAssembler: StockTransferResponseAssembler,
+    private val reconciledTransferLineFetcher: ReconciledTransferLineFetcher
 ) {
 
-    fun addLine(orderRef: String, stockTransferLineInsertDto: StockTransferLineInsertDto): StockTransferResponse {
+    fun applyLineChanges(orderRef: String, lineRequestDto: StockTransferLineRequestDto): StockTransferResponse {
         val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
-        val locationProductSummary = getLocationProductSummary(stockTransferLineInsertDto.locationProductId)
-        guardNoDuplicateDraftProduct(dispatch.id!!, locationProductSummary)
+        val existingLines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatch.id!!)
+        val existingLinesByRef = existingLines.associateBy { it.requiredReference() }
+        guardUpdatesTargetExistingLines(lineRequestDto.updates, existingLinesByRef)
 
-        val locationProductId = locationProductSummary.id
-        val conversionFactor = getConversionFactor(locationProductId, stockTransferLineInsertDto.unitId)
+        val locationProductSummariesById = locationProductDataFetcher.findSummaryByIds(
+            existingLines.map { it.locationProductId } + lineRequestDto.additions.map { it.locationProductId }
+        )
+        guardNoDuplicateAdditionProducts(lineRequestDto.additions, existingLines, locationProductSummariesById)
 
-        stockTransferDraftLineRepository.save(
+        val conversionFactorsByLocationProductId = locationProductDataFetcher.getConversionFactors(
+            conversionFactorRequests(lineRequestDto, existingLinesByRef)
+        )
+
+        val newDraftLines = lineRequestDto.additions.map { addition ->
             StockTransferDraftLineEntity(
                 stockTransferDispatchId = dispatch.id!!,
-                locationProductId = locationProductId,
-                quantity = stockTransferLineInsertDto.quantityDispatched,
-                unitId = stockTransferLineInsertDto.unitId,
-                conversionFactor = conversionFactor,
-                baseUnitId = locationProductSummary.baseUnitId
+                locationProductId = addition.locationProductId,
+                quantity = addition.quantityDispatched,
+                unitId = addition.unitId,
+                conversionFactor = conversionFactorsByLocationProductId.getValue(addition.locationProductId),
+                baseUnitId = locationProductSummariesById.getValue(addition.locationProductId).baseUnitId
             )
-        )
-        return buildResponse(orderRef)
-    }
-
-    private fun getLocationProductSummary(locationProductId: UUID): LocationProductSummaryDto {
-        return locationProductDataFetcher.findSummaryByIds(listOf(locationProductId))
-            .getValue(locationProductId)
-    }
-
-    private fun getConversionFactor(locationProductId: UUID, unitId: UUID): BigDecimal {
-        return locationProductDataFetcher.getConversionFactors(
-            listOf(LocationProductUnitRequestDto(locationProductId, unitId))
-        ).getValue(locationProductId)
-    }
-
-    fun updateLine(orderRef: String, lineRef: String, stockTransferLineUpdateDto: StockTransferLineUpdateDto): StockTransferResponse {
-        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
-        val draftLine = requireDraftLine(lineRef, dispatch.id!!)
-
-        val newUnitId = stockTransferLineUpdateDto.unitId ?: draftLine.unitId
-
-        val conversionFactor = if (newUnitId != draftLine.unitId) {
-            getConversionFactor(draftLine.locationProductId, newUnitId)
-        } else {
-            draftLine.conversionFactor
         }
 
-        draftLine.quantity = stockTransferLineUpdateDto.quantityDispatched ?: draftLine.quantity
-        draftLine.unitId = newUnitId
-        draftLine.conversionFactor = conversionFactor
-        stockTransferDraftLineRepository.save(draftLine)
-        return buildResponse(orderRef)
+        val updatedExistingLines = lineRequestDto.updates.map { update ->
+            val existingLine = existingLinesByRef.getValue(update.lineRef)
+            val newUnitId = update.unitId ?: existingLine.unitId
+            existingLine.conversionFactor = if (newUnitId != existingLine.unitId) {
+                conversionFactorsByLocationProductId.getValue(existingLine.locationProductId)
+            } else {
+                existingLine.conversionFactor
+            }
+            existingLine.quantity = update.quantityDispatched ?: existingLine.quantity
+            existingLine.unitId = newUnitId
+            existingLine
+        }
+
+        stockTransferDraftLineRepository.saveAll(newDraftLines)
+        stockTransferDraftLineRepository.saveAll(updatedExistingLines)
+        return buildDraftResponse(orderRef, dispatch)
     }
 
+    private fun conversionFactorRequests(
+        lineRequestDto: StockTransferLineRequestDto,
+        existingLinesByRef: Map<String, StockTransferDraftLineEntity>
+    ): List<LocationProductUnitRequestDto> = buildList {
+        lineRequestDto.additions.forEach { addition ->
+            add(LocationProductUnitRequestDto(addition.locationProductId, addition.unitId))
+        }
+        lineRequestDto.updates.forEach { update ->
+            val existingLine = existingLinesByRef.getValue(update.lineRef)
+            val newUnitId = update.unitId ?: existingLine.unitId
+            if (newUnitId != existingLine.unitId) {
+                add(LocationProductUnitRequestDto(existingLine.locationProductId, newUnitId))
+            }
+        }
+    }
+
+    private fun guardUpdatesTargetExistingLines(
+        updates: List<StockTransferLineUpdateDto>,
+        existingLinesByRef: Map<String, StockTransferDraftLineEntity>
+    ) {
+        val missingRefs = updates.map { it.lineRef }.filterNot { existingLinesByRef.containsKey(it) }
+        if (missingRefs.isNotEmpty()) {
+            throw RtsGenericException("Line(s) not found on this draft: ${missingRefs.joinToString()}")
+        }
+    }
+
+    private fun guardNoDuplicateAdditionProducts(
+        additions: List<StockTransferLineInsertDto>,
+        existingLines: List<StockTransferDraftLineEntity>,
+        locationProductSummariesById: Map<UUID, LocationProductSummaryDto>
+    ) {
+        val existingProductIds = existingLines.map { it.locationProductId }.toSet()
+        val seenAdditionProductIds = mutableSetOf<UUID>()
+        additions.forEach { addition ->
+            val locationProductId = addition.locationProductId
+            if (locationProductId in existingProductIds || !seenAdditionProductIds.add(locationProductId)) {
+                val label = locationProductSummariesById.getValue(locationProductId).label
+                throw RtsGenericException("Product $label already exists on this draft")
+            }
+        }
+    }
 
     fun removeLine(orderRef: String, lineRef: String): StockTransferResponse {
         val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
         val draftLine = requireDraftLine(lineRef, dispatch.id!!)
         stockTransferDraftLineRepository.delete(draftLine)
-        return buildResponse(orderRef)
+        return buildDraftResponse(orderRef, dispatch)
     }
 
-    private fun buildResponse(orderRef: String): StockTransferResponse =
-        stockTransferResponseAssembler.build(stockTransferOrderDataFetcher.getByReferenceNumber(orderRef))
+    private fun buildDraftResponse(orderRef: String, dispatch: StockTransferDispatchEntity): StockTransferResponse {
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
+        val draftLines = reconciledTransferLineFetcher.draftLines(dispatch.id!!)
+        return stockTransferResponseAssembler.buildDispatchOnly(order, dispatch, draftLines)
+    }
 
     private fun requireDraftLine(lineRef: String, dispatchId: UUID): StockTransferDraftLineEntity {
         val draftLine = stockTransferDraftLineRepository.findByReferenceNumber(lineRef)
@@ -93,14 +132,6 @@ class StockTransferDraftService(
             throw RtsGenericException("Line $lineRef does not belong to the specified dispatch")
         }
         return draftLine
-    }
-
-    private fun guardNoDuplicateDraftProduct(dispatchId: UUID, locationProductSummary: LocationProductSummaryDto) {
-        stockTransferDraftLineRepository
-            .existsByStockTransferDispatchIdAndLocationProductId(dispatchId, locationProductSummary.id)
-            .let { exists ->
-                if (exists) throw RtsGenericException("Product ${locationProductSummary.label} already exists on this draft")
-            }
     }
 
 }

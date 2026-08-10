@@ -13,3 +13,15 @@ data class StockTransferSummaryDto(
     val dispatchedAt: OffsetDateTime?,
     val dispatchedBy: String?
 )
+
+fun StockTransferOrderDomainDto.toSummaryDto(sourceLocationName: String?, destinationLocationName: String?) =
+    StockTransferSummaryDto(
+        referenceNumber = referenceNumber,
+        sourceLocationName = sourceLocationName,
+        destinationLocationName = destinationLocationName,
+        status = status,
+        lineCount = lineCount,
+        totalDispatchedCost = totalDispatchedCost,
+        dispatchedAt = dispatchedAt,
+        dispatchedBy = dispatchedByName
+    )

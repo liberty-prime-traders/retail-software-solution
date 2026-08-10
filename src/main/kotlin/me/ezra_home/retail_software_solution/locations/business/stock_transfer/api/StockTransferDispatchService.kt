@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNam
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLine
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchRepository
@@ -18,7 +19,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.S
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -26,11 +26,11 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class StockTransferDispatchService(
     private val stockTransferOrderService: StockTransferOrderService,
-    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
     private val stockTransferDispatchRepository: StockTransferDispatchRepository,
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
@@ -96,8 +96,29 @@ class StockTransferDispatchService(
             destinationSchema = locationService.getSchemaByLocationId(order.destinationLocationId),
             lines = toDispatchedLineDtos(dispatchLines)
         )
-        return buildResponse(orderRef)
+        return stockTransferResponseAssembler.buildDispatchOnly(
+            orderDomainDto = order,
+            dispatchEntity = dispatchEntity,
+            lines = toReconciledLines(dispatchLines, productLabelByLocationProductId)
+        )
     }
+
+    private fun toReconciledLines(
+        dispatchLines: List<StockTransferDispatchLineEntity>,
+        productLabelByLocationProductId: Map<UUID, String>
+    ): List<ReconciledTransferLine> =
+        dispatchLines.map { dispatchLine ->
+            ReconciledTransferLine(
+                dispatchLineRef = dispatchLine.requiredReference(),
+                productLabel = productLabelByLocationProductId.getValue(dispatchLine.locationProductId),
+                quantity = dispatchLine.quantityDispatched,
+                unitId = dispatchLine.unitId,
+                baseUnitId = dispatchLine.baseUnitId,
+                conversionFactor = dispatchLine.conversionFactor,
+                unitCost = dispatchLine.unitCost,
+                quantityReceived = null
+            )
+        }
 
     private fun toStockRequests(
         dispatchLines: List<StockTransferDispatchLineEntity>
@@ -128,7 +149,4 @@ class StockTransferDispatchService(
                 unitCost = dispatchLine.unitCost
             )
         }
-
-    private fun buildResponse(orderRef: String): StockTransferResponse =
-        stockTransferResponseAssembler.build(stockTransferOrderDataFetcher.getByReferenceNumber(orderRef))
 }

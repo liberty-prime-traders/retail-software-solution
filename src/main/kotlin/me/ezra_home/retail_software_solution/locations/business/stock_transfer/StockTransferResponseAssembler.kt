@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.a
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDomainDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.toResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.toSummaryDto
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -46,8 +46,8 @@ class StockTransferResponseAssembler(
             )
         }
 
-        return StockTransferResponse(
-            order = orderDomainDto.toResponseDto(),
+        return assemble(
+            orderDomainDto = orderDomainDto,
             dispatch = StockTransferDispatchResponseDto(
                 id = dispatchWithLines.dispatch.id,
                 referenceNumber = dispatchWithLines.dispatch.referenceNumber,
@@ -57,10 +57,80 @@ class StockTransferResponseAssembler(
                 notes = dispatchWithLines.dispatch.notes,
                 lines = dispatchWithLines.lines
             ),
-            receipt = receiptResponseDto,
-            perspective = getPerspective(orderDomainDto.sourceLocationId)
+            receipt = receiptResponseDto
         )
     }
+
+    fun buildDispatchOnly(
+        orderDomainDto: StockTransferOrderDomainDto,
+        dispatchEntity: StockTransferDispatchEntity,
+        lines: List<ReconciledTransferLine> = emptyList()
+    ): StockTransferResponse = assemble(
+        orderDomainDto = orderDomainDto,
+        dispatch = StockTransferDispatchResponseDto(
+            id = dispatchEntity.id!!,
+            referenceNumber = dispatchEntity.requiredReference(),
+            status = dispatchEntity.status,
+            dispatchedById = dispatchEntity.dispatchedById,
+            dispatchedAt = dispatchEntity.dispatchedAt,
+            notes = dispatchEntity.notes,
+            lines = lines
+        ),
+        receipt = null
+    )
+
+    fun buildDispatchAndReceipt(
+        orderDomainDto: StockTransferOrderDomainDto,
+        receiptEntity: StockTransferReceiptEntity,
+        receiptLines: List<StockTransferReceiptLineEntity>
+    ): StockTransferResponse {
+        val sourceLocationSchema = locationService.getSchemaByLocationId(orderDomainDto.sourceLocationId)
+        val confirmedRefs = receiptLines.map { it.stockTransferDispatchLineRef }.toSet()
+
+        val dispatchWithLines = locationService.withLocationSchema(sourceLocationSchema) {
+            stockTransferSchemaGateway.buildDispatchWithLines(
+                orderRef = orderDomainDto.referenceNumber,
+                isDraft = false,
+                confirmedRefs = confirmedRefs
+            )
+        }
+
+        return assemble(
+            orderDomainDto = orderDomainDto,
+            dispatch = StockTransferDispatchResponseDto(
+                id = dispatchWithLines.dispatch.id,
+                referenceNumber = dispatchWithLines.dispatch.referenceNumber,
+                status = dispatchWithLines.dispatch.status,
+                dispatchedById = dispatchWithLines.dispatch.dispatchedById,
+                dispatchedAt = dispatchWithLines.dispatch.dispatchedAt,
+                notes = dispatchWithLines.dispatch.notes,
+                lines = dispatchWithLines.lines
+            ),
+            receipt = StockTransferReceiptResponseDto(
+                id = receiptEntity.id!!,
+                referenceNumber = receiptEntity.requiredReference(),
+                status = receiptEntity.status,
+                receivedById = receiptEntity.receivedById,
+                receivedAt = receiptEntity.receivedAt,
+                notes = receiptEntity.notes,
+                lines = dispatchWithLines.lines.filter { it.quantityReceived != null }
+            )
+        )
+    }
+
+    private fun assemble(
+        orderDomainDto: StockTransferOrderDomainDto,
+        dispatch: StockTransferDispatchResponseDto,
+        receipt: StockTransferReceiptResponseDto?
+    ) = StockTransferResponse(
+        summary = orderDomainDto.toSummaryDto(
+            sourceLocationName = locationService.getById(orderDomainDto.sourceLocationId).name,
+            destinationLocationName = locationService.getById(orderDomainDto.destinationLocationId).name
+        ),
+        dispatch = dispatch,
+        receipt = receipt,
+        perspective = getPerspective(orderDomainDto.sourceLocationId)
+    )
 
     private fun getPerspective(sourceLocationId: UUID): StockTransferPerspective  {
         return if (SessionContextProvider.getLocationId() == sourceLocationId) {
