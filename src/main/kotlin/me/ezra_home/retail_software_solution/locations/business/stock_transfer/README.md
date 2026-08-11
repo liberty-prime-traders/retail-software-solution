@@ -32,6 +32,33 @@ All three events (`StockTransferDispatchedEvent`, `StockTransferCancelledEvent`,
 
 `StockTransferFifoAllocator` splits a draft line into one or more dispatch lines, one per cost group. A single draft line for a product with stock at two different unit costs produces two dispatch lines. This means `recordTransferReceipt` in `StockTransferReceiptStockUpdater` must accumulate a running balance per `locationProductId` across lines — not use a single pre-fetched balance for each line — because multiple lines for the same product share the same balance accumulator.
 
+## Reservation-aware dispatch guard
+
+Before `StockTransferFifoAllocator` runs, `StockTransferDispatchService.dispatch` calls
+`StockAvailabilityValidator.guardSufficientStock` (`stock/api/`) with each draft line's
+base quantity. This nets on-hand balance against the **total** of any live sale
+reservations (`StockReserver.loadReservationBreakdown(...).total`) for the same
+`locationProductId`, and throws before allocation if a transfer would take stock a sale
+has already reserved. Unlike `SaleValidator.guardSufficientStockForSale`, this call never
+excludes anything — draft transfers hold no reservation of their own today, so there is no
+"self" to exclude. If transfers ever need to hold stock across a real draft window (not
+just draft → immediate dispatch), that's the trigger to give transfers their own
+reservation rows; until then, `StockAvailabilityValidator` stays a thin net against sales'
+existing reservations only.
+
+`guardSufficientStock` acquires its own `PRODUCT` advisory lock and fetches its own
+balances internally, exactly like the "self-protecting updaters" below — it does not take
+pre-fetched balances as a parameter. This means `getLatestBalances` runs once here and
+again inside `StockTransferStockUpdater.consumeStockForDispatch` moments later: a real,
+accepted duplicate query, not an oversight. The alternative (caller fetches once, passes
+the snapshot into both the guard and the updater) was tried and reverted — it would make
+guard correctness depend on every future caller remembering to lock-then-fetch in the
+right order before calling it, which is the exact class of bug the mutation lock below was
+already introduced to eliminate (see the git history on `SaleStockUpdater`/
+`StockTransferStockUpdater`: transfer dispatch/cancel used to have no `PRODUCT` lock at
+all, only sale confirm did, until locking was moved inside the updaters themselves so
+protection can't depend on which caller remembers to ask for it).
+
 ## Destination location product resolution
 
 Dispatch lines store the **source** location's `locationProductId`. When writing to the destination schema (receipt lines, stock entries, stock movements), the destination `locationProductId` must be looked up by `productId` via `LocationProductDataFetcher.findIdentityByProductId`. Never copy the source `locationProductId` to the destination.

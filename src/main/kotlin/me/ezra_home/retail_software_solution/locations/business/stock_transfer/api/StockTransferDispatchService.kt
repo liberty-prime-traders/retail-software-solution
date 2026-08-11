@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferStockUpdater
@@ -42,7 +43,8 @@ class StockTransferDispatchService(
     private val locationService: LocationService,
     private val userQualifier: UserQualifier,
     private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
-    private val entityAdvisoryLock: EntityAdvisoryLock
+    private val entityAdvisoryLock: EntityAdvisoryLock,
+    private val stockAvailabilityValidator: StockAvailabilityValidator,
 ) {
 
     @TransactionalOnLocationSchema
@@ -57,6 +59,11 @@ class StockTransferDispatchService(
         val productIdByLocationProductId = locationProductDataFetcher.getProductIds(locationProductIds)
         val summariesByLocationProductId = locationProductDataFetcher.findSummaryByIds(locationProductIds)
         val productLabelByLocationProductId = summariesByLocationProductId.mapValues { (_, summary) -> summary.label }
+
+        val baseQuantityNeededByLocationProductId = draftLines.associate {
+            it.locationProductId to Decimals.multiplyScale4(it.quantity, it.conversionFactor)
+        }
+        stockAvailabilityValidator.guardSufficientStock(baseQuantityNeededByLocationProductId, productLabelByLocationProductId)
 
         val dispatchLines = StockTransferFifoAllocator.allocateDispatchLines(
             dispatchId = dispatchEntity.id!!,

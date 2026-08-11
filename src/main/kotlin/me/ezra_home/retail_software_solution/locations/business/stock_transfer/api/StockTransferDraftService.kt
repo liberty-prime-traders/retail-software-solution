@@ -35,20 +35,22 @@ class StockTransferDraftService(
         val locationProductSummariesById = locationProductDataFetcher.findSummaryByIds(
             existingLines.map { it.locationProductId } + lineRequestDto.additions.map { it.locationProductId }
         )
+        val locationProductBaseUnitIds = locationProductSummariesById.mapValues { it.value.baseUnitId }
         guardNoDuplicateAdditionProducts(lineRequestDto.additions, existingLines, locationProductSummariesById)
 
         val conversionFactorsByLocationProductId = locationProductDataFetcher.getConversionFactors(
-            conversionFactorRequests(lineRequestDto, existingLinesByRef)
+            conversionFactorRequests(lineRequestDto, existingLinesByRef, locationProductBaseUnitIds)
         )
 
         val newDraftLines = lineRequestDto.additions.map { addition ->
+            val baseUnitId = locationProductBaseUnitIds.getValue(addition.locationProductId)
             StockTransferDraftLineEntity(
                 stockTransferDispatchId = dispatch.id!!,
                 locationProductId = addition.locationProductId,
                 quantity = addition.quantityDispatched,
-                unitId = addition.unitId,
+                unitId = baseUnitId,
                 conversionFactor = conversionFactorsByLocationProductId.getValue(addition.locationProductId),
-                baseUnitId = locationProductSummariesById.getValue(addition.locationProductId).baseUnitId
+                baseUnitId = baseUnitId
             )
         }
 
@@ -72,10 +74,12 @@ class StockTransferDraftService(
 
     private fun conversionFactorRequests(
         lineRequestDto: StockTransferLineRequestDto,
-        existingLinesByRef: Map<String, StockTransferDraftLineEntity>
+        existingLinesByRef: Map<String, StockTransferDraftLineEntity>,
+        locationProductBaseUnitIds: Map<UUID, UUID>
     ): List<LocationProductUnitRequestDto> = buildList {
         lineRequestDto.additions.forEach { addition ->
-            add(LocationProductUnitRequestDto(addition.locationProductId, addition.unitId))
+            val baseUnitId = locationProductBaseUnitIds.getValue(addition.locationProductId)
+            add(LocationProductUnitRequestDto(addition.locationProductId, baseUnitId))
         }
         lineRequestDto.updates.forEach { update ->
             val existingLine = existingLinesByRef.getValue(update.lineRef)

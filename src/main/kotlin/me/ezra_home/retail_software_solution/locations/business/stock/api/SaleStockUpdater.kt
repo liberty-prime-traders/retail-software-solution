@@ -30,9 +30,9 @@ class SaleStockUpdater(
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val fifoEntriesByLocationProductId = loadFifoEntriesByLocationProductId(locationProductIds)
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
-
         val productSummariesByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(saleLineStockRequests.map { it.locationProductId }.toSet())
+
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
         saleLineStockRequests.forEach { saleLineStockRequest ->

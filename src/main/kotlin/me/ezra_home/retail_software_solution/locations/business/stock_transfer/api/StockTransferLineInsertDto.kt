@@ -5,6 +5,5 @@ import java.util.UUID
 
 data class StockTransferLineInsertDto(
     val locationProductId: UUID,
-    val quantityDispatched: BigDecimal,
-    val unitId: UUID
+    val quantityDispatched: BigDecimal
 )

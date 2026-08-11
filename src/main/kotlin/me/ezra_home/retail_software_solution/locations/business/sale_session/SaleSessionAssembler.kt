@@ -31,7 +31,8 @@ class SaleSessionAssembler(
         val sessionMappingContext = SaleSessionMappingContext(
             contactLabel = contactNameFor(saleSession.header.contactId),
             walkInCustomer = saleSession.header.contactId == SystemContact.WALK_IN.id,
-            showActiveUserWarning = showActiveUserWarning(saleSession)
+            showActiveUserWarning = showActiveUserWarning(saleSession),
+            showUnreservedChangesWarning = saleSession.showUnreservedChangesWarning
         )
         val adjustmentMappingContext = AdjustmentMappingContext(
             adjustmentReasonNamesById = adjustmentReasonService.getReasonNamesById(),
