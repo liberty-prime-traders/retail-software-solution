@@ -55,6 +55,7 @@ class StockTransferDispatchService(
         if (draftLines.isEmpty()) throw RtsGenericException("Cannot dispatch a transfer with no lines")
 
         val locationProductIds = draftLines.map { it.locationProductId }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val fifoEntriesByProduct = stockBalanceFetcher.getFifoEntriesByProduct(locationProductIds)
         val productIdByLocationProductId = locationProductDataFetcher.getProductIds(locationProductIds)
         val summariesByLocationProductId = locationProductDataFetcher.findSummaryByIds(locationProductIds)

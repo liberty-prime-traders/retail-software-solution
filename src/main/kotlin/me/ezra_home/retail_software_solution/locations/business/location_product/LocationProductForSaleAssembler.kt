@@ -1,34 +1,28 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductWithAvailability
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 
 @Component
 class LocationProductForSaleAssembler(
-    private val stockBalanceFetcher: StockBalanceFetcher,
-    private val stockReserver: StockReserver,
+    private val stockAvailabilityFetcher: StockAvailabilityFetcher,
 ) {
 
-    fun assemble(activeProducts: List<LocationProductDto>): List<LocationProductForSaleDto> {
+    fun assemble(activeProducts: List<LocationProductDto>): List<LocationProductWithAvailability> {
         val sellable = activeProducts.filter { it.defaultSalePrice != null }
-        val sellableProductIds = sellable.map { it.id }
-        val quantityOnHandByProductId = stockBalanceFetcher.getLatestBalances(sellableProductIds)
-        val reservationsByProductId = stockReserver.loadReservationBreakdown(sellableProductIds)
+        val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(sellable.map { it.id })
         return sellable.map { locationProductDto ->
-            val quantityOnHand = quantityOnHandByProductId[locationProductDto.id] ?: BigDecimal.ZERO
-            val quantityReserved = reservationsByProductId[locationProductDto.id]?.total ?: BigDecimal.ZERO
-            LocationProductForSaleDto(
+            val availability = availabilityByLocationProductId[locationProductDto.id] ?: StockAvailability.ZERO
+            LocationProductWithAvailability(
                 id = locationProductDto.id,
                 referenceNumber = locationProductDto.referenceNumber,
                 productName = locationProductDto.productName!!,
                 productGroupName = locationProductDto.productGroupName!!,
-                defaultSalePrice = locationProductDto.defaultSalePrice!!,
-                quantityOnHand = quantityOnHand,
-                quantityReserved = quantityReserved,
-                quantityAvailable = quantityOnHand - quantityReserved,
+                quantityOnHand = availability.quantityOnHand,
+                quantityReserved = availability.quantityReserved,
+                quantityAvailable = availability.quantityAvailable,
             )
         }
     }

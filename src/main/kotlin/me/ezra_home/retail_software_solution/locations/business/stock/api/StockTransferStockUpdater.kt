@@ -42,17 +42,20 @@ class StockTransferStockUpdater(
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
-        dispatchLineRequests.forEach { dispatchLineRequest ->
-            val productLabel = productSummariesByLocationProductId[dispatchLineRequest.locationProductId]?.label
-                ?: dispatchLineRequest.locationProductId.toString()
-            consumeStockForLine(
-                dispatchLineRequest = dispatchLineRequest,
-                fifoEntries = fifoEntriesByLocationProductId[dispatchLineRequest.locationProductId].orEmpty(),
-                startingBalance = balancesByLocationProductId[dispatchLineRequest.locationProductId] ?: BigDecimal.ZERO,
-                productLabel = productLabel,
-                modifiedEntries = modifiedEntries,
-                movements = movements
-            )
+        dispatchLineRequests.groupBy { it.locationProductId }.forEach { (locationProductId, requestsForProduct) ->
+            val productLabel = productSummariesByLocationProductId[locationProductId]?.label
+                ?: locationProductId.toString()
+            var runningBalance = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO
+            requestsForProduct.forEach { dispatchLineRequest ->
+                runningBalance = consumeStockForLine(
+                    dispatchLineRequest = dispatchLineRequest,
+                    fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
+                    startingBalance = runningBalance,
+                    productLabel = productLabel,
+                    modifiedEntries = modifiedEntries,
+                    movements = movements
+                )
+            }
         }
         stockEntryRepository.saveAll(modifiedEntries)
         stockMovementRepository.saveAll(movements)
@@ -65,7 +68,7 @@ class StockTransferStockUpdater(
         productLabel: String,
         modifiedEntries: MutableList<StockEntryEntity>,
         movements: MutableList<StockMovementEntity>
-    ) {
+    ): BigDecimal {
         var runningBalance = startingBalance
         var unsatisfiedQuantity = dispatchLineRequest.baseQuantity
         for (stockEntry in fifoEntries) {
@@ -89,6 +92,7 @@ class StockTransferStockUpdater(
             unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
         }
         throwIfNotFulfilled(dispatchLineRequest, unsatisfiedQuantity, productLabel)
+        return runningBalance
     }
 
     private fun throwIfNotFulfilled(

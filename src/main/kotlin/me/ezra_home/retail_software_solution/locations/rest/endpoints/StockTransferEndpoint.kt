@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -37,32 +36,32 @@ class StockTransferEndpoint(
     fun dispatch(@PathVariable orderRef: String): StockTransferResponse =
         stockTransferDispatchService.dispatch(orderRef)
 
-    @PutMapping("{orderRef}/cancel")
+    @PostMapping("{orderRef}/cancel")
     fun cancelTransfer(@PathVariable orderRef: String): StockTransferResponse =
         stockTransferService.cancelTransfer(orderRef)
 
-    @PutMapping("{orderRef}/lines")
+    @PostMapping("{orderRef}/lines")
     fun applyLineChanges(
         @PathVariable orderRef: String,
         @RequestBody lineRequestDto: StockTransferLineRequestDto
     ): StockTransferResponse =
         stockTransferDraftService.applyLineChanges(orderRef, lineRequestDto)
 
-    @PutMapping("{orderRef}/lines/remove/{lineRef}")
+    @PostMapping("{orderRef}/lines/remove/{lineRef}")
     fun removeLine(
         @PathVariable orderRef: String,
         @PathVariable lineRef: String
     ): StockTransferResponse =
         stockTransferDraftService.removeLine(orderRef, lineRef)
 
-    @PostMapping("{orderRef}/lines/{dispatchLineRef}/confirm")
+    @PostMapping("{orderRef}/lines/confirm/{dispatchLineRef}")
     fun confirmLine(
         @PathVariable orderRef: String,
         @PathVariable dispatchLineRef: String
     ): StockTransferResponse =
         stockTransferReceiptService.confirmLine(orderRef, dispatchLineRef)
 
-    @DeleteMapping("{orderRef}/lines/{dispatchLineRef}/confirm")
+    @DeleteMapping("{orderRef}/lines/unconfirm/{dispatchLineRef}")
     fun unconfirmLine(
         @PathVariable orderRef: String,
         @PathVariable dispatchLineRef: String
@@ -70,8 +69,8 @@ class StockTransferEndpoint(
         stockTransferReceiptService.unconfirmLine(orderRef, dispatchLineRef)
 
     @PostMapping("{receiptRef}/complete")
-    fun completeReceipt(@PathVariable receiptRef: String): StockTransferResponse =
-        stockTransferReceiptService.completeReceipt(receiptRef)
+    fun completeTransfer(@PathVariable receiptRef: String): StockTransferResponse =
+        stockTransferReceiptService.completeTransfer(receiptRef)
 
     @GetMapping
     fun fetchTop(@RequestParam n: Int?): List<StockTransferResponse> =

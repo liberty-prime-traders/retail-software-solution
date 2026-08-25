@@ -50,16 +50,24 @@ sale_session/ → may call sale/api/, sale_adjustment/api/, sale_payment/api/, s
 sale/         → knows nothing about sale_session (convention)
 ```
 
-`sale_session → stock/api/` is used by `SaleSessionStockOverlay` to fetch
-`StockBalanceFetcher.getLatestBalances` and `StockReserver.loadReservationBreakdown`
-when populating the three per-line quantities (`quantityOnHand`,
-`quantityReserved`, `quantityAvailable`). The overlay is advisory only — it
-never throws. Session mutations and loads run it so the UI can warn the
-cashier when a requested quantity exceeds availability; the hard reject
-happens at `saveDraft` / `confirm` via `SaleValidator.guardSufficientStockForSale`.
-The session's own reservations are excluded via
-`ProductReservations.excludingSale(session.saleId)`, so editing a line in a
-DRAFT session does not count its own prior reservation against itself.
+`sale_session → stock/api/` is used by `SaleSessionStockOverlay` to populate the
+three per-line quantities (`quantityOnHand`, `quantityReserved`,
+`quantityAvailable`). It calls `StockAvailabilityFetcher.fetch` (shared with
+`LocationProductForSaleAssembler` and `stock_transfer`'s
+`ReconciledTransferLineFetcher.draftLines`) for the sale-agnostic baseline —
+on-hand balance netted against the **total** of live reservations, no
+exclusion — then separately calls `StockReserver.loadReservationBreakdown`
+itself to read this session's own reservation via
+`ProductReservations.forSale(session.saleId)` and adds it back onto
+`quantityReserved`/`quantityAvailable`, so editing a line in a DRAFT session
+does not count its own prior reservation against itself. This is a second,
+accepted duplicate `loadReservationBreakdown` call (one inside the shared
+fetcher, one local to the overlay) — the same tradeoff `stock_transfer`'s
+README documents for `guardSufficientStock`/`consumeStockForDispatch`. The
+overlay is advisory only — it never throws. Session mutations and loads run
+it so the UI can warn the cashier when a requested quantity exceeds
+availability; the hard reject happens at `saveDraft` / `confirm` via
+`SaleValidator.guardSufficientStockForSale`.
 
 `SaleSessionLineHandler.removeLine` is a partial exception to the buffered
 model: when a removed line is persisted (`identity.id != null`), the handler

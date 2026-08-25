@@ -30,12 +30,18 @@ All three events (`StockTransferDispatchedEvent`, `StockTransferCancelledEvent`,
 
 ## FIFO allocation
 
-`StockTransferFifoAllocator` splits a draft line into one or more dispatch lines, one per cost group. A single draft line for a product with stock at two different unit costs produces two dispatch lines. This means `recordTransferReceipt` in `StockTransferReceiptStockUpdater` must accumulate a running balance per `locationProductId` across lines — not use a single pre-fetched balance for each line — because multiple lines for the same product share the same balance accumulator.
+`StockTransferFifoAllocator` splits a draft line into one or more dispatch lines, one per cost group. A single draft line for a product with stock at two different unit costs produces two dispatch lines. This means any consumer of those lines must accumulate a running balance per `locationProductId` across lines — not use a single pre-fetched balance for each line — because multiple lines for the same product share the same balance accumulator. Both `recordTransferReceipt` in `StockTransferReceiptStockUpdater` and `consumeStockForDispatch` in `StockTransferStockUpdater` follow this: they group their incoming lines by `locationProductId` and thread the running balance across a product's own lines before moving to the next product.
 
 ## Reservation-aware dispatch guard
 
-Before `StockTransferFifoAllocator` runs, `StockTransferDispatchService.dispatch` calls
-`StockAvailabilityValidator.guardSufficientStock` (`stock/api/`) with each draft line's
+`StockTransferDispatchService.dispatch` acquires the `PRODUCT` advisory lock on the draft
+lines' `locationProductId`s before reading any `stock_entry` rows — including the
+`getFifoEntriesByProduct` read that feeds `StockTransferFifoAllocator`'s cost-group split.
+This closes the window where a concurrent sale or transfer could otherwise change the FIFO
+cost layers between that read and the dispatch lines being persisted, which would leave the
+recorded `unitCost`/`totalDispatchedCost` inconsistent with what `StockTransferStockUpdater`
+actually decrements moments later. Before `StockTransferFifoAllocator` runs, `dispatch` also
+calls `StockAvailabilityValidator.guardSufficientStock` (`stock/api/`) with each draft line's
 base quantity. This nets on-hand balance against the **total** of any live sale
 reservations (`StockReserver.loadReservationBreakdown(...).total`) for the same
 `locationProductId`, and throws before allocation if a transfer would take stock a sale
@@ -48,9 +54,11 @@ existing reservations only.
 
 `guardSufficientStock` acquires its own `PRODUCT` advisory lock and fetches its own
 balances internally, exactly like the "self-protecting updaters" below — it does not take
-pre-fetched balances as a parameter. This means `getLatestBalances` runs once here and
-again inside `StockTransferStockUpdater.consumeStockForDispatch` moments later: a real,
-accepted duplicate query, not an oversight. The alternative (caller fetches once, passes
+pre-fetched balances as a parameter. Since `dispatch` already holds the same `PRODUCT` lock
+by the time `guardSufficientStock` runs (see above), this re-acquire is a harmless no-op —
+`pg_advisory_xact_lock` stacks within a transaction. This means `getLatestBalances` runs once
+here and again inside `StockTransferStockUpdater.consumeStockForDispatch` moments later: a
+real, accepted duplicate query, not an oversight. The alternative (caller fetches once, passes
 the snapshot into both the guard and the updater) was tried and reverted — it would make
 guard correctness depend on every future caller remembering to lock-then-fetch in the
 right order before calling it, which is the exact class of bug the mutation lock below was
@@ -58,6 +66,21 @@ already introduced to eliminate (see the git history on `SaleStockUpdater`/
 `StockTransferStockUpdater`: transfer dispatch/cancel used to have no `PRODUCT` lock at
 all, only sale confirm did, until locking was moved inside the updaters themselves so
 protection can't depend on which caller remembers to ask for it).
+
+## Draft line availability display
+
+`ReconciledTransferLineFetcher.draftLines` populates each `ReconciledTransferLine`'s
+`quantityAvailable` via `StockAvailabilityFetcher.fetch` (`stock/api/`) — the same shared
+component `LocationProductForSaleAssembler` and `SaleSessionStockOverlay` use for their own
+availability displays. The underlying `quantityAvailable` nets on-hand balance against the
+**total** of live sale reservations, with no exclusion, matching `guardSufficientStock`'s
+behavior above: draft transfer lines hold no reservation of their own to exclude. Unlike
+`guardSufficientStock`, this call takes **no** `PRODUCT` lock — it's a display-only read for
+the pre-dispatch review screen, not a guard gating a mutation, so serializing concurrent
+viewers against it would be pointless and could contend with the real dispatch lock for no
+reason. `dispatchLines` and the post-dispatch `toReconciledLines` (in
+`StockTransferDispatchService`) leave the field `null`: once stock has actually moved, an
+available-quantity snapshot for the now-consumed draft quantity is no longer meaningful.
 
 ## Destination location product resolution
 

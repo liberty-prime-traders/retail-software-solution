@@ -95,7 +95,7 @@ class StockTransferReceiptService(
         return buildReceiptResponse(order, receipt)
     }
 
-    fun completeReceipt(receiptRef: String): StockTransferResponse {
+    fun completeTransfer(receiptRef: String): StockTransferResponse {
         val receipt = stockTransferReceiptRepository.findByReferenceNumber(receiptRef)
             ?: throw RtsGenericException("Receipt $receiptRef not found")
         if (receipt.status != StockTransferReceiptStatus.PENDING) {
@@ -111,7 +111,7 @@ class StockTransferReceiptService(
         val confirmedRefs = receiptLines.map { it.stockTransferDispatchLineRef }.toSet()
         val unconfirmedCount = allDispatchLines.count { it.requiredReference() !in confirmedRefs }
         if (unconfirmedCount > 0) {
-            throw RtsGenericException("Cannot complete receipt: $unconfirmedCount dispatch line(s) not yet confirmed")
+            throw RtsGenericException("Cannot complete transfer #$orderRef: $unconfirmedCount dispatch line(s) not yet confirmed")
         }
 
         receipt.status = StockTransferReceiptStatus.COMPLETED

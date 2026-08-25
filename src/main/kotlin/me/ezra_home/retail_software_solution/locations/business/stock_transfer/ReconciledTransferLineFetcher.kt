@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
 import java.util.UUID
@@ -10,14 +12,17 @@ import java.util.UUID
 class ReconciledTransferLineFetcher(
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
-    private val locationProductDataFetcher: LocationProductDataFetcher
+    private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val stockAvailabilityFetcher: StockAvailabilityFetcher
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.MANDATORY)
     fun draftLines(dispatchId: UUID): List<ReconciledTransferLine> {
         val lines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatchId)
         val labels = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
+        val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(lines.map { it.locationProductId }.toSet())
         return lines.map { line ->
+            val availability = availabilityByLocationProductId[line.locationProductId] ?: StockAvailability.ZERO
             ReconciledTransferLine(
                 dispatchLineRef = line.requiredReference(),
                 productLabel = labels.getValue(line.locationProductId).label,
@@ -26,7 +31,8 @@ class ReconciledTransferLineFetcher(
                 baseUnitId = line.baseUnitId,
                 conversionFactor = line.conversionFactor,
                 unitCost = null,
-                quantityReceived = null
+                quantityReceived = null,
+                quantityAvailable = availability.quantityAvailable
             )
         }
     }

@@ -11,7 +11,8 @@ data class StockTransferSummaryDto(
     val lineCount: Int?,
     val totalDispatchedCost: BigDecimal?,
     val dispatchedAt: OffsetDateTime?,
-    val dispatchedBy: String?
+    val dispatchedBy: String?,
+    val notes: String?,
 )
 
 fun StockTransferOrderDomainDto.toSummaryDto(sourceLocationName: String?, destinationLocationName: String?) =
@@ -23,5 +24,6 @@ fun StockTransferOrderDomainDto.toSummaryDto(sourceLocationName: String?, destin
         lineCount = lineCount,
         totalDispatchedCost = totalDispatchedCost,
         dispatchedAt = dispatchedAt,
-        dispatchedBy = dispatchedByName
+        dispatchedBy = dispatchedByName,
+        notes = notes,
     )

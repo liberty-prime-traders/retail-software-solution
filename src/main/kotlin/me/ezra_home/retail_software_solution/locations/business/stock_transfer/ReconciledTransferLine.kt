@@ -12,7 +12,8 @@ data class ReconciledTransferLine(
     val baseUnitId: UUID,
     val conversionFactor: BigDecimal,
     val unitCost: BigDecimal?,
-    val quantityReceived: BigDecimal?
+    val quantityReceived: BigDecimal?,
+    val quantityAvailable: BigDecimal? = null,
 ) {
     val totalCost: BigDecimal? = unitCost?.let { Decimals.multiplyScale4(quantity, it) }
 }

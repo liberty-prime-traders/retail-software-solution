@@ -40,7 +40,7 @@ class LocationProductDataFetcher(
 
     fun searchForSale(
         pageRequest: PageRequest<LocationProductSearchParameters, String>
-    ): PageResponse<LocationProductForSaleDto, String> {
+    ): PageResponse<LocationProductWithAvailability, String> {
         val page = locationProductPagedSearch.searchWithParameters(toActiveProductSearch(pageRequest))
         return PageResponse(
             currentCursor = page.currentCursor,
