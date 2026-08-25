@@ -61,6 +61,7 @@ class SaleSessionLineHandler(
         val updatedSaleSession = saleSession.copy(
             saleLines = effectiveSaleLines,
             saleAdjustments = updatedSaleAdjustments,
+            productsVersion = saleSession.productsVersion + 1,
         )
         return saleSessionUpdateFinalizer.finalize(saleSessionStockOverlay.populate(updatedSaleSession))
     }
@@ -134,7 +135,11 @@ class SaleSessionLineHandler(
             saleSessionAdjustment.relatedSaleLineIdentity == null ||
                     saleSessionAdjustment.relatedSaleLineIdentity.key() != targetLineKey
         }
-        val updatedSaleSession = saleSession.copy(saleLines = survivingSaleLines, saleAdjustments = survivingSaleAdjustments)
+        val updatedSaleSession = saleSession.copy(
+            saleLines = survivingSaleLines,
+            saleAdjustments = survivingSaleAdjustments,
+            productsVersion = saleSession.productsVersion + 1,
+        )
         return saleSessionUpdateFinalizer.finalize(saleSessionStockOverlay.populate(updatedSaleSession))
     }
 }

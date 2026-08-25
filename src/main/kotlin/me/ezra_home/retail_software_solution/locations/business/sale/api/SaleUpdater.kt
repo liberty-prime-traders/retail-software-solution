@@ -1,11 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
-import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidEntity
@@ -23,14 +20,12 @@ import java.util.UUID
 class SaleUpdater(
     private val saleDataFetcher: SaleDataFetcher,
     private val saleRepository: SaleRepository,
-    private val saleLineRepository: SaleLineRepository,
     private val stockReserver: StockReserver,
     private val saleAssembler: SaleAssembler,
     private val saleStockUpdater: SaleStockUpdater,
     private val saleVoidHandlerForKafka: SaleVoidHandlerForKafka,
     private val saleValidator: SaleValidator,
     private val saleVoidRepository: SaleVoidRepository,
-    private val entityAdvisoryLock: EntityAdvisoryLock,
     private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
@@ -49,8 +44,6 @@ class SaleUpdater(
     fun voidSale(saleVoidCreateDto: SaleVoidCreateDto): SaleSummary {
         val sale = saleDataFetcher.lockAndGetSale(saleVoidCreateDto.saleId)
         saleValidator.guardCanVoid(sale)
-        val saleLines = saleLineRepository.findBySaleId(saleVoidCreateDto.saleId)
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleLines.map { it.locationProductId })
         if (sale.status == SaleStatus.DRAFT) {
             stockReserver.clearBySale(saleVoidCreateDto.saleId)
             sale.status = SaleStatus.DISCARDED

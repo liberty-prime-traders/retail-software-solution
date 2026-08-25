@@ -24,7 +24,6 @@ data class SaleSessionResponseDto(
     val paymentStatus: PaymentStatus,
     val dateSold: OffsetDateTime?,
     val notes: String?,
-    val showActiveUserWarning: Boolean,
     val saleLines: List<SaleSessionLineResponse>,
     val saleAdjustments: List<SaleSessionAdjustmentResponse>,
     val salePayments: List<SaleSessionPaymentResponse>,
@@ -35,6 +34,8 @@ data class SaleSessionResponseDto(
 data class SaleSessionUiOptions(
     val canMakeChangesToTheSale: Boolean,
     val canAddPaymentsToSale: Boolean,
+    val showUnreservedChangesWarning: Boolean,
+    val showActiveUserWarning: Boolean
 )
 
 data class SaleSessionLineResponse(

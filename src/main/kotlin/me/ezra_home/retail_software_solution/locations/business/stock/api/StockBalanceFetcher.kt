@@ -10,7 +10,20 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class StockBalanceFetcher(private val stockEntryRepository: StockEntryRepository) {
 
-    fun getLatestBalances(locationProductIds: List<UUID>): Map<UUID, BigDecimal> {
+    fun getFifoEntriesByProduct(locationProductIds: List<UUID>): Map<UUID, List<StockEntryFifoDto>> =
+        stockEntryRepository.findFifoEntriesForProducts(locationProductIds)
+            .groupBy { it.locationProductId }
+            .mapValues { (_, entries) ->
+                entries.sortedWith(stockEntryFifoComparator).map { entry ->
+                    StockEntryFifoDto(
+                        locationProductId = entry.locationProductId,
+                        unitCost = entry.unitCost,
+                        quantityRemaining = entry.quantityRemaining
+                    )
+                }
+            }
+
+    fun getLatestBalances(locationProductIds: Collection<UUID>): Map<UUID, BigDecimal> {
         val balancesByProduct = stockEntryRepository.sumRemainingByProducts(locationProductIds)
             .associateBy { it.getLocationProductId() }
         return locationProductIds.associateWith {

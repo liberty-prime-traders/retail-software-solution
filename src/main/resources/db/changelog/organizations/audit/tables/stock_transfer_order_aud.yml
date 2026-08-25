@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-order-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_order_aud
+      changes:
+        - createTable:
+            tableName: stock_transfer_order_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: source_location_id
+                  type: uuid
+
+              - column:
+                  name: destination_location_id
+                  type: uuid
+
+              - column:
+                  name: status
+                  type: varchar(5)
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: line_count
+                  type: integer
+
+              - column:
+                  name: total_dispatched_cost
+                  type: numeric(19, 4)
+
+              - column:
+                  name: dispatched_at
+                  type: timestamptz
+
+              - column:
+                  name: dispatched_by_name
+                  type: varchar(200)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: stock_transfer_order_aud
+            columnNames: id, rev
+            constraintName: pk_stock_transfer_order_aud
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_order_aud

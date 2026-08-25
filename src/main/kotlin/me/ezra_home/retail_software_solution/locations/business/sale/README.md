@@ -271,28 +271,32 @@ Two distinct mechanisms protect inventory:
 
 ### Reservations (drafts only)
 
-- `SaleLineStockReservationEntity` holds **`quantity_reserved`** per sale
+- `StockReservationEntity` holds **`quantity_reserved`** per sale
   line (always written as `line.baseQty()`).
 - Every `DraftSalePersister.saveDraft` invocation clears all reservations
   for the sale (`clearBySale`) **before** running `SaleLineSync.sync`, then
   re-issues fresh reservations for the surviving line set. This avoids
   hand-rolled diffing, and the clear-before-sync order is required because
-  the `fk_slsr_sale_line` FK constraint on `sale_line_stock_reservation`
+  the FK constraint from `stock_reservation` to the sale line
   would fail when sync deletes a removed line that still has a reservation.
 - Reservations are also cleared when:
   - A draft is voided (`SaleUpdater.voidSale` → `DISCARDED` branch).
   - The sale is confirmed (`ConfirmedSalePersister.confirm` clears
-    reservations before line sync for the same FK-ordering reason; the
-    PRODUCT advisory lock is then taken before FIFO consumption).
+    reservations before line sync for the same FK-ordering reason).
 - Stock guards run at:
   1. **Add line to session** — `SaleSessionLineHandler.applyLineChanges`
      calls `LocationProductService.guardAllActive` on the addition entries'
      `locationProductId`s (live stock is NOT pre-checked here; it gets
      checked at the next commit).
-  2. **Save draft commit** — `SaleValidator.guardStockForDraftUpdates` runs
+  2. **Save draft commit** — `SaleValidator.guardSufficientStockForSale` runs
      after reservations were cleared and lines persisted; computes available
      stock excluding *this* sale's reservations, then issues new ones.
-  3. **Confirm** — FIFO consumption fails fast if a layer cannot fill.
+  3. **Confirm** — `SaleValidator.guardSufficientStockForSale` runs again
+     after line sync (this sale's own reservations were already cleared, so
+     it's checking against every other sale's live reservations), then the
+     PRODUCT advisory lock is taken again before FIFO consumption. FIFO
+     consumption itself still fails fast if a layer cannot fill, as a
+     physical-stock backstop.
 
 ### FIFO Consumption (confirmation only)
 
@@ -306,9 +310,19 @@ Two distinct mechanisms protect inventory:
 ### Locking discipline
 
 - `EntityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)` is taken
-  inside `ConfirmedSalePersister` before clearing reservations + FIFO. The
-  draft path lets the validator's own product-scoped lock cover stock
-  reads + writes.
+  independently in three self-contained places, each of which fetches its own
+  balances immediately after locking rather than accepting a pre-fetched
+  snapshot from a caller: `SaleValidator.guardSufficientStockForSale` (draft
+  save and confirm, before validating availability) and
+  `SaleStockUpdater.consumeStock` / `restoreStock` (confirm and void, before
+  mutating `stock_entry` rows). This means the same product's balance can be
+  queried twice within one `confirm()` call (once by the guard, once by
+  `consumeStock`) — a deliberate, accepted duplicate, not an oversight: no
+  caller should be relied on to lock-then-fetch correctly before calling
+  these, the same reasoning that moved `PRODUCT` locking into
+  `StockTransferStockUpdater` itself (see `stock_transfer/README.md`
+  "Locking") after transfer dispatch/cancel once shipped with no lock at all
+  while sale confirm had its own.
 - `EntityAdvisoryLock.acquire(LockNamespaces.SALE, saleId)` is acquired by
   `SaleDataFetcher.lockAndGetSale` / `lockAndGetSaleContext`, which every
   flow that touches an *existing* sale (`voidSale`, `updateNotes`,
@@ -562,7 +576,7 @@ run** — i.e. as soon as the data it needs is in scope.
 - For an existing draft: acquires the SALE advisory lock and runs the
   optimistic `SaleEntity.version` check (both via `loadDraftAtVersion`).
 - Persists `SaleEntity` at `DRAFT`, syncs lines, clears + re-issues
-  reservations (with `guardStockForDraftUpdates` in between), syncs
+  reservations (with `guardSufficientStockForSale` in between), syncs
   adjustments, applies totals, then appends new payments.
 
 ### `ConfirmedSalePersister.confirm(SaleSaveRequest): SaleSaveResult`
@@ -572,7 +586,9 @@ run** — i.e. as soon as the data it needs is in scope.
   period must be open.
 - For an existing draft: acquires the SALE advisory lock and runs the
   optimistic `SaleEntity.version` check (both via `loadDraftAtVersion`).
-- Acquires PRODUCT lock, clears reservations, runs FIFO consumption.
+- Clears reservations, syncs lines, guards sufficient stock
+  (`guardSufficientStockForSale`, excluding this sale's own now-cleared
+  reservations), then runs FIFO consumption.
 - Publishes `SaleConfirmedEvent` → taxes finalize asynchronously.
 
 ### `SaleUpdater.voidSale(SaleVoidCreateDto)`
@@ -652,7 +668,7 @@ run** — i.e. as soon as the data it needs is in scope.
 | Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                |
 | Validation                 | `SaleValidator`                                                                                         |
 | Save primitives            | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                  |
-| Stock reservation          | `SaleStockReserver`, `SaleLineStockReservationEntity`, `StockReservationDtos`                           |
+| Stock reservation          | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                       |
 | Adjustments (disc + srch)  | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`) |
 | Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)    |
 | Payments                   | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper) |

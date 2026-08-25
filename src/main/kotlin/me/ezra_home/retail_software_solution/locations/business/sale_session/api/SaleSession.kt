@@ -10,6 +10,8 @@ data class SaleSession(
     val locationId: UUID,
     val saleId: UUID?,
     val saleVersion: Long?,
+    val productsVersion: Long,
+    val productsReservedAtVersion: Long,
     val originalStatus: SaleStatus,
     val createdById: UUID,
     val createdAt: OffsetDateTime,
@@ -22,6 +24,8 @@ data class SaleSession(
     val salePayments: List<SaleSessionPayment>,
     val totals: SaleSessionTotals,
 ) {
+
+    val showUnreservedChangesWarning: Boolean = productsReservedAtVersion < productsVersion
 
     fun mutable(): Boolean =
         originalStatus == SaleStatus.DRAFT
@@ -41,4 +45,5 @@ data class SaleSession(
 
     fun markVisited(userId: UUID): SaleSession =
         copy(lastAccessedById = userId, lastAccessedAt = DateTimes.Offset.Now.organization())
+
 }

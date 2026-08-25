@@ -16,7 +16,7 @@ import me.ezra_home.retail_software_solution.util.model.TableNames
 class StockItemSourceEntity(
 
   @Convert(converter = StockItemSourceConverter::class)
-  @Column(name = "code", nullable = false, length = 20, unique = true, updatable = false)
+  @Column(name = "code", nullable = false, length = 5, unique = true, updatable = false)
   var code: StockItemSource,
 
   @Column(name = "name", nullable = false, length = 100)

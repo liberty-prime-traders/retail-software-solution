@@ -2,16 +2,15 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
-import me.ezra_home.retail_software_solution.locations.business.stock.api.ProductReservations
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.util.UUID
 
 @Service
 class SaleSessionStockOverlay(
-    private val stockBalanceFetcher: StockBalanceFetcher,
+    private val stockAvailabilityFetcher: StockAvailabilityFetcher,
     private val stockReserver: StockReserver,
 ) {
 
@@ -19,25 +18,19 @@ class SaleSessionStockOverlay(
         if (saleSession.originalStatus != SaleStatus.DRAFT) return saleSession
         if (saleSession.saleLines.isEmpty()) return saleSession
         val locationProductIds = saleSession.saleLines.map { it.locationProductId }.distinct()
-        val quantityOnHandByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
+        val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(locationProductIds)
         val reservationsByLocationProductId = stockReserver.loadReservationBreakdown(locationProductIds)
         val populatedSaleLines = saleSession.saleLines.map { saleSessionLine ->
-            val quantityOnHand = quantityOnHandByLocationProductId[saleSessionLine.locationProductId] ?: BigDecimal.ZERO
-            val quantityReservedByOthers = reservedByOthers(
-                productReservations = reservationsByLocationProductId[saleSessionLine.locationProductId],
-                excludingSaleId = saleSession.saleId,
-            )
+            val availability = availabilityByLocationProductId[saleSessionLine.locationProductId] ?: StockAvailability.ZERO
+            val ownReservation = saleSession.saleId?.let { saleId ->
+                reservationsByLocationProductId[saleSessionLine.locationProductId]?.forSale(saleId)
+            } ?: BigDecimal.ZERO
             saleSessionLine.copy(
-                quantityOnHand = quantityOnHand,
-                quantityReserved = quantityReservedByOthers,
-                quantityAvailable = quantityOnHand.subtract(quantityReservedByOthers),
+                quantityOnHand = availability.quantityOnHand,
+                quantityReserved = availability.quantityReserved.subtract(ownReservation),
+                quantityAvailable = availability.quantityAvailable.add(ownReservation),
             )
         }
         return saleSession.copy(saleLines = populatedSaleLines)
-    }
-
-    private fun reservedByOthers(productReservations: ProductReservations?, excludingSaleId: UUID?): BigDecimal {
-        if (productReservations == null) return BigDecimal.ZERO
-        return excludingSaleId?.let { productReservations.excludingSale(it) } ?: productReservations.total
     }
 }

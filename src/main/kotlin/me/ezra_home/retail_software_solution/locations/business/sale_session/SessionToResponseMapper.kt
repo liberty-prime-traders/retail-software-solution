@@ -25,7 +25,6 @@ interface SessionToResponseMapper {
     @Mapping(source = "header.contactId", target = "contactId")
     @Mapping(target = "contactLabel", expression = "java(sessionMappingContext.getContactLabel())")
     @Mapping(target = "walkInCustomer", expression = "java(sessionMappingContext.getWalkInCustomer())")
-    @Mapping(target = "showActiveUserWarning", expression = "java(sessionMappingContext.getShowActiveUserWarning())")
     @Mapping(source = "sessionId", target = "id")
     @Mapping(source = "header.soldById", target = "soldBy", qualifiedBy = [FullName::class])
     @Mapping(source = "header.dateSold", target = "dateSold")

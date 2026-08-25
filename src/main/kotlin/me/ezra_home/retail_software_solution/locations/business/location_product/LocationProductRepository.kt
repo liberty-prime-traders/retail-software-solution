@@ -11,4 +11,6 @@ interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID>
   fun findAllLocationProducts(): List<LocationProductEntity>
 
   fun findByProductId(productId: UUID): LocationProductEntity?
+
+  fun findByProductIdIn(productIds: Collection<UUID>): List<LocationProductEntity>
 }

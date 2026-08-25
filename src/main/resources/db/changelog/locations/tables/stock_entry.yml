@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: stock_entry_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: stock_entry_reference_number_unique
+                    uniqueConstraintName: uq_stock_entry_reference_number
 
               - column:
                   name: location_product_id
@@ -37,7 +37,7 @@ databaseChangeLog:
 
               - column:
                   name: source_type
-                  type: varchar(10)
+                  type: varchar(5)
 
               - column:
                   name: external_reference_number

@@ -47,7 +47,7 @@ class SaleValidator(
         }
     }
 
-    fun guardStockForDraftUpdates(
+    fun guardSufficientStockForSale(
         saleId: UUID,
         requested: Map<UUID, BigDecimal>,
         productSummaries: Map<UUID, LocationProductSummaryDto>

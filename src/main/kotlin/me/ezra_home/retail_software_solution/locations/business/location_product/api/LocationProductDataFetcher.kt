@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.stereotype.Component
@@ -39,7 +40,7 @@ class LocationProductDataFetcher(
 
     fun searchForSale(
         pageRequest: PageRequest<LocationProductSearchParameters, String>
-    ): PageResponse<LocationProductForSaleDto, String> {
+    ): PageResponse<LocationProductWithAvailability, String> {
         val page = locationProductPagedSearch.searchWithParameters(toActiveProductSearch(pageRequest))
         return PageResponse(
             currentCursor = page.currentCursor,
@@ -96,6 +97,25 @@ class LocationProductDataFetcher(
     fun getBaseUnitIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
         locationProductRepository.findAllById(locationProductIds)
             .associate { it.id!! to it.baseUnitId }
+
+    fun getProductIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
+        locationProductRepository.findAllById(locationProductIds)
+            .associate { it.id!! to it.productId }
+
+    fun findIdentityByProductId(productId: UUID): LocationProductIdentityDto {
+        val entity = locationProductRepository.findByProductId(productId)
+            ?: throw RtsGenericException("No location product found for product $productId")
+        return LocationProductIdentityDto(locationProductId = entity.id!!, productId = entity.productId)
+    }
+
+    fun findIdentitiesByProductIds(productIds: Collection<UUID>): Map<UUID, LocationProductIdentityDto> =
+        locationProductRepository.findByProductIdIn(productIds)
+            .associate { entity ->
+                entity.productId to LocationProductIdentityDto(
+                    locationProductId = entity.id!!,
+                    productId = entity.productId
+                )
+            }
 
     fun getConversionFactors(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, BigDecimal> {
         if (productUnitRequests.isEmpty()) return emptyMap()

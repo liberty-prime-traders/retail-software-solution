@@ -50,16 +50,24 @@ sale_session/ → may call sale/api/, sale_adjustment/api/, sale_payment/api/, s
 sale/         → knows nothing about sale_session (convention)
 ```
 
-`sale_session → stock/api/` is used by `SaleSessionStockOverlay` to fetch
-`StockBalanceFetcher.getLatestBalances` and `StockReserver.loadReservationBreakdown`
-when populating the three per-line quantities (`quantityOnHand`,
-`quantityReserved`, `quantityAvailable`). The overlay is advisory only — it
-never throws. Session mutations and loads run it so the UI can warn the
-cashier when a requested quantity exceeds availability; the hard reject
-happens at `saveDraft` / `confirm` via `SaleValidator.guardStockForDraftUpdates`.
-The session's own reservations are excluded via
-`ProductReservations.excludingSale(session.saleId)`, so editing a line in a
-DRAFT session does not count its own prior reservation against itself.
+`sale_session → stock/api/` is used by `SaleSessionStockOverlay` to populate the
+three per-line quantities (`quantityOnHand`, `quantityReserved`,
+`quantityAvailable`). It calls `StockAvailabilityFetcher.fetch` (shared with
+`LocationProductForSaleAssembler` and `stock_transfer`'s
+`ReconciledTransferLineFetcher.draftLines`) for the sale-agnostic baseline —
+on-hand balance netted against the **total** of live reservations, no
+exclusion — then separately calls `StockReserver.loadReservationBreakdown`
+itself to read this session's own reservation via
+`ProductReservations.forSale(session.saleId)` and adds it back onto
+`quantityReserved`/`quantityAvailable`, so editing a line in a DRAFT session
+does not count its own prior reservation against itself. This is a second,
+accepted duplicate `loadReservationBreakdown` call (one inside the shared
+fetcher, one local to the overlay) — the same tradeoff `stock_transfer`'s
+README documents for `guardSufficientStock`/`consumeStockForDispatch`. The
+overlay is advisory only — it never throws. Session mutations and loads run
+it so the UI can warn the cashier when a requested quantity exceeds
+availability; the hard reject happens at `saveDraft` / `confirm` via
+`SaleValidator.guardSufficientStockForSale`.
 
 `SaleSessionLineHandler.removeLine` is a partial exception to the buffered
 model: when a removed line is persisted (`identity.id != null`), the handler
@@ -234,8 +242,8 @@ the timestamp. This is what drives `SaleSessionSummaryDto.activeUser`.
 | When           | Who                      | What                                                                                                                                                                                                                                                                                                                |
 |----------------|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Every mutation | `SaleSessionValidator`   | Positive quantities, no duplicate products, valid adjustment line refs, adjustment reason + direction valid, positive payments, line + order discount ceilings                                                                                                                                                      |
-| Save Draft     | `DraftSalePersister`     | If any payments in the input, future-date guard + fiscal period open; stock availability for requested quantities (`SaleValidator.guardStockForDraftUpdates`); optimistic `@Version` check on `SaleEntity` (existing sales only). Note: drafts do NOT enforce a payments-within-payable-total ceiling.              |
-| Confirm        | `ConfirmedSalePersister` | At least one line (enforced upstream by `SaleSessionValidator.guardNonEmptyLines`); future-date guard; fiscal period open; walk-in full coverage (enforced upstream); payments within payable total (enforced upstream); FIFO stock consumption; optimistic `@Version` check on `SaleEntity` (existing sales only). |
+| Save Draft     | `DraftSalePersister`     | If any payments in the input, future-date guard + fiscal period open; stock availability for requested quantities (`SaleValidator.guardSufficientStockForSale`); optimistic `@Version` check on `SaleEntity` (existing sales only). Note: drafts do NOT enforce a payments-within-payable-total ceiling.              |
+| Confirm        | `ConfirmedSalePersister` | At least one line (enforced upstream by `SaleSessionValidator.guardNonEmptyLines`); future-date guard; fiscal period open; walk-in full coverage (enforced upstream); payments within payable total (enforced upstream); stock availability for requested quantities (`SaleValidator.guardSufficientStockForSale`); FIFO stock consumption; optimistic `@Version` check on `SaleEntity` (existing sales only). |
 
 Structural validation runs on **every** mutation; commit-time guards run only
 when the session is committed. The commit-time guards exist because the world
@@ -261,7 +269,7 @@ product gets deactivated).
      - sync lines (`SaleLineSync.sync` — insert new, update existing,
        delete missing)
      - clear reservations for this sale; if any persisted lines remain,
-       guard stock availability (`guardStockForDraftUpdates`), then re-reserve
+       guard stock availability (`guardSufficientStockForSale`), then re-reserve
      - SaleSaveFinalizer.finalize:
          - sync adjustments (`SaleAdjustmentSyncer.sync` — delete missing,
            update kept, insert new)
@@ -289,16 +297,21 @@ product gets deactivated).
      - load-or-create SaleEntity (`loadDraftAtVersion` for existing —
        rejects non-DRAFT or version mismatch; new sales start at CONFIRMED)
      - assign header, save sale
+     - clear reservations for this sale (`clearBySale`) — before sync, same
+       FK-ordering reason as the draft path
      - sync lines (`SaleLineSync.sync`)
-     - acquire PRODUCT advisory lock over the persisted lines'
-       location-product ids, clear reservations
+     - guard stock availability (`SaleValidator.guardSufficientStockForSale`
+       — this sale's own reservations are already cleared, so it checks
+       against every other sale's live reservations)
      - flip status to CONFIRMED
      - SaleSaveFinalizer.finalize:
          - sync adjustments (`SaleAdjustmentSyncer.sync`)
          - apply totals (`SaleTotalsApplier`)
          - append new payments (`SalePaymentAppender.appendNew`)
          - set `paymentStatus`, save sale
-     - run FIFO consumption via `SaleStockUpdater.consumeStock`
+     - run FIFO consumption via `SaleStockUpdater.consumeStock` (acquires the
+       PRODUCT advisory lock again immediately before consuming, as a
+       physical-stock backstop)
      - publish `SaleConfirmedEvent` via `SaleConfirmedHandlerForKafka`
 6. apply outcome to session (`applySaleSaveResult` — new ids, header
    sync from persisted entity (`referenceNumber`, `dateSold`, `soldById`),

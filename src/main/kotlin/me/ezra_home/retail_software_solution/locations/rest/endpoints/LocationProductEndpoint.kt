@@ -3,11 +3,11 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForPurchaseDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductForSaleDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductWithAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementHistoryBuilder
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementResponse
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
@@ -36,10 +36,10 @@ class LocationProductEndpoint(
   ): PageResponse<LocationProductResponseDto, String> =
     locationProductDataFetcher.searchWithParameters(pageRequest)
 
-  @PostMapping("search-for-sale")
-  fun searchForSale(
+  @PostMapping("search-available")
+  fun searchAvailable(
     @RequestBody pageRequest: PageRequest<LocationProductSearchParameters, String>
-  ): PageResponse<LocationProductForSaleDto, String> =
+  ): PageResponse<LocationProductWithAvailability, String> =
     locationProductDataFetcher.searchForSale(pageRequest)
 
   @PostMapping("search-for-purchase")

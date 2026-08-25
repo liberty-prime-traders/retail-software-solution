@@ -9,6 +9,7 @@ data class SaleSessionMappingContext(
     val contactLabel: String,
     val walkInCustomer: Boolean,
     val showActiveUserWarning: Boolean,
+    val showUnreservedChangesWarning: Boolean,
 )
 
 data class AdjustmentMappingContext(

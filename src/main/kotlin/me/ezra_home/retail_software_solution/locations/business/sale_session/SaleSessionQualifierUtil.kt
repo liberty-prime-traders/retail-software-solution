@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.mapstruct.Context
+import org.mapstruct.Mapping
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
@@ -34,9 +35,14 @@ object SaleSessionQualifierUtil {
     ): SessionIdentity? = saleLineId?.let { relatedSaleLineIdentityBySaleLineId[it] }
 
     @SaleSessionUiOptionsBuild
-    fun toSaleSessionUiOptions(saleSession: SaleSession): SaleSessionUiOptions = SaleSessionUiOptions(
+    fun toSaleSessionUiOptions(
+        saleSession: SaleSession,
+        @Context sessionMappingContext: SaleSessionMappingContext
+    ): SaleSessionUiOptions = SaleSessionUiOptions(
         canMakeChangesToTheSale = saleSession.mutable(),
         canAddPaymentsToSale = saleSession.canAddPayments(),
+        showUnreservedChangesWarning = saleSession.showUnreservedChangesWarning,
+        showActiveUserWarning = sessionMappingContext.showActiveUserWarning
     )
 
     @SaleSessionPaymentStatus

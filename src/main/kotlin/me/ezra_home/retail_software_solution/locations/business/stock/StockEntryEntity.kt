@@ -1,8 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.StockItemSourceConverter
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -20,8 +23,9 @@ class StockEntryEntity(
   @Column(name = "location_product_id", nullable = false)
   var locationProductId: UUID,
 
-  @Column(name = "source_type", length = 10)
-  var sourceType: String? = null,
+  @Column(name = "source_type", length = 5)
+  @Convert(converter = StockItemSourceConverter::class)
+  var sourceType: StockItemSource? = null,
 
   @Column(name = "external_reference_number", length = 30)
   var externalReferenceNumber: String? = null,

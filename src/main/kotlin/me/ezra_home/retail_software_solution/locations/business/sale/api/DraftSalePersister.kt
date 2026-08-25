@@ -45,7 +45,7 @@ class DraftSalePersister(
                 .associate { it.locationProductId to it.baseQty() }
             val productSummariesByLocationProductId = locationProductDataFetcher
                 .findSummaryByIds(resolvedBaseQuantitiesByLocationProductId.keys)
-            saleValidator.guardStockForDraftUpdates(
+            saleValidator.guardSufficientStockForSale(
                 saleEntity.id!!,
                 resolvedBaseQuantitiesByLocationProductId,
                 productSummariesByLocationProductId,

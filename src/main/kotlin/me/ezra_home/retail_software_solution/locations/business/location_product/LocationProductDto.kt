@@ -20,6 +20,5 @@ data class LocationProductDto(
     val minStockLevel: Int? = null,
     val lastPurchasePrice: BigDecimal? = null,
     val status: ProductStatus = ProductStatus.ACTIVE,
-    val lastSyncedAt: OffsetDateTime? = null,
-    val stockBalance: BigDecimal? = null
+    val lastSyncedAt: OffsetDateTime? = null
 )
