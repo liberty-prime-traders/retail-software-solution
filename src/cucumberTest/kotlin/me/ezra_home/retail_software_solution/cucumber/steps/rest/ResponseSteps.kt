@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cucumber.steps.rest
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Then
 import io.restassured.response.Response
@@ -19,10 +19,9 @@ import kotlin.test.assertTrue
 
 class ResponseSteps(
   private val responseContext: ResponseContext,
-  private val injectContext: InjectContext
+  private val injectContext: InjectContext,
+  private val objectMapper: ObjectMapper,
 ) {
-  private val objectMapper = jacksonObjectMapper()
-
   @Then("the response status should be {int}")
   fun verifyStatus(expectedStatus: Int) {
     val actualStatus = responseContext.lastResponse?.statusCode
@@ -82,13 +81,6 @@ class ResponseSteps(
       actualMessage,
       "Expected error message '$injectedExpectedMessage' but got '$actualMessage'"
     )
-  }
-
-  @Then("the response error should contain {string}")
-  fun verifyErrorContains(expectedMessage: String) {
-    val error = responseContext.lastError
-    assertNotNull(error, "Expected an error response but status was ${responseContext.lastResponse?.statusCode}")
-    assertTrue(error.contains(expectedMessage, ignoreCase = true), "Expected error containing '$expectedMessage' but got: $error")
   }
 
   @Then("the response error field {string} should be {string}")
