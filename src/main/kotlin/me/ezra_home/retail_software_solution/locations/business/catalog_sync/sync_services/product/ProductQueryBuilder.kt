@@ -31,12 +31,12 @@ object ProductQueryBuilder {
     """.trimIndent()
   }
 
-  fun buildFetchQueryByProductId(): String {
+  fun buildFetchQueryByOrgProductId(): String {
     return """
       ${buildSelectClause("$A.${SyncQueryConstants.AuditColumns.REV}")}
       ${buildAuditFromClause()}
       WHERE $A.${SyncQueryConstants.AuditColumns.REVEND} IS NULL
-        AND $P.${ProductQueryConstants.Columns.ID} = :${ProductQueryConstants.Parameters.PRODUCT_ID}
+        AND $P.${ProductQueryConstants.Columns.ID} = :${ProductQueryConstants.Parameters.ORG_PRODUCT_ID}
     """.trimIndent()
   }
 

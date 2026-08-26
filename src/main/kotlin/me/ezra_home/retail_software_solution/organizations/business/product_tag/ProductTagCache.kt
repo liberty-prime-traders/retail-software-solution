@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagInsertDto
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -19,16 +18,16 @@ class ProductTagCache(
 ) {
 
     @Cacheable
-    fun findActiveProductTagsByProductId(productId: UUID): Collection<ProductTagDto> =
-        productTagRepository.findActiveProductTagsByProductId(productId).map { productTagMapper.toDomainDto(it) }
+    fun findActiveProductTagsByOrgProductId(orgProductId: UUID): Collection<ProductTagDto> =
+        productTagRepository.findActiveProductTagsByOrgProductId(orgProductId).map { productTagMapper.toDomainDto(it) }
 
     @Cacheable
-    fun findActiveTagIdsByProductId(productId: UUID): Collection<UUID> =
-        productTagRepository.findActiveTagIdsByProductId(productId)
+    fun findActiveTagIdsByOrgProductId(orgProductId: UUID): Collection<UUID> =
+        productTagRepository.findActiveTagIdsByOrgProductId(orgProductId)
 
-    fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagDto> {
-        if (productIds.isEmpty()) return emptyList()
-        return productTagRepository.findActiveProductTagsByProductIds(productIds).map { productTagMapper.toDomainDto(it) }
+    fun findActiveProductTagsByOrgProductIds(orgProductIds: Collection<UUID>): List<ProductTagDto> {
+        if (orgProductIds.isEmpty()) return emptyList()
+        return productTagRepository.findActiveProductTagsByOrgProductIds(orgProductIds).map { productTagMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)

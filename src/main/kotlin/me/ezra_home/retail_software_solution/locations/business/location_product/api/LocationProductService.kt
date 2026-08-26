@@ -50,19 +50,19 @@ class LocationProductService(
         return convertToResponseDto(locationProductCache.save(updated))
     }
 
-    fun deactivateProduct(productId: UUID): LocationProductResponseDto {
-        val entity = locationProductRepository.findById(productId).orElseThrow {
+    fun deactivateProduct(locationProductId: UUID): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(locationProductId).orElseThrow {
             UpdatingNonExistingRecordException()
         }
         val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.DISCONTINUED))
         return convertToResponseDto(saved)
     }
 
-    fun reactivateProduct(productId: UUID): LocationProductResponseDto {
-        val entity = locationProductRepository.findById(productId).orElseThrow {
+    fun reactivateProduct(locationProductId: UUID): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(locationProductId).orElseThrow {
             UpdatingNonExistingRecordException()
         }
-        verifyOrgProductIsActive(entity.productId)
+        verifyOrgProductIsActive(entity.orgProductId)
         val saved = locationProductCache.save(locationProductMapper.toDomainDto(entity).copy(status = ProductStatus.ACTIVE))
         return convertToResponseDto(saved)
     }

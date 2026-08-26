@@ -13,7 +13,7 @@ object StockTransferFifoAllocator {
         dispatchId: UUID,
         draftLines: List<StockTransferDraftLineEntity>,
         fifoEntriesByProduct: Map<UUID, List<StockEntryFifoDto>>,
-        productIdByLocationProductId: Map<UUID, UUID>,
+        orgProductIdByLocationProductId: Map<UUID, UUID>,
         productLabelByLocationProductId: Map<UUID, String>
     ): List<StockTransferDispatchLineEntity> {
         return draftLines.flatMap { draftLine ->
@@ -23,7 +23,7 @@ object StockTransferFifoAllocator {
             allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
                 StockTransferDispatchLineEntity(
                     stockTransferDispatchId = dispatchId,
-                    productId = productIdByLocationProductId.getValue(draftLine.locationProductId),
+                    orgProductId = orgProductIdByLocationProductId.getValue(draftLine.locationProductId),
                     locationProductId = draftLine.locationProductId,
                     quantityDispatched = Decimals.divideScale4(allocation.baseQuantity, draftLine.conversionFactor),
                     unitId = draftLine.unitId,

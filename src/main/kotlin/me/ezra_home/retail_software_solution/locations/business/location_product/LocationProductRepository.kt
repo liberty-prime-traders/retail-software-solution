@@ -10,7 +10,7 @@ interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID>
   @Query("SELECT lp FROM LocationProductEntity lp ORDER BY lower(lp.productName) ASC")
   fun findAllLocationProducts(): List<LocationProductEntity>
 
-  fun findByProductId(productId: UUID): LocationProductEntity?
+  fun findByOrgProductId(orgProductId: UUID): LocationProductEntity?
 
-  fun findByProductIdIn(productIds: Collection<UUID>): List<LocationProductEntity>
+  fun findByOrgProductIdIn(orgProductIds: Collection<UUID>): List<LocationProductEntity>
 }

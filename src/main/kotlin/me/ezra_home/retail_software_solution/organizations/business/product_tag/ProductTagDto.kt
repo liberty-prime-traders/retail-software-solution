@@ -9,6 +9,6 @@ data class ProductTagDto(
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
     val endOn: OffsetDateTime? = null,
-    val productId: UUID,
+    val orgProductId: UUID,
     val tagId: UUID
 )

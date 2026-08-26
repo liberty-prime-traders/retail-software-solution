@@ -12,7 +12,7 @@ object ProductSyncDataMapper {
       ?: throw IllegalStateException("Invalid status value: $statusString")
 
     return ProductSyncData(
-      productId = tuple.getRequired(ProductQueryConstants.Columns.ID, UUID::class.java),
+      orgProductId = tuple.getRequired(ProductQueryConstants.Columns.ID, UUID::class.java),
       productName = tuple.getRequired(ProductQueryConstants.Columns.NAME, String::class.java),
       description = tuple.getOptional(ProductQueryConstants.Columns.DESCRIPTION, String::class.java),
       productGroupName = tuple.getOptional(ProductQueryConstants.Columns.PRODUCT_GROUP_NAME, String::class.java),

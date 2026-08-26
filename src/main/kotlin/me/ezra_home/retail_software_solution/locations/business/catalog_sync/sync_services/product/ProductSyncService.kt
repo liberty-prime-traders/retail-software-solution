@@ -48,7 +48,7 @@ class ProductSyncService(
 
   @TransactionalOnOrganizationSchema(readOnly = true)
   override fun syncSingle(entityId: UUID) {
-    val productSyncData = productRevisionFetcher.fetchByProductId(entityId) ?: return
+    val productSyncData = productRevisionFetcher.fetchByOrgProductId(entityId) ?: return
     createLocationRecord(productSyncData)
   }
 }

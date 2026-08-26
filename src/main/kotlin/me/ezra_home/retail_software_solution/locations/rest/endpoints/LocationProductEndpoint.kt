@@ -58,13 +58,13 @@ class LocationProductEndpoint(
   fun updateProduct(@RequestBody dto: LocationProductUpdateDto): LocationProductResponseDto =
     locationProductService.updateProduct(dto)
 
-  @PutMapping("{productId}/deactivate")
-  fun deactivateProduct(@PathVariable productId: UUID): LocationProductResponseDto =
-    locationProductService.deactivateProduct(productId)
+  @PutMapping("{locationProductId}/deactivate")
+  fun deactivateProduct(@PathVariable locationProductId: UUID): LocationProductResponseDto =
+    locationProductService.deactivateProduct(locationProductId)
 
-  @PutMapping("{productId}/reactivate")
-  fun reactivateProduct(@PathVariable productId: UUID): LocationProductResponseDto =
-    locationProductService.reactivateProduct(productId)
+  @PutMapping("{locationProductId}/reactivate")
+  fun reactivateProduct(@PathVariable locationProductId: UUID): LocationProductResponseDto =
+    locationProductService.reactivateProduct(locationProductId)
 
   @GetMapping("history")
   fun getMovementHistory(@RequestParam("locationProductId") locationProductId: UUID): Collection<StockMovementResponse> =

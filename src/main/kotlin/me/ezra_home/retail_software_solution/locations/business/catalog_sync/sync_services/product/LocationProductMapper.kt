@@ -6,7 +6,7 @@ object LocationProductMapper {
 
   fun toSyncDto(syncData: ProductSyncData): LocationProductSyncDto {
     return LocationProductSyncDto(
-      productId = syncData.productId,
+      orgProductId = syncData.orgProductId,
       productName = syncData.productName,
       description = syncData.description,
       productGroupName = syncData.productGroupName,

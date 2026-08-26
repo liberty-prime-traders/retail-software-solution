@@ -30,18 +30,18 @@ class StockTransferReceiptStockUpdater(
     }
 
     fun recordTransferReceipt(event: StockTransferDispatchedEvent) {
-        val productIds = event.lines.map { it.productId }.toSet()
-        val identitiesByProductId = locationProductDataFetcher.findIdentitiesByProductIds(productIds)
-        val locationProductIdByProductId = productIds.associateWith { productId ->
-            identitiesByProductId[productId]?.locationProductId
-                ?: throw RtsGenericException("No location product found for product $productId at destination")
+        val orgProductIds = event.lines.map { it.orgProductId }.toSet()
+        val identitiesByOrgProductId = locationProductDataFetcher.findIdentitiesByOrgProductIds(orgProductIds)
+        val locationProductIdByOrgProductId = orgProductIds.associateWith { orgProductId ->
+            identitiesByOrgProductId[orgProductId]?.locationProductId
+                ?: throw RtsGenericException("No location product found for product $orgProductId at destination")
         }
 
-        val locationProductIds = locationProductIdByProductId.values.toList()
+        val locationProductIds = locationProductIdByOrgProductId.values.toList()
         val runningBalances = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
 
         val entriesByDispatchLineRef = event.lines.associate { line ->
-            val locationProductId = locationProductIdByProductId.getValue(line.productId)
+            val locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId)
             val baseQty = Decimals.multiplyScale4(line.quantityDispatched, line.conversionFactor)
             line.dispatchLineReferenceNumber to StockEntryEntity(
                 locationProductId = locationProductId,
@@ -56,7 +56,7 @@ class StockTransferReceiptStockUpdater(
         stockEntryRepository.saveAll(entriesByDispatchLineRef.values)
 
         val movements = event.lines.map { line ->
-            val locationProductId = locationProductIdByProductId.getValue(line.productId)
+            val locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId)
             val entry = entriesByDispatchLineRef[line.dispatchLineReferenceNumber]!!
             val newBalance = (runningBalances[locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
             runningBalances[locationProductId] = newBalance

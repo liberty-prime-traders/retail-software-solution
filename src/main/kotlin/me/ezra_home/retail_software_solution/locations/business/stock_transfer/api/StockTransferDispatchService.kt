@@ -57,7 +57,7 @@ class StockTransferDispatchService(
         val locationProductIds = draftLines.map { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val fifoEntriesByProduct = stockBalanceFetcher.getFifoEntriesByProduct(locationProductIds)
-        val productIdByLocationProductId = locationProductDataFetcher.getProductIds(locationProductIds)
+        val orgProductIdByLocationProductId = locationProductDataFetcher.getOrgProductIds(locationProductIds)
         val summariesByLocationProductId = locationProductDataFetcher.findSummaryByIds(locationProductIds)
         val productLabelByLocationProductId = summariesByLocationProductId.mapValues { (_, summary) -> summary.label }
 
@@ -70,7 +70,7 @@ class StockTransferDispatchService(
             dispatchId = dispatchEntity.id!!,
             draftLines = draftLines,
             fifoEntriesByProduct = fifoEntriesByProduct,
-            productIdByLocationProductId = productIdByLocationProductId,
+            orgProductIdByLocationProductId = orgProductIdByLocationProductId,
             productLabelByLocationProductId = productLabelByLocationProductId
         )
 
@@ -149,7 +149,7 @@ class StockTransferDispatchService(
         dispatchLines.map { dispatchLine ->
             StockTransferDispatchedLineDto(
                 dispatchLineReferenceNumber = dispatchLine.requiredReference(),
-                productId = dispatchLine.productId,
+                orgProductId = dispatchLine.orgProductId,
                 quantityDispatched = dispatchLine.quantityDispatched,
                 unitId = dispatchLine.unitId,
                 baseUnitId = dispatchLine.baseUnitId,

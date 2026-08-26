@@ -39,12 +39,12 @@ class ProductEndpoint(
     fun updateProduct(@RequestBody productDto: OrganizationProductUpdateDto): OrganizationProductResponseDto =
         organizationProductService.updateProduct(productDto)
 
-    @PutMapping("{productId}/deactivate")
-    fun deactivateProduct(@PathVariable productId: UUID): OrganizationProductResponseDto =
-        organizationProductService.deactivateProduct(productId)
+    @PutMapping("{orgProductId}/deactivate")
+    fun deactivateProduct(@PathVariable orgProductId: UUID): OrganizationProductResponseDto =
+        organizationProductService.deactivateProduct(orgProductId)
 
-    @PutMapping("{productId}/reactivate")
-    fun reactivateProduct(@PathVariable productId: UUID): OrganizationProductResponseDto =
-        organizationProductService.reactivateProduct(productId)
+    @PutMapping("{orgProductId}/reactivate")
+    fun reactivateProduct(@PathVariable orgProductId: UUID): OrganizationProductResponseDto =
+        organizationProductService.reactivateProduct(orgProductId)
 
 }

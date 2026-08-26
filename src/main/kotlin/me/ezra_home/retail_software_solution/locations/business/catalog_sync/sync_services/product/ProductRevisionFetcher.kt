@@ -42,11 +42,11 @@ class ProductRevisionFetcher(
     }
   }
 
-  fun fetchByProductId(productId: UUID): ProductSyncData? {
+  fun fetchByOrgProductId(orgProductId: UUID): ProductSyncData? {
     organizationEmf.createEntityManager().use { em ->
-      val sql = ProductQueryBuilder.buildFetchQueryByProductId()
+      val sql = ProductQueryBuilder.buildFetchQueryByOrgProductId()
       val query = em.createNativeQuery(sql, Tuple::class.java)
-      query.setParameter(ProductQueryConstants.Parameters.PRODUCT_ID, productId)
+      query.setParameter(ProductQueryConstants.Parameters.ORG_PRODUCT_ID, orgProductId)
 
       @Suppress("UNCHECKED_CAST")
       val results = query.resultList as List<Tuple>

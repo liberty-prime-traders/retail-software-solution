@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductInsertDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context

@@ -309,7 +309,7 @@ Two distinct mechanisms protect inventory:
 
 ### Locking discipline
 
-- `EntityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)` is taken
+- `EntityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds)` is taken
   independently in three self-contained places, each of which fetches its own
   balances immediately after locking rather than accepting a pre-fetched
   snapshot from a caller: `SaleValidator.guardSufficientStockForSale` (draft
