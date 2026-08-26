@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitconversi
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 
 @Component
 class UnitConversionValidator(
@@ -14,7 +13,9 @@ class UnitConversionValidator(
 ) {
 
     fun validateInsert(dto: UnitConversionInsertDto) {
-        if (dto.factor <= BigDecimal.ZERO) throw RtsGenericException("factor must be greater than zero")
+        if (dto.numerator <= 0 || dto.denominator <= 0) {
+            throw RtsGenericException("numerator and denominator must both be greater than zero")
+        }
         if (dto.fromUnitId == dto.toUnitId) throw RtsGenericException("fromUnitId and toUnitId must be different")
 
         val allUnits = unitValueFetcher.getAllUnitValues().associateBy { it.id }
@@ -32,6 +33,8 @@ class UnitConversionValidator(
     }
 
     fun validateUpdate(dto: UnitConversionUpdateDto) {
-        if (dto.factor <= BigDecimal.ZERO) throw RtsGenericException("factor must be greater than zero")
+        if (dto.numerator <= 0 || dto.denominator <= 0) {
+            throw RtsGenericException("numerator and denominator must both be greater than zero")
+        }
     }
 }

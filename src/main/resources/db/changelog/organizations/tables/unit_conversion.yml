@@ -34,11 +34,18 @@ databaseChangeLog:
                     notNullConstraintName: unit_conversion_to_unit_id_notnull
 
               - column:
-                  name: factor
-                  type: numeric(19, 6)
+                  name: factor_numerator
+                  type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: unit_conversion_factor_notnull
+                    notNullConstraintName: unit_conversion_factor_numerator_notnull
+
+              - column:
+                  name: factor_denominator
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_conversion_factor_denominator_notnull
 
               - column:
                   name: created_by_id

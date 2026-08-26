@@ -4,8 +4,8 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.ConversionTargetDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,44 +32,42 @@ class UnitConversionGraphBuilder(
         val unitById = allUnits.associateBy { it.id }
         val manualConversions = unitConversionRepository.findAll()
 
-        val edges = mutableMapOf<UUID, MutableMap<UUID, Pair<Long, Long>>>()
+        val edges = mutableMapOf<UUID, MutableMap<UUID, ConversionRatio>>()
 
-        fun addEdge(fromId: UUID, toId: UUID, numerator: Long, denominator: Long) {
-            edges.getOrPut(fromId) { mutableMapOf() }[toId] = numerator to denominator
-            edges.getOrPut(toId) { mutableMapOf() }[fromId] = denominator to numerator
+        fun addEdge(fromId: UUID, toId: UUID, ratio: ConversionRatio) {
+            edges.getOrPut(fromId) { mutableMapOf() }[toId] = ratio
+            edges.getOrPut(toId) { mutableMapOf() }[fromId] = ratio.invert()
         }
 
-        allUnits.filter { it.baseUnit != null && it.conversionFactor != null }.forEach { unit ->
-            val (n, d) = unit.conversionFactor!!.toRationalPair()
-            addEdge(unit.id, unit.baseUnit!!, n, d)
+        allUnits.filter { it.baseUnit != null && it.unitsOfBasePerUnit != null }.forEach { unit ->
+            addEdge(unit.id, unit.baseUnit!!, ConversionRatio(unit.unitsOfBasePerUnit!!, 1L))
         }
 
         manualConversions.forEach { conversion ->
-            val (n, d) = conversion.factor.toRationalPair()
-            addEdge(conversion.fromUnitId, conversion.toUnitId, n, d)
+            addEdge(conversion.fromUnitId, conversion.toUnitId, ConversionRatio(conversion.factorNumerator, conversion.factorDenominator))
         }
 
         val map = allUnits.associate { startUnit ->
-            val reachable = mutableMapOf<UUID, Pair<Long, Long>>()
-            val queue = ArrayDeque<RationalNode>()
-            queue.add(RationalNode(startUnit.id, 1L, 1L))
+            val reachable = mutableMapOf<UUID, ConversionRatio>()
+            val queue = ArrayDeque<Pair<UUID, ConversionRatio>>()
+            queue.add(startUnit.id to ConversionRatio.IDENTITY)
 
             while (queue.isNotEmpty()) {
-                val current = queue.removeFirst()
-                edges[current.id]?.forEach { (neighbourId, edge) ->
+                val (currentId, currentRatio) = queue.removeFirst()
+                edges[currentId]?.forEach { (neighbourId, edgeRatio) ->
                     if (neighbourId != startUnit.id && neighbourId !in reachable) {
-                        val (compN, compD) = compound(current.numerator, current.denominator, edge.first, edge.second)
-                        reachable[neighbourId] = compN to compD
-                        queue.add(RationalNode(neighbourId, compN, compD))
+                        val compounded = currentRatio.times(edgeRatio)
+                        reachable[neighbourId] = compounded
+                        queue.add(neighbourId to compounded)
                     }
                 }
             }
 
-            reachable[startUnit.id] = 1L to 1L
+            reachable[startUnit.id] = ConversionRatio.IDENTITY
 
-            val conversions = reachable.mapNotNull { (toId, pair) ->
+            val conversions = reachable.mapNotNull { (toId, ratio) ->
                 unitById[toId]?.let { toUnit ->
-                    toId to ConversionTargetDto(toUnit.id, toUnit.name, toUnit.code, pair.first, pair.second)
+                    toId to ConversionTargetDto(toUnit.id, toUnit.name, toUnit.code, ratio.numerator, ratio.denominator)
                 }
             }.toMap()
 
@@ -77,21 +75,4 @@ class UnitConversionGraphBuilder(
         }
         return UnitConversionGraph(map, allUnits.associate { it.id to it.name })
     }
-}
-
-private data class RationalNode(val id: UUID, val numerator: Long, val denominator: Long)
-
-private fun BigDecimal.toRationalPair(): Pair<Long, Long> {
-    val scaled = this.multiply(BigDecimal(100)).toLong()
-    val g = gcd(scaled, 100L)
-    return (scaled / g) to (100L / g)
-}
-
-private fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
-
-private fun compound(aN: Long, aD: Long, bN: Long, bD: Long): Pair<Long, Long> {
-    val n = aN * bN
-    val d = aD * bD
-    val g = gcd(n, d)
-    return (n / g) to (d / g)
 }
