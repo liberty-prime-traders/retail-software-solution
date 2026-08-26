@@ -40,7 +40,7 @@ class OrganizationProductService(
         organizationProductValidator.validateProductInsert(productInsertDto)
         val savedDto = organizationProductCache.create(productInsertDto)
         productTagService.manageProductTags(
-            productId = savedDto.id,
+            orgProductId = savedDto.id,
             tagsToAdd = productInsertDto.tagsToAdd
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
@@ -55,7 +55,7 @@ class OrganizationProductService(
         val updated = productUpdateDto.applyTo(existing)
         val savedDto = organizationProductCache.save(updated)
         productTagService.manageProductTags(
-            productId = productUpdateDto.id,
+            orgProductId = productUpdateDto.id,
             tagsToAdd = productUpdateDto.tagsToAdd,
             tagsToRemove = productUpdateDto.tagsToRemove
         )
@@ -63,14 +63,14 @@ class OrganizationProductService(
         return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
     }
 
-    fun deactivateProduct(productId: UUID): OrganizationProductResponseDto {
-        val dto = organizationProductCache.findAllProducts().find { it.id == productId }
+    fun deactivateProduct(orgProductId: UUID): OrganizationProductResponseDto {
+        val dto = organizationProductCache.findAllProducts().find { it.id == orgProductId }
             ?: throw UpdatingNonExistingRecordException()
         return updateStatus(dto, ProductStatus.DISCONTINUED)
     }
 
-    fun reactivateProduct(productId: UUID): OrganizationProductResponseDto {
-        val dto = organizationProductCache.findAllProducts().find { it.id == productId }
+    fun reactivateProduct(orgProductId: UUID): OrganizationProductResponseDto {
+        val dto = organizationProductCache.findAllProducts().find { it.id == orgProductId }
             ?: throw UpdatingNonExistingRecordException()
         return updateStatus(dto, ProductStatus.ACTIVE)
     }

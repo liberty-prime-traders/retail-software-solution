@@ -98,22 +98,22 @@ class LocationProductDataFetcher(
         locationProductRepository.findAllById(locationProductIds)
             .associate { it.id!! to it.baseUnitId }
 
-    fun getProductIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
+    fun getOrgProductIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
         locationProductRepository.findAllById(locationProductIds)
-            .associate { it.id!! to it.productId }
+            .associate { it.id!! to it.orgProductId }
 
-    fun findIdentityByProductId(productId: UUID): LocationProductIdentityDto {
-        val entity = locationProductRepository.findByProductId(productId)
-            ?: throw RtsGenericException("No location product found for product $productId")
-        return LocationProductIdentityDto(locationProductId = entity.id!!, productId = entity.productId)
+    fun findIdentityByOrgProductId(orgProductId: UUID): LocationProductIdentityDto {
+        val entity = locationProductRepository.findByOrgProductId(orgProductId)
+            ?: throw RtsGenericException("No location product found for product $orgProductId")
+        return LocationProductIdentityDto(locationProductId = entity.id!!, orgProductId = entity.orgProductId)
     }
 
-    fun findIdentitiesByProductIds(productIds: Collection<UUID>): Map<UUID, LocationProductIdentityDto> =
-        locationProductRepository.findByProductIdIn(productIds)
+    fun findIdentitiesByOrgProductIds(orgProductIds: Collection<UUID>): Map<UUID, LocationProductIdentityDto> =
+        locationProductRepository.findByOrgProductIdIn(orgProductIds)
             .associate { entity ->
-                entity.productId to LocationProductIdentityDto(
+                entity.orgProductId to LocationProductIdentityDto(
                     locationProductId = entity.id!!,
-                    productId = entity.productId
+                    orgProductId = entity.orgProductId
                 )
             }
 

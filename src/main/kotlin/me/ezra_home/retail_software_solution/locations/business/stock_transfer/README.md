@@ -14,9 +14,9 @@ A stock transfer spans **two** location schemas and **one** org schema:
 
 Because each schema requires its own connection, every cross-schema read or write uses `locationService.withLocationSchema(schema) { ... }` to switch the search path, which requires `REQUIRES_NEW` (a fresh connection) on the gateway method called inside. `withLocationSchema` re-resolves the full location (id, schema, timezone) for the target schema via `LocationService.getBySchema` — it never carries over the caller's own location id.
 
-## Response assembly after a write
+## Response assembly after each write
 
-`StockTransferResponseAssembler.build` is read-only and always re-reads both schemas via `REQUIRES_NEW`. It must never be called right after a write to either schema in the *same* still-open transaction — that write won't be visible yet to a `REQUIRES_NEW` connection. Every service that mutates its own ambient schema and then needs a response uses a dedicated assembler method instead, passing in the entity/lines it just touched directly: `buildDispatchOnly` (draft line add/update/remove, dispatch creation, and the draft-to-dispatch transition — all source-schema) and `buildDispatchAndReceipt` (receipt line confirm/unconfirm/complete — destination-schema; the dispatch side is still read from the foreign source schema via the gateway, which is safe since nothing was written there in the same transaction).
+`StockTransferResponseAssembler.build` is read-only and always re-reads both schemas via `REQUIRES_NEW`. It must never be called right after each write to either schema in the *same* still-open transaction — that write won't be visible yet to a `REQUIRES_NEW` connection. Every service that mutates its own ambient schema and then needs a response uses a dedicated assembler method instead, passing in the entity/lines it just touched directly: `buildDispatchOnly` (draft line add/update/remove, dispatch creation, and the draft-to-dispatch transition — all source-schema) and `buildDispatchAndReceipt` (receipt line confirm/unconfirm/complete — destination-schema; the dispatch side is still read from the foreign source schema via the gateway, which is safe since nothing was written there in the same transaction).
 
 `ReconciledTransferLineFetcher` (not `StockTransferSchemaGateway`) is what those services call for their own-schema draft/dispatch line reads. It exists specifically so `StockTransferSchemaGateway` can stay uniform: every gateway method is `REQUIRES_NEW` cross-schema access, no exceptions. `ReconciledTransferLineFetcher`'s methods are the opposite — `Propagation.MANDATORY`, meaning they refuse to run without an already-active location-schema transaction and always join it. `StockTransferSchemaGateway.buildDispatchWithLines` itself calls into `ReconciledTransferLineFetcher` (MANDATORY is happy to join the gateway's own REQUIRES_NEW transaction) to avoid duplicating the entity-to-`ReconciledTransferLine` mapping.
 
@@ -84,7 +84,7 @@ available-quantity snapshot for the now-consumed draft quantity is no longer mea
 
 ## Destination location product resolution
 
-Dispatch lines store the **source** location's `locationProductId`. When writing to the destination schema (receipt lines, stock entries, stock movements), the destination `locationProductId` must be looked up by `productId` via `LocationProductDataFetcher.findIdentityByProductId`. Never copy the source `locationProductId` to the destination.
+Dispatch lines store the **source** location's `locationProductId`. When writing to the destination schema (receipt lines, stock entries, stock movements), the destination `locationProductId` must be looked up by `orgProductId` via `LocationProductDataFetcher.findIdentityByOrgProductId`. Never copy the source `locationProductId` to the destination.
 
 ## Kafka processor conventions
 

@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductCache
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductInsertDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
@@ -19,7 +20,7 @@ class LocationProductSyncService(
 
     @TransactionalOnLocationSchema
     fun syncUpsert(syncDto: LocationProductSyncDto): Boolean {
-        val existing = locationProductRepository.findByProductId(syncDto.productId)
+        val existing = locationProductRepository.findByOrgProductId(syncDto.orgProductId)
 
         if (existing != null) {
             if (fieldsMatch(existing, syncDto)) return false
@@ -38,16 +39,18 @@ class LocationProductSyncService(
             return true
         }
 
-        locationProductCache.create(LocationProductInsertDto(
-            productId = syncDto.productId,
-            productName = syncDto.productName,
-            description = syncDto.description,
-            productGroupName = syncDto.productGroupName ?: "Unknown",
-            categoryId = syncDto.categoryId,
-            baseUnitId = syncDto.baseUnitId,
-            status = syncDto.status,
-            lastSyncedAt = OffsetDateTime.now()
-        ))
+        locationProductCache.create(
+            LocationProductInsertDto(
+                orgProductId = syncDto.orgProductId,
+                productName = syncDto.productName,
+                description = syncDto.description,
+                productGroupName = syncDto.productGroupName ?: "Unknown",
+                categoryId = syncDto.categoryId,
+                baseUnitId = syncDto.baseUnitId,
+                status = syncDto.status,
+                lastSyncedAt = OffsetDateTime.now()
+            )
+        )
         return true
     }
 

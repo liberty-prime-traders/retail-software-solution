@@ -4,5 +4,5 @@ import java.util.UUID
 
 data class LocationProductIdentityDto(
     val locationProductId: UUID,
-    val productId: UUID
+    val orgProductId: UUID
 )

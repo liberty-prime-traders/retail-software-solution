@@ -14,9 +14,9 @@ class ProductTagQualifier(
 ) {
 
     @ActiveProductTags
-    fun mapProductIdToActiveTags(productId: UUID?): List<TagSummaryDto> {
-        if (productId == null) return emptyList()
-        val activeTagIds = productTagService.findActiveTagIdsByProductId(productId)
+    fun mapOrgProductIdToActiveTags(orgProductId: UUID?): List<TagSummaryDto> {
+        if (orgProductId == null) return emptyList()
+        val activeTagIds = productTagService.findActiveTagIdsByOrgProductId(orgProductId)
         if (activeTagIds.isEmpty()) return emptyList()
         return tagService.getAllTagDtos()
             .filter { activeTagIds.contains(it.id) }

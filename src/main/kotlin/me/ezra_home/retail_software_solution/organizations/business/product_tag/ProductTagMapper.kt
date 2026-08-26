@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagInsertDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

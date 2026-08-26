@@ -41,7 +41,7 @@ class StockTransferDispatchedHandlerForKafka(
             lines = dispatchRecord.lines.map { line ->
                 StockTransferDispatchedLineDto(
                     dispatchLineReferenceNumber = line.requiredReference(),
-                    productId = line.productId,
+                    orgProductId = line.orgProductId,
                     quantityDispatched = line.quantityDispatched,
                     unitId = line.unitId,
                     baseUnitId = line.baseUnitId,

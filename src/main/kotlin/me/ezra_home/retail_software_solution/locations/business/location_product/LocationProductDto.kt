@@ -10,7 +10,7 @@ data class LocationProductDto(
     val createdById: UUID,
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
-    val productId: UUID? = null,
+    val orgProductId: UUID? = null,
     val productName: String? = null,
     val description: String? = null,
     val productGroupName: String? = null,

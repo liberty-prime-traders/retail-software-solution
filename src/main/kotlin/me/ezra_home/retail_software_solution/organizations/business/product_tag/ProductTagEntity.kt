@@ -15,7 +15,7 @@ import java.util.UUID
 class ProductTagEntity(
 
     @Column(name = "product_id", nullable = false, updatable = false)
-    var productId: UUID,
+    var orgProductId: UUID,
 
     @Column(name = "tag_id", nullable = false, updatable = false)
     var tagId: UUID

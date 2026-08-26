@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class StockTransferDispatchedLineDto(
     val dispatchLineReferenceNumber: String,
-    val productId: UUID,
+    val orgProductId: UUID,
     val quantityDispatched: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,

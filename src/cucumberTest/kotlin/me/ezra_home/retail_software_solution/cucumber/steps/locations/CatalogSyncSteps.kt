@@ -18,7 +18,7 @@ class CatalogSyncSteps(
 
   @Then("the location catalog should contain product {string}")
   fun verifyLocationCatalogContainsProduct(productName: String) {
-    val productId = injectContext.get(TransientKey.PRODUCT)
+    val orgProductId = injectContext.get(TransientKey.PRODUCT)
 
     val searchBody = PageRequest(
       previousCursor = null,
@@ -26,14 +26,14 @@ class CatalogSyncSteps(
       parameters = ProductSearchParameters(searchText = productName)
     )
 
-    await().alias("Product '$productName' (id=$productId) not found in location catalog")
+    await().alias("Product '$productName' (id=$orgProductId) not found in location catalog")
       .atMost(Duration.ofMillis(TestConstants.Timeouts.KAFKA_SYNC_MS))
       .pollInterval(Duration.ofMillis(TestConstants.Timeouts.KAFKA_POLL_INTERVAL_MS))
       .until {
         apiClient.post("/secured/location-products/search", searchBody)
           .jsonPath()
           .getList("contents", LocationProductResponseDto::class.java)
-          ?.any { it.productName == productName && it.productId == productId } == true
+          ?.any { it.productName == productName && it.orgProductId == orgProductId } == true
       }
   }
 }

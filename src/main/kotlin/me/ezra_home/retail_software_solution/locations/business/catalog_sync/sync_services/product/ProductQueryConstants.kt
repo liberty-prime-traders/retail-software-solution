@@ -27,6 +27,6 @@ object ProductQueryConstants {
   }
 
   object Parameters {
-    const val PRODUCT_ID = "productId"
+    const val ORG_PRODUCT_ID = "productId"
   }
 }

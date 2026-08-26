@@ -11,22 +11,22 @@ interface ProductTagRepository : JpaRepository<ProductTagEntity, UUID> {
 
     @Query("""
         SELECT pt.tagId FROM ProductTagEntity pt
-        WHERE pt.productId = :productId
+        WHERE pt.orgProductId = :orgProductId
         AND pt.endOn IS NULL
     """)
-    fun findActiveTagIdsByProductId(@Param("productId") productId: UUID): Set<UUID>
+    fun findActiveTagIdsByOrgProductId(@Param("orgProductId") orgProductId: UUID): Set<UUID>
 
     @Query("""
         SELECT pt FROM ProductTagEntity pt
-        WHERE pt.productId = :productId
+        WHERE pt.orgProductId = :orgProductId
         AND pt.endOn IS NULL
     """)
-    fun findActiveProductTagsByProductId(@Param("productId") productId: UUID): Collection<ProductTagEntity>
+    fun findActiveProductTagsByOrgProductId(@Param("orgProductId") orgProductId: UUID): Collection<ProductTagEntity>
 
     @Query("""
         SELECT pt FROM ProductTagEntity pt
-        WHERE pt.productId IN :productIds
+        WHERE pt.orgProductId IN :orgProductIds
         AND pt.endOn IS NULL
     """)
-    fun findActiveProductTagsByProductIds(@Param("productIds") productIds: Collection<UUID>): List<ProductTagEntity>
+    fun findActiveProductTagsByOrgProductIds(@Param("orgProductIds") orgProductIds: Collection<UUID>): List<ProductTagEntity>
 }

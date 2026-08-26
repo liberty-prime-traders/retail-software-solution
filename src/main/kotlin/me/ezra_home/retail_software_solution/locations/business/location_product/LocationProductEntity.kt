@@ -23,7 +23,7 @@ import java.util.UUID
 class LocationProductEntity(
 
   @Column(name = "product_id", nullable = false, unique = true)
-  var productId: UUID,
+  var orgProductId: UUID,
 
   @Column(name = "name", nullable = false, length = 100)
   var productName: String,

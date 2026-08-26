@@ -47,7 +47,7 @@ class StockTransferReceiptService(
         val sourceSchema = locationService.getSchemaByLocationId(order.sourceLocationId)
         val dispatchLine = locationService.withLocationSchema(sourceSchema) { stockTransferSchemaGateway.readDispatchLine(dispatchLineRef) }
         val destinationLocationProductId = locationProductDataFetcher
-            .findIdentityByProductId(dispatchLine.productId).locationProductId
+            .findIdentityByOrgProductId(dispatchLine.orgProductId).locationProductId
 
         entityAdvisoryLock.acquire(LockNamespaces.STOCK_TRANSFER_ORDER, order.id)
 

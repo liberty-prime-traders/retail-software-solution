@@ -21,7 +21,7 @@ class StockTransferDispatchLineEntity(
     var stockTransferDispatchId: UUID,
 
     @Column(name = "product_id", nullable = false, updatable = false)
-    var productId: UUID,
+    var orgProductId: UUID,
 
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,
