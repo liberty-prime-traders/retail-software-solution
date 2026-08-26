@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.cucumber.java.ParameterType
 import io.cucumber.java.en.Then
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
@@ -91,7 +92,7 @@ class DatabaseSteps(
         } ?: error("Failed to load organization")
         
         // Initialize SessionContext with organization using OrgSession
-        SessionContextProvider.getSession().organization = me.ezra_home.retail_software_solution.configuration.session.OrgSession(
+        SessionContextProvider.getSession().organization = OrgSession(
           id = org.id!!,
           schemaName = org.schemaName!!,
           timezone = org.timezone
