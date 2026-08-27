@@ -5,7 +5,8 @@ import java.math.BigDecimal
 data class ConversionRatio(val numerator: Long, val denominator: Long) {
 
     init {
-        require(denominator != 0L) { "denominator must not be zero" }
+        require(numerator > 0) { "numerator must be positive" }
+        require(denominator > 0) { "denominator must be positive" }
     }
 
     fun factor(): BigDecimal = Decimals.divideScale4(numerator.toBigDecimal(), denominator.toBigDecimal())
@@ -13,15 +14,16 @@ data class ConversionRatio(val numerator: Long, val denominator: Long) {
     fun applyTo(quantity: BigDecimal): BigDecimal =
         Decimals.divideScale4(quantity.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
 
+    fun isEquivalentTo(other: ConversionRatio): Boolean = numerator * other.denominator == other.numerator * denominator
+
     fun invert(): ConversionRatio = ConversionRatio(denominator, numerator).reduced()
 
     fun times(other: ConversionRatio): ConversionRatio =
         ConversionRatio(numerator * other.numerator, denominator * other.denominator).reduced()
 
     fun reduced(): ConversionRatio {
-        val sign = if (denominator < 0) -1L else 1L
         val g = Decimals.gcd(numerator, denominator)
-        return ConversionRatio(sign * numerator / g, sign * denominator / g)
+        return ConversionRatio(numerator / g, denominator / g)
     }
 
     companion object {

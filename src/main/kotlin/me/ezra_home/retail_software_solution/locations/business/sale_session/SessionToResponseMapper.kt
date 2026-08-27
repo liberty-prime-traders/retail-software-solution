@@ -42,6 +42,7 @@ interface SessionToResponseMapper {
 
     @Mapping(target = "unitPriceOverride", source = ".", qualifiedBy = [LineUnitPriceOverride::class])
     @Mapping(target = "netUnitPrice", source = ".", qualifiedBy = [LineNetUnitPrice::class])
+    @Mapping(target = "conversionFactor", source = ".", qualifiedBy = [LineConversionFactor::class])
     fun toLineDto(
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,

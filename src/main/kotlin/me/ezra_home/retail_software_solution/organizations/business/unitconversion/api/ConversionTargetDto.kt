@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitconversion.api
 
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
@@ -40,6 +41,12 @@ data class UnitConversionGraph(
     fun getFactor(fromUnitId: UUID, toUnitId: UUID): BigDecimal {
         if (fromUnitId == toUnitId) return BigDecimal.ONE
         return getTarget(fromUnitId, toUnitId).factor
+    }
+
+    fun getRatio(fromUnitId: UUID, toUnitId: UUID): ConversionRatio {
+        if (fromUnitId == toUnitId) return ConversionRatio.IDENTITY
+        val target = getTarget(fromUnitId, toUnitId)
+        return ConversionRatio(target.numerator, target.denominator)
     }
 
     private fun label(unitId: UUID): String =

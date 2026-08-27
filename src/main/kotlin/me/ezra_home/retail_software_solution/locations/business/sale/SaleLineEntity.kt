@@ -5,7 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -34,10 +34,13 @@ class SaleLineEntity(
     @Column(name = "unit_price", nullable = false, precision = 19, scale = 4)
     override var unitPrice: BigDecimal,
 
-    @Column(name = "conversion_factor", nullable = false, precision = 19, scale = 10)
-    var conversionFactor: BigDecimal
+    @Column(name = "conversion_numerator", nullable = false)
+    override var conversionNumerator: Long,
 
-) : HasReferenceEntity(), ProductLineWithPrice {
+    @Column(name = "conversion_denominator", nullable = false)
+    override var conversionDenominator: Long
 
-    fun baseQty(): BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
+) : HasReferenceEntity(), ProductLineWithPrice, HasConversionRatio {
+
+    fun baseQty(): BigDecimal = conversionRatio().applyTo(quantity)
 }

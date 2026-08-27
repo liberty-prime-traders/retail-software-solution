@@ -77,16 +77,18 @@ class StockTransferStockUpdater(
             stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
             modifiedEntries.add(stockEntry)
             runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
+            val conversionRatio = dispatchLineRequest.conversionRatio
             movements.add(
                 StockMovementEntity(
                     stockEntryId = stockEntry.id!!,
                     locationProductId = dispatchLineRequest.locationProductId,
                     movementType = MovementType.TRANSFER_OUT,
-                    movedQuantity = Decimals.divideScale4(takenQuantityInBaseUnit, dispatchLineRequest.conversionFactor),
+                    movedQuantity = conversionRatio.invert().applyTo(takenQuantityInBaseUnit),
                     remainingQuantity = runningBalance,
                     externalReferenceNumber = dispatchLineRequest.dispatchLineRef,
                     unitId = dispatchLineRequest.unitId,
-                    conversionFactor = dispatchLineRequest.conversionFactor
+                    conversionNumerator = conversionRatio.numerator,
+                    conversionDenominator = conversionRatio.denominator
                 )
             )
             unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
@@ -129,7 +131,8 @@ class StockTransferStockUpdater(
             var runningBalance = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO
             stockMovementsForProduct.forEach { stockMovement ->
                 val stockEntry = stockEntriesById[stockMovement.stockEntryId]!!
-                val restoredBaseQuantity = Decimals.multiplyScale4(stockMovement.movedQuantity, stockMovement.conversionFactor)
+                val conversionRatio = stockMovement.conversionRatio()
+                val restoredBaseQuantity = conversionRatio.applyTo(stockMovement.movedQuantity)
                 stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBaseQuantity)
                 modifiedEntries.add(stockEntry)
                 runningBalance = runningBalance.add(restoredBaseQuantity)
@@ -142,7 +145,8 @@ class StockTransferStockUpdater(
                         remainingQuantity = runningBalance,
                         externalReferenceNumber = stockMovement.externalReferenceNumber,
                         unitId = stockMovement.unitId,
-                        conversionFactor = stockMovement.conversionFactor
+                        conversionNumerator = conversionRatio.numerator,
+                        conversionDenominator = conversionRatio.denominator
                     )
                 )
             }

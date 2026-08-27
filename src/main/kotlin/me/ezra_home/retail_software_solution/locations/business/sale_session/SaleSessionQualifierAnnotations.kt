@@ -66,3 +66,8 @@ annotation class LineUnitPriceOverride
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
 annotation class LineNetUnitPrice
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineConversionFactor

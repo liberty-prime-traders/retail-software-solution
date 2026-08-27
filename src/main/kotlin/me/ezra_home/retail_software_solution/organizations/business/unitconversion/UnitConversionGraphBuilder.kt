@@ -40,11 +40,19 @@ class UnitConversionGraphBuilder(
         }
 
         allUnits.filter { it.baseUnit != null && it.unitsOfBasePerUnit != null }.forEach { unit ->
-            addEdge(unit.id, unit.baseUnit!!, ConversionRatio(unit.unitsOfBasePerUnit!!, 1L))
+            addEdge(
+                unit.id,
+                unit.baseUnit!!,
+                ConversionRatio(unit.unitsOfBasePerUnit!!, 1L)
+            )
         }
 
         manualConversions.forEach { conversion ->
-            addEdge(conversion.fromUnitId, conversion.toUnitId, ConversionRatio(conversion.factorNumerator, conversion.factorDenominator))
+            addEdge(
+                conversion.fromUnitId,
+                conversion.toUnitId,
+                ConversionRatio(conversion.factorNumerator, conversion.factorDenominator)
+            )
         }
 
         val map = allUnits.associate { startUnit ->

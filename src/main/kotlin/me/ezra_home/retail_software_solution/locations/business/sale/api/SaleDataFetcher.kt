@@ -97,7 +97,7 @@ class SaleDataFetcher(
                 productLabel = productSummaries[line.locationProductId]?.label ?: line.locationProductId.toString(),
                 quantity = line.quantity,
                 unitId = line.unitId,
-                conversionFactor = line.conversionFactor,
+                conversionRatio = line.conversionRatio(),
                 unitPrice = line.unitPrice,
             )
         }

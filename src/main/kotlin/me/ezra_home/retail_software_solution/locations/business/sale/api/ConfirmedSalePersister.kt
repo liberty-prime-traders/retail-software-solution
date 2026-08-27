@@ -91,7 +91,7 @@ class ConfirmedSalePersister(
                 locationProductId = saleLineEntity.locationProductId,
                 baseQuantity = saleLineEntity.baseQty(),
                 unitId = saleLineEntity.unitId,
-                conversionFactor = saleLineEntity.conversionFactor,
+                conversionRatio = saleLineEntity.conversionRatio(),
             )
         }
 

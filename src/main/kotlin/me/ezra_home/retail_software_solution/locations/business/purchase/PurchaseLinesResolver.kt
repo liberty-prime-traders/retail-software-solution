@@ -41,12 +41,12 @@ class PurchaseLinesResolver(
     private fun computeAdditions(purchaseId: UUID, linesToAdd: List<PurchaseLineCreateDto>): List<PurchaseLineEntity> {
         PurchaseValidator.guardPositiveLineQuantities(linesToAdd)
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
-        val factors = locationProductDataFetcher.getConversionFactors(
+        val conversionRatios = locationProductDataFetcher.getConversionRatios(
             linesToAdd.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         return linesToAdd.map {
             PurchaseMapper.toNewLineEntity(
-                purchaseId, it, factors.getValue(it.locationProductId)
+                purchaseId, it, conversionRatios.getValue(it.locationProductId)
             )
         }
     }
@@ -66,7 +66,7 @@ class PurchaseLinesResolver(
         val changedUnitLineDtos = linesToUpdate.filter { lineDto ->
             existingLinesById[lineDto.id]?.unitId != lineDto.unitId
         }
-        val unitFactorsForChangedProducts = locationProductDataFetcher.getConversionFactors(
+        val conversionRatiosForChangedProducts = locationProductDataFetcher.getConversionRatios(
             changedUnitLineDtos.map {
                 LocationProductUnitRequestDto(existingLinesById[it.id]!!.locationProductId, it.unitId)
             }
@@ -82,7 +82,9 @@ class PurchaseLinesResolver(
                 existing.unitCost = lineDto.unitCost
                 if (existing.unitId != lineDto.unitId) {
                     existing.unitId = lineDto.unitId
-                    existing.conversionFactor = unitFactorsForChangedProducts.getValue(existing.locationProductId)
+                    val ratio = conversionRatiosForChangedProducts.getValue(existing.locationProductId)
+                    existing.conversionNumerator = ratio.numerator
+                    existing.conversionDenominator = ratio.denominator
                 }
                 toSave.add(existing)
             }

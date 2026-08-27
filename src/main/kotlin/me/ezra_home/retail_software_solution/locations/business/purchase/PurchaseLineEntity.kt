@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -33,8 +34,11 @@ class PurchaseLineEntity(
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "conversion_factor", nullable = false, precision = 19, scale = 10)
-  var conversionFactor: BigDecimal,
+  @Column(name = "conversion_numerator", nullable = false)
+  override var conversionNumerator: Long,
+
+  @Column(name = "conversion_denominator", nullable = false)
+  override var conversionDenominator: Long,
 
   @Column(name = "quantity_delivered", nullable = false, precision = 19, scale = 4)
   var quantityDelivered: BigDecimal = BigDecimal.ZERO,
@@ -42,7 +46,7 @@ class PurchaseLineEntity(
   @Column(name = "quantity_canceled", nullable = false, precision = 19, scale = 4)
   var quantityCanceled: BigDecimal = BigDecimal.ZERO
 
-) : HasLocationProduct, HasReferenceEntity() {
+) : HasLocationProduct, HasReferenceEntity(), HasConversionRatio {
 
   fun getExpectedQuantity(): BigDecimal = quantityOrdered.subtract(quantityCanceled)
 

@@ -59,8 +59,11 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: conversion_factor
-                  type: decimal(19,10)
+                  name: conversion_numerator
+                  type: bigint
+              - column:
+                  name: conversion_denominator
+                  type: bigint
 
               - column:
                   name: revend

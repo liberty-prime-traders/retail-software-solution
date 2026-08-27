@@ -13,15 +13,24 @@ class ConversionRatioTest {
     }
 
     @Test
-    fun `reduced divides out the gcd`() {
-        val ratio = ConversionRatio(24L, 6L).reduced()
-        assertEquals(ConversionRatio(4L, 1L), ratio)
+    fun `rejects a negative denominator`() {
+        assertThrows<IllegalArgumentException> { ConversionRatio(1L, -2L) }
     }
 
     @Test
-    fun `reduced normalizes a negative denominator onto the numerator`() {
-        val ratio = ConversionRatio(3L, -6L).reduced()
-        assertEquals(ConversionRatio(-1L, 2L), ratio)
+    fun `rejects a zero numerator`() {
+        assertThrows<IllegalArgumentException> { ConversionRatio(0L, 1L) }
+    }
+
+    @Test
+    fun `rejects a negative numerator`() {
+        assertThrows<IllegalArgumentException> { ConversionRatio(-1L, 2L) }
+    }
+
+    @Test
+    fun `reduced divides out the gcd`() {
+        val ratio = ConversionRatio(24L, 6L).reduced()
+        assertEquals(ConversionRatio(4L, 1L), ratio)
     }
 
     @Test
@@ -61,5 +70,15 @@ class ConversionRatioTest {
     @Test
     fun `identity applyTo returns the same quantity`() {
         assertEquals(BigDecimal("7.0000"), ConversionRatio.IDENTITY.applyTo(BigDecimal("7")))
+    }
+
+    @Test
+    fun `isEquivalentTo is true for unreduced forms of the same ratio`() {
+        assertEquals(true, ConversionRatio(2L, 4L).isEquivalentTo(ConversionRatio(1L, 2L)))
+    }
+
+    @Test
+    fun `isEquivalentTo is false for genuinely different ratios`() {
+        assertEquals(false, ConversionRatio(1L, 2L).isEquivalentTo(ConversionRatio(1L, 3L)))
     }
 }

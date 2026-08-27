@@ -40,7 +40,8 @@ object SaleLineSync {
                     existingSaleLineEntity.quantity = saleLineSaveRequest.quantity
                     existingSaleLineEntity.unitId = saleLineSaveRequest.unitId
                     existingSaleLineEntity.unitPrice = saleLineSaveRequest.unitPrice
-                    existingSaleLineEntity.conversionFactor = saleLineSaveRequest.conversionFactor
+                    existingSaleLineEntity.conversionNumerator = saleLineSaveRequest.conversionRatio.numerator
+                    existingSaleLineEntity.conversionDenominator = saleLineSaveRequest.conversionRatio.denominator
                 } ?: throw RtsGenericException("Sale line ${saleLineSaveRequest.existingId} no longer exists")
             } else {
                 saleLineSaveRequest.toEntity(saleId)
@@ -60,6 +61,7 @@ object SaleLineSync {
         quantity = quantity,
         unitId = unitId,
         unitPrice = unitPrice,
-        conversionFactor = conversionFactor,
+        conversionNumerator = conversionRatio.numerator,
+        conversionDenominator = conversionRatio.denominator,
     )
 }

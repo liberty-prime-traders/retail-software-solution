@@ -91,6 +91,7 @@ object TableNames {
     const val JOB_TITLE_AUDIT = "job_title_aud"
     const val UNIT_GROUP_AUDIT = "unit_group_aud"
     const val UNIT_VALUE_AUDIT = "unit_value_aud"
+    const val UNIT_CONVERSION_AUDIT = "unit_conversion_aud"
     const val LOCATION_AUDIT = "location_aud"
     const val PAYMENT_METHOD_AUDIT = "payment_method_aud"
     const val TAG_AUDIT = "tag_aud"

@@ -17,7 +17,8 @@ object StockTransferFifoAllocator {
         productLabelByLocationProductId: Map<UUID, String>
     ): List<StockTransferDispatchLineEntity> {
         return draftLines.flatMap { draftLine ->
-            val baseQtyNeeded = Decimals.multiplyScale4(draftLine.quantity, draftLine.conversionFactor)
+            val ratio = draftLine.conversionRatio()
+            val baseQtyNeeded = ratio.applyTo(draftLine.quantity)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
             val productLabel = productLabelByLocationProductId.getValue(draftLine.locationProductId)
             allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
@@ -25,10 +26,11 @@ object StockTransferFifoAllocator {
                     stockTransferDispatchId = dispatchId,
                     orgProductId = orgProductIdByLocationProductId.getValue(draftLine.locationProductId),
                     locationProductId = draftLine.locationProductId,
-                    quantityDispatched = Decimals.divideScale4(allocation.baseQuantity, draftLine.conversionFactor),
+                    quantityDispatched = ratio.invert().applyTo(allocation.baseQuantity),
                     unitId = draftLine.unitId,
                     unitCost = allocation.unitCost,
-                    conversionFactor = draftLine.conversionFactor,
+                    conversionNumerator = ratio.numerator,
+                    conversionDenominator = ratio.denominator,
                     baseUnitId = draftLine.baseUnitId
                 )
             }

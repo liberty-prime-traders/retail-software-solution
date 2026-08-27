@@ -29,7 +29,7 @@ class ReconciledTransferLineFetcher(
                 quantity = line.quantity,
                 unitId = line.unitId,
                 baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionFactor,
+                conversionFactor = line.conversionRatio().factor(),
                 unitCost = null,
                 quantityReceived = null,
                 quantityAvailable = availability.quantityAvailable
@@ -48,7 +48,7 @@ class ReconciledTransferLineFetcher(
                 quantity = line.quantityDispatched,
                 unitId = line.unitId,
                 baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionFactor,
+                conversionFactor = line.conversionRatio().factor(),
                 unitCost = line.unitCost,
                 quantityReceived = if (line.requiredReference() in confirmedRefs) line.quantityDispatched else null
             )

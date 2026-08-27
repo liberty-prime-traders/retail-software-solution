@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
@@ -117,9 +118,9 @@ class LocationProductDataFetcher(
                 )
             }
 
-    fun getConversionFactors(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, BigDecimal> {
+    fun getConversionRatios(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, ConversionRatio> {
         if (productUnitRequests.isEmpty()) return emptyMap()
-        return populateConversionInfo(productUnitRequests).associate { it.locationProductId to it.conversionFactor }
+        return populateConversionInfo(productUnitRequests).associate { it.locationProductId to it.conversionRatio }
     }
 
     private fun populateConversionInfo(productUnitRequests: List<LocationProductUnitRequestDto>): List<LocationProductUnitDto> {
@@ -132,7 +133,7 @@ class LocationProductDataFetcher(
                 locationProductId = locationProductId,
                 unitId = unitId,
                 baseUnitId = baseUnitId,
-                conversionFactor = unitConversionGraph.getFactor(unitId, baseUnitId)
+                conversionRatio = unitConversionGraph.getRatio(unitId, baseUnitId)
             )
         }
     }

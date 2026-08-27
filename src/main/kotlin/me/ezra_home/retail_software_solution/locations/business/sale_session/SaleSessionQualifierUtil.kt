@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.mapstruct.Context
-import org.mapstruct.Mapping
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
@@ -69,7 +68,10 @@ object SaleSessionQualifierUtil {
 
     @SaleLineDefaultSalePrice
     fun deriveDefaultSalePrice(saleLineDto: SaleLineDto): BigDecimal =
-        Decimals.divideScale4(saleLineDto.unitPrice, saleLineDto.conversionFactor)
+        Decimals.divideScale4(saleLineDto.unitPrice, saleLineDto.conversionRatio.factor())
+
+    @LineConversionFactor
+    fun toConversionFactor(saleSessionLine: SaleSessionLine): BigDecimal = saleSessionLine.conversionRatio.factor()
 
     @SaleLineBaseUnitId
     fun resolveBaseUnitId(

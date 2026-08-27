@@ -9,6 +9,7 @@ data class StockTransferDispatchedLineDto(
     val quantityDispatched: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,
-    val conversionFactor: BigDecimal,
+    val conversionNumerator: Long,
+    val conversionDenominator: Long,
     val unitCost: BigDecimal
 )

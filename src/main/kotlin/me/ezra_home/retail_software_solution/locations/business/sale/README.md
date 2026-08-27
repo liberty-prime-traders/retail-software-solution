@@ -134,18 +134,20 @@ Rules:
 ### Identity
 
 - A `SaleLineEntity` belongs to exactly one `SaleEntity` (`sale_id`, FK).
-- A sale line carries: `locationProductId`, `quantity`, `unitId`,
-  `conversionFactor` to the product's base unit, and a frozen `unitPrice`.
+- A sale line carries: `locationProductId`, `quantity`, `unitId`, an exact
+  rational conversion ratio to the product's base unit
+  (`conversionNumerator`/`conversionDenominator`, wrapped by
+  `conversionRatio()`), and a frozen `unitPrice`.
 - **`sale_line.quantity` is stored in the line's `unitId`**, not the base
-  unit. `conversionFactor` is stored alongside; `baseQty()` is a derived
-  helper (`quantity * conversionFactor`). What gets *persisted* as base qty
-  is `sale_line_stock_reservation.quantity_reserved` and the FIFO stock
-  requests — never the sale line itself.
+  unit. The conversion ratio is stored alongside; `baseQty()` is a derived
+  helper (`conversionRatio().applyTo(quantity)`). What gets *persisted* as
+  base qty is `sale_line_stock_reservation.quantity_reserved` and the
+  FIFO stock requests — never the sale line itself.
 - `unitPrice` is **captured from the product at line add time** (when the
   user adds the line to a session) and frozen for the life of that line —
   a price change on the product does not retro-affect existing lines.
 - `lineTotal = quantity * unitPrice` (scale 4, half-up via `Decimals`).
-- `baseQty() = quantity * conversionFactor` (scale 4).
+- `baseQty() = conversionRatio().applyTo(quantity)` (scale 4).
 
 ### Per-line invariants
 
@@ -158,7 +160,7 @@ Rules:
    put on the cart does **not** block subsequent draft saves or confirm —
    the line stays valid once it has been accepted.
 4. `unitId` must be a valid unit reachable in the `UnitConversionGraph` to
-   the product's base unit; otherwise `getFactor` throws.
+   the product's base unit; otherwise `getRatio` throws.
 5. `unitPrice` must be set on the product summary at add time; the session
    line handler rejects with `"Product X has no unit price"` otherwise.
 

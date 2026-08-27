@@ -46,7 +46,7 @@ class UnitValueCache(
 
     @CacheEvict(allEntries = true)
     fun save(unitValueEntity: UnitValueEntity): UnitValueDto {
-        val saved = unitValueRepository.save(unitValueEntity)
+        val saved = unitValueRepository.saveAndFlush(unitValueEntity)
         return unitValueMapper.toDomainDto(saved)
     }
 

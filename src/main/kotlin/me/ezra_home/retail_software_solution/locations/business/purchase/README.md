@@ -187,8 +187,13 @@ change after `ORDERED`.
 ### Per-line invariants
 
 1. `quantityOrdered` carries the unit chosen by the user (`unitId`).
-   `conversionFactor` is the multiplier to the product's base unit and
-   is resolved by `locationProductDataFetcher.getConversionFactors`.
+   `conversionNumerator`/`conversionDenominator` are the exact rational
+   multiplier to the product's base unit (`conversionRatio()` builds a
+   `ConversionRatio` from them) and are resolved by
+   `locationProductDataFetcher.getConversionRatios`. The REST response
+   (`PurchaseLineResponseDto`) exposes a single derived `conversionFactor`
+   decimal instead — nothing outside this domain needs the exact
+   numerator/denominator.
 2. **`quantityOrdered` must be positive** on create
    (`PurchaseValidator.guardPositiveLineQuantities`, enforced by
    `PurchaseService.createDraft` / `createOrder` and inside
