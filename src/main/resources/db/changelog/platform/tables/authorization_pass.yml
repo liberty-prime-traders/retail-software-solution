@@ -45,7 +45,7 @@ databaseChangeLog:
               - column:
                   name: used_count
                   type: int
-                  defaultValueNumeric: '0'
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: authorization_pass_used_count_notnull

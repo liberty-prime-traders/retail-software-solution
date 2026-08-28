@@ -768,7 +768,7 @@ Add new guards as early as the data they need is in scope.
 | Payments                       | `supplier_payment/` package                                                                       |
 | Payment status (single source) | `PurchasePaymentStatusService`                                                                    |
 | Payment ceiling                | `PurchasePaymentCeilingService`                                                                   |
-| Returns (scaffolding, no svc)  | `supplier_return/SupplierReturnEntity`; repo at `purchase/SupplierReturnRepository`               |
+| Returns (scaffolding, no svc)  | `supplier_return/SupplierReturnEntity`; repo at `supplier_return/SupplierReturnRepository`        |
 | Kafka publish/republish        | `DeliveryHandlerForKafka`, `SupplierPaymentHandlerForKafka`, `SupplierPaymentVoidHandlerForKafka` |
 | Read APIs                      | `PurchaseDataFetcher`, `PurchaseAssembler`, `PurchaseDeliveryDataFetcher`                         |
 

@@ -104,7 +104,7 @@ databaseChangeLog:
               - column:
                   name: version
                   type: bigint
-                  defaultValueNumeric: 0
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: sale_version_notnull

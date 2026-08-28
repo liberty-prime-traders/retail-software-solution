@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.util.business.mappers
 
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
 import org.springframework.stereotype.Component
 import java.util.Objects
 import java.util.UUID

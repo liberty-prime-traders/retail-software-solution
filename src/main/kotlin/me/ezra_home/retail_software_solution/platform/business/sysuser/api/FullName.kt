@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.platform.business.sysuser.mapping
+package me.ezra_home.retail_software_solution.platform.business.sysuser.api
 
 import org.mapstruct.Qualifier
 

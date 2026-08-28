@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitconversion.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.UnitConversionDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.UnitConversionEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.UnitConversionRepository
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.UnitConversionValidator

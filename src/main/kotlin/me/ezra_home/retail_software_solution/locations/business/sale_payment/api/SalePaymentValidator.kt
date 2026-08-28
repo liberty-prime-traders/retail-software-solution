@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.sale_payment
+package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.business.Currencies

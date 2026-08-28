@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDat
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
