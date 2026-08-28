@@ -47,6 +47,7 @@ object TableNames {
     const val LEDGER_ENTRY_GROUP = "ledger_entry_group"
     const val LEDGER_ENTRY = "ledger_entry"
     const val SUBLEDGER_ENTRY = "subledger_entry"
+    const val OPENING_BALANCE = "opening_balance"
 
     // Location tables
     const val EVENT_PROCESSING_LOG = "event_processing_log"

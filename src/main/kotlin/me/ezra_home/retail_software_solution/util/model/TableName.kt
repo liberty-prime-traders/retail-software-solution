@@ -51,6 +51,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   LEDGER_ENTRY_GROUP(TableNames.LEDGER_ENTRY_GROUP, SchemaLevel.ORGANIZATION),
   LEDGER_ENTRY(TableNames.LEDGER_ENTRY, SchemaLevel.ORGANIZATION),
   SUBLEDGER_ENTRY(TableNames.SUBLEDGER_ENTRY, SchemaLevel.ORGANIZATION),
+  OPENING_BALANCE(TableNames.OPENING_BALANCE, SchemaLevel.ORGANIZATION),
 
   // Location-level tables
   EVENT_PROCESSING_LOG(TableNames.EVENT_PROCESSING_LOG, SchemaLevel.LOCATION),

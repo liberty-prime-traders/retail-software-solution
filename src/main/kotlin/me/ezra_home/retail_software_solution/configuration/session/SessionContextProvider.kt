@@ -31,6 +31,10 @@ object SessionContextProvider {
         return getSession().location?.id ?: throw RtsMissingHeaderException(RtsHeaders.LOCATION_ID_HEADER)
     }
 
+    fun getLocationIdOrNull(): UUID? {
+        return getSession().location?.id
+    }
+
     fun getLocationSchema(): String {
         return getSession().location?.schemaName ?: throw RtsGenericException("Location schema not found in session.")
     }

@@ -8,4 +8,5 @@ import java.util.UUID
 interface LedgerEntryGroupRepository : JpaRepository<LedgerEntryGroupEntity, UUID> {
     fun existsBySourceReferenceNumberAndSourceLocationId(reference: String, locationId: UUID): Boolean
     fun existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(reference: String, sourceType: LedgerSourceType, locationId: UUID): Boolean
+    fun existsBySourceReferenceNumberAndSourceLocationIdIsNull(reference: String): Boolean
 }

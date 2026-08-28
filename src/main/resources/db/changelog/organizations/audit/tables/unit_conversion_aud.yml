@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-unit-conversion-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: unit_conversion_aud
+      changes:
+        - createTable:
+            tableName: unit_conversion_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: from_unit_id
+                  type: uuid
+              - column:
+                  name: to_unit_id
+                  type: uuid
+              - column:
+                  name: factor_numerator
+                  type: bigint
+              - column:
+                  name: factor_denominator
+                  type: bigint
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: unit_conversion_aud
+            columnNames: id, rev
+            constraintName: pk_unit_conversion_aud
+      rollback:
+        - dropTable:
+            tableName: unit_conversion_aud

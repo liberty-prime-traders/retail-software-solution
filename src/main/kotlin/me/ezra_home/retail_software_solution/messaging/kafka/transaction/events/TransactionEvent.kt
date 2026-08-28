@@ -5,6 +5,6 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import java.util.UUID
 
 sealed class TransactionEvent: BaseEvent() {
-    abstract override val sourceContext: EventSourceContext.LocationLevel
+    abstract override val sourceContext: EventSourceContext
     abstract val sourceDocumentId: UUID
 }

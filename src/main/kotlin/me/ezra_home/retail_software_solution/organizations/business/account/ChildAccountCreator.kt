@@ -49,7 +49,7 @@ class ChildAccountCreator(
         }
         if (parent.accountIsSystemMaintained) {
             val systemAccount = SystemAccount.fromCode(parent.code)
-            if (systemAccount?.isExtensible() != true) {
+            if (systemAccount?.isSingleLevelExtensionPoint() != true) {
                 throw RtsGenericException("${parent.label} is maintained by the system and does not allow child accounts to be added")
             }
         }
@@ -57,9 +57,9 @@ class ChildAccountCreator(
 
     private fun preventSystemAccountGainingGrandChild(parent: AccountDto, accountsByCode: Map<String, AccountDto>) {
         val grandparent = accountsByCode[parent.parentAccountCode] ?: return
-        val isSystemAccount = grandparent.accountIsSystemMaintained
-        val isExtensible = SystemAccount.fromCode(grandparent.code)?.isExtensible() == true
-        if (isSystemAccount && isExtensible) {
+        val grandparentIsSystemAccount = grandparent.accountIsSystemMaintained
+        val grandparentIsSingleLevelExtensionPoint = SystemAccount.fromCode(grandparent.code)?.isSingleLevelExtensionPoint() == true
+        if (grandparentIsSystemAccount && grandparentIsSingleLevelExtensionPoint) {
             throw RtsGenericException("Cannot add further children under '${parent.label}'")
         }
     }

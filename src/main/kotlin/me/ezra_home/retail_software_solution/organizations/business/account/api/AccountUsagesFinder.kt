@@ -9,12 +9,9 @@ class AccountUsagesFinder(
 ) {
 
     fun findUsagesForAccountCode(code: String): List<AccountUsageDto> {
-        return referenceProviders.map { provider ->
-            AccountUsageDto(
-                provider.usageType,
-                provider.getReferences(code)
-            )
-        }.filter { it.references.isNotEmpty() }
+        return referenceProviders
+            .map { provider -> AccountUsageDto(provider.usageType, provider.getReferences(code)) }
+            .filter { it.references.isNotEmpty() }
     }
 
     fun failOnUsagesForCode(code: String) {
