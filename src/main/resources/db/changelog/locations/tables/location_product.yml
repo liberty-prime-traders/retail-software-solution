@@ -20,7 +20,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: location_product_product_id_notnull
                     unique: true
-                    uniqueConstraintName: location_product_product_id_unique
+                    uniqueConstraintName: uq_location_product_product_id
 
               - column:
                   name: name

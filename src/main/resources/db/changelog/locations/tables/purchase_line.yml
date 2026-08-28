@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: purchase_line_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: purchase_line_reference_number_unique
+                    uniqueConstraintName: uq_purchase_line_reference_number
 
               - column:
                   name: purchase_id

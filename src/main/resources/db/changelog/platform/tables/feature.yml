@@ -27,7 +27,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: feature_feature_notnull
                     unique: true
-                    uniqueConstraintName: feature_feature_unique
+                    uniqueConstraintName: uq_feature_feature
 
               - column:
                   name: description

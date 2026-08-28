@@ -31,7 +31,7 @@ databaseChangeLog:
                   type: varchar(5)
                   constraints:
                     unique: true
-                    uniqueConstraintName: adjustment_reason_code_unique
+                    uniqueConstraintName: uq_adjustment_reason_code
 
               - column:
                   name: direction
