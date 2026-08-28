@@ -59,13 +59,13 @@ class OrganizationService(
     }
 
     fun createOrganization(dto: OrganizationInsertDto): OrganizationResponseDto {
-        val pass = authorizationPassService.redeem(dto.passCode, PassType.CREATE_ORGANIZATION)
+        val passId = authorizationPassService.redeem(dto.passCode, PassType.CREATE_ORGANIZATION)
         organizationValidator.validateNameOnSave(dto.name)
         DateTimes.validateTimezone(dto.timezone)
         markSubdomainAsUsed(dto.subdomain)
         val schemaName = createOrganizationSchema(dto.subdomain)
         try {
-            val saved = organizationCache.create(dto, schemaName, pass.id!!)
+            val saved = organizationCache.create(dto, schemaName, passId)
             SessionContextProvider.initOrganization(saved)
             organizationAdminService.registerFounder(saved.createdById)
             organizationUserService.registerFounder(saved.createdById)

@@ -77,7 +77,7 @@ class AuthorizationPassService(
         return authorizationPassMapper.toResponseDto(pass)
     }
 
-    fun redeem(code: UUID, passType: PassType): AuthorizationPassEntity {
+    fun redeem(code: UUID, passType: PassType): UUID {
         val requestingUserId = SessionContextProvider.getUserId()
 
         val pass = authorizationPassRepository.findByCode(code)
@@ -113,7 +113,7 @@ class AuthorizationPassService(
             pass.passStatus = PassStatus.EXHAUSTED
         }
         authorizationPassRepository.save(pass)
-        return pass
+        return pass.id!!
     }
 
     private fun revokeAndReissue(stolen: AuthorizationPassEntity) {

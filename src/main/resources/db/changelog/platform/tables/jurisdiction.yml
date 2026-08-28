@@ -54,7 +54,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: jurisdiction_reference_number_unique
+                    uniqueConstraintName: uq_jurisdiction_reference_number
                     nullable: false
                     notNullConstraintName: jurisdiction_reference_number_notnull
       rollback:

@@ -1,14 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.product_tag.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.TagSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagValidator
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -17,7 +15,6 @@ import java.util.UUID
 @TransactionalOnOrganizationSchema
 class ProductTagService(
     private val productTagCache: ProductTagCache,
-    private val organizationProductRepository: OrganizationProductRepository,
     private val productTagValidator: ProductTagValidator,
     private val tagService: TagService
 ) {
@@ -47,10 +44,6 @@ class ProductTagService(
         tagsToAdd: Set<UUID> = emptySet(),
         tagsToRemove: Set<UUID> = emptySet()
     ) {
-        if (!organizationProductRepository.existsById(orgProductId)) {
-           throw RtsGenericException("Product with ID $orgProductId does not exist")
-        }
-
         val combinedTags = tagsToAdd + tagsToRemove
         productTagValidator.validateTagsExist(combinedTags)
         productTagValidator.validateNoOverlap(tagsToAdd, tagsToRemove)

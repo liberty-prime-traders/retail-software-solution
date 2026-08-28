@@ -91,6 +91,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: contact_reference_number_unique
+                    uniqueConstraintName: uq_contact_reference_number
                     nullable: false
                     notNullConstraintName: contact_reference_number_not_null

@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.stock_movem
 
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.StockMovementReasonInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.StockMovementReasonResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

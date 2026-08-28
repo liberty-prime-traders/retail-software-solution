@@ -34,7 +34,7 @@ databaseChangeLog:
                   type: nvarchar2(100)
                   constraints:
                     unique: true
-                    uniqueConstraintName: payment_method_name_unique
+                    uniqueConstraintName: uq_payment_method_name
               - column:
                   name: description
                   type: nvarchar2(1000)
@@ -43,7 +43,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: payment_method_reference_number_unique
+                    uniqueConstraintName: uq_payment_method_reference_number
                     nullable: false
                     notNullConstraintName: payment_method_reference_number_not_null
 

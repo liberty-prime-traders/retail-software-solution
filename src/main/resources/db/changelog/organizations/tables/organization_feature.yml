@@ -40,7 +40,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: organization_feature_feature_code_notnull
                     unique: true
-                    uniqueConstraintName: organization_feature_feature_code_unique
+                    uniqueConstraintName: uq_organization_feature_feature_code
 
               - column:
                   name: status
