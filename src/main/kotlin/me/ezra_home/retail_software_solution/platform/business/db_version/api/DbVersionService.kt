@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.platform.business.db_version.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionCache
 import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionMapper
-import me.ezra_home.retail_software_solution.platform.business.db_version.DbVersionNumber
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service

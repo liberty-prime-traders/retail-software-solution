@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper

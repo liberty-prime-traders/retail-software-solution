@@ -55,7 +55,7 @@ databaseChangeLog:
         - addUniqueConstraint:
             tableName: unit_conversion
             columnNames: from_unit_id, to_unit_id
-            constraintName: unit_conversion_from_to_unique
+            constraintName: uq_unit_conversion_from_to
       rollback:
         - dropTable:
             tableName: unit_conversion

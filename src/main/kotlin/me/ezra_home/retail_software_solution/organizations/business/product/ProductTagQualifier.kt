@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.organizations.business.product.api.TagSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
-import me.ezra_home.retail_software_solution.organizations.business.product_tag.mapping.ActiveProductTags
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ActiveProductTags
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
 import org.springframework.stereotype.Component
 import java.util.UUID

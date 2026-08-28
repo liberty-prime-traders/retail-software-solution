@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.feature
 
+import me.ezra_home.retail_software_solution.platform.business.feature.api.FeatureDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 
