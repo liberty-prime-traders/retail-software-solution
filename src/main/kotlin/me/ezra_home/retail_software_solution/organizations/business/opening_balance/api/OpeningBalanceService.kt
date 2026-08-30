@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.opening_bal
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountStructureLock
+import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceEntity
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceHandlerForKafka
@@ -20,6 +21,7 @@ class OpeningBalanceService(
     private val accountDataFetcher: AccountDataFetcher,
     private val openingBalanceHandlerForKafka: OpeningBalanceHandlerForKafka,
     private val accountStructureLock: AccountStructureLock,
+    private val fiscalPeriodService: FiscalPeriodService,
     private val userQualifier: UserQualifier
 ) {
 
@@ -27,6 +29,8 @@ class OpeningBalanceService(
         if (upsertDto.newAmount < BigDecimal.ZERO) {
             throw RtsGenericException("Opening balance amount must not be negative")
         }
+        val postingDate = DateTimes.Local.Now.organization()
+        fiscalPeriodService.requireOpenForDate(postingDate)
         accountStructureLock.acquire(upsertDto.accountCode)
         val account = accountDataFetcher.getByCode(upsertDto.accountCode)
         OpeningBalanceAccountValidator.requireLeafActive(account)
@@ -36,7 +40,7 @@ class OpeningBalanceService(
 
         val saved = openingBalanceRepository.save(OpeningBalanceEntity(accountCode = upsertDto.accountCode, amount = upsertDto.newAmount))
         val accountEntryType = openingBalanceHandlerForKafka.directionFor(account.normalBalanceEntryType, delta)
-        openingBalanceHandlerForKafka.publish(saved, accountEntryType, delta.abs(), DateTimes.Local.Now.organization())
+        openingBalanceHandlerForKafka.publish(saved, accountEntryType, delta.abs(), postingDate)
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -49,14 +53,13 @@ class OpeningBalanceService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getHistory(accountCode: String): List<OpeningBalanceRevisionDto> {
         val rows = openingBalanceRepository.findByAccountCodeOrderByCreatedOnAsc(accountCode)
-        if (rows.isEmpty()) {
-            throw RtsGenericException("No opening balance has ever been set for account $accountCode")
-        }
         return rows.map { row ->
             OpeningBalanceRevisionDto(
+                referenceNumber = row.requiredReference(),
+                accountCode = row.accountCode,
                 amount = row.amount,
                 changedBy = userQualifier.getUserFullName(row.createdById) ?: "",
-                changedAt = requireNotNull(row.createdOn) { "Opening balance ${row.id} is missing createdOn" }
+                changedAt = row.requiredCreatedOn()
             )
         }
     }

@@ -22,4 +22,10 @@ class TableRegistryCache(
         val saved = repository.save(mapper.toEntity(dto))
         return mapper.toDomainDto(saved)
     }
+
+    @CacheEvict(allEntries = true)
+    fun saveAll(dtos: Collection<TableRegistryDto>): Collection<TableRegistryDto> {
+        val saved = repository.saveAll(dtos.map { mapper.toEntity(it) })
+        return saved.map { mapper.toDomainDto(it) }
+    }
 }

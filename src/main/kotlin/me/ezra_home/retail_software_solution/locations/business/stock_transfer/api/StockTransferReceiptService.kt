@@ -52,7 +52,7 @@ class StockTransferReceiptService(
         entityAdvisoryLock.acquire(LockNamespaces.STOCK_TRANSFER_ORDER, order.id)
 
         val receipt = stockTransferReceiptRepository.findByStockTransferOrderRef(orderRef)
-            ?: stockTransferReceiptRepository.saveAndFlush(
+            ?: stockTransferReceiptRepository.save(
                 StockTransferReceiptEntity(
                     stockTransferOrderRef = orderRef,
                     receivedById = SessionContextProvider.getUserId(),

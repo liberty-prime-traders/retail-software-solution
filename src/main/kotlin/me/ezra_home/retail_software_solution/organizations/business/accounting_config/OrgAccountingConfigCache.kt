@@ -25,7 +25,7 @@ class OrgAccountingConfigCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrgAccountingConfigInsertDto): OrgAccountingConfigDto {
-        val saved = repository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = repository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

@@ -25,7 +25,7 @@ class TagCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: TagInsertDto): TagDto {
-        val saved = tagRepository.saveAndFlush(tagMapper.toEntity(insertDto))
+        val saved = tagRepository.save(tagMapper.toEntity(insertDto))
         return tagMapper.toDomainDto(saved)
     }
 

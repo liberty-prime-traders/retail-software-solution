@@ -24,7 +24,7 @@ class JurisdictionCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: JurisdictionInsertDto): JurisdictionDto {
-        val saved = jurisdictionRepository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = jurisdictionRepository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

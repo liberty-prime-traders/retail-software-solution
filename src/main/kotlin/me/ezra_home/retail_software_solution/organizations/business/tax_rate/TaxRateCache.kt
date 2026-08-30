@@ -22,7 +22,7 @@ class TaxRateCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: TaxRateInsertDto): TaxRateDto {
-        val saved = taxRateRepository.saveAndFlush(taxRateMapper.toEntity(insertDto))
+        val saved = taxRateRepository.save(taxRateMapper.toEntity(insertDto))
         return taxRateMapper.toDomainDto(saved)
     }
 

@@ -31,7 +31,7 @@ class OpeningBalanceHandlerForKafka(
             .orElseThrow { RtsGenericException("Opening balance $sourceDocumentId not found") }
         val previous = openingBalanceRepository.findFirstByAccountCodeAndCreatedOnLessThanOrderByCreatedOnDesc(
             row.accountCode,
-            requireNotNull(row.createdOn) { "Opening balance $sourceDocumentId is missing createdOn" }
+            row.requiredCreatedOn()
         )
         val delta = row.amount - (previous?.amount ?: BigDecimal.ZERO)
         if (delta.compareTo(BigDecimal.ZERO) == 0) return
@@ -39,7 +39,7 @@ class OpeningBalanceHandlerForKafka(
         val account = accountDataFetcher.getByCode(row.accountCode)
         OpeningBalanceAccountValidator.requireLeafActive(account)
         val accountEntryType = directionFor(account.normalBalanceEntryType, delta)
-        publish(row, accountEntryType, delta.abs(), DateTimes.Local.atOrganizationZone(requireNotNull(row.createdOn)))
+        publish(row, accountEntryType, delta.abs(), DateTimes.Local.atOrganizationZone(row.requiredCreatedOn()))
     }
 
     fun directionFor(normalBalanceEntryType: EntryType, delta: BigDecimal): EntryType {

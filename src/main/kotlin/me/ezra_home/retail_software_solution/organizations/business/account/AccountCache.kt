@@ -37,6 +37,6 @@ class AccountCache(
 
     @CacheEvict(allEntries = true)
     fun create(dto: AccountInsertDto): AccountDto {
-        return accountMapper.toDomainDto(accountRepository.saveAndFlush(accountMapper.toEntity(dto)))
+        return accountMapper.toDomainDto(accountRepository.save(accountMapper.toEntity(dto)))
     }
 }

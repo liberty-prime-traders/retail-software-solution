@@ -27,9 +27,21 @@ Platform layer adds after audit: `version-entries/ → registry-entries/`
 1. Add sequence for the reference number column.
 2. Reference number = prefix (from registry) + zero-padded number to ≥6 chars total (e.g. `OR000042`).
 3. Register in `registry-entries/` and in `TableNames` constants.
-4. Add audit table + register it in `TableNames` + registry.
+4. Add audit table + register it in `TableNames` + registry — unless the table is append-only or
+   otherwise deliberately not `@Audited` (see "What NOT to audit"), in which case there is no
+   audit table and nothing to register for it.
 5. Audit table indexes: one on `rev`, one on `(id, rev)`.
 6. Create sequences, triggers, extensions, FKs, indexes in their own subfolders.
+
+## `TableNames` / `TableName` ordering
+
+Both files group entries under the same comment headers (`Platform tables`, `Organization tables`,
+`Location tables`, and their `*audit tables` counterparts). Within each section, keep entries
+alphabetical by constant/enum name — insert a new entry in sorted position, don't just append it
+to the end of the section. Don't reorder across sections or move an entry to a "more correct"
+section to fix a pre-existing miscategorization (e.g. a table's `SchemaLevel` disagreeing with
+which comment block it sits under) — that's a separate, deliberate change, not a byproduct of
+alphabetizing.
 
 ## Entity / JPA rules
 

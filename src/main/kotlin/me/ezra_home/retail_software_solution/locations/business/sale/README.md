@@ -662,21 +662,21 @@ run** — i.e. as soon as the data it needs is in scope.
 
 ## 15. Where Things Live
 
-| Topic                      | Class(es)                                                                                               |
-|----------------------------|---------------------------------------------------------------------------------------------------------|
-| State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                  |
-| Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                |
-| Validation                 | `SaleValidator`                                                                                         |
-| Save primitives            | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                  |
-| Stock reservation          | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                       |
+| Topic                      | Class(es)                                                                                                                                                      |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                                                                         |
+| Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                                                                             |
+| Validation                 | `SaleValidator`                                                                                                                                                |
+| Save primitives            | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                                                                         |
+| Stock reservation          | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                                                                              |
 | Adjustments (disc + srch)  | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`) |
-| Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)    |
-| Payments                   | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper) |
-| Taxes (async finalization) | `SaleTaxFinalizationProcessor`, `SaleTaxReversalProcessor`, `tax_entry/` package                        |
-| Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                               |
-| Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                          |
-| Read APIs                  | `SaleDataFetcher`, `SaleAssembler`                                                                      |
-| Session orchestration      | `sale_session/` package (see `sale_session/README.md`)                                                  |
+| Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)                                                           |
+| Payments                   | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper)                                            |
+| Taxes (async finalization) | `SaleTaxFinalizationProcessor`, `SaleTaxReversalProcessor`, `tax_entry/` package                                                                               |
+| Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                                                                                      |
+| Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                                                                                 |
+| Read APIs                  | `SaleDataFetcher`, `SaleAssembler`                                                                                                                             |
+| Session orchestration      | `sale_session/` package (see `sale_session/README.md`)                                                                                                         |
 
 Keep this table accurate as the package evolves — it is the entry point
 for anyone (or any agent) doing a first-pass investigation.

@@ -65,6 +65,24 @@ The order of execution is
   - `val ceilingService: PurchasePaymentCeilingService` is bad
   - `val purchasePaymentCeilingService: PurchasePaymentCeilingService` is good
 
+### Comments
+- Gotchas only — never restate what the code already says.
+- A comment describes the code as it now stands, never the change that produced it. It is read by
+  someone who has no idea what the previous version looked like.
+- Banned: what the code used to do, what the old approach was, how many call sites a migration
+  touched, ticket/PR references, and words that date the comment (`now`, `previously`, `used to`,
+  `no longer`, `recently`, `this change`). That narrative belongs in the commit message.
+- Naming a rejected alternative is allowed only to stop someone reverting to it, and only stated
+  as a durable property of that alternative — `@CreationTimestamp applies at INSERT, so the field
+  is null after save()`, not `we switched off @CreationTimestamp because ~20 call sites needed
+  saveAndFlush`.
+- State a rationale once, at the most relevant spot. Don't repeat the same "why" at every call
+  site; if it spans a package, it goes in that package's README instead.
+- Don't defend against an edit the compiler or type system already prevents (a reordering blocked
+  by a data dependency, an elvis on a non-nullable type).
+- Test comments: name the invariant being guarded and what breaks if it regresses — not the bug
+  or task that prompted writing the test.
+
 ### Auditing
 - Add YAML for audit table + expected indexes
 - Register audit table in `TableNames` and registry

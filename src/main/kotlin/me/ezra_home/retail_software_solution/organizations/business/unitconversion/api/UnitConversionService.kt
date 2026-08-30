@@ -27,7 +27,7 @@ class UnitConversionService(
             toUnitId = dto.toUnitId,
             factor = dto.factor
         )
-        val saved = unitConversionRepository.saveAndFlush(entity)
+        val saved = unitConversionRepository.save(entity)
         invalidateGraph()
         return saved.toDto()
     }

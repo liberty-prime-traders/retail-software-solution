@@ -25,7 +25,7 @@ class StockTransferOrderService(
             destinationLocationId = destinationLocationId,
             notes = notes
         )
-        return stockTransferOrderRepository.saveAndFlush(entity).toDomainDto()
+        return stockTransferOrderRepository.save(entity).toDomainDto()
     }
 
     fun updateStatusToCompleted(referenceNumber: String): StockTransferOrderDomainDto =

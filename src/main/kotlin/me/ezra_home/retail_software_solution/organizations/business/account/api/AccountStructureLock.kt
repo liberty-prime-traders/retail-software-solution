@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 //
 //   - AccountService.createChild reads the parent's current children, then inserts a new one.
 //   - CoaDefaultsInserter.seedDefaults reads the current chart of accounts, then bulk-inserts any
-//     missing SystemAccount children (e.g. seeding BANK under DIGITAL_PAYMENTS).
+//     missing SystemAccount children (e.g. seeding CASH under CURRENT_ASSETS).
 //   - OpeningBalanceService.upsert reads whether the account has children, then, if it doesn't,
 //     writes an opening balance for it.
 //
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
 //
 // Acquire this before doing the read, and hold it for the whole transaction (it's a
 // pg_advisory_xact_lock under the hood, released on commit/rollback). A row lock on the account
-// itself wouldn't do the same job here: neither operation updates the account row being read, so
+// itself wouldn't do the same job here: none of the three updates the account row being read, so
 // there's nothing for a row lock to catch.
 @Component
 class AccountStructureLock(

@@ -34,6 +34,15 @@ class TableRegistryService(
         return tableRegistryMapper.toDto(dto)
     }
 
+    fun validateAll(): Collection<TableRegistryResponseDto> {
+        val allTables = tableRegistryCache.getAllTables()
+        val unvalidatedTables = allTables.filter { !it.validated }
+        unvalidatedTables.forEach { validateName(it.tableName) }
+        val savedTables = tableRegistryCache.saveAll(unvalidatedTables.map { it.copy(validated = true) })
+            .associateBy { it.id }
+        return allTables.map { tableRegistryMapper.toDto(savedTables[it.id] ?: it) }
+    }
+
     private fun validateName(name: String?) {
         require(TableName.exists(name)) { "Table name '$name' is not recognized in the system" }
     }

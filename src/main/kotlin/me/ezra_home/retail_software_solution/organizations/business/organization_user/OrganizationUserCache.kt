@@ -29,7 +29,7 @@ class OrganizationUserCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrganizationUserInsertDto): OrganizationUserDto {
-        val saved = organizationUserRepository.saveAndFlush(organizationUserMapper.toEntity(insertDto))
+        val saved = organizationUserRepository.save(organizationUserMapper.toEntity(insertDto))
         return organizationUserMapper.toDomainDto(saved)
     }
 

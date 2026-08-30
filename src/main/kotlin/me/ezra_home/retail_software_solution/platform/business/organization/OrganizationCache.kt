@@ -30,7 +30,7 @@ class OrganizationCache(
             this.creationPassId = passId
             this.subdomain = insertDto.subdomain
         }
-        val saved = organizationRepository.saveAndFlush(entity)
+        val saved = organizationRepository.save(entity)
         return mapper.toDomainDto(saved)
     }
 

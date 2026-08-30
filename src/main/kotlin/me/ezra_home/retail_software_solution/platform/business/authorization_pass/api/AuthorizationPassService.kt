@@ -41,7 +41,7 @@ class AuthorizationPassService(
             assignedToId = dto.assignedToId,
             expiresOn = dto.expiresOn
         )
-        authorizationPassRepository.saveAndFlush(entity)
+        authorizationPassRepository.save(entity)
         return authorizationPassMapper.toResponseDto(entity)
     }
 
