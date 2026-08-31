@@ -6,18 +6,25 @@ databaseChangeLog:
       preConditions:
         - onFail: MARK_RAN
         - not:
-            - uniqueConstraintExists:
+            - indexExists:
                 tableName: ledger_entry_group
-                constraintName: uq_ledger_entry_grp_ref_type_loc
+                indexName: uq_ledger_entry_grp_ref_type_loc
       changes:
-        - addUniqueConstraint:
-            tableName: ledger_entry_group
-            constraintName: uq_ledger_entry_grp_ref_type_loc
-            columnNames: source_reference_number, source_type, source_location_id
+        # A single addUniqueConstraint on (source_reference_number, source_type, source_location_id)
+        # doesn't work here: Postgres never treats two NULLs as equal in a unique constraint, so it
+        # wouldn't catch duplicates among org-level rows, which always have source_location_id NULL.
+        # Two partial unique indexes instead, split on that column being null or not.
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_ledger_entry_grp_ref_type_loc ON ledger_entry_group (source_reference_number, source_type, source_location_id) WHERE source_location_id IS NOT NULL;
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_ledger_entry_grp_ref_type_org ON ledger_entry_group (source_reference_number, source_type) WHERE source_location_id IS NULL;
       rollback:
-        - dropUniqueConstraint:
+        - dropIndex:
             tableName: ledger_entry_group
-            constraintName: uq_ledger_entry_grp_ref_type_loc
+            indexName: uq_ledger_entry_grp_ref_type_loc
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: uq_ledger_entry_grp_ref_type_org
 
   - changeSet:
       id: create-index-ledger-entry-group-source-ref

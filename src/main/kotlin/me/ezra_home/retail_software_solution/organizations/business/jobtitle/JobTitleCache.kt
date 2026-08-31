@@ -23,7 +23,7 @@ class JobTitleCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: JobTitleInsertDto): JobTitleDto {
-        val saved = jobTitleRepository.saveAndFlush(jobTitleMapper.toEntity(insertDto))
+        val saved = jobTitleRepository.save(jobTitleMapper.toEntity(insertDto))
         return jobTitleMapper.toDomainDto(saved)
     }
 

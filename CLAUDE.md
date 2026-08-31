@@ -79,4 +79,4 @@ Liquibase changelogs live under `src/main/resources/db/changelog/{platform,organ
 
 ## Agent discipline
 
-Before starting a multi-step task: write a plan to `.claude/plan.txt` and update it as you go. Read at most 3 files before making a first edit, then adjust. Checkpoint every 5 tool calls — state your hypothesis and decide whether to continue or back out.
+Before starting a multi-step task: write a plan to `.claude-local/plan.txt` (personal scratch, not committed) and update it as you go. Read at most 3 files before making a first edit, then adjust. Checkpoint every 5 tool calls — state your hypothesis and decide whether to continue or back out.

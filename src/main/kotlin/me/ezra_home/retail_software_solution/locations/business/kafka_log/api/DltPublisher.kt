@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.kafka_log.api
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.configuration.session.withSession
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
 import org.slf4j.LoggerFactory
@@ -20,7 +21,11 @@ class DltPublisher(
         val dltTopic = KafkaConstants.Topics.transactionDlt(consumerGroup)
         // Capture session here; the callback runs on a Kafka producer thread without one.
         val session = SessionContextProvider.getSession().copy()
-        kafkaTemplate.send(dltTopic, event.sourceContext.locationSchema, event)
+        val partitionKey = when (val sourceContext = event.sourceContext) {
+            is EventSourceContext.LocationLevel -> sourceContext.locationSchema
+            is EventSourceContext.OrgLevel -> sourceContext.orgSchema
+        }
+        kafkaTemplate.send(dltTopic, partitionKey, event)
             .whenComplete { result, throwable ->
                 if (throwable == null) {
                     runCatching {

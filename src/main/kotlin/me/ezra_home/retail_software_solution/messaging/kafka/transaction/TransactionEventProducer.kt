@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.transaction
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.configuration.session.withSession
 import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
 import org.slf4j.LoggerFactory
@@ -22,7 +23,11 @@ class TransactionEventProducer(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onTransactionEvent(event: TransactionEvent) {
         val session = SessionContextProvider.getSession().copy()
-        kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, event.sourceContext.locationSchema, event)
+        val partitionKey = when (val sourceContext = event.sourceContext) {
+            is EventSourceContext.LocationLevel -> sourceContext.locationSchema
+            is EventSourceContext.OrgLevel -> sourceContext.orgSchema
+        }
+        kafkaTemplate.send(KafkaConstants.Topics.TRANSACTION_EVENTS, partitionKey, event)
             .whenComplete { _, throwable ->
                 if (throwable != null) {
                     log.error("Failed to publish event ${event.eventId}", throwable)

@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.lock.api.LockNamespaces
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest

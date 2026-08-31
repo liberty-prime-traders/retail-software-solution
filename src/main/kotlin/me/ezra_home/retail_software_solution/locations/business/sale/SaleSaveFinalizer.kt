@@ -41,7 +41,7 @@ class SaleSaveFinalizer(
             saleSaveRequest = saleSaveRequest,
         )
         saleEntity.paymentStatus = salePaymentAppendResult.newPaymentStatus
-        saleRepository.saveAndFlush(saleEntity)
+        saleRepository.save(saleEntity)
         return SaleSaveFinalizeResult(
             saleAdjustmentIdsByClientKey = saleAdjustmentIdsByClientKey,
             persistedSalePaymentsByClientKey = salePaymentAppendResult.persistedSalePaymentsByClientKey,

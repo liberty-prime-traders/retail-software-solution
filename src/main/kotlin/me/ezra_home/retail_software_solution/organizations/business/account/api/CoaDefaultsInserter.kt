@@ -6,9 +6,13 @@ import org.springframework.stereotype.Component
 
 @Component
 @TransactionalOnOrganizationSchema
-class CoaDefaultsInserter(private val accountCache: AccountCache) {
+class CoaDefaultsInserter(
+    private val accountCache: AccountCache,
+    private val accountStructureLock: AccountStructureLock
+) {
 
     fun seedDefaults() {
+        accountStructureLock.acquire(SystemAccount.entries.mapNotNull { it.parent?.code }.toSet())
         val allAccounts = accountCache.getAll().map { it.code }.toSet()
         val toInsert = SystemAccount.entries.filter { it.code !in allAccounts }
             .map { buildInsertDto(it) }
