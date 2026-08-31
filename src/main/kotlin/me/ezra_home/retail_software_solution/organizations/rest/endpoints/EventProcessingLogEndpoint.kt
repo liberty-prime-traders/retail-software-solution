@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.locations.rest.endpoints
+package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventRetryService
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.KafkaEventLogDto
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.KafkaEventLogsFetcher
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.EventRetryService
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.KafkaEventLogDto
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.KafkaEventLogsFetcher
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

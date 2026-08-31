@@ -25,6 +25,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   ADDRESS(TableNames.ADDRESS, SchemaLevel.ORGANIZATION),
   ADJUSTMENT_REASON(TableNames.ADJUSTMENT_REASON, SchemaLevel.ORGANIZATION),
   CONTACT(TableNames.CONTACT, SchemaLevel.ORGANIZATION),
+  EVENT_PROCESSING_LOG(TableNames.EVENT_PROCESSING_LOG, SchemaLevel.ORGANIZATION),
   FISCAL_PERIOD(TableNames.FISCAL_PERIOD, SchemaLevel.ORGANIZATION),
   JOB_TITLE(TableNames.JOB_TITLE, SchemaLevel.ORGANIZATION),
   LEDGER_ENTRY(TableNames.LEDGER_ENTRY, SchemaLevel.ORGANIZATION),
@@ -54,7 +55,6 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   UNIT_VALUE(TableNames.UNIT_VALUE, SchemaLevel.ORGANIZATION),
 
   // Location-level tables
-  EVENT_PROCESSING_LOG(TableNames.EVENT_PROCESSING_LOG, SchemaLevel.LOCATION),
   LOCATION_PRODUCT(TableNames.LOCATION_PRODUCT, SchemaLevel.LOCATION),
   PURCHASE(TableNames.PURCHASE, SchemaLevel.LOCATION),
   PURCHASE_DELIVERY(TableNames.PURCHASE_DELIVERY, SchemaLevel.LOCATION),

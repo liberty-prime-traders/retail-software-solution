@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log
 
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 

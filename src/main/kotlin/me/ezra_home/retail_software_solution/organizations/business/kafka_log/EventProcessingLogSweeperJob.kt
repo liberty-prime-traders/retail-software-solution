@@ -1,8 +1,7 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogSweepService
-import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.EventProcessingLogSweepService
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component
 @Component
 class EventProcessingLogSweeperJob(
     private val organizationService: OrganizationService,
-    private val locationService: LocationService,
     private val sweepService: EventProcessingLogSweepService
 ) {
 
@@ -24,19 +22,14 @@ class EventProcessingLogSweeperJob(
             .forEach { org ->
                 SessionContextProvider.initOrganization(org)
                 try {
-                    locationService.getAllLocationDtos().forEach { location ->
-                        SessionContextProvider.initLocation(location)
-                        try {
-                            sweepService.reclaimStalePending(
-                                sweepService.findStalePending(STALE_PENDING_AGE_MINUTES)
-                            )
-                            sweepService.retryAll(
-                                sweepService.findRetryableToSweep(RETRYABLE_AGE_MINUTES)
-                            )
-                        } catch (e: Exception) {
-                            log.error("Sweep failed for org {} location {}", org.id, location.id, e)
-                        }
-                    }
+                    sweepService.reclaimStalePending(
+                        sweepService.findStalePending(STALE_PENDING_AGE_MINUTES)
+                    )
+                    sweepService.retryAll(
+                        sweepService.findRetryableToSweep(RETRYABLE_AGE_MINUTES)
+                    )
+                } catch (e: Exception) {
+                    log.error("Sweep failed for org {}", org.id, e)
                 } finally {
                     SessionContextProvider.clear()
                 }

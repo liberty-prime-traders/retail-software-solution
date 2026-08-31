@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log.api
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log.api
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogRepository
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogStatus
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogRepository
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -18,14 +18,14 @@ class EventProcessingLogSweepService(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @TransactionalOnLocationSchema(readOnly = true)
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun findRetryableToSweep(olderThanMinutes: Long): List<UUID> {
         val cutoff = OffsetDateTime.now().minus(olderThanMinutes, ChronoUnit.MINUTES)
         return repository.findByStatusInAndCreatedOnBefore(RETRYABLE_STATUSES, cutoff)
             .mapNotNull { it.id }
     }
 
-    @TransactionalOnLocationSchema(readOnly = true)
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun findStalePending(olderThanMinutes: Long): List<UUID> {
         val cutoff = OffsetDateTime.now().minus(olderThanMinutes, ChronoUnit.MINUTES)
         return repository.findByStatusInAndCreatedOnBefore(listOf(EventProcessingLogStatus.PENDING), cutoff)

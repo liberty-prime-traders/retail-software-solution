@@ -1,6 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log.api
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log.api
 
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogStatus
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogStatus
 import java.time.Instant
 import java.util.UUID
 

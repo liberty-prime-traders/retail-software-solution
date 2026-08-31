@@ -23,6 +23,7 @@ object TableNames {
     const val ADDRESS = "address"
     const val ADJUSTMENT_REASON = "adjustment_reason"
     const val CONTACT = "contact"
+    const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val FISCAL_PERIOD = "fiscal_period"
     const val JOB_TITLE = "job_title"
     const val LEDGER_ENTRY = "ledger_entry"
@@ -50,7 +51,6 @@ object TableNames {
     const val UNIT_VALUE = "unit_value"
 
     // Location tables
-    const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val LOCATION_PRODUCT = "location_product"
     const val PURCHASE = "purchase"
     const val PURCHASE_DELIVERY = "purchase_delivery"

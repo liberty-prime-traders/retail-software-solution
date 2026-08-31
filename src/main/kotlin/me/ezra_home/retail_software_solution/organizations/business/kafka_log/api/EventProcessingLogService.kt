@@ -1,10 +1,12 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log.api
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log.api
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogEntity
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogRepository
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogResolutionType
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogStatus
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogEntity
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogRepository
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogResolutionType
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogStatus
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -15,10 +17,11 @@ import java.util.UUID
 // Every method runs in REQUIRES_NEW so the log persists even when the caller's transaction rolls back.
 @Service
 class EventProcessingLogService(
-    private val repository: EventProcessingLogRepository
+    private val repository: EventProcessingLogRepository,
+    private val locationService: LocationService
 ) {
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun insertPending(event: TransactionEvent, consumerGroup: String) {
         val existing = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup)
         if (existing?.status == EventProcessingLogStatus.RETRYING) return
@@ -34,19 +37,26 @@ class EventProcessingLogService(
                 eventId = event.eventId,
                 eventType = event::class.simpleName!!,
                 consumerGroup = consumerGroup,
+                sourceLocationId = resolveSourceLocationId(event),
                 sourceDocumentId = event.sourceDocumentId,
                 status = EventProcessingLogStatus.PENDING
             )
         )
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    private fun resolveSourceLocationId(event: TransactionEvent): UUID? =
+        when (val sourceContext = event.sourceContext) {
+            is EventSourceContext.LocationLevel -> locationService.getBySchema(sourceContext.locationSchema).id
+            is EventSourceContext.OrgLevel -> null
+        }
+
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markProcessed(event: TransactionEvent, consumerGroup: String) {
         val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return
         markProcessed(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markProcessed(entry: EventProcessingLogEntity, resolutionType: EventProcessingLogResolutionType? = null) {
         entry.status = EventProcessingLogStatus.PROCESSED
         entry.processedOn = Instant.now()
@@ -56,7 +66,7 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markFailed(event: TransactionEvent, consumerGroup: String, reason: String): UUID? {
         val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return null
         entry.status = EventProcessingLogStatus.FAILED
@@ -65,7 +75,7 @@ class EventProcessingLogService(
         return repository.save(entry).id
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun recordDltPublished(logId: UUID, partition: Int, offset: Long) {
         val entry = repository.findById(logId).orElse(null) ?: return
         entry.dltPartition = partition
@@ -73,7 +83,7 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markDltPublishFailed(logId: UUID, reason: String) {
         val entry = repository.findById(logId).orElse(null) ?: return
         entry.status = EventProcessingLogStatus.DLT_PUBLISH_FAILED
@@ -81,7 +91,7 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markRetrying(logId: UUID) {
         val entry = repository.findById(logId)
             .orElseThrow { RtsGenericException("Event log entry $logId not found") }
@@ -90,13 +100,14 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun insertPublishFailed(event: TransactionEvent, reason: String) {
         repository.save(
             EventProcessingLogEntity(
                 eventId = event.eventId,
                 eventType = event::class.simpleName!!,
                 consumerGroup = null,
+                sourceLocationId = resolveSourceLocationId(event),
                 sourceDocumentId = event.sourceDocumentId,
                 status = EventProcessingLogStatus.PUBLISH_FAILED,
                 failedOn = Instant.now(),
@@ -105,19 +116,19 @@ class EventProcessingLogService(
         )
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun isRetrying(eventId: UUID, consumerGroup: String): Boolean {
         val existing = repository.findLatestByEventIdAndConsumerGroup(eventId, consumerGroup)
         return existing?.status == EventProcessingLogStatus.RETRYING
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun isProcessorCompleted(eventId: UUID, consumerGroup: String, processorName: String): Boolean {
         val existing = repository.findLatestByEventIdAndConsumerGroup(eventId, consumerGroup) ?: return false
         return processorName in existing.completedProcessors
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markProcessorCompleted(eventId: UUID, consumerGroup: String, processorName: String) {
         val entry = repository.findLatestByEventIdAndConsumerGroup(eventId, consumerGroup) ?: return
         if (processorName in entry.completedProcessors) return
@@ -125,7 +136,7 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markRaceLost(event: TransactionEvent, consumerGroup: String, reason: String) {
         val entry = repository.findLatestByEventIdAndConsumerGroup(event.eventId, consumerGroup) ?: return
         entry.status = EventProcessingLogStatus.PROCESSED
@@ -136,7 +147,7 @@ class EventProcessingLogService(
         repository.save(entry)
     }
 
-    @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)
     fun markPendingTimedOut(logId: UUID) {
         val entry = repository.findById(logId).orElse(null) ?: return
         if (entry.status != EventProcessingLogStatus.PENDING) return

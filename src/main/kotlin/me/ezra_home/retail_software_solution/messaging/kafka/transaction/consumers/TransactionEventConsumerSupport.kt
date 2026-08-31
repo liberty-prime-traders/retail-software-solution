@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.consumers
 
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.DltPublisher
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.DltPublisher
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSessionSetup
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.ConsumerFailureEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.notifications.NotificationEventProducer

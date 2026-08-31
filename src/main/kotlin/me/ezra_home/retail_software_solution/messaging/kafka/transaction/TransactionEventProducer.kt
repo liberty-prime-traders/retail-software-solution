@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.transaction
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.configuration.session.withSession
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.api.EventProcessingLogService
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.api.EventProcessingLogService
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.common.KafkaConstants
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent

@@ -47,6 +47,10 @@ databaseChangeLog:
                   type: varchar(50)
 
               - column:
+                  name: source_location_id
+                  type: uuid
+
+              - column:
                   name: source_document_id
                   type: uuid
                   constraints:
