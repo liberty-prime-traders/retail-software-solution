@@ -1,12 +1,12 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log.api
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log.api
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.kafka_log.EventProcessingLogRepository
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogRepository
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-@TransactionalOnLocationSchema
+@TransactionalOnOrganizationSchema
 class KafkaEventLogsFetcher(private val eventProcessingLogRepository: EventProcessingLogRepository) {
 
     fun getEventsForSourceId(sourceId: UUID): List<KafkaEventLogDto> {

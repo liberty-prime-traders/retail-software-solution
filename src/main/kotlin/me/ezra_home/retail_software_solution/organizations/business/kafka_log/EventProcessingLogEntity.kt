@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.kafka_log
+package me.ezra_home.retail_software_solution.organizations.business.kafka_log
 
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -25,6 +25,9 @@ class EventProcessingLogEntity(
 
     @Column(name = "consumer_group", updatable = false, length = 50)
     var consumerGroup: String?,
+
+    @Column(name = "source_location_id", updatable = false)
+    var sourceLocationId: UUID? = null,
 
     @Column(name = "source_document_id", nullable = false, updatable = false)
     var sourceDocumentId: UUID,

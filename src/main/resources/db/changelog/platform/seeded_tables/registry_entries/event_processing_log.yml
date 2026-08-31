@@ -20,7 +20,7 @@ databaseChangeLog:
                   valueComputed: ${version_1_id}
               - column:
                   name: schema_level
-                  value: LOC
+                  value: ORG
               - column:
                   name: display_name
                   value: Event Processing Log
