@@ -19,7 +19,7 @@ class AddressCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: AddressInsertDto): AddressDto {
-        val saved = addressRepository.saveAndFlush(addressMapper.toEntity(insertDto))
+        val saved = addressRepository.save(addressMapper.toEntity(insertDto))
         return addressMapper.toDomainDto(saved)
     }
 

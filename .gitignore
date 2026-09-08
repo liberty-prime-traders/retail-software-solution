@@ -65,7 +65,10 @@ out/
 
 ### Kotlin ###
 .kotlin
-.claude
+
+### Claude Code (personal/ephemeral only — .claude/ itself is tracked) ###
+.claude-local/
+.claude/settings.local.json
 
 ### macOS ###
 .DS_Store

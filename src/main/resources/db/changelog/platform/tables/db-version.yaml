@@ -25,21 +25,21 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: db_version_version_number_notnull
                     unique: true
-                    uniqueConstraintName: db_version_version_number_unique
+                    uniqueConstraintName: uq_db_version_version_number
 
               - column:
                   name: sequence_number
                   type: BIGINT
                   constraints:
                     unique: true
-                    uniqueConstraintName: db_version_sequence_number_unique
+                    uniqueConstraintName: uq_db_version_sequence_number
 
               - column:
                   name: prev_version_id
                   type: uuid
                   constraints:
                     unique: true
-                    uniqueConstraintName: db_version_prev_version_id_unique
+                    uniqueConstraintName: uq_db_version_prev_version_id
 
               - column:
                   name: activated_on

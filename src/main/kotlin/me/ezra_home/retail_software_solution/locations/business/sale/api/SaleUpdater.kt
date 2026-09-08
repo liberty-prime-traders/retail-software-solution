@@ -48,12 +48,12 @@ class SaleUpdater(
             stockReserver.clearBySale(saleVoidCreateDto.saleId)
             sale.status = SaleStatus.DISCARDED
         } else {
-            fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
-            saleStockUpdater.restoreStock(sale.requiredReference())
-            sale.status = SaleStatus.VOIDED
             val saleVoidEntity = saleVoidRepository.save(
                 SaleVoidEntity(saleId = saleVoidCreateDto.saleId, reason = saleVoidCreateDto.reason)
             )
+            fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(saleVoidEntity.requiredCreatedOn()))
+            saleStockUpdater.restoreStock(sale.requiredReference())
+            sale.status = SaleStatus.VOIDED
             saleVoidHandlerForKafka.publishVoid(sale, saleVoidEntity)
         }
         saleRepository.save(sale)

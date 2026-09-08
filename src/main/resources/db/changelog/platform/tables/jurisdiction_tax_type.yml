@@ -56,7 +56,7 @@ databaseChangeLog:
         - addUniqueConstraint:
             tableName: jurisdiction_tax_type
             columnNames: tax_type_id, jurisdiction_id
-            constraintName: jurisdiction_tax_type_tax_type_id_jurisdiction_id_unique
+            constraintName: uq_jurisdiction_tax_type_tax_type_id_jurisdiction_id
       rollback:
         - dropTable:
             tableName: jurisdiction_tax_type

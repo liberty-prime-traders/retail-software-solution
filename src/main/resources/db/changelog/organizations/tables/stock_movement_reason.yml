@@ -26,14 +26,14 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: stock_movement_reason_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: stock_movement_reason_reference_number_unique
+                    uniqueConstraintName: uq_stock_movement_reason_reference_number
 
               - column:
                   name: code
                   type: varchar(20)
                   constraints:
                     unique: true
-                    uniqueConstraintName: stock_movement_reason_code_unique
+                    uniqueConstraintName: uq_stock_movement_reason_code
 
               - column:
                   name: name

@@ -31,7 +31,7 @@ class PurchaseService(
     PurchaseValidator.guardNoDuplicateProducts(dto.linesToAdd)
     PurchaseValidator.guardPositiveLineQuantities(dto.linesToAdd)
     locationProductService.guardAllActive(dto.linesToAdd.map { it.locationProductId })
-    val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.saveAndFlush(it) }
+    val purchase = PurchaseMapper.toDraftEntity(dto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(
       purchase.id!!,
       dto.linesToAdd,

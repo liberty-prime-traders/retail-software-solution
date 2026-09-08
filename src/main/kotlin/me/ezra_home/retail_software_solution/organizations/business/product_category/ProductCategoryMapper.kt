@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_cat
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.mapping.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping

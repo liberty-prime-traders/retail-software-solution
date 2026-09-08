@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.feature.api.OrganizationFeatureService
 import me.ezra_home.retail_software_solution.platform.business.feature.FeatureCache
-import me.ezra_home.retail_software_solution.platform.business.feature.FeatureDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service

@@ -26,7 +26,7 @@ class ContactCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: ContactInsertDto): ContactDto {
-        val saved = contactRepository.saveAndFlush(contactMapper.toEntity(insertDto))
+        val saved = contactRepository.save(contactMapper.toEntity(insertDto))
         return contactMapper.toDomainDto(saved)
     }
 

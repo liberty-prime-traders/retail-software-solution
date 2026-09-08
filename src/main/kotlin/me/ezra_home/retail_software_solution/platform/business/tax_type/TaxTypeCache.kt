@@ -24,7 +24,7 @@ class TaxTypeCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: TaxTypeInsertDto): TaxTypeDto {
-        val saved = taxTypeRepository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = taxTypeRepository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

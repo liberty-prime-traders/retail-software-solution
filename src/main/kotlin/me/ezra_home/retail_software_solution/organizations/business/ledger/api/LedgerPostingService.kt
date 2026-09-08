@@ -41,7 +41,7 @@ class LedgerPostingService(
         val group = LedgerEntryGroupEntity(
             sourceReferenceNumber = request.sourceReferenceNumber,
             sourceType = request.sourceType,
-            sourceLocationId = SessionContextProvider.getLocationId(),
+            sourceLocationId = SessionContextProvider.getLocationIdOrNull(),
             fiscalPeriodId = fiscalPeriodId,
             postedOn = Instant.now()
         )

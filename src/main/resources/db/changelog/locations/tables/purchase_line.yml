@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: purchase_line_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: purchase_line_reference_number_unique
+                    uniqueConstraintName: uq_purchase_line_reference_number
 
               - column:
                   name: purchase_id
@@ -66,7 +66,7 @@ databaseChangeLog:
               - column:
                   name: quantity_delivered
                   type: numeric(19, 4)
-                  defaultValueNumeric: '0'
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_quantity_delivered_notnull
@@ -74,7 +74,7 @@ databaseChangeLog:
               - column:
                   name: quantity_canceled
                   type: numeric(19, 4)
-                  defaultValueNumeric: '0'
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_quantity_canceled_notnull

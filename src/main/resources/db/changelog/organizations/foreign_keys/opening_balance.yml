@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-opening-balance-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_opening_balance_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: opening_balance
+            baseColumnNames: account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_opening_balance_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: opening_balance
+            constraintName: fk_opening_balance_account_code

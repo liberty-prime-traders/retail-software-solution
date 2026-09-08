@@ -18,5 +18,6 @@ data class AccountResponseDto(
     val parentAccountCode: String?,
     val parentAccount: String?,
     val accountIsExtensible: Boolean,
-    val balanceSignal: BalanceSignal
+    val balanceSignal: BalanceSignal,
+    val openingBalance: BigDecimal
 ) : Serializable

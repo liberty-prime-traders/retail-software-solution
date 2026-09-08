@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.startup_checks
 
+import me.ezra_home.retail_software_solution.platform.business.startup_checks.api.StartupCheck
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner

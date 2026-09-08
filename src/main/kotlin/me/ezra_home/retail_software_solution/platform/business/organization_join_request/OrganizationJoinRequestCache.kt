@@ -18,7 +18,7 @@ class OrganizationJoinRequestCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: OrganizationJoinRequestInsertDto): OrganizationJoinRequestDto {
-        val saved = organizationJoinRequestRepository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = organizationJoinRequestRepository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

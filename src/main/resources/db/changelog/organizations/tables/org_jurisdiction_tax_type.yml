@@ -50,7 +50,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: org_jurisdiction_tax_type_reference_number_unique
+                    uniqueConstraintName: uq_org_jurisdiction_tax_type_reference_number
                     nullable: false
                     notNullConstraintName: org_jurisdiction_tax_type_reference_number_notnull
 

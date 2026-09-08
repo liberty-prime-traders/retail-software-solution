@@ -30,7 +30,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: sys_user_reference_number_unique
+                    uniqueConstraintName: uq_sys_user_reference_number
                     nullable: false
                     notNullConstraintName: sys_user_reference_number_not_null
 

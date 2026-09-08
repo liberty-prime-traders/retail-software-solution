@@ -23,7 +23,7 @@ class StockMovementReasonCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: StockMovementReasonInsertDto): StockMovementReasonDto {
-        val saved = repository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = repository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

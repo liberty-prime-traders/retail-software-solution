@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: jurisdiction_type_name_notnull
                     unique: true
-                    uniqueConstraintName: jurisdiction_type_name_unique
+                    uniqueConstraintName: uq_jurisdiction_type_name
 
               - column:
                   name: description
@@ -49,7 +49,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: jurisdiction_type_reference_number_unique
+                    uniqueConstraintName: uq_jurisdiction_type_reference_number
                     nullable: false
                     notNullConstraintName: jurisdiction_type_reference_number_notnull
       rollback:

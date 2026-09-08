@@ -23,7 +23,7 @@ class AdjustmentReasonCache(
 
     @CacheEvict(allEntries = true)
     fun create(insertDto: AdjustmentReasonInsertDto): AdjustmentReasonDto {
-        val saved = repository.saveAndFlush(mapper.toEntity(insertDto))
+        val saved = repository.save(mapper.toEntity(insertDto))
         return mapper.toDomainDto(saved)
     }
 

@@ -5,7 +5,7 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.persistence.Version
-import me.ezra_home.retail_software_solution.locations.business.purchase.PaymentStatusConverter
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.annotations.HasReference

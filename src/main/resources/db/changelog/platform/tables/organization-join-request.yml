@@ -55,6 +55,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: org_join_request_reference_number_unique
+                    uniqueConstraintName: uq_org_join_request_reference_number
                     nullable: false
                     notNullConstraintName: org_join_request_reference_number_not_null

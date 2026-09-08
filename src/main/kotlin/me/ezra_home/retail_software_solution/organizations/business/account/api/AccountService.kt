@@ -20,7 +20,8 @@ class AccountService(
     private val accountCache: AccountCache,
     private val accountRepository: AccountRepository,
     private val accountResponseBuilder: AccountResponseBuilder,
-    private val childAccountCreator: ChildAccountCreator
+    private val childAccountCreator: ChildAccountCreator,
+    private val accountStructureLock: AccountStructureLock
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -53,6 +54,7 @@ class AccountService(
     }
 
     fun createChild(dto: AccountChildCreateRequest): AccountResponseDto {
+        accountStructureLock.acquire(dto.parentAccountCode)
         val accounts = accountCache.getAll()
         val accountsByCode = accounts.associateBy { it.code }
         val newAccount = childAccountCreator.createChild(dto, accountsByCode)

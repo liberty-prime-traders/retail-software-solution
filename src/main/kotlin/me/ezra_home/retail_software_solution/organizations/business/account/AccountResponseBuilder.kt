@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
+import me.ezra_home.retail_software_solution.organizations.business.opening_balance.api.OpeningBalanceService
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -10,7 +11,8 @@ import java.math.BigDecimal
 @Service
 @TransactionalOnOrganizationSchema(readOnly = true)
 class AccountResponseBuilder(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val openingBalanceService: OpeningBalanceService
 ) {
 
     fun buildResponse(accounts: AccountDto): AccountResponseDto {
@@ -22,23 +24,27 @@ class AccountResponseBuilder(
         val rawBalances = accountRepository
             .findBalancesByCodes(accountsByCode.keys.toSet())
             .associateBy(AccountBalance::code)
+        val rawOpeningBalances = openingBalanceService.getAmountsByAccountCodes(accountsByCode.keys)
         val rolledUpBalances = accountsByCode.keys.associateWith { code ->
-            computeRolledUpBalance(code, accountsByCode, rawBalances)
+            computeRolledUpAmount(code, accountsByCode) { rawBalances[it]?.currentBalance }
         }
-        return accounts.map { account -> buildFinalObject(account, accountsByCode, rolledUpBalances) }
+        val rolledUpOpeningBalances = accountsByCode.keys.associateWith { code ->
+            computeRolledUpAmount(code, accountsByCode) { rawOpeningBalances[it] }
+        }
+        return accounts.map { account -> buildFinalObject(account, accountsByCode, rolledUpBalances, rolledUpOpeningBalances) }
     }
 
-    private fun computeRolledUpBalance(
+    private fun computeRolledUpAmount(
         code: String,
         accountsByCode: Map<String, AccountDto>,
-        rawBalances: Map<String, AccountBalance>
+        leafAmount: (String) -> BigDecimal?
     ): BigDecimal {
         val children = accountsByCode.values.filter { it.parentAccountCode == code }
         return if (children.isEmpty()) {
-            rawBalances[code]?.currentBalance ?: BigDecimal.ZERO
+            leafAmount(code) ?: BigDecimal.ZERO
         } else {
             children.fold(BigDecimal.ZERO) { acc, child ->
-                acc + computeRolledUpBalance(child.code, accountsByCode, rawBalances)
+                acc + computeRolledUpAmount(child.code, accountsByCode, leafAmount)
             }
         }
     }
@@ -46,10 +52,11 @@ class AccountResponseBuilder(
     private fun buildFinalObject(
         account: AccountDto,
         accountsByCode: Map<String, AccountDto>,
-        rolledUpBalances: Map<String, BigDecimal>
+        rolledUpBalances: Map<String, BigDecimal>,
+        rolledUpOpeningBalances: Map<String, BigDecimal>
     ): AccountResponseDto {
         val currentBalance = rolledUpBalances[account.code] ?: BigDecimal.ZERO
-        val isExtensible = isExtensible(account, accountsByCode[account.parentAccountCode])
+        val canGainChildren = canGainChildren(account, accountsByCode[account.parentAccountCode])
         val balanceSignal = when {
             BigDecimal.ZERO.compareTo(currentBalance) == 0 -> BalanceSignal.ZERO_BALANCE
             currentBalance < BigDecimal.ZERO -> BalanceSignal.IRREGULAR_BALANCE
@@ -66,16 +73,20 @@ class AccountResponseBuilder(
             currentBalance = currentBalance,
             parentAccountCode = account.parentAccountCode,
             parentAccount = accountsByCode[account.parentAccountCode]?.label,
-            accountIsExtensible = isExtensible,
-            balanceSignal = balanceSignal
+            accountIsExtensible = canGainChildren,
+            balanceSignal = balanceSignal,
+            openingBalance = rolledUpOpeningBalances[account.code] ?: BigDecimal.ZERO
         )
     }
 
-    fun isExtensible(accountDto: AccountDto, parentAccountDto: AccountDto?): Boolean {
+    private fun canGainChildren(accountDto: AccountDto, parentAccountDto: AccountDto?): Boolean {
         if (accountDto.accountIsSystemMaintained) {
-            return SystemAccount.fromCode(accountDto.code)?.isExtensible() ?: false
+            return SystemAccount.fromCode(accountDto.code)?.isSingleLevelExtensionPoint() ?: false
         }
+        // A single-level extension point grants exactly one level of children beneath it — this
+        // account, sitting directly under one, is that one level and is not itself extensible.
         val parentSystemAccount = parentAccountDto?.let { SystemAccount.fromCode(it.code) }
-        return parentSystemAccount?.isExtensible() != true
+        val parentIsSingleLevelExtensionPoint = parentSystemAccount?.isSingleLevelExtensionPoint() == true
+        return !parentIsSingleLevelExtensionPoint
     }
 }

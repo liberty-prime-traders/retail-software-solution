@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine

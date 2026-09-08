@@ -22,7 +22,6 @@ enum class SystemAccount(
     INVENTORY("001.001.003", "Inventory", AccountType.ASSET, parent = CURRENT_ASSETS),
     TAX_RECOVERABLE("001.001.004", "Tax Recoverable", AccountType.ASSET, parent = CURRENT_ASSETS),
     DIGITAL_PAYMENTS("001.001.005", "Digital Payments", AccountType.ASSET, parent = CURRENT_ASSETS),
-    BANK("001.001.005.001", "Bank", AccountType.ASSET, parent = DIGITAL_PAYMENTS),
 
     // Fixed Assets
     FIXED_ASSETS("001.002", "Fixed Assets", AccountType.ASSET, parent = ASSETS),
@@ -46,6 +45,7 @@ enum class SystemAccount(
     OWNERS_CAPITAL("003.001", "Owner's Capital", AccountType.EQUITY, parent = EQUITY),
     RETAINED_EARNINGS("003.002", "Retained Earnings", AccountType.EQUITY, parent = EQUITY),
     OWNERS_DRAWS("003.003", "Owner's Draws", AccountType.EQUITY_CONTRA, parent = EQUITY),
+    OPENING_BALANCE_EQUITY("003.004", "Opening Balance Equity", AccountType.EQUITY, parent = EQUITY),
 
     // Revenue
     REVENUE("004", "Revenue", AccountType.REVENUE),
@@ -74,10 +74,14 @@ enum class SystemAccount(
     BAD_DEBT_EXPENSE("005.012", "Bad Debt Expense", AccountType.EXPENSE, parent = EXPENSES),
     OTHER_OPERATING_EXPENSES("005.013", "Other Operating Expenses", AccountType.EXPENSE, parent = EXPENSES);
 
-    fun isExtensible(): Boolean = this in extensibleAccounts
+    fun isSingleLevelExtensionPoint(): Boolean = this in singleLevelExtensionPoints
 
     companion object {
-        private val extensibleAccounts = setOf(DIGITAL_PAYMENTS, TAX_RECOVERABLE, TAX_PAYABLE)
+        // Accepts exactly one level of user-created children directly beneath it (e.g. a payment
+        // account under DIGITAL_PAYMENTS) — a second level is blocked separately, by
+        // ChildAccountCreator.preventSystemAccountGainingGrandChild. This is NOT an inherited
+        // trait: a child of one of these accounts is not itself an extension point.
+        private val singleLevelExtensionPoints = setOf(DIGITAL_PAYMENTS, TAX_RECOVERABLE, TAX_PAYABLE)
         private val byCode = entries.associateBy { it.code }
         fun fromCode(code: String): SystemAccount? = byCode[code]
     }

@@ -10,6 +10,10 @@ import java.util.UUID
 
 @Repository
 interface AccountRepository : JpaRepository<AccountEntity, UUID> {
+    fun findByCode(code: String): AccountEntity?
+
+    fun existsByParentAccountCode(code: String): Boolean
+
     @Query("SELECT a.code as code, a.currentBalance as currentBalance FROM AccountEntity a WHERE a.code IN :codes")
     fun findBalancesByCodes(codes: Set<String>): List<AccountBalance>
 

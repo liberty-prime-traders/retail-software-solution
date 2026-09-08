@@ -69,7 +69,7 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: tax_rate_reference_number_unique
+                    uniqueConstraintName: uq_tax_rate_reference_number
                     nullable: false
                     notNullConstraintName: tax_rate_reference_number_notnull
       rollback:

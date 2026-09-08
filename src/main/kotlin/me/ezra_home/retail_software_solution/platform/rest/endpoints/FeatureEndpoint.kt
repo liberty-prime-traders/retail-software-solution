@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.platform.business.feature.FeatureDto
 import me.ezra_home.retail_software_solution.platform.business.feature.api.Feature
+import me.ezra_home.retail_software_solution.platform.business.feature.api.FeatureDto
 import me.ezra_home.retail_software_solution.platform.business.feature.api.FeatureService
 import me.ezra_home.retail_software_solution.platform.business.feature.api.FeatureUpdateDto
 import org.springframework.web.bind.annotation.GetMapping
