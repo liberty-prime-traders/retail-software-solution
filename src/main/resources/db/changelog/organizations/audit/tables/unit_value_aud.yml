@@ -32,7 +32,7 @@ databaseChangeLog:
                   type: nvarchar2(100)
               - column:
                   name: code
-                  type: nvarchar2(5)
+                  type: nvarchar2(25)
               - column:
                   name: description
                   type: nvarchar2(400)

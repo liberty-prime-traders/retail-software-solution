@@ -1,6 +1,6 @@
 # RTSS — Kafka Messaging Patterns
 
-Read this before adding a new event, producer, processor, consumer group, or any retry/DLT logic.
+Read this before adding a new event, producer, processor, consumer group, or any retry/DLT logic. See also `messaging/kafka/README.md` for why `transaction/` and `catalog/` are two separate pipelines and when to use each.
 
 ---
 
@@ -43,7 +43,7 @@ eventPublisher.publishEvent(
 
 `TransactionEventProducer` listens with `@TransactionalEventListener(phase = AFTER_COMMIT)` — the event only reaches Kafka if the enclosing transaction commits. Rolled-back transactions never emit.
 
-Partition key = `locationSchema` (events for the same location land on the same partition in order).
+Partition key is derived from `event.sourceContext`: `locationSchema` for `LocationLevel` events (so events for the same location land on the same partition in order), `orgSchema` for `OrgLevel` events (e.g. `OpeningBalanceUpsertedEvent`) — `OrgLevel` has no `locationSchema` to key on.
 
 ### CatalogChangedEvent (org-scoped)
 
@@ -122,14 +122,19 @@ You never call this class directly — it is called by `InventoryEventConsumer` 
 
 ## EventProcessingLog
 
-Location-scoped table (`event_processing_log`) that tracks every `TransactionEvent` delivery per consumer group. Each log entry carries:
+**Org-scoped** table (`event_processing_log`, `organizations/business/kafka_log/`) that tracks every `TransactionEvent` delivery per consumer group — regardless of whether the event itself is `OrgLevel` or `LocationLevel`. It lives at org level (not location) because a location-scoped event has no location in session by the time an `OrgLevel` event needs the same log path; putting it under `@TransactionalOnLocationSchema` silently swallowed all `OrgLevel` event logging (`RtsGenericException`/"Location schema not found in session" caught and logged, never surfaced) until `OpeningBalanceUpsertedEvent` exposed it.
+
+Each log entry carries:
 
 - `status`: `PENDING → PROCESSED` (happy path); `FAILED`, `DLT_PUBLISH_FAILED`, `PUBLISH_FAILED`, `RETRYING`
 - `resolutionType`: `RACE_LOST`, `DLT_REPLAY`, `REISSUED` (set on manual retry)
 - `completedProcessors`: set of processor simple-class-names that have finished for this event+group combination
 - `dltPartition` / `dltOffset`: set when the event was forwarded to the DLT, so retry can fetch the exact record
+- `sourceLocationId`: nullable, resolved from `event.sourceContext` at insert time (`LocationLevel` → that location's id via `LocationService.getBySchema`; `OrgLevel` → `null`). Mirrors `ledger_entry_group.source_location_id`. This is how a location-scoped retry/reissue later knows which location schema to restore, since the log itself carries no location session.
 
-All `EventProcessingLogService` methods use `Propagation.REQUIRES_NEW` — the log record persists even when the caller's transaction rolls back.
+All `EventProcessingLogService` methods use `@TransactionalOnOrganizationSchema(propagation = Propagation.REQUIRES_NEW)` — the log record persists even when the caller's transaction rolls back.
+
+`EventProcessingLogSweeperJob` sweeps once per org (no per-location loop) — `EventProcessingLogSweepService` operates purely on org-scoped log rows.
 
 ---
 
@@ -154,9 +159,9 @@ Naming convention: `<Domain>HandlerForKafka` (e.g. `SaleConfirmedHandlerForKafka
 
 ## Retry / DLT flow
 
-`EventRetryService.retry(logId)`:
+`EventRetryService.retry(logId)` (`@TransactionalOnOrganizationSchema`, in `organizations/business/kafka_log/api/`):
 1. If `dltPartition`/`dltOffset` are set, fetches the original event from the DLT and re-publishes to `transaction-events` → marks log `RETRYING`.
-2. If no DLT record, finds the `EventReissueHandler` by `eventType` simple name and calls `reissue` → marks log `PROCESSED` with `REISSUED`.
+2. If no DLT record, finds the `EventReissueHandler` by `eventType` simple name. If `entry.sourceLocationId` is set, resolves that location and calls `SessionContextProvider.initLocation(...)` **before** invoking `reissue` — a location-scoped reissue handler needs location schema in session, and a retry triggered from the endpoint or the sweeper arrives with only org context, not a location already set. Then calls `reissue` → marks log `PROCESSED` with `REISSUED`.
 
 `DltPublisher` is called by consumer support on failure; it captures the session before sending because the Kafka producer callback runs on a non-session thread.
 

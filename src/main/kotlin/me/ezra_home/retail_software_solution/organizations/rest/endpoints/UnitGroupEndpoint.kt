@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.BulkUnitImportRequestDto
+import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.BulkUnitImportService
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
@@ -20,7 +22,10 @@ import java.util.UUID
 @CrossOrigin
 @RestController
 @RequestMapping("secured/unitgroups")
-class UnitGroupEndpoint(private val unitGroupService: UnitGroupService) {
+class UnitGroupEndpoint(
+    private val unitGroupService: UnitGroupService,
+    private val bulkUnitImportService: BulkUnitImportService
+) {
 
     @GetMapping
     fun getAllUnitGroups(): Collection<UnitGroupResponseDto> = unitGroupService.getAllUnitGroups()
@@ -28,6 +33,10 @@ class UnitGroupEndpoint(private val unitGroupService: UnitGroupService) {
     @PostMapping
     fun createUnitGroup(@RequestBody unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto =
         unitGroupService.createUnitGroup(unitGroupInsertDto)
+
+    @PostMapping("bulk")
+    fun bulkImport(@RequestBody bulkUnitImportRequestDto: BulkUnitImportRequestDto): Collection<UnitGroupResponseDto> =
+        bulkUnitImportService.bulkImport(bulkUnitImportRequestDto)
 
     @PutMapping
     fun updateUnitGroup(@RequestBody unitGroupUpdateDto: UnitGroupUpdateDto): UnitGroupResponseDto =

@@ -82,6 +82,12 @@ The order of execution is
   by a data dependency, an elvis on a non-nullable type).
 - Test comments: name the invariant being guarded and what breaks if it regresses — not the bug
   or task that prompted writing the test.
+- Prefer a name that carries the invariant over a comment that explains it. A bulk method that
+  deliberately skips per-item validation because the caller already validated the whole batch
+  should say so in its name — `bulkInsertValidatedList(insertDtos: List<UnitConversionInsertDto>)`,
+  not `bulkInsert` with a `// validation already happened upstream` comment above it. The name
+  travels with every call site and autocomplete entry; the comment only helps a reader already
+  looking at the declaration.
 
 ### Auditing
 - Add YAML for audit table + expected indexes

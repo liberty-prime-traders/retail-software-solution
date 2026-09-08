@@ -2,9 +2,12 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue.a
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.SystemUnitGroup
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueCache
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueValidator
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -25,6 +28,50 @@ class UnitValueService(
         val dto = unitValueCache.create(unitValueInsertDto)
         unitConversionGraphFacade.invalidate()
         return unitValueMapper.toResponseDto(dto, unitValueCache.getUnitNamesById()[dto.baseUnit])
+    }
+
+    fun bulkCreateValidatedList(topologicallyOrderedEntries: List<UnitValueBulkSaveEntry>): List<UnitValueResponseDto> {
+        if (topologicallyOrderedEntries.isEmpty()) return emptyList()
+        val entities = topologicallyOrderedEntries.map { entry ->
+            UnitValueEntity(
+                name = entry.name,
+                description = entry.description,
+                code = entry.code,
+                unitGroupId = entry.unitGroupId,
+                baseUnit = entry.baseUnit,
+                conversionFactor = entry.conversionFactor,
+                systemDefined = false
+            ).also { it.id = entry.id }
+        }
+        val saved = unitValueCache.saveAll(entities)
+        unitConversionGraphFacade.invalidate()
+        val unitNamesById = unitValueCache.getUnitNamesById()
+        return saved.map {
+            val dto = unitValueMapper.toDomainDto(it)
+            unitValueMapper.toResponseDto(dto, unitNamesById[it.baseUnit])
+        }
+    }
+
+    /** Provisions the group's default Piece base unit unless the group is Miscellaneous, Weight,
+     * or Volume (those have their own base units) or a Piece unit already exists in the group. */
+    fun ensurePieceUnitExists(unitGroupId: UUID, unitGroupName: String?): UnitValueResponseDto? {
+        val excludedFromPiece = listOf(SystemUnitGroup.MISC, SystemUnitGroup.WEIGHT, SystemUnitGroup.VOLUME)
+            .any { StringUtils.isEquivalent(it.groupName, unitGroupName) }
+        if (excludedFromPiece) return null
+
+        val pieceCode = SystemUnitValue.pieceCodeForGroup(unitGroupName)
+        if (unitValueCache.getByUnitGroupId(unitGroupId).any { it.code == pieceCode }) return null
+
+        val saved = unitValueCache.save(
+            UnitValueEntity(
+                name = SystemUnitValue.PIECE.unitName,
+                code = pieceCode,
+                unitGroupId = unitGroupId,
+                systemDefined = false
+            )
+        )
+        unitConversionGraphFacade.invalidate()
+        return unitValueMapper.toResponseDto(saved, null)
     }
 
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {

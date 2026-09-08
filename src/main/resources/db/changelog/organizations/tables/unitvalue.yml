@@ -28,8 +28,10 @@ databaseChangeLog:
 
               - column:
                   name: code
-                  type: nvarchar2(5)
+                  type: nvarchar2(25)
                   constraints:
+                    unique: true
+                    uniqueConstraintName: uq_unit_value_code
                     nullable: false
                     notNullConstraintName: unit_value_code_notnull
 

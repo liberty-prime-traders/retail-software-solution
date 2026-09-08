@@ -37,8 +37,8 @@ class UnitGroupCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun saveAll(entities: Collection<UnitGroupEntity>) {
-        unitGroupRepository.saveAll(entities)
+    fun saveAll(entities: Collection<UnitGroupEntity>): List<UnitGroupEntity> {
+        return unitGroupRepository.saveAll(entities)
     }
 
     @CacheEvict(allEntries = true)
