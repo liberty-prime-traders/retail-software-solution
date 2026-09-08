@@ -39,13 +39,15 @@ class StockTransferDispatchedHandlerForKafka(
             sourceSchema = sourceSchema,
             destinationSchema = destinationSchema,
             lines = dispatchRecord.lines.map { line ->
+                val ratio = line.conversionRatio()
                 StockTransferDispatchedLineDto(
                     dispatchLineReferenceNumber = line.requiredReference(),
                     orgProductId = line.orgProductId,
                     quantityDispatched = line.quantityDispatched,
                     unitId = line.unitId,
                     baseUnitId = line.baseUnitId,
-                    conversionFactor = line.conversionFactor,
+                    conversionNumerator = ratio.numerator,
+                    conversionDenominator = ratio.denominator,
                     unitCost = line.unitCost
                 )
             }

@@ -11,7 +11,7 @@ data class UnitValueUpdateDto(
     val code: Optional<String>? = null,
     val description: Optional<String>? = null,
     val baseUnit: Optional<UUID>? = null,
-    val conversionFactor: Optional<Double>? = null
+    val unitsOfBasePerUnit: Optional<Long>? = null
 ) : Serializable {
 
     fun applyTo(existing: UnitValueDto): UnitValueDto = existing.copy(
@@ -19,6 +19,6 @@ data class UnitValueUpdateDto(
         code = code?.orElse(existing.code) ?: existing.code,
         description = description?.orElse(existing.description) ?: existing.description,
         baseUnit = baseUnit?.orElse(existing.baseUnit) ?: existing.baseUnit,
-        conversionFactor = conversionFactor?.orElse(existing.conversionFactor) ?: existing.conversionFactor
+        unitsOfBasePerUnit = unitsOfBasePerUnit?.orElse(existing.unitsOfBasePerUnit) ?: existing.unitsOfBasePerUnit
     )
 }

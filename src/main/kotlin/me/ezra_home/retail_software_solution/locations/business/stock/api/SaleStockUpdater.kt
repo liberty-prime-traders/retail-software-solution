@@ -75,16 +75,18 @@ class SaleStockUpdater(
             stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
             modifiedEntries.add(stockEntry)
             runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
+            val conversionRatio = saleLineStockRequest.conversionRatio
             movements.add(
                 StockMovementEntity(
                     stockEntryId = stockEntry.id!!,
                     locationProductId = saleLineStockRequest.locationProductId,
                     movementType = MovementType.SALE,
-                    movedQuantity = Decimals.divideScale4(takenQuantityInBaseUnit, saleLineStockRequest.conversionFactor),
+                    movedQuantity = conversionRatio.invert().applyTo(takenQuantityInBaseUnit),
                     remainingQuantity = runningBalance,
                     externalReferenceNumber = saleRefNumber,
                     unitId = saleLineStockRequest.unitId,
-                    conversionFactor = saleLineStockRequest.conversionFactor,
+                    conversionNumerator = conversionRatio.numerator,
+                    conversionDenominator = conversionRatio.denominator,
                 )
             )
             unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
@@ -152,7 +154,8 @@ class SaleStockUpdater(
         var runningBalance = startingBalance
         saleMovementsForProduct.forEach { saleMovement ->
             val stockEntry = stockEntriesById[saleMovement.stockEntryId]!!
-            val restoredBaseQuantity = Decimals.multiplyScale4(saleMovement.movedQuantity, saleMovement.conversionFactor)
+            val conversionRatio = saleMovement.conversionRatio()
+            val restoredBaseQuantity = conversionRatio.applyTo(saleMovement.movedQuantity)
             stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBaseQuantity)
             modifiedEntries.add(stockEntry)
             runningBalance = runningBalance.add(restoredBaseQuantity)
@@ -165,7 +168,8 @@ class SaleStockUpdater(
                     remainingQuantity = runningBalance,
                     externalReferenceNumber = saleRefNumber,
                     unitId = saleMovement.unitId,
-                    conversionFactor = saleMovement.conversionFactor,
+                    conversionNumerator = conversionRatio.numerator,
+                    conversionDenominator = conversionRatio.denominator,
                 )
             )
         }

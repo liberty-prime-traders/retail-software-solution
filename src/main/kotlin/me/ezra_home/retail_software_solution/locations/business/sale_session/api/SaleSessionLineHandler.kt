@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
-import java.math.BigDecimal
 import java.util.UUID
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
@@ -12,6 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
@@ -95,7 +95,7 @@ class SaleSessionLineHandler(
                 quantity = lineAddDto.quantity,
                 unitId = productSummary.baseUnitId,
                 baseUnitId = productSummary.baseUnitId,
-                conversionFactor = BigDecimal.ONE,
+                conversionRatio = ConversionRatio.IDENTITY,
                 defaultSalePrice = defaultSalePrice,
             )
         }
@@ -109,12 +109,12 @@ class SaleSessionLineHandler(
         val updatesByLineKey = updates.associateBy { it.identity.key() }
         return existingSaleLines.map { saleSessionLine ->
             val lineUpdateDto = updatesByLineKey[saleSessionLine.identity.key()] ?: return@map saleSessionLine
-            val conversionFactor = saleSessionLineChangeContext.newConversionFactorsByLineKey[saleSessionLine.identity.key()]
-                ?: saleSessionLine.conversionFactor
+            val conversionRatio = saleSessionLineChangeContext.newConversionRatiosByLineKey[saleSessionLine.identity.key()]
+                ?: saleSessionLine.conversionRatio
             saleSessionLine.copy(
                 quantity = lineUpdateDto.quantity,
                 unitId = lineUpdateDto.unitId,
-                conversionFactor = conversionFactor,
+                conversionRatio = conversionRatio,
             )
         }
     }

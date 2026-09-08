@@ -5,10 +5,10 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.StockMovementReasonFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.UUID
 
 @Component
@@ -41,7 +41,7 @@ class StockMovementHistoryBuilder(
                 recordedOn = movement.createdOn!!.toInstant(),
                 conversionDriftNote = conversionDescription(
                     movement.unitId, baseUnitId,
-                    movement.conversionFactor, unitCode, baseUnitCode
+                    movement.conversionRatio(), unitCode, baseUnitCode
                 ),
                 reason = movement.reasonId?.let { reasonNamesById[it] }
             )
@@ -51,17 +51,18 @@ class StockMovementHistoryBuilder(
     private fun conversionDescription(
         unitId: UUID,
         baseUnitId: UUID,
-        recordedFactor: BigDecimal,
+        recordedRatio: ConversionRatio,
         unitCode: String,
         baseUnitCode: String
     ): String? {
         if (unitId == baseUnitId) return null
-        val currentFactor = try {
-            unitConversionGraphFacade.getFactor(unitId, baseUnitId)
+        val currentRatio = try {
+            unitConversionGraphFacade.getRatio(unitId, baseUnitId)
         } catch (_: Exception) {
             return null
         }
-        val formatedRecordedFactor = Decimals.stripZeroesAndRound(recordedFactor)
-        return if (currentFactor.compareTo(recordedFactor) != 0) "1 $unitCode = $formatedRecordedFactor $baseUnitCode" else null
+        if (recordedRatio.isEquivalentTo(currentRatio)) return null
+        val formatedRecordedFactor = Decimals.stripZeroesAndRound(recordedRatio.factor())
+        return "1 $unitCode = $formatedRecordedFactor $baseUnitCode"
     }
 }

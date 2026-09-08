@@ -43,8 +43,8 @@ databaseChangeLog:
                   name: base_unit
                   type: uuid
               - column:
-                  name: conversion_factor
-                  type: decimal
+                  name: units_of_base_per_unit
+                  type: bigint
               - column:
                   name: system_defined
                   type: boolean

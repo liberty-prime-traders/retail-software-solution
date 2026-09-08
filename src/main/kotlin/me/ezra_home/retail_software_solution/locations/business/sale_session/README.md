@@ -185,7 +185,7 @@ SessionIdentity
   - `id != null`:
     - **lines** are updated in place — `SaleLineSync` writes the
       current session values for `locationProductId`, `quantity`, `unitId`,
-      `unitPrice`, `conversionFactor` onto the existing entity.
+      `unitPrice`, `conversionRatio` onto the existing entity.
       `locationProductId` never changes (no session handler mutates it);
       `unitPrice` is recalculated by `SaleSessionLineHandler.applyLineChanges`
       whenever an update entry edits the line (see Pitfalls §8).
@@ -390,21 +390,25 @@ session before finalize.
   `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured on
   addition from `location_product.default_sale_price`), `baseUnitId`
   (snapshotted from `location_product.base_unit_id` on addition / on
-  hydration), and `conversionFactor` (line unit → base unit). `unitPrice`
-  is a computed getter: `defaultSalePrice * conversionFactor`, so the
+  hydration), and `conversionRatio` (line unit → base unit, an exact
+  rational — see `util/business/ConversionRatio`). `unitPrice`
+  is a computed getter: `conversionRatio.applyTo(defaultSalePrice)`, so the
   per-line-unit price tracks the unit automatically —
   `SaleSessionLineHandler.applyLineChanges` only has to set
-  `defaultSalePrice` / `conversionFactor`. Addition entries do not accept
+  `defaultSalePrice` / `conversionRatio`. Addition entries do not accept
   a `unitId`: new lines always start at the product's base unit
-  (`unitId = baseUnitId`, `conversionFactor = 1`). Switching the line to
-  a non-base unit is the job of an update entry in `applyLineChanges`.
-  Update entries do **not** re-fetch `defaultSalePrice`; the value is held
-  on the line for the life of the session. `DomainToSessionMapper`
-  rehydrates `defaultSalePrice` for persisted lines via
-  `unitPrice / conversionFactor`, and `baseUnitId` via a one-shot batch
-  lookup (`LocationProductDataFetcher.getBaseUnitIds`) supplied by
-  `SaleSessionLoader.loadFromSale`, so the DB price and base unit flow
-  back in unchanged on session reload.
+  (`unitId = baseUnitId`, `conversionRatio = ConversionRatio.IDENTITY`).
+  Switching the line to a non-base unit is the job of an update entry in
+  `applyLineChanges`. Update entries do **not** re-fetch `defaultSalePrice`;
+  the value is held on the line for the life of the session.
+  `DomainToSessionMapper` rehydrates `defaultSalePrice` for persisted
+  lines via `unitPrice / conversionRatio.factor()`, and `baseUnitId` via a
+  one-shot batch lookup (`LocationProductDataFetcher.getBaseUnitIds`)
+  supplied by `SaleSessionLoader.loadFromSale`, so the DB price and base
+  unit flow back in unchanged on session reload. The outbound
+  `SaleSessionLineResponse` still exposes a single derived
+  `conversionFactor` decimal — the exact ratio never needs to leave the
+  server.
 
 ---
 

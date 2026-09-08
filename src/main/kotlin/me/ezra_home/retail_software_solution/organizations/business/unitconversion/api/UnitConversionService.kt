@@ -25,7 +25,8 @@ class UnitConversionService(
         val entity = UnitConversionEntity(
             fromUnitId = dto.fromUnitId,
             toUnitId = dto.toUnitId,
-            factor = dto.factor
+            factorNumerator = dto.numerator,
+            factorDenominator = dto.denominator
         )
         val saved = unitConversionRepository.save(entity)
         invalidateGraph()
@@ -45,7 +46,8 @@ class UnitConversionService(
     fun update(dto: UnitConversionUpdateDto): UnitConversionDto {
         unitConversionValidator.validateUpdate(dto)
         val entity = unitConversionRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
-        entity.factor = dto.factor
+        entity.factorNumerator = dto.numerator
+        entity.factorDenominator = dto.denominator
         val saved = unitConversionRepository.save(entity)
         invalidateGraph()
         return saved.toDto()
@@ -64,6 +66,7 @@ class UnitConversionService(
         id = id!!,
         fromUnitId = fromUnitId,
         toUnitId = toUnitId,
-        factor = factor
+        numerator = factorNumerator,
+        denominator = factorDenominator
     )
 }

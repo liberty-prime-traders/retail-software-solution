@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockEntry
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -26,7 +27,7 @@ class StockTransferStockUpdaterTest {
             baseQuantity = BigDecimal("10.0000"),
             unitId = UUID.randomUUID(),
             unitCost = BigDecimal("5.00"),
-            conversionFactor = BigDecimal.ONE,
+            conversionRatio = ConversionRatio.IDENTITY,
             baseUnitId = UUID.randomUUID(),
         )
         val secondDispatchLineRequest = StockTransferDispatchLineStockRequest(
@@ -35,7 +36,7 @@ class StockTransferStockUpdaterTest {
             baseQuantity = BigDecimal("15.0000"),
             unitId = UUID.randomUUID(),
             unitCost = BigDecimal("6.00"),
-            conversionFactor = BigDecimal.ONE,
+            conversionRatio = ConversionRatio.IDENTITY,
             baseUnitId = UUID.randomUUID(),
         )
         val locationProductIds = listOf(locationProductId, locationProductId)

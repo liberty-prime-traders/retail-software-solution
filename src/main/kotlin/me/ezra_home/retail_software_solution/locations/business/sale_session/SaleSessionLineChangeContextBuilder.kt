@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineAddDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -14,7 +15,7 @@ import java.util.UUID
 data class SaleSessionLineChangeContext(
     val locationProductSummariesById: Map<UUID, LocationProductSummaryDto>,
     val defaultSalePricesByLocationProductId: Map<UUID, BigDecimal?>,
-    val newConversionFactorsByLineKey: Map<UUID, BigDecimal>,
+    val newConversionRatiosByLineKey: Map<UUID, ConversionRatio>,
 )
 
 @Service
@@ -48,7 +49,7 @@ class SaleSessionLineChangeContextBuilder(
             ?.let { locationProductDataFetcher.findSummaryByIds(it) }
             ?: emptyMap()
 
-        val newConversionFactorsByLineKey = resolveNewConversionFactors(
+        val newConversionRatiosByLineKey = resolveNewConversionRatios(
             updates = updates,
             saleSessionLinesByKey = saleSessionLinesByKey,
             locationProductSummariesById = locationProductSummariesById,
@@ -62,15 +63,15 @@ class SaleSessionLineChangeContextBuilder(
         return SaleSessionLineChangeContext(
             locationProductSummariesById = locationProductSummariesById,
             defaultSalePricesByLocationProductId = defaultSalePricesByLocationProductId,
-            newConversionFactorsByLineKey = newConversionFactorsByLineKey,
+            newConversionRatiosByLineKey = newConversionRatiosByLineKey,
         )
     }
 
-    private fun resolveNewConversionFactors(
+    private fun resolveNewConversionRatios(
         updates: List<SaleSessionLineUpdateDto>,
         saleSessionLinesByKey: Map<UUID, SaleSessionLine>,
         locationProductSummariesById: Map<UUID, LocationProductSummaryDto>,
-    ): Map<UUID, BigDecimal> {
+    ): Map<UUID, ConversionRatio> {
         val unitChangingUpdates = updates.filter { updatedSaleLine ->
             saleSessionLinesByKey.getValue(updatedSaleLine.identity.key()).unitId != updatedSaleLine.unitId
         }
@@ -79,7 +80,7 @@ class SaleSessionLineChangeContextBuilder(
         return unitChangingUpdates.associate { updatedSaleLine ->
             val saleSessionLine = saleSessionLinesByKey.getValue(updatedSaleLine.identity.key())
             val baseUnitId = locationProductSummariesById.getValue(saleSessionLine.locationProductId).baseUnitId
-            updatedSaleLine.identity.key() to unitConversionGraph.getFactor(updatedSaleLine.unitId, baseUnitId)
+            updatedSaleLine.identity.key() to unitConversionGraph.getRatio(updatedSaleLine.unitId, baseUnitId)
         }
     }
 }

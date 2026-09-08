@@ -21,4 +21,10 @@ object Decimals {
                     .toPlainString()
         }
     }
+
+    fun gcd(a: Long, b: Long): Long {
+        val absA = if (a < 0) -a else a
+        val absB = if (b < 0) -b else b
+        return if (absB == 0L) absA else gcd(absB, absA % absB)
+    }
 }

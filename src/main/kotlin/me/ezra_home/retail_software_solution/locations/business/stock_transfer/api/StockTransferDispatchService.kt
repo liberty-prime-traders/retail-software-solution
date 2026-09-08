@@ -62,7 +62,7 @@ class StockTransferDispatchService(
         val productLabelByLocationProductId = summariesByLocationProductId.mapValues { (_, summary) -> summary.label }
 
         val baseQuantityNeededByLocationProductId = draftLines.associate {
-            it.locationProductId to Decimals.multiplyScale4(it.quantity, it.conversionFactor)
+            it.locationProductId to it.conversionRatio().applyTo(it.quantity)
         }
         stockAvailabilityValidator.guardSufficientStock(baseQuantityNeededByLocationProductId, productLabelByLocationProductId)
 
@@ -122,7 +122,7 @@ class StockTransferDispatchService(
                 quantity = dispatchLine.quantityDispatched,
                 unitId = dispatchLine.unitId,
                 baseUnitId = dispatchLine.baseUnitId,
-                conversionFactor = dispatchLine.conversionFactor,
+                conversionFactor = dispatchLine.conversionRatio().factor(),
                 unitCost = dispatchLine.unitCost,
                 quantityReceived = null
             )
@@ -132,13 +132,14 @@ class StockTransferDispatchService(
         dispatchLines: List<StockTransferDispatchLineEntity>
     ): List<StockTransferDispatchLineStockRequest> =
         dispatchLines.map { dispatchLine ->
+            val ratio = dispatchLine.conversionRatio()
             StockTransferDispatchLineStockRequest(
                 dispatchLineRef = dispatchLine.requiredReference(),
                 locationProductId = dispatchLine.locationProductId,
-                baseQuantity = Decimals.multiplyScale4(dispatchLine.quantityDispatched, dispatchLine.conversionFactor),
+                baseQuantity = ratio.applyTo(dispatchLine.quantityDispatched),
                 unitId = dispatchLine.unitId,
                 unitCost = dispatchLine.unitCost,
-                conversionFactor = dispatchLine.conversionFactor,
+                conversionRatio = ratio,
                 baseUnitId = dispatchLine.baseUnitId
             )
         }
@@ -147,13 +148,15 @@ class StockTransferDispatchService(
         dispatchLines: List<StockTransferDispatchLineEntity>
     ): List<StockTransferDispatchedLineDto> =
         dispatchLines.map { dispatchLine ->
+            val ratio = dispatchLine.conversionRatio()
             StockTransferDispatchedLineDto(
                 dispatchLineReferenceNumber = dispatchLine.requiredReference(),
                 orgProductId = dispatchLine.orgProductId,
                 quantityDispatched = dispatchLine.quantityDispatched,
                 unitId = dispatchLine.unitId,
                 baseUnitId = dispatchLine.baseUnitId,
-                conversionFactor = dispatchLine.conversionFactor,
+                conversionNumerator = ratio.numerator,
+                conversionDenominator = ratio.denominator,
                 unitCost = dispatchLine.unitCost
             )
         }
