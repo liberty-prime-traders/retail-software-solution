@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import java.util.UUID
 
 data class LocationProductUnitRequestDto(
@@ -12,5 +12,5 @@ data class LocationProductUnitDto(
     val locationProductId: UUID,
     val unitId: UUID,
     val baseUnitId: UUID,
-    val conversionFactor: BigDecimal,
+    val conversionRatio: ConversionRatio,
 )

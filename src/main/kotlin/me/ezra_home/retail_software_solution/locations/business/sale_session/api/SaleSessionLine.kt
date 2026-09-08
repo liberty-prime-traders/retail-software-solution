@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -12,12 +12,12 @@ data class SaleSessionLine(
     override val quantity: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,
-    val conversionFactor: BigDecimal,
+    val conversionRatio: ConversionRatio,
     val defaultSalePrice: BigDecimal,
     val quantityOnHand: BigDecimal = BigDecimal.ZERO,
     val quantityReserved: BigDecimal = BigDecimal.ZERO,
     val quantityAvailable: BigDecimal = BigDecimal.ZERO,
 
 ) : ProductLineWithPrice {
-    override val unitPrice: BigDecimal = Decimals.multiplyScale4(defaultSalePrice, conversionFactor)
+    override val unitPrice: BigDecimal = conversionRatio.applyTo(defaultSalePrice)
 }

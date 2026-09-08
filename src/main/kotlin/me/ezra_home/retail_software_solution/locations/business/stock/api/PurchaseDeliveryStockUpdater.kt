@@ -50,7 +50,7 @@ class PurchaseDeliveryStockUpdater(
             val entry = entriesByLineId[line.deliveryLineId]!!
             val newQuantity = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
-            val factor = unitConversionGraphFacade.getFactor(line.unitId, baseUnitId)
+            val ratio = unitConversionGraphFacade.getRatio(line.unitId, baseUnitId)
             StockMovementEntity(
                 stockEntryId = entry.id!!,
                 locationProductId = line.locationProductId,
@@ -59,7 +59,8 @@ class PurchaseDeliveryStockUpdater(
                 remainingQuantity = newQuantity,
                 externalReferenceNumber = line.lineReferenceNumber,
                 unitId = line.unitId,
-                conversionFactor = factor
+                conversionNumerator = ratio.numerator,
+                conversionDenominator = ratio.denominator
             )
         }
         stockMovementRepository.saveAll(movements)

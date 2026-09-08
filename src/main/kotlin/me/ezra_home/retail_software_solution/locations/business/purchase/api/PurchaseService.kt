@@ -11,8 +11,8 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -35,15 +35,15 @@ class PurchaseService(
     val lines = PurchaseMapper.toLineEntities(
       purchase.id!!,
       dto.linesToAdd,
-      resolveFactors(dto.linesToAdd)
+      resolveConversionRatios(dto.linesToAdd)
     )
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
 
-  private fun resolveFactors(lines: List<PurchaseLineCreateDto>): Map<UUID, BigDecimal> {
+  private fun resolveConversionRatios(lines: List<PurchaseLineCreateDto>): Map<UUID, ConversionRatio> {
     val productUnitRequests = lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
-    return locationProductDataFetcher.getConversionFactors(productUnitRequests)
+    return locationProductDataFetcher.getConversionRatios(productUnitRequests)
   }
 
   fun updateDraft(dto: PurchaseUpdateDto): PurchaseResponseDto {
@@ -66,7 +66,7 @@ class PurchaseService(
     val lines = PurchaseMapper.toLineEntities(
       purchase.id!!,
       dto.linesToAdd,
-      resolveFactors(dto.linesToAdd)
+      resolveConversionRatios(dto.linesToAdd)
     )
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)

@@ -6,8 +6,8 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import java.math.BigDecimal
 import java.util.UUID
 
 object PurchaseMapper {
@@ -42,23 +42,26 @@ object PurchaseMapper {
     purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 
-  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineCreateDto, conversionFactor: BigDecimal) = PurchaseLineEntity(
+  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineCreateDto, conversionRatio: ConversionRatio) = PurchaseLineEntity(
     purchaseId = purchaseId,
     locationProductId = dto.locationProductId,
     quantityOrdered = dto.quantityOrdered,
     unitCost = dto.unitCost,
     unitId = dto.unitId,
-    conversionFactor = conversionFactor
+    conversionNumerator = conversionRatio.numerator,
+    conversionDenominator = conversionRatio.denominator
   )
 
-  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, factorByProductId: Map<UUID, BigDecimal>) = lines.map {
+  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, ratioByProductId: Map<UUID, ConversionRatio>) = lines.map {
+    val ratio = ratioByProductId.getValue(it.locationProductId)
     PurchaseLineEntity(
       purchaseId = purchaseId,
       locationProductId = it.locationProductId,
       quantityOrdered = it.quantityOrdered,
       unitCost = it.unitCost,
       unitId = it.unitId,
-      conversionFactor = factorByProductId.getValue(it.locationProductId)
+      conversionNumerator = ratio.numerator,
+      conversionDenominator = ratio.denominator
     )
   }
 
@@ -68,7 +71,7 @@ object PurchaseMapper {
     locationProductId = entity.locationProductId,
     unitCost = entity.unitCost,
     unitId = entity.unitId,
-    conversionFactor = entity.conversionFactor,
+    conversionRatio = entity.conversionRatio(),
     expectedQuantity = entity.getExpectedQuantity(),
     remainingQuantity = entity.getRemainingQuantity()
   )

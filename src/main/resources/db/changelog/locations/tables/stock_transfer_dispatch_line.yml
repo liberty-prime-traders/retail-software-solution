@@ -71,11 +71,18 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_dispatch_line_unit_cost_notnull
 
               - column:
-                  name: conversion_factor
-                  type: numeric(19,10)
+                  name: conversion_numerator
+                  type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_dispatch_line_conversion_factor_notnull
+                    notNullConstraintName: stock_transfer_dispatch_line_conversion_numerator_notnull
+
+              - column:
+                  name: conversion_denominator
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_dispatch_line_conversion_denominator_notnull
 
               - column:
                   name: base_unit_id

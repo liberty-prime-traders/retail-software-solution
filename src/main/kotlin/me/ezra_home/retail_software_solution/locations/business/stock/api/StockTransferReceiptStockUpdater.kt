@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -42,7 +42,8 @@ class StockTransferReceiptStockUpdater(
 
         val entriesByDispatchLineRef = event.lines.associate { line ->
             val locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId)
-            val baseQty = Decimals.multiplyScale4(line.quantityDispatched, line.conversionFactor)
+            val ratio = ConversionRatio(line.conversionNumerator, line.conversionDenominator)
+            val baseQty = ratio.applyTo(line.quantityDispatched)
             line.dispatchLineReferenceNumber to StockEntryEntity(
                 locationProductId = locationProductId,
                 sourceType = StockItemSource.TRANSFER_IN,
@@ -68,7 +69,8 @@ class StockTransferReceiptStockUpdater(
                 remainingQuantity = newBalance,
                 externalReferenceNumber = line.dispatchLineReferenceNumber,
                 unitId = line.unitId,
-                conversionFactor = line.conversionFactor
+                conversionNumerator = line.conversionNumerator,
+                conversionDenominator = line.conversionDenominator
             )
         }
         stockMovementRepository.saveAll(movements)

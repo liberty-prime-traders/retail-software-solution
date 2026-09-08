@@ -29,7 +29,7 @@ class UnitValueSeeder(
                     code = unitValue.code,
                     unitGroupId = groupId,
                     baseUnit = baseUnitId,
-                    conversionFactor = unitValue.conversionFactor?.toBigDecimal(),
+                    unitsOfBasePerUnit = unitValue.unitsOfBasePerUnit,
                     systemDefined = true
                 )
                 existingValues[unitValue.code] = unitValueCache.save(entity)

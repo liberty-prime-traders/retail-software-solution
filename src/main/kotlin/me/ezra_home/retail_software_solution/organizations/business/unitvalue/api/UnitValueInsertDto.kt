@@ -9,5 +9,5 @@ data class UnitValueInsertDto(
     val description: String? = null,
     val unitGroupId: UUID? = null,
     val baseUnit: UUID? = null,
-    val conversionFactor: Double? = null
+    val unitsOfBasePerUnit: Long? = null
 ) : Serializable

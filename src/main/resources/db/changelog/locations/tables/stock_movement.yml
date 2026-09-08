@@ -79,11 +79,18 @@ databaseChangeLog:
                     notNullConstraintName: stock_movement_unit_id_notnull
 
               - column:
-                  name: conversion_factor
-                  type: decimal(19,10)
+                  name: conversion_numerator
+                  type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_conversion_factor_notnull
+                    notNullConstraintName: stock_movement_conversion_numerator_notnull
+
+              - column:
+                  name: conversion_denominator
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_conversion_denominator_notnull
 
               - column:
                   name: created_by_id

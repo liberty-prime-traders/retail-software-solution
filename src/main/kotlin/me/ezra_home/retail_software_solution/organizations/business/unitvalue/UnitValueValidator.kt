@@ -29,12 +29,16 @@ class UnitValueValidator(
         unitValueCache.getAllUnitValues().find { StringUtils.isEquivalent(it.name, unitValueInsertDto.name) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueInsertDto.name)) }
 
-        if (unitValueInsertDto.baseUnit != null && unitValueInsertDto.conversionFactor == null){
-            throw RtsGenericException(CONVERSION_FACTOR_IS_REQUIRED)
+        if (unitValueInsertDto.baseUnit != null && unitValueInsertDto.unitsOfBasePerUnit == null){
+            throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_IS_REQUIRED)
         }
 
-        if (unitValueInsertDto.conversionFactor != null && unitValueInsertDto.baseUnit == null) {
+        if (unitValueInsertDto.unitsOfBasePerUnit != null && unitValueInsertDto.baseUnit == null) {
             throw RtsGenericException(BASE_UNIT_IS_REQUIRED)
+        }
+
+        if (unitValueInsertDto.unitsOfBasePerUnit != null && unitValueInsertDto.unitsOfBasePerUnit < 1) {
+            throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_MUST_BE_POSITIVE)
         }
 
         val baseUnitExistsInGroup = unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId)
@@ -58,14 +62,18 @@ class UnitValueValidator(
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
 
         val baseUnitIsProvided = unitValueUpdateDto.baseUnit?.isPresent == true
-        val conversionFactorIsProvided = unitValueUpdateDto.conversionFactor?.isPresent == true
+        val unitsOfBasePerUnitIsProvided = unitValueUpdateDto.unitsOfBasePerUnit?.isPresent == true
 
-        if (baseUnitIsProvided && !conversionFactorIsProvided) {
-            throw RtsGenericException(CONVERSION_FACTOR_IS_REQUIRED)
+        if (baseUnitIsProvided && !unitsOfBasePerUnitIsProvided) {
+            throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_IS_REQUIRED)
         }
 
-        if (conversionFactorIsProvided && !baseUnitIsProvided) {
+        if (unitsOfBasePerUnitIsProvided && !baseUnitIsProvided) {
             throw RtsGenericException(BASE_UNIT_IS_REQUIRED)
+        }
+
+        if (unitsOfBasePerUnitIsProvided && unitValueUpdateDto.unitsOfBasePerUnit?.get()!! < 1) {
+            throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_MUST_BE_POSITIVE)
         }
 
         if (baseUnitIsProvided) {
@@ -80,8 +88,9 @@ class UnitValueValidator(
         const val NAME_IS_REQUIRED = "A unit value must have a name"
         const val CODE_IS_REQUIRED = "A unit code must have a name"
         const val UNIT_GROUP_ID_IS_REQUIRED = "A unit value must have a unit group id"
-        const val CONVERSION_FACTOR_IS_REQUIRED = "A unit value with a base unit must have a conversion factor"
-        const val BASE_UNIT_IS_REQUIRED = "A unit value with a conversion factor must have a base unit"
+        const val UNITS_OF_BASE_PER_UNIT_IS_REQUIRED = "A unit value with a base unit must have unitsOfBasePerUnit"
+        const val BASE_UNIT_IS_REQUIRED = "A unit value with unitsOfBasePerUnit must have a base unit"
+        const val UNITS_OF_BASE_PER_UNIT_MUST_BE_POSITIVE = "unitsOfBasePerUnit must be a positive whole number"
         const val PROVIDED_MISSING_UNIT_GROUP = "UnitGroup with the provided id does not exist"
         const val NAME_ALREADY_EXISTS = "A unit value with the name %s already exists"
         const val BASE_UNIT_MUST_BE_IN_GROUP = "The base unit must be selected from the assigned group"

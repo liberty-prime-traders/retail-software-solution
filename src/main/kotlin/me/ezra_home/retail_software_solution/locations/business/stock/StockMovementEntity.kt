@@ -7,6 +7,7 @@ import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.stock.api.MovementType
 import me.ezra_home.retail_software_solution.locations.business.stock.api.MovementTypeConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -47,7 +48,10 @@ class StockMovementEntity(
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "conversion_factor", nullable = false, precision = 19, scale = 10, updatable = false)
-  var conversionFactor: BigDecimal
+  @Column(name = "conversion_numerator", nullable = false, updatable = false)
+  override var conversionNumerator: Long,
 
-) : HasReferenceEntity()
+  @Column(name = "conversion_denominator", nullable = false, updatable = false)
+  override var conversionDenominator: Long
+
+) : HasReferenceEntity(), HasConversionRatio
