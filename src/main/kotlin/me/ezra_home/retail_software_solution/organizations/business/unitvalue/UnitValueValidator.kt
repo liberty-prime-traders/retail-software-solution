@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
-import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -10,24 +10,28 @@ import org.springframework.stereotype.Component
 @Component
 class UnitValueValidator(
     private val unitValueCache: UnitValueCache,
-    private val unitGroupService: UnitGroupService
+    private val unitGroupDataFetcher: UnitGroupDataFetcher
 ) {
 
     fun validateUnitValueInsert(unitValueInsertDto: UnitValueInsertDto) {
-        if (unitValueInsertDto.name.isNullOrBlank()) {
+        if (!StringUtils.hasValue(unitValueInsertDto.name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
-        if (unitValueInsertDto.code.isNullOrBlank()) {
+        if (!StringUtils.hasValue(unitValueInsertDto.code)) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
         if (unitValueInsertDto.unitGroupId == null) {
             throw RtsGenericException(UNIT_GROUP_ID_IS_REQUIRED)
         }
-        if (unitGroupService.getAllUnitGroupDtos().none { it.id == unitValueInsertDto.unitGroupId }) {
+        if (!unitGroupDataFetcher.exists(unitValueInsertDto.unitGroupId)) {
             throw RtsGenericException(PROVIDED_MISSING_UNIT_GROUP)
         }
-        unitValueCache.getAllUnitValues().find { StringUtils.isEquivalent(it.name, unitValueInsertDto.name) }
+        unitValueCache.getByUnitGroupId(unitValueInsertDto.unitGroupId)
+            .find { StringUtils.isEquivalent(it.name, unitValueInsertDto.name) }
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, unitValueInsertDto.name)) }
+
+        unitValueCache.getAllUnitValues().find { it.code == unitValueInsertDto.code }
+            ?.let { throw RtsGenericException(String.format(CODE_ALREADY_EXISTS, unitValueInsertDto.code)) }
 
         if (unitValueInsertDto.baseUnit != null && unitValueInsertDto.unitsOfBasePerUnit == null){
             throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_IS_REQUIRED)
@@ -51,15 +55,22 @@ class UnitValueValidator(
 
     fun validateUnitValueUpdate(unitValueUpdateDto: UnitValueUpdateDto) {
         val name = unitValueUpdateDto.name?.get()
-        if (name.isNullOrBlank()) {
+        if (!StringUtils.hasValue(name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
-        if (unitValueUpdateDto.code?.get().isNullOrBlank()) {
+        val code = unitValueUpdateDto.code?.get()
+        if (!StringUtils.hasValue(code)) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
         val allUnitValues = unitValueCache.getAllUnitValues()
-        allUnitValues.find { StringUtils.isEquivalent(it.name, name) && it.id != unitValueUpdateDto.id }
-            ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+        val existing = allUnitValues.find { it.id == unitValueUpdateDto.id }
+
+        allUnitValues.find {
+            it.unitGroupId == existing?.unitGroupId && StringUtils.isEquivalent(it.name, name) && it.id != unitValueUpdateDto.id
+        }?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
+
+        allUnitValues.find { it.code == code && it.id != unitValueUpdateDto.id }
+            ?.let { throw RtsGenericException(String.format(CODE_ALREADY_EXISTS, code)) }
 
         val baseUnitIsProvided = unitValueUpdateDto.baseUnit?.isPresent == true
         val unitsOfBasePerUnitIsProvided = unitValueUpdateDto.unitsOfBasePerUnit?.isPresent == true
@@ -77,8 +88,7 @@ class UnitValueValidator(
         }
 
         if (baseUnitIsProvided) {
-            val unitGroupId = allUnitValues.find { it.id == unitValueUpdateDto.id }?.unitGroupId
-            val baseUnitExistsInGroup = unitValueCache.getByUnitGroupId(unitGroupId)
+            val baseUnitExistsInGroup = unitValueCache.getByUnitGroupId(existing?.unitGroupId)
                 .any { it.id == unitValueUpdateDto.baseUnit?.get() }
             if (!baseUnitExistsInGroup) throw RtsGenericException(BASE_UNIT_MUST_BE_IN_GROUP)
         }
@@ -93,6 +103,7 @@ class UnitValueValidator(
         const val UNITS_OF_BASE_PER_UNIT_MUST_BE_POSITIVE = "unitsOfBasePerUnit must be a positive whole number"
         const val PROVIDED_MISSING_UNIT_GROUP = "UnitGroup with the provided id does not exist"
         const val NAME_ALREADY_EXISTS = "A unit value with the name %s already exists"
+        const val CODE_ALREADY_EXISTS = "A unit value with the code %s already exists"
         const val BASE_UNIT_MUST_BE_IN_GROUP = "The base unit must be selected from the assigned group"
     }
 }

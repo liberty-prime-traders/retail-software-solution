@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgDataSeeder
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.SystemUnitValue
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 

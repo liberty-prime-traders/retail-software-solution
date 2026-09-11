@@ -33,6 +33,16 @@ class UnitConversionService(
         return saved.toDto()
     }
 
+    fun bulkInsertValidatedList(insertDtos: List<UnitConversionInsertDto>): List<UnitConversionDto> {
+        if (insertDtos.isEmpty()) return emptyList()
+        val entities = insertDtos.map {
+            UnitConversionEntity(fromUnitId = it.fromUnitId, toUnitId = it.toUnitId, factorNumerator = it.numerator, factorDenominator = it.denominator)
+        }
+        val saved = unitConversionRepository.saveAll(entities)
+        invalidateGraph()
+        return saved.map { it.toDto() }
+    }
+
     fun update(dto: UnitConversionUpdateDto): UnitConversionDto {
         unitConversionValidator.validateUpdate(dto)
         val entity = unitConversionRepository.findById(dto.id).orElseThrow { UpdatingNonExistingRecordException() }
