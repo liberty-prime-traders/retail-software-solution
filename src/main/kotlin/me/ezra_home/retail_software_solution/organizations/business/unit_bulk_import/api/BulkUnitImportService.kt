@@ -18,7 +18,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.ap
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -57,7 +56,7 @@ class BulkUnitImportService(
         val description: String?,
         val unitGroupId: UUID,
         val baseUnitCode: String?,
-        val conversionFactor: BigDecimal?
+        val unitsOfBasePerUnit: Long?
     )
 
     private fun saveValidatedUnitValues(
@@ -83,7 +82,7 @@ class BulkUnitImportService(
                 description = pendingValue.description,
                 unitGroupId = pendingValue.unitGroupId,
                 baseUnit = pendingValue.baseUnitCode?.let { resolvedIds[it] },
-                conversionFactor = pendingValue.conversionFactor
+                unitsOfBasePerUnit = pendingValue.unitsOfBasePerUnit
             )
         }
         return unitValueService.bulkCreateValidatedList(topologicallyOrderedEntries)
@@ -112,7 +111,7 @@ class BulkUnitImportService(
         description = "Base unit representing a single item",
         unitGroupId = groupId,
         baseUnitCode = null,
-        conversionFactor = null
+        unitsOfBasePerUnit = null
     )
 
     private fun createPendingUnitValue(groupId: UUID, pieceCode: String, unitValueDto: UnitValueBulkInsertDto): PendingUnitValue {
@@ -126,7 +125,7 @@ class BulkUnitImportService(
             description = unitValueDto.description,
             unitGroupId = groupId,
             baseUnitCode = baseUnitCode,
-            conversionFactor = unitValueDto.unitsOfBasePerUnit?.toBigDecimal()
+            unitsOfBasePerUnit = unitValueDto.unitsOfBasePerUnit
         )
     }
 
@@ -152,7 +151,8 @@ class BulkUnitImportService(
             UnitConversionInsertDto(
                 fromUnitId = idByCode.getValue(it.fromUnitCode!!),
                 toUnitId = idByCode.getValue(it.toUnitCode!!),
-                factor = it.unitsOfBasePerUnit!!
+                numerator = it.numerator!!,
+                denominator = it.denominator!!
             )
         }
         return unitConversionService.bulkInsertValidatedList(insertDtos)

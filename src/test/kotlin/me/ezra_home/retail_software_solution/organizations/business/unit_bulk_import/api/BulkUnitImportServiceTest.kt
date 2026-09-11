@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api
 
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.BulkUnitImportValidator
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionDto
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionService
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
@@ -9,11 +11,14 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.ap
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -34,8 +39,8 @@ class BulkUnitImportServiceTest {
                     name = "Count",
                     description = null,
                     unitValues = listOf(
-                        UnitValueBulkInsertDto(name = "Half Dozen", code = "hdz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 6.0),
-                        UnitValueBulkInsertDto(name = "Dozen", code = "dz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 12.0)
+                        UnitValueBulkInsertDto(name = "Half Dozen", code = "hdz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
+                        UnitValueBulkInsertDto(name = "Dozen", code = "dz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
                     )
                 )
             )
@@ -77,6 +82,87 @@ class BulkUnitImportServiceTest {
         assertEquals(pieceEntry.id, savedEntries.first { it.code == "hdz" }.baseUnit)
         assertEquals(pieceEntry.id, savedEntries.first { it.code == "dz" }.baseUnit)
     }
+
+    @Test
+    fun `bulkImport throws with the full error list and saves nothing when validation fails`() {
+        val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
+        val unitGroupService = mock(UnitGroupService::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+        val unitValueFetcher = mock(UnitValueFetcher::class.java)
+        val unitConversionService = mock(UnitConversionService::class.java)
+
+        val request = BulkUnitImportRequestDto(unitGroups = emptyList())
+        val validationErrors = listOf("Group at position 1: name is required")
+        `when`(bulkUnitImportValidator.validate(request)).thenReturn(validationErrors)
+
+        val service = BulkUnitImportService(
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+        )
+
+        val exception = assertThrows(RtsGenericException::class.java) { service.bulkImport(request) }
+
+        assertEquals(validationErrors, exception.payload)
+        verifyNoInteractions(unitGroupService, unitValueService, unitConversionService)
+    }
+
+    @Test
+    fun `saveConversions resolves codes to ids and passes numerator and denominator through`() {
+        val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
+        val unitGroupService = mock(UnitGroupService::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+        val unitValueFetcher = mock(UnitValueFetcher::class.java)
+        val unitConversionService = mock(UnitConversionService::class.java)
+
+        val fromId = UUID.randomUUID()
+        val toId = UUID.randomUUID()
+        val request = BulkUnitImportRequestDto(
+            unitGroups = emptyList(),
+            unitConversions = listOf(UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 42L, denominator = 1L))
+        )
+
+        `when`(bulkUnitImportValidator.validate(request)).thenReturn(emptyList())
+        `when`(unitGroupService.bulkCreateValidatedList(emptyList())).thenReturn(emptyList())
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(
+                unitValueResponseDto(id = fromId, code = "ctn", unitGroupId = UUID.randomUUID()),
+                unitValueResponseDto(id = toId, code = "dz", unitGroupId = UUID.randomUUID())
+            )
+        )
+
+        var insertedConversions: List<UnitConversionInsertDto> = emptyList()
+        `when`(unitConversionService.bulkInsertValidatedList(anyList<UnitConversionInsertDto>())).thenAnswer { invocation ->
+            insertedConversions = invocation.getArgument(0)
+            emptyList<UnitConversionDto>()
+        }
+
+        val service = BulkUnitImportService(
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+        )
+
+        service.bulkImport(request)
+
+        assertEquals(1, insertedConversions.size)
+        val insertDto = insertedConversions.first()
+        assertEquals(fromId, insertDto.fromUnitId)
+        assertEquals(toId, insertDto.toUnitId)
+        assertEquals(42L, insertDto.numerator)
+        assertEquals(1L, insertDto.denominator)
+    }
+
+    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID) = UnitValueResponseDto(
+        id = id,
+        name = code,
+        code = code,
+        description = null,
+        baseUnit = null,
+        baseUnitName = null,
+        unitsOfBasePerUnit = null,
+        createdBy = "Someone",
+        createdOn = OffsetDateTime.now(),
+        unitGroupId = unitGroupId,
+        referenceNumber = "REF-$code",
+        systemDefined = false
+    )
 
     private fun unitGroupResponseDto(id: UUID, name: String?) = UnitGroupResponseDto(
         id = id,

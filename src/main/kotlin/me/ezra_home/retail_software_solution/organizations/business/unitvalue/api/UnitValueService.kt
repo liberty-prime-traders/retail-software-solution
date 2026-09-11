@@ -39,7 +39,7 @@ class UnitValueService(
                 code = entry.code,
                 unitGroupId = entry.unitGroupId,
                 baseUnit = entry.baseUnit,
-                conversionFactor = entry.conversionFactor,
+                unitsOfBasePerUnit = entry.unitsOfBasePerUnit,
                 systemDefined = false
             ).also { it.id = entry.id }
         }

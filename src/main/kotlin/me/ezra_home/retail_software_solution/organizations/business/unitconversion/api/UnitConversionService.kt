@@ -36,7 +36,7 @@ class UnitConversionService(
     fun bulkInsertValidatedList(insertDtos: List<UnitConversionInsertDto>): List<UnitConversionDto> {
         if (insertDtos.isEmpty()) return emptyList()
         val entities = insertDtos.map {
-            UnitConversionEntity(fromUnitId = it.fromUnitId, toUnitId = it.toUnitId, factor = it.factor)
+            UnitConversionEntity(fromUnitId = it.fromUnitId, toUnitId = it.toUnitId, factorNumerator = it.numerator, factorDenominator = it.denominator)
         }
         val saved = unitConversionRepository.saveAll(entities)
         invalidateGraph()

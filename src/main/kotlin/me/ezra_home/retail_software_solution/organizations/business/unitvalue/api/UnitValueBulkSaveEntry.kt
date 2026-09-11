@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue.api
 
-import java.math.BigDecimal
 import java.util.UUID
 
 data class UnitValueBulkSaveEntry(
@@ -10,5 +9,5 @@ data class UnitValueBulkSaveEntry(
     val description: String?,
     val unitGroupId: UUID,
     val baseUnit: UUID?,
-    val conversionFactor: BigDecimal?
+    val unitsOfBasePerUnit: Long?
 )

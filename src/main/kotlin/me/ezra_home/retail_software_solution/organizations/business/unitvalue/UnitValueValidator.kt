@@ -14,10 +14,10 @@ class UnitValueValidator(
 ) {
 
     fun validateUnitValueInsert(unitValueInsertDto: UnitValueInsertDto) {
-        if (unitValueInsertDto.name.isNullOrBlank()) {
+        if (!StringUtils.hasValue(unitValueInsertDto.name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
-        if (unitValueInsertDto.code.isNullOrBlank()) {
+        if (!StringUtils.hasValue(unitValueInsertDto.code)) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
         if (unitValueInsertDto.unitGroupId == null) {
@@ -55,11 +55,11 @@ class UnitValueValidator(
 
     fun validateUnitValueUpdate(unitValueUpdateDto: UnitValueUpdateDto) {
         val name = unitValueUpdateDto.name?.get()
-        if (name.isNullOrBlank()) {
+        if (!StringUtils.hasValue(name)) {
             throw RtsGenericException(NAME_IS_REQUIRED)
         }
         val code = unitValueUpdateDto.code?.get()
-        if (code.isNullOrBlank()) {
+        if (!StringUtils.hasValue(code)) {
             throw RtsGenericException(CODE_IS_REQUIRED)
         }
         val allUnitValues = unitValueCache.getAllUnitValues()
@@ -73,7 +73,7 @@ class UnitValueValidator(
             ?.let { throw RtsGenericException(String.format(CODE_ALREADY_EXISTS, code)) }
 
         val baseUnitIsProvided = unitValueUpdateDto.baseUnit?.isPresent == true
-        val unitsOfBasePerUnitIsProvided = unitValueUpdateDto.conversionFactor?.isPresent == true
+        val unitsOfBasePerUnitIsProvided = unitValueUpdateDto.unitsOfBasePerUnit?.isPresent == true
 
         if (baseUnitIsProvided && !unitsOfBasePerUnitIsProvided) {
             throw RtsGenericException(UNITS_OF_BASE_PER_UNIT_IS_REQUIRED)

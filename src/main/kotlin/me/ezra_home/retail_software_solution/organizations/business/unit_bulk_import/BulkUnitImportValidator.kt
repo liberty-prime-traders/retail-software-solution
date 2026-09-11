@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.ap
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.UUID
 
 @Component
@@ -154,8 +153,8 @@ class BulkUnitImportValidator(
         if (unitsOfBasePerUnit != null && baseUnitCode == null) {
             errors.add("Unit value $label: unitsOfBasePerUnit requires a baseUnitCode")
         }
-        if (unitsOfBasePerUnit != null && unitsOfBasePerUnit <= 0.0) {
-            errors.add("Unit value $label: unitsOfBasePerUnit must be greater than zero")
+        if (unitsOfBasePerUnit != null && unitsOfBasePerUnit < 1) {
+            errors.add("Unit value $label: unitsOfBasePerUnit must be a positive whole number")
         }
         if (baseUnitCode == null) {
             return
@@ -204,8 +203,10 @@ class BulkUnitImportValidator(
             if (conversion.fromUnitCode == conversion.toUnitCode) {
                 errors.add("Conversion $label: fromUnitCode and toUnitCode must be different")
             }
-            if (conversion.unitsOfBasePerUnit == null || conversion.unitsOfBasePerUnit <= BigDecimal.ZERO) {
-                errors.add("Conversion $label: unitsOfBasePerUnit is required and must be greater than zero")
+            val numerator = conversion.numerator
+            val denominator = conversion.denominator
+            if (numerator == null || denominator == null || numerator <= 0 || denominator <= 0) {
+                errors.add("Conversion $label: numerator and denominator are required and must both be greater than zero")
             }
             if (conversion.fromUnitCode !in groupNameByCode) {
                 errors.add("Conversion $label: fromUnitCode '${conversion.fromUnitCode}' does not match any unit code in the payload or the database")

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
-import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -43,8 +42,8 @@ class BulkUnitImportValidatorTest {
         name: String? = "Half Dozen",
         code: String? = "hdz",
         baseUnitCode: String? = "__piece__",
-        conversionFactor: Double? = 6.0
-    ) = UnitValueBulkInsertDto(name = name, code = code, description = null, baseUnitCode = baseUnitCode, unitsOfBasePerUnit = conversionFactor)
+        unitsOfBasePerUnit: Long? = 6L
+    ) = UnitValueBulkInsertDto(name = name, code = code, description = null, baseUnitCode = baseUnitCode, unitsOfBasePerUnit = unitsOfBasePerUnit)
 
     private fun group(
         name: String? = "Count",
@@ -58,26 +57,26 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Count",
                     unitValues = listOf(
-                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = "__piece__", conversionFactor = 6.0),
-                        unitValue(name = "Dozen", code = "dz", baseUnitCode = "__piece__", conversionFactor = 12.0)
+                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
+                        unitValue(name = "Dozen", code = "dz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
                     )
                 ),
                 group(
                     name = "Nescafe",
                     unitValues = listOf(
-                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = null, conversionFactor = null),
-                        unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "nescafe-out", conversionFactor = 6.0)
+                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "nescafe-out", unitsOfBasePerUnit = 6L)
                     )
                 ),
                 group(
                     name = "Miscellaneous",
                     unitValues = listOf(
-                        unitValue(name = "Generic Carton", code = "ctn", baseUnitCode = null, conversionFactor = null)
+                        unitValue(name = "Generic Carton", code = "ctn", baseUnitCode = null, unitsOfBasePerUnit = null)
                     )
                 )
             ),
             unitConversions = listOf(
-                UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", unitsOfBasePerUnit = BigDecimal("42.0"))
+                UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 42L, denominator = 1L)
             )
         )
 
@@ -133,8 +132,8 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Nescafe",
                     unitValues = listOf(
-                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = "nescafe-ctn", conversionFactor = 1.0),
-                        unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "nescafe-out", conversionFactor = 6.0)
+                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = "nescafe-ctn", unitsOfBasePerUnit = 1L),
+                        unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "nescafe-out", unitsOfBasePerUnit = 6L)
                     )
                 )
             )
@@ -152,8 +151,8 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Count",
                     unitValues = listOf(
-                        unitValue(name = "First", code = "", baseUnitCode = null, conversionFactor = null),
-                        unitValue(name = "Second", code = "", baseUnitCode = null, conversionFactor = null)
+                        unitValue(name = "First", code = "", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Second", code = "", baseUnitCode = null, unitsOfBasePerUnit = null)
                     )
                 )
             )
@@ -168,7 +167,7 @@ class BulkUnitImportValidatorTest {
     @Test
     fun `baseUnitCode without unitsOfBasePerUnit is rejected`() {
         val request = BulkUnitImportRequestDto(
-            unitGroups = listOf(group(name = "Count", unitValues = listOf(unitValue(baseUnitCode = "__piece__", conversionFactor = null))))
+            unitGroups = listOf(group(name = "Count", unitValues = listOf(unitValue(baseUnitCode = "__piece__", unitsOfBasePerUnit = null))))
         )
 
         val errors = validator.validate(request)
@@ -180,7 +179,7 @@ class BulkUnitImportValidatorTest {
     fun `piece base unit is rejected inside a Miscellaneous group`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
-                group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = "__piece__", conversionFactor = 6.0)))
+                group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L)))
             )
         )
 
@@ -193,8 +192,8 @@ class BulkUnitImportValidatorTest {
     fun `same unit value name is allowed across different groups`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
-                group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = null, conversionFactor = null))),
-                group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = null, conversionFactor = null)))
+                group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = null, unitsOfBasePerUnit = null))),
+                group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = null, unitsOfBasePerUnit = null)))
             )
         )
 
@@ -210,8 +209,8 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Count",
                     unitValues = listOf(
-                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = null, conversionFactor = null),
-                        unitValue(name = "Half Dozen", code = "hdz2", baseUnitCode = null, conversionFactor = null)
+                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Half Dozen", code = "hdz2", baseUnitCode = null, unitsOfBasePerUnit = null)
                     )
                 )
             )
@@ -228,7 +227,7 @@ class BulkUnitImportValidatorTest {
             listOf(unitValueResponseDto(id = UUID.randomUUID(), code = "ctn", unitGroupId = UUID.randomUUID()))
         )
         val request = BulkUnitImportRequestDto(
-            unitGroups = listOf(group(name = "Count", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = null, conversionFactor = null))))
+            unitGroups = listOf(group(name = "Count", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = null, unitsOfBasePerUnit = null))))
         )
 
         val errors = validator.validate(request)
@@ -243,8 +242,8 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Count",
                     unitValues = listOf(
-                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = null, conversionFactor = null),
-                        unitValue(name = "Half Dozen 2", code = "hdz", baseUnitCode = null, conversionFactor = null)
+                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Half Dozen 2", code = "hdz", baseUnitCode = null, unitsOfBasePerUnit = null)
                     )
                 )
             )
@@ -267,12 +266,12 @@ class BulkUnitImportValidatorTest {
             )
         )
         `when`(unitConversionService.getAll()).thenReturn(
-            listOf(UnitConversionDto(id = UUID.randomUUID(), fromUnitId = fromId, toUnitId = toId, factor = BigDecimal("42.0")))
+            listOf(UnitConversionDto(id = UUID.randomUUID(), fromUnitId = fromId, toUnitId = toId, numerator = 42L, denominator = 1L))
         )
 
         val request = BulkUnitImportRequestDto(
             unitGroups = emptyList(),
-            unitConversions = listOf(UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", unitsOfBasePerUnit = BigDecimal("10.0")))
+            unitConversions = listOf(UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 10L, denominator = 1L))
         )
 
         val errors = validator.validate(request)
@@ -287,7 +286,7 @@ class BulkUnitImportValidatorTest {
         description = null,
         baseUnit = null,
         baseUnitName = null,
-        conversionFactor = null,
+        unitsOfBasePerUnit = null,
         createdBy = "Someone",
         createdOn = OffsetDateTime.now(),
         unitGroupId = unitGroupId,

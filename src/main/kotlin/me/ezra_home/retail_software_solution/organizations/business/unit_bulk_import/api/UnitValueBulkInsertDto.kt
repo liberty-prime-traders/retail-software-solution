@@ -5,5 +5,5 @@ data class UnitValueBulkInsertDto(
     val code: String?,
     val description: String?,
     val baseUnitCode: String?,
-    val unitsOfBasePerUnit: Double?
+    val unitsOfBasePerUnit: Long?
 )
