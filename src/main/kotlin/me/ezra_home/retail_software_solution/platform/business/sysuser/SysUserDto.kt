@@ -9,7 +9,8 @@ data class SysUserDto(
     val createdById: UUID? = null,
     val createdOn: OffsetDateTime,
     val referenceNumber: String,
-    val oktaId: String? = null,
+    val email: String? = null,
+    val disabledAt: OffsetDateTime? = null,
     val localFirstName: String? = null,
     val localLastName: String? = null,
     val userType: UserType? = null

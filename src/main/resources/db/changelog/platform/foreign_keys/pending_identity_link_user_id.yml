@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-pending-identity-link-user-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_pending_identity_link_user_id
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: pending_identity_link
+            baseColumnNames: user_id
+            referencedTableName: sys_user
+            referencedColumnNames: id
+            constraintName: fk_pending_identity_link_user_id
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: pending_identity_link
+            constraintName: fk_pending_identity_link_user_id

@@ -30,6 +30,10 @@ databaseChangeLog:
       path: foreign_keys
       relativeToChangelogFile: true
 
+  - includeAll:
+      path: indexes
+      relativeToChangelogFile: true
+
   - include:
       file: seeded_tables/db-changelog-seeded-tables.yml
       relativeToChangelogFile: true

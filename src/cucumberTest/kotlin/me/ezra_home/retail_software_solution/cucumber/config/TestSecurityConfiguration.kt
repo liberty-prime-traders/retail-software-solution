@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.cucumber.config
 
 import me.ezra_home.retail_software_solution.configuration.filters.UserDataExtractionFilter
-import me.ezra_home.retail_software_solution.configuration.security.OktaIdExtractor
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
@@ -31,7 +30,4 @@ class TestSecurityConfiguration {
 
   @Bean
   fun testAuthenticationFilter(): OncePerRequestFilter = TestAuthenticationFilter()
-
-  @Bean
-  fun testOktaIdExtractor(): OktaIdExtractor = OktaIdExtractor { it.principal as String }
 }

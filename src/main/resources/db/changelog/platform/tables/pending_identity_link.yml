@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-pending-identity-link-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: pending_identity_link
+      changes:
+        - createTable:
+            tableName: pending_identity_link
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: public_token
+                  type: nvarchar2(255)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: uq_pending_identity_link_public_token
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_public_token_notnull
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_user_id_notnull
+
+              - column:
+                  name: provider
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_provider_notnull
+
+              - column:
+                  name: external_id
+                  type: nvarchar2(255)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_external_id_notnull
+
+              - column:
+                  name: status
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_status_notnull
+
+              - column:
+                  name: expires_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_expires_at_notnull
+
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: pending_identity_link_created_at_notnull
+
+              - column:
+                  name: consumed_at
+                  type: timestamptz

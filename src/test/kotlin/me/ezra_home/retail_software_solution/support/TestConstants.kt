@@ -8,11 +8,6 @@ object TestConstants {
     const val ORG_USER = "mock-user-token"
   }
 
-  object Okta {
-    const val PLATFORM_USER = "okta-platform-user"
-    const val ORGANIZATION_USER = "okta-organization-user"
-  }
-
   object Timeouts {
     const val KAFKA_EVENT_MS = 15_000L
     const val KAFKA_SYNC_MS = 20_000L

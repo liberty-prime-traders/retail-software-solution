@@ -9,14 +9,18 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import java.time.OffsetDateTime
 
 @Entity
 @Table(name = TableNames.SYS_USER)
 @HasReference(tableName = TableName.SYS_USER)
 class SysUserEntity(
 
-    @Column(name = "okta_id", nullable = false, length = 50)
-    var oktaId: String? = null,
+    @Column(name = "email", length = 255)
+    var email: String? = null,
+
+    @Column(name = "disabled_at")
+    var disabledAt: OffsetDateTime? = null,
 
     @Column(name = "local_first_name", length = 100)
     var localFirstName: String? = null,

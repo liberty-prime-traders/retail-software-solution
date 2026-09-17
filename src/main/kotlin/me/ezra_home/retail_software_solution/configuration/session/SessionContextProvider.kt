@@ -23,8 +23,16 @@ object SessionContextProvider {
         return getSession().systemUserId ?: throw RtsGenericException("User ID not found in session")
     }
 
+    fun getUserIdOrNull(): UUID? {
+        return getSession().systemUserId
+    }
+
     fun getOrganizationId(): UUID {
         return getSession().organization?.id ?: throw RtsMissingHeaderException(RtsHeaders.ORGANIZATION_ID_HEADER)
+    }
+
+    fun getOrganizationIdOrNull(): UUID? {
+        return getSession().organization?.id
     }
 
     fun getLocationId(): UUID {

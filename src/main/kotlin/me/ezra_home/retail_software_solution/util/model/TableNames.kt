@@ -6,6 +6,7 @@ object TableNames {
     const val DB_MIGRATION = "db_migration"
     const val DB_VERSION = "db_version"
     const val FEATURE = "feature"
+    const val IDENTITY_PROVIDER_LINK = "identity_provider_link"
     const val JURISDICTION = "jurisdiction"
     const val JURISDICTION_TAX_TYPE = "jurisdiction_tax_type"
     const val JURISDICTION_TYPE = "jurisdiction_type"
@@ -13,6 +14,8 @@ object TableNames {
     const val ORGANIZATION_ADMIN = "organization_admin"
     const val ORGANIZATION_FEATURE = "organization_feature"
     const val ORGANIZATION_JOIN_REQUEST = "org_join_request"
+    const val PENDING_IDENTITY_LINK = "pending_identity_link"
+    const val PLATFORM_ROLE_ASSIGNMENT = "platform_role_assignment"
     const val RESERVED_SUBDOMAIN = "reserved_subdomain"
     const val SYS_USER = "sys_user"
     const val TABLE_REGISTRY = "table_registry"
@@ -33,6 +36,7 @@ object TableNames {
     const val ORGANIZATION_USER = "organization_user"
     const val ORG_ACCOUNTING_CONFIG = "org_accounting_config"
     const val ORG_JURISDICTION_TAX_TYPE = "org_jurisdiction_tax_type"
+    const val ORG_ROLE_ASSIGNMENT = "org_role_assignment"
     const val ORG_TABLE_REGISTRY = "org_table_registry"
     const val PAYMENT_METHOD = "payment_method"
     const val PRODUCT = "product"
@@ -52,6 +56,7 @@ object TableNames {
 
     // Location tables
     const val LOCATION_PRODUCT = "location_product"
+    const val LOCATION_ROLE_ASSIGNMENT = "location_role_assignment"
     const val PURCHASE = "purchase"
     const val PURCHASE_DELIVERY = "purchase_delivery"
     const val PURCHASE_DELIVERY_LINE = "purchase_delivery_line"

@@ -19,11 +19,12 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: okta_id
-                  type: nvarchar2(50)
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: sys_user_okta_id_notnull
+                  name: email
+                  type: nvarchar2(255)
+
+              - column:
+                  name: disabled_at
+                  type: timestamptz
 
               - column:
                   name: reference_number

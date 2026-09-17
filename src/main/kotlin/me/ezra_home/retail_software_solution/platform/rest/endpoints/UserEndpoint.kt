@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUs
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -12,9 +11,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("secured/users")
 class UserEndpoint(private val userService: SysUserService) {
-
-    @PostMapping
-    fun createUser(): SysUserWithProfileDto = userService.addSystemUser()
 
     @GetMapping
     fun getAllUsers(): Collection<SysUserWithProfileDto> = userService.getAllUsers()
