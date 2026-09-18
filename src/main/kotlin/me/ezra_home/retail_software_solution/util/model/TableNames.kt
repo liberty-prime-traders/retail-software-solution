@@ -57,6 +57,7 @@ object TableNames {
     // Location tables
     const val LOCATION_PRODUCT = "location_product"
     const val LOCATION_ROLE_ASSIGNMENT = "location_role_assignment"
+    const val LOCATION_USER = "location_user"
     const val PURCHASE = "purchase"
     const val PURCHASE_DELIVERY = "purchase_delivery"
     const val PURCHASE_DELIVERY_LINE = "purchase_delivery_line"

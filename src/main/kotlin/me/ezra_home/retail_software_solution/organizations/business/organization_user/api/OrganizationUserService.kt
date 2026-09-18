@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminService
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserCache
 import me.ezra_home.retail_software_solution.organizations.business.organization_user.OrganizationUserMapper
+import me.ezra_home.retail_software_solution.organizations.business.role_assignment.api.OrgRoleAssignmentService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -15,7 +16,8 @@ import java.util.UUID
 class OrganizationUserService(
     private val organizationUserCache: OrganizationUserCache,
     private val organizationAdminService: OrganizationAdminService,
-    private val organizationUserMapper: OrganizationUserMapper
+    private val organizationUserMapper: OrganizationUserMapper,
+    private val orgRoleAssignmentService: OrgRoleAssignmentService
 ) {
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun isOrganizationMember(userId: UUID): Boolean {
@@ -41,8 +43,17 @@ class OrganizationUserService(
             organizationUserIds.contains(it.id) && it.isActive()
         }.map { dto ->
             val saved = organizationUserCache.save(dto.copy(endOn = OffsetDateTime.now()))
+            orgRoleAssignmentService.removeAllRoles(dto.userId)
             organizationUserMapper.toDto(saved)
         }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getActiveMembershipId(userId: UUID): UUID {
+        return organizationUserCache.getOrganizationUsers()
+            .firstOrNull { it.userId == userId && it.isActive() }
+            ?.id
+            ?: throw RtsGenericException("User is not an active member of this organization")
     }
 
     fun admitJoinRequests(joinRequests: Collection<OrganizationAdminJoinRequestResponseDto>) {

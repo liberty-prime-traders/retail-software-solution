@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionResponseDto
 import me.ezra_home.retail_software_solution.platform.business.db_version.api.DbVersionService
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -13,7 +13,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/secured/db-versions")
-@PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
+@PreAuthorize("hasRole('${RtsRoleNames.PLATFORM_ADMIN}')")
 class DbVersionEndpoint(private val dbVersionService: DbVersionService) {
 
     @GetMapping

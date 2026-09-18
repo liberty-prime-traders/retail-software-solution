@@ -30,4 +30,9 @@ class OrgRoleCache(private val orgRoleAssignmentRepository: OrgRoleAssignmentRep
         orgRoleAssignmentRepository.findByUserIdAndRole(userId, role)
             ?.let { orgRoleAssignmentRepository.delete(it) }
     }
+
+    @CacheEvict(allEntries = true)
+    fun removeAll(userId: UUID) {
+        orgRoleAssignmentRepository.deleteAll(orgRoleAssignmentRepository.findAllByUserId(userId))
+    }
 }

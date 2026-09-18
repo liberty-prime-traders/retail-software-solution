@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.platform.business.role_assignment.api
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.location_user.api.LocationUserService
 import me.ezra_home.retail_software_solution.locations.business.role_assignment.api.LocationRoleAssignmentService
+import me.ezra_home.retail_software_solution.organizations.business.organization_user.api.OrganizationUserService
 import me.ezra_home.retail_software_solution.organizations.business.role_assignment.api.OrgRoleAssignmentService
 import me.ezra_home.retail_software_solution.util.enums.RtsRole
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
@@ -9,17 +11,13 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
-/**
- * Assigns/removes roles with the write-time dependency check and delete-time cascade described in
- * the role authorization design. The org/location tiers can only be consulted when the current
- * request already carries that schema's context (set by the tenant filter) — this service does not
- * fan out across every organization/location schema to look for a user's roles there.
- */
 @Service
 class RoleResolutionService(
     private val platformRoleAssignmentService: PlatformRoleAssignmentService,
     private val orgRoleAssignmentService: OrgRoleAssignmentService,
-    private val locationRoleAssignmentService: LocationRoleAssignmentService
+    private val locationRoleAssignmentService: LocationRoleAssignmentService,
+    private val organizationUserService: OrganizationUserService,
+    private val locationUserService: LocationUserService
 ) {
 
     fun getEffectiveRoles(userId: UUID): Set<RtsRole> {
@@ -54,8 +52,14 @@ class RoleResolutionService(
         }
         when (role.tier) {
             SchemaLevel.PLATFORM -> platformRoleAssignmentService.assign(userId, role, assignedById)
-            SchemaLevel.ORGANIZATION -> orgRoleAssignmentService.assign(userId, role, assignedById)
-            SchemaLevel.LOCATION -> locationRoleAssignmentService.assign(userId, role, assignedById)
+            SchemaLevel.ORGANIZATION -> {
+                val orgUserId = organizationUserService.getActiveMembershipId(userId)
+                orgRoleAssignmentService.assign(userId, orgUserId, role, assignedById)
+            }
+            SchemaLevel.LOCATION -> {
+                val locationUserId = locationUserService.getActiveMembershipId(userId)
+                locationRoleAssignmentService.assign(userId, locationUserId, role, assignedById)
+            }
         }
     }
 

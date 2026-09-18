@@ -56,6 +56,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
 
   // Location-level tables
   LOCATION_PRODUCT(TableNames.LOCATION_PRODUCT, SchemaLevel.LOCATION),
+  LOCATION_USER(TableNames.LOCATION_USER, SchemaLevel.LOCATION),
   PURCHASE(TableNames.PURCHASE, SchemaLevel.LOCATION),
   PURCHASE_DELIVERY(TableNames.PURCHASE_DELIVERY, SchemaLevel.LOCATION),
   PURCHASE_DELIVERY_LINE(TableNames.PURCHASE_DELIVERY_LINE, SchemaLevel.LOCATION),

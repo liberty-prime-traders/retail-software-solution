@@ -18,14 +18,15 @@ class LocationRoleAssignmentService(private val locationRoleCache: LocationRoleC
     fun holds(userId: UUID, role: RtsRole): Boolean = getRoles(userId).contains(role)
 
     @TransactionalOnLocationSchema
-    fun assign(userId: UUID, role: RtsRole, assignedById: UUID) {
+    fun assign(userId: UUID, locationUserId: UUID, role: RtsRole, assignedById: UUID) {
         if (holds(userId, role)) return
         locationRoleCache.insert(
             LocationRoleAssignmentEntity(
                 userId = userId,
                 role = role,
                 assignedAt = DateTimes.Offset.Now.system(),
-                assignedById = assignedById
+                assignedById = assignedById,
+                locationUserId = locationUserId
             )
         )
     }
@@ -33,5 +34,10 @@ class LocationRoleAssignmentService(private val locationRoleCache: LocationRoleC
     @TransactionalOnLocationSchema
     fun remove(userId: UUID, role: RtsRole) {
         locationRoleCache.remove(userId, role)
+    }
+
+    @TransactionalOnLocationSchema
+    fun removeAllRoles(userId: UUID) {
+        locationRoleCache.removeAll(userId)
     }
 }

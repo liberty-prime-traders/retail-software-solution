@@ -8,6 +8,7 @@ class CacheNames {
         const val ORGANIZATION = "Organization"
         const val ORGANIZATION_ADMIN = "OrganizationAdmin"
         const val ORGANIZATION_USER = "OrganizationUser"
+        const val LOCATION_USER = "LocationUser"
         const val ORGANIZATION_JOIN_REQUEST = "OrganizationJoinRequest"
         const val LOCATION = "Location"
         const val PRODUCT_CATEGORY = "Product Category"

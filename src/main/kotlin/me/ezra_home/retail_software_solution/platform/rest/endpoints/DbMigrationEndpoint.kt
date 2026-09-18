@@ -1,14 +1,13 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationHistoryService
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationRetryRequestDto
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.DbMigrationService
 import me.ezra_home.retail_software_solution.platform.business.db_migration.api.OrganizationMigrationResponseDto
 import org.springframework.format.annotation.DateTimeFormat
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -17,10 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.OffsetDateTime
 
-@CrossOrigin
 @RestController
 @RequestMapping("/secured/db-migrations")
-@PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
+@PreAuthorize("hasRole('${RtsRoleNames.PLATFORM_ADMIN}')")
 class DbMigrationEndpoint(
     private val dbMigrationService: DbMigrationService,
     private val dbMigrationHistoryService: DbMigrationHistoryService

@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
-import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationResponseDto
@@ -9,6 +8,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization.api.
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -27,11 +27,11 @@ import java.util.UUID
 class OrganizationEndpoint(private val organizationService: OrganizationService) {
 
     @GetMapping
-    @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
+    @PreAuthorize("hasRole('${RtsRoleNames.PLATFORM_ADMIN}')")
     fun getAllOrganizations(): Collection<OrganizationResponseDto> = organizationService.getAllOrganizations()
 
     @PostMapping
-    @PreAuthorize("hasRole('${RtsRoles.ROLE_CREATE_ORGANIZATION}')")
+    @PreAuthorize("hasRole('${RtsRoleNames.CREATE_ORGANIZATION}')")
     fun createOrganization(@RequestBody dto: OrganizationInsertDto): OrganizationResponseDto =
         organizationService.createOrganization(dto)
 
@@ -52,7 +52,7 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
         organizationService.attemptOrganizationLaunch(domain)
 
     @GetMapping("/{organizationId}/locations")
-    @PreAuthorize("hasRole('${RtsRoles.ROLE_PLATFORM_ADMIN}')")
+    @PreAuthorize("hasRole('${RtsRoleNames.PLATFORM_ADMIN}')")
     fun getOrganizationLocations(
         @PathVariable organizationId: UUID,
     ): Collection<LocationResponseDto> {

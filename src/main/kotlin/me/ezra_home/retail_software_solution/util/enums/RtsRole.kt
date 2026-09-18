@@ -5,8 +5,11 @@ enum class RtsRole(
     val tier: SchemaLevel,
     val requiredRoles: List<RtsRole> = emptyList()
 ) : HasCode {
-    PLATFORM_ADMIN("PLAD", SchemaLevel.PLATFORM),
+    ADD_USER_TO_LOCATION("AUTL", SchemaLevel.ORGANIZATION),
     CREATE_ORGANIZATION("CRGO", SchemaLevel.PLATFORM),
-    ORG_ADMIN("ORAD", SchemaLevel.ORGANIZATION),
-    LOCATION_ADMIN("LCAD", SchemaLevel.LOCATION)
+    PLATFORM_ADMIN("PLAD", SchemaLevel.PLATFORM),
+    REMOVE_USER_FROM_LOCATION("RUFL", SchemaLevel.ORGANIZATION),
+    REMOVE_USER_FROM_ORG("RUFO", SchemaLevel.ORGANIZATION),
+    VIEW_USERS_OF_LOCATION("VUOL", SchemaLevel.ORGANIZATION),
+    VIEW_USERS_OF_ORG("VUOO", SchemaLevel.ORGANIZATION)
 }

@@ -30,4 +30,9 @@ class LocationRoleCache(private val locationRoleAssignmentRepository: LocationRo
         locationRoleAssignmentRepository.findByUserIdAndRole(userId, role)
             ?.let { locationRoleAssignmentRepository.delete(it) }
     }
+
+    @CacheEvict(allEntries = true)
+    fun removeAll(userId: UUID) {
+        locationRoleAssignmentRepository.deleteAll(locationRoleAssignmentRepository.findAllByUserId(userId))
+    }
 }

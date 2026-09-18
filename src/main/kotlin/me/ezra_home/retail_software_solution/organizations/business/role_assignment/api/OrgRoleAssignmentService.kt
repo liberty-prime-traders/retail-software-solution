@@ -18,14 +18,15 @@ class OrgRoleAssignmentService(private val orgRoleCache: OrgRoleCache) {
     fun holds(userId: UUID, role: RtsRole): Boolean = getRoles(userId).contains(role)
 
     @TransactionalOnOrganizationSchema
-    fun assign(userId: UUID, role: RtsRole, assignedById: UUID) {
+    fun assign(userId: UUID, orgUserId: UUID, role: RtsRole, assignedById: UUID) {
         if (holds(userId, role)) return
         orgRoleCache.insert(
             OrgRoleAssignmentEntity(
                 userId = userId,
                 role = role,
                 assignedAt = DateTimes.Offset.Now.system(),
-                assignedById = assignedById
+                assignedById = assignedById,
+                orgUserId = orgUserId
             )
         )
     }
@@ -33,5 +34,10 @@ class OrgRoleAssignmentService(private val orgRoleCache: OrgRoleCache) {
     @TransactionalOnOrganizationSchema
     fun remove(userId: UUID, role: RtsRole) {
         orgRoleCache.remove(userId, role)
+    }
+
+    @TransactionalOnOrganizationSchema
+    fun removeAllRoles(userId: UUID) {
+        orgRoleCache.removeAll(userId)
     }
 }
