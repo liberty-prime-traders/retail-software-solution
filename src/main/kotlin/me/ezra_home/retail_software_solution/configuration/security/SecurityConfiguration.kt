@@ -19,7 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 @Configuration
 @Profile("!test")
-class OktaOAuth2WebSecurityConfiguration(
+class SecurityConfiguration(
     private val environment: Environment
 ) {
 
@@ -56,6 +56,7 @@ class OktaOAuth2WebSecurityConfiguration(
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/secured/**", configuration)
+        source.registerCorsConfiguration("/auth/**", configuration)
         return source
     }
 }

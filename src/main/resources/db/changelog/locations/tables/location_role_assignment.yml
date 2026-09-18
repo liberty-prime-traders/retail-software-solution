@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-location-role-assignment-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: location_role_assignment
+      changes:
+        - createTable:
+            tableName: location_role_assignment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_role_assignment_user_id_notnull
+
+              - column:
+                  name: role
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_role_assignment_role_notnull
+
+              - column:
+                  name: assigned_at
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_role_assignment_assigned_at_notnull
+
+              - column:
+                  name: assigned_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_role_assignment_assigned_by_id_notnull
+
+        - addUniqueConstraint:
+            tableName: location_role_assignment
+            columnNames: user_id, role
+            constraintName: uq_location_role_assignment_user_id_role

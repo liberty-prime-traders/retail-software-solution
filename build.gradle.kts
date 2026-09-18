@@ -18,10 +18,6 @@ java {
 	}
 }
 
-configurations.testRuntimeClasspath {
-	exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
-}
-
 repositories {
 	mavenCentral()
 }
@@ -39,11 +35,13 @@ val cucumberTestRuntimeOnly: Configuration by configurations.getting {
 }
 
 dependencies {
-	implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
-	implementation("com.okta.spring:okta-spring-sdk")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.security:spring-security-oauth2-resource-server")
+	implementation("org.springframework.security:spring-security-oauth2-jose")
+	implementation("com.google.api-client:google-api-client:2.7.0")
 	implementation("org.hibernate.orm:hibernate-envers:6.5.3.Final")
 	implementation("org.springframework.kafka:spring-kafka")
 
@@ -62,14 +60,9 @@ dependencies {
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	kapt("org.mapstruct:mapstruct-processor:1.6.3")
 
-	testImplementation("org.springframework.boot:spring-boot-starter-test") {
-		exclude(group = "com.okta.spring", module = "okta-spring-boot-starter")
-	}
-	testImplementation("com.okta.spring:okta-spring-sdk:3.0.7")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-config")
 	testImplementation("org.springframework.security:spring-security-web")
-	testImplementation("org.springframework.security:spring-security-oauth2-resource-server")
-	testImplementation("org.springframework.security:spring-security-oauth2-jose")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
@@ -107,8 +100,6 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("cucumber.junit-platform.naming-strategy", "long")
 	systemProperty("cucumber.filter.tags", System.getProperty("cucumber.filter.tags") ?: "not @ignore")
-	systemProperty("okta.oauth2.enabled", "false")
-	systemProperty("okta.client.enabled", "false")
 }
 
 fun registerCucumberLaneTask(taskName: String, tagExpression: String, descriptionText: String) {

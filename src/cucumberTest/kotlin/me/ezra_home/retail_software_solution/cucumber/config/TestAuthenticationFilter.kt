@@ -4,17 +4,19 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
+import me.ezra_home.retail_software_solution.cucumber.support.TestUserRegistry
 import me.ezra_home.retail_software_solution.support.TestConstants
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.filter.OncePerRequestFilter
+import java.time.Instant
 
 class TestAuthenticationFilter : OncePerRequestFilter() {
 
   private data class TestPrincipal(
-    val token: String,
-    val oktaId: String,
+    val systemUserId: String,
     val roles: List<String>
   )
 
@@ -30,22 +32,27 @@ class TestAuthenticationFilter : OncePerRequestFilter() {
   private fun mapTokenToPrincipal(token: String?): TestPrincipal? {
     if (token.isNullOrBlank() || token == "null") return null
     return when (token) {
-      TestConstants.Tokens.PLATFORM_ADMIN -> TestPrincipal(
-        token = token,
-        oktaId = TestConstants.Okta.PLATFORM_USER,
-        roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
-      )
-      TestConstants.Tokens.ORG_USER -> TestPrincipal(
-        token = token,
-        oktaId = TestConstants.Okta.ORGANIZATION_USER,
-        roles = emptyList()
-      )
+      TestConstants.Tokens.PLATFORM_ADMIN -> TestUserRegistry.platformAdminUserId?.let {
+        TestPrincipal(
+          systemUserId = it.toString(),
+          roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
+        )
+      }
+      TestConstants.Tokens.ORG_USER -> TestUserRegistry.organizationUserId?.let {
+        TestPrincipal(systemUserId = it.toString(), roles = emptyList())
+      }
       else -> null
     }
   }
 
-  private fun mapPrincipalToAuthentication(principal: TestPrincipal): UsernamePasswordAuthenticationToken {
+  private fun mapPrincipalToAuthentication(principal: TestPrincipal): JwtAuthenticationToken {
     val authorities = principal.roles.map { SimpleGrantedAuthority("ROLE_$it") }
-    return UsernamePasswordAuthenticationToken(principal.oktaId, principal.token, authorities)
+    val jwt = Jwt.withTokenValue(principal.systemUserId)
+      .subject(principal.systemUserId)
+      .header("alg", "none")
+      .issuedAt(Instant.now())
+      .expiresAt(Instant.now().plusSeconds(3600))
+      .build()
+    return JwtAuthenticationToken(jwt, authorities)
   }
 }

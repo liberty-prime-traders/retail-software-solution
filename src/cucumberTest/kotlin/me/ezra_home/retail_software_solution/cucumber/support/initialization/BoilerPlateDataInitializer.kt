@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContex
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
+import me.ezra_home.retail_software_solution.cucumber.support.TestUserRegistry
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationType
@@ -14,6 +15,7 @@ import me.ezra_home.retail_software_solution.platform.business.authorization_pas
 import me.ezra_home.retail_software_solution.platform.business.authorization_pass.api.PassType
 import me.ezra_home.retail_software_solution.platform.business.organization.OrganizationCache
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationInsertDto
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
 import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
 import me.ezra_home.retail_software_solution.support.TestConstants
 import me.ezra_home.retail_software_solution.util.model.ReferenceNumberEntityListener
@@ -34,7 +36,8 @@ class BoilerPlateDataInitializer(
   private val injectContext: InjectContext,
   private val organizationCache: OrganizationCache,
   private val locationCache: LocationCache,
-  private val tableRegistryCache: TableRegistryCache
+  private val tableRegistryCache: TableRegistryCache,
+  private val sysUserService: SysUserService
 ) {
 
   companion object {
@@ -67,16 +70,22 @@ class BoilerPlateDataInitializer(
   }
 
   private fun createPlatformUser(): UUID {
-    val response = apiClient.post("/secured/users")
-    check(response.statusCode() == 200) { "Failed to create platform user: ${response.asString()}" }
-    return ResponseContext.idFromResponse(response)
+    val platformUserId = sysUserService.createUser(
+      email = "platform-admin@test.local",
+      localFirstName = "Fake",
+      localLastName = "Platform Admin"
+    ).id
+    TestUserRegistry.platformAdminUserId = platformUserId
+    return platformUserId
   }
 
   private fun createOrgUser() {
-    authContext.authToken = TestConstants.Tokens.ORG_USER
-    val response = apiClient.post("/secured/users")
-    authContext.authToken = null
-    check(response.statusCode() == 200) { "Failed to create org user: ${response.asString()}" }
+    val orgUserId = sysUserService.createUser(
+      email = "org-user@test.local",
+      localFirstName = "Fake",
+      localLastName = "Organization User"
+    ).id
+    TestUserRegistry.organizationUserId = orgUserId
   }
 
   private fun reserveSubdomain() {

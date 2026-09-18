@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-identity-provider-link-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: identity_provider_link
+      changes:
+        - createTable:
+            tableName: identity_provider_link
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: identity_provider_link_user_id_notnull
+
+              - column:
+                  name: provider
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: identity_provider_link_provider_notnull
+
+              - column:
+                  name: external_id
+                  type: nvarchar2(255)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: identity_provider_link_external_id_notnull
+
+              - column:
+                  name: linked_at
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: identity_provider_link_linked_at_notnull
+
+        - addUniqueConstraint:
+            tableName: identity_provider_link
+            columnNames: provider, external_id
+            constraintName: uq_identity_provider_link_provider_external_id
+
+        - addUniqueConstraint:
+            tableName: identity_provider_link
+            columnNames: user_id, provider
+            constraintName: uq_identity_provider_link_user_id_provider

@@ -69,14 +69,16 @@ spring:
       properties:
         spring.json.trusted.packages: me.ezra_home.retail_software_solution.messaging.kafka.*
 
-okta:
-  oauth2:
-    issuer: https://${OKTA_DOMAIN}/oauth2/default
-    client-id: ${OKTA_CLIENT_ID}
-    client-secret: ${OKTA_CLIENT_SECRET}
-  client:
-    org-url: https://${OKTA_DOMAIN}
-    token: ${OKTA_API_TOKEN}
+rts:
+  jwt:
+    secret: ${RTS_JWT_SECRET}
+    expiration-minutes: ${RTS_JWT_EXPIRATION_MINUTES:60}
+  pending-identity-link:
+    expiration-minutes: ${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES:20}
+
+google:
+  oauth:
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID}
 
 server:
   port: ${PORT:8080}

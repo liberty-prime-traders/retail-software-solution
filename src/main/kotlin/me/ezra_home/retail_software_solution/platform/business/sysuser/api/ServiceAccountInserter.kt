@@ -17,11 +17,8 @@ class ServiceAccountInserter(private val sysUserRepository: SysUserRepository) {
         val newAccounts =  serviceAccountEntries
             .filter { it.uniqueId !in existingAccounts }
             .map { account ->
-                val entity =  SysUserEntity(userType = UserType.SERVICE_ACCOUNT).also { it.id = account.uniqueId }
-                entity.oktaId = account.name
-                entity.userType = UserType.SERVICE_ACCOUNT
-                entity.localFirstName = account.displayName
-                entity
+                SysUserEntity(userType = UserType.SERVICE_ACCOUNT, localFirstName = account.displayName)
+                    .also { it.id = account.uniqueId }
             }
         sysUserRepository.saveAll(newAccounts)
     }
