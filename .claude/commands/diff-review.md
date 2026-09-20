@@ -15,6 +15,6 @@ Perform a deep code review of the current branch changes.
    - A concise description of the problem
    - Why it matters (correctness, scalability, maintainability)
 
-5. Save the full report to `./.claude/claudesomemdfile.md`, organized by the five sections above.
+5. Save the full report to `./.claude-local/claudesomemdfile.md`, organized by the five sections above.
 
 Be blunt. Skip findings that are trivially cosmetic.

@@ -6,9 +6,10 @@ import me.ezra_home.retail_software_solution.platform.business.organization.api.
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationService
 import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
+import me.ezra_home.retail_software_solution.util.enums.RtsPermissionNames
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -31,7 +32,7 @@ class OrganizationEndpoint(private val organizationService: OrganizationService)
     fun getAllOrganizations(): Collection<OrganizationResponseDto> = organizationService.getAllOrganizations()
 
     @PostMapping
-    @PreAuthorize("hasRole('${RtsRoleNames.CREATE_ORGANIZATION}')")
+    @PreAuthorize("hasAuthority('${RtsPermissionNames.CREATE_ORGANIZATION}')")
     fun createOrganization(@RequestBody dto: OrganizationInsertDto): OrganizationResponseDto =
         organizationService.createOrganization(dto)
 

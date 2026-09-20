@@ -2,9 +2,10 @@ package me.ezra_home.retail_software_solution.platform.rest.endpoints
 
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.api.ReservedSubdomainDto
 import me.ezra_home.retail_software_solution.platform.business.reserved_subdomain.api.ReservedSubdomainService
+import me.ezra_home.retail_software_solution.util.enums.RtsPermissionNames
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -21,7 +22,7 @@ import java.util.UUID
 class ReservedSubdomainEndpoint(private val reservedSubdomainService: ReservedSubdomainService) {
 
     @GetMapping("verify")
-    @PreAuthorize("hasRole('${RtsRoleNames.CREATE_ORGANIZATION}')")
+    @PreAuthorize("hasAuthority('${RtsPermissionNames.CREATE_ORGANIZATION}')")
     fun sanitizeThenReserveSubdomain(@RequestParam("suggestedSubdomain") suggestedSubdomain: String): ReservedSubdomainDto =
         reservedSubdomainService.sanitizeThenReserveSubdomain(suggestedSubdomain)
 

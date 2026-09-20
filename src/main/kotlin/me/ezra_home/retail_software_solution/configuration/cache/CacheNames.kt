@@ -38,7 +38,10 @@ class CacheNames {
         const val STOCK_MOVEMENT_REASON = "StockMovementReason"
         const val ADJUSTMENT_REASON = "AdjustmentReason"
         const val PLATFORM_ROLES = "PlatformRoles"
+        const val PLATFORM_PERMISSIONS = "PlatformPermissions"
         const val ORG_ROLES = "OrgRoles"
+        const val ORG_PERMISSIONS = "OrgPermissions"
         const val LOCATION_ROLES = "LocationRoles"
+        const val LOCATION_PERMISSIONS = "LocationPermissions"
     }
 }

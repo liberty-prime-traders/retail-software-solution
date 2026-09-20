@@ -19,9 +19,9 @@ interface LocationUserMapper {
     @Mapping(target = "endOn", ignore = true)
     fun toEntity(insertDto: LocationUserInsertDto): LocationUserEntity
 
-    fun toEntity(dto: LocationUserDto): LocationUserEntity
+    fun toEntity(locationUserDto: LocationUserDto): LocationUserEntity
 
     @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])
     @Mapping(source = "createdOn", target = "startOn")
-    fun toDto(dto: LocationUserDto): LocationUserResponseDto
+    fun toDto(locationUserDto: LocationUserDto): LocationUserResponseDto
 }

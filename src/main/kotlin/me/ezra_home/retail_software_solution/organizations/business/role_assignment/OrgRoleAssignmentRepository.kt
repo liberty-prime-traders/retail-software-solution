@@ -7,4 +7,5 @@ import java.util.UUID
 interface OrgRoleAssignmentRepository : JpaRepository<OrgRoleAssignmentEntity, UUID> {
     fun findAllByUserId(userId: UUID): List<OrgRoleAssignmentEntity>
     fun findByUserIdAndRole(userId: UUID, role: RtsRole): OrgRoleAssignmentEntity?
+    fun findAllByUserIdInAndRole(userIds: Collection<UUID>, role: RtsRole): List<OrgRoleAssignmentEntity>
 }

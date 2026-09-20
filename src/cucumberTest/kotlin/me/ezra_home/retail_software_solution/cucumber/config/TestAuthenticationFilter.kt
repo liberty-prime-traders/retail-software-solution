@@ -3,9 +3,10 @@ package me.ezra_home.retail_software_solution.cucumber.config
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import me.ezra_home.retail_software_solution.configuration.security.RtsRoles
 import me.ezra_home.retail_software_solution.cucumber.support.TestUserRegistry
 import me.ezra_home.retail_software_solution.support.TestConstants
+import me.ezra_home.retail_software_solution.util.enums.RtsPermissionNames
+import me.ezra_home.retail_software_solution.util.enums.RtsRoleNames
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
@@ -17,7 +18,8 @@ class TestAuthenticationFilter : OncePerRequestFilter() {
 
   private data class TestPrincipal(
     val systemUserId: String,
-    val roles: List<String>
+    val roles: List<String> = emptyList(),
+    val permissions: List<String> = emptyList()
   )
 
   override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
@@ -35,7 +37,8 @@ class TestAuthenticationFilter : OncePerRequestFilter() {
       TestConstants.Tokens.PLATFORM_ADMIN -> TestUserRegistry.platformAdminUserId?.let {
         TestPrincipal(
           systemUserId = it.toString(),
-          roles = listOf(RtsRoles.ROLE_PLATFORM_ADMIN, RtsRoles.ROLE_CREATE_ORGANIZATION)
+          roles = listOf(RtsRoleNames.PLATFORM_ADMIN),
+          permissions = listOf(RtsPermissionNames.CREATE_ORGANIZATION)
         )
       }
       TestConstants.Tokens.ORG_USER -> TestUserRegistry.organizationUserId?.let {
@@ -46,7 +49,8 @@ class TestAuthenticationFilter : OncePerRequestFilter() {
   }
 
   private fun mapPrincipalToAuthentication(principal: TestPrincipal): JwtAuthenticationToken {
-    val authorities = principal.roles.map { SimpleGrantedAuthority("ROLE_$it") }
+    val authorities = principal.roles.map { SimpleGrantedAuthority("ROLE_$it") } +
+      principal.permissions.map { SimpleGrantedAuthority(it) }
     val jwt = Jwt.withTokenValue(principal.systemUserId)
       .subject(principal.systemUserId)
       .header("alg", "none")

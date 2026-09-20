@@ -6,8 +6,7 @@ import java.util.UUID
 data class SysUserWithProfileDto(
     val id: UUID,
     val email: String?,
-    val firstName: String?,
-    val lastName: String?,
-    val userType: UserType,
+    val fullName: String?,
+    val initials: String?,
     val disabledAt: OffsetDateTime?,
 )

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-foreign-key-org-permission-assignment-org-user-id'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_permission_assignment_org_user_id
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_permission_assignment
+            baseColumnNames: org_user_id
+            referencedTableName: organization_user
+            referencedColumnNames: id
+            constraintName: fk_org_permission_assignment_org_user_id
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_permission_assignment
+            constraintName: fk_org_permission_assignment_org_user_id
