@@ -8,6 +8,7 @@ class CacheNames {
         const val ORGANIZATION = "Organization"
         const val ORGANIZATION_ADMIN = "OrganizationAdmin"
         const val ORGANIZATION_USER = "OrganizationUser"
+        const val LOCATION_USER = "LocationUser"
         const val ORGANIZATION_JOIN_REQUEST = "OrganizationJoinRequest"
         const val LOCATION = "Location"
         const val PRODUCT_CATEGORY = "Product Category"
@@ -37,7 +38,10 @@ class CacheNames {
         const val STOCK_MOVEMENT_REASON = "StockMovementReason"
         const val ADJUSTMENT_REASON = "AdjustmentReason"
         const val PLATFORM_ROLES = "PlatformRoles"
+        const val PLATFORM_PERMISSIONS = "PlatformPermissions"
         const val ORG_ROLES = "OrgRoles"
+        const val ORG_PERMISSIONS = "OrgPermissions"
         const val LOCATION_ROLES = "LocationRoles"
+        const val LOCATION_PERMISSIONS = "LocationPermissions"
     }
 }

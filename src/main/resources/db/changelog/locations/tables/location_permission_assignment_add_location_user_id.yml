@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-location-user-id-to-location-permission-assignment'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: location_permission_assignment
+                columnName: location_user_id
+      changes:
+        - addColumn:
+            tableName: location_permission_assignment
+            columns:
+              - column:
+                  name: location_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_permission_assignment_location_user_id_notnull
+      rollback:
+        - dropColumn:
+            tableName: location_permission_assignment
+            columnName: location_user_id

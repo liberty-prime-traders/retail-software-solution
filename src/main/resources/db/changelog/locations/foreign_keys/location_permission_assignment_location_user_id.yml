@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-foreign-key-location-permission-assignment-location-user-id'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_location_permission_assignment_location_user_id
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: location_permission_assignment
+            baseColumnNames: location_user_id
+            referencedTableName: location_user
+            referencedColumnNames: id
+            constraintName: fk_location_permission_assignment_location_user_id
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: location_permission_assignment
+            constraintName: fk_location_permission_assignment_location_user_id

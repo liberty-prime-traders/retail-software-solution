@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.location.ap
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.location_user.api.LocationUserService
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationMapper
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationSchemaService
@@ -20,6 +21,7 @@ class LocationService(
     private val locationMapper: LocationMapper,
     private val locationValidator: LocationValidator,
     private val locationSchemaService: LocationSchemaService,
+    private val locationUserService: LocationUserService,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -50,6 +52,8 @@ class LocationService(
         val schemaName = createLocationSchema(locationInsertDto.name!!)
         try {
             val locationDto = locationCache.create(locationInsertDto, schemaName)
+            SessionContextProvider.initLocation(locationDto)
+            locationUserService.registerFounder(locationDto.createdById)
             return locationMapper.toResponseDto(locationDto)
         } catch (e: Exception) {
             locationSchemaService.dropSchema(schemaName)

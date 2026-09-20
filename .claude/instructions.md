@@ -128,6 +128,16 @@ Use them when scanning in their vicinity. When we make changes, the relevant REA
 to reflect the current state of the code and any important details about the implementation.
 This is not a change log, but a current state document.
 
+Authorization:
+------------------------
+- Keep authorization checks separate from request validation. Express caller-authority checks
+  declaratively via `@PreAuthorize` on the endpoint — never as an imperative check inside a
+  service method that also validates the request's shape (single tier, required fields, etc.).
+- If one endpoint method would need a dynamic/data-dependent authorization check (e.g. "which
+  permission is required" varies with the request body), split it into multiple routes — one per
+  case — so each route's `@PreAuthorize` stays a static expression. The service layer underneath
+  stays validation-only regardless of how many routes call into it.
+
 Separation of Concerns:
 ------------------------
 - Each domain layer is likely to have its own set of entities, repositories, services to manage its specific data and business logic. 

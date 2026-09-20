@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.platform.business.sysuser
 
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserInsertDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserWithProfileDto
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -18,8 +17,4 @@ interface SysUserMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "disabledAt", ignore = true)
     fun toEntity(insertDto: SysUserInsertDto): SysUserEntity
-
-    @Mapping(source = "localFirstName", target = "firstName")
-    @Mapping(source = "localLastName", target = "lastName")
-    fun toSysUserWithProfileDto(entityDto: SysUserDto): SysUserWithProfileDto
 }

@@ -3,11 +3,11 @@ package me.ezra_home.retail_software_solution.cucumber.support.initialization
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
+import me.ezra_home.retail_software_solution.cucumber.support.TestUserRegistry
 import me.ezra_home.retail_software_solution.cucumber.support.context.AuthContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.PersistentKey
 import me.ezra_home.retail_software_solution.cucumber.support.context.ResponseContext
-import me.ezra_home.retail_software_solution.cucumber.support.TestUserRegistry
 import me.ezra_home.retail_software_solution.organizations.business.location.LocationCache
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationType
@@ -74,7 +74,7 @@ class BoilerPlateDataInitializer(
       email = "platform-admin@test.local",
       localFirstName = "Fake",
       localLastName = "Platform Admin"
-    ).id
+    )
     TestUserRegistry.platformAdminUserId = platformUserId
     return platformUserId
   }
@@ -84,7 +84,7 @@ class BoilerPlateDataInitializer(
       email = "org-user@test.local",
       localFirstName = "Fake",
       localLastName = "Organization User"
-    ).id
+    )
     TestUserRegistry.organizationUserId = orgUserId
   }
 
