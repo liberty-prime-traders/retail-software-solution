@@ -41,6 +41,9 @@ services:
       - default
 
     depends_on:
-      - postgres-rtss
-      - rtss-redis
-      - rtss-kafka
+      rtss-postgres:
+        condition: service_started
+      rtss-redis:
+        condition: service_started
+      rtss-kafka:
+        condition: service_started
