@@ -34,13 +34,9 @@ class HibernateProxyTypeAdapter private constructor(private val context: Gson) :
             out.nullValue()
             return
         }
-        // Retrieve the original (not proxy) class
         val baseType: Class<*> = Hibernate.getClass(value)
-        // Get the TypeAdapter of the original class, to delegate the serialization
         val delegate: TypeAdapter<*> = context.getAdapter(TypeToken.get(baseType))
-        // Get a filled instance of the original class
         val deproxiedValue = value.hibernateLazyInitializer.implementation
-        // Serialize the value
         (delegate as TypeAdapter<Any>).write(out, deproxiedValue)
     }
 

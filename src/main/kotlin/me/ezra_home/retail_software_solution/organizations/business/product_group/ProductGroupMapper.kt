@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_gro
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product_group.api.ProductGroupResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
@@ -22,7 +22,7 @@ interface ProductGroupMapper {
 
     fun toEntity(productGroupDto: ProductGroupDto): ProductGroupEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(target = "categoryName", expression = "java(categoryName)")
     @Mapping(source = "categoryId", target = "categoryId")
     fun toResponseDto(productGroupDto: ProductGroupDto, @Context categoryName: String?): ProductGroupResponseDto

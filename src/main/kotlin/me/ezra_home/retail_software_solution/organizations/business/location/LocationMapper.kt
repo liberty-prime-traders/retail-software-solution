@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.location
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -22,6 +22,6 @@ interface LocationMapper {
 
     fun toEntity(locationDto: LocationDto): LocationEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     fun toResponseDto(locationDto: LocationDto): LocationResponseDto
 }

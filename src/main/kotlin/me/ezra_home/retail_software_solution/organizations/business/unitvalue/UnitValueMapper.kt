@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
@@ -22,7 +22,7 @@ abstract class UnitValueMapper {
 
     abstract fun toEntity(unitValueDto: UnitValueDto): UnitValueEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(target = "baseUnitName", expression = "java(baseUnitName)")
     abstract fun toResponseDto(unitValueDto: UnitValueDto, @Context baseUnitName: String?): UnitValueResponseDto
 }

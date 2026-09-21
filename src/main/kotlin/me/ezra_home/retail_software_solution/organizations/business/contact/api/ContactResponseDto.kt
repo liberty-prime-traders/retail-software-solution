@@ -7,7 +7,7 @@ import java.util.UUID
 
 data class ContactResponseDto(
     val id: UUID,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String,
     val contactTypes: Set<ContactType>,

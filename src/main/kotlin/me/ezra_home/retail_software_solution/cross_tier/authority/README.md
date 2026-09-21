@@ -287,7 +287,7 @@ whole batch, roles and permissions together, must share one tier.
 
 The six routes are `POST`/`DELETE secured/authorizations/{platform,
 organization,location}` — one pair per tier, each with its own static
-`@PreAuthorize` (`hasRole(PLATFORM_ADMIN)` / `hasAuthority(MANAGE_ORG_ACCESS)`
+`@PreAuthorize` (`hasRole(PLATFORM_ADMIN)` / `hasAuthority(MANAGE_ORGANIZATION_ACCESS)`
 / `hasAuthority(MANAGE_LOCATION_ACCESS)`). **Authorization and request
 validation are deliberately kept apart**: the annotation is the only
 thing that decides who may call a route; `AuthorizationRequestService`
@@ -363,7 +363,7 @@ lookup, below) goes through a separate platform-tier service instead:
   own annotation (or absence of one) is what's authoritative, not the
   class it happens to live in.
 - `GET secured/authorities/platform` — `hasRole(PLATFORM_ADMIN)`.
-- `GET secured/authorities/organization` — `hasAuthority(MANAGE_ORG_ACCESS)`.
+- `GET secured/authorities/organization` — `hasAuthority(MANAGE_ORGANIZATION_ACCESS)`.
 - `GET secured/authorities/location` — `hasAuthority(MANAGE_LOCATION_ACCESS)`.
 
 All three are symmetric — each returns **only its own tier's**

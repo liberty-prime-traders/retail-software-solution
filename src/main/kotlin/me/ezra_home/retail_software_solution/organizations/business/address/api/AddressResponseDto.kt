@@ -12,7 +12,7 @@ data class AddressResponseDto(
     val state: String?,
     val postalCode: String?,
     val country: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String?
 ) : Serializable

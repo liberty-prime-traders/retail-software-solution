@@ -12,7 +12,7 @@ data class OrganizationProductResponseDto(
     val categoryId: UUID?,
     val productGroupId: UUID?,
     val productGroupName: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val baseUnit: String?,
     val baseUnitId: UUID?,

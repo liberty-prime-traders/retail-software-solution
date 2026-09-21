@@ -22,8 +22,8 @@ class SysUserEntity(
     @Column(name = "disabled_at")
     var disabledAt: OffsetDateTime? = null,
 
-    @Column(name = "local_first_name", length = 100)
-    var localFirstName: String? = null,
+    @Column(name = "local_first_name", length = 100, nullable = false)
+    var localFirstName: String,
 
     @Column(name = "local_last_name", length = 100)
     var localLastName: String? = null,

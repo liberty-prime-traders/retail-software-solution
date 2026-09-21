@@ -84,6 +84,56 @@ class BulkUnitImportServiceTest {
     }
 
     @Test
+    fun `bulkImport reuses a system-defined group and unit value instead of recreating them`() {
+        val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
+        val unitGroupService = mock(UnitGroupService::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+        val unitValueFetcher = mock(UnitValueFetcher::class.java)
+        val unitConversionService = mock(UnitConversionService::class.java)
+
+        val weightGroupId = UUID.randomUUID()
+        val kilogramId = UUID.randomUUID()
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                UnitGroupBulkInsertDto(
+                    name = "Weight",
+                    description = null,
+                    unitValues = listOf(
+                        UnitValueBulkInsertDto(name = "Kilogram", code = "kg", description = null, baseUnitCode = null, unitsOfBasePerUnit = null),
+                        UnitValueBulkInsertDto(name = "Sack", code = "sack", description = null, baseUnitCode = "kg", unitsOfBasePerUnit = 25L)
+                    )
+                )
+            )
+        )
+
+        val existingWeightGroup = unitGroupResponseDto(weightGroupId, "Weight", systemDefined = true)
+        `when`(bulkUnitImportValidator.validate(request)).thenReturn(emptyList())
+        `when`(unitGroupService.getAllUnitGroups()).thenReturn(listOf(existingWeightGroup))
+        `when`(unitGroupService.bulkCreateValidatedList(emptyList())).thenReturn(emptyList())
+        `when`(unitValueFetcher.getUnitValuesForUnitGroup(weightGroupId)).thenReturn(emptyList())
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(unitValueResponseDto(id = kilogramId, code = "kg", unitGroupId = weightGroupId, systemDefined = true))
+        )
+
+        var savedEntries: List<UnitValueBulkSaveEntry> = emptyList()
+        `when`(unitValueService.bulkCreateValidatedList(anyList<UnitValueBulkSaveEntry>())).thenAnswer { invocation ->
+            savedEntries = invocation.getArgument(0)
+            emptyList<UnitValueResponseDto>()
+        }
+
+        val service = BulkUnitImportService(
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+        )
+
+        val result = service.bulkImport(request)
+
+        assertEquals(listOf(existingWeightGroup), result)
+        assertEquals(1, savedEntries.size)
+        assertEquals("sack", savedEntries.first().code)
+        assertEquals(kilogramId, savedEntries.first().baseUnit)
+    }
+
+    @Test
     fun `bulkImport throws with the full error list and saves nothing when validation fails`() {
         val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
         val unitGroupService = mock(UnitGroupService::class.java)
@@ -149,7 +199,7 @@ class BulkUnitImportServiceTest {
         assertEquals(1L, insertDto.denominator)
     }
 
-    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID) = UnitValueResponseDto(
+    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID, systemDefined: Boolean = false) = UnitValueResponseDto(
         id = id,
         name = code,
         code = code,
@@ -161,16 +211,16 @@ class BulkUnitImportServiceTest {
         createdOn = OffsetDateTime.now(),
         unitGroupId = unitGroupId,
         referenceNumber = "REF-$code",
-        systemDefined = false
+        systemDefined = systemDefined
     )
 
-    private fun unitGroupResponseDto(id: UUID, name: String?) = UnitGroupResponseDto(
+    private fun unitGroupResponseDto(id: UUID, name: String, systemDefined: Boolean = false) = UnitGroupResponseDto(
         id = id,
         createdBy = "Someone",
         createdOn = OffsetDateTime.now(),
         name = name,
         description = null,
         referenceNumber = "REF-1",
-        systemDefined = false
+        systemDefined = systemDefined
     )
 }

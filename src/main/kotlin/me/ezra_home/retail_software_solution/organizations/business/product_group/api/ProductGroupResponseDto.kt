@@ -10,7 +10,7 @@ data class ProductGroupResponseDto(
     val description: String?,
     val categoryId: UUID?,
     val categoryName: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String?
 ) : Serializable

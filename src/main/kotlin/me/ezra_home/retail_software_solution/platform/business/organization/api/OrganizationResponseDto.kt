@@ -8,7 +8,7 @@ import java.util.UUID
 
 data class OrganizationResponseDto(
     val id: UUID,
-    val createdBy: String?,
+    val createdBy: String,
     @field:JsonSerialize(using = DatesToMillis::class)
     val createdOn: OffsetDateTime?,
     val name: String?,

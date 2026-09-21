@@ -31,13 +31,13 @@ class AuthorizationAssignmentEndpoint(private val authorizationRequestService: A
     }
 
     @PostMapping("organization")
-    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORG_ACCESS}')")
+    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORGANIZATION_ACCESS}')")
     fun assignAtOrganizationTier(@RequestBody authorizationAssignmentRequest: AuthorizationAssignmentRequest) {
         authorizationRequestService.assignAtOrganizationTier(authorizationAssignmentRequest)
     }
 
     @DeleteMapping("organization")
-    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORG_ACCESS}')")
+    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORGANIZATION_ACCESS}')")
     fun removeAtOrganizationTier(@RequestBody authorizationAssignmentRequest: AuthorizationAssignmentRequest) {
         authorizationRequestService.removeAtOrganizationTier(authorizationAssignmentRequest)
     }

@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitgroup
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -23,6 +23,6 @@ interface UnitGroupMapper {
 
     fun toEntity(unitGroupDto: UnitGroupDto): UnitGroupEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     fun toResponseDto(unitGroupDto: UnitGroupDto): UnitGroupResponseDto
 }

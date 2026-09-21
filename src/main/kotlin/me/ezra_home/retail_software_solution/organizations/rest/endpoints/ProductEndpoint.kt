@@ -6,13 +6,17 @@ import me.ezra_home.retail_software_solution.organizations.business.product.api.
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductSearchService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product_bulk_import.api.BulkProductImportRequestDto
+import me.ezra_home.retail_software_solution.organizations.business.product_bulk_import.api.BulkProductImportService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -20,12 +24,19 @@ import java.util.UUID
 @RequestMapping("secured/products")
 class ProductEndpoint(
     private val organizationProductService: OrganizationProductService,
-    private val organizationProductSearchService: OrganizationProductSearchService
+    private val organizationProductSearchService: OrganizationProductSearchService,
+    private val bulkProductImportService: BulkProductImportService
 ) {
 
     @PostMapping
     fun createProduct(@RequestBody productInsertDto: OrganizationProductInsertDto): OrganizationProductResponseDto =
         organizationProductService.createProduct(productInsertDto)
+
+    @PostMapping("bulk")
+    @ResponseStatus(HttpStatus.OK)
+    fun bulkImportProducts(@RequestBody bulkProductImportRequestDto: BulkProductImportRequestDto) {
+        bulkProductImportService.bulkImport(bulkProductImportRequestDto)
+    }
 
     @PostMapping("search")
     fun search(@RequestBody pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<OrganizationProductResponseDto, String> =

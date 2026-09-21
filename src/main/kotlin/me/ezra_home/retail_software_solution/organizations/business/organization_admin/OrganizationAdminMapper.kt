@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.organizatio
 
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.organization_admin.api.OrganizationAdminResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.NullableFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -21,7 +21,7 @@ interface OrganizationAdminMapper {
 
     fun toEntity(dto: OrganizationAdminDto): OrganizationAdminEntity
 
-    @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])
+    @Mapping(source = "userId", target = "user", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "createdOn", target = "startOn")
     fun toResponseDto(dto: OrganizationAdminDto): OrganizationAdminResponseDto
 }

@@ -56,6 +56,13 @@ class ProductCategoryService(
         productCategoryCache.deleteCategory(id)
     }
 
+    fun bulkCreateValidatedList(insertDtos: List<ProductCategoryInsertDto>): List<ProductCategoryResponseDto> {
+        if (insertDtos.isEmpty()) return emptyList()
+        val entities = insertDtos.map { productCategoryMapper.toEntity(it) }
+        val saved = productCategoryCache.saveAll(entities)
+        return saved.map { productCategoryMapper.toDomainDto(it) }.map { productCategoryMapper.toResponseDto(it) }
+    }
+
     companion object {
         const val NAME_IS_REQUIRED = "A category must have a name"
         const val NAME_ALREADY_EXISTS = "A category with the name %s already exists."

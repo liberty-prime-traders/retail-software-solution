@@ -58,8 +58,4 @@ class PurchaseEndpoint(
   @GetMapping
   fun fetchTop(@RequestParam n: Int?): List<PurchaseResponseDto> =
     purchaseDataFetcher.fetchTop(n)
-
-//  @PostMapping("search")
-//  fun search(@RequestBody request: PurchaseSearchRequest): List<PurchaseResponseDto> =
-//    purchaseSearchService.search(request)
 }

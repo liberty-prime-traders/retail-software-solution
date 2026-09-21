@@ -7,7 +7,7 @@ import java.util.UUID
 data class JobTitleResponseDto(
     val id: UUID,
     val value: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String?
 ) : Serializable

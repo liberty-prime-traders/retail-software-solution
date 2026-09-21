@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.Un
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueValidator
-import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -55,8 +54,7 @@ class UnitValueService(
     /** Provisions the group's default Piece base unit unless the group is Miscellaneous, Weight,
      * or Volume (those have their own base units) or a Piece unit already exists in the group. */
     fun ensurePieceUnitExists(unitGroupId: UUID, unitGroupName: String?): UnitValueResponseDto? {
-        val excludedFromPiece = listOf(SystemUnitGroup.MISC, SystemUnitGroup.WEIGHT, SystemUnitGroup.VOLUME)
-            .any { StringUtils.isEquivalent(it.groupName, unitGroupName) }
+        val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(unitGroupName)
         if (excludedFromPiece) return null
 
         val pieceCode = SystemUnitValue.pieceCodeForGroup(unitGroupName)

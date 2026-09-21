@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.contact
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -22,7 +22,7 @@ interface ContactMapper {
 
     fun toEntity(contactDto: ContactDto): ContactEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = ".", target = "identityType", qualifiedBy = [ToIdentityType::class])
     @Mapping(source = "identity.displayName", target = "fullName")
     fun toResponseDto(contactDto: ContactDto): ContactResponseDto

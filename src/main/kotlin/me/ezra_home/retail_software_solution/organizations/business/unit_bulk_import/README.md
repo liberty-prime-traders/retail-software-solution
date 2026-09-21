@@ -64,6 +64,26 @@ looping (and re-evicting per row) by:
    earlier in the list than children, so the single `saveAll` never violates
    the FK.
 
+## A payload matching system-defined data is a reuse, not a conflict
+
+Every org is bootstrapped with the `SystemUnitGroup` and `SystemUnitValue`
+rows (`UnitGroupSeeder`, `UnitValueSeeder`) - e.g. "Weight" and "kg" already
+exist in every org before any bulk import runs. Without special handling, a
+payload that names a standard unit would always fail with an "already
+exists" error, since the validator otherwise treats any name/code collision
+against the database as invalid.
+
+Instead, `BulkUnitImportValidator.validateGroupNames`/`validateUnitValues`
+check whether the colliding database row is `systemDefined`. If it is, the
+payload entry is treated as a reuse: no error is added, and validation of
+that entry stops there (its own name/base-unit/etc. fields are never
+checked, since it won't be created). `BulkUnitImportService` mirrors this at
+save time - `findExistingSystemDefinedGroup` and `existingSystemDefinedCodes`
+resolve a reused entry to its existing id instead of passing it to
+`bulkCreateValidatedList`, so the same code never gets inserted twice. A
+payload that lists the same system-defined code twice is still rejected as a
+payload-internal duplicate; only the database-collision error is suppressed.
+
 ## Codes are unique org-wide; names are unique only within a group
 
 `unit_value.code` has a DB-level `unique: true` constraint

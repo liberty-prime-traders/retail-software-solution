@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ActiveProductTags
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
@@ -27,14 +27,14 @@ interface OrganizationProductMapper {
 
     fun toEntity(productDto: OrganizationProductDto): OrganizationProductEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = "productGroupId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
     @Mapping(source = "productGroupId", target = "categoryId", qualifiedBy = [ProductCategoryId::class])
     @Mapping(target = "baseUnit", expression = "java(baseUnit)")
     @Mapping(source = "id", target = "activeTags", qualifiedBy = [ActiveProductTags::class])
     fun toResponseDto(productDto: OrganizationProductDto, @Context baseUnit: String?): OrganizationProductResponseDto
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = "productGroupId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
     @Mapping(source = "productGroupId", target = "categoryId", qualifiedBy = [ProductCategoryId::class])
     @Mapping(target = "baseUnit", expression = "java(baseUnit)")

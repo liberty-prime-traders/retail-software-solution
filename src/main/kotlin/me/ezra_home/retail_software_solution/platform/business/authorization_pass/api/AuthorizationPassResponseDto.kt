@@ -13,6 +13,6 @@ data class AuthorizationPassResponseDto(
     val assignedTo: String?,
     val passStatus: PassStatus,
     val expiresOn: OffsetDateTime?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?
 ) : Serializable

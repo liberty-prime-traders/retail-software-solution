@@ -6,7 +6,7 @@ import java.util.UUID
 data class ReservedSubdomainDto(
     val id: UUID,
     val subdomain: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val status: ReservedDomainStatus?,
     val referenceNumber: String?
 ): Serializable

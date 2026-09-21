@@ -6,7 +6,7 @@ import java.util.UUID
 
 data class LocationResponseDto(
     val id: UUID,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val locationType: LocationType?,
     val name: String?,

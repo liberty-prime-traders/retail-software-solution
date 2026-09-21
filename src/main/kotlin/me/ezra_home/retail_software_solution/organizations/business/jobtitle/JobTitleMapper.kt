@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.jobtitle
 
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.jobtitle.api.JobTitleResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -20,6 +20,6 @@ interface JobTitleMapper {
 
     fun toEntity(titleDto: JobTitleDto): JobTitleEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     fun toDto(titleDto: JobTitleDto): JobTitleResponseDto
 }

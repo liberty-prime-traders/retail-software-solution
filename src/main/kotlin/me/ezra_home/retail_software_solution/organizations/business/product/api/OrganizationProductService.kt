@@ -28,6 +28,20 @@ class OrganizationProductService(
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun isDuplicateProductName(productName: String): Boolean =
+        organizationProductRepository.findFirstByProductNameIgnoreCase(productName) != null
+
+    fun bulkCreateValidatedList(insertDtos: List<OrganizationProductInsertDto>): List<OrganizationProductResponseDto> {
+        if (insertDtos.isEmpty()) return emptyList()
+        val entities = insertDtos.map { organizationProductMapper.toEntity(it) }
+        val saved = organizationProductCache.saveAll(entities)
+        return saved.map { organizationProductMapper.toDomainDto(it) }.map { dto ->
+            catalogEventHandler.publish(TableName.PRODUCT, dto.id)
+            organizationProductMapper.toResponseDto(dto, unitValueFetcher.getUnitName(dto.baseUnitId))
+        }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun verifyProductIsActive(orgProductId: UUID) {
         val dto = organizationProductCache.findAllProducts().find { it.id == orgProductId }
             ?: throw UpdatingNonExistingRecordException()

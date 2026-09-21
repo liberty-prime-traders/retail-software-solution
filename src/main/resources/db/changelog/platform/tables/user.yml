@@ -47,6 +47,9 @@ databaseChangeLog:
               - column:
                   name: local_first_name
                   type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sys_user_local_first_name_notnull
 
               - column:
                   name: local_last_name

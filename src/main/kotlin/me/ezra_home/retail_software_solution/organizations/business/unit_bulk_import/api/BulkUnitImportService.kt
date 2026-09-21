@@ -36,15 +36,30 @@ class BulkUnitImportService(
             throw RtsGenericException("Bulk unit import validation failed", errors)
         }
 
-        val savedGroups = unitGroupService.bulkCreateValidatedList(
-            bulkUnitImportRequestDto.unitGroups.map { UnitGroupInsertDto(name = it.name!!, description = it.description) }
+        // StringUtils.isEquivalent's normalization is a pure function of the name, so a name -> group
+        // map keyed by that same normalization gives every lookup below O(1) instead of an O(n) scan.
+        val existingSystemDefinedGroupsByNormalizedName = unitGroupService.getAllUnitGroups()
+            .filter { it.systemDefined }
+            .associateBy { StringUtils.normalizeForComparison(it.name) }
+        fun findExistingSystemDefinedGroup(name: String?) =
+            existingSystemDefinedGroupsByNormalizedName[StringUtils.normalizeForComparison(name ?: "")]
+
+        val groupsToCreate = bulkUnitImportRequestDto.unitGroups.filter { findExistingSystemDefinedGroup(it.name) == null }
+        val createdGroups = unitGroupService.bulkCreateValidatedList(
+            groupsToCreate.map { UnitGroupInsertDto(name = it.name!!, description = it.description) }
         )
-        val groupIdByName = savedGroups.associate { (StringUtils.getValueOrNull(it.name) ?: "") to it.id }
+        val createdGroupIdByName = createdGroups.associate { (StringUtils.getValueOrNull(it.name) ?: "") to it.id }
+
+        val groupIdByName = bulkUnitImportRequestDto.unitGroups.associate { group ->
+            val name = group.name!!
+            name to (findExistingSystemDefinedGroup(name)?.id ?: createdGroupIdByName.getValue(name))
+        }
 
         saveValidatedUnitValues(bulkUnitImportRequestDto, groupIdByName)
         saveConversions(bulkUnitImportRequestDto)
 
-        return savedGroups
+        val reusedGroups = bulkUnitImportRequestDto.unitGroups.mapNotNull { findExistingSystemDefinedGroup(it.name) }
+        return createdGroups + reusedGroups
     }
 
     /** One save-order node: a unit value pending creation for a specific group. Codes are unique
@@ -63,13 +78,16 @@ class BulkUnitImportService(
         bulkUnitImportRequestDto: BulkUnitImportRequestDto,
         groupIdByName: Map<String, UUID>
     ): List<UnitValueResponseDto> {
+        val existingUnitValues = unitValueFetcher.getAllUnitValues()
+        val existingSystemDefinedCodes = existingUnitValues.filter { it.systemDefined }.map { it.code }.toSet()
+
         val pending : List<PendingUnitValue> = bulkUnitImportRequestDto.unitGroups.flatMap { group ->
             val groupId = groupIdByName.getValue(group.name!!)
-            generatePendingUnitValuesForGroup(groupId, group.name, group.unitValues)
+            generatePendingUnitValuesForGroup(groupId, group.name, group.unitValues, existingSystemDefinedCodes)
         }
 
         val resolvedIds = mutableMapOf<String, UUID>()
-        unitValueFetcher.getAllUnitValues().forEach { resolvedIds[it.code] = it.id }
+        existingUnitValues.forEach { resolvedIds[it.code] = it.id }
 
         val orderedPending = topologicallyOrder(pending)
         val topologicallyOrderedEntries = orderedPending.map { pendingValue ->
@@ -88,9 +106,13 @@ class BulkUnitImportService(
         return unitValueService.bulkCreateValidatedList(topologicallyOrderedEntries)
     }
 
-    private fun generatePendingUnitValuesForGroup(groupId: UUID, groupName: String?, unitValues: List<UnitValueBulkInsertDto>): List<PendingUnitValue> {
-        val excludedFromPiece = listOf(SystemUnitGroup.MISC, SystemUnitGroup.WEIGHT, SystemUnitGroup.VOLUME)
-            .any { StringUtils.isEquivalent(it.groupName, groupName) }
+    private fun generatePendingUnitValuesForGroup(
+        groupId: UUID,
+        groupName: String?,
+        unitValues: List<UnitValueBulkInsertDto>,
+        existingSystemDefinedCodes: Set<String>
+    ): List<PendingUnitValue> {
+        val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(groupName)
         val referencesPiece = unitValues.any { it.baseUnitCode == BulkUnitImportValidator.PIECE_BASE_UNIT_CODE }
         val pieceCode = SystemUnitValue.pieceCodeForGroup(groupName)
         val pieceAlreadyExists = unitValueFetcher.getUnitValuesForUnitGroup(groupId).any { it.code == pieceCode }
@@ -99,7 +121,10 @@ class BulkUnitImportService(
             if (referencesPiece && !excludedFromPiece && !pieceAlreadyExists) {
                 add(createDefaultPiece(groupId, pieceCode))
             }
-            unitValues.forEach {
+            // A unit value whose code already matches a system-defined row (see SystemUnitValue /
+            // UnitValueSeeder) was accepted by the validator as a reuse, not a duplicate - its id is
+            // already resolvable via the existing-unit-value lookup, so it must not be inserted again.
+            unitValues.filter { it.code !in existingSystemDefinedCodes }.forEach {
                 add(createPendingUnitValue(groupId, pieceCode, it))
             }
         }

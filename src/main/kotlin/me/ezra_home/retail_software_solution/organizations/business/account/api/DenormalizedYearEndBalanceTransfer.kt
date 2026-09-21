@@ -12,10 +12,9 @@ class DenormalizedYearEndBalanceTransfer(
     private val accountRepository: AccountRepository
 ) {
 
-    // TODO: Replace with proper year-end closing ledger entries
-    // Current implementation updates running balances directly without creating ledger entries
-    // Year-end close should create a ledger_entry_group with source_type = YEAR_END_CLOSE
-    // zeroing out revenue/expense accounts into Retained Earnings via double-entry entries
+    // TODO: Replace with proper year-end closing ledger entries — a ledger_entry_group with
+    // source_type = YEAR_END_CLOSE zeroing out revenue/expense accounts into Retained Earnings
+    // via double-entry entries, instead of updating running balances directly.
     fun applyYearEndBalanceTransfer() {
         val accounts = accountRepository.findAll()
         val retainedEarnings = accounts.firstOrNull { it.code == SystemAccount.RETAINED_EARNINGS.code }
