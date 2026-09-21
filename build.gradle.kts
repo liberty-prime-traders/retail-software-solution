@@ -3,14 +3,31 @@ plugins {
 	kotlin("jvm") version "1.9.25"
 	kotlin("plugin.spring") version "1.9.25"
 	kotlin("plugin.jpa") version "1.9.25"
-	id("org.springframework.boot") version "3.3.5"
-	id("io.spring.dependency-management") version "1.1.6"
+	id("org.springframework.boot") version "3.3.11"
+	id("io.spring.dependency-management") version "1.1.7"
+	id("com.google.cloud.tools.jib") version "3.4.5"
 }
 
 ext["testcontainers.version"] = "1.20.6"
 
 group = "me.ezra-home"
 version = "0.0.1-SNAPSHOT"
+
+jib {
+	from {
+		image = "eclipse-temurin:17-jre"
+		platforms {
+			platform {
+				architecture = "arm64"
+				os = "linux"
+			}
+		}
+	}
+	to {
+		image = "ezraorina834/rtss-server:${project.findProperty("imageTag") ?: "latest"}"
+		tags = setOf(version.toString())
+	}
+}
 
 java {
 	toolchain {

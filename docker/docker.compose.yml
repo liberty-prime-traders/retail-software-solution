@@ -1,0 +1,46 @@
+include:
+  - postgres-compose.yml
+  - redis-compose.yml
+  - kafka-compose.yml
+
+services:
+  rtss-server:
+    image: ezraorina834/rtss-server:${APP_VERSION}
+    restart: unless-stopped
+    environment:
+      - DB_DOMAIN=${DB_DOMAIN}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_INTERNAL_PORT}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - KAFKA_HOST=${KAFKA_HOST}
+      - KAFKA_PORT=${KAFKA_INTERNAL_PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - PORT=${PORT}
+      - REDIS_PORT=${REDIS_INTERNAL_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SHOW_SQL=${SHOW_SQL}
+      - RTS_JWT_SECRET=${RTS_JWT_SECRET}
+      - RTS_JWT_EXPIRATION_MINUTES=${RTS_JWT_EXPIRATION_MINUTES}
+      - RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES=${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID}
+      - HIBERNATE_SQL_LOGGING=${HIBERNATE_SQL_LOGGING}
+      - HIBERNATE_ENVERS_LOGGING=${HIBERNATE_ENVERS_LOGGING}
+      - HIBERNATE_TYPE_LOGGING=${HIBERNATE_TYPE_LOGGING}
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rtss-server-${ENV}.rule=Host(`rtss-server-${ENV}.ezra-home.me`)"
+      - "traefik.http.routers.rtss-server-${ENV}.entrypoints=websecure"
+      - "traefik.http.routers.rtss-server-${ENV}.tls=true"
+      - "traefik.http.routers.rtss-server-${ENV}.tls.certresolver=acme-cert-resolver"
+      - "traefik.http.services.rtss-server-${ENV}.loadbalancer.server.port=${PORT}"
+
+    networks:
+      - ezra-home
+      - default
+
+    depends_on:
+      - postgres-rtss
+      - rtss-redis
+      - rtss-kafka

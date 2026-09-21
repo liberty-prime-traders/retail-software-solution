@@ -41,14 +41,14 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
 
       AUTH_TYPE: OAUTH2
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTID: ${OKTA_CLIENT_ID}
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTSECRET: ${OKTA_CLIENT_SECRET}
-      AUTH_OAUTH2_CLIENT_OKTA_SCOPE: openid,profile,email
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTNAME: Okta
-      AUTH_OAUTH2_CLIENT_OKTA_PROVIDER: okta
-      AUTH_OAUTH2_CLIENT_OKTA_REDIRECTURI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/okta
-      AUTH_OAUTH2_CLIENT_OKTA_ISSUERURI: https://${OKTA_DOMAIN}/oauth2/default
-      AUTH_OAUTH2_CLIENT_OKTA_CUSTOMPARAMS_TYPE: oauth
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTID: ${OAUTH_CLIENT_ID}
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTSECRET: ${OAUTH_CLIENT_SECRET}
+      AUTH_OAUTH2_CLIENT_AUTH0_SCOPE: openid
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTNAME: Auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_PROVIDER: auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_REDIRECTURI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_ISSUERURI: https://${OAUTH_DOMAIN}
+      AUTH_OAUTH2_CLIENT_AUTH0_CUSTOMPARAMS_TYPE: oauth
 
     labels:
       - "traefik.enable=true"
@@ -57,7 +57,6 @@ services:
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls=true"
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
       - "traefik.http.services.rtss-kafka-ui-${ENV}.loadbalancer.server.port=8080"
-      - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
 
     networks:
       - ezra-home
