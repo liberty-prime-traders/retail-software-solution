@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 class LocationEndpoint(private val locationService: LocationService) {
 
     @GetMapping
-    @PreAuthorize("@rtsPermissions.isOrganizationAdmin()")
-    //TODO: Change to @PreAuthorize("@rtsPermissions.isOrganizationMember()") when user locations are implemented
+    @PreAuthorize("@rtsPermissions.isOrganizationMember()")
     fun getForOrganization(): Collection<LocationResponseDto> =
         locationService.getAllLocations()
 

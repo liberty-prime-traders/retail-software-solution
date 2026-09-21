@@ -8,7 +8,6 @@ import java.util.UUID
 
 @Repository
 interface OrganizationUserRepository : JpaRepository<OrganizationUserEntity, UUID> {
-    fun existsByUserId(userId: UUID): Boolean
 
     @Query(
         value = """
