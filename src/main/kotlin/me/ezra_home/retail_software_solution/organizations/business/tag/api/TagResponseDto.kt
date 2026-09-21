@@ -9,7 +9,7 @@ data class TagResponseDto(
     val category: CategoryType?,
     val tagName: String?,
     val description: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String?
 ) : Serializable

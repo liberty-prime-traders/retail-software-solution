@@ -30,6 +30,11 @@ class ProductGroupCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun saveAll(entities: Collection<ProductGroupEntity>): List<ProductGroupEntity> {
+        return productGroupRepository.saveAll(entities)
+    }
+
+    @CacheEvict(allEntries = true)
     fun save(productGroupDto: ProductGroupDto): ProductGroupDto {
         val saved = productGroupRepository.save(productGroupMapper.toEntity(productGroupDto))
         return productGroupMapper.toDomainDto(saved)

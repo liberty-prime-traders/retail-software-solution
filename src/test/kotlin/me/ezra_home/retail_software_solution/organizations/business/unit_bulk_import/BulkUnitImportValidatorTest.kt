@@ -126,6 +126,46 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
+    fun `group name matching a system-defined group is reused, not rejected`() {
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(
+            listOf(
+                UnitGroupDto(
+                    id = UUID.randomUUID(),
+                    createdById = UUID.randomUUID(),
+                    createdOn = OffsetDateTime.now(),
+                    referenceNumber = "REF-1",
+                    code = null,
+                    name = "Weight",
+                    description = null,
+                    systemDefined = true
+                )
+            )
+        )
+
+        val errors = validator.validate(
+            BulkUnitImportRequestDto(unitGroups = listOf(group(name = "Weight", unitValues = emptyList())))
+        )
+
+        assertEquals(emptyList<String>(), errors)
+    }
+
+    @Test
+    fun `unit value code matching a system-defined unit value is reused, not rejected`() {
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(unitValueResponseDto(id = UUID.randomUUID(), code = "kg", unitGroupId = UUID.randomUUID(), systemDefined = true))
+        )
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Weight", unitValues = listOf(unitValue(name = "Kilogram", code = "kg", baseUnitCode = null, unitsOfBasePerUnit = null)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertEquals(emptyList<String>(), errors)
+    }
+
+    @Test
     fun `base unit chain cycle across groups is rejected`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
@@ -256,6 +296,28 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
+    fun `unit value code matching a system-defined unit value still flags a payload-internal duplicate`() {
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(unitValueResponseDto(id = UUID.randomUUID(), code = "kg", unitGroupId = UUID.randomUUID(), systemDefined = true))
+        )
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(
+                    name = "Weight",
+                    unitValues = listOf(
+                        unitValue(name = "Kilogram", code = "kg", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Kilogram 2", code = "kg", baseUnitCode = null, unitsOfBasePerUnit = null)
+                    )
+                )
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("duplicates another unit value code in the same payload") })
+    }
+
+    @Test
     fun `conversion duplicated against an existing database conversion is rejected`() {
         val fromId = UUID.randomUUID()
         val toId = UUID.randomUUID()
@@ -279,7 +341,7 @@ class BulkUnitImportValidatorTest {
         assertTrue(errors.any { it.contains("already exists in the database") })
     }
 
-    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID) = UnitValueResponseDto(
+    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID, systemDefined: Boolean = false) = UnitValueResponseDto(
         id = id,
         name = code,
         code = code,
@@ -291,6 +353,6 @@ class BulkUnitImportValidatorTest {
         createdOn = OffsetDateTime.now(),
         unitGroupId = unitGroupId,
         referenceNumber = "REF-$code",
-        systemDefined = false
+        systemDefined = systemDefined
     )
 }

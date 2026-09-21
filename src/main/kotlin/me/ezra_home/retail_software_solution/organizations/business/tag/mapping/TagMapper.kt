@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.tag.TagEntit
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -22,6 +22,6 @@ interface TagMapper {
 
     fun toEntity(tagDto: TagDto): TagEntity
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     fun toResponseDto(tagDto: TagDto): TagResponseDto
 }

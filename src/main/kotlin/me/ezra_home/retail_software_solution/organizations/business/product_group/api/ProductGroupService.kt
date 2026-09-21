@@ -52,4 +52,12 @@ class ProductGroupService(
     fun deleteProductGroup(productGroupId: UUID) {
         productGroupCache.deleteProductGroupById(productGroupId)
     }
+
+    fun bulkCreateValidatedList(insertDtos: List<ProductGroupInsertDto>): List<ProductGroupResponseDto> {
+        if (insertDtos.isEmpty()) return emptyList()
+        val entities = insertDtos.map { productGroupMapper.toEntity(it) }
+        val saved = productGroupCache.saveAll(entities)
+        val categoriesById = productCategoryService.getCategoryNamesById()
+        return saved.map { productGroupMapper.toDomainDto(it) }.map { productGroupMapper.toResponseDto(it, categoriesById[it.categoryId]) }
+    }
 }

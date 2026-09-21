@@ -58,6 +58,14 @@ class BulkUnitImportValidator(
             if (duplicateInPayload) {
                 errors.add("Group '$name': duplicates another group name in the same payload")
             }
+
+            // Every org is bootstrapped with the SystemUnitGroup rows (see UnitGroupSeeder), so a payload
+            // naming one of them (e.g. "Weight") always matches something already in the database. Treat
+            // that as a reuse rather than a conflict, and skip further checks for this group entirely.
+            if (existingGroups.any { it.systemDefined && StringUtils.isEquivalent(it.name, name) }) {
+                return@forEachIndexed
+            }
+
             if (existingGroups.any { StringUtils.isEquivalent(it.name, name) }) {
                 errors.add("Group '$name': name already exists in the database")
             }
@@ -91,10 +99,22 @@ class BulkUnitImportValidator(
     ) {
         val allPayloadValues = payloadGroups.flatMap { group -> group.unitValues.map { group to it } }
         val existingCodes = existingUnitValues.map { it.code }.toSet()
+        val existingSystemDefinedCodes = existingUnitValues.filter { it.systemDefined }.map { it.code }.toSet()
         val existingGroupNameById = existingGroups.associate { it.id to it.name }
 
         allPayloadValues.forEachIndexed { index, (group, unitValue) ->
             val label = StringUtils.getValueOrNull(unitValue.code) ?: StringUtils.getValueOrNull(unitValue.name) ?: "at position ${index + 1}"
+
+            if (StringUtils.hasValue(unitValue.code) && allPayloadValues.take(index).any { it.second.code == unitValue.code }) {
+                errors.add("Unit value '${unitValue.code}': duplicates another unit value code in the same payload")
+            }
+
+            // Every org is bootstrapped with the SystemUnitValue rows (see UnitValueSeeder), so a payload
+            // naming one of their codes (e.g. "kg") always matches something already in the database.
+            // Treat that as a reuse rather than a conflict, and skip further checks for this value entirely.
+            if (unitValue.code != null && unitValue.code in existingSystemDefinedCodes) {
+                return@forEachIndexed
+            }
 
             if (!StringUtils.hasValue(unitValue.name)) {
                 errors.add("Unit value $label: name is required")
@@ -108,8 +128,6 @@ class BulkUnitImportValidator(
                 val code = unitValue.code!!
                 if (code.length > MAX_UNIT_VALUE_CODE_LENGTH) {
                     errors.add("Unit value '$code': code must be at most $MAX_UNIT_VALUE_CODE_LENGTH characters")
-                } else if (allPayloadValues.take(index).any { it.second.code == code }) {
-                    errors.add("Unit value '$code': duplicates another unit value code in the same payload")
                 } else if (existingCodes.contains(code)) {
                     errors.add("Unit value '$code': code already exists in the database")
                 }
@@ -160,7 +178,7 @@ class BulkUnitImportValidator(
             return
         }
         if (baseUnitCode == PIECE_BASE_UNIT_CODE) {
-            if (isExcludedFromPieceAutoInsert(group.name)) {
+            if (SystemUnitGroup.isExcludedFromPieceAutoInsert(group.name)) {
                 errors.add("Unit value $label: baseUnitCode '$PIECE_BASE_UNIT_CODE' is not valid inside the '${group.name}' group")
             }
             return
@@ -278,10 +296,6 @@ class BulkUnitImportValidator(
 
     private fun isMiscellaneous(groupName: String?): Boolean =
         StringUtils.isEquivalent(groupName, SystemUnitGroup.MISC.groupName)
-
-    private fun isExcludedFromPieceAutoInsert(groupName: String?): Boolean =
-        listOf(SystemUnitGroup.MISC, SystemUnitGroup.WEIGHT, SystemUnitGroup.VOLUME)
-            .any { StringUtils.isEquivalent(groupName, it.groupName) }
 
     companion object {
         const val PIECE_BASE_UNIT_CODE = "__piece__"

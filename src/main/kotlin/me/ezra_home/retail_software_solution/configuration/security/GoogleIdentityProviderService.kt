@@ -24,8 +24,6 @@ class GoogleIdentityProviderService(
     override fun supports(provider: IdentityProvider): Boolean = provider == IdentityProvider.GOOGLE
 
     override fun authenticate(credential: String): AuthenticatedIdentity {
-        // verify() checks signature/audience/issuer/expiry against Google's public keys; a null
-        // result or a thrown error both mean the token can't be trusted.
         val googleIdToken = try {
             googleIdTokenVerifier.verify(credential)
         } catch (_: Exception) {
@@ -37,8 +35,13 @@ class GoogleIdentityProviderService(
             provider = IdentityProvider.GOOGLE,
             externalId = payload.subject,
             email = payload.email,
-            firstName = payload["given_name"] as? String,
+            firstName = resolveFirstName(payload["given_name"] as? String, payload.email),
             lastName = payload["family_name"] as? String
         )
     }
+
+    private fun resolveFirstName(givenName: String?, email: String?): String =
+        givenName?.takeIf { it.isNotBlank() }
+            ?: email?.substringBefore("@")?.takeIf { it.isNotBlank() }
+            ?: "Google User"
 }

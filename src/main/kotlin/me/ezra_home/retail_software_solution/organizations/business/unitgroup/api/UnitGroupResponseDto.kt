@@ -6,10 +6,10 @@ import java.util.UUID
 
 data class UnitGroupResponseDto(
     val id: UUID,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
-    val name: String?,
+    val name: String,
     val description: String?,
-    val referenceNumber: String?,
+    val referenceNumber: String,
     val systemDefined: Boolean
 ) : Serializable

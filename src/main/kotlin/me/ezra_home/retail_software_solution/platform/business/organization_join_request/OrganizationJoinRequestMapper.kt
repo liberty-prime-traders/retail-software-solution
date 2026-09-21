@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.platform.business.organization_join
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestInsertDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationLaunchResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -37,7 +37,7 @@ interface OrganizationJoinRequestMapper {
     @Mapping(source = "createdOn", target = "requestedDate")
     fun toDto(dto: OrganizationJoinRequestDto): OrganizationJoinRequestResponseDto
 
-    @Mapping(source = "createdById", target = "fullName", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "fullName", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = "createdOn", target = "requestedDate")
     fun toAdminDto(dto: OrganizationJoinRequestDto): OrganizationAdminJoinRequestResponseDto
 

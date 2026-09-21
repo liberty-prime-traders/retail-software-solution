@@ -41,7 +41,7 @@ class AuthorityCatalogEndpoint(
         platformAuthorityHolderService.getHolders(authorityName, authorityType)
 
     @GetMapping("organization")
-    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORG_ACCESS}')")
+    @PreAuthorize("hasAuthority('${RtsPermissionNames.MANAGE_ORGANIZATION_ACCESS}')")
     fun getOrgCatalog(): List<Authority> = authorizationCatalogService.getCatalogForTier(SchemaLevel.ORGANIZATION)
 
     @GetMapping("location")

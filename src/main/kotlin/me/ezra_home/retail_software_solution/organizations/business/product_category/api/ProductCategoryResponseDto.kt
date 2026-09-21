@@ -8,7 +8,7 @@ data class ProductCategoryResponseDto(
     val id: UUID,
     val categoryName: String?,
     val description: String?,
-    val createdBy: String?,
+    val createdBy: String,
     val createdOn: OffsetDateTime?,
     val referenceNumber: String?
 ) : Serializable

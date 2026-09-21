@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.location_user
 
 import me.ezra_home.retail_software_solution.locations.business.location_user.api.LocationUserInsertDto
 import me.ezra_home.retail_software_solution.locations.business.location_user.api.LocationUserResponseDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.NullableFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -21,7 +21,7 @@ interface LocationUserMapper {
 
     fun toEntity(locationUserDto: LocationUserDto): LocationUserEntity
 
-    @Mapping(source = "userId", target = "user", qualifiedBy = [FullName::class])
+    @Mapping(source = "userId", target = "user", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "createdOn", target = "startOn")
     fun toDto(locationUserDto: LocationUserDto): LocationUserResponseDto
 }

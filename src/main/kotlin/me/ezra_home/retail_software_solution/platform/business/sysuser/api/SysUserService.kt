@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.ServiceAccountContext
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserCache
 import me.ezra_home.retail_software_solution.platform.business.sysuser.SysUserDto
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
 import me.ezra_home.retail_software_solution.util.exceptions.AuthException
 import org.springframework.stereotype.Service
@@ -34,7 +35,8 @@ class SysUserService(
     }
 
     @TransactionalOnPlatformSchema
-    fun createUser(email: String?, localFirstName: String?, localLastName: String?): UUID {
+    fun createUser(email: String?, localFirstName: String, localLastName: String?): UUID {
+        StringUtils.requireHasValue(localFirstName, "A SysUser must have a local first name")
         val created = ServiceAccountContext.runWithServiceAccount<SysUserDto>(ServiceAccount.RECORD_INITIALIZER) {
             sysUserCache.create(
                 SysUserInsertDto(

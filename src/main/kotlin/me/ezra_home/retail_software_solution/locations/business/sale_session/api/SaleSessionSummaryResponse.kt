@@ -6,7 +6,7 @@ import java.util.UUID
 
 data class SaleSessionSummaryDto(
     val id: UUID,
-    val createdBy: String?,
+    val createdBy: String,
     val createdAt: OffsetDateTime,
     val lastUpdatedAt: OffsetDateTime,
     val lastAccessedBy: String,

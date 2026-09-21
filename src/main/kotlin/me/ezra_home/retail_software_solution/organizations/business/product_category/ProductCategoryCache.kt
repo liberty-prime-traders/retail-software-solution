@@ -35,6 +35,11 @@ class ProductCategoryCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun saveAll(entities: Collection<ProductCategoryEntity>): List<ProductCategoryEntity> {
+        return productCategoryRepository.saveAll(entities)
+    }
+
+    @CacheEvict(allEntries = true)
     fun save(productCategoryDto: ProductCategoryDto): ProductCategoryDto {
         val saved = productCategoryRepository.save(productCategoryMapper.toEntity(productCategoryDto))
         return productCategoryMapper.toDomainDto(saved)

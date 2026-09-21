@@ -33,6 +33,12 @@ class OrganizationProductCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun saveAll(entities: Collection<OrganizationProductEntity>): List<OrganizationProductEntity> {
+        entities.forEach { it.status = ProductStatus.ACTIVE }
+        return organizationProductRepository.saveAll(entities)
+    }
+
+    @CacheEvict(allEntries = true)
     fun save(productDto: OrganizationProductDto): OrganizationProductDto {
         val saved = organizationProductRepository.save(organizationProductMapper.toEntity(productDto))
         return organizationProductMapper.toDomainDto(saved)

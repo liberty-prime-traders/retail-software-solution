@@ -9,7 +9,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionPaymentResponse
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
-import me.ezra_home.retail_software_solution.platform.business.sysuser.api.FullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.CreatorFullName
+import me.ezra_home.retail_software_solution.platform.business.sysuser.api.NullableFullName
 import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Context
 import org.mapstruct.Mapper
@@ -20,13 +21,13 @@ import java.util.UUID
 interface SessionToResponseMapper {
 
     @Mapping(source = "header.referenceNumber", target = "referenceNumber")
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
+    @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "header.contactId", target = "contactId")
     @Mapping(target = "contactLabel", expression = "java(sessionMappingContext.getContactLabel())")
     @Mapping(target = "walkInCustomer", expression = "java(sessionMappingContext.getWalkInCustomer())")
     @Mapping(source = "sessionId", target = "id")
-    @Mapping(source = "header.soldById", target = "soldBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "header.soldById", target = "soldBy", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "header.dateSold", target = "dateSold")
     @Mapping(source = "header.notes", target = "notes")
     @Mapping(source = "originalStatus", target = "saleStatus")
@@ -50,7 +51,7 @@ interface SessionToResponseMapper {
 
     @Mapping(source = "adjustmentReasonId", target = "adjustmentReason", qualifiedBy = [AdjustmentReasonLabel::class])
     @Mapping(source = ".", target = "calculatedAmount", qualifiedBy = [AdjustmentCalculatedAmount::class])
-    @Mapping(source = "approvedById", target = "approvedBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "approvedById", target = "approvedBy", qualifiedBy = [NullableFullName::class])
     fun toAdjustmentDto(
         saleSessionAdjustment: SaleSessionAdjustment,
         @Context adjustmentMappingContext: AdjustmentMappingContext,
@@ -62,8 +63,8 @@ interface SessionToResponseMapper {
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): SaleSessionPaymentResponse
 
-    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [FullName::class])
-    @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [FullName::class])
+    @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
+    @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [NullableFullName::class])
     @Mapping(target = "contactLabel", expression = "java(contactLabel)")
     @Mapping(source = "totals.payableTotal", target = "payableTotal")
     @Mapping(source = "sessionId", target = "id")

@@ -11,7 +11,7 @@ data class SysUserDto(
     val referenceNumber: String,
     val email: String? = null,
     val disabledAt: OffsetDateTime? = null,
-    val localFirstName: String? = null,
+    val localFirstName: String,
     val localLastName: String? = null,
     val userType: UserType? = null
 )
