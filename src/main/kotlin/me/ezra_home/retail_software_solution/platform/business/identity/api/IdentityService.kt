@@ -7,9 +7,11 @@ import me.ezra_home.retail_software_solution.platform.business.identity.Identity
 import me.ezra_home.retail_software_solution.platform.business.identity.PendingIdentityLinkEntity
 import me.ezra_home.retail_software_solution.platform.business.identity.PendingIdentityLinkRepository
 import me.ezra_home.retail_software_solution.platform.business.identity.PendingLinkStatus
+import me.ezra_home.retail_software_solution.platform.business.permission_assignment.api.PlatformPermissionAssignmentService
 import me.ezra_home.retail_software_solution.platform.business.role_assignment.api.PlatformRoleAssignmentService
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.enums.RtsPermission
 import me.ezra_home.retail_software_solution.util.enums.RtsRole
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.AuthException
@@ -28,6 +30,7 @@ class IdentityService(
     private val sysUserService: SysUserService,
     private val sessionTokenService: SessionTokenService,
     private val platformRoleAssignmentService: PlatformRoleAssignmentService,
+    private val platformPermissionAssignmentService: PlatformPermissionAssignmentService,
 
     @param:Value("\${rts.pending-identity-link.expiration-minutes}")
     private val pendingLinkExpirationMinutes: Long
@@ -45,7 +48,13 @@ class IdentityService(
         if (user.disabledAt != null) throw AuthException.AccountDisabled()
         val sessionToken = sessionTokenService.mint(systemUserId)
         val verifiedRoles = verifyRequestedRoles(systemUserId, loginRequest.rolesToVerify)
-        return LoginResponse(sessionToken = sessionToken, user = user, verifiedRoles = verifiedRoles)
+        val verifiedPermissions = verifyRequestedPermissions(systemUserId, loginRequest.permissionsToVerify)
+        return LoginResponse(
+            sessionToken = sessionToken,
+            user = user,
+            verifiedRoles = verifiedRoles,
+            verifiedPermissions = verifiedPermissions
+        )
     }
 
     private fun resolveSystemUserId(authenticatedIdentity: AuthenticatedIdentity): UUID {
@@ -110,12 +119,25 @@ class IdentityService(
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes)
     }
 
-    // Unknown names and roles the user simply doesn't hold are both silently dropped: distinguishing
-    // them would let an unauthenticated caller probe for valid role names.
-    private fun verifyRequestedRoles(userId: UUID, requestedRoleNames: List<String>): List<RtsRole> {
+    // Unknown names and roles/permissions the user simply doesn't hold are both silently dropped:
+    // distinguishing them would let an unauthenticated caller probe for valid names.
+    private fun verifyRequestedRoles(
+        userId: UUID,
+        requestedRoleNames: List<String>
+    ): List<RtsRole> {
         val heldPlatformRoles = platformRoleAssignmentService.getRoles(userId)
         return requestedRoleNames
             .mapNotNull { name -> runCatching { RtsRole.valueOf(name) }.getOrNull() }
             .filter { it.tier == SchemaLevel.PLATFORM && it in heldPlatformRoles }
+    }
+
+    private fun verifyRequestedPermissions(
+        userId: UUID,
+        requestedPermissionNames: List<String>
+    ): List<RtsPermission> {
+        val heldPlatformPermissions = platformPermissionAssignmentService.getPermissions(userId)
+        return requestedPermissionNames
+            .mapNotNull { name -> runCatching { RtsPermission.valueOf(name) }.getOrNull() }
+            .filter { it.tier == SchemaLevel.PLATFORM && it in heldPlatformPermissions }
     }
 }
