@@ -40,10 +40,17 @@ services:
       - ezra-home
       - default
 
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:${PORT}/"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+
     depends_on:
       rtss-postgres:
-        condition: service_started
+        condition: service_healthy
       rtss-redis:
-        condition: service_started
+        condition: service_healthy
       rtss-kafka:
-        condition: service_started
+        condition: service_healthy

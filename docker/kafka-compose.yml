@@ -28,9 +28,10 @@ services:
       - rtss-kafka-data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
   rtss-kafka-ui:
     image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}
@@ -62,9 +63,16 @@ services:
       - ezra-home
       - default
 
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
     depends_on:
       rtss-kafka:
-        condition: service_started
+        condition: service_healthy
 
 networks:
   ezra-home:
