@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product_bul
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.product_bulk_import.BulkProductImportValidator
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryDto
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryInsertDto
@@ -46,9 +47,9 @@ class BulkProductImportServiceTest {
     )
 
     private fun productResponseDto(id: UUID, name: String) = OrganizationProductResponseDto(
-        id = id, productName = name, description = null, categoryName = null, categoryId = null, productGroupId = null,
-        productGroupName = null, createdBy = "someone", createdOn = OffsetDateTime.now(), baseUnit = null, baseUnitId = null,
-        status = null, activeTags = null, referenceNumber = "ref"
+        id = id, productName = name, description = null, categoryName = null, categoryId = null, productGroupId = UUID.randomUUID(),
+        productGroupName = "group", createdBy = "someone", createdOn = OffsetDateTime.now(), baseUnit = "unit", baseUnitId = UUID.randomUUID(),
+        status = ProductStatus.ACTIVE, activeTags = null, referenceNumber = "ref"
     )
 
     private fun unitValueDto(id: UUID, code: String) = UnitValueResponseDto(

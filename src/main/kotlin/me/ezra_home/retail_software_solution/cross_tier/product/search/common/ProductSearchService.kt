@@ -13,12 +13,12 @@ abstract class ProductSearchService<DTO>(
 ) {
 
   protected abstract fun countAllProducts(): Long
-  protected abstract fun findAllProducts(): List<DTO>
+  protected abstract fun findAllProducts(parameters: ProductSearchParameters): List<DTO>
 
   fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<DTO, String> {
 
     if (shouldUseClientSideFiltering()) {
-      return loadAllProductsForClientFiltering()
+      return loadAllProductsForClientFiltering(pageRequest.parameters)
     }
 
     ProductSearchValidator.validateArraySizes(
@@ -43,11 +43,11 @@ abstract class ProductSearchService<DTO>(
     return countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
   }
 
-  private fun loadAllProductsForClientFiltering(): PageResponse<DTO, String> {
+  private fun loadAllProductsForClientFiltering(parameters: ProductSearchParameters): PageResponse<DTO, String> {
     return PageResponse(
       currentCursor = "",
       hasMore = false,
-      contents = findAllProducts(),
+      contents = findAllProducts(parameters),
       requireClientSideFilter = true
     )
   }

@@ -27,6 +27,9 @@ class PurchaseDeliveryStockUpdater(
         val baseUnitsByProductId = locationProductDataFetcher.getBaseUnitIds(event.lines.map { it.locationProductId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
 
+        val productIds = event.lines.map { it.locationProductId }
+        val runningBalances = stockBalanceFetcher.getLatestBalances(productIds).toMutableMap()
+
         val entriesByLineId = event.lines.associate { line ->
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
             val baseQty = unitConversionGraph.getTarget(line.unitId, baseUnitId).applyTo(line.quantityDelivered)
@@ -43,12 +46,10 @@ class PurchaseDeliveryStockUpdater(
         }
         stockEntryRepository.saveAll(entriesByLineId.values)
 
-        val productIds = event.lines.map { it.locationProductId }
-        val previousBalances = stockBalanceFetcher.getLatestBalances(productIds)
-
         val movements = event.lines.map { line ->
             val entry = entriesByLineId[line.deliveryLineId]!!
-            val newQuantity = (previousBalances[line.locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
+            val newQuantity = (runningBalances[line.locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
+            runningBalances[line.locationProductId] = newQuantity
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
             val ratio = unitConversionGraphFacade.getRatio(line.unitId, baseUnitId)
             StockMovementEntity(

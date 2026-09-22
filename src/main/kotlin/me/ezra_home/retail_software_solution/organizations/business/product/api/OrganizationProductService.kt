@@ -37,7 +37,7 @@ class OrganizationProductService(
         val saved = organizationProductCache.saveAll(entities)
         return saved.map { organizationProductMapper.toDomainDto(it) }.map { dto ->
             catalogEventHandler.publish(TableName.PRODUCT, dto.id)
-            organizationProductMapper.toResponseDto(dto, unitValueFetcher.getUnitName(dto.baseUnitId))
+            organizationProductMapper.toResponseDto(dto, unitValueFetcher.requiredUnitName(dto.baseUnitId))
         }
     }
 
@@ -58,7 +58,7 @@ class OrganizationProductService(
             tagsToAdd = productInsertDto.tagsToAdd
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.requiredUnitName(savedDto.baseUnitId))
     }
 
     fun updateProduct(productUpdateDto: OrganizationProductUpdateDto): OrganizationProductResponseDto {
@@ -74,7 +74,7 @@ class OrganizationProductService(
             tagsToRemove = productUpdateDto.tagsToRemove
         )
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.requiredUnitName(savedDto.baseUnitId))
     }
 
     fun deactivateProduct(orgProductId: UUID): OrganizationProductResponseDto {
@@ -93,6 +93,6 @@ class OrganizationProductService(
         val updated = productDto.copy(status = status)
         val savedDto = organizationProductCache.save(updated)
         catalogEventHandler.publish(TableName.PRODUCT, savedDto.id)
-        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.getUnitName(savedDto.baseUnitId))
+        return organizationProductMapper.toResponseDto(savedDto, unitValueFetcher.requiredUnitName(savedDto.baseUnitId))
     }
 }

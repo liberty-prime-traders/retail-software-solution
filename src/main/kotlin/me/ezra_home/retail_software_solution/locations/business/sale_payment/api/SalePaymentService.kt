@@ -9,7 +9,9 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentWriter
+import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
@@ -24,11 +26,14 @@ class SalePaymentService(
     private val salePaymentWriter: SalePaymentWriter,
     private val salePaymentVoidHandlerForKafka: SalePaymentVoidHandlerForKafka,
     private val paymentMethodService: PaymentMethodService,
+    private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
     fun recordPayment(dto: SalePaymentCreateDto): SalePaymentResponseDto {
         val saleId = dto.saleId ?: throw RtsGenericException("saleId is required")
         SalePaymentValidator.guardPositiveAmount(dto.amount)
+        val effectivePaymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization()
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectivePaymentDate))
         val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
@@ -42,7 +47,7 @@ class SalePaymentService(
                     paymentMethodId = dto.paymentMethodId,
                     amount = dto.amount,
                     reference = dto.reference,
-                    paymentDate = dto.paymentDate,
+                    paymentDate = effectivePaymentDate,
                 )
             ),
         )

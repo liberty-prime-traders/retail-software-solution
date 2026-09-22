@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.product.Orga
 import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
@@ -47,8 +48,11 @@ class OrganizationProductFetcher(
 
     fun findAllProducts(): List<OrganizationProductResponseDto> {
         val unitNamesById = unitValueFetcher.getUnitNamesById()
-        val responseDtos = organizationProductCache.findAllProducts()
-            .map { organizationProductMapper.toResponseDtoWithoutTags(it, unitNamesById[it.baseUnitId]) }
+        val responseDtos = organizationProductCache.findAllProducts().map {
+            val baseUnit = unitNamesById[it.baseUnitId]
+                ?: throw RtsGenericException("Unit name not found for id ${it.baseUnitId}")
+            organizationProductMapper.toResponseDtoWithoutTags(it, baseUnit)
+        }
         return productTagService.populateTagsForProducts(responseDtos)
     }
 

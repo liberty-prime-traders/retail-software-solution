@@ -32,12 +32,12 @@ interface OrganizationProductMapper {
     @Mapping(source = "productGroupId", target = "categoryId", qualifiedBy = [ProductCategoryId::class])
     @Mapping(target = "baseUnit", expression = "java(baseUnit)")
     @Mapping(source = "id", target = "activeTags", qualifiedBy = [ActiveProductTags::class])
-    fun toResponseDto(productDto: OrganizationProductDto, @Context baseUnit: String?): OrganizationProductResponseDto
+    fun toResponseDto(productDto: OrganizationProductDto, @Context baseUnit: String): OrganizationProductResponseDto
 
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = "productGroupId", target = "categoryName", qualifiedBy = [ProductCategoryName::class])
     @Mapping(source = "productGroupId", target = "categoryId", qualifiedBy = [ProductCategoryId::class])
     @Mapping(target = "baseUnit", expression = "java(baseUnit)")
     @Mapping(target = "activeTags", ignore = true)
-    fun toResponseDtoWithoutTags(productDto: OrganizationProductDto, @Context baseUnit: String?): OrganizationProductResponseDto
+    fun toResponseDtoWithoutTags(productDto: OrganizationProductDto, @Context baseUnit: String): OrganizationProductResponseDto
 }
