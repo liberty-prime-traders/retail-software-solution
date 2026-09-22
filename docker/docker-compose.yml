@@ -34,8 +34,6 @@ services:
       - "traefik.http.routers.rtss-server-${ENV}.rule=Host(`rtss-server-${ENV}.ezra-home.me`)"
       - "traefik.http.routers.rtss-server-${ENV}.entrypoints=websecure"
       - "traefik.http.routers.rtss-server-${ENV}.tls=true"
-      - "traefik.http.routers.rtss-server-${ENV}.tls.certresolver=acme-cert-resolver"
-      - "traefik.http.routers.rtss-server-${ENV}.middlewares=rate-limit@file,security-headers@file"
       - "traefik.http.services.rtss-server-${ENV}.loadbalancer.server.port=${PORT}"
 
     networks:
