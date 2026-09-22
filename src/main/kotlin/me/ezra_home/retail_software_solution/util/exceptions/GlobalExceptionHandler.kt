@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.time.Instant
 
 @RestControllerAdvice
@@ -44,6 +45,10 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
     }
 
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleResourceNotFound(): ResponseEntity<Unit> {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+    }
 }
 
 data class ApiError(

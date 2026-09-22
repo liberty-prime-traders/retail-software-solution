@@ -449,14 +449,19 @@ sale commit:
 
 `SalePaymentService.recordPayment` is **not REST-exposed** — its sole caller is
 `SaleSessionPaymentHandler.add` for the CONFIRMED-session short-circuit. It
-runs through `SaleDataFetcher.lockAndGetSaleContext`, checks
-`guardOpenForPayment` (only `CONFIRMED` accepts payments at this layer —
-`DRAFT` is rejected with "submit payments with the draft itself"; `VOIDED`
-and `DISCARDED` are also rejected), enforces the `amount ≤ saleTotal −
-alreadyPaid` ceiling (`guardNotExceedingBalance`), then delegates the actual
-write to `SalePaymentWriter.write`. Since this path has no orchestrator above
-it, it calls `saleUpdater.updatePaymentStatus` itself with the returned
-status.
+defaults a missing `paymentDate` to `DateTimes.Offset.Now.organization()` and
+**requires an open fiscal period for that date**
+(`FiscalPeriodService.requireOpenForDate`, mirroring the confirm-time guard on
+`dateSold`) before touching the sale — this closes the gap where a payment
+could be recorded synchronously and only fail later when
+`SalePaymentRecordedEvent` reached ledger posting. It then runs through
+`SaleDataFetcher.lockAndGetSaleContext`, checks `guardOpenForPayment` (only
+`CONFIRMED` accepts payments at this layer — `DRAFT` is rejected with "submit
+payments with the draft itself"; `VOIDED` and `DISCARDED` are also rejected),
+enforces the `amount ≤ saleTotal − alreadyPaid` ceiling
+(`guardNotExceedingBalance`), then delegates the actual write to
+`SalePaymentWriter.write`. Since this path has no orchestrator above it, it
+calls `saleUpdater.updatePaymentStatus` itself with the returned status.
 
 ### Voiding payments
 

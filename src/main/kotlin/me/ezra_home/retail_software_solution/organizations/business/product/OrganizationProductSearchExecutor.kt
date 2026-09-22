@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.DataSource
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
@@ -19,7 +20,9 @@ class OrganizationProductSearchExecutor(
   override fun map(entities: List<OrganizationProductEntity>): List<OrganizationProductResponseDto> {
     val unitNamesById = unitValueFetcher.getUnitNamesById()
     return entities.map { entity ->
-      mapper.toResponseDto(mapper.toDomainDto(entity), unitNamesById[entity.baseUnitId])
+      val baseUnit = unitNamesById[entity.baseUnitId]
+        ?: throw RtsGenericException("Unit name not found for id ${entity.baseUnitId}")
+      mapper.toResponseDto(mapper.toDomainDto(entity), baseUnit)
     }
   }
 }

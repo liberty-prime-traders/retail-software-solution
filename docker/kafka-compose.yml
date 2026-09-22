@@ -29,8 +29,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 15s
-      timeout: 10s
-      retries: 10
+      timeout: 15s
+      retries: 8
+      start_period: 90s
 
   rtss-kafka-ui:
     image: provectuslabs/kafka-ui:${KAFKA_UI_VERSION}
@@ -41,14 +42,14 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
 
       AUTH_TYPE: OAUTH2
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTID: ${OKTA_CLIENT_ID}
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTSECRET: ${OKTA_CLIENT_SECRET}
-      AUTH_OAUTH2_CLIENT_OKTA_SCOPE: openid,profile,email
-      AUTH_OAUTH2_CLIENT_OKTA_CLIENTNAME: Okta
-      AUTH_OAUTH2_CLIENT_OKTA_PROVIDER: okta
-      AUTH_OAUTH2_CLIENT_OKTA_REDIRECTURI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/okta
-      AUTH_OAUTH2_CLIENT_OKTA_ISSUERURI: https://${OKTA_DOMAIN}/oauth2/default
-      AUTH_OAUTH2_CLIENT_OKTA_CUSTOMPARAMS_TYPE: oauth
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTID: ${OAUTH_CLIENT_ID}
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTSECRET: ${OAUTH_CLIENT_SECRET}
+      AUTH_OAUTH2_CLIENT_AUTH0_SCOPE: openid,profile,email
+      AUTH_OAUTH2_CLIENT_AUTH0_CLIENTNAME: Auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_PROVIDER: auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_REDIRECTURI: https://rtss-kafka-${ENV}.ezra-home.me/login/oauth2/code/auth0
+      AUTH_OAUTH2_CLIENT_AUTH0_ISSUERURI: https://${OAUTH_DOMAIN}/
+      AUTH_OAUTH2_CLIENT_AUTH0_CUSTOMPARAMS_TYPE: oauth
 
     labels:
       - "traefik.enable=true"
@@ -57,14 +58,21 @@ services:
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls=true"
       - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
       - "traefik.http.services.rtss-kafka-ui-${ENV}.loadbalancer.server.port=8080"
-      - "traefik.http.routers.rtss-kafka-ui-${ENV}.tls.certresolver=acme-cert-resolver"
 
     networks:
       - ezra-home
       - default
 
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
     depends_on:
-      - rtss-kafka
+      rtss-kafka:
+        condition: service_healthy
 
 networks:
   ezra-home:

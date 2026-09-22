@@ -10,8 +10,10 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import org.hibernate.annotations.Generated
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
+import org.hibernate.generator.EventType
 import java.util.UUID
 
 @Audited
@@ -30,14 +32,15 @@ class OrganizationProductEntity(
     var productGroupId: UUID,
 
     @NotAudited
+    @Generated(event = [EventType.INSERT, EventType.UPDATE])
     @Column(name = "product_group_name", insertable = false, updatable = false)
-    var productGroupName: String? = null,
+    var productGroupName: String = "",
 
     @Column(name = "base_unit_id", updatable = false)
     var baseUnitId: UUID,
 
     @Convert(converter = ProductStatusConverter::class)
     @Column(name = "status", nullable = false)
-    var status: ProductStatus? = ProductStatus.ACTIVE
+    var status: ProductStatus = ProductStatus.ACTIVE
 
 ): HasReferenceEntity()

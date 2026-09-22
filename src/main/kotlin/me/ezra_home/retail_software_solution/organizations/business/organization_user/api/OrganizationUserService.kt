@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.organizations.business.permission_a
 import me.ezra_home.retail_software_solution.organizations.business.role_assignment.api.OrgRoleAssignmentService
 import me.ezra_home.retail_software_solution.platform.business.organization_join_request.api.OrganizationAdminJoinRequestResponseDto
 import me.ezra_home.retail_software_solution.platform.business.sysuser.api.SysUserService
+import me.ezra_home.retail_software_solution.util.enums.RtsPermission
 import me.ezra_home.retail_software_solution.util.enums.RtsRole
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -31,7 +32,7 @@ class OrganizationUserService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun isOrganizationMember(userId: UUID): Boolean {
         return organizationAdminService.isOrganizationAdmin()
-                || organizationUserCache.existsByOrganizationIdAndUserId(userId)
+                || organizationUserCache.getOrganizationUsers().any { it.userId == userId }
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -99,5 +100,6 @@ class OrganizationUserService(
         val assignedById = SessionContextProvider.getUserId()
         val membershipIdByUserId = mapOf(userId to membership.id)
         orgRoleAssignmentService.assignAll(membershipIdByUserId, RtsRole.MANAGE_ORGANIZATION_USERS, assignedById)
+        orgPermissionAssignmentService.assignAll(membershipIdByUserId, RtsPermission.MANAGE_ORGANIZATION_ACCESS, assignedById)
     }
 }

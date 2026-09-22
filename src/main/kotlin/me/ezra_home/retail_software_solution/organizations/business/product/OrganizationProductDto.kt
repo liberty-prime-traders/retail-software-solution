@@ -12,7 +12,7 @@ data class OrganizationProductDto(
     val productName: String,
     val description: String? = null,
     val productGroupId: UUID,
-    val productGroupName: String? = null,
+    val productGroupName: String,
     val baseUnitId: UUID,
-    val status: ProductStatus? = ProductStatus.ACTIVE
+    val status: ProductStatus
 )
