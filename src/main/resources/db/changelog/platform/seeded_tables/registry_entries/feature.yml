@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-feature-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: feature
+              - column:
+                  name: default_prefix
+                  value: FEAT
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: PLT
+              - column:
+                  name: display_name
+                  value: Feature
+              - column:
+                  name: description
+                  value: Platform-wide catalog of features that can be toggled per organization
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}
