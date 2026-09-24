@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
-import me.ezra_home.retail_software_solution.util.business.Currencies
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 
@@ -16,16 +16,16 @@ object SalePaymentValidator {
     fun guardNotExceedingSaleTotal(totalSubmitted: BigDecimal, saleTotal: BigDecimal) {
         if (totalSubmitted > saleTotal)
             throw RtsGenericException(
-                "Payments of ${Currencies.format(totalSubmitted)} exceed " +
-                        "sale total of ${Currencies.format(saleTotal)}"
+                "Payments of ${DisplayFormatters.formatCurrency(totalSubmitted)} exceed " +
+                        "sale total of ${DisplayFormatters.formatCurrency(saleTotal)}"
             )
     }
 
     fun guardNotExceedingBalance(amount: BigDecimal, remainingBalance: BigDecimal) {
         if (amount > remainingBalance)
             throw RtsGenericException(
-                "Payment of ${Currencies.format(amount)} would exceed remaining" +
-                        " balance of ${Currencies.format(remainingBalance)}"
+                "Payment of ${DisplayFormatters.formatCurrency(amount)} would exceed remaining" +
+                        " balance of ${DisplayFormatters.formatCurrency(remainingBalance)}"
             )
     }
 

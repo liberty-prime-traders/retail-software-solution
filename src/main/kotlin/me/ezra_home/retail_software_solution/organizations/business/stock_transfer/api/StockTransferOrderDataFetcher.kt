@@ -47,7 +47,7 @@ class StockTransferOrderDataFetcher(
         totalDispatchedCost = totalDispatchedCost,
         dispatchedAt = dispatchedAt,
         dispatchedByName = dispatchedByName,
-        createdById = createdById!!,
-        createdOn = createdOn!!
+        createdById = requiredCreatedById(),
+        createdOn = requiredCreatedOn()
     )
 }

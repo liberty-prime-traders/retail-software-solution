@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidInfoDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import java.math.BigDecimal
@@ -10,6 +11,7 @@ data class SaleSessionMappingContext(
     val walkInCustomer: Boolean,
     val showActiveUserWarning: Boolean,
     val showUnreservedChangesWarning: Boolean,
+    val saleVoidInfo:  SaleVoidInfoDto?
 )
 
 data class AdjustmentMappingContext(

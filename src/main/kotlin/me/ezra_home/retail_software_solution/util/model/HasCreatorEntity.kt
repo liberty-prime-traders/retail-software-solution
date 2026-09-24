@@ -35,4 +35,7 @@ abstract class HasCreatorEntity(
 
     fun requiredCreatedOn(): OffsetDateTime = createdOn
         ?: throw RtsGenericException("${javaClass.simpleName} is missing its createdOn timestamp")
+
+    fun requiredCreatedById(): UUID = createdById
+        ?: throw RtsGenericException("${javaClass.simpleName} is missing its createdById")
 }

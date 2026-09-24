@@ -14,7 +14,7 @@ databaseChangeLog:
                   value: tax_entry_aud
               - column:
                   name: default_prefix
-                  value: TXENAD
+                  value: TXEAD
               - column:
                   name: minimum_version_id
                   valueComputed: ${version_1_id}
