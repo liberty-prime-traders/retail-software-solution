@@ -33,6 +33,27 @@ Platform layer adds after audit: `version-entries/ → registry-entries/`
 5. Audit table indexes: one on `rev`, one on `(id, rev)`.
 6. Create sequences, triggers, extensions, FKs, indexes in their own subfolders.
 
+### Registry completeness is enforced, not just convention
+
+Step 3 is a real invariant, not a style preference — most tables never exercise the registry
+lookup at runtime (no `@HasReference`, no `reference_number` column), so a missing entry is
+otherwise silent until someone happens to hit it. `TableName` (the enum, distinct from the
+`TableNames` constants object) mirrors `TableNames` 1:1 for the same reason — it's not scoped to
+tables that generate reference numbers, `TableRegistryService.validateName` calls
+`TableName.exists(name)` against every table_registry row regardless. Three guards exist, all in
+`TableRegistryCompletenessTest`, diffing in both directions (missing + orphaned/stale-rename) with
+no DB or Spring context needed:
+
+- `TableNames` constants vs. `table_name` seeded under `registry-entries/`.
+- `TableNames` constants vs. `TableName` enum entries.
+
+Only the first relationship also gets a runtime guard,
+`TableRegistryCompletenessStartupCheck` (`platform/business/table_registry/`, wired through the
+`StartupCheck` plugin interface in `startup_checks/api/`) — it re-checks the missing-entry half
+against the live `table_registry` table on every boot and refuses to start if anything is missing.
+The `TableNames`/`TableName` relationship doesn't need one: both sides are compiled into the app,
+so they can only drift at code-review time, never at runtime — a unit test is the complete guard.
+
 ## `TableNames` / `TableName` ordering
 
 Both files group entries under the same comment headers (`Platform tables`, `Organization tables`,

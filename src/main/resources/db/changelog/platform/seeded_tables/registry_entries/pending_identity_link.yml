@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-pending-identity-link-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: pending_identity_link
+              - column:
+                  name: default_prefix
+                  value: PIDLK
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: PLT
+              - column:
+                  name: display_name
+                  value: Pending Identity Link
+              - column:
+                  name: description
+                  value: In-progress request to link a platform user to an external identity provider account
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}
