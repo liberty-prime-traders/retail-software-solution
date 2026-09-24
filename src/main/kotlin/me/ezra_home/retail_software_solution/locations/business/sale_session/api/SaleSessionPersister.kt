@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionTotalsCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -57,7 +58,7 @@ class SaleSessionPersister(
             saleSessionStore.delete(sessionId)
             return saleSessionAssembler.buildResponse(saleSession)
         }
-        val saleSummary = saleUpdater.voidSale(SaleVoidCreateDto(saleId, saleSessionVoidDto.reason))
+        val saleSummary = saleUpdater.voidSale(SaleVoidCreateDto(saleId, StringUtils.getValueOrNull(saleSessionVoidDto.reason)?: ""))
         val now = DateTimes.Offset.Now.organization()
         val saleSessionAfterVoid = saleSession.copy(
             originalStatus = saleSummary.status,

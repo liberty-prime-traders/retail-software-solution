@@ -16,7 +16,7 @@ import me.ezra_home.retail_software_solution.locations.business.supplier_payment
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidMapper
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
-import me.ezra_home.retail_software_solution.util.business.Currencies
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -86,8 +86,8 @@ class SupplierPaymentService(
             val alreadyPaidForDelivery = paymentsCalculatorService.calculatePaidAmountForDelivery(dto.deliveryId)
             val projected = alreadyPaidForDelivery + dto.amount
             if (projected > deliveryCeiling) {
-                val formattedBalance = Currencies.format(deliveryCeiling - alreadyPaidForDelivery)
-                throw RtsGenericException("Payment of ${Currencies.format(dto.amount)} would " +
+                val formattedBalance = DisplayFormatters.formatCurrency(deliveryCeiling - alreadyPaidForDelivery)
+                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(dto.amount)} would " +
                         "exceed the remaining delivery balance of $formattedBalance"
                 )
             }

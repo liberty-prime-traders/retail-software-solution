@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
-import me.ezra_home.retail_software_solution.util.business.Currencies
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -139,10 +139,10 @@ class SaleSessionValidator(
         val remainingSubtotalAfterLineDiscounts = subtotal - totals.lineLevelDiscountTotal
         if (totals.orderLevelDiscountTotal > remainingSubtotalAfterLineDiscounts) {
             throw RtsGenericException(
-                "Order-level discount total of ${Currencies.format(totals.orderLevelDiscountTotal)} exceeds " +
-                        "remaining subtotal ${Currencies.format(remainingSubtotalAfterLineDiscounts)} " +
-                        "(subtotal ${Currencies.format(subtotal)} " +
-                        "minus line discounts ${Currencies.format(totals.lineLevelDiscountTotal)})."
+                "Order-level discount total of ${DisplayFormatters.formatCurrency(totals.orderLevelDiscountTotal)} exceeds " +
+                        "remaining subtotal ${DisplayFormatters.formatCurrency(remainingSubtotalAfterLineDiscounts)} " +
+                        "(subtotal ${DisplayFormatters.formatCurrency(subtotal)} " +
+                        "minus line discounts ${DisplayFormatters.formatCurrency(totals.lineLevelDiscountTotal)})."
             )
         }
     }
@@ -162,8 +162,8 @@ class SaleSessionValidator(
             if (totalDiscountAmount > lineTotal) {
                 throw RtsGenericException(
                     "On ${targetSaleSessionLine.productLabel}, total discounts of " +
-                            "${Currencies.format(totalDiscountAmount)} exceed " +
-                            "line total of ${Currencies.format(lineTotal)}."
+                            "${DisplayFormatters.formatCurrency(totalDiscountAmount)} exceed " +
+                            "line total of ${DisplayFormatters.formatCurrency(lineTotal)}."
                 )
             }
         }

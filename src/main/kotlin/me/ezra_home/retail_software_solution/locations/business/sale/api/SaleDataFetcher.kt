@@ -8,6 +8,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembl
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidRepository
+import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -26,6 +28,8 @@ class SaleDataFetcher(
     private val saleAssembler: SaleAssembler,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val entityAdvisoryLock: EntityAdvisoryLock,
+    private val saleVoidRepository: SaleVoidRepository,
+    private val userQualifier: UserQualifier
 ) {
 
     fun fetchRecent(n: Int?): List<SaleSummary> {
@@ -83,6 +87,15 @@ class SaleDataFetcher(
             soldById = sale.soldById,
             dateSold = sale.dateSold,
             notes = sale.notes,
+        )
+    }
+
+    fun getSaleVoidInfo(saleId: UUID): SaleVoidInfoDto? {
+        val saleVoid = saleVoidRepository.findBySaleId(saleId) ?: return null
+        return SaleVoidInfoDto(
+            voidedBy = userQualifier.getCreatorFullName(saleVoid.requiredCreatedById()),
+            voidedOn = saleVoid.requiredCreatedOn(),
+            voidedReason = saleVoid.reason
         )
     }
 

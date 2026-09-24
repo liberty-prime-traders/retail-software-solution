@@ -30,6 +30,7 @@ interface SessionToResponseMapper {
     @Mapping(source = "header.soldById", target = "soldBy", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "header.dateSold", target = "dateSold")
     @Mapping(source = "header.notes", target = "notes")
+    @Mapping(target = "saleVoidInfo", expression = "java(sessionMappingContext.getSaleVoidInfo())")
     @Mapping(source = "originalStatus", target = "saleStatus")
     @Mapping(source = ".", target = "paymentStatus", qualifiedBy = [SaleSessionPaymentStatus::class])
     @Mapping(source = ".", target = "uiOptions", qualifiedBy = [SaleSessionUiOptionsBuild::class])

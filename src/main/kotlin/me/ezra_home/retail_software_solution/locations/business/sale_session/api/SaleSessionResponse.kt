@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session.ap
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidInfoDto
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.util.business.Decimals
@@ -24,6 +25,7 @@ data class SaleSessionResponseDto(
     val paymentStatus: PaymentStatus,
     val dateSold: OffsetDateTime?,
     val notes: String?,
+    val saleVoidInfo: SaleVoidInfoDto?,
     val saleLines: List<SaleSessionLineResponse>,
     val saleAdjustments: List<SaleSessionAdjustmentResponse>,
     val salePayments: List<SaleSessionPaymentResponse>,

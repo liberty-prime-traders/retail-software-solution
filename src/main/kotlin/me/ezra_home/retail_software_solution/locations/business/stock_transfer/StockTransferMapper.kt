@@ -9,8 +9,8 @@ fun StockTransferDispatchEntity.toDomainDto() = StockTransferDispatchDomainDto(
     dispatchedById = dispatchedById,
     dispatchedAt = dispatchedAt,
     notes = notes,
-    createdById = createdById!!,
-    createdOn = createdOn!!
+    createdById = requiredCreatedById(),
+    createdOn = requiredCreatedOn()
 )
 
 fun StockTransferDraftLineEntity.toDomainDto() = StockTransferDraftLineDomainDto(
@@ -22,8 +22,8 @@ fun StockTransferDraftLineEntity.toDomainDto() = StockTransferDraftLineDomainDto
     unitId = unitId,
     conversionRatio = conversionRatio(),
     baseUnitId = baseUnitId,
-    createdById = createdById!!,
-    createdOn = createdOn!!
+    createdById = requiredCreatedById(),
+    createdOn = requiredCreatedOn()
 )
 
 fun StockTransferDispatchLineEntity.toDomainDto() = StockTransferDispatchLineDomainDto(
@@ -36,8 +36,8 @@ fun StockTransferDispatchLineEntity.toDomainDto() = StockTransferDispatchLineDom
     unitCost = unitCost,
     conversionRatio = conversionRatio(),
     baseUnitId = baseUnitId,
-    createdById = createdById!!,
-    createdOn = createdOn!!
+    createdById = requiredCreatedById(),
+    createdOn = requiredCreatedOn()
 )
 
 fun StockTransferReceiptEntity.toDomainDto() = StockTransferReceiptDomainDto(
@@ -48,8 +48,8 @@ fun StockTransferReceiptEntity.toDomainDto() = StockTransferReceiptDomainDto(
     receivedAt = receivedAt,
     status = status,
     notes = notes,
-    createdById = createdById!!,
-    createdOn = createdOn!!
+    createdById = requiredCreatedById(),
+    createdOn = requiredCreatedOn()
 )
 
 fun StockTransferReceiptLineEntity.toDomainDto() = StockTransferReceiptLineDomainDto(
@@ -59,6 +59,6 @@ fun StockTransferReceiptLineEntity.toDomainDto() = StockTransferReceiptLineDomai
     stockTransferDispatchLineRef = stockTransferDispatchLineRef,
     locationProductId = locationProductId,
     quantityReceived = quantityReceived,
-    createdById = createdById!!,
-    createdOn = createdOn!!
+    createdById = requiredCreatedById(),
+    createdOn = requiredCreatedOn()
 )
