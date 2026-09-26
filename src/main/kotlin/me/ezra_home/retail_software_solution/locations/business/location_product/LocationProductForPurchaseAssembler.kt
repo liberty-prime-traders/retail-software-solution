@@ -10,9 +10,9 @@ object LocationProductForPurchaseAssembler {
             LocationProductForPurchaseDto(
                 id = locationProductDto.id,
                 referenceNumber = locationProductDto.referenceNumber,
-                productName = locationProductDto.productName!!,
-                productGroupName = locationProductDto.productGroupName!!,
-                baseUnitId = locationProductDto.baseUnitId!!,
+                productName = locationProductDto.productName,
+                productGroupName = locationProductDto.productGroupName,
+                baseUnitId = locationProductDto.baseUnitId,
                 lastPurchasePrice = locationProductDto.lastPurchasePrice ?: BigDecimal.ZERO,
             )
         }

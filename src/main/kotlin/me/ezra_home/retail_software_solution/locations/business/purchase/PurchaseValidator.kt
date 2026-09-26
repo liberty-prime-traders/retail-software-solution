@@ -23,6 +23,11 @@ object PurchaseValidator {
       throw RtsGenericException("Line quantity must be positive.")
   }
 
+  fun guardPositiveUnitCosts(lines: List<HasUnitCost>) {
+    if (lines.any { it.unitCost.signum() <= 0 })
+      throw RtsGenericException("Line unit cost must be positive.")
+  }
+
   fun guardNonNegativeUpdateQuantity(quantityOrdered: BigDecimal) {
     if (quantityOrdered.signum() < 0)
       throw RtsGenericException("Line quantity cannot be negative; send 0 to delete a line.")

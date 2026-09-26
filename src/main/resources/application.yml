@@ -82,6 +82,8 @@ rts:
     expiration-minutes: ${RTS_JWT_EXPIRATION_MINUTES:60}
   pending-identity-link:
     expiration-minutes: ${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES:20}
+  product-search:
+    client-side-filter-threshold: ${RTS_CLIENT_SIDE_FILTER_THRESHOLD:1000}
 
 google:
   oauth:

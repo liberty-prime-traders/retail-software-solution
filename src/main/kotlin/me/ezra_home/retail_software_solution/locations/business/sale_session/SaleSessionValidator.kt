@@ -17,7 +17,6 @@ import java.math.BigDecimal
 @Component
 class SaleSessionValidator(
     private val adjustmentReasonService: AdjustmentReasonService,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
 ) {
 
     fun guardNonNegativeEffectivePrices(updates: List<SaleSessionLineUpdateDto>) {
@@ -131,17 +130,16 @@ class SaleSessionValidator(
     }
 
     private fun guardDiscountCeilings(saleSession: SaleSession) {
-        val totals = saleSessionTotalsCalculator.compute(
+        val totals = SaleSessionTotalsCalculator.compute(
             saleSession.saleLines, saleSession.saleAdjustments, saleSession.totalPaid()
         )
         guardLineDiscountCeilings(saleSession)
-        val subtotal = totals.subtotal
-        val remainingSubtotalAfterLineDiscounts = subtotal - totals.lineLevelDiscountTotal
+        val remainingSubtotalAfterLineDiscounts = totals.subtotal - totals.lineLevelDiscountTotal
         if (totals.orderLevelDiscountTotal > remainingSubtotalAfterLineDiscounts) {
             throw RtsGenericException(
                 "Order-level discount total of ${DisplayFormatters.formatCurrency(totals.orderLevelDiscountTotal)} exceeds " +
                         "remaining subtotal ${DisplayFormatters.formatCurrency(remainingSubtotalAfterLineDiscounts)} " +
-                        "(subtotal ${DisplayFormatters.formatCurrency(subtotal)} " +
+                        "(subtotal ${DisplayFormatters.formatCurrency(totals.subtotal)} " +
                         "minus line discounts ${DisplayFormatters.formatCurrency(totals.lineLevelDiscountTotal)})."
             )
         }
@@ -156,7 +154,7 @@ class SaleSessionValidator(
             val targetSaleSessionLine = saleSessionLinesByKey[targetLineKey]
                 ?: throw RtsGenericException("Adjustment references a line that is not on the sale")
             val totalDiscountAmount = lineDiscounts.sumOf {
-                saleSessionTotalsCalculator.calculatedAmount(it, saleSession.saleLines)
+                SaleSessionTotalsCalculator.calculateAdjustmentAmount(it, saleSession.saleLines)
             }
             val lineTotal = targetSaleSessionLine.lineTotal
             if (totalDiscountAmount > lineTotal) {

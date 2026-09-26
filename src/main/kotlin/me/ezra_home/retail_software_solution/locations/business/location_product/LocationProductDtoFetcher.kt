@@ -25,7 +25,7 @@ class LocationProductDtoFetcher(
 
         val hasMore = results.size > pageRequest.requestedSize
         val pageResults = if (hasMore) results.take(pageRequest.requestedSize) else results
-        val currentCursor = pageResults.lastOrNull()?.let { it.productName!! } ?: pageRequest.previousCursor
+        val currentCursor = pageResults.lastOrNull()?.productName ?: pageRequest.previousCursor
 
         return PageResponse(
             currentCursor = currentCursor,

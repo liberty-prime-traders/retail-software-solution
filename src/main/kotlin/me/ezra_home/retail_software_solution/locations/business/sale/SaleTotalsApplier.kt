@@ -13,11 +13,13 @@ class SaleTotalsApplier {
         saleLines: List<SaleLineEntity>,
         adjustmentSummaries: List<SaleAdjustmentSummaryDto>,
     ) {
-        sale.subtotal = saleLines.sumOf { it.lineTotal }
         sale.lineLevelDiscountTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.DISCOUNT, lineLevel = true)
         sale.orderLevelDiscountTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.DISCOUNT, lineLevel = false)
         sale.lineLevelSurchargeTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.SURCHARGE, lineLevel = true)
         sale.orderLevelSurchargeTotal = sumAdjustmentAmounts(adjustmentSummaries, AdjustmentDirection.SURCHARGE, lineLevel = false)
+        // Surcharges are folded into subtotal (not held out until payableTotal) so the customer-facing
+        // figure never looks like it grows a fee after the fact.
+        sale.subtotal = saleLines.sumOf { it.lineTotal } + sale.lineLevelSurchargeTotal!! + sale.orderLevelSurchargeTotal!!
     }
 
     private fun sumAdjustmentAmounts(

@@ -66,6 +66,6 @@ class StockMovementHistoryBuilder(
         }
         if (recordedRatio.isEquivalentTo(currentRatio)) return null
         val formatedRecordedFactor = Decimals.stripZeroesAndRound(recordedRatio.factor())
-        return "1 $unitName = $formatedRecordedFactor ${baseUnitName}s"
+        return DisplayFormatters.pluralize("1 $unitName = $formatedRecordedFactor $baseUnitName", recordedRatio.factor())
     }
 }

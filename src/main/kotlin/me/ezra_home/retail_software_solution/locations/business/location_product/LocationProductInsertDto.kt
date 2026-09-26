@@ -6,12 +6,12 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 data class LocationProductInsertDto(
-    val orgProductId: UUID? = null,
-    val productName: String? = null,
+    val orgProductId: UUID,
+    val productName: String,
     val description: String? = null,
-    val productGroupName: String? = null,
-    val categoryId: UUID? = null,
-    val baseUnitId: UUID? = null,
+    val productGroupName: String,
+    val categoryId: UUID,
+    val baseUnitId: UUID,
     val status: ProductStatus = ProductStatus.ACTIVE,
     val lastSyncedAt: OffsetDateTime? = null
 ) : Serializable

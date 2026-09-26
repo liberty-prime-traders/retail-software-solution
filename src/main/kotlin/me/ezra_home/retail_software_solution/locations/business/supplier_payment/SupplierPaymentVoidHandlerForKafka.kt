@@ -54,7 +54,7 @@ class SupplierPaymentVoidHandlerForKafka(
                 supplierId = supplierId,
                 paymentMethodAccountCode = paymentMethodAccountCode,
                 amount = payment.amount,
-                voidedOn = DateTimes.Local.atOrganizationZone(paymentVoid.createdOn!!),
+                voidedOn = DateTimes.Local.atOrganizationZone(paymentVoid.requiredCreatedOn()),
                 paymentReferenceNumber = payment.requiredReference()
             )
         )

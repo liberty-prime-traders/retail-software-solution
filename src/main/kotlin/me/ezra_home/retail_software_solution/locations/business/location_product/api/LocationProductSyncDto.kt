@@ -7,7 +7,7 @@ data class LocationProductSyncDto(
     val orgProductId: UUID,
     val productName: String,
     val description: String?,
-    val productGroupName: String?,
+    val productGroupName: String,
     val status: ProductStatus,
     val baseUnitId: UUID,
     val categoryId: UUID

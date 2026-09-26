@@ -16,12 +16,11 @@ data class SaleSessionMappingContext(
 
 data class AdjustmentMappingContext(
     private val adjustmentReasonNamesById: Map<UUID, String>,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val saleSessionLines: List<SaleSessionLine>,
 ) {
     fun reasonLabel(adjustmentReasonId: UUID): String? = adjustmentReasonNamesById[adjustmentReasonId]
     fun calculatedAmount(saleSessionAdjustment: SaleSessionAdjustment): BigDecimal =
-        saleSessionTotalsCalculator.calculatedAmount(saleSessionAdjustment, saleSessionLines)
+        SaleSessionTotalsCalculator.calculateAdjustmentAmount(saleSessionAdjustment, saleSessionLines)
 }
 
 data class LineMappingContext(
