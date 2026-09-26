@@ -72,16 +72,16 @@ class PurchaseLinesResolver(
             }
         )
 
-        for (lineDto in linesToUpdate) {
-            val existing = existingLinesById[lineDto.id] ?: continue
-            PurchaseValidator.guardNonNegativeUpdateQuantity(lineDto.quantityOrdered)
-            if (lineDto.quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
+        for ((id, quantityOrdered, unitId, unitCost) in linesToUpdate) {
+            val existing = existingLinesById[id] ?: continue
+            PurchaseValidator.guardNonNegativeUpdateQuantity(quantityOrdered)
+            if (quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
                 toDelete.add(existing)
             } else {
-                existing.quantityOrdered = lineDto.quantityOrdered
-                existing.unitCost = lineDto.unitCost
-                if (existing.unitId != lineDto.unitId) {
-                    existing.unitId = lineDto.unitId
+                existing.quantityOrdered = quantityOrdered
+                existing.unitCost = unitCost
+                if (existing.unitId != unitId) {
+                    existing.unitId = unitId
                     val ratio = conversionRatiosForChangedProducts.getValue(existing.locationProductId)
                     existing.conversionNumerator = ratio.numerator
                     existing.conversionDenominator = ratio.denominator

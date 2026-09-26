@@ -18,7 +18,6 @@ class SaleSessionLoader(
     private val saleDataFetcher: SaleDataFetcher,
     private val saleAdjustmentFetcher: SaleAdjustmentFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val domainToSessionMapper: DomainToSessionMapper,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleSessionStockOverlay: SaleSessionStockOverlay,
@@ -56,7 +55,7 @@ class SaleSessionLoader(
             salePayments = emptyList(),
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
+        return SaleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
     }
 
     fun loadFromSale(sessionId: UUID, saleId: UUID): SaleSession {
@@ -99,6 +98,6 @@ class SaleSessionLoader(
             salePayments = saleSessionPayments,
             totals = SaleSessionTotals.ZERO,
         )
-        return saleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
+        return SaleSessionTotalsCalculator.recompute(saleSessionStockOverlay.populate(saleSession))
     }
 }

@@ -59,6 +59,10 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    listener:
+      auto-startup: ${KAFKA_ENABLED:true}
+    admin:
+      auto-create: ${KAFKA_ENABLED:true}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -70,11 +74,16 @@ spring:
         spring.json.trusted.packages: me.ezra_home.retail_software_solution.messaging.kafka.*
 
 rts:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+
   jwt:
     secret: ${RTS_JWT_SECRET}
     expiration-minutes: ${RTS_JWT_EXPIRATION_MINUTES:60}
   pending-identity-link:
     expiration-minutes: ${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES:20}
+  product-search:
+    client-side-filter-threshold: ${RTS_CLIENT_SIDE_FILTER_THRESHOLD:1000}
 
 google:
   oauth:

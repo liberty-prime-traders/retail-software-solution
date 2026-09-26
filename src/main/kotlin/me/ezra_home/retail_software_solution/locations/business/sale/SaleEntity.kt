@@ -43,6 +43,8 @@ class SaleEntity(
     @Column(name = "payment_status", nullable = false, length = 5)
     var paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
 
+    // Includes surcharges (lineLevelSurchargeTotal + orderLevelSurchargeTotal) so the customer-facing
+    // subtotal never appears to grow a fee after the fact — see SaleTotalsApplier.
     @Column(name = "subtotal", precision = 19, scale = 4)
     var subtotal: BigDecimal? = null,
 
@@ -73,9 +75,6 @@ class SaleEntity(
     fun discountTotal(): BigDecimal =
         (lineLevelDiscountTotal ?: BigDecimal.ZERO) + (orderLevelDiscountTotal ?: BigDecimal.ZERO)
 
-    private fun surchargeTotal(): BigDecimal =
-        (lineLevelSurchargeTotal ?: BigDecimal.ZERO) + (orderLevelSurchargeTotal ?: BigDecimal.ZERO)
-
     fun payableTotal(): BigDecimal =
-        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - discountTotal() + surchargeTotal())
+        grandTotal ?: ((subtotal ?: BigDecimal.ZERO) - discountTotal())
 }

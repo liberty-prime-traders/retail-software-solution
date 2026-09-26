@@ -29,7 +29,7 @@ class PurchaseLineEntity(
   var quantityOrdered: BigDecimal,
 
   @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
-  var unitCost: BigDecimal,
+  override var unitCost: BigDecimal,
 
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
@@ -46,7 +46,7 @@ class PurchaseLineEntity(
   @Column(name = "quantity_canceled", nullable = false, precision = 19, scale = 4)
   var quantityCanceled: BigDecimal = BigDecimal.ZERO
 
-) : HasLocationProduct, HasReferenceEntity(), HasConversionRatio {
+) : HasLocationProduct, HasUnitCost, HasReferenceEntity(), HasConversionRatio {
 
   fun getExpectedQuantity(): BigDecimal = quantityOrdered.subtract(quantityCanceled)
 

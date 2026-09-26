@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session.ap
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -29,6 +30,9 @@ data class SaleSession(
 
     fun mutable(): Boolean =
         originalStatus == SaleStatus.DRAFT
+
+    fun requiredSaleId(): UUID = saleId
+        ?: throw RtsGenericException("SaleSession $sessionId with status $originalStatus is missing its saleId")
 
     fun totalPaid() =
         salePayments.filter { it.voidedReason == null }.sumOf { it.amount }

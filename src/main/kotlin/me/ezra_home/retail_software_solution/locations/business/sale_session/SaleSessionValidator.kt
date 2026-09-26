@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
-import me.ezra_home.retail_software_solution.util.business.Currencies
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -17,7 +17,6 @@ import java.math.BigDecimal
 @Component
 class SaleSessionValidator(
     private val adjustmentReasonService: AdjustmentReasonService,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
 ) {
 
     fun guardNonNegativeEffectivePrices(updates: List<SaleSessionLineUpdateDto>) {
@@ -131,18 +130,17 @@ class SaleSessionValidator(
     }
 
     private fun guardDiscountCeilings(saleSession: SaleSession) {
-        val totals = saleSessionTotalsCalculator.compute(
+        val totals = SaleSessionTotalsCalculator.compute(
             saleSession.saleLines, saleSession.saleAdjustments, saleSession.totalPaid()
         )
         guardLineDiscountCeilings(saleSession)
-        val subtotal = totals.subtotal
-        val remainingSubtotalAfterLineDiscounts = subtotal - totals.lineLevelDiscountTotal
+        val remainingSubtotalAfterLineDiscounts = totals.subtotal - totals.lineLevelDiscountTotal
         if (totals.orderLevelDiscountTotal > remainingSubtotalAfterLineDiscounts) {
             throw RtsGenericException(
-                "Order-level discount total of ${Currencies.format(totals.orderLevelDiscountTotal)} exceeds " +
-                        "remaining subtotal ${Currencies.format(remainingSubtotalAfterLineDiscounts)} " +
-                        "(subtotal ${Currencies.format(subtotal)} " +
-                        "minus line discounts ${Currencies.format(totals.lineLevelDiscountTotal)})."
+                "Order-level discount total of ${DisplayFormatters.formatCurrency(totals.orderLevelDiscountTotal)} exceeds " +
+                        "remaining subtotal ${DisplayFormatters.formatCurrency(remainingSubtotalAfterLineDiscounts)} " +
+                        "(subtotal ${DisplayFormatters.formatCurrency(totals.subtotal)} " +
+                        "minus line discounts ${DisplayFormatters.formatCurrency(totals.lineLevelDiscountTotal)})."
             )
         }
     }
@@ -156,14 +154,14 @@ class SaleSessionValidator(
             val targetSaleSessionLine = saleSessionLinesByKey[targetLineKey]
                 ?: throw RtsGenericException("Adjustment references a line that is not on the sale")
             val totalDiscountAmount = lineDiscounts.sumOf {
-                saleSessionTotalsCalculator.calculatedAmount(it, saleSession.saleLines)
+                SaleSessionTotalsCalculator.calculateAdjustmentAmount(it, saleSession.saleLines)
             }
             val lineTotal = targetSaleSessionLine.lineTotal
             if (totalDiscountAmount > lineTotal) {
                 throw RtsGenericException(
                     "On ${targetSaleSessionLine.productLabel}, total discounts of " +
-                            "${Currencies.format(totalDiscountAmount)} exceed " +
-                            "line total of ${Currencies.format(lineTotal)}."
+                            "${DisplayFormatters.formatCurrency(totalDiscountAmount)} exceed " +
+                            "line total of ${DisplayFormatters.formatCurrency(lineTotal)}."
                 )
             }
         }

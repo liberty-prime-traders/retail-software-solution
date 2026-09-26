@@ -209,7 +209,17 @@ change after `ORDERED`.
    (`LocationProductService.guardAllActive`) at create and on every newly
    added line during update.
 5. `unitCost` is per the line's `unitId`. Precision `(15, 2)` — purchase
-   costs are 2 decimal places, not 4.
+   costs are 2 decimal places, not 4. **Must be positive whenever a
+   purchase lands at `ORDERED`** (`PurchaseValidator.guardPositiveUnitCosts`,
+   which takes `HasUnitCost` so it runs unmodified against either
+   `List<PurchaseLineCreateDto>` or `List<PurchaseLineEntity>`) — a
+   zero-cost line cannot be ordered. Enforced on `createOrder` (against
+   `dto.linesToAdd`) and on `convertDraftToOrder` (against the merged
+   `resultingLines`, so a zero-cost line left over from the draft blocks
+   the conversion too). `createDraft` and `updateDraft` do **not** run
+   this guard — a draft may sit with a zero (or as-yet unknown) cost
+   while it's being worked on; the check only fires at the moment the
+   purchase actually becomes an order.
 6. Canceling on a draft is **not** an `update` operation — there is no
    `quantityCanceled` field on `PurchaseLineUpdateDto`. Use
    `PurchaseCanceller.cancel` after the purchase is `ORDERED`.
@@ -648,6 +658,11 @@ Add new guards as early as the data they need is in scope.
 - **No fiscal-period guard on order creation.** Only deliveries enforce
   fiscal periods. If you need order-time fiscal enforcement, add it
   consciously — there's no precedent in this package.
+- **A draft can carry a zero-cost line indefinitely.** `guardPositiveUnitCosts`
+  only runs on the two paths that produce an `ORDERED` purchase
+  (`createOrder`, `convertDraftToOrder`) — not on `createDraft` /
+  `updateDraft`. That's deliberate: cost may genuinely be unknown while
+  a draft is still being priced.
 - **Forgetting to recompute payment status.** Any flow that changes
   lines, deliveries, or payments must end with
   `purchasePaymentStatusService.patchThenReturnPaymentStatus`. Delivery
@@ -682,7 +697,8 @@ Add new guards as early as the data they need is in scope.
 
 ### `PurchaseService.createOrder(PurchaseCreateDto)`
 - Requires ≥1 line, all products active, no duplicates, every quantity
-  positive.
+  positive, **every unit cost positive** (`guardPositiveUnitCosts`) — a
+  zero-cost line cannot be placed as an order.
 - Creates `PurchaseEntity` at `ORDERED`, defaulting `dateOrdered` to
   `DateTimes.Offset.Now.organization()` and `orderedById` to
   `SessionContextProvider.getUserId()` when the DTO omits them.
@@ -690,7 +706,10 @@ Add new guards as early as the data they need is in scope.
 ### `PurchaseService.convertDraftToOrder(PurchaseUpdateDto)`
 - Loads the purchase via `PurchaseDataFetcher.lockAndGetPurchase`.
 - Purchase must be `DRAFT`.
-- Applies header + line changes; requires ≥1 surviving line.
+- Applies header + line changes; requires ≥1 surviving line, no
+  duplicate products, and **every resulting line's unit cost positive**
+  (`guardPositiveUnitCosts` against `resultingLines` — a zero-cost line
+  left over from the draft blocks the conversion).
 - Backfills `dateOrdered` / `orderedById` if missing.
 - Flips status to `ORDERED`.
 

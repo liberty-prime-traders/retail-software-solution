@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionTotalsCalculator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -20,7 +21,6 @@ class SaleSessionPersister(
     private val saleSessionStore: SaleSessionStore,
     private val saleSessionAssembler: SaleSessionAssembler,
     private val saleSessionValidator: SaleSessionValidator,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val sessionToSaveRequestMapper: SessionToSaveRequestMapper,
     private val draftSalePersister: DraftSalePersister,
     private val confirmedSalePersister: ConfirmedSalePersister,
@@ -32,7 +32,7 @@ class SaleSessionPersister(
         val saleSaveRequest = sessionToSaveRequestMapper.toSaleSaveRequest(saleSession)
         val saleSaveResult = draftSalePersister.saveDraft(saleSaveRequest)
         val saleSessionAfterSave = applySaleSaveResult(saleSession, saleSaveResult)
-        val saleSessionWithTotals = saleSessionTotalsCalculator.recompute(saleSessionAfterSave)
+        val saleSessionWithTotals = SaleSessionTotalsCalculator.recompute(saleSessionAfterSave)
         saleSessionStore.save(saleSessionWithTotals)
         return saleSessionAssembler.buildResponse(saleSessionWithTotals)
     }
@@ -57,7 +57,7 @@ class SaleSessionPersister(
             saleSessionStore.delete(sessionId)
             return saleSessionAssembler.buildResponse(saleSession)
         }
-        val saleSummary = saleUpdater.voidSale(SaleVoidCreateDto(saleId, saleSessionVoidDto.reason))
+        val saleSummary = saleUpdater.voidSale(SaleVoidCreateDto(saleId, StringUtils.normalize(saleSessionVoidDto.reason)))
         val now = DateTimes.Offset.Now.organization()
         val saleSessionAfterVoid = saleSession.copy(
             originalStatus = saleSummary.status,
@@ -73,7 +73,7 @@ class SaleSessionPersister(
     private fun loadAndValidate(sessionId: UUID): SaleSession {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.guardMutable(saleSession)
-        val saleSessionWithTotals = saleSessionTotalsCalculator.recompute(saleSession)
+        val saleSessionWithTotals = SaleSessionTotalsCalculator.recompute(saleSession)
         saleSessionValidator.validate(saleSessionWithTotals)
         return saleSessionWithTotals
     }

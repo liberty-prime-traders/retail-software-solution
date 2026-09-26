@@ -30,7 +30,7 @@ class LocationProductSyncService(
             locationProductCache.save(dto.copy(
                 productName = syncDto.productName,
                 description = syncDto.description,
-                productGroupName = syncDto.productGroupName ?: "",
+                productGroupName = syncDto.productGroupName,
                 categoryId = syncDto.categoryId,
                 baseUnitId = syncDto.baseUnitId,
                 lastSyncedAt = OffsetDateTime.now(),
@@ -44,7 +44,7 @@ class LocationProductSyncService(
                 orgProductId = syncDto.orgProductId,
                 productName = syncDto.productName,
                 description = syncDto.description,
-                productGroupName = syncDto.productGroupName ?: "Unknown",
+                productGroupName = syncDto.productGroupName,
                 categoryId = syncDto.categoryId,
                 baseUnitId = syncDto.baseUnitId,
                 status = syncDto.status,

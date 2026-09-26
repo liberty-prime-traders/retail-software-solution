@@ -18,8 +18,8 @@ class LocationProductForSaleAssembler(
             LocationProductWithAvailability(
                 id = locationProductDto.id,
                 referenceNumber = locationProductDto.referenceNumber,
-                productName = locationProductDto.productName!!,
-                productGroupName = locationProductDto.productGroupName!!,
+                productName = locationProductDto.productName,
+                productGroupName = locationProductDto.productGroupName,
                 quantityOnHand = availability.quantityOnHand,
                 quantityReserved = availability.quantityReserved,
                 quantityAvailable = availability.quantityAvailable,

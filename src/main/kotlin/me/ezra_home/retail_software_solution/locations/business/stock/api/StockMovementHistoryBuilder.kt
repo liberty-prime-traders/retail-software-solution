@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.organizations.business.unitconversi
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -25,23 +26,25 @@ class StockMovementHistoryBuilder(
         if (movements.isEmpty()) return emptyList()
 
         val baseUnitId = locationProductDataFetcher.getBaseUnitIds(listOf(locationProductId))[locationProductId]!!
-        val unitCodesById = unitValueFetcher.getAllUnitValues().associate { it.id to it.code }
-        val baseUnitCode = unitCodesById[baseUnitId] ?: ""
+        val unitNamesById = unitValueFetcher.getAllUnitValues().associate { it.id to it.name }
+        val baseUnitName = unitNamesById[baseUnitId] ?: ""
         val reasonNamesById = stockMovementReasonFetcher.getNamesById()
 
         return movements.map { movement ->
-            val unitCode = unitCodesById[movement.unitId] ?: ""
+            val unitName = unitNamesById[movement.unitId] ?: ""
+            val movedQuantity = Decimals.stripZeroesAndRound(movement.movedQuantity)
+            val remainingQuantity = Decimals.stripZeroesAndRound(movement.remainingQuantity)
             StockMovementResponse(
                 id = movement.id!!,
                 movementType = movement.movementType,
                 locationProductId = movement.locationProductId,
                 externalReferenceNumber = movement.externalReferenceNumber,
-                quantityMoved = "${Decimals.stripZeroesAndRound(movement.movedQuantity)} $unitCode",
-                newQuantity = "${Decimals.stripZeroesAndRound(movement.remainingQuantity)} $baseUnitCode",
-                recordedOn = movement.createdOn!!.toInstant(),
+                quantityMoved = DisplayFormatters.pluralize("$movedQuantity $unitName", movement.movedQuantity),
+                newQuantity = DisplayFormatters.pluralize("$remainingQuantity $baseUnitName", movement.remainingQuantity),
+                recordedOn = movement.requiredCreatedOn().toInstant(),
                 conversionDriftNote = conversionDescription(
                     movement.unitId, baseUnitId,
-                    movement.conversionRatio(), unitCode, baseUnitCode
+                    movement.conversionRatio(), unitName, baseUnitName
                 ),
                 reason = movement.reasonId?.let { reasonNamesById[it] }
             )
@@ -52,8 +55,8 @@ class StockMovementHistoryBuilder(
         unitId: UUID,
         baseUnitId: UUID,
         recordedRatio: ConversionRatio,
-        unitCode: String,
-        baseUnitCode: String
+        unitName: String,
+        baseUnitName: String
     ): String? {
         if (unitId == baseUnitId) return null
         val currentRatio = try {
@@ -63,6 +66,6 @@ class StockMovementHistoryBuilder(
         }
         if (recordedRatio.isEquivalentTo(currentRatio)) return null
         val formatedRecordedFactor = Decimals.stripZeroesAndRound(recordedRatio.factor())
-        return "1 $unitCode = $formatedRecordedFactor $baseUnitCode"
+        return DisplayFormatters.pluralize("1 $unitName = $formatedRecordedFactor $baseUnitName", recordedRatio.factor())
     }
 }
