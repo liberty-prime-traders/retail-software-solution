@@ -10,12 +10,11 @@ class SaleSessionUpdateFinalizer(
     private val saleSessionStore: SaleSessionStore,
     private val saleSessionAssembler: SaleSessionAssembler,
     private val saleSessionValidator: SaleSessionValidator,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
 ) {
 
     fun finalize(updated: SaleSession): SaleSessionResponseDto {
         val touched = updated.markTouched(SessionContextProvider.getUserId())
-        val withTotals = saleSessionTotalsCalculator.recompute(touched)
+        val withTotals = SaleSessionTotalsCalculator.recompute(touched)
         saleSessionValidator.validate(withTotals)
         saleSessionStore.save(withTotals)
         return saleSessionAssembler.buildResponse(withTotals)

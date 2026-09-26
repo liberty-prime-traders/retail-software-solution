@@ -330,6 +330,14 @@ product gets deactivated).
 4. reflect resulting status on the session, build response, delete session
 ```
 
+Any response built for a `VOIDED` session — whether right after this flow or
+on a later view of a persisted session — carries `saleVoidInfo` (voided-by,
+voided-on, voided-reason), sourced from the sale's `SaleVoidEntity` via
+`SaleDataFetcher.getSaleVoidInfo`. A `VOIDED` sale is expected to always have
+exactly one `SaleVoidEntity`, written in the same flow that flips its status;
+`SaleSessionAssembler` treats a missing one as a data-integrity violation and
+throws rather than silently omitting the field.
+
 ### CONFIRMED-session payments (no commit step)
 When `originalStatus == CONFIRMED`, `POST /secured/sale-sessions/{sessionId}/payments`
 forwards the payment to `SalePaymentService.recordPayment` synchronously and

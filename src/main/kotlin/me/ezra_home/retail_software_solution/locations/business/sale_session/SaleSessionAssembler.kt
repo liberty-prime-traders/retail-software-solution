@@ -25,7 +25,6 @@ class SaleSessionAssembler(
     private val contactService: ContactService,
     private val paymentMethodService: PaymentMethodService,
     private val adjustmentReasonService: AdjustmentReasonService,
-    private val saleSessionTotalsCalculator: SaleSessionTotalsCalculator,
     private val sessionToResponseMapper: SessionToResponseMapper,
     private val saleDataFetcher: SaleDataFetcher,
 ) {
@@ -43,7 +42,6 @@ class SaleSessionAssembler(
         )
         val adjustmentMappingContext = AdjustmentMappingContext(
             adjustmentReasonNamesById = adjustmentReasonService.getReasonNamesById(),
-            saleSessionTotalsCalculator = saleSessionTotalsCalculator,
             saleSessionLines = saleSession.saleLines,
         )
         val lineMappingContext = buildLineMappingContext(saleSession)
@@ -89,7 +87,7 @@ class SaleSessionAssembler(
         val netUnitPriceByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
             val lineAdjustments = lineAdjustmentsByLineKey[lineKey] ?: emptyList()
             val netAdjustmentAmount = lineAdjustments.sumOf { saleSessionAdjustment ->
-                val calculatedAmount = saleSessionTotalsCalculator.calculatedAmount(saleSessionAdjustment, saleSession.saleLines)
+                val calculatedAmount = SaleSessionTotalsCalculator.calculateAdjustmentAmount(saleSessionAdjustment, saleSession.saleLines)
                 when (saleSessionAdjustment.direction) {
                     AdjustmentDirection.DISCOUNT -> calculatedAmount.negate()
                     AdjustmentDirection.SURCHARGE -> calculatedAmount

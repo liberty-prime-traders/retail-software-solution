@@ -9,13 +9,14 @@ import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 abstract class ProductSearchService<DTO>(
   private val fetcher: FetchesUsingSmartTextStrategy<ProductSearchParameters, DTO>,
-  private val queryBuilder: (ProductSearchParameters, String) -> SqlQuery
+  private val queryBuilder: (ProductSearchParameters, String) -> SqlQuery,
+  private val clientSideFilterThreshold: Int
 ) {
 
   protected abstract fun countAllProducts(): Long
   protected abstract fun findAllProducts(parameters: ProductSearchParameters): List<DTO>
 
-  fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<DTO, String> {
+  open fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<DTO, String> {
 
     if (shouldUseClientSideFiltering()) {
       return loadAllProductsForClientFiltering(pageRequest.parameters)
@@ -40,7 +41,7 @@ abstract class ProductSearchService<DTO>(
   }
 
   private fun shouldUseClientSideFiltering(): Boolean {
-    return countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
+    return countAllProducts() <= clientSideFilterThreshold
   }
 
   private fun loadAllProductsForClientFiltering(parameters: ProductSearchParameters): PageResponse<DTO, String> {
@@ -52,7 +53,7 @@ abstract class ProductSearchService<DTO>(
     )
   }
 
-  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
+  open fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
     ProductSearchValidator.validateArraySizes(
       pageRequest.parameters.categoryIds,
       pageRequest.parameters.statusList,

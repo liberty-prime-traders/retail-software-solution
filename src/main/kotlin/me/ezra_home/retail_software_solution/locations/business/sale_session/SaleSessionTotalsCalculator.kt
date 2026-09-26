@@ -7,12 +7,10 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionTotals
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
 
-@Component
-class SaleSessionTotalsCalculator {
+object SaleSessionTotalsCalculator {
 
     fun recompute(saleSession: SaleSession): SaleSession {
         val totals = compute(saleSession.saleLines, saleSession.saleAdjustments, saleSession.totalPaid())
@@ -24,7 +22,7 @@ class SaleSessionTotalsCalculator {
         saleSessionAdjustments: List<SaleSessionAdjustment>,
         paymentTotal: BigDecimal,
     ): SaleSessionTotals {
-        val subtotal = saleSessionLines.sumOf { it.lineTotal }
+
         val locationProductIdBySaleSessionLineKey = saleSessionLines.associate { it.identity.key() to it.locationProductId }
         val calculatedAmountByAdjustmentKey = saleSessionAdjustments.associate { saleSessionAdjustment ->
             saleSessionAdjustment.identity.key() to calculateAdjustmentAmount(
@@ -45,7 +43,10 @@ class SaleSessionTotalsCalculator {
         val orderLevelSurcharge = sumAdjustmentAmounts(
             saleSessionAdjustments, AdjustmentDirection.SURCHARGE, lineLevel = false, calculatedAmountByAdjustmentKey
         )
-        val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount + lineLevelSurcharge + orderLevelSurcharge
+
+        val lineTotalSum = saleSessionLines.sumOf { it.lineTotal }
+        val subtotal = lineTotalSum + lineLevelSurcharge + orderLevelSurcharge
+        val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount
         return SaleSessionTotals(
             subtotal = subtotal,
             lineLevelDiscountTotal = lineLevelDiscount,
@@ -58,7 +59,7 @@ class SaleSessionTotalsCalculator {
         )
     }
 
-    fun calculatedAmount(
+    fun calculateAdjustmentAmount(
         saleSessionAdjustment: SaleSessionAdjustment,
         saleSessionLines: List<SaleSessionLine>,
     ): BigDecimal {

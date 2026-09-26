@@ -7,7 +7,7 @@ data class ProductSyncData(
   val orgProductId: UUID,
   val productName: String,
   val description: String?,
-  val productGroupName: String?,
+  val productGroupName: String,
   val status: ProductStatus,
   val referenceNumber: String,
   val baseUnitId: UUID,
