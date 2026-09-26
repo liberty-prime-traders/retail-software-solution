@@ -16,9 +16,11 @@ data class LocationProductResponseDto(
   val baseUnitId: UUID,
   val defaultSalePrice: BigDecimal?,
   val minStockLevel: Int?,
-  val status: ProductStatus?,
+  val status: ProductStatus,
   val referenceNumber: String,
   val lastSyncedAt: OffsetDateTime?,
   val lastPurchasePrice: BigDecimal?,
-  val stockBalance: BigDecimal?
+  val stockBalance: BigDecimal,
+  val openingStockQuantity: BigDecimal? = BigDecimal.ZERO,
+  val openingStockUnitCost: BigDecimal?
 )

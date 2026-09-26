@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-opening-stock-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: opening_stock
+      changes:
+        - createTable:
+            tableName: opening_stock
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_stock_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_opening_stock_reference_number
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_stock_location_product_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_opening_stock_location_product_id
+
+              - column:
+                  name: quantity
+                  type: numeric(15,3)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_stock_quantity_notnull
+
+              - column:
+                  name: unit_cost
+                  type: numeric(15,2)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_stock_unit_cost_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_stock_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: opening_stock

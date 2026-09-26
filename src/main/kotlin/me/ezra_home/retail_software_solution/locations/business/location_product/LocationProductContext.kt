@@ -4,5 +4,7 @@ import java.math.BigDecimal
 
 data class LocationProductContext(
     val unitName: String?,
-    val balance: BigDecimal? = null
+    val balance: BigDecimal? = null,
+    val openingStockQuantity: BigDecimal? = null,
+    val openingStockUnitCost: BigDecimal? = null
 )
