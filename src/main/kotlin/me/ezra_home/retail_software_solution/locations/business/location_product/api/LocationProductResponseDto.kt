@@ -20,5 +20,7 @@ data class LocationProductResponseDto(
   val referenceNumber: String,
   val lastSyncedAt: OffsetDateTime?,
   val lastPurchasePrice: BigDecimal?,
-  val stockBalance: BigDecimal
+  val stockBalance: BigDecimal,
+  val openingStockQuantity: BigDecimal? = BigDecimal.ZERO,
+  val openingStockUnitCost: BigDecimal?
 )

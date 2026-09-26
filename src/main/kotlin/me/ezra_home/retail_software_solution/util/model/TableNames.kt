@@ -34,6 +34,7 @@ object TableNames {
     const val LEDGER_ENTRY_GROUP = "ledger_entry_group"
     const val LOCATION = "location"
     const val OPENING_BALANCE = "opening_balance"
+    const val OPENING_STOCK = "opening_stock"
     const val ORGANIZATION_USER = "organization_user"
     const val ORG_ACCOUNTING_CONFIG = "org_accounting_config"
     const val ORG_JURISDICTION_TAX_TYPE = "org_jurisdiction_tax_type"

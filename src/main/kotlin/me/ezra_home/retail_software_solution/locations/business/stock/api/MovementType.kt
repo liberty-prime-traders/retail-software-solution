@@ -12,5 +12,6 @@ enum class MovementType(override val code: String) : HasCode {
     TRANSFER_OUT("TO"),
     TRANSFER_CANCELLED("TOC"),
     WRITE_OFF("WO"),
-    PURCHASE_RECEIVED("PR")
+    PURCHASE_RECEIVED("PR"),
+    OPENING_STOCK("OPS")
 }
