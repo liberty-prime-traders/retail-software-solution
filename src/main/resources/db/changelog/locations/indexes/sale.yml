@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-sale-contact-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_contact_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_contact_id
+            tableName: sale
+            columns:
+              - column:
+                  name: contact_id
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_contact_id
+            tableName: sale

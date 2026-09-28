@@ -20,6 +20,7 @@ class OrganizationFeatureEntity(
     var feature: Feature,
 
     @Column(name = "status", nullable = false)
+    @Convert(converter = OrganizationFeatureStatusConverter::class)
     var status: OrganizationFeatureStatus,
 
     @Column(name = "enabled_on")

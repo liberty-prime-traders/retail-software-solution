@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.product.sea
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
-import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
@@ -16,7 +16,7 @@ class ProductSearchQueryFormatterTest {
     val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE name = :productName",
       params = mapOf("productName" to "laptop's & tablets"),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
@@ -30,7 +30,7 @@ class ProductSearchQueryFormatterTest {
     val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE id = :productId",
       params = mapOf("productId" to TestUUIDs.UUID1),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
@@ -46,7 +46,7 @@ class ProductSearchQueryFormatterTest {
         "ids" to arrayOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
         "statusList" to arrayOf("A", "X")
       ),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
@@ -60,7 +60,7 @@ class ProductSearchQueryFormatterTest {
     val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE count = :tagCount AND price > :minPrice",
       params = mapOf("tagCount" to 2, "minPrice" to 12345L),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
@@ -74,7 +74,7 @@ class ProductSearchQueryFormatterTest {
     val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product LIMIT :pageSize",
       params = emptyMap(),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 25, ParameterNames.PAGE_SIZE)
@@ -88,7 +88,7 @@ class ProductSearchQueryFormatterTest {
     val sqlQuery = SqlQuery(
       sql = "SELECT * FROM product WHERE name = :name AND full_name = :fullName",
       params = mapOf("name" to "laptop", "fullName" to "laptop computer"),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
@@ -119,7 +119,7 @@ class ProductSearchQueryFormatterTest {
         "tagIds" to arrayOf(TestUUIDs.UUID1, TestUUIDs.UUID2),
         "tagIdsCount" to 2
       ),
-      metadata = QueryMetadata()
+      metadata = ProductQueryMetadata()
     )
 
     val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100, ParameterNames.PAGE_SIZE)

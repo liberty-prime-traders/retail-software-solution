@@ -200,10 +200,7 @@ persistence model, lifecycle, and reconciliation logic.
   - For **order-level** `FIXED_VALUE` there is no per-line concept — `value`
     is the whole sale-wide amount and the calculator returns it as-is.
   - `PERCENTAGE` line-level applies to the line's `lineTotal`
-    (`quantity * unitPrice`); order-level applies to the sum of all lines'
-    `lineTotal` (`AdjustmentAmountCalculator` — this base is always the raw
-    line-total sum, never the persisted `subtotal` field, which folds
-    surcharges in).
+    (`quantity * unitPrice`); order-level applies to the sale subtotal.
 - Every adjustment references an `adjustment_reason_id` (org-schema lookup).
   The session validator validates the reason exists and that
   `AdjustmentReasonService.requireCanApply(reasonId, direction)` succeeds.
@@ -225,10 +222,9 @@ persistence model, lifecycle, and reconciliation logic.
   - Sum of line-level discounts on a single line must not exceed that
     line's `lineTotal`.
   - Sum of order-level discounts must not exceed
-    `subtotal − Σ(line-level discounts)`. Since `subtotal` already has
-    surcharges folded in, surcharges count toward this ceiling — not
-    against it — so an order-level discount can be sized to offset (e.g.
-    waive) a surcharge, not just merchandise value.
+    `subtotal − Σ(line-level discounts)`. `subtotal` here is pure
+    merchandise value (see §5) — a surcharge is never part of this
+    ceiling, so an order-level discount can't be sized against it.
 - **Surcharge ceilings are not enforced in phase 1**.
 
 ### Sync semantics at commit
@@ -263,24 +259,26 @@ Adjustments **never modify `sale_line.unitPrice`**. They live as separate
 - `lineLevelSurchargeTotal = Σ(direction = SURCHARGE and saleLineId != null)`
 - `orderLevelSurchargeTotal= Σ(direction = SURCHARGE and saleLineId == null)`
 
-`subtotal` folds surcharges in at the point it's computed
-(`SaleTotalsApplier.applyTotals`):
+`subtotal` (`SaleTotalsApplier.applyTotals`) is pure merchandise value:
 
 ```
-subtotal = Σ(line totals) + lineLevelSurchargeTotal + orderLevelSurchargeTotal
+subtotal = Σ(line totals)
 ```
 
-This is deliberate: a surcharge is part of what the customer sees as the
-subtotal, not a fee that appears only once the payable total is shown —
-avoids the sale looking like it grew a hidden charge after the fact.
-
-`SaleEntity.payableTotal()` becomes:
-
 ```
-payableTotal() = grandTotal ?: subtotal − discountTotal()
+payableTotal() = grandTotal ?: displaySubtotal() − discountTotal()
 ```
 
 `grandTotal` is set after taxes finalize (see §7).
+
+`displaySubtotal()` — `subtotal + surchargeTotal()` — is the UI-facing
+figure: what the customer sees as "subtotal," so a surcharge never looks
+like a fee that appears only once the payable total is shown. It is
+computed fresh on every read, never persisted. `SaleAssembler` uses it for
+`SaleSummary.subtotal`; `SaleSessionTotals` (the session/draft screen's
+wire DTO) carries the identical computed `displaySubtotal` val for the
+same screen on the draft side. `subtotal` itself never reflects a
+surcharge — only `payableTotal()` and `displaySubtotal()` do.
 
 ---
 
@@ -405,7 +403,7 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 - `SaleEntity.taxTotal` / `grandTotal` are **null at the end of the commit
   transaction** and become populated **after the Kafka event lands**. Code
   that needs the final total must call `payableTotal()` (which gracefully
-  falls back to `subtotal − discountTotal + surchargeTotal` when `grandTotal`
+  falls back to `displaySubtotal() − discountTotal()` when `grandTotal`
   is null).
 
 ---
@@ -522,8 +520,8 @@ convention, no `@MappingTarget`, entity rules) live in
 `.claude/instructions.md`. Sale-package specifics only:
 
 - Entity helpers in this package: `SaleEntity.payableTotal()`,
-  `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal`. No business
-  logic beyond these.
+  `SaleEntity.displaySubtotal()`, `SaleLineEntity.baseQty()`,
+  `SaleLineEntity.lineTotal`. No business logic beyond these.
 - Domain DTOs (`SaleSummary`, `SaleLineDto`) abstract DB
   details and are what cross package boundaries on the read path.
 - Save-request DTOs (`SaleSaveRequest`, `SaleLineSaveRequest`, etc.) abstract

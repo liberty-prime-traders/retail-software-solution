@@ -19,7 +19,7 @@ object SalePaymentMapper {
         amount = payment.amount,
         reference = payment.reference,
         paymentDate = payment.paymentDate,
-        paymentMethodName = paymentMethodNamesById[payment.paymentMethodId] ?: "",
+        paymentMethodName = paymentMethodNamesById.getValue(payment.paymentMethodId),
         voidedReason = voidedReason,
         updatedSalePaymentStatus = updatedStatus,
         updatedSaleVersion = updatedSaleVersion,

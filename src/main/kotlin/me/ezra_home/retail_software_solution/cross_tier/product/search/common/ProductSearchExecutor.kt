@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
+import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 
@@ -31,7 +32,7 @@ abstract class ProductSearchExecutor<T, D>(
       @Suppress("UNCHECKED_CAST")
       val results = query.resultList as List<T>
 
-      ProductSearchPerformanceLogger.logPerformance(startTime, sqlQuery.metadata, results.size)
+      ProductSearchPerformanceLogger.logPerformance(startTime, sqlQuery.metadata as ProductQueryMetadata, results.size)
 
       return map(results)
     }

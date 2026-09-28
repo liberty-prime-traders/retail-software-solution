@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
 import org.slf4j.LoggerFactory
 
 object ProductSearchPerformanceLogger {
@@ -8,7 +8,7 @@ object ProductSearchPerformanceLogger {
   private const val SLOW_QUERY_THRESHOLD_MS = 1000
   private val logger = LoggerFactory.getLogger(ProductSearchPerformanceLogger::class.java)
 
-  fun logPerformance(startTime: Long, metadata: QueryMetadata, resultSize: Int) {
+  fun logPerformance(startTime: Long, metadata: ProductQueryMetadata, resultSize: Int) {
     val duration = System.currentTimeMillis() - startTime
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
       val message = buildString {

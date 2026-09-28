@@ -17,6 +17,7 @@ class OrgAccountingConfigEntity(
     var fiscalYearEndMonth: Int,
 
     @Column(name = "fiscal_period_cycle", nullable = false, length = 5)
+    @Convert(converter = FiscalPeriodCycleConverter::class)
     var fiscalPeriodCycle: FiscalPeriodCycle,
 
     @Column(name = "period_week_start_day", nullable = false, length = 9)

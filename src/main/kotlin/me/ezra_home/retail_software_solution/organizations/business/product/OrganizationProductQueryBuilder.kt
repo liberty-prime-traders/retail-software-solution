@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.fi
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.TextSearchFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
-import me.ezra_home.retail_software_solution.util.queries.QueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 object OrganizationProductQueryBuilder {
@@ -143,8 +143,8 @@ object OrganizationProductQueryBuilder {
     searchParams: ProductSearchParameters,
     statusCodes: Set<String>,
     hasTagFilter: Boolean
-  ): QueryMetadata {
-    return QueryMetadata(
+  ): ProductQueryMetadata {
+    return ProductQueryMetadata(
       categoryIdsCount = searchParams.categoryIds.size,
       tagIdsCount = searchParams.tagIds.size,
       statusListCount = statusCodes.size,

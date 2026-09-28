@@ -56,6 +56,9 @@ databaseChangeLog:
               - column:
                   name: payment_date
                   type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_payment_date_notnull
 
               - column:
                   name: created_by_id

@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.tax_entry
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -22,6 +24,7 @@ class TaxEntryEntity(
     @Column(name = "source_reference_number", nullable = false, updatable = false)
     var sourceReferenceNumber: String,
 
+    @Convert(converter = TaxSourceTypeConverter::class)
     @Column(name = "source_type", nullable = false, length = 5, updatable = false)
     var sourceType: TaxSourceType,
 
@@ -31,6 +34,7 @@ class TaxEntryEntity(
     @Column(name = "fiscal_period_id", nullable = false, updatable = false)
     var fiscalPeriodId: UUID,
 
+    @Convert(converter = CalculationMethodConverter::class)
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
     var calculationMethod: CalculationMethod,
 

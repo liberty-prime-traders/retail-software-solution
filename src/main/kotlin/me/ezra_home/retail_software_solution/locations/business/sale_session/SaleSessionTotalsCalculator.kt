@@ -22,7 +22,7 @@ object SaleSessionTotalsCalculator {
         saleSessionAdjustments: List<SaleSessionAdjustment>,
         paymentTotal: BigDecimal,
     ): SaleSessionTotals {
-
+        val subtotal = saleSessionLines.sumOf { it.lineTotal }
         val locationProductIdBySaleSessionLineKey = saleSessionLines.associate { it.identity.key() to it.locationProductId }
         val calculatedAmountByAdjustmentKey = saleSessionAdjustments.associate { saleSessionAdjustment ->
             saleSessionAdjustment.identity.key() to calculateAdjustmentAmount(
@@ -43,10 +43,7 @@ object SaleSessionTotalsCalculator {
         val orderLevelSurcharge = sumAdjustmentAmounts(
             saleSessionAdjustments, AdjustmentDirection.SURCHARGE, lineLevel = false, calculatedAmountByAdjustmentKey
         )
-
-        val lineTotalSum = saleSessionLines.sumOf { it.lineTotal }
-        val subtotal = lineTotalSum + lineLevelSurcharge + orderLevelSurcharge
-        val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount
+        val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount + lineLevelSurcharge + orderLevelSurcharge
         return SaleSessionTotals(
             subtotal = subtotal,
             lineLevelDiscountTotal = lineLevelDiscount,

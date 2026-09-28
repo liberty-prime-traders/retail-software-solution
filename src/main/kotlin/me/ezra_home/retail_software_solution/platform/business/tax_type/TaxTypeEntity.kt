@@ -5,6 +5,7 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxRecoveryType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
