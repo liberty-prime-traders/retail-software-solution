@@ -31,11 +31,6 @@ class OrganizationProductEntity(
     @Column(name = "product_group_id", nullable = false)
     var productGroupId: UUID,
 
-    @NotAudited
-    @Generated(event = [EventType.INSERT, EventType.UPDATE])
-    @Column(name = "product_group_name", insertable = false, updatable = false)
-    var productGroupName: String = "",
-
     @Column(name = "base_unit_id", updatable = false)
     var baseUnitId: UUID,
 
@@ -43,4 +38,10 @@ class OrganizationProductEntity(
     @Column(name = "status", nullable = false)
     var status: ProductStatus = ProductStatus.ACTIVE
 
-): HasReferenceEntity()
+): HasReferenceEntity() {
+
+    @NotAudited
+    @Generated(event = [EventType.INSERT, EventType.UPDATE])
+    @Column(name = "product_group_name", insertable = false, updatable = false)
+    var productGroupName: String = ""
+}

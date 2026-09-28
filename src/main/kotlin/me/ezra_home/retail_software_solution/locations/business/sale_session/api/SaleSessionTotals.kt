@@ -13,6 +13,7 @@ data class SaleSessionTotals(
     val balance: BigDecimal,
 ) {
     val surchargeTotal: BigDecimal = lineLevelSurchargeTotal + orderLevelSurchargeTotal
+    val displaySubtotal: BigDecimal = subtotal + surchargeTotal
 
     companion object {
         val ZERO = SaleSessionTotals(

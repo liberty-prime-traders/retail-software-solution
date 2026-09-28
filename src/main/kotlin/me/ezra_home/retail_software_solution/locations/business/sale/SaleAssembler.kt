@@ -45,12 +45,12 @@ class SaleAssembler(
         return SaleSummary(
             id = saleEntity.id!!,
             referenceNumber = saleEntity.requiredReference(),
-            contactName = contactNameMap[saleEntity.contactId] ?: "",
+            contactName = contactNameMap.getValue(saleEntity.contactId),
             soldBy = userQualifier.getUserFullName(saleEntity.soldById),
             dateSold = saleEntity.dateSold,
             status = saleEntity.status,
             paymentStatus = saleEntity.paymentStatus,
-            subtotal = saleEntity.subtotal,
+            subtotal = saleEntity.displaySubtotal(),
             grandTotal = saleEntity.grandTotal,
             totalPaid = totalPaid
         )

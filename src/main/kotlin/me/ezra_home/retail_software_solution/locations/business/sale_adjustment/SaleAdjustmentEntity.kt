@@ -1,10 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_adjustment
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
+import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirectionConverter
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -25,9 +28,11 @@ class SaleAdjustmentEntity(
     @Column(name = "sale_line_id")
     var saleLineId: UUID?,
 
+    @Convert(converter = AdjustmentDirectionConverter::class)
     @Column(name = "direction", nullable = false, length = 5, updatable = false)
     var direction: AdjustmentDirection,
 
+    @Convert(converter = CalculationMethodConverter::class)
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
     var calculationMethod: CalculationMethod,
 

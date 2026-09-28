@@ -18,3 +18,87 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_sale_payment_sale_id
             tableName: sale_payment
+
+  - changeSet:
+      id: create-index-sale-payment-payment-method-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_payment_payment_method_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_payment_payment_method_id
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: payment_method_id
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_payment_payment_method_id
+            tableName: sale_payment
+
+  - changeSet:
+      id: create-index-sale-payment-created-on-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_payment_created_on_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_payment_created_on_id
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: created_on
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_payment_created_on_id
+            tableName: sale_payment
+
+  - changeSet:
+      id: create-index-sale-payment-payment-date
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_payment_payment_date
+      changes:
+        - createIndex:
+            indexName: idx_sale_payment_payment_date
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: payment_date
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_payment_payment_date
+            tableName: sale_payment
+
+  - changeSet:
+      id: create-index-sale-payment-amount
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_payment_amount
+      changes:
+        - createIndex:
+            indexName: idx_sale_payment_amount
+            tableName: sale_payment
+            columns:
+              - column:
+                  name: amount
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_payment_amount
+            tableName: sale_payment
