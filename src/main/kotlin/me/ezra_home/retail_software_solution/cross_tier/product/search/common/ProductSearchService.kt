@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
+import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategyExecutor
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
@@ -60,6 +61,6 @@ abstract class ProductSearchService<DTO>(
       pageRequest.parameters.tagIds
     )
     val sqlQuery = queryBuilder(pageRequest.parameters, pageRequest.previousCursor)
-    return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, ParameterNames.PAGE_SIZE)
+    return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, QueryParameterNames.PAGE_SIZE)
   }
 }

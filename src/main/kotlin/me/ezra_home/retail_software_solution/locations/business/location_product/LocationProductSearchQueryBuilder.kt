@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.Aliases
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.CategoryFilterStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.filters.ExcludeIdsFilterStrategy
@@ -12,6 +11,7 @@ import me.ezra_home.retail_software_solution.cross_tier.product.search.common.fi
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 object LocationProductSearchQueryBuilder {
@@ -46,7 +46,7 @@ object LocationProductSearchQueryBuilder {
       FROM ${TableNames.LOCATION_PRODUCT} ${P.TABLE_ALIAS}
       WHERE ${context.whereClauses.joinToString(" AND ")}
       ORDER BY LOWER(${P.TABLE_ALIAS}.${P.PRODUCT_NAME})
-      LIMIT :${ParameterNames.PAGE_SIZE}
+      LIMIT :${QueryParameterNames.PAGE_SIZE}
     """.trimIndent()
   }
 

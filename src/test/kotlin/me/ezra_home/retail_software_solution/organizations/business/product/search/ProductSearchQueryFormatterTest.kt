@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ParameterNames
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
+import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, QueryParameterNames.PAGE_SIZE)
 
     assertFalse(result.contains(":productName"))
     assertTrue(result.contains("'laptop's & tablets'"))
@@ -33,7 +33,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, QueryParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("'${TestUUIDs.UUID1}'"))
   }
@@ -49,7 +49,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, QueryParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("ARRAY['${TestUUIDs.UUID1}', '${TestUUIDs.UUID2}']"))
     assertTrue(result.contains("ARRAY['A', 'X']"))
@@ -63,7 +63,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, QueryParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("12345"))
     assertTrue(result.contains("2"))
@@ -77,7 +77,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 25, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 25, QueryParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("25"))
     assertFalse(result.contains(":pageSize"))
@@ -91,7 +91,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 10, QueryParameterNames.PAGE_SIZE)
 
     assertTrue(result.contains("'laptop computer'"))
     assertTrue(result.contains("'laptop'"))
@@ -122,7 +122,7 @@ class ProductSearchQueryFormatterTest {
       metadata = ProductQueryMetadata()
     )
 
-    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100, ParameterNames.PAGE_SIZE)
+    val result = QueryFormatter.formatQueryWithParameters(sqlQuery, pageSize = 100, QueryParameterNames.PAGE_SIZE)
 
     assertFalse(result.contains(":previousName"))
     assertFalse(result.contains(":statusList"))

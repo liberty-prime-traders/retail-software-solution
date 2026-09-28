@@ -6,12 +6,20 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 object SalePaymentSearchValidator {
 
   private const val MAX_SALE_REFERENCE_NUMBERS = 20
-  const val MIN_PAGE_SIZE = 1
-  const val MAX_PAGE_SIZE = 1000
+  private const val MAX_CONTACT_IDS = 100
+  private const val MAX_PAYMENT_METHOD_IDS = 100
+  private const val MIN_PAGE_SIZE = 1
+  private const val MAX_PAGE_SIZE = 500
 
   fun guardValidParameters(salePaymentSearchParameters: SalePaymentSearchParameters) {
     if (salePaymentSearchParameters.saleReferenceNumbers.size > MAX_SALE_REFERENCE_NUMBERS) {
       throw RtsGenericException("A maximum of $MAX_SALE_REFERENCE_NUMBERS sale reference numbers may be supplied")
+    }
+    if (salePaymentSearchParameters.contactIds.size > MAX_CONTACT_IDS) {
+      throw RtsGenericException("A maximum of $MAX_CONTACT_IDS contact ids may be supplied")
+    }
+    if (salePaymentSearchParameters.paymentMethodIds.size > MAX_PAYMENT_METHOD_IDS) {
+      throw RtsGenericException("A maximum of $MAX_PAYMENT_METHOD_IDS payment method ids may be supplied")
     }
     if (salePaymentSearchParameters.minAmount != null && salePaymentSearchParameters.maxAmount != null && salePaymentSearchParameters.minAmount > salePaymentSearchParameters.maxAmount) {
       throw RtsGenericException("minAmount must not be greater than maxAmount")

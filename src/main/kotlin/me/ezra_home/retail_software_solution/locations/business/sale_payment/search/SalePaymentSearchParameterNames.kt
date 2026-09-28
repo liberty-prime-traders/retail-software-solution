@@ -12,5 +12,4 @@ object SalePaymentSearchParameterNames {
   const val SALE_REFERENCE_NUMBERS = "saleReferenceNumbers"
   const val CURSOR_CREATED_ON = "cursorCreatedOn"
   const val CURSOR_ID = "cursorId"
-  const val PAGE_SIZE = "pageSize"
 }

@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.se
 
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 import java.util.Base64
 import java.util.UUID
 
@@ -20,7 +21,9 @@ data class SalePaymentSearchCursor(val createdOn: OffsetDateTime, val id: UUID) 
         val parts = raw.split("|")
         if (parts.size != 2) throw IllegalArgumentException()
         return SalePaymentSearchCursor(OffsetDateTime.parse(parts[0]), UUID.fromString(parts[1]))
-      } catch (_: Exception) {
+      } catch (_: IllegalArgumentException) {
+        throw RtsGenericException("Malformed cursor")
+      } catch (_: DateTimeParseException) {
         throw RtsGenericException("Malformed cursor")
       }
     }

@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
-import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchExecutor
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.queries.SqlSearchExecutor
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
@@ -15,7 +15,7 @@ class OrganizationProductSearchExecutor(
   emf: LocalContainerEntityManagerFactoryBean,
   private val mapper: OrganizationProductMapper,
   private val unitValueFetcher: UnitValueFetcher
-) : ProductSearchExecutor<OrganizationProductEntity, OrganizationProductResponseDto>(emf, OrganizationProductEntity::class.java) {
+) : SqlSearchExecutor<OrganizationProductEntity, OrganizationProductResponseDto>(emf, OrganizationProductEntity::class.java) {
 
   override fun map(entities: List<OrganizationProductEntity>): List<OrganizationProductResponseDto> {
     val unitNamesById = unitValueFetcher.getUnitNamesById()

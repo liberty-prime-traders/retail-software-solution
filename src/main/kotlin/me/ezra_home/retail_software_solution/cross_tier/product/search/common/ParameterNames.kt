@@ -9,5 +9,4 @@ object ParameterNames {
   const val TAG_IDS = "tagIds"
   const val EXCLUDE_IDS = "excludeIds"
   const val TAG_IDS_COUNT = "tagIdsCount"
-  const val PAGE_SIZE = "pageSize"
 }

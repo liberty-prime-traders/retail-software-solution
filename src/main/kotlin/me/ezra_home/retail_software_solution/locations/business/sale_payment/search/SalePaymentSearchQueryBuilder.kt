@@ -3,13 +3,13 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.se
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.AmountRangeFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.ContactIdsFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.PaymentDateRangeFilterStrategy
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.DateRangeFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.PaymentMethodIdsFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.RecordedRangeFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.SalePaymentStatusFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.SaleReferenceNumbersFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
+import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 object SalePaymentSearchQueryBuilder {
@@ -25,8 +25,23 @@ object SalePaymentSearchQueryBuilder {
   fun buildPredicate(salePaymentSearchParameters: SalePaymentSearchParameters): QueryBuilderContext {
     val context = QueryBuilderContext()
     context.whereClauses.add("1=1")
-    RecordedRangeFilterStrategy(salePaymentSearchParameters.recordedFrom, salePaymentSearchParameters.recordedBefore).apply(context)
-    PaymentDateRangeFilterStrategy(salePaymentSearchParameters.paymentDateFrom, salePaymentSearchParameters.paymentDateBefore).apply(context)
+
+    DateRangeFilterStrategy(
+      "${SalePaymentSearchAliases.SALE_PAYMENT}.created_on",
+      SalePaymentSearchParameterNames.RECORDED_FROM,
+      salePaymentSearchParameters.recordedFrom,
+      SalePaymentSearchParameterNames.RECORDED_BEFORE,
+      salePaymentSearchParameters.recordedBefore
+    ).apply(context)
+
+    DateRangeFilterStrategy(
+      "${SalePaymentSearchAliases.SALE_PAYMENT}.payment_date",
+      SalePaymentSearchParameterNames.PAYMENT_DATE_FROM,
+      salePaymentSearchParameters.paymentDateFrom,
+      SalePaymentSearchParameterNames.PAYMENT_DATE_BEFORE,
+      salePaymentSearchParameters.paymentDateBefore
+    ).apply(context)
+
     ContactIdsFilterStrategy(salePaymentSearchParameters.contactIds).apply(context)
     PaymentMethodIdsFilterStrategy(salePaymentSearchParameters.paymentMethodIds).apply(context)
     SalePaymentStatusFilterStrategy(salePaymentSearchParameters.statuses).apply(context)
@@ -35,7 +50,7 @@ object SalePaymentSearchQueryBuilder {
     return context
   }
 
-  fun buildListQuery(predicate: QueryBuilderContext, cursor: SalePaymentSearchCursor?, maxRows: Int): SqlQuery {
+  fun buildListQuery(predicate: QueryBuilderContext, cursor: SalePaymentSearchCursor?): SqlQuery {
     val whereClauses = predicate.whereClauses.toMutableList()
     val params = predicate.params.toMutableMap()
 
@@ -47,7 +62,6 @@ object SalePaymentSearchQueryBuilder {
       params[SalePaymentSearchParameterNames.CURSOR_CREATED_ON] = cursor.createdOn
       params[SalePaymentSearchParameterNames.CURSOR_ID] = cursor.id
     }
-    params[SalePaymentSearchParameterNames.PAGE_SIZE] = maxRows
 
     val sql = """
       SELECT
@@ -65,7 +79,7 @@ object SalePaymentSearchQueryBuilder {
       $FROM_AND_JOINS
       WHERE ${whereClauses.joinToString(" AND ")}
       ORDER BY ${SalePaymentSearchAliases.SALE_PAYMENT}.created_on DESC, ${SalePaymentSearchAliases.SALE_PAYMENT}.id DESC
-      LIMIT :${SalePaymentSearchParameterNames.PAGE_SIZE}
+      LIMIT :${QueryParameterNames.PAGE_SIZE}
     """.trimIndent()
 
     return SqlQuery(sql, params, SalePaymentSearchQueryMetadata("sale_payment_search"))
