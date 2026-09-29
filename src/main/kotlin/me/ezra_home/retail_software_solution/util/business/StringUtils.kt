@@ -5,12 +5,20 @@ import java.util.Optional
 
 object StringUtils {
 
+    fun getValueOrNull(str: Optional<String>?): String? {
+        return getValueOrNull(str?.orElse(null))
+    }
+
     fun getValueOrNull(str: String?): String? {
         return if (hasValue(str)) {
             normalize(str!!)
         } else {
             null
         }
+    }
+
+    fun requireHasValue(str: String?, exceptionMessage: String) {
+        getValueOrException(str, exceptionMessage)
     }
 
     fun getValueOrException(str: String?, exceptionMessage: String): String {
@@ -59,4 +67,10 @@ object StringUtils {
             .lowercase()
     }
 
+    fun useIfProvided(optional: Optional<String>?, existing: String?): String? {
+        if (optional == null) {
+            return existing
+        }
+        return optional.map { getValueOrNull(it) }.orElse(null)
+    }
 }

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-line-sale
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_line_sale
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_line
+            baseColumnNames: sale_id
+            referencedTableName: sale
+            referencedColumnNames: id
+            constraintName: fk_sale_line_sale
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_line
+            constraintName: fk_sale_line_sale
+
+  - changeSet:
+      id: add-foreign-key-sale-line-location-product
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_line_location_product
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_line
+            baseColumnNames: location_product_id
+            referencedTableName: location_product
+            referencedColumnNames: id
+            constraintName: fk_sale_line_location_product
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_line
+            constraintName: fk_sale_line_location_product

@@ -19,18 +19,19 @@ databaseChangeLog:
                     primaryKey: true
 
               - column:
-                  name: okta_id
-                  type: nvarchar2(50)
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: sys_user_okta_id_notnull
+                  name: email
+                  type: nvarchar2(255)
+
+              - column:
+                  name: disabled_at
+                  type: timestamptz
 
               - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: sys_user_reference_number_unique
+                    uniqueConstraintName: uq_sys_user_reference_number
                     nullable: false
                     notNullConstraintName: sys_user_reference_number_not_null
 
@@ -46,6 +47,9 @@ databaseChangeLog:
               - column:
                   name: local_first_name
                   type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sys_user_local_first_name_notnull
 
               - column:
                   name: local_last_name

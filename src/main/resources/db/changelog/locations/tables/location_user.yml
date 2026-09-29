@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-location-user-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: location_user
+      changes:
+        - createTable:
+            tableName: location_user
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_user_user_id_notnull
+
+              - column:
+                  name: end_on
+                  type: timestamptz
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_user_created_on_not_null
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: location_user_created_by_id_not_null
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(30)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: uq_location_user_reference_number
+                    nullable: false
+                    notNullConstraintName: location_user_reference_number_not_null

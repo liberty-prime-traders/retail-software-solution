@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.platform.business.db_migration
 
-import me.ezra_home.retail_software_solution.platform.model.DbMigrationEntity
 import org.springframework.stereotype.Component
 
 @Component
@@ -8,7 +7,7 @@ class MigrationFinalizer(
   private val migrationStatusUpdater: MigrationStatusUpdater
 ) {
   fun finalizeOrganizationMigration(
-    migration: DbMigrationEntity,
+    migration: DbMigrationDto,
     locationResults: LocationMigrationResults,
     includesLocations: Boolean,
     isRetry: Boolean
@@ -30,4 +29,3 @@ class MigrationFinalizer(
     }
   }
 }
-

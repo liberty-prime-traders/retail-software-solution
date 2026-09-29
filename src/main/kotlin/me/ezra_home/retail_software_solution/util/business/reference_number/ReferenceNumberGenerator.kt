@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.util.business.reference_number
 
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.OrgTableRegistryCache
-import me.ezra_home.retail_software_solution.platform.business.table_registry.TableRegistryCache
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryService
+import me.ezra_home.retail_software_solution.platform.business.table_registry.api.TableRegistryService
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service
 @Service
 class ReferenceNumberGenerator(
     private val sequenceFetcher: SequenceFetcher,
-    private val tableRegistryCache: TableRegistryCache,
-    private val orgTableRegistryCache: OrgTableRegistryCache
+    private val tableRegistryService: TableRegistryService,
+    private val orgTableRegistryService: OrgTableRegistryService
 ) {
 
     companion object {
@@ -30,11 +30,15 @@ class ReferenceNumberGenerator(
             sequenceFetcher.getBulkSequenceValues(tableName, schemaLevel, count)
         }
         val prefix = getPrefix(tableName, schemaLevel)
-        return sequenceNumbers.map { prefix.padEnd(REFERENCE_NUMBER_MIN_LENGTH, '0') + it }
+        return sequenceNumbers.map { makeReferenceNumber(prefix, it) }
+    }
+
+    private fun makeReferenceNumber(prefix: String, sequenceNumber: String): String {
+        return prefix + sequenceNumber.padStart(REFERENCE_NUMBER_MIN_LENGTH - prefix.length, '0')
     }
 
     private fun getSchemaLevel(tableName: TableName): SchemaLevel {
-        val table = tableRegistryCache.getAllTables()
+        val table = tableRegistryService.getAllTableDtos()
             .firstOrNull { it.tableName == tableName.tableName }
             ?: throw RtsGenericException("Table ${tableName.tableName} not found in registry")
 
@@ -42,7 +46,7 @@ class ReferenceNumberGenerator(
     }
 
     private fun getPrefix(tableName: TableName, schemaLevel: SchemaLevel): String {
-        val platformTable = tableRegistryCache.getAllTables()
+        val platformTable = tableRegistryService.getAllTableDtos()
             .firstOrNull { it.tableName == tableName.tableName }
             ?: throw RtsGenericException("Table ${tableName.tableName} not found in platform registry")
 
@@ -50,7 +54,7 @@ class ReferenceNumberGenerator(
             throw RtsGenericException("Table ${tableName.tableName} is not validated hence cannot generate reference number")
         }
         if (schemaLevel != SchemaLevel.PLATFORM) {
-            orgTableRegistryCache.getAllTables()
+            orgTableRegistryService.getAllOrgTableDtos()
                 .firstOrNull { it.registryId == platformTable.id }
                 ?.apply { return this.defaultPrefix }
         }

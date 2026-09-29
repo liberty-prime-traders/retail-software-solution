@@ -1,14 +1,14 @@
 package me.ezra_home.retail_software_solution.configuration.session
 
+import me.ezra_home.retail_software_solution.util.enums.RtsPermission
+import me.ezra_home.retail_software_solution.util.enums.RtsRole
 import java.util.UUID
 
-
 data class SessionContext(
-    var oktaId: String? = null,
     var systemUserId: UUID? = null,
-    var locationSchemaName: String? = null,
-    var organizationSchemaName: String? = null,
     var tenantFilterIsComplete: Boolean = false,
-    var organizationId: UUID? = null,
-    var locationId: UUID? = null
+    var organization: OrgSession? = null,
+    var location: LocationSession? = null,
+    var roles: Set<RtsRole> = emptySet(),
+    var permissions: Set<RtsPermission> = emptySet()
 )

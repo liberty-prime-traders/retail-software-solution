@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-unit-conversion-from-unit
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_unit_conversion_from_unit
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: unit_conversion
+            baseColumnNames: from_unit_id
+            referencedTableName: unit_value
+            referencedColumnNames: id
+            constraintName: fk_unit_conversion_from_unit
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: unit_conversion
+            constraintName: fk_unit_conversion_from_unit
+
+  - changeSet:
+      id: add-foreign-key-unit-conversion-to-unit
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_unit_conversion_to_unit
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: unit_conversion
+            baseColumnNames: to_unit_id
+            referencedTableName: unit_value
+            referencedColumnNames: id
+            constraintName: fk_unit_conversion_to_unit
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: unit_conversion
+            constraintName: fk_unit_conversion_to_unit

@@ -11,7 +11,7 @@ class CatalogEventConsumer(
 
     @KafkaListener(
         topics = [KafkaConstants.Topics.CATALOG_EVENTS],
-        groupId = KafkaConstants.ConsumerGroups.CATALOG_SYNC
+        groupId = KafkaConstants.ConsumerGroups.Catalog.SYNC
     )
     fun onCatalogEvent(event: CatalogChangedEvent) {
         catalogEventHandler.consume(event)

@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-location-permission-assignment-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: location_permission_assignment_aud
+      changes:
+        - createTable:
+            tableName: location_permission_assignment_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+              - column:
+                  name: permission
+                  type: nvarchar2(5)
+              - column:
+                  name: assigned_at
+                  type: timestamptz
+              - column:
+                  name: assigned_by_id
+                  type: uuid
+              - column:
+                  name: location_user_id
+                  type: uuid
+              - column:
+                  name: revend
+                  type: bigint
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+        - addPrimaryKey:
+            tableName: location_permission_assignment_aud
+            columnNames: id, rev
+            constraintName: pk_location_permission_assignment_aud
+      rollback:
+        - dropTable:
+            tableName: location_permission_assignment_aud

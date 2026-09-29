@@ -1,5 +1,6 @@
 spring:
-  config.import: optional:file:docker/dev.env[.properties]
+  config:
+    import: optional:file:docker/dev.env[.properties]
   application:
     name: retail-software-solution
 
@@ -36,6 +37,14 @@ spring:
   cache:
     caffeine:
       spec: maximumSize=100
+    type: caffeine
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
 
   jpa:
     show-sql: ${SHOW_SQL:false}
@@ -50,6 +59,10 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    listener:
+      auto-startup: ${KAFKA_ENABLED:true}
+    admin:
+      auto-create: ${KAFKA_ENABLED:true}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -60,14 +73,21 @@ spring:
       properties:
         spring.json.trusted.packages: me.ezra_home.retail_software_solution.messaging.kafka.*
 
-okta:
-  oauth2:
-    issuer: https://${OKTA_DOMAIN}/oauth2/default
-    client-id: ${OKTA_CLIENT_ID}
-    client-secret: ${OKTA_CLIENT_SECRET}
-  client:
-    org-url: https://${OKTA_DOMAIN}
-    token: ${OKTA_API_TOKEN}
+rts:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+
+  jwt:
+    secret: ${RTS_JWT_SECRET}
+    expiration-minutes: ${RTS_JWT_EXPIRATION_MINUTES:60}
+  pending-identity-link:
+    expiration-minutes: ${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES:20}
+  product-search:
+    client-side-filter-threshold: ${RTS_CLIENT_SIDE_FILTER_THRESHOLD:1000}
+
+google:
+  oauth:
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID}
 
 server:
   port: ${PORT:8080}

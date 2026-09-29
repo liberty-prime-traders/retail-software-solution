@@ -1,0 +1,113 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale
+      changes:
+        - createTable:
+            tableName: sale
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_sale_reference_number
+
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_contact_id_notnull
+
+              - column:
+                  name: sold_by_id
+                  type: uuid
+
+              - column:
+                  name: date_sold
+                  type: timestamptz
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_status_notnull
+
+              - column:
+                  name: payment_status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: subtotal
+                  type: numeric(19, 4)
+
+              - column:
+                  name: line_level_discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_discount_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: line_level_surcharge_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: order_level_surcharge_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: grand_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_version_notnull
+      rollback:
+        - dropTable:
+            tableName: sale

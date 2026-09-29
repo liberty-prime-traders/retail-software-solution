@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineCreateDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseUpdateDto
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.util.enums.PurchaseStatus
-import java.time.OffsetDateTime
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
+import me.ezra_home.retail_software_solution.util.business.ConversionRatio
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import java.util.UUID
 
 object PurchaseMapper {
@@ -22,8 +22,8 @@ object PurchaseMapper {
   fun toOrderEntity(dto: PurchaseCreateDto) = PurchaseEntity(
     supplierId = dto.supplierId,
     notes = dto.notes,
-    status = PurchaseStatus.ORDERED,
-    dateOrdered = dto.dateOrdered ?: OffsetDateTime.now(),
+    purchaseStatus = PurchaseStatus.ORDERED,
+    dateOrdered = dto.dateOrdered ?: DateTimes.Offset.Now.organization(),
     orderedById = dto.orderedById ?: SessionContextProvider.getUserId()
   )
 
@@ -37,17 +37,42 @@ object PurchaseMapper {
   fun convertDraftToOrder(purchase: PurchaseEntity, dto: PurchaseUpdateDto) {
     dto.supplierId?.let { purchase.supplierId = it }
     dto.notes?.let { purchase.notes = it.orElse(null) }
-    purchase.dateOrdered = dto.dateOrdered?.orElseGet { OffsetDateTime.now() } ?: OffsetDateTime.now()
-    purchase.orderedById = dto.orderedById?.orElseGet { SessionContextProvider.getUserId() } ?: SessionContextProvider.getUserId()
-    purchase.status = PurchaseStatus.ORDERED
+    purchase.dateOrdered = dto.dateOrdered?.orElse(null) ?: DateTimes.Offset.Now.organization()
+    purchase.orderedById = dto.orderedById?.orElse(null) ?: SessionContextProvider.getUserId()
+    purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 
-  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>) = lines.map {
+  fun toNewLineEntity(purchaseId: UUID, dto: PurchaseLineCreateDto, conversionRatio: ConversionRatio) = PurchaseLineEntity(
+    purchaseId = purchaseId,
+    locationProductId = dto.locationProductId,
+    quantityOrdered = dto.quantityOrdered,
+    unitCost = dto.unitCost,
+    unitId = dto.unitId,
+    conversionNumerator = conversionRatio.numerator,
+    conversionDenominator = conversionRatio.denominator
+  )
+
+  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, ratioByProductId: Map<UUID, ConversionRatio>) = lines.map {
+    val ratio = ratioByProductId.getValue(it.locationProductId)
     PurchaseLineEntity(
       purchaseId = purchaseId,
       locationProductId = it.locationProductId,
       quantityOrdered = it.quantityOrdered,
-      unitCost = it.unitCost
+      unitCost = it.unitCost,
+      unitId = it.unitId,
+      conversionNumerator = ratio.numerator,
+      conversionDenominator = ratio.denominator
     )
   }
+
+  fun purchaseLineEntityToDto(entity: PurchaseLineEntity) = PurchaseLineDto(
+    id = entity.id!!,
+    purchaseId = entity.purchaseId,
+    locationProductId = entity.locationProductId,
+    unitCost = entity.unitCost,
+    unitId = entity.unitId,
+    conversionRatio = entity.conversionRatio(),
+    expectedQuantity = entity.getExpectedQuantity(),
+    remainingQuantity = entity.getRemainingQuantity()
+  )
 }

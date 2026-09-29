@@ -1,26 +1,5 @@
 databaseChangeLog:
   - changeSet:
-      id: create-index-stock-movement-location-product-id
-      author: ezra
-      labels: 1.0.0
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - indexExists:
-                indexName: idx_stock_movement_location_product_id
-      changes:
-        - createIndex:
-            indexName: idx_stock_movement_location_product_id
-            tableName: stock_movement
-            columns:
-              - column:
-                  name: location_product_id
-      rollback:
-        - dropIndex:
-            indexName: idx_stock_movement_location_product_id
-            tableName: stock_movement
-
-  - changeSet:
       id: create-index-stock-movement-stock-item-id
       author: ezra
       labels: 1.0.0
@@ -42,43 +21,65 @@ databaseChangeLog:
             tableName: stock_movement
 
   - changeSet:
-      id: create-index-stock-movement-movement-type
+      id: create-index-stock-movement-external_reference_number
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_stock_movement_movement_type
+                indexName: idx_stock_movement_external_reference_number
       changes:
         - createIndex:
-            indexName: idx_stock_movement_movement_type
+            indexName: idx_stock_movement_external_reference_number
             tableName: stock_movement
             columns:
               - column:
-                  name: movement_type
+                  name: external_reference_number
       rollback:
         - dropIndex:
-            indexName: idx_stock_movement_movement_type
+            indexName: idx_stock_movement_external_reference_number
             tableName: stock_movement
 
   - changeSet:
-      id: create-index-stock-movement-reference-id
+      id: create-idx-stock-movement-location-product-id-created-on
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_movement_location_product_id_created_on
+      changes:
+        - createIndex:
+            indexName: idx_stock_movement_location_product_id_created_on
+            tableName: stock_movement
+            columns:
+              - column:
+                  name: location_product_id
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_movement_location_product_id_created_on
+            tableName: stock_movement
+
+  - changeSet:
+      id: add-unique-constraint-stock-movement-ext-ref-type-product
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
-            - indexExists:
-                indexName: idx_stock_movement_reference_id
+            - uniqueConstraintExists:
+                tableName: stock_movement
+                constraintName: uq_stock_movement_ext_ref_type_product_entry
       changes:
-        - createIndex:
-            indexName: idx_stock_movement_reference_id
+        - addUniqueConstraint:
             tableName: stock_movement
-            columns:
-              - column:
-                  name: reference_id
+            constraintName: uq_stock_movement_ext_ref_type_product_entry
+            columnNames: external_reference_number, movement_type, location_product_id, stock_entry_id
       rollback:
-        - dropIndex:
-            indexName: idx_stock_movement_reference_id
+        - dropUniqueConstraint:
             tableName: stock_movement
+            constraintName: uq_stock_movement_ext_ref_type_product_entry

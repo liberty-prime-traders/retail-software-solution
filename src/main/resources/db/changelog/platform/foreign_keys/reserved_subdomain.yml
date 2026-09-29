@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-reserved-subdomain-created-by-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: reserved_subdomain_created_by_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: reserved_subdomain
+            baseColumnNames: created_by_id
+            referencedTableName: sys_user
+            referencedColumnNames: id
+            constraintName: reserved_subdomain_created_by_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: reserved_subdomain
+            constraintName: reserved_subdomain_created_by_id_fk

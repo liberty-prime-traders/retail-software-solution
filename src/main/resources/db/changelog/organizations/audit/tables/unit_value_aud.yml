@@ -32,7 +32,7 @@ databaseChangeLog:
                   type: nvarchar2(100)
               - column:
                   name: code
-                  type: nvarchar2(5)
+                  type: nvarchar2(25)
               - column:
                   name: description
                   type: nvarchar2(400)
@@ -43,8 +43,11 @@ databaseChangeLog:
                   name: base_unit
                   type: uuid
               - column:
-                  name: conversion_factor
-                  type: decimal
+                  name: units_of_base_per_unit
+                  type: bigint
+              - column:
+                  name: system_defined
+                  type: boolean
               - column:
                   name: revend
                   type: bigint

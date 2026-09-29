@@ -4,23 +4,23 @@ import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
 import me.ezra_home.retail_software_solution.util.queries.QueryFormatter
+import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategyExecutor
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 abstract class ProductSearchService<DTO>(
   private val fetcher: FetchesUsingSmartTextStrategy<ProductSearchParameters, DTO>,
-  private val queryBuilder: (ProductSearchParameters, String) -> SqlQuery
+  private val queryBuilder: (ProductSearchParameters, String) -> SqlQuery,
+  private val clientSideFilterThreshold: Int
 ) {
 
   protected abstract fun countAllProducts(): Long
-  protected abstract fun findAllProducts(): List<DTO>
+  protected abstract fun findAllProducts(parameters: ProductSearchParameters): List<DTO>
 
-  fun searchWithParameters(
-    pageRequest: PageRequest<ProductSearchParameters, String>
-  ): PageResponse<DTO, String> {
+  open fun searchWithParameters(pageRequest: PageRequest<ProductSearchParameters, String>): PageResponse<DTO, String> {
 
     if (shouldUseClientSideFiltering()) {
-      return loadAllProductsForClientFiltering()
+      return loadAllProductsForClientFiltering(pageRequest.parameters)
     }
 
     ProductSearchValidator.validateArraySizes(
@@ -42,25 +42,25 @@ abstract class ProductSearchService<DTO>(
   }
 
   private fun shouldUseClientSideFiltering(): Boolean {
-    return countAllProducts() <= PageRequest.REQUIRE_CLIENT_SIDE_FILTER_THRESHOLD
+    return countAllProducts() <= clientSideFilterThreshold
   }
 
-  private fun loadAllProductsForClientFiltering(): PageResponse<DTO, String> {
+  private fun loadAllProductsForClientFiltering(parameters: ProductSearchParameters): PageResponse<DTO, String> {
     return PageResponse(
       currentCursor = "",
       hasMore = false,
-      contents = findAllProducts(),
+      contents = findAllProducts(parameters),
       requireClientSideFilter = true
     )
   }
 
-  fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
+  open fun generateFormattedQuery(pageRequest: PageRequest<ProductSearchParameters, String>): String {
     ProductSearchValidator.validateArraySizes(
       pageRequest.parameters.categoryIds,
       pageRequest.parameters.statusList,
       pageRequest.parameters.tagIds
     )
     val sqlQuery = queryBuilder(pageRequest.parameters, pageRequest.previousCursor)
-    return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, ParameterNames.PAGE_SIZE)
+    return QueryFormatter.formatQueryWithParameters(sqlQuery, pageRequest.requestedSize, QueryParameterNames.PAGE_SIZE)
   }
 }

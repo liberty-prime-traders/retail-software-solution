@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-entry-for-authorization-pass-in-table-registry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: authorization_pass
+              - column:
+                  name: default_prefix
+                  value: PASAD
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: PLT
+              - column:
+                  name: display_name
+                  value: Authorization Pass
+              - column:
+                  name: description
+                  value: Table containing authorization passes
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

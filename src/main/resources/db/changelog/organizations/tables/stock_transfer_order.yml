@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-order-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_order
+      changes:
+        - createTable:
+            tableName: stock_transfer_order
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_order_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_order_reference_number
+
+              - column:
+                  name: source_location_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_order_source_location_id_notnull
+
+              - column:
+                  name: destination_location_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_order_destination_location_id_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_order_status_notnull
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: line_count
+                  type: integer
+
+              - column:
+                  name: total_dispatched_cost
+                  type: numeric(19, 4)
+
+              - column:
+                  name: dispatched_at
+                  type: timestamptz
+
+              - column:
+                  name: dispatched_by_name
+                  type: varchar(200)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_order_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_order

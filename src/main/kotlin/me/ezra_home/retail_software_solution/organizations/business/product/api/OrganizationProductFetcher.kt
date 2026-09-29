@@ -1,0 +1,60 @@
+package me.ezra_home.retail_software_solution.organizations.business.product.api
+
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductCache
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductMapper
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductQueryBuilder
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductSearchExecutor
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.api.ProductTagService
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
+import me.ezra_home.retail_software_solution.util.queries.FetchesUsingSmartTextStrategy
+import org.springframework.stereotype.Service
+
+@Service
+@TransactionalOnOrganizationSchema(readOnly = true)
+class OrganizationProductFetcher(
+    private val executor: OrganizationProductSearchExecutor,
+    private val productTagService: ProductTagService,
+    private val unitValueFetcher: UnitValueFetcher,
+    private val organizationProductCache: OrganizationProductCache,
+    private val organizationProductMapper: OrganizationProductMapper
+): FetchesUsingSmartTextStrategy<ProductSearchParameters, OrganizationProductResponseDto> {
+
+    override fun fetch(
+        pageRequest: PageRequest<ProductSearchParameters, String>,
+        setTimeout: Boolean
+    ): PageResponse<OrganizationProductResponseDto, String> {
+        val sqlQuery = OrganizationProductQueryBuilder.buildSearchQuery(
+            pageRequest.parameters,
+            pageRequest.previousCursor
+        )
+        val results = executor.execute(sqlQuery, pageRequest.requestedSize + 1, setTimeout)
+
+        val hasMore = results.size > pageRequest.requestedSize
+        val pageResults = if (hasMore) results.take(pageRequest.requestedSize) else results
+        val contents = productTagService.populateTagsForProducts(pageResults)
+        val currentCursor = contents.lastOrNull()?.productName ?: pageRequest.previousCursor
+
+        return PageResponse(
+            currentCursor = currentCursor,
+            hasMore = hasMore,
+            contents = contents
+        )
+    }
+
+    fun findAllProducts(): List<OrganizationProductResponseDto> {
+        val unitNamesById = unitValueFetcher.getUnitNamesById()
+        val responseDtos = organizationProductCache.findAllProducts().map {
+            val baseUnit = unitNamesById[it.baseUnitId]
+                ?: throw RtsGenericException("Unit name not found for id ${it.baseUnitId}")
+            organizationProductMapper.toResponseDtoWithoutTags(it, baseUnit)
+        }
+        return productTagService.populateTagsForProducts(responseDtos)
+    }
+
+    fun countAllProducts(): Long = organizationProductCache.countAllProducts()
+}

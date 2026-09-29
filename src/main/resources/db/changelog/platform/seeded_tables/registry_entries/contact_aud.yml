@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-contact-aud-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: contact_aud
+              - column:
+                  name: default_prefix
+                  value: CTAUD
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Contact Audit
+              - column:
+                  name: description
+                  value: Audit trail for contact changes
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

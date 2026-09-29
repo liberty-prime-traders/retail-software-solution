@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.product
 
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.product.dto.OrganizationProductUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductUpdateDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -13,9 +13,6 @@ class OrganizationProductValidator(
 
     fun validateProductUpdate(productUpdateDto: OrganizationProductUpdateDto) {
         val name = StringUtils.getValueOrException(productUpdateDto.productName, NAME_IS_REQUIRED)
-        if(productUpdateDto.baseUnitId?.isPresent != true) {
-            throw RtsGenericException("A product must have a base unit.")
-        }
         if (productUpdateDto.productGroupId != null && productUpdateDto.productGroupId.isEmpty) {
             throw RtsGenericException("If a product group is provided, it cannot be empty.")
         }

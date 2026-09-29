@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 class LocationTenantIdentifier: CurrentTenantIdentifierResolver<String> {
 
     override fun resolveCurrentTenantIdentifier(): String {
-        val schemaName = SessionContextProvider.getSession().locationSchemaName
+        val schemaName = SessionContextProvider.getSession().location?.schemaName
         if (schemaName.isNullOrBlank() && SessionContextProvider.getSession().tenantFilterIsComplete) {
             throw RtsGenericException("Location schema name is not set in the session context")
         }

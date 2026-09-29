@@ -26,11 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: stock_entry_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: stock_entry_reference_number_unique
-
-              - column:
-                  name: purchase_delivery_line_id
-                  type: uuid
+                    uniqueConstraintName: uq_stock_entry_reference_number
 
               - column:
                   name: location_product_id
@@ -40,15 +36,12 @@ databaseChangeLog:
                     notNullConstraintName: stock_entry_location_product_id_notnull
 
               - column:
-                  name: source_type_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_entry_source_type_id_notnull
+                  name: source_type
+                  type: varchar(5)
 
               - column:
-                  name: source_id
-                  type: uuid
+                  name: external_reference_number
+                  type: varchar(30)
 
               - column:
                   name: batch_size
@@ -67,6 +60,9 @@ databaseChangeLog:
               - column:
                   name: priority
                   type: integer
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_priority_notnull
 
               - column:
                   name: unit_cost

@@ -27,10 +27,6 @@ databaseChangeLog:
       relativeToChangelogFile: true
 
   - includeAll:
-      path: seeded_tables
-      relativeToChangelogFile: true
-
-  - includeAll:
       path: indexes
       relativeToChangelogFile: true
 

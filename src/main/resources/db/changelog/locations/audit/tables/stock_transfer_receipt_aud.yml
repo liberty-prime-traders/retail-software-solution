@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-receipt-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_receipt_aud
+      changes:
+        - createTable:
+            tableName: stock_transfer_receipt_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: stock_transfer_order_ref
+                  type: varchar(30)
+
+              - column:
+                  name: received_by_id
+                  type: uuid
+
+              - column:
+                  name: received_at
+                  type: timestamptz
+
+              - column:
+                  name: status
+                  type: varchar(5)
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: stock_transfer_receipt_aud
+            columnNames: id, rev
+            constraintName: pk_stock_transfer_receipt_aud
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_receipt_aud

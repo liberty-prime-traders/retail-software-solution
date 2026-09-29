@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-jurisdiction-type-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: jurisdiction_type_aud
+      changes:
+        - createTable:
+            tableName: jurisdiction_type_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+
+              - column:
+                  name: description
+                  type: nvarchar2(500)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: jurisdiction_type_aud
+            columnNames: id, rev
+            constraintName: pk_jurisdiction_type_aud
+      rollback:
+        - dropTable:
+            tableName: jurisdiction_type_aud

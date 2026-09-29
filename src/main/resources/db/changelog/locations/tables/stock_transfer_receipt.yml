@@ -1,0 +1,79 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-transfer-receipt-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_transfer_receipt
+      changes:
+        - createTable:
+            tableName: stock_transfer_receipt
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_receipt_reference_number
+
+              - column:
+                  name: stock_transfer_order_ref
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_stock_transfer_order_ref_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_transfer_receipt_stock_transfer_order_ref
+
+              - column:
+                  name: received_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_received_by_id_notnull
+
+              - column:
+                  name: received_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_received_at_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_status_notnull
+
+              - column:
+                  name: notes
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_transfer_receipt_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_transfer_receipt

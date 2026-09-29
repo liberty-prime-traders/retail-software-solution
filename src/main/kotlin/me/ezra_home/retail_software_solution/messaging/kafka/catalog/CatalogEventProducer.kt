@@ -12,7 +12,7 @@ class CatalogEventProducer(
     fun publish(event: CatalogChangedEvent) {
         kafkaTemplate.send(
             KafkaConstants.Topics.CATALOG_EVENTS,
-            event.sourceSchema,
+            event.sourceContext.orgSchema,
             event
         )
     }

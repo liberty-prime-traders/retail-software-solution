@@ -25,7 +25,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: table_registry_table_name_not_null
                     unique: true
-                    uniqueConstraintName: table_registry_table_name_unique
+                    uniqueConstraintName: uq_table_registry_table_name
 
               - column:
                   name: default_prefix
@@ -34,7 +34,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: table_registry_default_prefix_not_null
                     unique: true
-                    uniqueConstraintName: table_registry_default_prefix_unique
+                    uniqueConstraintName: uq_table_registry_default_prefix
 
               - column:
                   name: minimum_version_id
@@ -57,7 +57,7 @@ databaseChangeLog:
                       nullable: false
                       notNullConstraintName: table_registry_display_name_not_null
                       unique: true
-                      uniqueConstraintName: table_registry_display_name_unique
+                      uniqueConstraintName: uq_table_registry_display_name
 
               - column:
                   name: description
@@ -81,6 +81,6 @@ databaseChangeLog:
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: table_registry_reference_number_unique
+                    uniqueConstraintName: uq_table_registry_reference_number
                     nullable: false
                     notNullConstraintName: table_registry_reference_number_not_null

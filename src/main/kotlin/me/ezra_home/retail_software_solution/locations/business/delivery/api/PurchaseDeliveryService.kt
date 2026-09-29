@@ -1,0 +1,56 @@
+package me.ezra_home.retail_software_solution.locations.business.delivery.api
+
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.delivery.DeliveryHandlerForKafka
+import me.ezra_home.retail_software_solution.locations.business.delivery.DeliveryRecord
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryMapper
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
+import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
+import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
+import org.springframework.stereotype.Service
+
+@Service
+@TransactionalOnLocationSchema
+class PurchaseDeliveryService(
+  private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
+  private val deliveryRepository: PurchaseDeliveryRepository,
+  private val deliveryLineRepository: PurchaseDeliveryLineRepository,
+  private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
+  private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
+  private val unitConversionGraphFacade: UnitConversionGraphFacade,
+  private val purchasePaymentStatusService: PurchasePaymentStatusService,
+  private val fiscalPeriodService: FiscalPeriodService
+) {
+
+  fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
+    fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))
+    val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
+    purchaseDeliveryValidator.validate(dto, context.purchaseLineById)
+
+    val deliveryLines = dto.lines.map { line ->
+      val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
+      val factor = unitConversionGraphFacade.getFactor(line.unitId, purchaseLine.unitId)
+      DeliveryLineQuantity(line.purchaseLineId, Decimals.multiplyScale4(line.quantityDelivered, factor))
+    }
+
+    val deliveryRecord = persistDelivery(dto)
+    val response = deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveryLines)
+    deliveryHandlerForKafka.publish(context, deliveryRecord)
+    return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(dto.purchaseId))
+  }
+
+  private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {
+    val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(dto))
+    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
+    deliveryLineRepository.saveAll(lines)
+    return DeliveryRecord(delivery, lines)
+  }
+}

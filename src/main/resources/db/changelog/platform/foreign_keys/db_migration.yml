@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-db-migration-db-version-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: db_migration_db_version_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: db_migration
+            baseColumnNames: db_version_id
+            referencedTableName: db_version
+            referencedColumnNames: id
+            constraintName: db_migration_db_version_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: db_migration
+            constraintName: db_migration_db_version_id_fk
+
+  - changeSet:
+      id: add-fk-db-migration-migration-parent-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: db_migration_migration_parent_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: db_migration
+            baseColumnNames: migration_parent_id
+            referencedTableName: db_migration
+            referencedColumnNames: id
+            constraintName: db_migration_migration_parent_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: db_migration
+            constraintName: db_migration_migration_parent_id_fk
+
+  - changeSet:
+      id: add-fk-db-migration-created-by-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: db_migration_created_by_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: db_migration
+            baseColumnNames: created_by_id
+            referencedTableName: sys_user
+            referencedColumnNames: id
+            constraintName: db_migration_created_by_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: db_migration
+            constraintName: db_migration_created_by_id_fk

@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-org-permission-assignment-table'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: org_permission_assignment
+      changes:
+        - createTable:
+            tableName: org_permission_assignment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_permission_assignment_user_id_notnull
+
+              - column:
+                  name: permission
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_permission_assignment_permission_notnull
+
+              - column:
+                  name: assigned_at
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_permission_assignment_assigned_at_notnull
+
+              - column:
+                  name: assigned_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_permission_assignment_assigned_by_id_notnull
+
+        - addUniqueConstraint:
+            tableName: org_permission_assignment
+            columnNames: user_id, permission
+            constraintName: uq_org_permission_assignment_user_id_permission

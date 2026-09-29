@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.product_tag
 
 import me.ezra_home.retail_software_solution.configuration.cache.CacheNames
 import me.ezra_home.retail_software_solution.configuration.cache.CacheSchemaLevel
-import me.ezra_home.retail_software_solution.organizations.model.ProductTagEntity
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
@@ -13,23 +12,32 @@ import java.util.UUID
 @Service
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
 @CacheConfig(cacheNames = [CacheNames.PRODUCT_TAG])
-class ProductTagCache(private val productTagRepository: ProductTagRepository) {
+class ProductTagCache(
+    private val productTagRepository: ProductTagRepository,
+    private val productTagMapper: ProductTagMapper
+) {
 
     @Cacheable
-    fun findActiveProductTagsByProductId(productId: UUID): Collection<ProductTagEntity> =
-        productTagRepository.findActiveProductTagsByProductId(productId)
+    fun findActiveProductTagsByOrgProductId(orgProductId: UUID): Collection<ProductTagDto> =
+        productTagRepository.findActiveProductTagsByOrgProductId(orgProductId).map { productTagMapper.toDomainDto(it) }
 
     @Cacheable
-    fun findActiveTagIdsByProductId(productId: UUID): Collection<UUID> =
-        productTagRepository.findActiveTagIdsByProductId(productId)
+    fun findActiveTagIdsByOrgProductId(orgProductId: UUID): Collection<UUID> =
+        productTagRepository.findActiveTagIdsByOrgProductId(orgProductId)
 
-    fun findActiveProductTagsByProductIds(productIds: Collection<UUID>): List<ProductTagEntity> {
-        if (productIds.isEmpty()) return emptyList()
-        return productTagRepository.findActiveProductTagsByProductIds(productIds)
+    fun findActiveProductTagsByOrgProductIds(orgProductIds: Collection<UUID>): List<ProductTagDto> {
+        if (orgProductIds.isEmpty()) return emptyList()
+        return productTagRepository.findActiveProductTagsByOrgProductIds(orgProductIds).map { productTagMapper.toDomainDto(it) }
     }
 
     @CacheEvict(allEntries = true)
-    fun saveAllProductTags(productTagEntities: List<ProductTagEntity>) {
-        productTagRepository.saveAll(productTagEntities)
+    fun createProductTags(insertDtos: List<ProductTagInsertDto>): List<ProductTagDto> {
+        val entities = insertDtos.map { productTagMapper.toEntity(it) }
+        return productTagRepository.saveAllAndFlush(entities).map { productTagMapper.toDomainDto(it) }
+    }
+
+    @CacheEvict(allEntries = true)
+    fun saveAllProductTags(productTagDtos: List<ProductTagDto>) {
+        productTagRepository.saveAll(productTagDtos.map { productTagMapper.toEntity(it) })
     }
 }

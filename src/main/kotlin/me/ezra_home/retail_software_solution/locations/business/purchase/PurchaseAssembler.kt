@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductMapper
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.dto.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.model.LocationProductEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.model.PurchaseLineEntity
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -15,43 +15,65 @@ import java.util.UUID
 
 @Service
 class PurchaseAssembler(
-  private val locationProductRepository: LocationProductRepository,
   private val purchaseLineRepository: PurchaseLineRepository,
-  private val contactCache: ContactCache,
-  private val locationProductMapper: LocationProductMapper,
+  private val locationProductDataFetcher: LocationProductDataFetcher,
+  private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
+  private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
+  private val contactService: ContactService,
   private val userQualifier: UserQualifier
 ) {
 
   fun buildResponses(purchases: List<PurchaseEntity>): List<PurchaseResponseDto> {
-    val allLines = purchaseLineRepository.findByPurchaseIdIn(purchases.map { it.id!! })
-    val productMap = loadProductMap(allLines.map { it.locationProductId })
+    val purchaseIds = purchases.map { it.id!! }
+    val allLines = purchaseLineRepository.findByPurchaseIdIn(purchaseIds)
+    val productSummaries = locationProductDataFetcher.findSummaryByIds(allLines.map { it.locationProductId })
     val linesByPurchaseId = allLines.groupBy { it.purchaseId }
-    return purchases.map { buildResponse(it, linesByPurchaseId[it.id] ?: emptyList(), productMap) }
-  }
-
-  private fun loadProductMap(ids: List<UUID>): Map<UUID?, LocationProductEntity> {
-    return locationProductRepository.findAllById(ids).associateBy { it.id }
+    val purchaseLineDtoMap = allLines.associateBy { it.id!! }.mapValues {
+      PurchaseMapper.purchaseLineEntityToDto(it.value)
+    }
+    val deliveryResponsesByPurchaseId = purchaseDeliveryDataFetcher.getDeliveryResponses(
+      purchaseIds, purchaseLineDtoMap, productSummaries
+    )
+    val supplierNameMap = contactService.getAllContactDtos().associateBy(
+      { it.id }, { it.identity.displayName }
+    )
+    return purchases.map { purchase ->
+      val lines = linesByPurchaseId[purchase.id] ?: emptyList()
+      val deliveries = deliveryResponsesByPurchaseId[purchase.id] ?: emptyList()
+      buildResponse(purchase, lines, productSummaries, supplierNameMap, deliveries)
+    }
   }
 
   fun buildResponse(purchase: PurchaseEntity, lines: List<PurchaseLineEntity>): PurchaseResponseDto {
-    return buildResponse(purchase, lines, loadProductMap(lines.map { it.locationProductId }))
+    val productSummaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId })
+    val purchaseLineDtoMap = lines.associateBy { it.id!! }.mapValues {
+      PurchaseMapper.purchaseLineEntityToDto(it.value)
+    }
+    val deliveries = purchaseDeliveryDataFetcher.getDeliveryResponses(
+        listOf(purchase.id!!), purchaseLineDtoMap, productSummaries
+    )[purchase.id] ?: emptyList()
+    val supplierNameMap = contactService.getAllContactDtos().associateBy(
+      { it.id }, { it.identity.displayName }
+    )
+    return buildResponse(purchase, lines, productSummaries, supplierNameMap, deliveries)
   }
 
-  fun buildResponse(
+  private fun buildResponse(
     purchase: PurchaseEntity,
     lines: List<PurchaseLineEntity>,
-    productMap: Map<UUID?, LocationProductEntity>
+    productSummaries: Map<UUID, LocationProductSummaryDto>,
+    supplierNameMap: Map<UUID, String>,
+    deliveries: List<PurchaseDeliveryResponseDto>
   ): PurchaseResponseDto {
-    val supplierNameMap = contactCache.getAllContacts().associateBy({ it.id }, { it.identity.displayName })
-    val lineDtos = toLinesDto(lines, productMap)
-    val orderTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) }
-
+    val lineDtos = toLinesDto(lines, productSummaries)
+    val deliveredTotal = deliveries.fold(BigDecimal.ZERO) { acc, d -> acc.add(d.deliveryTotal) }
     return PurchaseResponseDto(
-      id = purchase.id,
-      referenceNumber = purchase.referenceNumber,
+      id = purchase.id!!,
+      referenceNumber = purchase.requiredReference(),
       supplierId = purchase.supplierId,
       supplierName = supplierNameMap[purchase.supplierId],
-      status = purchase.status,
+      purchaseStatus = purchase.purchaseStatus,
+      paymentStatus = purchase.paymentStatus,
       notes = purchase.notes,
       dateOrdered = purchase.dateOrdered,
       orderedById = purchase.orderedById,
@@ -59,24 +81,38 @@ class PurchaseAssembler(
       createdBy = userQualifier.getUserFullName(purchase.createdById),
       createdOn = purchase.createdOn,
       lines = lineDtos,
-      orderTotal = orderTotal
+      orderedTotal = lineDtos.fold(BigDecimal.ZERO) { acc, line -> acc.add(line.lineTotal) },
+      deliveredTotal = deliveredTotal,
+      paymentCeiling = purchasePaymentCeilingService.computeCeiling(lines, deliveredTotal).amount,
+      deliveries = deliveries
     )
   }
 
-  private fun toLinesDto(lines: List<PurchaseLineEntity>, productMap: Map<UUID?, LocationProductEntity>): List<PurchaseLineResponseDto> {
+  private fun toLinesDto(
+    lines: List<PurchaseLineEntity>,
+    productSummaries: Map<UUID, LocationProductSummaryDto>
+  ): List<PurchaseLineResponseDto> {
     return lines.map { line ->
-      val quantityExpected = line.quantityOrdered.subtract(line.quantityDelivered).subtract(line.quantityCanceled)
-      val lineTotal = quantityExpected.multiply(line.unitCost)
+      val product = productSummaries[line.locationProductId]!!
       PurchaseLineResponseDto(
-        id = line.id,
-        referenceNumber = line.referenceNumber,
-        locationProduct = productMap[line.locationProductId]?.let { locationProductMapper.toDto(it) },
+        id = line.id!!,
+        referenceNumber = line.requiredReference(),
         quantityOrdered = line.quantityOrdered,
+        unitId = line.unitId,
+        conversionFactor = line.conversionRatio().factor(),
         unitCost = line.unitCost,
-        lineTotal = lineTotal,
+        lineTotal = line.getTotalCost(),
         quantityDelivered = line.quantityDelivered,
+        quantityYetToBeDelivered = line.getRemainingQuantity(),
         quantityCanceled = line.quantityCanceled,
-        quantityExpected = quantityExpected
+        quantityExpected = line.getExpectedQuantity(),
+        locationProduct = LocationProductSummaryDto(
+          id = product.id,
+          referenceNumber = product.referenceNumber,
+          productName = product.productName,
+          productGroupName = product.productGroupName,
+          baseUnitId = product.baseUnitId
+        )
       )
     }
   }

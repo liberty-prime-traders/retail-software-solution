@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-authorization-pass-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: authorization_pass_aud
+      changes:
+        - createTable:
+            tableName: authorization_pass_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: pass_type
+                  type: nvarchar2(5)
+
+              - column:
+                  name: max_use_count
+                  type: int
+
+              - column:
+                  name: used_count
+                  type: int
+
+              - column:
+                  name: assigned_to_id
+                  type: uuid
+
+              - column:
+                  name: pass_status
+                  type: nvarchar2(5)
+
+              - column:
+                  name: expires_on
+                  type: timestamptz
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: authorization_pass_aud
+            columnNames: id, rev
+            constraintName: pk_authorization_pass_aud
+      rollback:
+        - dropTable:
+            tableName: authorization_pass_aud

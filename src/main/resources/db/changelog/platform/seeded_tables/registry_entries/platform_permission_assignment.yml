@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-platform-permission-assignment-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: platform_permission_assignment
+              - column:
+                  name: default_prefix
+                  value: PPA
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: PLT
+              - column:
+                  name: display_name
+                  value: Platform Permission Assignment
+              - column:
+                  name: description
+                  value: Direct grant of a platform-level permission to a user
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

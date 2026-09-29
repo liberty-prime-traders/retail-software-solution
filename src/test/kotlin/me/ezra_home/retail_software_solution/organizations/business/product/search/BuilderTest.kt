@@ -1,10 +1,11 @@
 package me.ezra_home.retail_software_solution.organizations.business.product.search
 
-import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import me.ezra_home.retail_software_solution.cross_tier.product.search.common.ProductSearchParameters
-import me.ezra_home.retail_software_solution.cross_tier.product.search.organization.OrganizationProductQueryBuilder
+import me.ezra_home.retail_software_solution.organizations.business.product.OrganizationProductQueryBuilder
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.product.search.TestDataFactory.TestUUIDs
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import me.ezra_home.retail_software_solution.util.queries.ProductQueryMetadata
+import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -134,12 +135,13 @@ class BuilderTest {
       previousName = ""
     )
 
-    assertEquals(2, result.metadata.categoryIdsCount)
-    assertEquals(1, result.metadata.tagIdsCount)
-    assertEquals(2, result.metadata.statusListCount)
-    assertTrue(result.metadata.hasTextSearch)
-    assertTrue(result.metadata.hasReferenceNumberSearch!!)
-    assertTrue(result.metadata.hasTagFilter!!)
+    val metadata = result.metadata as ProductQueryMetadata
+    assertEquals(2, metadata.categoryIdsCount)
+    assertEquals(1, metadata.tagIdsCount)
+    assertEquals(2, metadata.statusListCount)
+    assertTrue(metadata.hasTextSearch)
+    assertTrue(metadata.hasReferenceNumberSearch!!)
+    assertTrue(metadata.hasTagFilter!!)
   }
 
   @Test

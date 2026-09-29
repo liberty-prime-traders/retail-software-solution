@@ -1,0 +1,58 @@
+package me.ezra_home.retail_software_solution.locations.business.delivery
+
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
+import java.time.Instant
+import java.util.UUID
+
+object PurchaseDeliveryMapper {
+
+  fun toEntity(dto: PurchaseDeliveryCreateDto) = PurchaseDeliveryEntity(
+    purchaseId = dto.purchaseId,
+    deliveredAt = dto.deliveredAt,
+    notes = dto.notes
+  )
+
+  fun toLineEntities(deliveryId: UUID, dto: PurchaseDeliveryCreateDto) =
+    dto.lines.map { lineDto ->
+      PurchaseDeliveryLineEntity(
+        purchaseDeliveryId = deliveryId,
+        purchaseLineId = lineDto.purchaseLineId,
+        quantityDelivered = lineDto.quantityDelivered,
+        unitCost = lineDto.unitCost,
+        unitId = lineDto.unitId
+      )
+    }
+
+  fun toEvent(
+    purchaseId: UUID,
+    supplierId: UUID,
+    deliveryRecord: DeliveryRecord,
+    purchaseLineById: Map<UUID, PurchaseLineDto>,
+    sourceContext: EventSourceContext.LocationLevel
+  ) = PurchaseDeliveredEvent(
+    eventId = UUID.randomUUID(),
+    sourceContext = sourceContext,
+    timestamp = Instant.now(),
+    correlationId = null,
+    purchaseId = purchaseId,
+    deliveryId = deliveryRecord.delivery.id!!,
+    deliveryReferenceNumber = deliveryRecord.delivery.requiredReference(),
+    deliveredAt = deliveryRecord.delivery.deliveredAt,
+    supplierId = supplierId,
+    lines = deliveryRecord.lines.map { dl ->
+      val pl = purchaseLineById[dl.purchaseLineId]!!
+      PurchaseDeliveredLineDto(
+        deliveryLineId = dl.id!!,
+        lineReferenceNumber = dl.requiredReference(),
+        locationProductId = pl.locationProductId,
+        quantityDelivered = dl.quantityDelivered,
+        unitId = dl.unitId,
+        unitCost = dl.unitCost
+      )
+    }
+  )
+}

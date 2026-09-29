@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.cross_tier.product.search.common
 
-import me.ezra_home.retail_software_solution.util.enums.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.util.queries.HasSearchStrategy
 import me.ezra_home.retail_software_solution.util.queries.SearchStrategy
 import java.util.UUID
@@ -10,6 +10,7 @@ data class ProductSearchParameters(
     val referenceNumber: String? = null,
     val categoryIds: Set<UUID> = emptySet(),
     val tagIds: Set<UUID> = emptySet(),
+    val excludeIds: Set<UUID> = emptySet(),
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
     override val searchStrategy: SearchStrategy = SearchStrategy.NONE
 ): HasSearchStrategy<ProductSearchParameters> {

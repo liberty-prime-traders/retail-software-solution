@@ -9,8 +9,4 @@ class ExpirableAssignmentEntity(
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null
 
-): HasReferenceEntity() {
-    fun isActive(): Boolean {
-        return endOn == null
-    }
-}
+): HasReferenceEntity()

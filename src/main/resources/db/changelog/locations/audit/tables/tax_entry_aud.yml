@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax-entry-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: tax_entry_aud
+      changes:
+        - createTable:
+            tableName: tax_entry_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: source_reference_number
+                  type: varchar(5)
+
+              - column:
+                  name: source_type
+                  type: varchar(30)
+
+              - column:
+                  name: tax_type_id
+                  type: uuid
+
+              - column:
+                  name: fiscal_period_id
+                  type: uuid
+
+              - column:
+                  name: calculation_method
+                  type: varchar(5)
+
+              - column:
+                  name: rate
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_inclusive
+                  type: boolean
+
+              - column:
+                  name: taxable_amount
+                  type: numeric(19, 4)
+
+              - column:
+                  name: tax_amount
+                  type: numeric(19, 4)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: tax_entry_aud
+            columnNames: id, rev
+            constraintName: pk_tax_entry_aud
+
+      rollback:
+        - dropTable:
+            tableName: tax_entry_aud

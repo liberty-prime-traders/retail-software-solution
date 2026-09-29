@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: purchase_line_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: purchase_line_reference_number_unique
+                    uniqueConstraintName: uq_purchase_line_reference_number
 
               - column:
                   name: purchase_id
@@ -44,7 +44,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_ordered
-                  type: decimal(15,3)
+                  type: numeric(19, 4)
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_quantity_ordered_notnull
@@ -57,20 +57,41 @@ databaseChangeLog:
                     notNullConstraintName: purchase_line_unit_cost_notnull
 
               - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_line_unit_id_notnull
+
+              - column:
                   name: quantity_delivered
-                  type: decimal(15,3)
-                  defaultValueNumeric: '0'
+                  type: numeric(19, 4)
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_quantity_delivered_notnull
 
               - column:
                   name: quantity_canceled
-                  type: decimal(15,3)
-                  defaultValueNumeric: '0'
+                  type: numeric(19, 4)
+                  defaultValueNumeric: "0"
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_quantity_canceled_notnull
+
+              - column:
+                  name: conversion_numerator
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_line_conversion_numerator_notnull
+
+              - column:
+                  name: conversion_denominator
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_line_conversion_denominator_notnull
 
               - column:
                   name: created_by_id
@@ -83,3 +104,7 @@ databaseChangeLog:
                   name: created_on
                   type: timestamptz
                   defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: purchase_line

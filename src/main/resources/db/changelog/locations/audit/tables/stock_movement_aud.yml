@@ -51,8 +51,19 @@ databaseChangeLog:
                   type: decimal(15,3)
 
               - column:
-                  name: reference_id
+                  name: external_reference_number
+                  type: varchar(30)
+
+              - column:
+                  name: unit_id
                   type: uuid
+
+              - column:
+                  name: conversion_numerator
+                  type: bigint
+              - column:
+                  name: conversion_denominator
+                  type: bigint
 
               - column:
                   name: revend

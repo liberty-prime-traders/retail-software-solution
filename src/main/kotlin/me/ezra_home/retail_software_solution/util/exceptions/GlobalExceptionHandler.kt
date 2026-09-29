@@ -5,8 +5,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.time.Instant
 
 @RestControllerAdvice
@@ -19,7 +21,7 @@ class GlobalExceptionHandler {
         log.warn("Business error on ${req.method} ${req.requestURI}: ${ex.message}")
         return ResponseEntity
             .status(ex.statusCode)
-            .body(ApiError(ex.message))
+            .body(ApiError(ex.message, ex.payload))
     }
 
     @ExceptionHandler(DataAccessException::class)
@@ -37,9 +39,20 @@ class GlobalExceptionHandler {
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ApiError("An unexpected error occurred"))
     }
+
+    @ExceptionHandler(AuthorizationDeniedException::class)
+    fun handleAuthorizationDenied(): ResponseEntity<Unit> {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleResourceNotFound(): ResponseEntity<Unit> {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+    }
 }
 
 data class ApiError(
     val message: String,
+    val body: Any? = null,
     val timestamp: Instant = Instant.now()
 )

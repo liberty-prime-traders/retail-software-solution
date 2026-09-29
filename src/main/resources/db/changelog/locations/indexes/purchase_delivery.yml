@@ -19,24 +19,3 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_purchase_delivery_purchase_id
             tableName: purchase_delivery
-
-  - changeSet:
-      id: create-index-purchase-delivery-status
-      author: ezra
-      labels: 1.0.0
-      preConditions:
-        - onFail: MARK_RAN
-        - not:
-            - indexExists:
-                indexName: idx_purchase_delivery_status
-      changes:
-        - createIndex:
-            indexName: idx_purchase_delivery_status
-            tableName: purchase_delivery
-            columns:
-              - column:
-                  name: status
-      rollback:
-        - dropIndex:
-            indexName: idx_purchase_delivery_status
-            tableName: purchase_delivery

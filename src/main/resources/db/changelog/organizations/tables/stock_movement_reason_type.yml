@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: smrt_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: smrt_reference_number_unique
+                    uniqueConstraintName: uq_smrt_reference_number
 
               - column:
                   name: stock_movement_reason_id

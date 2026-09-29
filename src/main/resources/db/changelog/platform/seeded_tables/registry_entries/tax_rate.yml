@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-tax-rate-in-table-registry
+      author: ezra
+      labels: 1.0.0
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: tax_rate
+              - column:
+                  name: default_prefix
+                  value: TXRT
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Tax Rate
+              - column:
+                  name: description
+                  value: Table containing organisation-specific tax rates with effective dating
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

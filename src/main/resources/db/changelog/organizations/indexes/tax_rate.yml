@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-partial-unique-index-tax-rate-active-name'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_tax_rate_active_name_unique
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX idx_tax_rate_active_name_unique ON tax_rate (org_jurisdiction_tax_type_id, LOWER(name)) WHERE end_date IS NULL;
+      rollback:
+        - dropIndex:
+            tableName: tax_rate
+            indexName: idx_tax_rate_active_name_unique

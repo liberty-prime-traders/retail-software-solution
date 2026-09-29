@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tax-rate-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: tax_rate_aud
+      changes:
+        - createTable:
+            tableName: tax_rate_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: org_jurisdiction_tax_type_id
+                  type: uuid
+
+              - column:
+                  name: name
+                  type: nvarchar2(100)
+
+              - column:
+                  name: rate_percentage
+                  type: decimal(5,2)
+
+              - column:
+                  name: rate_flat_amount
+                  type: decimal(15,4)
+
+              - column:
+                  name: start_date
+                  type: date
+
+              - column:
+                  name: end_date
+                  type: date
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: tax_rate_aud
+            columnNames: id, rev
+            constraintName: pk_tax_rate_aud
+      rollback:
+        - dropTable:
+            tableName: tax_rate_aud

@@ -2,6 +2,7 @@ databaseChangeLog:
   - changeSet:
       id: create-sync-log-table
       author: ezra
+      labels: 1.0.0
       changes:
         - createTable:
             tableName: sync_log
@@ -17,9 +18,9 @@ databaseChangeLog:
                   type: varchar(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: sync_log_reference_number_unique
+                    uniqueConstraintName: uq_sync_log_reference_number
                     nullable: false
-                    notNullConstraintName: sync_log_reference_number_not_null
+                    notNullConstraintName: sync_log_reference_number_notnull
 
               - column:
                   name: table_name
@@ -58,7 +59,7 @@ databaseChangeLog:
 
               - column:
                   name: status
-                  type: varchar(20)
+                  type: varchar(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: sync_log_status_notnull

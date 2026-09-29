@@ -9,7 +9,7 @@ import javax.sql.DataSource
 
 @Service
 class LocationSchemaService(
-    @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
+    @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
     private val dataSource: DataSource
 ) {
 

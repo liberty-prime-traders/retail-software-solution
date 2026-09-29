@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-void-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_void
+      changes:
+        - createTable:
+            tableName: sale_void
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_void_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_sale_void_reference_number
+
+              - column:
+                  name: sale_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_void_sale_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_sale_void_sale_id
+
+              - column:
+                  name: reason
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_void_reason_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_void_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_void

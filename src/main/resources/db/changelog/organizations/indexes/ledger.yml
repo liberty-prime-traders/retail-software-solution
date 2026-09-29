@@ -1,0 +1,116 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-unique-constraint-ledger-entry-group-source-ref-type
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: ledger_entry_group
+                indexName: uq_ledger_entry_grp_ref_type_loc
+      changes:
+        # A single addUniqueConstraint on (source_reference_number, source_type, source_location_id)
+        # doesn't work here: Postgres never treats two NULLs as equal in a unique constraint, so it
+        # wouldn't catch duplicates among org-level rows, which always have source_location_id NULL.
+        # Two partial unique indexes instead, split on that column being null or not.
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_ledger_entry_grp_ref_type_loc ON ledger_entry_group (source_reference_number, source_type, source_location_id) WHERE source_location_id IS NOT NULL;
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_ledger_entry_grp_ref_type_org ON ledger_entry_group (source_reference_number, source_type) WHERE source_location_id IS NULL;
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: uq_ledger_entry_grp_ref_type_loc
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: uq_ledger_entry_grp_ref_type_org
+
+  - changeSet:
+      id: create-index-ledger-entry-group-source-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ledger_entry_grp_src_ref_loc
+      changes:
+        - createIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_grp_src_ref_loc
+            columns:
+              - column:
+                  name: source_reference_number
+              - column:
+                  name: source_location_id
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_grp_src_ref_loc
+
+  - changeSet:
+      id: create-index-ledger-entry-group-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ledger_entry_grp_ref
+      changes:
+        - createIndex:
+            tableName: ledger_entry
+            indexName: idx_ledger_entry_grp_ref
+            columns:
+              - column:
+                  name: group_reference_number
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry
+            indexName: idx_ledger_entry_grp_ref
+
+  - changeSet:
+      id: create-index-subledger-entry-group-ref
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_subledger_entry_grp_ref
+      changes:
+        - createIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_grp_ref
+            columns:
+              - column:
+                  name: group_reference_number
+      rollback:
+        - dropIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_grp_ref
+
+  - changeSet:
+      id: create-index-subledger-entry-contact-ref-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_subledger_entry_contact_created
+      changes:
+        - createIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_contact_created
+            columns:
+              - column:
+                  name: contact_reference_number
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            tableName: subledger_entry
+            indexName: idx_subledger_entry_contact_created

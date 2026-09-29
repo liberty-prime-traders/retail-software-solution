@@ -1,5 +1,5 @@
 services:
-  postgres-rtss:
+  rtss-postgres:
     image: postgres:${POSTGRES_VERSION}
     restart: unless-stopped
     environment:
@@ -10,6 +10,12 @@ services:
       - db-data:/var/lib/postgresql/data
     ports:
       - "${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
 volumes:
   db-data:

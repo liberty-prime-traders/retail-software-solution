@@ -1,16 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_table_registry
 
-import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryResponseDto
-import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.dto.OrgTableRegistryUpdateDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryDto
+import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.api.OrgTableRegistryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameQualifier
 import me.ezra_home.retail_software_solution.organizations.business.org_table_registry.mapping.TableNameResolver
-import me.ezra_home.retail_software_solution.organizations.model.OrgTableRegistryEntity
-import org.mapstruct.BeanMapping
+import me.ezra_home.retail_software_solution.util.business.mappers.RtsMapperConfig
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
-import org.mapstruct.MappingTarget
-import org.mapstruct.NullValuePropertyMappingStrategy
 
 @Mapper(
     config = RtsMapperConfig::class,
@@ -18,11 +14,10 @@ import org.mapstruct.NullValuePropertyMappingStrategy
 )
 interface OrgTableRegistryMapper {
 
-    @Mapping(source = "registryId", target = "tableName", qualifiedBy = [TableNameQualifier::class])
-    fun toDto(entity: OrgTableRegistryEntity): OrgTableRegistryResponseDto
+    fun toDomainDto(entity: OrgTableRegistryEntity): OrgTableRegistryDto
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "registryId", ignore = true)
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    fun patchEntity(dto: OrgTableRegistryUpdateDto, @MappingTarget entity: OrgTableRegistryEntity): OrgTableRegistryEntity
+    fun toEntity(dto: OrgTableRegistryDto): OrgTableRegistryEntity
+
+    @Mapping(source = "registryId", target = "tableName", qualifiedBy = [TableNameQualifier::class])
+    fun toDto(dto: OrgTableRegistryDto): OrgTableRegistryResponseDto
 }

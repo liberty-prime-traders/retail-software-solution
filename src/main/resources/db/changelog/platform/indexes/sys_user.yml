@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-unique-index-sys-user-email'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_sys_user_email
+      changes:
+        - sql:
+            sql: CREATE UNIQUE INDEX uq_sys_user_email ON sys_user (email) WHERE email IS NOT NULL;
+      rollback:
+        - dropIndex:
+            tableName: sys_user
+            indexName: uq_sys_user_email

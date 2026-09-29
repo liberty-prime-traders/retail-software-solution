@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'create-entry-for-location-product-in-table-registry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: location_product
+              - column:
+                  name: default_prefix
+                  value: LPRD
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Location Product
+              - column:
+                  name: description
+                  value: Table containing location-specific product configurations
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

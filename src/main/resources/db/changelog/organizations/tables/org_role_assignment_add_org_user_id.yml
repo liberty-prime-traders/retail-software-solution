@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'add-org-user-id-to-org-role-assignment'
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: org_role_assignment
+                columnName: org_user_id
+      changes:
+        - addColumn:
+            tableName: org_role_assignment
+            columns:
+              - column:
+                  name: org_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_role_assignment_org_user_id_notnull
+      rollback:
+        - dropColumn:
+            tableName: org_role_assignment
+            columnName: org_user_id

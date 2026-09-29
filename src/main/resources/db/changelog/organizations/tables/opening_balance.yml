@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-opening-balance-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: opening_balance
+      changes:
+        - createTable:
+            tableName: opening_balance
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_balance_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_opening_balance_reference_number
+
+              - column:
+                  name: account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_balance_account_code_notnull
+
+              - column:
+                  name: amount
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_balance_amount_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: opening_balance_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: opening_balance

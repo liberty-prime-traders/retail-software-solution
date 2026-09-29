@@ -28,8 +28,10 @@ databaseChangeLog:
 
               - column:
                   name: code
-                  type: nvarchar2(5)
+                  type: nvarchar2(25)
                   constraints:
+                    unique: true
+                    uniqueConstraintName: uq_unit_value_code
                     nullable: false
                     notNullConstraintName: unit_value_code_notnull
 
@@ -49,8 +51,8 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: conversion_factor
-                  type: decimal
+                  name: units_of_base_per_unit
+                  type: bigint
 
               - column:
                   name: created_by_id
@@ -65,10 +67,18 @@ databaseChangeLog:
                   defaultValueDate: ${now}
 
               - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: unit_value_system_defined_notnull
+
+              - column:
                   name: reference_number
                   type: nvarchar2(30)
                   constraints:
                     unique: true
-                    uniqueConstraintName: unit_value_reference_number_unique
+                    uniqueConstraintName: uq_unit_value_reference_number
                     nullable: false
                     notNullConstraintName: unit_value_reference_number_not_null

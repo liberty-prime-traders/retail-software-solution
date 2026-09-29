@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-stock-entry-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: stock_entry
+              - column:
+                  name: default_prefix
+                  value: STK
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Stock Entry
+              - column:
+                  name: description
+                  value: Table tracking stock entries received from purchase deliveries
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

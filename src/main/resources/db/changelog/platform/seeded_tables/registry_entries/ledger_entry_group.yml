@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-ledger-entry-group-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: ledger_entry_group
+              - column:
+                  name: default_prefix
+                  value: LDGRP
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Ledger Entry Group
+              - column:
+                  name: description
+                  value: Groups related ledger entries originating from a single source document
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

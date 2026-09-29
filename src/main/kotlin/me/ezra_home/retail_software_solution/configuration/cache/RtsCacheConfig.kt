@@ -3,9 +3,9 @@ package me.ezra_home.retail_software_solution.configuration.cache
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.configuration.util.typeadapters.HibernateProxyTypeAdapter
 import me.ezra_home.retail_software_solution.configuration.util.typeadapters.OffsetDateTimeAdapter
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.enums.SchemaLevel
 import org.springframework.cache.annotation.CachingConfigurer
 import org.springframework.cache.annotation.EnableCaching
@@ -45,8 +45,8 @@ class RtsCacheConfig : CachingConfigurer {
         }
         val schemaName = when (schemaLevel) {
             SchemaLevel.PLATFORM -> default
-            SchemaLevel.ORGANIZATION -> SessionContextProvider.getSession().organizationSchemaName
-            SchemaLevel.LOCATION -> SessionContextProvider.getSession().locationSchemaName
+            SchemaLevel.ORGANIZATION -> SessionContextProvider.getSession().organization?.schemaName
+            SchemaLevel.LOCATION -> SessionContextProvider.getSession().location?.schemaName
         }
         return schemaName ?: default
     }

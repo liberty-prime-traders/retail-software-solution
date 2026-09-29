@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-opening-balance-account-code-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_opening_balance_account_code_created_on
+      changes:
+        - createIndex:
+            indexName: idx_opening_balance_account_code_created_on
+            tableName: opening_balance
+            columns:
+              - column:
+                  name: account_code
+              - column:
+                  name: created_on
+      rollback:
+        - dropIndex:
+            tableName: opening_balance
+            indexName: idx_opening_balance_account_code_created_on

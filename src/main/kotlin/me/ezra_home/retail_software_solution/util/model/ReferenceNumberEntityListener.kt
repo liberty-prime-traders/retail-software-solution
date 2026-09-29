@@ -9,7 +9,7 @@ import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-@Component
+@Component(ReferenceNumberEntityListener.BEAN_NAME)
 class ReferenceNumberEntityListener {
 
 
@@ -19,6 +19,7 @@ class ReferenceNumberEntityListener {
     }
 
     companion object {
+        const val BEAN_NAME = "referenceNumberEntityListener"
         private val log = LoggerFactory.getLogger(ReferenceNumberEntityListener::class.java)
         private var applicationContext: ApplicationContext? = null
     }
@@ -30,12 +31,10 @@ class ReferenceNumberEntityListener {
             if (!currentValue.isNullOrBlank()) return
             val hasReferenceAnnotation = entity.javaClass.getAnnotation(HasReference::class.java) ?: return
             val tableName = hasReferenceAnnotation.tableName
-            val referenceNumberGenerator = applicationContext?.getBean<ReferenceNumberGenerator>()
-            if (referenceNumberGenerator == null) {
-                log.error("ReferenceNumberGenerator not available in Spring context")
-                return
-            }
-            val referenceNumber = referenceNumberGenerator.generateSingle(tableName)
+            val context = applicationContext ?: throw IllegalStateException(
+                "ApplicationContext not injected; refusing to persist ${entity.javaClass.simpleName} without a reference number"
+            )
+            val referenceNumber = context.getBean<ReferenceNumberGenerator>().generateSingle(tableName)
             entity.referenceNumber = referenceNumber
             log.debug("Generated reference number for ${entity.javaClass.simpleName}: $referenceNumber")
         } catch (e: Exception) {

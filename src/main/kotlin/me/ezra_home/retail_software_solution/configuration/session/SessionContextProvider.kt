@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.configuration.session
 
 import me.ezra_home.retail_software_solution.configuration.security.RtsHeaders
-import me.ezra_home.retail_software_solution.organizations.model.LocationEntity
-import me.ezra_home.retail_software_solution.platform.model.OrganizationEntity
+import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
+import me.ezra_home.retail_software_solution.platform.business.organization.api.OrganizationDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID
@@ -19,30 +19,60 @@ object SessionContextProvider {
         return sessionContextThreadLocal.get() ?: SessionContext().also { sessionContextThreadLocal.set(it) }
     }
 
-    fun getUserId(): UUID  {
+    fun getUserId(): UUID {
         return getSession().systemUserId ?: throw RtsGenericException("User ID not found in session")
     }
 
+    fun getUserIdOrNull(): UUID? {
+        return getSession().systemUserId
+    }
+
     fun getOrganizationId(): UUID {
-        return getSession().organizationId ?: throw RtsMissingHeaderException(RtsHeaders.ORGANIZATION_ID_HEADER)
+        return getSession().organization?.id ?: throw RtsMissingHeaderException(RtsHeaders.ORGANIZATION_ID_HEADER)
+    }
+
+    fun getOrganizationIdOrNull(): UUID? {
+        return getSession().organization?.id
     }
 
     fun getLocationId(): UUID {
-        return getSession().locationId ?: throw RtsMissingHeaderException(RtsHeaders.LOCATION_ID_HEADER)
+        return getSession().location?.id ?: throw RtsMissingHeaderException(RtsHeaders.LOCATION_ID_HEADER)
+    }
+
+    fun getLocationIdOrNull(): UUID? {
+        return getSession().location?.id
+    }
+
+    fun getLocationSchema(): String {
+        return getSession().location?.schemaName ?: throw RtsGenericException("Location schema not found in session.")
+    }
+
+    fun getOrganizationSchema(): String {
+        return getSession().organization?.schemaName ?: throw RtsGenericException("Organization schema not found in session.")
+    }
+
+    fun getOrgTimezone(): String {
+        return getSession().organization?.timezone ?: throw RtsGenericException("Organization timezone not found in session.")
     }
 
     fun clear() {
         sessionContextThreadLocal.remove()
     }
 
-    fun initOrganization(organization: OrganizationEntity) {
-        getSession().organizationId = organization.id
-        getSession().organizationSchemaName = organization.schemaName
+    fun initOrganization(organization: OrganizationDto) {
+        getSession().organization = OrgSession(
+            id = organization.id,
+            schemaName = organization.schemaName!!,
+            timezone = organization.timezone
+        )
     }
 
-    fun initLocation(location: LocationEntity) {
-        getSession().locationId = location.id
-        getSession().locationSchemaName = location.schemaName
+    fun initLocation(location: LocationDto) {
+        getSession().location = LocationSession(
+            id = location.id,
+            schemaName = location.schemaName!!,
+            timezone = location.timezone
+        )
     }
 
     fun initSystemUser(userId: UUID) {

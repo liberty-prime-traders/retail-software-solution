@@ -1,0 +1,70 @@
+package me.ezra_home.retail_software_solution.organizations.business.product_tag.api
+
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.product.api.TagSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagCache
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.product_tag.ProductTagValidator
+import me.ezra_home.retail_software_solution.organizations.business.tag.api.TagService
+import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import java.util.UUID
+
+@Service
+@TransactionalOnOrganizationSchema
+class ProductTagService(
+    private val productTagCache: ProductTagCache,
+    private val productTagValidator: ProductTagValidator,
+    private val tagService: TagService
+) {
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun findActiveTagIdsByOrgProductId(orgProductId: UUID): Collection<UUID> =
+        productTagCache.findActiveTagIdsByOrgProductId(orgProductId)
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun populateTagsForProducts(products: List<OrganizationProductResponseDto>): List<OrganizationProductResponseDto> {
+        if (products.isEmpty()) return products
+        val orgProductIds = products.map { it.id }
+        val productTags = productTagCache.findActiveProductTagsByOrgProductIds(orgProductIds)
+        val tagIdsByOrgProductId = productTags.groupBy({ it.orgProductId }, { it.tagId })
+        val tagsById = tagService.getAllTagDtos().associateBy { it.id }
+        return products.map { product ->
+            val tagIds = tagIdsByOrgProductId[product.id] ?: emptyList()
+            val tags = tagIds.mapNotNull { tagId ->
+                tagsById[tagId]?.let { tag -> TagSummaryDto(id = tag.id, tagName = tag.tagName) }
+            }
+            product.copy(activeTags = tags)
+        }
+    }
+
+    fun manageProductTags(
+        orgProductId: UUID,
+        tagsToAdd: Set<UUID> = emptySet(),
+        tagsToRemove: Set<UUID> = emptySet()
+    ) {
+        val combinedTags = tagsToAdd + tagsToRemove
+        productTagValidator.validateTagsExist(combinedTags)
+        productTagValidator.validateNoOverlap(tagsToAdd, tagsToRemove)
+
+        val activeProductTags = productTagCache.findActiveProductTagsByOrgProductId(orgProductId)
+        val activeTagIds = activeProductTags.map { it.tagId }
+
+        val dtosToUpdate = tagsToRemove.mapNotNull { tagId ->
+            activeProductTags.find { it.tagId == tagId }?.copy(endOn = OffsetDateTime.now())
+        }
+
+        if (dtosToUpdate.isNotEmpty()) {
+            productTagCache.saveAllProductTags(dtosToUpdate)
+        }
+
+        val insertDtos = tagsToAdd
+            .filter { !activeTagIds.contains(it) }
+            .map { tagId -> ProductTagInsertDto(orgProductId = orgProductId, tagId = tagId) }
+
+        if (insertDtos.isNotEmpty()) {
+            productTagCache.createProductTags(insertDtos)
+        }
+    }
+}

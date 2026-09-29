@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-fk-table-registry-minimum-version-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            foreignKeyConstraintExists:
+              foreignKeyName: table_registry_minimum_version_id_fk
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: table_registry
+            baseColumnNames: minimum_version_id
+            referencedTableName: db_version
+            referencedColumnNames: id
+            constraintName: table_registry_minimum_version_id_fk
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: table_registry
+            constraintName: table_registry_minimum_version_id_fk

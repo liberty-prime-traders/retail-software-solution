@@ -26,16 +26,16 @@ databaseChangeLog:
                     nullable: false
                     notNullConstraintName: stock_item_source_reference_number_notnull
                     unique: true
-                    uniqueConstraintName: stock_item_source_reference_number_unique
+                    uniqueConstraintName: uq_stock_item_source_reference_number
 
               - column:
                   name: code
-                  type: varchar(20)
+                  type: varchar(5)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_item_source_code_notnull
                     unique: true
-                    uniqueConstraintName: stock_item_source_code_unique
+                    uniqueConstraintName: uq_stock_item_source_code
 
               - column:
                   name: name
