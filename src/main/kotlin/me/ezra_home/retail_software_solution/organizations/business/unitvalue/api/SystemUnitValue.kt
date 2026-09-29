@@ -21,6 +21,7 @@ enum class SystemUnitValue(
 
     PIECE("pc", "Piece", SystemUnitGroup.COUNTABLE),
     DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 12L),
+    HALF_DOZEN("hdz", "Half Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 6L),
     CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 24L),
     TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 30L);
 

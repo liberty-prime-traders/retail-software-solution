@@ -10,6 +10,4 @@ object SalePaymentSearchParameterNames {
   const val MIN_AMOUNT = "minAmount"
   const val MAX_AMOUNT = "maxAmount"
   const val SALE_REFERENCE_NUMBERS = "saleReferenceNumbers"
-  const val CURSOR_CREATED_ON = "cursorCreatedOn"
-  const val CURSOR_ID = "cursorId"
 }

@@ -29,6 +29,10 @@ class OrganizationProductCache(
     fun create(insertDto: OrganizationProductInsertDto): OrganizationProductDto {
         val entity = organizationProductMapper.toEntity(insertDto).apply { status = ProductStatus.ACTIVE }
         val saved = organizationProductRepository.save(entity)
+        // productGroupName is trigger-populated and insertable/updatable = false; Hibernate's
+        // @Generated post-insert refresh doesn't reliably repopulate it on this entity instance,
+        // so read it back explicitly instead of trusting the in-memory field.
+        saved.productGroupName = organizationProductRepository.findProductGroupNameById(checkNotNull(saved.id))
         return organizationProductMapper.toDomainDto(saved)
     }
 

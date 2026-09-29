@@ -2,12 +2,11 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.se
 
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.AmountRangeFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.ContactIdsFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.DateRangeFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.PaymentMethodIdsFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.SalePaymentStatusFilterStrategy
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.SaleReferenceNumbersFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
+import me.ezra_home.retail_software_solution.util.queries.DateRangeFilterStrategy
+import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
@@ -42,25 +41,37 @@ object SalePaymentSearchQueryBuilder {
       salePaymentSearchParameters.paymentDateBefore
     ).apply(context)
 
-    ContactIdsFilterStrategy(salePaymentSearchParameters.contactIds).apply(context)
-    PaymentMethodIdsFilterStrategy(salePaymentSearchParameters.paymentMethodIds).apply(context)
+    AnyListFilterStrategy(
+      "${SalePaymentSearchAliases.SALE}.contact_id",
+      SalePaymentSearchParameterNames.CONTACT_IDS,
+      salePaymentSearchParameters.contactIds.toTypedArray()
+    ).apply(context)
+    AnyListFilterStrategy(
+      "${SalePaymentSearchAliases.SALE_PAYMENT}.payment_method_id",
+      SalePaymentSearchParameterNames.PAYMENT_METHOD_IDS,
+      salePaymentSearchParameters.paymentMethodIds.toTypedArray()
+    ).apply(context)
     SalePaymentStatusFilterStrategy(salePaymentSearchParameters.statuses).apply(context)
     AmountRangeFilterStrategy(salePaymentSearchParameters.minAmount, salePaymentSearchParameters.maxAmount).apply(context)
-    SaleReferenceNumbersFilterStrategy(salePaymentSearchParameters.saleReferenceNumbers).apply(context)
+    AnyListFilterStrategy(
+      "${SalePaymentSearchAliases.SALE}.reference_number",
+      SalePaymentSearchParameterNames.SALE_REFERENCE_NUMBERS,
+      salePaymentSearchParameters.saleReferenceNumbers.toTypedArray()
+    ).apply(context)
     return context
   }
 
-  fun buildListQuery(predicate: QueryBuilderContext, cursor: SalePaymentSearchCursor?): SqlQuery {
+  fun buildListQuery(predicate: QueryBuilderContext, cursor: KeysetSearchCursor?): SqlQuery {
     val whereClauses = predicate.whereClauses.toMutableList()
     val params = predicate.params.toMutableMap()
 
     if (cursor != null) {
       whereClauses.add(
         "(${SalePaymentSearchAliases.SALE_PAYMENT}.created_on, ${SalePaymentSearchAliases.SALE_PAYMENT}.id) < " +
-          "(:${SalePaymentSearchParameterNames.CURSOR_CREATED_ON}, :${SalePaymentSearchParameterNames.CURSOR_ID})"
+          "(:${QueryParameterNames.CURSOR_CREATED_ON}, :${QueryParameterNames.CURSOR_ID})"
       )
-      params[SalePaymentSearchParameterNames.CURSOR_CREATED_ON] = cursor.createdOn
-      params[SalePaymentSearchParameterNames.CURSOR_ID] = cursor.id
+      params[QueryParameterNames.CURSOR_CREATED_ON] = cursor.createdOn
+      params[QueryParameterNames.CURSOR_ID] = cursor.id
     }
 
     val sql = """

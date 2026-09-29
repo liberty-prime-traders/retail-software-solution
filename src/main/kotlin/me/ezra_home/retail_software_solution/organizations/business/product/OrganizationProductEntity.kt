@@ -32,13 +32,13 @@ class OrganizationProductEntity(
     var productGroupId: UUID,
 
     @Column(name = "base_unit_id", updatable = false)
-    var baseUnitId: UUID,
+    var baseUnitId: UUID
+
+): HasReferenceEntity() {
 
     @Convert(converter = ProductStatusConverter::class)
     @Column(name = "status", nullable = false)
     var status: ProductStatus = ProductStatus.ACTIVE
-
-): HasReferenceEntity() {
 
     @NotAudited
     @Generated(event = [EventType.INSERT, EventType.UPDATE])

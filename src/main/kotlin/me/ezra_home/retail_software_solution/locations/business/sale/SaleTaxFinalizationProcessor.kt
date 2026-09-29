@@ -17,6 +17,7 @@ import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxA
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.model.ConstraintNames
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -33,6 +34,7 @@ class SaleTaxFinalizationProcessor(
 ) : InventoryEventProcessor<SaleConfirmedEvent> {
 
     override val eventType: KClass<SaleConfirmedEvent> = SaleConfirmedEvent::class
+    override val idempotencyConstraintName = ConstraintNames.TAX_ENTRY_UNIQUE_SOURCE_REFERENCE_NUMBER_SOURCE_TYPE_AND_TAX_TYPE
 
     @TransactionalOnLocationSchema(readOnly = true)
     override fun shouldProcess(event: SaleConfirmedEvent): Boolean {

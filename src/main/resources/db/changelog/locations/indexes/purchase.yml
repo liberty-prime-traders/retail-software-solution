@@ -19,3 +19,28 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_purchase_supplier_id
             tableName: purchase
+
+  - changeSet:
+      id: create-index-purchase-created-on-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_purchase_created_on_id
+      changes:
+        - createIndex:
+            indexName: idx_purchase_created_on_id
+            tableName: purchase
+            columns:
+              - column:
+                  name: created_on
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_purchase_created_on_id
+            tableName: purchase

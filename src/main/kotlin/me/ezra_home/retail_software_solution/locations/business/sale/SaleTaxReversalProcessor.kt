@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.Ta
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.util.model.ConstraintNames
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
@@ -17,6 +18,7 @@ class SaleTaxReversalProcessor(
 ) : InventoryEventProcessor<SaleVoidedEvent> {
 
     override val eventType: KClass<SaleVoidedEvent> = SaleVoidedEvent::class
+    override val idempotencyConstraintName = ConstraintNames.TAX_ENTRY_UNIQUE_SOURCE_REFERENCE_NUMBER_SOURCE_TYPE_AND_TAX_TYPE
 
     @TransactionalOnLocationSchema(readOnly = true)
     override fun shouldProcess(event: SaleVoidedEvent): Boolean {

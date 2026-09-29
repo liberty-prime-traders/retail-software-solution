@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.SalePaymentSearchCursor
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.SalePaymentSearchFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.SalePaymentSearchMapper
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.SalePaymentSearchValidator
@@ -9,6 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
+import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -23,7 +23,7 @@ class SalePaymentSearchService(
   fun search(pageRequest: PageRequest<SalePaymentSearchParameters, String>): PageResponse<SalePaymentSearchResultDto, String> {
     SalePaymentSearchValidator.guardValidParameters(pageRequest.parameters)
     SalePaymentSearchValidator.guardValidPageSize(pageRequest.requestedSize)
-    val cursor = SalePaymentSearchCursor.decode(pageRequest.previousCursor)
+    val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
     val rawRows = salePaymentSearchFetcher.search(pageRequest.parameters, cursor, pageRequest.requestedSize)
     val hasMore = rawRows.size > pageRequest.requestedSize
@@ -34,7 +34,7 @@ class SalePaymentSearchService(
     val contents = pageRows.map { SalePaymentSearchMapper.toRowDto(it, paymentMethodNamesById, contactNamesById) }
 
     val currentCursor = pageRows.lastOrNull()
-      ?.let { SalePaymentSearchCursor(it.createdOn, it.id).encode() }
+      ?.let { KeysetSearchCursor(it.createdOn, it.id).encode() }
       ?: pageRequest.previousCursor
 
     return PageResponse(currentCursor = currentCursor, hasMore = hasMore, contents = contents)

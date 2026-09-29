@@ -6,9 +6,14 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -27,6 +32,7 @@ class PurchaseEndpoint(
   private val purchaseDataFetcher: PurchaseDataFetcher,
   private val purchaseCanceller: PurchaseCanceller,
   private val purchaseUpdater: PurchaseUpdater,
+  private val purchaseSearchService: PurchaseSearchService,
 ) {
 
   @PostMapping("draft")
@@ -58,4 +64,14 @@ class PurchaseEndpoint(
   @GetMapping
   fun fetchTop(@RequestParam n: Int?): List<PurchaseResponseDto> =
     purchaseDataFetcher.fetchTop(n)
+
+  @PostMapping("search")
+  fun search(
+    @RequestBody pageRequest: PageRequest<PurchaseSearchParameters, String>
+  ): PageResponse<PurchaseResponseDto, String> =
+    purchaseSearchService.search(pageRequest)
+
+  @PostMapping("summary")
+  fun searchSummary(@RequestBody purchaseSearchParameters: PurchaseSearchParameters): PurchaseSearchSummaryDto =
+    purchaseSearchService.summarize(purchaseSearchParameters)
 }

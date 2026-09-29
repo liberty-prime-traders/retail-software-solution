@@ -15,6 +15,12 @@ Perform a deep code review of the current branch changes.
    - A concise description of the problem
    - Why it matters (correctness, scalability, maintainability)
 
-5. Save the full report to `./.claude-local/claudesomemdfile.md`, organized by the five sections above.
+5. If `./.claude-local/claudesomemdfile.md` already exists from a prior run, re-verify each of its
+   findings against the current code before writing the new report — re-read the cited file/lines and
+   confirm the problem still exists. Drop any finding that's been fixed since; never carry a stale
+   finding forward. The report you save should read as a clean, current review, not an accumulating
+   backlog.
+
+6. Save the full report to `./.claude-local/claudesomemdfile.md`, organized by the five sections above.
 
 Be blunt. Skip findings that are trivially cosmetic.
