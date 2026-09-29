@@ -8,7 +8,10 @@ abstract class SqlSearchExecutor<T, D>(
 ) {
 
   companion object {
-    private const val MAX_PAGE_SIZE = 500
+    // Callers pass requestedSize + 1 (one extra row to detect hasMore), so this must exceed the
+    // largest MAX_PAGE_SIZE any validator allows (currently 500) — otherwise the extra row gets
+    // coerced away right at the largest page size and hasMore false-negatives on the last page.
+    private const val MAX_PAGE_SIZE = 501
     private const val MIN_PAGE_SIZE = 1
     private const val QUERY_TIMEOUT_MS = 2000
   }

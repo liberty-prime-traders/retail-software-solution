@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment.se
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentSearchParameters
+import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import org.springframework.stereotype.Component
 
 @Component
@@ -12,7 +13,7 @@ class SalePaymentSearchFetcher(
 
   fun search(
     salePaymentSearchParameters: SalePaymentSearchParameters,
-    cursor: SalePaymentSearchCursor?,
+    cursor: KeysetSearchCursor?,
     requestedSize: Int
   ): List<SalePaymentSearchRawRow> {
     val predicate = SalePaymentSearchQueryBuilder.buildPredicate(salePaymentSearchParameters)

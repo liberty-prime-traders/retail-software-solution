@@ -41,6 +41,7 @@ domain needs it — internally all three write services and
 | `PurchaseCanceller`             | Cancel quantities on existing lines                              |
 | `PurchaseDataFetcher`           | Read purchases (recent list, lookups, info-by-ids)               |
 | `PurchaseAssembler`             | Build `PurchaseResponseDto` from entities                        |
+| `PurchaseSearchService`         | Filtered/paginated purchase search + aggregate summary           |
 | `DeliveryHandlerForPurchase`    | Prepare a delivery context; commit a delivery to lines           |
 | `PurchasePaymentCeilingService` | Compute the payable ceiling for a purchase                       |
 | `PurchaseDeliveryService`       | Record a delivery (with Kafka event + payment status patch)      |
@@ -777,6 +778,44 @@ Add new guards as early as the data they need is in scope.
 - Note: unlike sale's fetchRecent, **no guard against `n ≤ 0`** — a
   negative limit will reach the page request as-is.
 
+### `PurchaseSearchService.search(PageRequest<PurchaseSearchParameters, String>)` / `.summarize(PurchaseSearchParameters)`
+- Read-only, mirrors the `sale_payment` search technique (`purchase/search/` package: aliases,
+  parameter names, query builder, filter strategies, native-SQL executors). The keyset cursor is
+  the shared `util/queries/KeysetSearchCursor` — sale_payment search uses the same class.
+- **List** filters down to a page of `PurchaseEntity` via a native query mapped straight onto the
+  entity (`SELECT p.*`), then hands that page to the existing `PurchaseAssembler.buildResponses` —
+  no slim row DTO, no second supplier-name lookup, no separate line/delivery fetch. Keyset paged on
+  `created_on DESC, id DESC`; cursor is the same opaque base64 string as sale payment search.
+  Max page size is 200 (vs. 500 for sale payments) — each row carries its lines and deliveries, so
+  the payload per row is much heavier.
+- **Amount filter** (`minAmount`/`maxAmount`) is the one predicate that isn't a plain column
+  compare: it's a `LEFT JOIN LATERAL` to a `purchase_line` subquery, correlated on
+  `purchase_id = p.id`, summing `unit_cost * (quantity_ordered - quantity_canceled)` for that one
+  purchase — the same expression `PurchaseAssembler` sums into `orderedTotal`. Being `LATERAL` (and
+  backed by `idx_purchase_line_purchase_id`) means the planner filters `purchase` first and only sums
+  each surviving row's own lines, rather than aggregating the whole `purchase_line` table up front. For
+  the **list** query the join is still only added when `minAmount`/`maxAmount` is actually supplied —
+  even a per-row indexed lookup is wasted work on every page of an unfiltered call. The **summary**
+  queries always include it (and the equivalent `LATERAL` join for `paid_total` against
+  `supplier_payment`), since they aggregate `ordered_total`/`totalPaid` regardless of whether the
+  caller filtered on amount. It's a `LEFT JOIN` (not `INNER`) so a draft with zero lines still matches —
+  but a `purchase_id` with no `purchase_line` rows produces no row at all from the joined subquery, so
+  every reference to `ordered_total` (both in the filter's `WHERE` and in the summary's `SUM`) goes
+  through `COALESCE(..., 0)` to turn that missing row into a zero total instead of `NULL`.
+- **Summary** aggregates the whole filtered set (not a page) via `GROUP BY payment_status` and,
+  only when `supplierIds` is non-empty, a second `GROUP BY supplier_id` query — omitted (`null`)
+  otherwise, since an unfiltered per-supplier breakdown would be unbounded. Header totals
+  (`purchaseCount`/`totalOrdered`/`totalPaid`) are the sum of the `byPaymentStatus` rows in Kotlin,
+  not a third query — same trick as `SalePaymentSearchService`. `totalOutstanding` is
+  `totalOrdered - totalPaid` (the ordered basis): a `PAID` purchase can still show non-zero
+  outstanding if more was ordered than delivered. `totalPaid` always excludes voided
+  `supplier_payment` rows (joined via `supplier_payment_void`), same as everywhere else paid amounts
+  appear. At least one filter is required to summarize, same guard as sale payment search, to avoid
+  an unbounded full-table aggregate.
+- Out of scope by design: no outstanding-amount filter, no payment-method filter, no delivery-date
+  filter, no supplier-invoice-number filter, no paid/outstanding fields on the list rows
+  (`PurchaseResponseDto` is shared with the detail view).
+
 ---
 
 ## 15. Where Things Live
@@ -795,6 +834,7 @@ Add new guards as early as the data they need is in scope.
 | Returns (scaffolding, no svc)  | `supplier_return/SupplierReturnEntity`; repo at `supplier_return/SupplierReturnRepository`        |
 | Kafka publish/republish        | `DeliveryHandlerForKafka`, `SupplierPaymentHandlerForKafka`, `SupplierPaymentVoidHandlerForKafka` |
 | Read APIs                      | `PurchaseDataFetcher`, `PurchaseAssembler`, `PurchaseDeliveryDataFetcher`                         |
+| Search/summary                 | `PurchaseSearchService`, `search/` package (`PurchaseSearchFetcher`, `PurchaseSearchQueryBuilder`)|
 
 Keep this table accurate as the package evolves — it is the entry point
 for anyone (or any agent) doing a first-pass investigation.

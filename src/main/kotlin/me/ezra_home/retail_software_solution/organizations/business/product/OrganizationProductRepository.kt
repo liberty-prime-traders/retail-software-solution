@@ -12,4 +12,7 @@ interface OrganizationProductRepository: JpaRepository<OrganizationProductEntity
 
     fun findFirstByProductNameIgnoreCase(productName: String): OrganizationProductEntity?
 
+    @Query("SELECT p.productGroupName FROM OrganizationProductEntity p WHERE p.id = :productId")
+    fun findProductGroupNameById(productId: UUID): String
+
 }

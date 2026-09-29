@@ -32,11 +32,11 @@ databaseChangeLog:
 
               - column:
                   name: source_reference_number
-                  type: varchar(5)
+                  type: varchar(30)
 
               - column:
                   name: source_type
-                  type: varchar(30)
+                  type: varchar(5)
 
               - column:
                   name: tax_type_id

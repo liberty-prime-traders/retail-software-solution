@@ -29,6 +29,7 @@ class EventProcessingLogService(
             existing.status = EventProcessingLogStatus.PENDING
             existing.failedOn = null
             existing.failureReason = null
+            existing.resolutionType = null
             repository.save(existing)
             return
         }
@@ -72,6 +73,7 @@ class EventProcessingLogService(
         entry.status = EventProcessingLogStatus.FAILED
         entry.failedOn = Instant.now()
         entry.failureReason = reason
+        entry.resolutionType = null
         return repository.save(entry).id
     }
 
@@ -154,6 +156,7 @@ class EventProcessingLogService(
         entry.status = EventProcessingLogStatus.FAILED
         entry.failedOn = Instant.now()
         entry.failureReason = "Stuck in PENDING — likely consumer crash before completion"
+        entry.resolutionType = null
         repository.save(entry)
     }
 }

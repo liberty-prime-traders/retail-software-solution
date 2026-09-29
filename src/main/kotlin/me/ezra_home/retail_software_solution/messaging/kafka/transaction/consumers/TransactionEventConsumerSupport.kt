@@ -9,11 +9,13 @@ import me.ezra_home.retail_software_solution.messaging.kafka.notifications.Notif
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.TransactionEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.TransactionEventProcessor
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
+import org.hibernate.exception.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
 
 @Component
 class TransactionEventConsumerSupport(
@@ -37,18 +39,42 @@ class TransactionEventConsumerSupport(
             return
         }
 
+        val lastAttemptedProcessor = AtomicReference<TransactionEventProcessor<EVENT>?>(null)
+
         ServiceAccountContext.runWithServiceAccount(serviceAccount) {
             eventSessionSetup.initFromEvent(event)
             try {
-                dispatch(event, consumerGroup, processorsForEvent)
+                dispatch(event, consumerGroup, processorsForEvent, lastAttemptedProcessor)
             } catch (e: DataIntegrityViolationException) {
-                logger.info("Event ${event.eventId} lost a unique-constraint race in $consumerGroup — marking PROCESSED with RACE_LOST", e)
-                markRaceLostLog(event, consumerGroup, e)
+                if (isUniqueConstraintViolation(e, lastAttemptedProcessor.get())) {
+                    logger.info("Event ${event.eventId} lost a unique-constraint race in $consumerGroup — marking PROCESSED with RACE_LOST", e)
+                    markRaceLostLog(event, consumerGroup, e)
+                } else {
+                    markFailedLog(event, consumerGroup, e)
+                    publishNotification(event, consumerGroup, e)
+                }
             } catch (e: Exception) {
                 markFailedLog(event, consumerGroup, e)
                 publishNotification(event, consumerGroup, e)
             }
         }
+    }
+
+    // A processor that has declared its idempotency constraint gets the strict check: benign only
+    // when the violated constraint is that exact one, so an unrelated 23505 still fails loudly.
+    // A processor that hasn't declared one yet keeps the legacy blanket-tolerant behavior — any
+    // 23505 is treated as a benign race — so processors not yet migrated to idempotencyConstraintName
+    // don't regress from "always benign" to "always a hard failure".
+    private fun isUniqueConstraintViolation(e: DataIntegrityViolationException, processor: TransactionEventProcessor<*>?): Boolean {
+        val expectedConstraintName = processor?.idempotencyConstraintName
+        var cause: Throwable? = e.cause
+        while (cause != null) {
+            if (cause is ConstraintViolationException) {
+                return cause.sqlState == "23505" && (expectedConstraintName == null || cause.constraintName == expectedConstraintName)
+            }
+            cause = cause.cause
+        }
+        return false
     }
 
     private fun markRaceLostLog(event: TransactionEvent, consumerGroup: String, e: Exception) {
@@ -70,7 +96,8 @@ class TransactionEventConsumerSupport(
     private fun <EVENT: TransactionEvent> dispatch(
         event: EVENT,
         consumerGroup: String,
-        processors: List<TransactionEventProcessor<EVENT>>
+        processors: List<TransactionEventProcessor<EVENT>>,
+        lastAttemptedProcessor: AtomicReference<TransactionEventProcessor<EVENT>?>
     ) {
         val toProcess = processors.filter { processor ->
             !logService.isProcessorCompleted(event.eventId, consumerGroup, processor::class.java.simpleName)
@@ -82,6 +109,7 @@ class TransactionEventConsumerSupport(
         }
         insertPendingLog(event, consumerGroup)
         toProcess.forEach { processor ->
+            lastAttemptedProcessor.set(processor)
             processor.handle(event)
             logService.markProcessorCompleted(event.eventId, consumerGroup, processor::class.java.simpleName)
         }
