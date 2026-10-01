@@ -67,7 +67,7 @@ interface SessionToResponseMapper {
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
     @Mapping(source = "lastAccessedById", target = "lastAccessedBy", qualifiedBy = [NullableFullName::class])
     @Mapping(target = "contactLabel", expression = "java(contactLabel)")
-    @Mapping(source = "totals.payableTotal", target = "payableTotal")
+    @Mapping(source = "totals.receivableTotal", target = "receivableTotal")
     @Mapping(source = "sessionId", target = "id")
     fun toSummaryDto(
         saleSession: SaleSession,

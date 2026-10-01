@@ -5,10 +5,10 @@ import java.math.BigDecimal
 
 object PaymentStatusResolver {
 
-    fun resolve(paid: BigDecimal, payableTotal: BigDecimal): PaymentStatus = when {
+    fun resolve(paid: BigDecimal, receivableTotal: BigDecimal): PaymentStatus = when {
         paid.compareTo(BigDecimal.ZERO) == 0 -> PaymentStatus.UNPAID
-        paid > payableTotal -> PaymentStatus.OVERPAID
-        paid < payableTotal -> PaymentStatus.PARTIALLY_SETTLED
+        paid > receivableTotal -> PaymentStatus.OVERPAID
+        paid < receivableTotal -> PaymentStatus.PARTIALLY_SETTLED
         else -> PaymentStatus.FULLY_SETTLED
     }
 }

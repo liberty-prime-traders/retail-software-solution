@@ -15,7 +15,7 @@ class SalePaymentAppender(
     fun appendNew(
         saleId: UUID,
         contactId: UUID,
-        payableTotal: BigDecimal,
+        receivableTotal: BigDecimal,
         saleSaveRequest: SaleSaveRequest,
     ): AppendResult {
         val newSalePaymentSaveRequests = saleSaveRequest.salePayments.filter { it.existingId == null }
@@ -27,7 +27,7 @@ class SalePaymentAppender(
                 paymentDate = salePaymentSaveRequest.paymentDate,
             )
         }
-        val writeResult = salePaymentWriter.write(saleId, contactId, payableTotal, newSalePayments)
+        val writeResult = salePaymentWriter.write(saleId, contactId, receivableTotal, newSalePayments)
         val persistedSalePaymentsByClientKey = newSalePaymentSaveRequests
             .mapIndexed { paymentIndex, salePaymentSaveRequest ->
                 val savedSalePayment = writeResult.savedSalePayments[paymentIndex]

@@ -14,7 +14,7 @@ data class SaleConfirmedEvent(
     override val sourceDocumentId: UUID,
     val contactId: UUID,
     val saleReferenceNumber: String,
-    val payableTotal: BigDecimal,
+    val receivableTotal: BigDecimal,
     val discountTotal: BigDecimal,
     val dateSold: LocalDate
 ) : TransactionEvent()

@@ -41,7 +41,7 @@ class SalePaymentService(
         val writeResult = salePaymentWriter.write(
             saleId = saleId,
             contactId = contactId,
-            payableTotal = saleTotal,
+            receivableTotal = saleTotal,
             newSalePayments = listOf(
                 SalePaymentWriter.NewSalePayment(
                     paymentMethodId = dto.paymentMethodId,

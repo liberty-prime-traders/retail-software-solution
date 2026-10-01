@@ -13,7 +13,6 @@ data class SaleSummary(
     val dateSold: OffsetDateTime?,
     val status: SaleStatus,
     val paymentStatus: PaymentStatus,
-    val subtotal: BigDecimal?,
-    val grandTotal: BigDecimal?,
+    val arrearsTotal: BigDecimal,
     val totalPaid: BigDecimal
 )

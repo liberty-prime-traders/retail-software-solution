@@ -80,16 +80,16 @@ class SaleSessionValidator(
 
     fun guardWalkInFullyCovered(saleSession: SaleSession) {
         if (saleSession.header.contactId != SystemContact.WALK_IN.id) return
-        if (saleSession.totals.paymentTotal < saleSession.totals.payableTotal) {
+        if (saleSession.totals.paymentTotal < saleSession.totals.receivableTotal) {
             throw RtsGenericException("Walk-in sales require full payment coverage")
         }
     }
 
     fun guardPaymentsWithinTotal(saleSession: SaleSession) {
-        if (saleSession.totals.payableTotal.signum() <= 0) return
+        if (saleSession.totals.receivableTotal.signum() <= 0) return
         SalePaymentValidator.guardNotExceedingSaleTotal(
             totalSubmitted = saleSession.totals.paymentTotal,
-            saleTotal = saleSession.totals.payableTotal,
+            receivableTotal = saleSession.totals.receivableTotal,
         )
     }
 

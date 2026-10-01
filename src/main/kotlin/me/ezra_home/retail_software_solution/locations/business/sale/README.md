@@ -22,12 +22,13 @@ locations/business/sale/api/
 Only the `api/` sub-package is considered the public surface. Other packages
 must call into sale through one of these classes:
 
-| Class                  | Purpose                                                                    |
-|------------------------|----------------------------------------------------------------------------|
-| `DraftSalePersister`   | Persist a sale at `DRAFT` from a `SaleSaveRequest` (called by sale_session) |
-| `ConfirmedSalePersister` | Persist a sale at `CONFIRMED` from a `SaleSaveRequest` (FIFO + Kafka)       |
-| `SaleUpdater`          | Void a sale; update payment status; update notes                            |
-| `SaleDataFetcher`      | Read sales (recent list, context lookup, header/line snapshots, contact, commit-time draft+version load) |
+| Class                    | Purpose                                                                                                  |
+|--------------------------|----------------------------------------------------------------------------------------------------------|
+| `DraftSalePersister`     | Persist a sale at `DRAFT` from a `SaleSaveRequest` (called by sale_session)                              |
+| `ConfirmedSalePersister` | Persist a sale at `CONFIRMED` from a `SaleSaveRequest` (FIFO + Kafka)                                    |
+| `SaleUpdater`            | Void a sale; update payment status; update notes                                                         |
+| `SaleDataFetcher`        | Read sales (recent list, context lookup, header/line snapshots, contact, commit-time draft+version load) |
+| `SaleSearchService`      | Filtered/paginated sale search (list + status summary), REST-exposed on `SaleEndpoint`                   |
 
 Creating and confirming a sale is **only** possible via a session — see
 `sale_session/README.md`. The persisters are the seams the session layer calls
@@ -80,6 +81,13 @@ Rules:
   tax entries reversed via Kafka, `SaleVoidEntity` recorded).
 - `VOIDED` and `DISCARDED` are terminal. `SaleValidator.guardCanVoid` rejects
   both, and also rejects voiding when there are active (non-voided) payments.
+- Voiding a `CONFIRMED` sale also requires `sale.taxTotal != null` — set
+  unconditionally (even to zero) by `SaleTaxFinalizationProcessor.handle`, so
+  it doubles as a "tax finalization has run" marker. This closes the race
+  where `SaleTaxReversalProcessor.shouldProcess` would otherwise no-op
+  (nothing to reverse yet) on a void that outran a still-pending or
+  retry-stuck finalization, permanently leaving unreversed tax on a voided
+  sale.
 
 `SaleStatus` is persisted as a short code via `SaleStatusConverter`
 (`DFT`, `CFM`, `VD`, `DSC`); the `status` column is `length = 5`. Never
@@ -191,7 +199,7 @@ persistence model, lifecycle, and reconciliation logic.
 - Either **line-level** (references a `SessionIdentity` of a session line —
   carries through to a `sale_line_id` after commit) or **order-level**
   (no `lineId`).
-- `direction`: `DISC` (reduces the payable) or `SRCH` (adds to the payable).
+- `direction`: `DISC` (reduces the receivable) or `SRCH` (adds to the receivable).
 - `calculationMethod`: `FIXED_VALUE` or `PERCENTAGE`.
   - **`value` is stored per-unit for line-level adjustments**; the calculator
     scales by line `quantity` at compute time
@@ -266,19 +274,25 @@ subtotal = Σ(line totals)
 ```
 
 ```
-payableTotal() = grandTotal ?: displaySubtotal() − discountTotal()
+receivableTotal() = grandTotal ?: displaySubtotal() − discountTotal()
 ```
 
 `grandTotal` is set after taxes finalize (see §7).
 
 `displaySubtotal()` — `subtotal + surchargeTotal()` — is the UI-facing
 figure: what the customer sees as "subtotal," so a surcharge never looks
-like a fee that appears only once the payable total is shown. It is
-computed fresh on every read, never persisted. `SaleAssembler` uses it for
-`SaleSummary.subtotal`; `SaleSessionTotals` (the session/draft screen's
-wire DTO) carries the identical computed `displaySubtotal` val for the
-same screen on the draft side. `subtotal` itself never reflects a
-surcharge — only `payableTotal()` and `displaySubtotal()` do.
+like a fee that appears only once the receivable total is shown. It is
+computed fresh on every read, never persisted. `SaleSessionTotals` (the
+session/draft screen's wire DTO) carries the identical computed
+`displaySubtotal` val for the same screen on the draft side. `subtotal`
+itself never reflects a surcharge — only `receivableTotal()` and
+`displaySubtotal()` do.
+
+`SaleAssembler.buildSummary` and `sale/search`'s row mapper both use
+`receivableTotal()` (not `displaySubtotal()`) as the input to
+`SaleArrears.arrearsTotal` — `SaleSummary` no longer carries `subtotal` or
+`grandTotal`; it carries `arrearsTotal` (non-null, computed, may be negative
+on an overpaid confirmed sale — never clamped there).
 
 ---
 
@@ -365,10 +379,10 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 
 1. On confirmation, `SaleConfirmedHandlerForKafka.publish` emits
    `SaleConfirmedEvent(sourceDocumentId, contactId, saleReferenceNumber,
-   payableTotal, dateSold)`. The event carries `payableTotal` only —
+   receivableTotal, dateSold)`. The event carries `receivableTotal` only —
    line/adjustment detail is not on the wire, so the downstream tax
    processor cannot reach back into line breakdowns; it computes against
-   `payableTotal` as the taxable amount.
+   `receivableTotal` as the taxable amount.
 2. `SaleTaxFinalizationProcessor.handle` consumes the event in a separate
    transaction:
    - Looks up active `OrgJurisdictionTaxType` rows (status = ACTIVE).
@@ -402,7 +416,7 @@ Taxes are **never computed in the sale transaction itself.** Instead:
 
 - `SaleEntity.taxTotal` / `grandTotal` are **null at the end of the commit
   transaction** and become populated **after the Kafka event lands**. Code
-  that needs the final total must call `payableTotal()` (which gracefully
+  that needs the final total must call `receivableTotal()` (which gracefully
   falls back to `displaySubtotal() − discountTotal()` when `grandTotal`
   is null).
 
@@ -449,7 +463,7 @@ sale commit:
 
 ### Ceilings
 
-- **At confirm, payments cannot exceed payable total** — enforced by
+- **At confirm, payments cannot exceed receivable total** — enforced by
   `SaleSessionValidator.guardPaymentsWithinTotal`, called from
   `SaleSessionPersister.confirm` before the commit transaction opens.
   **Drafts intentionally permit overpayment** (prepayment is legitimate
@@ -519,7 +533,7 @@ General project rules (Insert flow, `Optional<T>?` partial-update
 convention, no `@MappingTarget`, entity rules) live in
 `.claude/instructions.md`. Sale-package specifics only:
 
-- Entity helpers in this package: `SaleEntity.payableTotal()`,
+- Entity helpers in this package: `SaleEntity.receivableTotal()`,
   `SaleEntity.displaySubtotal()`, `SaleLineEntity.baseQty()`,
   `SaleLineEntity.lineTotal`. No business logic beyond these.
 - Domain DTOs (`SaleSummary`, `SaleLineDto`) abstract DB
@@ -617,7 +631,9 @@ run** — i.e. as soon as the data it needs is in scope.
 - DRAFT → DISCARDED (releases reservations only).
 - CONFIRMED → VOIDED (restores stock, writes `SaleVoidEntity`, publishes
   `SaleVoidedEvent`).
-- Rejected if already voided/discarded or if active payments exist.
+- Rejected if already voided/discarded, if active payments exist, or (for a
+  CONFIRMED sale) if tax finalization for it hasn't completed yet
+  (`sale.taxTotal == null`).
 - Confirmed-sale void requires the fiscal period **of today** to be open
   (the void itself is the bookable event).
 - DB defense-in-depth: `sale_void.sale_id` is `unique = true`, so a second
@@ -654,12 +670,35 @@ run** — i.e. as soon as the data it needs is in scope.
   REST-exposed as `POST /secured/location-products/search-for-sale` on
   `LocationProductEndpoint`.
 
+### `SaleSearchService.search(PageRequest<SaleSearchParameters, String>)` / `.summarize(SaleSearchParameters)`
+- Mirrors `sale_payment/search`. Native SQL (not Criteria API), one shared
+  `QueryBuilderContext` predicate built by `SaleSearchQueryBuilder.buildPredicate`
+  and reused by both the list and the summary query.
+- The predicate targets only `sale` columns/expressions — **no joins** — so a
+  future filter on a `sale_payment` column cannot be added to it without
+  breaking this sharing.
+- Keyset cursor is `(created_on, id)` descending, same shape as the payment
+  search, even though the grid displays `date_sold` (nullable, backdatable —
+  not a safe sort key).
+- List query selects from `sale` alone; paid amounts and arrears are resolved
+  post-fetch in Kotlin via `salePaymentFetcher.calculatePaidAmounts` and
+  `SaleArrears.arrearsTotal`, for the page's ids only.
+- Summary query joins payments via `LEFT JOIN LATERAL` (one row per sale) and
+  groups by `sale.status`, padded to all four `SaleStatus` entries in the
+  service layer. Only `CONFIRMED` sales are owed — see `SaleArrears`.
+- `SaleSearchSummaryResponseDto`'s `confirmedReceivableTotal` /
+  `confirmedDiscountTotal` are read off the confirmed row, not summed across
+  statuses — summing would add voided sales into a "real" total.
+- Summary requires at least one filter (`SaleSearchValidator.guardSummaryHasFilter`).
+- REST: `POST /secured/sales/search`, `POST /secured/sales/search/summary` on
+  `SaleEndpoint`.
+
 ---
 
 ## 14. Common Pitfalls
 
 - **Computing `grandTotal` synchronously.** It is null until the tax
-  processor runs. Use `payableTotal()` if you need a real number in the
+  processor runs. Use `receivableTotal()` if you need a real number in the
   same transaction.
 - **Using `LocalDate.now()` / `ZoneOffset.UTC` anywhere in this package.**
   Always go through `DateTimes`. Sales straddle midnight and member orgs
@@ -698,6 +737,8 @@ run** — i.e. as soon as the data it needs is in scope.
 | Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                                                                                      |
 | Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                                                                                 |
 | Read APIs                  | `SaleDataFetcher`, `SaleAssembler`                                                                                                                             |
+| Arrears rule               | `SaleArrears` — shared by `SaleAssembler.buildSummary` and `sale/search`                                                                                       |
+| Search (list + summary)    | `sale/search/` package (`SaleSearchQueryBuilder`, `SaleSearchFetcher`, `SaleSearchExecutor`, `SaleSearchRowMapper`, `SaleSearchMapper`, `SaleSearchValidator`), `SaleSearchService` |
 | Session orchestration      | `sale_session/` package (see `sale_session/README.md`)                                                                                                         |
 
 Keep this table accurate as the package evolves — it is the entry point

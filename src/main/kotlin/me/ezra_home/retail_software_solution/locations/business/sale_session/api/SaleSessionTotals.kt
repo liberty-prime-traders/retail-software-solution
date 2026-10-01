@@ -9,7 +9,7 @@ data class SaleSessionTotals(
     val lineLevelSurchargeTotal: BigDecimal,
     val orderLevelSurchargeTotal: BigDecimal,
     val paymentTotal: BigDecimal,
-    val payableTotal: BigDecimal,
+    val receivableTotal: BigDecimal,
     val balance: BigDecimal,
 ) {
     val surchargeTotal: BigDecimal = lineLevelSurchargeTotal + orderLevelSurchargeTotal
@@ -23,7 +23,7 @@ data class SaleSessionTotals(
             lineLevelSurchargeTotal = BigDecimal.ZERO,
             orderLevelSurchargeTotal = BigDecimal.ZERO,
             paymentTotal = BigDecimal.ZERO,
-            payableTotal = BigDecimal.ZERO,
+            receivableTotal = BigDecimal.ZERO,
             balance = BigDecimal.ZERO,
         )
     }

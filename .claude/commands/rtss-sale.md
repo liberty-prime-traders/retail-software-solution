@@ -53,7 +53,7 @@ create → DRAFT → CONFIRMED → VOIDED
 
 - **Reservations**: always `clearBySale` before re-issuing at commit. Never diff-based reservation logic.
 - **Kafka events**: always via `ApplicationEventPublisher` so they bind to the transaction commit.
-- **`grandTotal`** is null at commit time — async Kafka tax processor fills it. Use `payableTotal()` if you need a real number in the same transaction.
+- **`grandTotal`** is null at commit time — async Kafka tax processor fills it. Use `receivableTotal()` if you need a real number in the same transaction.
 - **`dateSold`** comparisons use org timezone — always `DateTimes.Local.Now.organization()`, never `LocalDate.now()` / `ZoneOffset.UTC`.
 - **Walk-in** (`SystemContact.WALK_IN.id`) must be fully paid at confirm; no DB lookup required for walk-in existence check.
 - **Discount ceilings** enforced on every session mutation — line-level discounts cannot exceed the line total; order-level cannot exceed subtotal minus line-level discounts.
@@ -71,7 +71,7 @@ create → DRAFT → CONFIRMED → VOIDED
 
 ## Common pitfalls (from README §14 / §8)
 
-- Never compute `grandTotal` synchronously — use `payableTotal()`.
+- Never compute `grandTotal` synchronously — use `receivableTotal()`.
 - Never add a guard after a bulk fetch — move it earlier.
 - Never bypass the session for line/adjustment edits — no REST surface exists to mutate a draft directly.
 - Never publish Kafka events outside the sale transaction.

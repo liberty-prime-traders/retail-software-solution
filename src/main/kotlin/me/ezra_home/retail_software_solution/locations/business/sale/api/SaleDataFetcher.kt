@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Propagation
 import java.math.BigDecimal
 import java.util.UUID
 
-data class SaleContext(val contactId: UUID, val payableTotal: BigDecimal, val status: SaleStatus)
+data class SaleContext(val contactId: UUID, val receivableTotal: BigDecimal, val status: SaleStatus)
 
 @Service
 @TransactionalOnLocationSchema(readOnly = true)
@@ -45,7 +45,7 @@ class SaleDataFetcher(
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun lockAndGetSaleContext(saleId: UUID): SaleContext {
         val sale = lockAndGetSale(saleId)
-        return SaleContext(sale.contactId, sale.payableTotal(), sale.status)
+        return SaleContext(sale.contactId, sale.receivableTotal(), sale.status)
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)

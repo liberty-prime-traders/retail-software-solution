@@ -37,7 +37,7 @@ class SaleConfirmedHandlerForKafka(
                 sourceDocumentId = sale.id!!,
                 contactId = sale.contactId,
                 saleReferenceNumber = sale.requiredReference(),
-                payableTotal = sale.payableTotal(),
+                receivableTotal = sale.receivableTotal(),
                 discountTotal = sale.discountTotal(),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!)
             )

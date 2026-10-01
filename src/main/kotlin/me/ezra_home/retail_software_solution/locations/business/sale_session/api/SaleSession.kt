@@ -38,7 +38,7 @@ data class SaleSession(
         salePayments.filter { it.voidedReason == null }.sumOf { it.amount }
 
     fun canAddPayments(): Boolean {
-        if (totals.paymentTotal >= totals.payableTotal) return false
+        if (totals.paymentTotal >= totals.receivableTotal) return false
         return originalStatus == SaleStatus.DRAFT || originalStatus == SaleStatus.CONFIRMED
     }
 

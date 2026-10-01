@@ -79,6 +79,6 @@ class SaleEntity(
     fun displaySubtotal(): BigDecimal =
         (subtotal ?: BigDecimal.ZERO) + surchargeTotal()
 
-    fun payableTotal(): BigDecimal =
+    fun receivableTotal(): BigDecimal =
         grandTotal ?: (displaySubtotal() - discountTotal())
 }

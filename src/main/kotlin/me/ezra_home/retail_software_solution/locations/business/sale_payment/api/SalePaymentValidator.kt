@@ -13,11 +13,11 @@ object SalePaymentValidator {
         }
     }
 
-    fun guardNotExceedingSaleTotal(totalSubmitted: BigDecimal, saleTotal: BigDecimal) {
-        if (totalSubmitted > saleTotal)
+    fun guardNotExceedingSaleTotal(totalSubmitted: BigDecimal, receivableTotal: BigDecimal) {
+        if (totalSubmitted > receivableTotal)
             throw RtsGenericException(
                 "Payments of ${DisplayFormatters.formatCurrency(totalSubmitted)} exceed " +
-                        "sale total of ${DisplayFormatters.formatCurrency(saleTotal)}"
+                        "sale total of ${DisplayFormatters.formatCurrency(receivableTotal)}"
             )
     }
 
