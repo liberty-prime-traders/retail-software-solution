@@ -18,3 +18,30 @@ databaseChangeLog:
         - dropUniqueConstraint:
             tableName: tax_entry
             constraintName: uq_tax_entry_src_ref_type_tax_type
+
+  - changeSet:
+      id: create-index-tax-entry-fiscal-period-id-created-on-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_tax_entry_fiscal_period_id_created_on_id
+      changes:
+        - createIndex:
+            indexName: idx_tax_entry_fiscal_period_id_created_on_id
+            tableName: tax_entry
+            columns:
+              - column:
+                  name: fiscal_period_id
+              - column:
+                  name: created_on
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_tax_entry_fiscal_period_id_created_on_id
+            tableName: tax_entry

@@ -45,6 +45,7 @@ class SaleTaxReversalProcessor(
             TaxEntryCreateDto(
                 sourceReferenceNumber = source.sourceReferenceNumber,
                 sourceType = TaxSourceType.SALE_VOID,
+                direction = source.direction,
                 taxTypeId = source.taxTypeId,
                 fiscalPeriodId = fiscalPeriodId,
                 calculationMethod = source.calculationMethod,

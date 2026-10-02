@@ -7,6 +7,7 @@ import java.util.UUID
 data class TaxEntryCreateDto(
     val sourceReferenceNumber: String,
     val sourceType: TaxSourceType,
+    val direction: TaxDirection,
     val taxTypeId: UUID,
     val fiscalPeriodId: UUID,
     val calculationMethod: CalculationMethod,

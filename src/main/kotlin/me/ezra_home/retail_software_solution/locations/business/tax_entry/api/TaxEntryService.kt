@@ -28,6 +28,7 @@ class TaxEntryService(
     private fun TaxEntryEntity.toDto() = TaxEntryDto(
         sourceReferenceNumber = sourceReferenceNumber,
         sourceType = sourceType,
+        direction = direction,
         taxTypeId = taxTypeId,
         fiscalPeriodId = fiscalPeriodId,
         calculationMethod = calculationMethod,
@@ -40,6 +41,7 @@ class TaxEntryService(
     private fun TaxEntryCreateDto.toEntity() = TaxEntryEntity(
         sourceReferenceNumber = sourceReferenceNumber,
         sourceType = sourceType,
+        direction = direction,
         taxTypeId = taxTypeId,
         fiscalPeriodId = fiscalPeriodId,
         calculationMethod = calculationMethod,

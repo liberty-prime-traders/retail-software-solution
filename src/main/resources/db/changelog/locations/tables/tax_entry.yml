@@ -43,6 +43,13 @@ databaseChangeLog:
                     notNullConstraintName: tax_entry_source_type_notnull
 
               - column:
+                  name: direction
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_direction_notnull
+
+              - column:
                   name: tax_type_id
                   type: uuid
                   constraints:

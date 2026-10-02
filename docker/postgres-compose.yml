@@ -8,6 +8,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
     volumes:
       - db-data:/var/lib/postgresql/data
+    labels:
+      - "rtss.allow-db-overwrite=${ALLOW_DB_OVERWRITE:-false}"
     ports:
       - "${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}"
     healthcheck:

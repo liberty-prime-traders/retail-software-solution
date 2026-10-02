@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntryService
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
@@ -65,6 +66,7 @@ class SaleTaxFinalizationProcessor(
             taxEntries += TaxEntryCreateDto(
                 sourceReferenceNumber = event.saleReferenceNumber,
                 sourceType = TaxSourceType.SALE,
+                direction = TaxDirection.OUTPUT,
                 taxTypeId = orgTaxType.jurisdictionTaxTypeId,
                 fiscalPeriodId = fiscalPeriodId,
                 calculationMethod = taxType.calculationMethod,

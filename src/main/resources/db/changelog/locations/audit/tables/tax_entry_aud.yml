@@ -39,6 +39,10 @@ databaseChangeLog:
                   type: varchar(5)
 
               - column:
+                  name: direction
+                  type: varchar(5)
+
+              - column:
                   name: tax_type_id
                   type: uuid
 

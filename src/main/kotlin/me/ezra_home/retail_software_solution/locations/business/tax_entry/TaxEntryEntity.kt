@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
@@ -27,6 +28,10 @@ class TaxEntryEntity(
     @Convert(converter = TaxSourceTypeConverter::class)
     @Column(name = "source_type", nullable = false, length = 5, updatable = false)
     var sourceType: TaxSourceType,
+
+    @Convert(converter = TaxDirectionConverter::class)
+    @Column(name = "direction", nullable = false, length = 5, updatable = false)
+    var direction: TaxDirection,
 
     @Column(name = "tax_type_id", nullable = false, updatable = false)
     var taxTypeId: UUID,
