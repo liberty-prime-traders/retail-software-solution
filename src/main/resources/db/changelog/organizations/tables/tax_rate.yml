@@ -42,6 +42,20 @@ databaseChangeLog:
                   type: decimal(15,4)
 
               - column:
+                  name: tax_is_billed_to_customer_separately
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_tax_is_billed_to_customer_separately_notnull
+
+              - column:
+                  name: tax_is_included_in_taxable_amount
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_rate_tax_is_included_in_taxable_amount_notnull
+
+              - column:
                   name: start_date
                   type: date
                   constraints:

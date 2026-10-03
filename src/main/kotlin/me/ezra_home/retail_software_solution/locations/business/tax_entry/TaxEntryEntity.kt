@@ -36,6 +36,12 @@ class TaxEntryEntity(
     @Column(name = "tax_type_id", nullable = false, updatable = false)
     var taxTypeId: UUID,
 
+    @Column(name = "tax_type_name", length = 100, nullable = false, updatable = false)
+    var taxTypeName: String,
+
+    @Column(name = "jurisdiction_name", length = 100, nullable = false, updatable = false)
+    var jurisdictionName: String,
+
     @Column(name = "fiscal_period_id", nullable = false, updatable = false)
     var fiscalPeriodId: UUID,
 
@@ -46,11 +52,17 @@ class TaxEntryEntity(
     @Column(name = "rate", nullable = false, precision = 19, scale = 4, updatable = false)
     var rate: BigDecimal,
 
-    @Column(name = "tax_inclusive", nullable = false, updatable = false)
-    var taxInclusive: Boolean,
+    @Column(name = "tax_is_billed_to_customer_separately", nullable = false, updatable = false)
+    var taxIsBilledToCustomerSeparately: Boolean,
+
+    @Column(name = "tax_is_included_in_taxable_amount", nullable = false, updatable = false)
+    var taxIsIncludedInTaxableAmount: Boolean,
 
     @Column(name = "taxable_amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var taxableAmount: BigDecimal,
+
+    @Column(name = "resolved_taxable_base", nullable = false, precision = 19, scale = 4, updatable = false)
+    var resolvedTaxableBase: BigDecimal,
 
     @Column(name = "tax_amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var taxAmount: BigDecimal

@@ -7,7 +7,6 @@ object TaxEntrySearchMapper {
 
     fun toRowDto(
         row: TaxEntrySearchRawRow,
-        taxTypeNamesById: Map<UUID, String>,
         fiscalPeriodNamesById: Map<UUID, String>
     ): TaxEntrySearchResultDto = TaxEntrySearchResultDto(
         id = row.id,
@@ -15,13 +14,16 @@ object TaxEntrySearchMapper {
         sourceType = row.sourceType,
         direction = row.direction,
         taxTypeId = row.taxTypeId,
-        taxTypeName = taxTypeNamesById.getValue(row.taxTypeId),
+        taxTypeName = row.taxTypeName,
+        jurisdictionName = row.jurisdictionName,
         fiscalPeriodId = row.fiscalPeriodId,
         fiscalPeriodName = fiscalPeriodNamesById.getValue(row.fiscalPeriodId),
         calculationMethod = row.calculationMethod,
         rate = row.rate,
-        taxInclusive = row.taxInclusive,
+        taxIsBilledToCustomerSeparately = row.taxIsBilledToCustomerSeparately,
+        taxIsIncludedInTaxableAmount = row.taxIsIncludedInTaxableAmount,
         taxableAmount = row.taxableAmount,
+        resolvedTaxableBase = row.resolvedTaxableBase,
         taxAmount = row.taxAmount,
         recordedOn = row.createdOn
     )

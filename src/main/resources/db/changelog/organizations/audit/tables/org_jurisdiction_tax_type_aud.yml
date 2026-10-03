@@ -47,10 +47,6 @@ databaseChangeLog:
                   type: nvarchar2(50)
 
               - column:
-                  name: tax_inclusive
-                  type: boolean
-
-              - column:
                   name: revend
                   type: bigint
 

@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.tax_entry.search
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.search.TaxEntrySearchValidator
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.search.TaxEntrySourceTypeSummaryRawRow
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
@@ -17,7 +16,6 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class TaxEntrySearchService(
     private val taxEntrySearchFetcher: TaxEntrySearchFetcher,
-    private val jurisdictionTaxTypeFetcher: JurisdictionTaxTypeFetcher,
     private val fiscalPeriodService: FiscalPeriodService
 ) {
 
@@ -30,9 +28,8 @@ class TaxEntrySearchService(
         val hasMore = rawRows.size > pageRequest.requestedSize
         val pageRows = if (hasMore) rawRows.take(pageRequest.requestedSize) else rawRows
 
-        val taxTypeNamesById = resolveTaxTypeNames(pageRows.map { it.taxTypeId })
         val fiscalPeriodNamesById = resolveFiscalPeriodNames(pageRows.map { it.fiscalPeriodId })
-        val contents = pageRows.map { TaxEntrySearchMapper.toRowDto(it, taxTypeNamesById, fiscalPeriodNamesById) }
+        val contents = pageRows.map { TaxEntrySearchMapper.toRowDto(it, fiscalPeriodNamesById) }
 
         val currentCursor = pageRows.lastOrNull()
             ?.let { KeysetSearchCursor(it.createdOn, it.id).encode() }
@@ -45,13 +42,19 @@ class TaxEntrySearchService(
         TaxEntrySearchValidator.guardValidParameters(taxEntrySearchParameters)
         val rawRows = taxEntrySearchFetcher.summarize(taxEntrySearchParameters)
 
-        val taxTypeNamesById = resolveTaxTypeNames(rawRows.map { it.taxTypeId })
         val fiscalPeriodNamesById = resolveFiscalPeriodNames(rawRows.map { it.fiscalPeriodId })
 
+        // Grouped by the name each row snapshotted at creation, not a live lookup by taxTypeId --
+        // if a tax type or jurisdiction was renamed between two periods, that shows up as two
+        // separate fragments here rather than being silently merged under today's name.
         val groups = rawRows
-            .groupBy { it.fiscalPeriodId to it.taxTypeId }
-            .map { (key, rowsForGroup) -> foldGroup(key.first, key.second, rowsForGroup, taxTypeNamesById, fiscalPeriodNamesById) }
-            .sortedWith(compareByDescending<TaxTypePeriodSummaryDto> { it.fiscalPeriodName }.thenBy { it.taxTypeName })
+            .groupBy { TaxTypeFragmentKey(it.fiscalPeriodId, it.taxTypeId, it.taxTypeName, it.jurisdictionName) }
+            .map { (key, rowsForGroup) -> foldGroup(key, rowsForGroup, fiscalPeriodNamesById) }
+            .sortedWith(
+                compareByDescending<TaxTypePeriodSummaryDto> { it.fiscalPeriodName }
+                    .thenBy { it.taxTypeName }
+                    .thenBy { it.jurisdictionName }
+            )
 
         return TaxEntrySearchSummaryResponseDto(
             groups = groups,
@@ -62,11 +65,16 @@ class TaxEntrySearchService(
         )
     }
 
+    private data class TaxTypeFragmentKey(
+        val fiscalPeriodId: UUID,
+        val taxTypeId: UUID,
+        val taxTypeName: String,
+        val jurisdictionName: String
+    )
+
     private fun foldGroup(
-        fiscalPeriodId: UUID,
-        taxTypeId: UUID,
+        key: TaxTypeFragmentKey,
         rowsForGroup: List<TaxEntrySourceTypeSummaryRawRow>,
-        taxTypeNamesById: Map<UUID, String>,
         fiscalPeriodNamesById: Map<UUID, String>
     ): TaxTypePeriodSummaryDto {
         val reversalRows = rowsForGroup.filter { it.sourceType == TaxSourceType.SALE_VOID }
@@ -76,24 +84,17 @@ class TaxEntrySearchService(
         val reversalTax = reversalRows.sumOf { it.taxAmount }
 
         return TaxTypePeriodSummaryDto(
-            fiscalPeriodId = fiscalPeriodId,
-            fiscalPeriodName = fiscalPeriodNamesById[fiscalPeriodId] ?: fiscalPeriodId.toString(),
-            taxTypeId = taxTypeId,
-            taxTypeName = taxTypeNamesById[taxTypeId] ?: taxTypeId.toString(),
+            fiscalPeriodId = key.fiscalPeriodId,
+            fiscalPeriodName = fiscalPeriodNamesById[key.fiscalPeriodId] ?: key.fiscalPeriodId.toString(),
+            taxTypeId = key.taxTypeId,
+            taxTypeName = key.taxTypeName,
+            jurisdictionName = key.jurisdictionName,
             entryCount = rowsForGroup.sumOf { it.entryCount },
             grossTaxable = grossRows.sumOf { it.taxableAmount },
             grossTax = grossTax,
             reversalTax = reversalTax,
             netTax = grossTax + reversalTax
         )
-    }
-
-    private fun resolveTaxTypeNames(ids: Collection<UUID>): Map<UUID, String> {
-        if (ids.isEmpty()) return emptyMap()
-        val idSet = ids.toSet()
-        return jurisdictionTaxTypeFetcher.buildIndex()
-            .filterKeys { it in idSet }
-            .mapValues { it.value.label }
     }
 
     private fun resolveFiscalPeriodNames(ids: Collection<UUID>): Map<UUID, String> {

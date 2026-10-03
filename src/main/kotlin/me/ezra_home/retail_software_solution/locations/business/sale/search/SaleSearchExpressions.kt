@@ -15,6 +15,9 @@ object SaleSearchExpressions {
   const val DISPLAY_SUBTOTAL =
     "(COALESCE($S.subtotal, 0) + $SURCHARGE_TOTAL)"
 
+  const val TAXABLE_AMOUNT =
+    "($DISPLAY_SUBTOTAL - $DISCOUNT_TOTAL)"
+
   const val RECEIVABLE_TOTAL =
-    "COALESCE($S.grand_total, ($DISPLAY_SUBTOTAL - $DISCOUNT_TOTAL))"
+    "($TAXABLE_AMOUNT + COALESCE($S.tax_billed, 0))"
 }

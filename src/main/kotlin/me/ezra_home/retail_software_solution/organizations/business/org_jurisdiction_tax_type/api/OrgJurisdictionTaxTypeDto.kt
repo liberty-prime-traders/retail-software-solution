@@ -11,6 +11,5 @@ data class OrgJurisdictionTaxTypeDto(
     val jurisdictionTaxTypeId: UUID,
     val status: OrgJurisdictionTaxTypeStatus = OrgJurisdictionTaxTypeStatus.ACTIVE,
     val payableAccountCode: String,
-    val recoverableAccountCode: String? = null,
-    val taxInclusive: Boolean = true
+    val recoverableAccountCode: String? = null
 )

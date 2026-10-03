@@ -17,11 +17,15 @@ object TaxEntrySearchRowMapper {
         sourceType = TaxSourceType.entries.first { it.code == tuple.get("source_type", String::class.java) },
         direction = TaxDirection.entries.first { it.code == tuple.get("direction", String::class.java) },
         taxTypeId = tuple.get("tax_type_id", UUID::class.java),
+        taxTypeName = tuple.get("tax_type_name", String::class.java),
+        jurisdictionName = tuple.get("jurisdiction_name", String::class.java),
         fiscalPeriodId = tuple.get("fiscal_period_id", UUID::class.java),
         calculationMethod = CalculationMethod.entries.first { it.code == tuple.get("calculation_method", String::class.java) },
         rate = tuple.get("rate", BigDecimal::class.java),
-        taxInclusive = tuple.get("tax_inclusive", Boolean::class.java),
+        taxIsBilledToCustomerSeparately = tuple.get("tax_is_billed_to_customer_separately", Boolean::class.java),
+        taxIsIncludedInTaxableAmount = tuple.get("tax_is_included_in_taxable_amount", Boolean::class.java),
         taxableAmount = tuple.get("taxable_amount", BigDecimal::class.java),
+        resolvedTaxableBase = tuple.get("resolved_taxable_base", BigDecimal::class.java),
         taxAmount = tuple.get("tax_amount", BigDecimal::class.java),
         createdOn = requireNotNull(DateQualifier.toOffsetDateTime(tuple.get("created_on", Instant::class.java)))
     )
@@ -29,6 +33,8 @@ object TaxEntrySearchRowMapper {
     fun summaryFromTuple(tuple: Tuple): TaxEntrySourceTypeSummaryRawRow = TaxEntrySourceTypeSummaryRawRow(
         fiscalPeriodId = tuple.get("fiscal_period_id", UUID::class.java),
         taxTypeId = tuple.get("tax_type_id", UUID::class.java),
+        taxTypeName = tuple.get("tax_type_name", String::class.java),
+        jurisdictionName = tuple.get("jurisdiction_name", String::class.java),
         sourceType = TaxSourceType.entries.first { it.code == tuple.get("source_type", String::class.java) },
         entryCount = tuple.get("entry_count", Number::class.java).toLong(),
         taxableAmount = tuple.get("taxable_amount", BigDecimal::class.java),

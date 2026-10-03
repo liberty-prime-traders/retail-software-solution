@@ -25,6 +25,7 @@ class TaxRateValidator(
     fun validateForCreate(dto: TaxRateInsertDto) {
         validateName(dto.name)
         validateDates(dto.startDate, dto.endDate)
+        validateBillingAndInclusionAreNotBothTrue(dto.taxIsBilledToCustomerSeparately, dto.taxIsIncludedInTaxableAmount)
         val parent = orgJurisdictionTaxTypeFetcher.getAllDtos()
             .firstOrNull { it.id == dto.orgJurisdictionTaxTypeId }
             ?: throw RtsGenericException("Org jurisdiction tax type not found")
@@ -56,6 +57,14 @@ class TaxRateValidator(
             TaxApplicationLevel.TRANSACTION -> candidates.firstOrNull()
         }
         conflict?.let { throwOverlapError(it) }
+    }
+
+    private fun validateBillingAndInclusionAreNotBothTrue(
+        taxIsBilledToCustomerSeparately: Boolean,
+        taxIsIncludedInTaxableAmount: Boolean
+    ) {
+        if (taxIsBilledToCustomerSeparately && taxIsIncludedInTaxableAmount)
+            throw RtsGenericException("A tax already included in the taxable amount cannot also be billed separately")
     }
 
     private fun validateName(name: String) {

@@ -12,12 +12,15 @@ data class TaxEntrySearchResultDto(
     val direction: TaxDirection,
     val taxTypeId: UUID,
     val taxTypeName: String,
+    val jurisdictionName: String,
     val fiscalPeriodId: UUID,
     val fiscalPeriodName: String,
     val calculationMethod: CalculationMethod,
     val rate: BigDecimal,
-    val taxInclusive: Boolean,
+    val taxIsBilledToCustomerSeparately: Boolean,
+    val taxIsIncludedInTaxableAmount: Boolean,
     val taxableAmount: BigDecimal,
+    val resolvedTaxableBase: BigDecimal,
     val taxAmount: BigDecimal,
     val recordedOn: OffsetDateTime
 )

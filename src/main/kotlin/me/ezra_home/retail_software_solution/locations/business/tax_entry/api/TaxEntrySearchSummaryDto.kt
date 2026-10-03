@@ -8,6 +8,7 @@ data class TaxTypePeriodSummaryDto(
     val fiscalPeriodName: String,
     val taxTypeId: UUID,
     val taxTypeName: String,
+    val jurisdictionName: String,
     val entryCount: Long,
     val grossTaxable: BigDecimal,
     val grossTax: BigDecimal,

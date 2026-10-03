@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRep
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleTaxFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
@@ -32,6 +33,7 @@ class ConfirmedSalePersister(
     private val saleSaveFinalizer: SaleSaveFinalizer,
     private val saleValidator: SaleValidator,
     private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val saleTaxFinalizer: SaleTaxFinalizer,
 ) {
 
     fun confirm(saleSaveRequest: SaleSaveRequest): SaleSaveResult {
@@ -58,6 +60,7 @@ class ConfirmedSalePersister(
         )
 
         runFifoConsumption(saleEntity, lineSyncResult.persistedSaleLines)
+        saleTaxFinalizer.finalizeTaxForConfirm(saleEntity)
         saleConfirmedHandlerForKafka.publish(saleEntity)
 
         return SaleSaveResult(

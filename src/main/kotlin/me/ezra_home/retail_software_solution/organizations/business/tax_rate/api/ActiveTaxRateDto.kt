@@ -4,5 +4,7 @@ import java.math.BigDecimal
 
 data class ActiveTaxRateDto(
     val ratePercentage: BigDecimal?,
-    val rateFlatAmount: BigDecimal?
+    val rateFlatAmount: BigDecimal?,
+    val taxIsBilledToCustomerSeparately: Boolean,
+    val taxIsIncludedInTaxableAmount: Boolean
 )

@@ -34,14 +34,14 @@ class SalePaymentService(
         SalePaymentValidator.guardPositiveAmount(dto.amount)
         val effectivePaymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization()
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectivePaymentDate))
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
+        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-        SalePaymentValidator.guardNotExceedingBalance(dto.amount, saleTotal.subtract(alreadyPaid))
+        SalePaymentValidator.guardNotExceedingBalance(dto.amount, receivableTotal.subtract(alreadyPaid))
         val writeResult = salePaymentWriter.write(
             saleId = saleId,
             contactId = contactId,
-            receivableTotal = saleTotal,
+            receivableTotal = receivableTotal,
             newSalePayments = listOf(
                 SalePaymentWriter.NewSalePayment(
                     paymentMethodId = dto.paymentMethodId,
@@ -69,14 +69,14 @@ class SalePaymentService(
             payment.requiredReference()
         )
 
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
+        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
         SalePaymentValidator.guardSaleNotVoided(saleStatus)
 
         val voidEntity = SalePaymentVoidEntity(salePaymentId = dto.salePaymentId, reason = dto.reason)
         salePaymentVoidRepository.save(voidEntity)
 
         val totalPaidAfterVoid = salePaymentFetcher.calculatePaidAmount(payment.saleId)
-        val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, saleTotal)
+        val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, receivableTotal)
         val updatedSaleVersion = saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
         salePaymentVoidHandlerForKafka.publish(payment, voidEntity, contactId)
         return SalePaymentMapper.toResponseDto(

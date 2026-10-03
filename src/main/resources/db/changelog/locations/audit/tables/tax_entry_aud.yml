@@ -47,6 +47,14 @@ databaseChangeLog:
                   type: uuid
 
               - column:
+                  name: tax_type_name
+                  type: nvarchar2(100)
+
+              - column:
+                  name: jurisdiction_name
+                  type: nvarchar2(100)
+
+              - column:
                   name: fiscal_period_id
                   type: uuid
 
@@ -59,11 +67,19 @@ databaseChangeLog:
                   type: numeric(19, 4)
 
               - column:
-                  name: tax_inclusive
+                  name: tax_is_billed_to_customer_separately
+                  type: boolean
+
+              - column:
+                  name: tax_is_included_in_taxable_amount
                   type: boolean
 
               - column:
                   name: taxable_amount
+                  type: numeric(19, 4)
+
+              - column:
+                  name: resolved_taxable_base
                   type: numeric(19, 4)
 
               - column:

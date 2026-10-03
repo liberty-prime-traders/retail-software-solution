@@ -42,12 +42,13 @@ class SaleVoidedEventProcessor(
 
     override fun prepareLedgerRequest(event: SaleVoidedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)
-        val netAmount = event.receivableTotal
-        val grossRevenue = netAmount.add(event.discountTotal)
+        val taxableAmount = event.taxableAmount
+        val amountOwed = taxableAmount.add(event.taxBilled)
+        val grossRevenue = taxableAmount.add(event.discountTotal)
 
-        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelReversalEntries(event.dateSold, netAmount)
+        val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelReversalEntries(event.saleReferenceNumber)
         val saleEntries = buildList {
-            add(LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.CREDIT, netAmount))
+            add(LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.CREDIT, amountOwed))
             add(LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.DEBIT, grossRevenue))
             if (event.discountTotal.signum() > 0) {
                 add(LedgerEntryRequest(SystemAccount.SALES_DISCOUNTS.code, EntryType.CREDIT, event.discountTotal))
@@ -63,7 +64,7 @@ class SaleVoidedEventProcessor(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
                     receivableAmount = BigDecimal.ZERO,
-                    payableAmount = netAmount
+                    payableAmount = amountOwed
                 )
             )
         )

@@ -57,6 +57,20 @@ databaseChangeLog:
                     notNullConstraintName: tax_entry_tax_type_id_notnull
 
               - column:
+                  name: tax_type_name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_tax_type_name_notnull
+
+              - column:
+                  name: jurisdiction_name
+                  type: nvarchar2(100)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_jurisdiction_name_notnull
+
+              - column:
                   name: fiscal_period_id
                   type: uuid
                   constraints:
@@ -78,11 +92,18 @@ databaseChangeLog:
                     notNullConstraintName: tax_entry_rate_notnull
 
               - column:
-                  name: tax_inclusive
+                  name: tax_is_billed_to_customer_separately
                   type: boolean
                   constraints:
                     nullable: false
-                    notNullConstraintName: tax_entry_tax_inclusive_notnull
+                    notNullConstraintName: tax_entry_tax_is_billed_to_customer_separately_notnull
+
+              - column:
+                  name: tax_is_included_in_taxable_amount
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_tax_is_included_in_taxable_amount_notnull
 
               - column:
                   name: taxable_amount
@@ -90,6 +111,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: tax_entry_taxable_amount_notnull
+
+              - column:
+                  name: resolved_taxable_base
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: tax_entry_resolved_taxable_base_notnull
 
               - column:
                   name: tax_amount

@@ -42,7 +42,12 @@ class TaxRateService(
     fun findActiveRateForDate(date: LocalDate): Map<UUID, ActiveTaxRateDto> {
         val rates = taxRateRepository.findActiveRateByDate(date)
         return rates.associate { rate ->
-            rate.orgJurisdictionTaxTypeId to ActiveTaxRateDto(rate.ratePercentage, rate.rateFlatAmount)
+            rate.orgJurisdictionTaxTypeId to ActiveTaxRateDto(
+                ratePercentage = rate.ratePercentage,
+                rateFlatAmount = rate.rateFlatAmount,
+                taxIsBilledToCustomerSeparately = rate.taxIsBilledToCustomerSeparately,
+                taxIsIncludedInTaxableAmount = rate.taxIsIncludedInTaxableAmount
+            )
         }
     }
 

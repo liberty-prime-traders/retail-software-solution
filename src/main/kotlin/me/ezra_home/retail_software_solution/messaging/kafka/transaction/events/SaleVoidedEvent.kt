@@ -14,7 +14,8 @@ data class SaleVoidedEvent(
     override val sourceDocumentId: UUID,
     val contactId: UUID,
     val saleReferenceNumber: String,
-    val receivableTotal: BigDecimal,
+    val taxableAmount: BigDecimal,
+    val taxBilled: BigDecimal,
     val discountTotal: BigDecimal,
     val dateSold: LocalDate,
     val dateVoided: LocalDate

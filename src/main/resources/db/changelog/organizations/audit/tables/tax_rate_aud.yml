@@ -47,6 +47,14 @@ databaseChangeLog:
                   type: decimal(15,4)
 
               - column:
+                  name: tax_is_billed_to_customer_separately
+                  type: boolean
+
+              - column:
+                  name: tax_is_included_in_taxable_amount
+                  type: boolean
+
+              - column:
                   name: start_date
                   type: date
 

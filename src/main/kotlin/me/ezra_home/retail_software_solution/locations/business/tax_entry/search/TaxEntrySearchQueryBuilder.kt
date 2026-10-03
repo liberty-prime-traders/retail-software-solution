@@ -75,11 +75,15 @@ object TaxEntrySearchQueryBuilder {
                 ${TaxEntrySearchAliases.TAX_ENTRY}.source_type AS source_type,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.direction AS direction,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_id AS tax_type_id,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_name AS tax_type_name,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.jurisdiction_name AS jurisdiction_name,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.fiscal_period_id AS fiscal_period_id,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.calculation_method AS calculation_method,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.rate AS rate,
-                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_inclusive AS tax_inclusive,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_is_billed_to_customer_separately AS tax_is_billed_to_customer_separately,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_is_included_in_taxable_amount AS tax_is_included_in_taxable_amount,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.taxable_amount AS taxable_amount,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.resolved_taxable_base AS resolved_taxable_base,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.tax_amount AS tax_amount,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.created_on AS created_on
             $FROM
@@ -96,6 +100,8 @@ object TaxEntrySearchQueryBuilder {
             SELECT
                 ${TaxEntrySearchAliases.TAX_ENTRY}.fiscal_period_id AS fiscal_period_id,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_id AS tax_type_id,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_name AS tax_type_name,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.jurisdiction_name AS jurisdiction_name,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.source_type AS source_type,
                 COUNT(*) AS entry_count,
                 COALESCE(SUM(${TaxEntrySearchAliases.TAX_ENTRY}.taxable_amount), 0) AS taxable_amount,
@@ -105,6 +111,8 @@ object TaxEntrySearchQueryBuilder {
             GROUP BY
                 ${TaxEntrySearchAliases.TAX_ENTRY}.fiscal_period_id,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_id,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.tax_type_name,
+                ${TaxEntrySearchAliases.TAX_ENTRY}.jurisdiction_name,
                 ${TaxEntrySearchAliases.TAX_ENTRY}.source_type
         """.trimIndent()
 

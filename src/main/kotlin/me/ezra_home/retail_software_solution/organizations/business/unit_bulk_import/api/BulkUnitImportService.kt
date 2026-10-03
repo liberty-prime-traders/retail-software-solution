@@ -36,8 +36,6 @@ class BulkUnitImportService(
             throw RtsGenericException("Bulk unit import validation failed", errors)
         }
 
-        // StringUtils.isEquivalent's normalization is a pure function of the name, so a name -> group
-        // map keyed by that same normalization gives every lookup below O(1) instead of an O(n) scan.
         val existingSystemDefinedGroupsByNormalizedName = unitGroupService.getAllUnitGroups()
             .filter { it.systemDefined }
             .associateBy { StringUtils.normalizeForComparison(it.name) }

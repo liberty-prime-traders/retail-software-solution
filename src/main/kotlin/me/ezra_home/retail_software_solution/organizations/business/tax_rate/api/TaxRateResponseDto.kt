@@ -15,6 +15,8 @@ data class TaxRateResponseDto(
     val name: String,
     val ratePercentage: BigDecimal?,
     val rateFlatAmount: BigDecimal?,
+    val taxIsBilledToCustomerSeparately: Boolean,
+    val taxIsIncludedInTaxableAmount: Boolean,
     val startDate: LocalDate,
     val endDate: LocalDate?,
     val parentIsActive: Boolean

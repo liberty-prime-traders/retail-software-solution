@@ -15,4 +15,12 @@ interface OrganizationProductRepository: JpaRepository<OrganizationProductEntity
     @Query("SELECT p.productGroupName FROM OrganizationProductEntity p WHERE p.id = :productId")
     fun findProductGroupNameById(productId: UUID): String
 
+    @Query("" +
+            "SELECT new me.ezra_home.retail_software_solution.organizations.business.product.ProductGroupNameProjection(p.id, p.productGroupName)" +
+            " FROM OrganizationProductEntity p WHERE p.id IN :productIds"
+    )
+    fun findProductGroupNamesByIdIn(productIds: Collection<UUID>): List<ProductGroupNameProjection>
+
 }
+
+data class ProductGroupNameProjection(val id: UUID, val productGroupName: String)
