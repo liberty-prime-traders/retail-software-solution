@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
@@ -56,8 +55,8 @@ class SalePaymentRecordedEventProcessor(
             sourceType = LedgerSourceType.SALE_PAYMENT,
             postingDate = DateTimes.Local.atOrganizationZone(payment.paymentDate),
             entries = listOf(
-                LedgerEntryRequest(payment.paymentMethodAccountCode, EntryType.DEBIT, payment.amount),
-                LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.CREDIT, payment.amount)
+                LedgerEntryRequest.debit(payment.paymentMethodAccountCode, payment.amount),
+                LedgerEntryRequest.credit(SystemAccount.TRADE_RECEIVABLES.code, payment.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(

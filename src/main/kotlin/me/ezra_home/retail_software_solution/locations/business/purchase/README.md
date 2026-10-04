@@ -155,7 +155,8 @@ not currently set by any flow.
   to `DateTimes.Offset.Now.organization()` (org-zoned now).
 - Unlike sale's `dateSold`, **no future-date guard** and **no fiscal-period
   guard** is applied at order time. Fiscal-period validation only happens
-  on `recordDelivery`, and it operates on a `LocalDate` derived from the
+  on `recordDelivery` and on supplier payments (`recordPayment` /
+  `voidPayment`, see below), and for delivery it operates on a `LocalDate` derived from the
   delivery's `OffsetDateTime` at the org timezone:
   `fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))`.
 
@@ -409,7 +410,10 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
 
 ### Record payment (`SupplierPaymentService.recordPayment`)
 
-1. Amount must be `> 0`.
+1. Amount must be `> 0`, and `paymentDate` (org-zoned `LocalDate`) must fall
+   in an open fiscal period (`requireOpenForDate`, checked before the
+   purchase lock). The ledger posts from this date later and is not the
+   guard here.
 2. **Delivery-level guard** (only when `dto.deliveryId != null`): the
    sum of payments tagged with that delivery cannot exceed that
    delivery's single-delivery total.
@@ -434,6 +438,8 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
 
 - Cannot void a payment that is already voided
   (`existsBySupplierPaymentId`).
+- Requires an open fiscal period for today (org-zoned) — the void is posted
+  to the ledger as of that date.
 - Records a `SupplierPaymentVoidEntity`, recomputes the purchase's
   payment status, and emits a void event (again, only if the payment
   method has an account code).
@@ -656,8 +662,8 @@ Add new guards as early as the data they need is in scope.
 - **`PurchaseUpdateDto` has no `linesToRemove`.** Send
   `quantityOrdered = 0` in `linesToUpdate` to delete a line. This is a
   deliberate departure from the sale package.
-- **No fiscal-period guard on order creation.** Only deliveries enforce
-  fiscal periods. If you need order-time fiscal enforcement, add it
+- **No fiscal-period guard on order creation.** Only deliveries and supplier
+  payments (record and void) enforce fiscal periods. If you need order-time fiscal enforcement, add it
   consciously — there's no precedent in this package.
 - **A draft can carry a zero-cost line indefinitely.** `guardPositiveUnitCosts`
   only runs on the two paths that produce an `ORDERED` purchase

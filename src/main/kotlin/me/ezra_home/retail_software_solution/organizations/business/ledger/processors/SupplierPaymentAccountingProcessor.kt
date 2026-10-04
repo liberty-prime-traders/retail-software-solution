@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
@@ -42,8 +41,8 @@ class SupplierPaymentAccountingProcessor(
             sourceType = LedgerSourceType.SUPPLIER_PAYMENT,
             postingDate = DateTimes.Local.atOrganizationZone(event.paymentDate),
             entries = listOf(
-                LedgerEntryRequest(event.paymentMethodAccountCode, EntryType.CREDIT, event.amount),
-                LedgerEntryRequest(SystemAccount.TRADE_PAYABLES.code, EntryType.DEBIT, event.amount)
+                LedgerEntryRequest.credit(event.paymentMethodAccountCode, event.amount),
+                LedgerEntryRequest.debit(SystemAccount.TRADE_PAYABLES.code, event.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(

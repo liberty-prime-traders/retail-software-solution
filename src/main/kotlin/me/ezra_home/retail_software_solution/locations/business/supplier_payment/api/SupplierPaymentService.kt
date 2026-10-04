@@ -15,7 +15,9 @@ import me.ezra_home.retail_software_solution.locations.business.supplier_payment
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidMapper
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidRepository
+import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -42,7 +44,8 @@ class SupplierPaymentService(
     private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
     private val paymentsCalculatorService: PaymentsCalculatorService,
-    private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher
+    private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
+    private val fiscalPeriodService: FiscalPeriodService
 ) {
 
     fun getPaymentsByPurchaseId(purchaseId: UUID): List<SupplierPaymentResponseDto> {
@@ -54,56 +57,58 @@ class SupplierPaymentService(
         return assembler.buildResponses(payments, voidsByPaymentId)
     }
 
-    fun recordPayment(dto: SupplierPaymentCreateDto): SupplierPaymentResponseDto {
-        if (dto.amount <= BigDecimal.ZERO) {
+    fun recordPayment(supplierPaymentCreateDto: SupplierPaymentCreateDto): SupplierPaymentResponseDto {
+        if (supplierPaymentCreateDto.amount <= BigDecimal.ZERO) {
             throw RtsGenericException("Payment amount must be greater than zero")
         }
-        purchaseDataFetcher.lockPurchase(dto.purchaseId)
-        validateDeliveryLevelPayment(dto)
-        val ceiling = purchasePaymentCeilingService.computeCeiling(dto.purchaseId)
-        val alreadyPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(dto.purchaseId)
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(supplierPaymentCreateDto.paymentDate))
+        purchaseDataFetcher.lockPurchase(supplierPaymentCreateDto.purchaseId)
+        validateDeliveryLevelPayment(supplierPaymentCreateDto)
+        val ceiling = purchasePaymentCeilingService.computeCeiling(supplierPaymentCreateDto.purchaseId)
+        val alreadyPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(supplierPaymentCreateDto.purchaseId)
 
         if (ceiling.isFullyDelivered) {
-            val projected = alreadyPaid + dto.amount
+            val projected = alreadyPaid + supplierPaymentCreateDto.amount
             if (projected > ceiling.deliveredTotal) {
                 val formattedBalance = NumberFormat.getCurrencyInstance().format(ceiling.deliveredTotal - alreadyPaid)
-                throw RtsGenericException("Payment of ${dto.amount} would exceed the remaining balance of $formattedBalance")
+                throw RtsGenericException("Payment of ${supplierPaymentCreateDto.amount} would exceed the remaining balance of $formattedBalance")
             }
         }
 
-        val entity = supplierPaymentMapper.toEntity(dto)
+        val entity = supplierPaymentMapper.toEntity(supplierPaymentCreateDto)
         supplierPaymentRepository.save(entity)
 
-        val newStatus = purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid + dto.amount, ceiling)
-        purchaseUpdater.updatePaymentStatus(dto.purchaseId, newStatus)
-        publishTransactionToKafka(dto, entity)
+        val newStatus = purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid + supplierPaymentCreateDto.amount, ceiling)
+        purchaseUpdater.updatePaymentStatus(supplierPaymentCreateDto.purchaseId, newStatus)
+        publishTransactionToKafka(supplierPaymentCreateDto, entity)
         return assembler.buildResponse(entity, null, newStatus)
     }
 
-    private fun validateDeliveryLevelPayment(dto: SupplierPaymentCreateDto) {
-        if (dto.deliveryId != null) {
-            val deliveryCeiling = purchaseDeliveryDataFetcher.calculateSingleDeliveryTotal(dto.deliveryId)
-            val alreadyPaidForDelivery = paymentsCalculatorService.calculatePaidAmountForDelivery(dto.deliveryId)
-            val projected = alreadyPaidForDelivery + dto.amount
+    private fun validateDeliveryLevelPayment(supplierPaymentCreateDto: SupplierPaymentCreateDto) {
+        if (supplierPaymentCreateDto.deliveryId != null) {
+            val deliveryCeiling = purchaseDeliveryDataFetcher.calculateSingleDeliveryTotal(supplierPaymentCreateDto.deliveryId)
+            val alreadyPaidForDelivery = paymentsCalculatorService.calculatePaidAmountForDelivery(supplierPaymentCreateDto.deliveryId)
+            val projected = alreadyPaidForDelivery + supplierPaymentCreateDto.amount
             if (projected > deliveryCeiling) {
                 val formattedBalance = DisplayFormatters.formatCurrency(deliveryCeiling - alreadyPaidForDelivery)
-                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(dto.amount)} would " +
+                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(supplierPaymentCreateDto.amount)} would " +
                         "exceed the remaining delivery balance of $formattedBalance"
                 )
             }
         }
     }
 
-    fun voidPayment(dto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto {
-        val paymentEntity = supplierPaymentRepository.findById(dto.supplierPaymentId)
+    fun voidPayment(supplierPaymentVoidCreateDto: SupplierPaymentVoidCreateDto): SupplierPaymentResponseDto {
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
+        val paymentEntity = supplierPaymentRepository.findById(supplierPaymentVoidCreateDto.supplierPaymentId)
             .orElseThrow { UpdatingNonExistingRecordException() }
         purchaseDataFetcher.lockPurchase(paymentEntity.purchaseId)
 
-        if (supplierPaymentVoidRepository.existsBySupplierPaymentId(dto.supplierPaymentId)) {
+        if (supplierPaymentVoidRepository.existsBySupplierPaymentId(supplierPaymentVoidCreateDto.supplierPaymentId)) {
             throw RtsGenericException("Payment ${paymentEntity.referenceNumber} has already been voided")
         }
 
-        val voidEntity = supplierPaymentVoidMapper.toEntity(dto)
+        val voidEntity = supplierPaymentVoidMapper.toEntity(supplierPaymentVoidCreateDto)
         supplierPaymentVoidRepository.save(voidEntity)
 
         val newStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(paymentEntity.purchaseId)
@@ -112,15 +117,15 @@ class SupplierPaymentService(
         return assembler.buildResponse(paymentEntity, voidEntity, newStatus)
     }
 
-    private fun publishTransactionToKafka(dto: SupplierPaymentCreateDto, payment: SupplierPaymentEntity) {
-        val accountCode = paymentMethodService.findAccountCode(dto.paymentMethodId)
+    private fun publishTransactionToKafka(supplierPaymentCreateDto: SupplierPaymentCreateDto, payment: SupplierPaymentEntity) {
+        val accountCode = paymentMethodService.findAccountCode(supplierPaymentCreateDto.paymentMethodId)
         if (StringUtils.hasValue(accountCode)) {
-            val supplierId = purchaseDataFetcher.getSupplierId(dto.purchaseId)
+            val supplierId = purchaseDataFetcher.getSupplierId(supplierPaymentCreateDto.purchaseId)
             supplierPaymentHandlerForKafka.publish(payment, supplierId, accountCode!!)
         } else {
             log.debug(
                 "Payment method {} has no account code — ledger entry skipped for payment {}",
-                dto.paymentMethodId,
+                supplierPaymentCreateDto.paymentMethodId,
                 payment.referenceNumber
             )
         }

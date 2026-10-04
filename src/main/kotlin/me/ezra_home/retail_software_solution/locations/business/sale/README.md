@@ -533,6 +533,8 @@ calls `saleUpdater.updatePaymentStatus` itself with the returned status.
 
 ### Voiding payments
 
+- Requires an open fiscal period for today (org-zoned): the void posts to the
+  ledger as of that date. `recordPayment` checks the period of `paymentDate`.
 - Cannot void a payment whose sale is already `VOIDED`.
 - A payment can only be voided once (`guardNotAlreadyVoided`).
 - After voiding, the sale's `paymentStatus` is recomputed from

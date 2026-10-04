@@ -3,10 +3,10 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCodeGenerator
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountRepository
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountResponseBuilder
 import me.ezra_home.retail_software_solution.organizations.business.account.ChildAccountCreator
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntrySummaryDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -55,16 +55,14 @@ class AccountService(
 
     fun createChild(dto: AccountChildCreateRequest): AccountResponseDto {
         accountStructureLock.acquire(dto.parentAccountCode)
-        val accounts = accountCache.getAll()
+        val accounts = accountCache.getAllFresh()
         val accountsByCode = accounts.associateBy { it.code }
         val newAccount = childAccountCreator.createChild(dto, accountsByCode)
         return accountResponseBuilder.buildResponse(newAccount)
     }
 
     fun rename(dto: AccountUpdateDto): AccountResponseDto {
-        val accounts = accountCache.getAll()
-        val existing = accounts.firstOrNull { it.id == dto.id }
-            ?: throw RtsGenericException("Account not found")
+        val existing = lockAndGetFresh(dto.id)
         if (existing.accountIsSystemMaintained) {
             throw RtsGenericException("System accounts cannot be renamed")
         }
@@ -73,9 +71,7 @@ class AccountService(
     }
 
     fun toggleActive(id: UUID, setActive: Boolean): AccountResponseDto {
-        val accounts = accountCache.getAll()
-        val existing = accounts.firstOrNull { it.id == id }
-            ?: throw RtsGenericException("Account not found")
+        val existing = lockAndGetFresh(id)
         if (existing.accountIsSystemMaintained) {
             throw RtsGenericException("System accounts cannot be activated or deactivated")
         }
@@ -86,11 +82,38 @@ class AccountService(
         return accountResponseBuilder.buildResponse(saved)
     }
 
-    fun patchBalances(entries: List<LedgerEntrySummaryDto>) {
+    // The code is immutable per id, so the cached lookup is safe; the row itself is re-read once the lock is held.
+    private fun lockAndGetFresh(id: UUID): AccountDto {
+        val accountCode = accountCache.getAll().firstOrNull { it.id == id }?.code
+            ?: throw RtsGenericException("Account not found")
+        accountStructureLock.acquire(accountCode)
+        return accountCache.getAllFresh().first { it.id == id }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun assertPostable(accountPostings: List<AccountPosting>) {
+        val accounts = accountCache.getAllFresh()
+        val accountsByCode = accounts.associateBy { it.code }
+        val parentAccountCodes = accounts.mapNotNull { it.parentAccountCode }.toSet()
+        accountPostings.forEach { accountPosting ->
+            val code = accountPosting.accountCode
+            val account = accountsByCode[code] ?: throw RtsGenericException("Cannot post to unknown account $code")
+            if (code in parentAccountCodes) {
+                throw RtsGenericException("Cannot post to ${account.label}: accounts with children never post directly")
+            }
+            // An inactive account may still be drawn down (reversals, settling old balances), never built up.
+            val increasesBalance = accountPosting.entryType == account.accountType.normalBalance
+            if (account.accountIsActive.not() && increasesBalance) {
+                throw RtsGenericException("Cannot post an increase to inactive account ${account.label}")
+            }
+        }
+    }
+
+    fun patchBalances(accountPostings: List<AccountPosting>) {
         val accountsByCode = accountCache.getAll().associateBy { it.code }
-        entries.forEach { entry ->
-            val account = accountsByCode[entry.accountCode] ?: return@forEach
-            val delta = if (account.accountType.normalBalance == entry.entryType) entry.amount else entry.amount.negate()
+        accountPostings.forEach { accountPosting ->
+            val account = accountsByCode.getValue(accountPosting.accountCode)
+            val delta = if (account.accountType.normalBalance == accountPosting.entryType) accountPosting.amount else accountPosting.amount.negate()
             accountRepository.incrementBalance(account.code, delta, Instant.now())
         }
     }

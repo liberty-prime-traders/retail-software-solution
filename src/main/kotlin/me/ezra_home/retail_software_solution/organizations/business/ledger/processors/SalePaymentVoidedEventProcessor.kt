@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
@@ -42,8 +41,8 @@ class SalePaymentVoidedEventProcessor(
             sourceType = LedgerSourceType.SALE_PAYMENT_VOID,
             postingDate = event.voidedOn,
             entries = listOf(
-                LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, event.amount),
-                LedgerEntryRequest(event.paymentMethodAccountCode, EntryType.CREDIT, event.amount)
+                LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, event.amount),
+                LedgerEntryRequest.credit(event.paymentMethodAccountCode, event.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(

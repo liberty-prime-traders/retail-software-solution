@@ -9,7 +9,8 @@ import java.time.Instant
 
 @Service
 class DenormalizedYearEndBalanceTransfer(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val accountStructureLock: AccountStructureLock
 ) {
 
     // TODO: Replace with proper year-end closing ledger entries — a ledger_entry_group with
@@ -20,22 +21,31 @@ class DenormalizedYearEndBalanceTransfer(
         val retainedEarnings = accounts.firstOrNull { it.code == SystemAccount.RETAINED_EARNINGS.code }
             ?: throw RtsGenericException("Retained Earnings account not found in organization.")
 
-        val closingAccounts = accounts.filter { it.accountType.isClosingType() && it.currentBalance.compareTo(BigDecimal.ZERO) != 0 }
+        val closingAccountsByCode = accounts.filter { it.accountType.isClosingType() }.associateBy { it.code }
+        if (closingAccountsByCode.isEmpty()) return
 
+        accountStructureLock.acquire(closingAccountsByCode.keys + retainedEarnings.code)
+
+        // The entities above were loaded before the lock wait, so their balances may predate a posting
+        // that just committed; the projection query reads straight from the database.
+        val currentBalancesByCode = accountRepository.findBalancesByCodes(closingAccountsByCode.keys)
+            .associate { it.code to it.currentBalance }
+        val closingAccounts = closingAccountsByCode.values.filter { currentBalancesByCode.getValue(it.code).signum() != 0 }
         if (closingAccounts.isEmpty()) return
 
         val revenueNet = closingAccounts
             .filter { it.accountType == AccountType.REVENUE || it.accountType == AccountType.REVENUE_CONTRA }
-            .fold(BigDecimal.ZERO) { acc, acct ->
-                if (acct.accountType == AccountType.REVENUE) acc + acct.currentBalance else acc - acct.currentBalance
+            .fold(BigDecimal.ZERO) { runningTotal, closingAccount ->
+                val currentBalance = currentBalancesByCode.getValue(closingAccount.code)
+                if (closingAccount.accountType == AccountType.REVENUE) runningTotal + currentBalance else runningTotal - currentBalance
             }
         val expenseNet = closingAccounts
             .filter { it.accountType == AccountType.EXPENSE }
-            .fold(BigDecimal.ZERO) { acc, acct -> acc + acct.currentBalance }
+            .fold(BigDecimal.ZERO) { runningTotal, closingAccount -> runningTotal + currentBalancesByCode.getValue(closingAccount.code) }
         val netIncome = revenueNet - expenseNet
 
-        closingAccounts.forEach { acct ->
-            accountRepository.incrementBalance(acct.code, acct.currentBalance.negate(), Instant.now())
+        closingAccounts.forEach { closingAccount ->
+            accountRepository.incrementBalance(closingAccount.code, currentBalancesByCode.getValue(closingAccount.code).negate(), Instant.now())
         }
         accountRepository.incrementBalance(retainedEarnings.code, netIncome, Instant.now())
     }

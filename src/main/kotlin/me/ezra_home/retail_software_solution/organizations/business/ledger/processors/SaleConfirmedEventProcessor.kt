@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
@@ -39,10 +38,10 @@ class SaleConfirmedEventProcessor(
 
         val ledgerEntries = buildList {
             addAll(saleTaxLedgerEntriesBuilder.buildTransactionLevelEntries(event.saleReferenceNumber))
-            add(LedgerEntryRequest(SystemAccount.TRADE_RECEIVABLES.code, EntryType.DEBIT, amountOwed))
-            add(LedgerEntryRequest(SystemAccount.GROSS_SALES.code, EntryType.CREDIT, grossRevenue))
+            add(LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, amountOwed))
+            add(LedgerEntryRequest.credit(SystemAccount.GROSS_SALES.code, grossRevenue))
             if (event.discountTotal.signum() > 0) {
-                add(LedgerEntryRequest(SystemAccount.SALES_DISCOUNTS.code, EntryType.DEBIT, event.discountTotal))
+                add(LedgerEntryRequest.debit(SystemAccount.SALES_DISCOUNTS.code, event.discountTotal))
             }
         }
 

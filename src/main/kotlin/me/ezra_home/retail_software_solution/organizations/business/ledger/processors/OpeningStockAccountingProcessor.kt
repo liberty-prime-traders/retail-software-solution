@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.OpeningStockDeclaredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
@@ -37,8 +36,8 @@ class OpeningStockAccountingProcessor(
             sourceType = LedgerSourceType.OPENING_STOCK,
             postingDate = event.postingDate,
             entries = listOf(
-                LedgerEntryRequest(SystemAccount.INVENTORY.code, EntryType.DEBIT, amount),
-                LedgerEntryRequest(SystemAccount.OPENING_BALANCE_EQUITY.code, EntryType.CREDIT, amount)
+                LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, amount),
+                LedgerEntryRequest.credit(SystemAccount.OPENING_BALANCE_EQUITY.code, amount)
             ),
             subledgerEntries = emptyList()
         )
