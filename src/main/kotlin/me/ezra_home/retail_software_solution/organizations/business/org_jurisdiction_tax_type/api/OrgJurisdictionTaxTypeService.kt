@@ -81,8 +81,7 @@ class OrgJurisdictionTaxTypeService(
             payableAccountCode = dto.payableAccountCode,
             payableAccount = accountNamesByCode[dto.payableAccountCode],
             recoverableAccountCode = dto.recoverableAccountCode,
-            recoverableAccount = accountNamesByCode[dto.recoverableAccountCode],
-            taxInclusive = dto.taxInclusive
+            recoverableAccount = accountNamesByCode[dto.recoverableAccountCode]
         )
     }
 }

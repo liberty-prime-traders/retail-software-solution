@@ -19,6 +19,12 @@ class AccountCache(
 
     @Cacheable
     fun getAll(): List<AccountDto> {
+        return getAllFresh()
+    }
+
+    // Eviction runs before the writing transaction commits, so a reader can re-cache pre-commit state.
+    // Callers holding an account lock must read committed state, not the cache.
+    fun getAllFresh(): List<AccountDto> {
         return accountRepository.findAll().map { accountMapper.toDomainDto(it) }
     }
 

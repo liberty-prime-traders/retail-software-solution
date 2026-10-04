@@ -43,8 +43,10 @@ class AccountResponseBuilder(
         return if (children.isEmpty()) {
             leafAmount(code) ?: BigDecimal.ZERO
         } else {
+            val parentAccountType = accountsByCode.getValue(code).accountType
             children.fold(BigDecimal.ZERO) { acc, child ->
-                acc + computeRolledUpAmount(child.code, accountsByCode, leafAmount)
+                val childAmount = computeRolledUpAmount(child.code, accountsByCode, leafAmount)
+                if (child.accountType.isContraOf(parentAccountType)) acc - childAmount else acc + childAmount
             }
         }
     }

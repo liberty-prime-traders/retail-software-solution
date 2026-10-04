@@ -72,7 +72,8 @@ enum class SystemAccount(
     REPAIRS_AND_MAINTENANCE("005.010", "Repairs & Maintenance", AccountType.EXPENSE, parent = EXPENSES),
     SHRINKAGE_AND_LOSSES("005.011", "Shrinkage & Losses", AccountType.EXPENSE, parent = EXPENSES),
     BAD_DEBT_EXPENSE("005.012", "Bad Debt Expense", AccountType.EXPENSE, parent = EXPENSES),
-    OTHER_OPERATING_EXPENSES("005.013", "Other Operating Expenses", AccountType.EXPENSE, parent = EXPENSES);
+    OTHER_OPERATING_EXPENSES("005.013", "Other Operating Expenses", AccountType.EXPENSE, parent = EXPENSES),
+    TAX_EXPENSE("005.014", "Tax Expense", AccountType.EXPENSE, parent = EXPENSES);
 
     fun isSingleLevelExtensionPoint(): Boolean = this in singleLevelExtensionPoints
 

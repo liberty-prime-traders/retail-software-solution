@@ -21,7 +21,10 @@ a balance).
 
 `AccountCache` (`@CacheSchemaLevel(ORGANIZATION)`) is the only path to
 `AccountRepository` for anything but balance increments — `getAll()` is
-cached and evicted whole on every `create`/`saveAll`/`update`.
+cached and evicted whole on every `create`/`saveAll`/`update`. Eviction runs
+before the writing transaction commits, so a concurrent reader can re-cache
+pre-commit state; `getAllFresh()` bypasses the cache and is what any check made
+under an account lock (`assertPostable`) reads.
 
 - `api/AccountDataFetcher` — the exception to that: a lean, uncached
   single-account lookup (`findByCode` → `AccountLookupDto`: `code`,
@@ -149,21 +152,39 @@ returns the non-empty ones; `failOnUsagesForCode` throws if any exist.
 - `AccountEntity.currentBalance` is a running total updated in place via
   `AccountRepository.incrementBalance` (`UPDATE ... SET current_balance =
   current_balance + :delta`) — never read-modify-write through the cached DTO.
-- `AccountService.patchBalances(entries: List<LedgerEntrySummaryDto>)` is
+- `AccountService.assertPostable(accountPostings)` is the account-side
+  gate for `ledger` postings (`AccountPosting` is `account`'s own view of a
+  posting line, so this package imports nothing from `ledger`): it rejects unknown codes, accounts that have
+  children (they never post directly), and any entry that would *increase*
+  an inactive account — i.e. whose `EntryType` equals the account's
+  `normalBalance`. Entries that draw an inactive account down are allowed.
+  It reads `getAllFresh()` after `ledger` takes the account locks; every
+  writer of those facts (`createChild`, `seedDefaults`, `rename`,
+  `toggleActive`, opening-balance upsert) takes `AccountStructureLock` on the
+  account and, where it reads before writing, reads `getAllFresh()` once the
+  lock is held. `rename` and `toggleActive` write the whole row, so a stale
+  read would otherwise overwrite the other's change.
+- `AccountService.patchBalances(accountPostings: List<AccountPosting>)` is
   called by `ledger` after posting; the delta is applied as-is when the
   entry's `EntryType` matches the account's `normalBalance`, negated
-  otherwise.
+  otherwise. An unknown account code throws.
 - `AccountResponseBuilder.buildResponse` rolls balances up the tree at read
   time (`computeRolledUpAmount`) — a parent's displayed balance is the sum
   of its leaf descendants' `currentBalance`, not its own row (accounts with
-  children never post directly). `openingBalance` is rolled up the same way,
+  children never post directly). A child that is the contra of its parent's
+  type (`AccountType.isContraOf`, e.g. `SALES_DISCOUNTS` under `SALES_REVENUE`)
+  is subtracted, since every balance is stored in its own normal direction.
+  `openingBalance` is rolled up the same way,
   sourced via `opening_balance`'s `OpeningBalanceService.getAmountsByAccountCodes`
   (see `api/AccountDataFetcher` above for why this calls `OpeningBalanceService`
   directly rather than through `AccountDataFetcher`).
 - Year-end close (`api/DenormalizedYearEndBalanceTransfer`) zeroes every
   `isClosingType()` account with a non-zero balance and transfers net income
   (revenue − contra − expense) into `SystemAccount.RETAINED_EARNINGS`, all via
-  direct `incrementBalance` calls.
+  direct `incrementBalance` calls. It takes the closing accounts' and Retained
+  Earnings' locks through `ledger`'s `AccountsAndLedgerLock` *before* reading
+  balances, so it waits for in-flight postings and then reads fresh values
+  (via `findBalancesByCodes`, since the entities loaded earlier may be stale).
   - **Known gap** (see TODO in the class): this mutates running balances
     without writing offsetting ledger entries. A proper close should post a
     `ledger_entry_group` with `source_type = YEAR_END_CLOSE` instead.

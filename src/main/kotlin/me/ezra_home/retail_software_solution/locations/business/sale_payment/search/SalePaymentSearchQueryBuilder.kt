@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.search
 
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentSearchParameters
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.AmountRangeFilterStrategy
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.search.filters.SalePaymentStatusFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.DateRangeFilterStrategy
+import me.ezra_home.retail_software_solution.util.queries.ExpressionRangeFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
@@ -52,7 +52,13 @@ object SalePaymentSearchQueryBuilder {
       salePaymentSearchParameters.paymentMethodIds.toTypedArray()
     ).apply(context)
     SalePaymentStatusFilterStrategy(salePaymentSearchParameters.statuses).apply(context)
-    AmountRangeFilterStrategy(salePaymentSearchParameters.minAmount, salePaymentSearchParameters.maxAmount).apply(context)
+    ExpressionRangeFilterStrategy(
+      "${SalePaymentSearchAliases.SALE_PAYMENT}.amount",
+      SalePaymentSearchParameterNames.MIN_AMOUNT,
+      salePaymentSearchParameters.minAmount,
+      SalePaymentSearchParameterNames.MAX_AMOUNT,
+      salePaymentSearchParameters.maxAmount
+    ).apply(context)
     AnyListFilterStrategy(
       "${SalePaymentSearchAliases.SALE}.reference_number",
       SalePaymentSearchParameterNames.SALE_REFERENCE_NUMBERS,

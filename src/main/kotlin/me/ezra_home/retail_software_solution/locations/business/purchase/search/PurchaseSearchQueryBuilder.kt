@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
-import me.ezra_home.retail_software_solution.locations.business.purchase.search.filters.AmountRangeFilterStrategy
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.DateRangeFilterStrategy
+import me.ezra_home.retail_software_solution.util.queries.ExpressionRangeFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import me.ezra_home.retail_software_solution.util.queries.QueryBuilderContext
 import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
@@ -77,7 +77,15 @@ object PurchaseSearchQueryBuilder {
       PurchaseSearchParameterNames.PAYMENT_STATUSES,
       purchaseSearchParameters.paymentStatuses.map { it.code }.toTypedArray()
     ).apply(context)
-    AmountRangeFilterStrategy(purchaseSearchParameters.minAmount, purchaseSearchParameters.maxAmount).apply(context)
+    // COALESCE to 0 — a purchase with no lines has no row at all in the ordered-total join,
+    // not a matched row with a zero total, so the raw column is NULL and would fail both bounds.
+    ExpressionRangeFilterStrategy(
+      "COALESCE(${PurchaseSearchAliases.ORDERED_TOTAL}.ordered_total, 0)",
+      PurchaseSearchParameterNames.MIN_AMOUNT,
+      purchaseSearchParameters.minAmount,
+      PurchaseSearchParameterNames.MAX_AMOUNT,
+      purchaseSearchParameters.maxAmount
+    ).apply(context)
     AnyListFilterStrategy(
       "${PurchaseSearchAliases.PURCHASE}.reference_number",
       PurchaseSearchParameterNames.PURCHASE_REFERENCE_NUMBERS,

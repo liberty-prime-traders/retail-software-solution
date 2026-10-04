@@ -29,24 +29,24 @@ class SalePaymentService(
     private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
-    fun recordPayment(dto: SalePaymentCreateDto): SalePaymentResponseDto {
-        val saleId = dto.saleId ?: throw RtsGenericException("saleId is required")
-        SalePaymentValidator.guardPositiveAmount(dto.amount)
-        val effectivePaymentDate = dto.paymentDate ?: DateTimes.Offset.Now.organization()
+    fun recordPayment(salePaymentCreateDto: SalePaymentCreateDto): SalePaymentResponseDto {
+        val saleId = salePaymentCreateDto.saleId ?: throw RtsGenericException("saleId is required")
+        SalePaymentValidator.guardPositiveAmount(salePaymentCreateDto.amount)
+        val effectivePaymentDate = salePaymentCreateDto.paymentDate ?: DateTimes.Offset.Now.organization()
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectivePaymentDate))
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
+        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-        SalePaymentValidator.guardNotExceedingBalance(dto.amount, saleTotal.subtract(alreadyPaid))
+        SalePaymentValidator.guardNotExceedingBalance(salePaymentCreateDto.amount, receivableTotal.subtract(alreadyPaid))
         val writeResult = salePaymentWriter.write(
             saleId = saleId,
             contactId = contactId,
-            payableTotal = saleTotal,
+            receivableTotal = receivableTotal,
             newSalePayments = listOf(
                 SalePaymentWriter.NewSalePayment(
-                    paymentMethodId = dto.paymentMethodId,
-                    amount = dto.amount,
-                    reference = dto.reference,
+                    paymentMethodId = salePaymentCreateDto.paymentMethodId,
+                    amount = salePaymentCreateDto.amount,
+                    reference = salePaymentCreateDto.reference,
                     paymentDate = effectivePaymentDate,
                 )
             ),
@@ -62,21 +62,22 @@ class SalePaymentService(
         )
     }
 
-    fun voidPayment(dto: SalePaymentVoidCreateDto): SalePaymentResponseDto {
-        val payment = salePaymentRepository.getReferenceById(dto.salePaymentId)
+    fun voidPayment(salePaymentVoidCreateDto: SalePaymentVoidCreateDto): SalePaymentResponseDto {
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
+        val payment = salePaymentRepository.getReferenceById(salePaymentVoidCreateDto.salePaymentId)
         SalePaymentValidator.guardNotAlreadyVoided(
-            salePaymentVoidRepository.existsBySalePaymentId(dto.salePaymentId),
+            salePaymentVoidRepository.existsBySalePaymentId(salePaymentVoidCreateDto.salePaymentId),
             payment.requiredReference()
         )
 
-        val (contactId, saleTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
+        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
         SalePaymentValidator.guardSaleNotVoided(saleStatus)
 
-        val voidEntity = SalePaymentVoidEntity(salePaymentId = dto.salePaymentId, reason = dto.reason)
+        val voidEntity = SalePaymentVoidEntity(salePaymentId = salePaymentVoidCreateDto.salePaymentId, reason = salePaymentVoidCreateDto.reason)
         salePaymentVoidRepository.save(voidEntity)
 
         val totalPaidAfterVoid = salePaymentFetcher.calculatePaidAmount(payment.saleId)
-        val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, saleTotal)
+        val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, receivableTotal)
         val updatedSaleVersion = saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
         salePaymentVoidHandlerForKafka.publish(payment, voidEntity, contactId)
         return SalePaymentMapper.toResponseDto(

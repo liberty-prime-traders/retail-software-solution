@@ -16,7 +16,6 @@ interface SubledgerEntryRepository : JpaRepository<SubledgerEntryEntity, UUID> {
             WHERE contact_reference_number IN :contactReferenceNumbers
             ORDER BY contact_reference_number, created_on DESC
         )
-        FOR UPDATE
     """, nativeQuery = true)
     fun findLatestForContacts(contactReferenceNumbers: Set<String>): List<SubledgerEntryEntity>
 }

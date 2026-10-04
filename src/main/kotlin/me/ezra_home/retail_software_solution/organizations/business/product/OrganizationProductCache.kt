@@ -38,8 +38,13 @@ class OrganizationProductCache(
 
     @CacheEvict(allEntries = true)
     fun saveAll(entities: Collection<OrganizationProductEntity>): List<OrganizationProductEntity> {
+        if (entities.isEmpty()) return emptyList()
         entities.forEach { it.status = ProductStatus.ACTIVE }
-        return organizationProductRepository.saveAll(entities)
+        val saved = organizationProductRepository.saveAll(entities)
+        val groupNameById = organizationProductRepository.findProductGroupNamesByIdIn(saved.map { checkNotNull(it.id) })
+            .associate { it.id to it.productGroupName }
+        saved.forEach { it.productGroupName = groupNameById.getValue(it.id!!) }
+        return saved
     }
 
     @CacheEvict(allEntries = true)

@@ -30,6 +30,12 @@ class TaxRateEntity(
     @Column(name = "rate_flat_amount", precision = 15, scale = 4)
     var rateFlatAmount: BigDecimal? = null,
 
+    @Column(name = "tax_is_billed_to_customer_separately", nullable = false)
+    var taxIsBilledToCustomerSeparately: Boolean,
+
+    @Column(name = "tax_is_included_in_taxable_amount", nullable = false)
+    var taxIsIncludedInTaxableAmount: Boolean,
+
     startDate: LocalDate,
     endDate: LocalDate? = null
 

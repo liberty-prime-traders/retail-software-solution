@@ -45,7 +45,7 @@ object SaleSessionQualifierUtil {
 
     @SaleSessionPaymentStatus
     fun toSaleSessionPaymentStatus(saleSession: SaleSession): PaymentStatus =
-        PaymentStatusResolver.resolve(saleSession.totals.paymentTotal, saleSession.totals.payableTotal)
+        PaymentStatusResolver.resolve(saleSession.totals.paymentTotal, saleSession.totals.receivableTotal)
 
     @AdjustmentReasonLabel
     fun toAdjustmentReasonLabel(

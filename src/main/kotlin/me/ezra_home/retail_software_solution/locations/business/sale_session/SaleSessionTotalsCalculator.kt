@@ -43,7 +43,7 @@ object SaleSessionTotalsCalculator {
         val orderLevelSurcharge = sumAdjustmentAmounts(
             saleSessionAdjustments, AdjustmentDirection.SURCHARGE, lineLevel = false, calculatedAmountByAdjustmentKey
         )
-        val payableTotal = subtotal - lineLevelDiscount - orderLevelDiscount + lineLevelSurcharge + orderLevelSurcharge
+        val receivableTotal = subtotal - lineLevelDiscount - orderLevelDiscount + lineLevelSurcharge + orderLevelSurcharge
         return SaleSessionTotals(
             subtotal = subtotal,
             lineLevelDiscountTotal = lineLevelDiscount,
@@ -51,8 +51,8 @@ object SaleSessionTotalsCalculator {
             lineLevelSurchargeTotal = lineLevelSurcharge,
             orderLevelSurchargeTotal = orderLevelSurcharge,
             paymentTotal = paymentTotal,
-            payableTotal = payableTotal,
-            balance = payableTotal - paymentTotal,
+            receivableTotal = receivableTotal,
+            balance = receivableTotal - paymentTotal,
         )
     }
 

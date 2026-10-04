@@ -34,6 +34,22 @@ class JurisdictionTaxTypeFetcher(
             ?: throw RtsGenericException("Tax type not found for jurisdiction link")
     }
 
+    fun getNames(jurisdictionTaxTypeIds: Collection<UUID>): Map<UUID, JurisdictionTaxTypeNames> {
+        if (jurisdictionTaxTypeIds.isEmpty()) return emptyMap()
+        val idSet = jurisdictionTaxTypeIds.toSet()
+        val jurisdictionIndex = jurisdictionFetcher.getAllDtos().associateBy { it.id }
+        val taxTypeIndex = taxTypeFetcher.getAllDtos().associateBy { it.id }
+        return jurisdictionTaxTypeCache.getAll()
+            .filter { it.id in idSet }
+            .associate { link ->
+                val jurisdictionName = jurisdictionIndex[link.jurisdictionId]?.name
+                    ?: throw RtsGenericException("Jurisdiction not found for jurisdiction link")
+                val taxTypeName = taxTypeIndex[link.taxTypeId]?.name
+                    ?: throw RtsGenericException("Tax type not found for jurisdiction link")
+                link.id to JurisdictionTaxTypeNames(jurisdictionName, taxTypeName)
+            }
+    }
+
     private fun getLink(jurisdictionTaxTypeId: UUID): JurisdictionTaxTypeDto {
         return jurisdictionTaxTypeCache.getAll().find { it.id == jurisdictionTaxTypeId }
             ?: throw RtsGenericException("Jurisdiction tax type not found for link id: $jurisdictionTaxTypeId")

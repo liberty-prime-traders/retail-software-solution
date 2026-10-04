@@ -6,4 +6,5 @@ object LockNamespaces {
     const val PURCHASE = "purchase"
     const val STOCK_TRANSFER_ORDER = "stock_transfer_order"
     const val ACCOUNT = "account"
+    const val SUBLEDGER_CONTACT = "subledger_contact"
 }

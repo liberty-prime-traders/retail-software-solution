@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
@@ -28,8 +29,18 @@ class TaxEntryEntity(
     @Column(name = "source_type", nullable = false, length = 5, updatable = false)
     var sourceType: TaxSourceType,
 
+    @Convert(converter = TaxDirectionConverter::class)
+    @Column(name = "direction", nullable = false, length = 5, updatable = false)
+    var direction: TaxDirection,
+
     @Column(name = "tax_type_id", nullable = false, updatable = false)
     var taxTypeId: UUID,
+
+    @Column(name = "tax_type_name", length = 100, nullable = false, updatable = false)
+    var taxTypeName: String,
+
+    @Column(name = "jurisdiction_name", length = 100, nullable = false, updatable = false)
+    var jurisdictionName: String,
 
     @Column(name = "fiscal_period_id", nullable = false, updatable = false)
     var fiscalPeriodId: UUID,
@@ -41,11 +52,17 @@ class TaxEntryEntity(
     @Column(name = "rate", nullable = false, precision = 19, scale = 4, updatable = false)
     var rate: BigDecimal,
 
-    @Column(name = "tax_inclusive", nullable = false, updatable = false)
-    var taxInclusive: Boolean,
+    @Column(name = "tax_is_billed_to_customer_separately", nullable = false, updatable = false)
+    var taxIsBilledToCustomerSeparately: Boolean,
+
+    @Column(name = "tax_is_included_in_taxable_amount", nullable = false, updatable = false)
+    var taxIsIncludedInTaxableAmount: Boolean,
 
     @Column(name = "taxable_amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var taxableAmount: BigDecimal,
+
+    @Column(name = "resolved_taxable_base", nullable = false, precision = 19, scale = 4, updatable = false)
+    var resolvedTaxableBase: BigDecimal,
 
     @Column(name = "tax_amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var taxAmount: BigDecimal

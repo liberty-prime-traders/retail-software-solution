@@ -45,6 +45,9 @@ class SaleValidator(
         if (salePaymentFetcher.hasActivePayments(sale.id!!)) {
             throw RtsGenericException("Cannot void a sale with active payments")
         }
+        if (sale.status != SaleStatus.DRAFT && sale.taxTotal == null) {
+            throw RtsGenericException("Cannot void sale ${sale.referenceNumber} — tax finalization is still pending")
+        }
     }
 
     fun guardSufficientStockForSale(

@@ -19,6 +19,14 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
     REVENUE("R", EntryType.CREDIT),
     REVENUE_CONTRA("RC", EntryType.DEBIT);
 
+    fun isContraOf(baseType: AccountType) = when (this) {
+        ASSET_CONTRA -> baseType == ASSET
+        LIABILITY_CONTRA -> baseType == LIABILITY
+        EQUITY_CONTRA -> baseType == EQUITY
+        REVENUE_CONTRA -> baseType == REVENUE
+        else -> false
+    }
+
     fun canBeRoot() = this in setOf(ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE)
     fun isClosingType() = this in setOf(REVENUE, REVENUE_CONTRA, EXPENSE)
 

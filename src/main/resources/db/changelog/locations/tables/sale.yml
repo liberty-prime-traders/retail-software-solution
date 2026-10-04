@@ -98,7 +98,7 @@ databaseChangeLog:
                   type: numeric(19, 4)
 
               - column:
-                  name: grand_total
+                  name: tax_billed
                   type: numeric(19, 4)
 
               - column:

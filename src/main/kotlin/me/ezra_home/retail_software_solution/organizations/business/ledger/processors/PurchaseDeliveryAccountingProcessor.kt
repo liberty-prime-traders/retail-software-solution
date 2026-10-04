@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
@@ -49,8 +48,8 @@ class PurchaseDeliveryAccountingProcessor(
     private fun getLedgerEntries(event: PurchaseDeliveredEvent): List<LedgerEntryRequest> {
         val total = event.deliveryTotal
         return listOf(
-            LedgerEntryRequest(SystemAccount.INVENTORY.code, EntryType.DEBIT, total),
-            LedgerEntryRequest(SystemAccount.TRADE_PAYABLES.code, EntryType.CREDIT, total)
+            LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, total),
+            LedgerEntryRequest.credit(SystemAccount.TRADE_PAYABLES.code, total)
         )
     }
     private fun getSubLedgerEntries(event: PurchaseDeliveredEvent): List<SubledgerEntryRequest> {

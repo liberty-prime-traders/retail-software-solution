@@ -33,30 +33,36 @@ class BulkUnitImportServiceTest {
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
         val unitConversionService = mock(UnitConversionService::class.java)
 
+        // A custom countable group, not the system "Count" group - only a custom group gets an
+        // auto-inserted Piece, since the system "Count" group already has the real one. Codes must
+        // not collide with SystemUnitValue's seeded codes ("hdz", "dz", "pc", ...) - a real org
+        // already has those from UnitValueSeeder, so a colliding code would be treated as a reuse
+        // of the existing system-defined row instead of creating a new one (see this package's
+        // README, "A payload matching system-defined data is a reuse, not a conflict").
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
                 UnitGroupBulkInsertDto(
-                    name = "Count",
+                    name = "Eggs",
                     description = null,
                     unitValues = listOf(
-                        UnitValueBulkInsertDto(name = "Half Dozen", code = "hdz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
-                        UnitValueBulkInsertDto(name = "Dozen", code = "dz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
+                        UnitValueBulkInsertDto(name = "Half Dozen", code = "egg-hdz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
+                        UnitValueBulkInsertDto(name = "Dozen", code = "egg-dz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
                     )
                 )
             )
         )
-        val countGroupId = UUID.randomUUID()
-        val groupInsertDtos = listOf(UnitGroupInsertDto(name = "Count", description = null))
+        val eggsGroupId = UUID.randomUUID()
+        val groupInsertDtos = listOf(UnitGroupInsertDto(name = "Eggs", description = null))
 
-        val savedGroups = listOf(unitGroupResponseDto(countGroupId, "Count"))
+        val savedGroups = listOf(unitGroupResponseDto(eggsGroupId, "Eggs"))
 
         `when`(bulkUnitImportValidator.validate(request)).thenReturn(emptyList())
         `when`(unitGroupService.bulkCreateValidatedList(groupInsertDtos)).thenReturn(savedGroups)
-        `when`(unitValueFetcher.getUnitValuesForUnitGroup(countGroupId)).thenReturn(emptyList())
+        `when`(unitValueFetcher.getUnitValuesForUnitGroup(eggsGroupId)).thenReturn(emptyList())
         `when`(unitValueFetcher.getAllUnitValues()).thenReturn(emptyList())
 
         var savedEntries: List<UnitValueBulkSaveEntry> = emptyList()
-        `when`(unitValueService.bulkCreateValidatedList(anyList<UnitValueBulkSaveEntry>())).thenAnswer { invocation ->
+        `when`(unitValueService.bulkCreateValidatedList(anyList())).thenAnswer { invocation ->
             savedEntries = invocation.getArgument(0)
             emptyList<UnitValueResponseDto>()
         }
@@ -70,17 +76,17 @@ class BulkUnitImportServiceTest {
         assertEquals(savedGroups, result)
         assertEquals(3, savedEntries.size)
 
-        val pieceEntry = savedEntries.first { it.code == "count-pc" }
+        val pieceEntry = savedEntries.first { it.code == "eggs-pc" }
         assertNull(pieceEntry.baseUnit)
 
         val pieceIndex = savedEntries.indexOf(pieceEntry)
-        val hdzIndex = savedEntries.indexOfFirst { it.code == "hdz" }
-        val dzIndex = savedEntries.indexOfFirst { it.code == "dz" }
+        val hdzIndex = savedEntries.indexOfFirst { it.code == "egg-hdz" }
+        val dzIndex = savedEntries.indexOfFirst { it.code == "egg-dz" }
         assert(pieceIndex < hdzIndex) { "Piece must be saved before Half Dozen" }
         assert(pieceIndex < dzIndex) { "Piece must be saved before Dozen" }
 
-        assertEquals(pieceEntry.id, savedEntries.first { it.code == "hdz" }.baseUnit)
-        assertEquals(pieceEntry.id, savedEntries.first { it.code == "dz" }.baseUnit)
+        assertEquals(pieceEntry.id, savedEntries.first { it.code == "egg-hdz" }.baseUnit)
+        assertEquals(pieceEntry.id, savedEntries.first { it.code == "egg-dz" }.baseUnit)
     }
 
     @Test

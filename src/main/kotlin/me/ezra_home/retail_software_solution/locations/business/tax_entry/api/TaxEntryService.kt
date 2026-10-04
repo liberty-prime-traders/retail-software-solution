@@ -11,10 +11,6 @@ class TaxEntryService(
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun existsBySourceReference(sourceReferenceNumber: String, sourceType: TaxSourceType): Boolean =
-        taxEntryRepository.existsBySourceReferenceNumberAndSourceType(sourceReferenceNumber, sourceType)
-
-    @TransactionalOnLocationSchema(readOnly = true)
     fun findBySourceReference(sourceReferenceNumber: String, sourceType: TaxSourceType): List<TaxEntryDto> =
         taxEntryRepository.findBySourceReferenceNumberAndSourceType(sourceReferenceNumber, sourceType)
             .map { it.toDto() }
@@ -28,24 +24,34 @@ class TaxEntryService(
     private fun TaxEntryEntity.toDto() = TaxEntryDto(
         sourceReferenceNumber = sourceReferenceNumber,
         sourceType = sourceType,
+        direction = direction,
         taxTypeId = taxTypeId,
+        taxTypeName = taxTypeName,
+        jurisdictionName = jurisdictionName,
         fiscalPeriodId = fiscalPeriodId,
         calculationMethod = calculationMethod,
         rate = rate,
-        taxInclusive = taxInclusive,
+        taxIsBilledToCustomerSeparately = taxIsBilledToCustomerSeparately,
+        taxIsIncludedInTaxableAmount = taxIsIncludedInTaxableAmount,
         taxableAmount = taxableAmount,
+        resolvedTaxableBase = resolvedTaxableBase,
         taxAmount = taxAmount,
     )
 
     private fun TaxEntryCreateDto.toEntity() = TaxEntryEntity(
         sourceReferenceNumber = sourceReferenceNumber,
         sourceType = sourceType,
+        direction = direction,
         taxTypeId = taxTypeId,
+        taxTypeName = taxTypeName,
+        jurisdictionName = jurisdictionName,
         fiscalPeriodId = fiscalPeriodId,
         calculationMethod = calculationMethod,
         rate = rate,
-        taxInclusive = taxInclusive,
+        taxIsBilledToCustomerSeparately = taxIsBilledToCustomerSeparately,
+        taxIsIncludedInTaxableAmount = taxIsIncludedInTaxableAmount,
         taxableAmount = taxableAmount,
+        resolvedTaxableBase = resolvedTaxableBase,
         taxAmount = taxAmount,
     )
 }

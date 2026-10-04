@@ -12,5 +12,5 @@ data class SaleSessionSummaryDto(
     val lastAccessedBy: String,
     val lastAccessedAt: OffsetDateTime,
     val contactLabel: String,
-    val payableTotal: BigDecimal
+    val receivableTotal: BigDecimal
 )

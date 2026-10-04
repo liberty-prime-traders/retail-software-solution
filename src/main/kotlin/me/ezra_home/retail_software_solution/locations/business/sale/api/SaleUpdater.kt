@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleTaxFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidHandlerForKafka
@@ -27,6 +28,7 @@ class SaleUpdater(
     private val saleValidator: SaleValidator,
     private val saleVoidRepository: SaleVoidRepository,
     private val fiscalPeriodService: FiscalPeriodService,
+    private val saleTaxFinalizer: SaleTaxFinalizer,
 ) {
 
     fun updatePaymentStatus(id: UUID, status: PaymentStatus): Long {
@@ -51,9 +53,11 @@ class SaleUpdater(
             val saleVoidEntity = saleVoidRepository.save(
                 SaleVoidEntity(saleId = saleVoidCreateDto.saleId, reason = saleVoidCreateDto.reason)
             )
-            fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(saleVoidEntity.requiredCreatedOn()))
+            val voidDate = DateTimes.Local.atOrganizationZone(saleVoidEntity.requiredCreatedOn())
+            fiscalPeriodService.requireOpenForDate(voidDate)
             saleStockUpdater.restoreStock(sale.requiredReference())
             sale.status = SaleStatus.VOIDED
+            saleTaxFinalizer.finalizeTaxForVoid(sale, voidDate)
             saleVoidHandlerForKafka.publishVoid(sale, saleVoidEntity)
         }
         saleRepository.save(sale)

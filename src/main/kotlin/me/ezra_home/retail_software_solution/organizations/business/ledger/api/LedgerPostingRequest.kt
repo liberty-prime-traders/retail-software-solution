@@ -17,7 +17,12 @@ data class LedgerEntryRequest(
     val accountCode: String,
     val entryType: EntryType,
     val amount: BigDecimal
-)
+) {
+    companion object {
+        fun debit(accountCode: String, amount: BigDecimal) = LedgerEntryRequest(accountCode, EntryType.DEBIT, amount)
+        fun credit(accountCode: String, amount: BigDecimal) = LedgerEntryRequest(accountCode, EntryType.CREDIT, amount)
+    }
+}
 
 data class SubledgerEntryRequest(
     val contactReferenceNumber: String,

@@ -13,7 +13,7 @@ class CoaDefaultsInserter(
 
     fun seedDefaults() {
         accountStructureLock.acquire(SystemAccount.entries.mapNotNull { it.parent?.code }.toSet())
-        val allAccounts = accountCache.getAll().map { it.code }.toSet()
+        val allAccounts = accountCache.getAllFresh().map { it.code }.toSet()
         val toInsert = SystemAccount.entries.filter { it.code !in allAccounts }
             .map { buildInsertDto(it) }
         if (toInsert.isNotEmpty()) {

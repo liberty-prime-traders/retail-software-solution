@@ -37,7 +37,7 @@ class SaleSaveFinalizer(
         val salePaymentAppendResult = salePaymentAppender.appendNew(
             saleId = saleId,
             contactId = saleEntity.contactId,
-            payableTotal = saleEntity.payableTotal(),
+            receivableTotal = saleEntity.receivableTotal(),
             saleSaveRequest = saleSaveRequest,
         )
         saleEntity.paymentStatus = salePaymentAppendResult.newPaymentStatus

@@ -54,11 +54,18 @@ class BulkUnitImportValidatorTest {
     fun `valid payload produces no errors`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
+                // A custom countable group, not the system "Count" group - "__piece__" auto-provisions
+                // its own Piece here, which is only valid for a group that doesn't already have one.
+                // Codes must not collide with SystemUnitValue's seeded codes ("hdz", "dz", "pc", ...)
+                // - a real org already has those from UnitValueSeeder, so a colliding code would be
+                // treated as a reuse of the existing system-defined row instead of a new one (see
+                // this package's README, "A payload matching system-defined data is a reuse, not a
+                // conflict").
                 group(
-                    name = "Count",
+                    name = "Eggs",
                     unitValues = listOf(
-                        unitValue(name = "Half Dozen", code = "hdz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
-                        unitValue(name = "Dozen", code = "dz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
+                        unitValue(name = "Half Dozen", code = "egg-hdz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L),
+                        unitValue(name = "Dozen", code = "egg-dz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
                     )
                 ),
                 group(
@@ -76,7 +83,7 @@ class BulkUnitImportValidatorTest {
                 )
             ),
             unitConversions = listOf(
-                UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 42L, denominator = 1L)
+                UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "egg-dz", numerator = 42L, denominator = 1L)
             )
         )
 

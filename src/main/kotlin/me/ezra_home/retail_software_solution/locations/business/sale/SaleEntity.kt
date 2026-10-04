@@ -61,8 +61,8 @@ class SaleEntity(
     @Column(name = "tax_total", precision = 19, scale = 4)
     var taxTotal: BigDecimal? = null,
 
-    @Column(name = "grand_total", precision = 19, scale = 4)
-    var grandTotal: BigDecimal? = null,
+    @Column(name = "tax_billed", precision = 19, scale = 4)
+    var taxBilled: BigDecimal? = null,
 
     @Version
     @Column(name = "version", nullable = false)
@@ -79,6 +79,9 @@ class SaleEntity(
     fun displaySubtotal(): BigDecimal =
         (subtotal ?: BigDecimal.ZERO) + surchargeTotal()
 
-    fun payableTotal(): BigDecimal =
-        grandTotal ?: (displaySubtotal() - discountTotal())
+    fun taxableAmount(): BigDecimal =
+        displaySubtotal() - discountTotal()
+
+    fun receivableTotal(): BigDecimal =
+        taxableAmount() + (taxBilled ?: BigDecimal.ZERO)
 }
