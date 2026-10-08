@@ -46,10 +46,14 @@ class EventRetryService(
             log.error("No reissue handler for event type '${entry.eventType}' — manual intervention required for log entry $logId")
             throw RtsGenericException("No reissue handler registered for event type '${entry.eventType}'")
         }
-        // Reissue handlers for location-level events run on the location schema; a retry
-        // triggered here (endpoint or sweep) no longer arrives with one already in session.
-        entry.sourceLocationId?.let { SessionContextProvider.initLocation(locationService.getById(it)) }
-        handler.reissue(entry.sourceDocumentId)
+        val callerLocationSession = SessionContextProvider.getLocationSession()
+        SessionContextProvider.setLocationSession(null)
+        try {
+            entry.sourceLocationId?.let { SessionContextProvider.initLocation(locationService.getById(it)) }
+            handler.reissue(entry.sourceDocumentId)
+        } finally {
+            SessionContextProvider.setLocationSession(callerLocationSession)
+        }
         logService.markProcessed(entry, EventProcessingLogResolutionType.REISSUED)
     }
 

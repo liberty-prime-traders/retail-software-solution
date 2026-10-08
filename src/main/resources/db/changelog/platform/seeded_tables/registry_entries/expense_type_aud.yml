@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-expense-type-aud-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: expense_type_aud
+              - column:
+                  name: default_prefix
+                  value: EXTA
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Expense Type Audit
+              - column:
+                  name: description
+                  value: Audit trail for expense type changes
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

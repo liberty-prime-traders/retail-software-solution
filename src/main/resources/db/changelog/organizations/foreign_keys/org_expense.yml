@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-org-expense-batch
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_batch
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense
+            baseColumnNames: batch_id
+            referencedTableName: org_expense_batch
+            referencedColumnNames: id
+            constraintName: fk_org_expense_batch
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense
+            constraintName: fk_org_expense_batch
+
+  - changeSet:
+      id: add-foreign-key-org-expense-expense-type
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_expense_type
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense
+            baseColumnNames: expense_type_id
+            referencedTableName: expense_type
+            referencedColumnNames: id
+            constraintName: fk_org_expense_expense_type
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense
+            constraintName: fk_org_expense_expense_type
+
+  - changeSet:
+      id: add-foreign-key-org-expense-payee-contact
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_payee_contact
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense
+            baseColumnNames: payee_contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_org_expense_payee_contact
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense
+            constraintName: fk_org_expense_payee_contact

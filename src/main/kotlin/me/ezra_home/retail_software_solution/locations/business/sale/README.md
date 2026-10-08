@@ -601,11 +601,15 @@ Events produced by this package:
 | `SalePaymentVoidedEvent`    | `SalePaymentService.voidPayment`                       | accounting/external systems    |
 
 The two payment events are **conditional on the payment method carrying an
-`accountCode`**. `SalePaymentHandlerForKafka.publish` drops payment lines
-whose method has no account code; if every line drops, no event is
-published. `SalePaymentVoidHandlerForKafka.publish` similarly skips the
-void event when the original payment's method has no account code. The
-sale itself is still persisted/voided — only the downstream accounting
+`accountCode` when the payment is recorded**. `SalePaymentWriter` copies it onto
+the payment as `payment_method_account_code` (null when the method had none), and
+every later publish, void and reissue uses that copy, never the method's current
+account — re-pointing a payment method cannot split a payment and its reversal
+across two accounts, and a code added later does not make an unposted payment
+reversible. `SalePaymentHandlerForKafka.publish` drops payment lines with no
+copied code; if every line drops, no event is published.
+`SalePaymentVoidHandlerForKafka.publish` skips the void event for such a payment.
+The sale itself is still persisted/voided — only the downstream accounting
 fan-out is suppressed.
 
 General Kafka processor rules (`shouldProcess` idempotency check backed by

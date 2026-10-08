@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-org-expense-payment-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: org_expense_payment
+              - column:
+                  name: default_prefix
+                  value: OXPY
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Organization Expense Payment
+              - column:
+                  name: description
+                  value: Payment made against an organization expense
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

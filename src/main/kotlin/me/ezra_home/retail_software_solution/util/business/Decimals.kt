@@ -4,6 +4,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 object Decimals {
+    fun roundToScale4(value: BigDecimal): BigDecimal = value.setScale(4, RoundingMode.HALF_UP)
+
     fun multiplyScale4(value: BigDecimal, factor: BigDecimal): BigDecimal =
         value.multiply(factor).setScale(4, RoundingMode.HALF_UP)
 

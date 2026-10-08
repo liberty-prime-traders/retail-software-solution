@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDat
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentVoidedEvent
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.slf4j.LoggerFactory
@@ -21,7 +20,6 @@ class SalePaymentVoidHandlerForKafka(
     private val saleDataFetcher: SaleDataFetcher,
     private val salePaymentRepository: SalePaymentRepository,
     private val salePaymentVoidRepository: SalePaymentVoidRepository,
-    private val paymentMethodService: PaymentMethodService,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -33,20 +31,19 @@ class SalePaymentVoidHandlerForKafka(
         if (payments.isEmpty()) return
         val voidsByPaymentId = salePaymentVoidRepository.findBySalePaymentIdIn(payments.map { it.id!! })
             .associateBy { it.salePaymentId }
-        val allPaymentMethods = paymentMethodService.getAllPaymentMethods().associateBy { it.id }
         payments.forEach { payment ->
             val voidEntity = voidsByPaymentId[payment.id!!] ?: return@forEach
-            val accountCode = allPaymentMethods[payment.paymentMethodId]?.accountCode
-            if (StringUtils.hasValue(accountCode)) {
-                publishEvent(payment, voidEntity, contactId, accountCode!!)
-            }
+            publish(payment, voidEntity, contactId)
         }
     }
 
     fun publish(payment: SalePaymentEntity, voidEntity: SalePaymentVoidEntity, contactId: UUID) {
-        val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
+        val accountCode = payment.paymentMethodAccountCode
         if (!StringUtils.hasValue(accountCode)) {
-            log.debug("Payment method {} has no account code — ledger entry skipped for void of {}", payment.paymentMethodId, payment.referenceNumber)
+            log.debug(
+                "Payment method {} had no account code when payment {} was recorded — ledger entry skipped for its void",
+                payment.paymentMethodId, payment.referenceNumber
+            )
             return
         }
         publishEvent(payment, voidEntity, contactId, accountCode!!)

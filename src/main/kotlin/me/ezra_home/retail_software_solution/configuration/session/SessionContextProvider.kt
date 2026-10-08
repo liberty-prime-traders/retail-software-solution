@@ -59,6 +59,14 @@ object SessionContextProvider {
         sessionContextThreadLocal.remove()
     }
 
+    fun getLocationSession(): LocationSession? {
+        return getSession().location
+    }
+
+    fun setLocationSession(locationSession: LocationSession?) {
+        getSession().location = locationSession
+    }
+
     fun initOrganization(organization: OrganizationDto) {
         getSession().organization = OrgSession(
             id = organization.id,

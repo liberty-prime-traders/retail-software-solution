@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-org-expense-void-expense
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_void_expense
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense_void
+            baseColumnNames: expense_id
+            referencedTableName: org_expense
+            referencedColumnNames: id
+            constraintName: fk_org_expense_void_expense
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense_void
+            constraintName: fk_org_expense_void_expense

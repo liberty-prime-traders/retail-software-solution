@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-expense-payment-expense
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_expense_payment_expense
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: expense_payment
+            baseColumnNames: expense_id
+            referencedTableName: expense
+            referencedColumnNames: id
+            constraintName: fk_expense_payment_expense
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: expense_payment
+            constraintName: fk_expense_payment_expense

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-org-expense-payment-expense-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_payment_expense_id
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_payment_expense_id
+            tableName: org_expense_payment
+            columns:
+              - column:
+                  name: expense_id
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_payment_expense_id
+            tableName: org_expense_payment

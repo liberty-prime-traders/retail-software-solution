@@ -6,8 +6,9 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.StringUtils
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -20,7 +21,6 @@ class SupplierPaymentVoidHandlerForKafka(
     private val supplierPaymentRepository: SupplierPaymentRepository,
     private val supplierPaymentVoidRepository: SupplierPaymentVoidRepository,
     private val purchaseDataFetcher: PurchaseDataFetcher,
-    private val paymentMethodService: PaymentMethodService,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -29,17 +29,19 @@ class SupplierPaymentVoidHandlerForKafka(
     override fun reissue(sourceDocumentId: UUID) {
         val paymentVoid = supplierPaymentVoidRepository.getReferenceById(sourceDocumentId)
         val supplierPayment = supplierPaymentRepository.getReferenceById(paymentVoid.supplierPaymentId)
-        val accountCode = paymentMethodService.findAccountCode(supplierPayment.paymentMethodId) ?: return
         val supplierId = purchaseDataFetcher.getSupplierId(supplierPayment.purchaseId)
-        publish(paymentVoid, supplierPayment, supplierId, accountCode)
+        publish(paymentVoid, supplierPayment, supplierId)
     }
 
-    fun publish(
-        paymentVoid: SupplierPaymentVoidEntity,
-        payment: SupplierPaymentEntity,
-        supplierId: UUID,
-        paymentMethodAccountCode: String
-    ) {
+    fun publish(paymentVoid: SupplierPaymentVoidEntity, payment: SupplierPaymentEntity, supplierId: UUID) {
+        val paymentMethodAccountCode = payment.paymentMethodAccountCode
+        if (!StringUtils.hasValue(paymentMethodAccountCode)) {
+            log.debug(
+                "Payment method {} had no account code when payment {} was recorded — ledger entry skipped for its void",
+                payment.paymentMethodId, payment.referenceNumber
+            )
+            return
+        }
         eventPublisher.publishEvent(
             SupplierPaymentVoidedEvent(
                 eventId = UUID.randomUUID(),
@@ -52,11 +54,15 @@ class SupplierPaymentVoidHandlerForKafka(
                 voidId = paymentVoid.id!!,
                 paymentId = payment.id!!,
                 supplierId = supplierId,
-                paymentMethodAccountCode = paymentMethodAccountCode,
+                paymentMethodAccountCode = paymentMethodAccountCode!!,
                 amount = payment.amount,
                 voidedOn = DateTimes.Local.atOrganizationZone(paymentVoid.requiredCreatedOn()),
                 paymentReferenceNumber = payment.requiredReference()
             )
         )
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(SupplierPaymentVoidHandlerForKafka::class.java)
     }
 }

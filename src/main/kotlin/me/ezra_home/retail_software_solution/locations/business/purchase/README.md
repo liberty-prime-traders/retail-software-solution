@@ -431,8 +431,10 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
    - `paid > ceiling` → `OVERPAID`
    - `paid == ceiling` → `FULLY_SETTLED`
    - else → `PARTIALLY_SETTLED`
-7. Publish `SupplierPaymentEvent` **only when the payment method has an
-   account code** (cash-only methods skip the ledger event).
+7. Publish `SupplierPaymentEvent` **only when the payment method had an
+   account code at record time** (cash-only methods skip the ledger event).
+   The code is copied onto the payment as `payment_method_account_code`; void
+   and reissue use that copy, never the method's current account.
 
 ### Void payment
 
@@ -442,7 +444,7 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
   to the ledger as of that date.
 - Records a `SupplierPaymentVoidEntity`, recomputes the purchase's
   payment status, and emits a void event (again, only if the payment
-  method has an account code).
+  had a copied account code).
 
 ### Status helpers
 
@@ -756,7 +758,9 @@ Add new guards as early as the data they need is in scope.
   reusing the already-fetched ceiling and total. It does NOT call
   `patchThenReturnPaymentStatus` — see §7 for why this is the one
   exception to that rule.
-- Kafka event emitted only if the payment method has an account code.
+- `SupplierPaymentMapper.toEntity` takes the method's current account code and
+  stores it as `paymentMethodAccountCode`; the Kafka event is emitted only if
+  that copy is non-blank.
 
 ### `SupplierPaymentService.voidPayment(SupplierPaymentVoidCreateDto)`
 - Locks the purchase via `PurchaseDataFetcher.lockPurchase` (resolved
@@ -765,7 +769,8 @@ Add new guards as early as the data they need is in scope.
   `supplierPaymentVoidRepository.existsBySupplierPaymentId`.
 - Persists `SupplierPaymentVoidEntity` and recomputes the purchase
   payment status via `patchThenReturnPaymentStatus`.
-- Kafka void event emitted only if the payment method has an account code.
+- Kafka void event emitted only if the payment's copied account code is non-blank,
+  and posts to that copy.
 
 ### `PurchaseUpdater.updateNotes(id, Optional<String>?)` / `updatePaymentStatus(id, status)`
 - Direct field updates by id; no business validation.

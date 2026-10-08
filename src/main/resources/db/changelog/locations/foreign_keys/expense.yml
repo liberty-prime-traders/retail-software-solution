@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-expense-batch
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_expense_batch
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: expense
+            baseColumnNames: batch_id
+            referencedTableName: expense_batch
+            referencedColumnNames: id
+            constraintName: fk_expense_batch
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: expense
+            constraintName: fk_expense_batch

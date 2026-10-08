@@ -1,0 +1,101 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-org-expense-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: org_expense
+      changes:
+        - createTable:
+            tableName: org_expense
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_org_expense_reference_number
+
+              - column:
+                  name: expense_type_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_expense_type_id_notnull
+
+              - column:
+                  name: expense_account_code
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_expense_account_code_notnull
+
+              - column:
+                  name: payee_contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_payee_contact_id_notnull
+
+              - column:
+                  name: amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_amount_notnull
+
+              - column:
+                  name: expense_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_expense_date_notnull
+
+              - column:
+                  name: description
+                  type: text
+
+              - column:
+                  name: source_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_source_type_notnull
+
+              - column:
+                  name: source_reference
+                  type: varchar(30)
+
+              - column:
+                  name: batch_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_batch_id_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: org_expense_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: org_expense

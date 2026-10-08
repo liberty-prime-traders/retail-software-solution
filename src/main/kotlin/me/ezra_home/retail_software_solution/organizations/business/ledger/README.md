@@ -56,6 +56,37 @@ takes the closing accounts and Retained Earnings through
 `AccountStructureLock` directly, and `ledger` hands `account` its posting lines
 as `AccountPosting`s.
 
+## Expense processors
+
+`ExpensePostingRequests` builds all four expense postings; the four processors
+(`Expense{Recorded,Voided,PaymentRecorded,PaymentVoided}AccountingProcessor`) only gate
+`shouldProcess` through `ExpenseLedgerGate` and resolve the payee's contact reference.
+They serve both location and org expenses.
+
+| Event | Entries | Subledger (payee) |
+|---|---|---|
+| recorded | debit expense account, credit liability | payable raised |
+| voided | credit expense account, debit liability | payable reduced |
+| payment recorded | debit liability, credit payment-method account | payable reduced |
+| payment voided | credit liability, debit payment-method account | payable restored |
+
+The liability is derived at posting time from the expense account snapshotted on the expense row (`expense_account_code`, copied from the expense type when recorded and never re-read from it): `WAGES_EXPENSE`
+credits `WAGES_PAYABLE`, every other account credits `TRADE_PAYABLES`
+(`ExpenseLiabilityAccount`, in `processors/`).
+
+Voiding an expense is the only entry that credits the expense account; a refund-style
+reversal of a payment never touches it.
+
+Idempotency is keyed on `(reference, source type, location)` in `ledger_entry_group`. A
+void and its original share a reference and differ only by source type, so a void's
+`shouldProcess` also requires the original posting to exist. `ExpenseLedgerGate` picks the
+location-keyed or the `...SourceLocationIdIsNull` check from the event's `sourceContext`,
+and a location-level event processed outside that location's session is rejected rather than
+keyed elsewhere. An org-level expense is stored with a null `source_location_id`, which
+is what separates it from a location expense. Both share the `EXPENSE*` source types, and
+the two partial indexes (`uq_ledger_entry_grp_ref_type_loc` / `_org`) keep their
+references from colliding. `idempotencyConstraintName` follows the same session check.
+
 ## Contra accounts
 
 Contras are posted like any other account, in their own normal direction

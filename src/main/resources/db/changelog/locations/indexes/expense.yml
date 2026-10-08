@@ -1,0 +1,106 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-expense-batch-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_batch_id
+      changes:
+        - createIndex:
+            indexName: idx_expense_batch_id
+            tableName: expense
+            columns:
+              - column:
+                  name: batch_id
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_batch_id
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-expense-type-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_expense_type_id
+      changes:
+        - createIndex:
+            indexName: idx_expense_expense_type_id
+            tableName: expense
+            columns:
+              - column:
+                  name: expense_type_id
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_expense_type_id
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-payee-contact-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_payee_contact_id
+      changes:
+        - createIndex:
+            indexName: idx_expense_payee_contact_id
+            tableName: expense
+            columns:
+              - column:
+                  name: payee_contact_id
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_payee_contact_id
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-source-reference
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_source_reference
+      changes:
+        - createIndex:
+            indexName: idx_expense_source_reference
+            tableName: expense
+            columns:
+              - column:
+                  name: source_reference
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_source_reference
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_created_on
+      changes:
+        - createIndex:
+            indexName: idx_expense_created_on
+            tableName: expense
+            columns:
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_created_on
+            tableName: expense
