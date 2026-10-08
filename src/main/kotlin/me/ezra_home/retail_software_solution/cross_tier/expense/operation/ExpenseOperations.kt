@@ -7,11 +7,11 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseVoidR
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.StandaloneExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseBatchRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseVoidRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpenseRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpenseVoidedEvent
@@ -130,25 +130,17 @@ class ExpenseOperations(
         sourceReference: String?,
         resolvedExpenseRows: List<ResolvedExpenseRow>
     ): ExpenseAggregate {
-        val writtenExpenseRecords = ArrayList<ExpenseRecord>()
-        val writtenPaymentRecords = ArrayList<ExpensePaymentRecord>()
-        resolvedExpenseRows.forEach { resolvedExpenseRow ->
+        val settledExpenses = ArrayList<SettledExpense>()
+        val writtenExpenseIds = resolvedExpenseRows.map { resolvedExpenseRow ->
             val expenseRecord = expenseStore.saveExpense(expenseBatchRecord.id, sourceType, sourceReference, resolvedExpenseRow)
-            writtenExpenseRecords.add(expenseRecord)
             publishRecorded(expenseStore, expenseRecord)
-            resolvedExpenseRow.settlement?.let { resolvedSettlement ->
-                writtenPaymentRecords.add(
-                    expensePaymentOperations.settle(expenseStore, expenseRecord, resolvedExpenseRow.amount, resolvedSettlement)
-                )
-            }
+            resolvedExpenseRow.settlement?.let { settledExpenses.add(SettledExpense(expenseRecord, it)) }
+            expenseRecord.id
         }
-        return ExpenseAggregate(
-            batches = listOf(expenseBatchRecord),
-            expenses = writtenExpenseRecords,
-            payments = writtenPaymentRecords,
-            paymentVoids = emptyList(),
-            expenseVoids = emptyList()
-        )
+        expensePaymentOperations.settleNewExpenses(expenseStore, settledExpenses)
+        val writtenAggregate = expenseStore.loadForExpenses(writtenExpenseIds)
+        val writtenOrderByExpenseId = writtenExpenseIds.withIndex().associate { (index, expenseId) -> expenseId to index }
+        return writtenAggregate.copy(expenses = writtenAggregate.expenses.sortedBy { writtenOrderByExpenseId.getValue(it.id) })
     }
 
     private fun summariesOf(expenseAggregate: ExpenseAggregate): List<ExpenseSummaryResponse> =

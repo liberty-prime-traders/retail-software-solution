@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentWriter
 import org.springframework.stereotype.Service

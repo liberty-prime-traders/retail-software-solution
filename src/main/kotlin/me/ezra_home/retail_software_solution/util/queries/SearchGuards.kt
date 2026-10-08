@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.util.queries
 
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import java.math.BigDecimal
 
 object SearchGuards {
 
@@ -13,6 +14,18 @@ object SearchGuards {
   fun guardMaxSize(size: Int, maxSize: Int, label: String) {
     if (size > maxSize) {
       throw RtsGenericException("A maximum of $maxSize $label may be supplied")
+    }
+  }
+
+  fun guardRangeSupplied(from: Any?, before: Any?, fromLabel: String, beforeLabel: String) {
+    if (from == null || before == null) {
+      throw RtsGenericException("$fromLabel and $beforeLabel are required")
+    }
+  }
+
+  fun guardNonNegative(value: BigDecimal?, label: String) {
+    if (value != null && value < BigDecimal.ZERO) {
+      throw RtsGenericException("$label must not be negative")
     }
   }
 

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PaymentStatusResolver
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
+import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes

@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.search
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSearchParameters
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.SearchGuards
 
 object SaleSearchValidator {
@@ -13,6 +12,12 @@ object SaleSearchValidator {
   private const val MAX_PAGE_SIZE = 500
 
   fun guardValidParameters(saleSearchParameters: SaleSearchParameters) {
+    SearchGuards.guardRangeSupplied(
+      saleSearchParameters.createdFrom,
+      saleSearchParameters.createdBefore,
+      "createdFrom",
+      "createdBefore"
+    )
     SearchGuards.guardMaxSize(saleSearchParameters.saleReferenceNumbers.size, MAX_SALE_REFERENCE_NUMBERS, "sale reference numbers")
     SearchGuards.guardMaxSize(saleSearchParameters.contactIds.size, MAX_CONTACT_IDS, "contact ids")
     SearchGuards.guardMaxSize(saleSearchParameters.soldByUserIds.size, MAX_SOLD_BY_USER_IDS, "sold by user ids")
@@ -34,15 +39,14 @@ object SaleSearchValidator {
       saleSearchParameters.maxDiscountTotal,
       "minDiscountTotal must not be greater than maxDiscountTotal"
     ) { min, max -> min > max }
+
+    SearchGuards.guardNonNegative(saleSearchParameters.minReceivableTotal, "minReceivableTotal")
+    SearchGuards.guardNonNegative(saleSearchParameters.maxReceivableTotal, "maxReceivableTotal")
+    SearchGuards.guardNonNegative(saleSearchParameters.minDiscountTotal, "minDiscountTotal")
+    SearchGuards.guardNonNegative(saleSearchParameters.maxDiscountTotal, "maxDiscountTotal")
   }
 
   fun guardValidPageSize(requestedSize: Int) {
     SearchGuards.guardPageSize(requestedSize, MIN_PAGE_SIZE, MAX_PAGE_SIZE)
-  }
-
-  fun guardSummaryHasFilter(saleSearchParameters: SaleSearchParameters) {
-    if (saleSearchParameters == SaleSearchParameters()) {
-      throw RtsGenericException("At least one filter must be supplied to summarize sales")
-    }
   }
 }

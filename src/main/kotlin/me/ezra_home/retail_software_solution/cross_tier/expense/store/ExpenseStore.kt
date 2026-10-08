@@ -33,6 +33,8 @@ interface ExpenseStore {
 
     fun savePayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentRecord>
 
+    fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>)
+
     fun saveExpenseVoid(expenseId: UUID, reason: String): ExpenseVoidRecord
 
     fun savePaymentVoid(paymentId: UUID, reason: String): ExpensePaymentVoidRecord

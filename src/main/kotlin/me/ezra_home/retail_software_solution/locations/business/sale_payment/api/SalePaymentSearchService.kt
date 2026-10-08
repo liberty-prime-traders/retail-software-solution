@@ -20,11 +20,12 @@ class SalePaymentSearchService(
 ) {
 
   fun search(pageRequest: PageRequest<SalePaymentSearchParameters, String>): PageResponse<SalePaymentSearchResultDto, String> {
-    SalePaymentSearchValidator.guardValidParameters(pageRequest.parameters)
+    val salePaymentSearchParameters = pageRequest.parameters.sanitized()
+    SalePaymentSearchValidator.guardValidParameters(salePaymentSearchParameters)
     SalePaymentSearchValidator.guardValidPageSize(pageRequest.requestedSize)
     val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
-    val rawRows = salePaymentSearchFetcher.search(pageRequest.parameters, cursor, pageRequest.requestedSize)
+    val rawRows = salePaymentSearchFetcher.search(salePaymentSearchParameters, cursor, pageRequest.requestedSize)
     val hasMore = rawRows.size > pageRequest.requestedSize
     val pageRows = if (hasMore) rawRows.take(pageRequest.requestedSize) else rawRows
 
@@ -40,9 +41,9 @@ class SalePaymentSearchService(
   }
 
   fun summarize(salePaymentSearchParameters: SalePaymentSearchParameters): SalePaymentSummaryResponseDto {
-    SalePaymentSearchValidator.guardValidParameters(salePaymentSearchParameters)
-    SalePaymentSearchValidator.guardSummaryHasFilter(salePaymentSearchParameters)
-    val rawSummaries = salePaymentSearchFetcher.summarize(salePaymentSearchParameters)
+    val sanitizedSalePaymentSearchParameters = salePaymentSearchParameters.sanitized()
+    SalePaymentSearchValidator.guardValidParameters(sanitizedSalePaymentSearchParameters)
+    val rawSummaries = salePaymentSearchFetcher.summarize(sanitizedSalePaymentSearchParameters)
     val paymentMethodNamesById = paymentMethodService.getNamesById()
 
     val methods = rawSummaries.map { raw ->

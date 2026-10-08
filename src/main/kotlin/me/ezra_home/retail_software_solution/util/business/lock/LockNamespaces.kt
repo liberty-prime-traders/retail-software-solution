@@ -8,5 +8,6 @@ object LockNamespaces {
     const val ACCOUNT = "account"
     const val EXPENSE = "expense"
     const val EXPENSE_SOURCE = "expense_source"
+    const val EXPENSE_TYPE = "expense_type"
     const val SUBLEDGER_CONTACT = "subledger_contact"
 }

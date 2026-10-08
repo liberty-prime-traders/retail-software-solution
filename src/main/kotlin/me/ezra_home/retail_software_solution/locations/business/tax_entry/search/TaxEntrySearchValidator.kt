@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.locations.business.tax_entry.searc
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxEntrySearchParameters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.SearchGuards
-import java.math.BigDecimal
 
 object TaxEntrySearchValidator {
 
@@ -31,14 +30,8 @@ object TaxEntrySearchValidator {
 
         // Both bounds filter on ABS(tax_amount), so a negative bound is not a looser filter — it is
         // meaningless: min < 0 is a no-op (magnitude is never negative) and max < 0 empties the result.
-        guardNonNegative(taxEntrySearchParameters.minTaxAmount, "minTaxAmount")
-        guardNonNegative(taxEntrySearchParameters.maxTaxAmount, "maxTaxAmount")
-    }
-
-    private fun guardNonNegative(value: BigDecimal?, label: String) {
-        if (value != null && value < BigDecimal.ZERO) {
-            throw RtsGenericException("$label must not be negative")
-        }
+        SearchGuards.guardNonNegative(taxEntrySearchParameters.minTaxAmount, "minTaxAmount")
+        SearchGuards.guardNonNegative(taxEntrySearchParameters.maxTaxAmount, "maxTaxAmount")
     }
 
     fun guardValidPageSize(requestedSize: Int) {

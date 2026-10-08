@@ -4,18 +4,21 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceTyp
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseBatchBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentBase
+import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentStateBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseBatchRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentStateRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseVoidRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseBatchRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentRepositoryBase
+import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentStateRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentVoidRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseVoidRepositoryBase
@@ -29,7 +32,8 @@ abstract class JpaExpenseStore(
     private val expenseRepository: ExpenseRepositoryBase<out ExpenseBase>,
     private val expensePaymentRepository: ExpensePaymentRepositoryBase<out ExpensePaymentBase>,
     private val expensePaymentVoidRepository: ExpensePaymentVoidRepositoryBase<out ExpensePaymentVoidBase>,
-    private val expenseVoidRepository: ExpenseVoidRepositoryBase<out ExpenseVoidBase>
+    private val expenseVoidRepository: ExpenseVoidRepositoryBase<out ExpenseVoidBase>,
+    private val expensePaymentStateRepository: ExpensePaymentStateRepositoryBase<out ExpensePaymentStateBase>
 ) : ExpenseStore {
 
     protected abstract fun saveNewBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?): ExpenseBatchBase
@@ -116,12 +120,14 @@ abstract class JpaExpenseStore(
         val paymentVoidEntities = if (paymentEntities.isEmpty()) emptyList() else
             expensePaymentVoidRepository.findByExpensePaymentIdIn(paymentEntities.map { it.id!! })
         val expenseVoidEntities = if (expenseIds.isEmpty()) emptyList() else expenseVoidRepository.findByExpenseIdIn(expenseIds)
+        val paymentStateEntities = if (expenseIds.isEmpty()) emptyList() else expensePaymentStateRepository.findByExpenseIdIn(expenseIds)
         return ExpenseAggregate(
             batches = batchEntities.map { toRecord(it) },
             expenses = expenseEntities.map { toRecord(it) },
             payments = paymentEntities.map { toRecord(it) },
             paymentVoids = paymentVoidEntities.map { toRecord(it) },
-            expenseVoids = expenseVoidEntities.map { toRecord(it) }
+            expenseVoids = expenseVoidEntities.map { toRecord(it) },
+            paymentStates = paymentStateEntities.map { toRecord(it) }
         )
     }
 
@@ -146,6 +152,10 @@ abstract class JpaExpenseStore(
     private fun toRecord(paymentVoid: ExpensePaymentVoidBase) = ExpensePaymentVoidRecord(
         paymentVoid.id!!, paymentVoid.expensePaymentId,
         paymentVoid.reason, paymentVoid.requiredCreatedOn()
+    )
+
+    private fun toRecord(paymentState: ExpensePaymentStateBase) = ExpensePaymentStateRecord(
+        paymentState.expenseId, paymentState.paymentStatus, paymentState.amountPaid
     )
 
     private fun toRecord(expenseVoid: ExpenseVoidBase) = ExpenseVoidRecord(

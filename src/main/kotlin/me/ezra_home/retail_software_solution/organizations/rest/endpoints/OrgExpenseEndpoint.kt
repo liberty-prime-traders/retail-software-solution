@@ -1,15 +1,20 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
-import me.ezra_home.retail_software_solution.organizations.business.org_expense.api.OrgExpenseService
-import me.ezra_home.retail_software_solution.platform.business.feature.api.Feature
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
+import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseVoidRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.StandaloneExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.StockTransferExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchParameters
+import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchSummaryResponseDto
+import me.ezra_home.retail_software_solution.organizations.business.org_expense.api.OrgExpenseSearchService
+import me.ezra_home.retail_software_solution.organizations.business.org_expense.api.OrgExpenseService
+import me.ezra_home.retail_software_solution.platform.business.feature.api.Feature
 import me.ezra_home.retail_software_solution.util.annotations.RequiresFeature
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -22,7 +27,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("secured/org-expenses")
 @RequiresFeature(Feature.CHART_OF_ACCOUNTS)
 class OrgExpenseEndpoint(
-    private val orgExpenseService: OrgExpenseService
+    private val orgExpenseService: OrgExpenseService,
+    private val orgExpenseSearchService: OrgExpenseSearchService
 ) {
 
     @PostMapping("standalone")
@@ -33,6 +39,14 @@ class OrgExpenseEndpoint(
     fun createForStockTransfer(
         @RequestBody stockTransferExpenseBatchRequest: StockTransferExpenseBatchRequest
     ): List<ExpenseSummaryResponse> = orgExpenseService.createForStockTransfer(stockTransferExpenseBatchRequest)
+
+    @PostMapping("search")
+    fun search(@RequestBody pageRequest: PageRequest<ExpenseSearchParameters, String>): PageResponse<ExpenseSummaryResponse, String> =
+        orgExpenseSearchService.search(pageRequest)
+
+    @PostMapping("search/summary")
+    fun searchSummary(@RequestBody expenseSearchParameters: ExpenseSearchParameters): ExpenseSearchSummaryResponseDto =
+        orgExpenseSearchService.summarize(expenseSearchParameters)
 
     @PostMapping("payments")
     fun recordPayments(@RequestBody expensePaymentCreateRequests: List<ExpensePaymentCreateRequest>): List<ExpenseSummaryResponse> =

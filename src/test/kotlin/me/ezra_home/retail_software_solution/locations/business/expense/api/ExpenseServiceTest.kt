@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpe
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpenseRowRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.RequiredPayeeExpenseRowRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.api.SaleExpenseBatchRequest
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher

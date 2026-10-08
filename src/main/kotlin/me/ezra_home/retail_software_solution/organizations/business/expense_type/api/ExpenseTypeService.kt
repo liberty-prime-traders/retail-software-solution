@@ -68,6 +68,7 @@ class ExpenseTypeService(
         expenseTypeEntity.expenseAccountCode = updatedExpenseTypeDto.expenseAccountCode
         expenseTypeEntity.eligiblePayeeTypes = updatedExpenseTypeDto.eligiblePayeeTypes
         expenseTypeEntity.eligibleSourceTypes = updatedExpenseTypeDto.eligibleSourceTypes
+        expenseTypeRepository.save(expenseTypeEntity)
         return expenseTypeMapper.toResponseDto(updatedExpenseTypeDto)
     }
 }

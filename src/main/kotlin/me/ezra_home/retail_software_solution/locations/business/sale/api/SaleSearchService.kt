@@ -21,11 +21,12 @@ class SaleSearchService(
 ) {
 
   fun search(pageRequest: PageRequest<SaleSearchParameters, String>): PageResponse<SaleSummary, String> {
-    SaleSearchValidator.guardValidParameters(pageRequest.parameters)
+    val saleSearchParameters = pageRequest.parameters.sanitized()
+    SaleSearchValidator.guardValidParameters(saleSearchParameters)
     SaleSearchValidator.guardValidPageSize(pageRequest.requestedSize)
     val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
-    val rawRows = saleSearchFetcher.search(pageRequest.parameters, cursor, pageRequest.requestedSize)
+    val rawRows = saleSearchFetcher.search(saleSearchParameters, cursor, pageRequest.requestedSize)
     val hasMore = rawRows.size > pageRequest.requestedSize
     val pageRows = if (hasMore) rawRows.take(pageRequest.requestedSize) else rawRows
 
@@ -44,9 +45,9 @@ class SaleSearchService(
   }
 
   fun summarize(saleSearchParameters: SaleSearchParameters): SaleSearchSummaryResponseDto {
-    SaleSearchValidator.guardValidParameters(saleSearchParameters)
-    SaleSearchValidator.guardSummaryHasFilter(saleSearchParameters)
-    val rawRowsByStatus = saleSearchFetcher.summarize(saleSearchParameters).associateBy { it.status }
+    val sanitizedSaleSearchParameters = saleSearchParameters.sanitized()
+    SaleSearchValidator.guardValidParameters(sanitizedSaleSearchParameters)
+    val rawRowsByStatus = saleSearchFetcher.summarize(sanitizedSaleSearchParameters).associateBy { it.status }
 
     val statuses = SaleStatus.entries.map { status ->
       rawRowsByStatus[status]?.let {

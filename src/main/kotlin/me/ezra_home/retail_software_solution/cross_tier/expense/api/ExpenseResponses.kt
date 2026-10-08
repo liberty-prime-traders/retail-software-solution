@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.api
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime

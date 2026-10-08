@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.search.PurchasePaymentStatusSummaryRawRow
@@ -22,11 +23,12 @@ class PurchaseSearchService(
 ) {
 
   fun search(pageRequest: PageRequest<PurchaseSearchParameters, String>): PageResponse<PurchaseResponseDto, String> {
-    PurchaseSearchValidator.guardValidParameters(pageRequest.parameters)
+    val purchaseSearchParameters = pageRequest.parameters.sanitized()
+    PurchaseSearchValidator.guardValidParameters(purchaseSearchParameters)
     PurchaseSearchValidator.guardValidPageSize(pageRequest.requestedSize)
     val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
-    val purchases = purchaseSearchFetcher.search(pageRequest.parameters, cursor, pageRequest.requestedSize)
+    val purchases = purchaseSearchFetcher.search(purchaseSearchParameters, cursor, pageRequest.requestedSize)
     val hasMore = purchases.size > pageRequest.requestedSize
     val pageRows = if (hasMore) purchases.take(pageRequest.requestedSize) else purchases
 
@@ -40,15 +42,15 @@ class PurchaseSearchService(
   }
 
   fun summarize(purchaseSearchParameters: PurchaseSearchParameters): PurchaseSearchSummaryDto {
-    PurchaseSearchValidator.guardValidParameters(purchaseSearchParameters)
-    PurchaseSearchValidator.guardSummaryHasFilter(purchaseSearchParameters)
+    val sanitizedPurchaseSearchParameters = purchaseSearchParameters.sanitized()
+    PurchaseSearchValidator.guardValidParameters(sanitizedPurchaseSearchParameters)
 
-    val byPaymentStatusRaw = purchaseSearchFetcher.summarizeByPaymentStatus(purchaseSearchParameters)
+    val byPaymentStatusRaw = purchaseSearchFetcher.summarizeByPaymentStatus(sanitizedPurchaseSearchParameters)
     val byPaymentStatus = byPaymentStatusRaw.map { it.toDto() }
 
-    val bySupplier = if (purchaseSearchParameters.supplierIds.isNotEmpty()) {
+    val bySupplier = if (sanitizedPurchaseSearchParameters.supplierIds.isNotEmpty()) {
       val supplierNamesById = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
-      purchaseSearchFetcher.summarizeBySupplier(purchaseSearchParameters).map { it.toDto(supplierNamesById) }
+      purchaseSearchFetcher.summarizeBySupplier(sanitizedPurchaseSearchParameters).map { it.toDto(supplierNamesById) }
     } else {
       null
     }

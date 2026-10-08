@@ -3,14 +3,18 @@ package me.ezra_home.retail_software_solution.locations.business.expense.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpensePaymentStateMaintainer
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.JpaExpenseStore
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseBatchEntity
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseBatchRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseEntity
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentRepository
+import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentStateEntity
+import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentStateRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseRepository
@@ -32,9 +36,11 @@ class LocationExpenseStore(
     private val expensePaymentRepository: ExpensePaymentRepository,
     private val expensePaymentVoidRepository: ExpensePaymentVoidRepository,
     private val expenseVoidRepository: ExpenseVoidRepository,
+    private val expensePaymentStateRepository: ExpensePaymentStateRepository,
     private val entityAdvisoryLock: EntityAdvisoryLock
 ) : JpaExpenseStore(
-    expenseBatchRepository, expenseRepository, expensePaymentRepository, expensePaymentVoidRepository, expenseVoidRepository
+    expenseBatchRepository, expenseRepository, expensePaymentRepository, expensePaymentVoidRepository, expenseVoidRepository,
+    expensePaymentStateRepository
 ) {
 
     override fun sourceContext(): EventSourceContext = EventSourceContext.LocationLevel(
@@ -60,19 +66,26 @@ class LocationExpenseStore(
         sourceType: ExpenseSourceType,
         sourceReference: String?,
         resolvedExpenseRow: ResolvedExpenseRow
-    ) = expenseRepository.save(
-        ExpenseEntity(
-            expenseTypeId = resolvedExpenseRow.expenseType.id,
-            expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
-            payeeContactId = resolvedExpenseRow.payee.id,
-            amount = resolvedExpenseRow.amount,
-            expenseDate = resolvedExpenseRow.expenseDate,
-            description = resolvedExpenseRow.description,
-            sourceType = sourceType,
-            sourceReference = sourceReference,
-            batchId = batchId
+    ): ExpenseEntity {
+        val expenseEntity = expenseRepository.save(
+            ExpenseEntity(
+                expenseTypeId = resolvedExpenseRow.expenseType.id,
+                expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
+                payeeContactId = resolvedExpenseRow.payee.id,
+                amount = resolvedExpenseRow.amount,
+                expenseDate = resolvedExpenseRow.expenseDate,
+                description = resolvedExpenseRow.description,
+                sourceType = sourceType,
+                sourceReference = sourceReference,
+                batchId = batchId
+            )
         )
-    )
+        expensePaymentStateRepository.save(ExpensePaymentStateEntity(expenseId = expenseEntity.id!!))
+        return expenseEntity
+    }
+
+    override fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>) =
+        ExpensePaymentStateMaintainer.refresh(expensePaymentStateRepository, expenseRecords)
 
     override fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>) =
         expensePaymentRepository.saveAll(

@@ -118,7 +118,7 @@ class ExpenseOperationsTest {
         val batchRecord = ExpenseBatchRecord(UUID.randomUUID(), "EXBT01", "Purchase PRCH01", OffsetDateTime.now(), UUID.randomUUID())
         `when`(expenseRowResolver.resolve(ExpenseSourceType.PURCHASE, expenseDate, emptyList())).thenReturn(emptyList())
         `when`(expenseStore.findBatchBySource(ExpenseSourceType.PURCHASE, "PRCH01")).thenReturn(batchRecord)
-        `when`(expenseStore.loadForBatch(batchRecord.id)).thenReturn(emptyAggregate())
+        `when`(expenseStore.loadForExpenses(emptyList())).thenReturn(emptyAggregate())
 
         expenseOperations.createForSourceDocument(
             expenseStore, ExpenseSourceType.PURCHASE, "PRCH01", sourceDocumentId, expenseDate, emptyList()
@@ -135,12 +135,34 @@ class ExpenseOperationsTest {
         val batchRecord = ExpenseBatchRecord(UUID.randomUUID(), "EXBT01", "Purchase PRCH01", OffsetDateTime.now(), UUID.randomUUID())
         `when`(expenseRowResolver.resolve(ExpenseSourceType.PURCHASE, expenseDate, emptyList())).thenReturn(emptyList())
         `when`(expenseStore.findBatchBySource(ExpenseSourceType.PURCHASE, "PRCH01")).thenReturn(batchRecord)
+        `when`(expenseStore.loadForExpenses(emptyList())).thenReturn(emptyAggregate())
 
         expenseOperations.createForSourceDocument(
             expenseStore, ExpenseSourceType.PURCHASE, "PRCH01", UUID.randomUUID(), expenseDate, emptyList()
         )
 
         verify(expenseStore, never()).loadForBatch(batchRecord.id)
+    }
+
+    @Test
+    fun `rows are answered in the order they were written whatever order the store loads them in`() {
+        val batchRecord = ExpenseBatchRecord(UUID.randomUUID(), "EXBT01", "Freight run", OffsetDateTime.now(), UUID.randomUUID())
+        val firstRow = ResolvedExpenseRow(expenseType, payee, BigDecimal("10.0000"), null, expenseDate, null)
+        val secondRow = ResolvedExpenseRow(expenseType, payee, BigDecimal("20.0000"), null, expenseDate, null)
+        val firstRecord = expenseRecord(BigDecimal("10.0000"), "EXPN01")
+        val secondRecord = expenseRecord(BigDecimal("20.0000"), "EXPN02")
+        `when`(expenseRowResolver.resolve(ExpenseSourceType.ADHOC, expenseDate, emptyList())).thenReturn(listOf(firstRow, secondRow))
+        `when`(expenseStore.createBatch("Freight run", ExpenseSourceType.ADHOC, null)).thenReturn(batchRecord)
+        `when`(expenseStore.saveExpense(batchRecord.id, ExpenseSourceType.ADHOC, null, firstRow)).thenReturn(firstRecord)
+        `when`(expenseStore.saveExpense(batchRecord.id, ExpenseSourceType.ADHOC, null, secondRow)).thenReturn(secondRecord)
+        `when`(expenseStore.loadForExpenses(listOf(firstRecord.id, secondRecord.id))).thenReturn(
+            ExpenseAggregate(emptyList(), listOf(secondRecord, firstRecord), emptyList(), emptyList(), emptyList())
+        )
+
+        expenseOperations.createBatch(expenseStore, ExpenseSourceType.ADHOC, "Freight run", expenseDate, emptyList())
+
+        val summarizedAggregate = mockingDetails(expenseResponseBuilder).invocations.single().arguments[0] as ExpenseAggregate
+        assertEquals(listOf("EXPN01", "EXPN02"), summarizedAggregate.expenses.map { it.referenceNumber })
     }
 
     @Test
@@ -156,7 +178,9 @@ class ExpenseOperationsTest {
         `when`(expenseStore.saveExpense(batchRecord.id, ExpenseSourceType.ADHOC, null, resolvedRow)).thenReturn(expenseRecord)
         `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseRecord.id, BigDecimal("100.0000"), resolvedRow.settlement!!))))
             .thenReturn(listOf(paymentRecord(expenseRecord.id, "100")))
-        `when`(expenseStore.loadForBatch(batchRecord.id)).thenReturn(emptyAggregate())
+        `when`(expenseStore.loadForExpenses(listOf(expenseRecord.id))).thenReturn(
+            ExpenseAggregate(emptyList(), listOf(expenseRecord), emptyList(), emptyList(), emptyList())
+        )
 
         expenseOperations.createBatch(expenseStore, ExpenseSourceType.ADHOC, "Freight run", expenseDate, emptyList())
 

@@ -1,6 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
+package me.ezra_home.retail_software_solution.util.business
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import java.math.BigDecimal
 
 object PaymentStatusResolver {

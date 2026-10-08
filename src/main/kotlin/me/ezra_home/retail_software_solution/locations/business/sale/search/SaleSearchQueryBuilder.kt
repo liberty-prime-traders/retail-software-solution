@@ -13,16 +13,16 @@ import me.ezra_home.retail_software_solution.util.queries.SqlQuery
 
 object SaleSearchQueryBuilder {
 
-  private const val S = SaleSearchAliases.SALE
+  private const val SALE_ALIAS = SaleSearchAliases.SALE
 
   private const val SUMMARY_FROM_AND_JOINS = """
-    FROM ${TableNames.SALE} $S
+    FROM ${TableNames.SALE} $SALE_ALIAS
     LEFT JOIN LATERAL (
       SELECT COALESCE(SUM(${SaleSearchAliases.SALE_PAYMENT}.amount) FILTER (WHERE ${SaleSearchAliases.SALE_PAYMENT_VOID}.id IS NULL), 0) AS paid
       FROM ${TableNames.SALE_PAYMENT} ${SaleSearchAliases.SALE_PAYMENT}
       LEFT JOIN ${TableNames.SALE_PAYMENT_VOID} ${SaleSearchAliases.SALE_PAYMENT_VOID}
         ON ${SaleSearchAliases.SALE_PAYMENT_VOID}.sale_payment_id = ${SaleSearchAliases.SALE_PAYMENT}.id
-      WHERE ${SaleSearchAliases.SALE_PAYMENT}.sale_id = $S.id
+      WHERE ${SaleSearchAliases.SALE_PAYMENT}.sale_id = $SALE_ALIAS.id
     ) ${SaleSearchAliases.PAYMENTS} ON TRUE
   """
 
@@ -31,7 +31,7 @@ object SaleSearchQueryBuilder {
     context.whereClauses.add("1=1")
 
     DateRangeFilterStrategy(
-      "$S.created_on",
+      "$SALE_ALIAS.created_on",
       SaleSearchParameterNames.CREATED_FROM,
       saleSearchParameters.createdFrom,
       SaleSearchParameterNames.CREATED_BEFORE,
@@ -39,31 +39,31 @@ object SaleSearchQueryBuilder {
     ).apply(context)
 
     AnyListFilterStrategy(
-      "$S.contact_id",
+      "$SALE_ALIAS.contact_id",
       SaleSearchParameterNames.CONTACT_IDS,
       saleSearchParameters.contactIds.toTypedArray()
     ).apply(context)
 
     AnyListFilterStrategy(
-      "$S.sold_by_id",
+      "$SALE_ALIAS.sold_by_id",
       SaleSearchParameterNames.SOLD_BY_USER_IDS,
       saleSearchParameters.soldByUserIds.toTypedArray()
     ).apply(context)
 
     AnyListFilterStrategy(
-      "$S.reference_number",
+      "$SALE_ALIAS.reference_number",
       SaleSearchParameterNames.SALE_REFERENCE_NUMBERS,
       saleSearchParameters.saleReferenceNumbers.toTypedArray()
     ).apply(context)
 
     AnyListFilterStrategy(
-      "$S.status",
+      "$SALE_ALIAS.status",
       SaleSearchParameterNames.SALE_STATUSES,
       saleSearchParameters.saleStatuses.map { it.code }.toTypedArray()
     ).apply(context)
 
     AnyListFilterStrategy(
-      "$S.payment_status",
+      "$SALE_ALIAS.payment_status",
       SaleSearchParameterNames.PAYMENT_STATUSES,
       saleSearchParameters.paymentStatuses.map { it.code }.toTypedArray()
     ).apply(context)
@@ -93,7 +93,7 @@ object SaleSearchQueryBuilder {
 
     if (cursor != null) {
       whereClauses.add(
-        "($S.created_on, $S.id) < (:${QueryParameterNames.CURSOR_CREATED_ON}, :${QueryParameterNames.CURSOR_ID})"
+        "($SALE_ALIAS.created_on, $SALE_ALIAS.id) < (:${QueryParameterNames.CURSOR_CREATED_ON}, :${QueryParameterNames.CURSOR_ID})"
       )
       params[QueryParameterNames.CURSOR_CREATED_ON] = cursor.createdOn
       params[QueryParameterNames.CURSOR_ID] = cursor.id
@@ -101,18 +101,18 @@ object SaleSearchQueryBuilder {
 
     val sql = """
       SELECT
-        $S.id AS id,
-        $S.reference_number AS reference_number,
-        $S.contact_id AS contact_id,
-        $S.sold_by_id AS sold_by_id,
-        $S.date_sold AS date_sold,
-        $S.created_on AS created_on,
-        $S.status AS status,
-        $S.payment_status AS payment_status,
+        $SALE_ALIAS.id AS id,
+        $SALE_ALIAS.reference_number AS reference_number,
+        $SALE_ALIAS.contact_id AS contact_id,
+        $SALE_ALIAS.sold_by_id AS sold_by_id,
+        $SALE_ALIAS.date_sold AS date_sold,
+        $SALE_ALIAS.created_on AS created_on,
+        $SALE_ALIAS.status AS status,
+        $SALE_ALIAS.payment_status AS payment_status,
         ${SaleSearchExpressions.RECEIVABLE_TOTAL} AS receivable_total
-      FROM ${TableNames.SALE} $S
+      FROM ${TableNames.SALE} $SALE_ALIAS
       WHERE ${whereClauses.joinToString(" AND ")}
-      ORDER BY $S.created_on DESC, $S.id DESC
+      ORDER BY $SALE_ALIAS.created_on DESC, $SALE_ALIAS.id DESC
       LIMIT :${QueryParameterNames.PAGE_SIZE}
     """.trimIndent()
 
@@ -134,20 +134,20 @@ object SaleSearchQueryBuilder {
 
     val sql = """
       SELECT
-        $S.status AS status,
+        $SALE_ALIAS.status AS status,
         COUNT(*) AS sale_count,
         COALESCE(SUM($receivableTotal), 0) AS receivable_total,
         COALESCE(SUM($discountTotal), 0) AS discount_total,
         COALESCE(SUM($paid), 0) AS paid_total,
-        COALESCE(SUM(CASE WHEN $S.status = $confirmedStatus
+        COALESCE(SUM(CASE WHEN $SALE_ALIAS.status = $confirmedStatus
                           THEN GREATEST($receivableTotal - $paid, 0)
                           ELSE 0 END), 0) AS outstanding_total,
-        COALESCE(SUM(CASE WHEN $S.status = $confirmedStatus
+        COALESCE(SUM(CASE WHEN $SALE_ALIAS.status = $confirmedStatus
                           THEN GREATEST($paid - $receivableTotal, 0)
                           ELSE $paid END), 0) AS credit_total
       $SUMMARY_FROM_AND_JOINS
       WHERE ${predicate.whereClauses.joinToString(" AND ")}
-      GROUP BY $S.status
+      GROUP BY $SALE_ALIAS.status
     """.trimIndent()
 
     return SqlQuery(sql, params, SaleSearchQueryMetadata("sale_search_summary"))

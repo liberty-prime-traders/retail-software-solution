@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.entities.Expense
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.JpaExpenseStore
@@ -42,9 +43,11 @@ class JpaExpenseStoreTest {
     private val expensePaymentRepository = mock(ExpensePaymentRepository::class.java)
     private val expensePaymentVoidRepository = mock(ExpensePaymentVoidRepository::class.java)
     private val expenseVoidRepository = mock(ExpenseVoidRepository::class.java)
+    private val expensePaymentStateRepository = mock(ExpensePaymentStateRepository::class.java)
 
     private val expenseStore = object : JpaExpenseStore(
-        expenseBatchRepository, expenseRepository, expensePaymentRepository, expensePaymentVoidRepository, expenseVoidRepository
+        expenseBatchRepository, expenseRepository, expensePaymentRepository, expensePaymentVoidRepository, expenseVoidRepository,
+        expensePaymentStateRepository
     ) {
         override fun saveNewBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?): ExpenseBatchBase =
             persisted(ExpenseBatchEntity(description, sourceType, sourceReference))
@@ -68,6 +71,8 @@ class JpaExpenseStoreTest {
         override fun sourceContext() = EventSourceContext.OrgLevel(orgSchema = "org-a")
 
         override fun lockExpense(expenseId: UUID) = Unit
+
+        override fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>) = Unit
 
         override fun lockSourceDocument(sourceDocumentId: UUID) = Unit
     }

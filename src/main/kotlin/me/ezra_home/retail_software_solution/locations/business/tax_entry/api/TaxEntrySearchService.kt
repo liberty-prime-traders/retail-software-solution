@@ -20,11 +20,12 @@ class TaxEntrySearchService(
 ) {
 
     fun search(pageRequest: PageRequest<TaxEntrySearchParameters, String>): PageResponse<TaxEntrySearchResultDto, String> {
-        TaxEntrySearchValidator.guardValidParameters(pageRequest.parameters)
+        val taxEntrySearchParameters = pageRequest.parameters.sanitized()
+        TaxEntrySearchValidator.guardValidParameters(taxEntrySearchParameters)
         TaxEntrySearchValidator.guardValidPageSize(pageRequest.requestedSize)
         val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
-        val rawRows = taxEntrySearchFetcher.search(pageRequest.parameters, cursor, pageRequest.requestedSize)
+        val rawRows = taxEntrySearchFetcher.search(taxEntrySearchParameters, cursor, pageRequest.requestedSize)
         val hasMore = rawRows.size > pageRequest.requestedSize
         val pageRows = if (hasMore) rawRows.take(pageRequest.requestedSize) else rawRows
 
@@ -39,8 +40,9 @@ class TaxEntrySearchService(
     }
 
     fun summarize(taxEntrySearchParameters: TaxEntrySearchParameters): TaxEntrySearchSummaryResponseDto {
-        TaxEntrySearchValidator.guardValidParameters(taxEntrySearchParameters)
-        val rawRows = taxEntrySearchFetcher.summarize(taxEntrySearchParameters)
+        val sanitizedTaxEntrySearchParameters = taxEntrySearchParameters.sanitized()
+        TaxEntrySearchValidator.guardValidParameters(sanitizedTaxEntrySearchParameters)
+        val rawRows = taxEntrySearchFetcher.summarize(sanitizedTaxEntrySearchParameters)
 
         val fiscalPeriodNamesById = resolveFiscalPeriodNames(rawRows.map { it.fiscalPeriodId })
 

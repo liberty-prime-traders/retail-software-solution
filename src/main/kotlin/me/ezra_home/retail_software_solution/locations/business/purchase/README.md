@@ -821,8 +821,10 @@ Add new guards as early as the data they need is in scope.
   `totalOrdered - totalPaid` (the ordered basis): a `PAID` purchase can still show non-zero
   outstanding if more was ordered than delivered. `totalPaid` always excludes voided
   `supplier_payment` rows (joined via `supplier_payment_void`), same as everywhere else paid amounts
-  appear. At least one filter is required to summarize, same guard as sale payment search, to avoid
-  an unbounded full-table aggregate.
+  appear. Both `recordedFrom` and `recordedBefore` are required on list and summary searches, so no
+  query is an unbounded full-table scan. `recordedBefore` is exclusive. Amount filters reject
+  negative values; zero is allowed. `purchaseReferenceNumbers` drops null and blank entries first
+  (`PurchaseSearchParameters.sanitized`).
 - Out of scope by design: no outstanding-amount filter, no payment-method filter, no delivery-date
   filter, no supplier-invoice-number filter, no paid/outstanding fields on the list rows
   (`PurchaseResponseDto` is shared with the detail view).

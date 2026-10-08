@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpensePaymentStateMaintainer
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.JpaExpenseStore
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
@@ -13,6 +15,8 @@ import me.ezra_home.retail_software_solution.organizations.business.org_expense.
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseEntity
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentEntity
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentRepository
+import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentStateEntity
+import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentStateRepository
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentVoidEntity
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseRepository
@@ -32,9 +36,11 @@ class OrgExpenseStore(
     private val orgExpensePaymentRepository: OrgExpensePaymentRepository,
     private val orgExpensePaymentVoidRepository: OrgExpensePaymentVoidRepository,
     private val orgExpenseVoidRepository: OrgExpenseVoidRepository,
+    private val orgExpensePaymentStateRepository: OrgExpensePaymentStateRepository,
     private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock
 ) : JpaExpenseStore(
-    orgExpenseBatchRepository, orgExpenseRepository, orgExpensePaymentRepository, orgExpensePaymentVoidRepository, orgExpenseVoidRepository
+    orgExpenseBatchRepository, orgExpenseRepository, orgExpensePaymentRepository, orgExpensePaymentVoidRepository, orgExpenseVoidRepository,
+    orgExpensePaymentStateRepository
 ) {
 
     override fun sourceContext(): EventSourceContext =
@@ -58,19 +64,26 @@ class OrgExpenseStore(
         sourceType: ExpenseSourceType,
         sourceReference: String?,
         resolvedExpenseRow: ResolvedExpenseRow
-    ) = orgExpenseRepository.save(
-        OrgExpenseEntity(
-            expenseTypeId = resolvedExpenseRow.expenseType.id,
-            expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
-            payeeContactId = resolvedExpenseRow.payee.id,
-            amount = resolvedExpenseRow.amount,
-            expenseDate = resolvedExpenseRow.expenseDate,
-            description = resolvedExpenseRow.description,
-            sourceType = sourceType,
-            sourceReference = sourceReference,
-            batchId = batchId
+    ): OrgExpenseEntity {
+        val orgExpenseEntity = orgExpenseRepository.save(
+            OrgExpenseEntity(
+                expenseTypeId = resolvedExpenseRow.expenseType.id,
+                expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
+                payeeContactId = resolvedExpenseRow.payee.id,
+                amount = resolvedExpenseRow.amount,
+                expenseDate = resolvedExpenseRow.expenseDate,
+                description = resolvedExpenseRow.description,
+                sourceType = sourceType,
+                sourceReference = sourceReference,
+                batchId = batchId
+            )
         )
-    )
+        orgExpensePaymentStateRepository.save(OrgExpensePaymentStateEntity(expenseId = orgExpenseEntity.id!!))
+        return orgExpenseEntity
+    }
+
+    override fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>) =
+        ExpensePaymentStateMaintainer.refresh(orgExpensePaymentStateRepository, expenseRecords)
 
     override fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>) =
         orgExpensePaymentRepository.saveAll(

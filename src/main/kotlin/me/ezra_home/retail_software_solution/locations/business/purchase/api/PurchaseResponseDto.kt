@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import java.io.Serializable
 import java.math.BigDecimal

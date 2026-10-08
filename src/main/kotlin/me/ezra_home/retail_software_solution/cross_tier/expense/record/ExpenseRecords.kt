@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.record
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -56,12 +57,24 @@ data class ExpensePaymentVoidRecord(
     val voidedOn: OffsetDateTime
 )
 
+data class SettledExpense(
+    val expenseRecord: ExpenseRecord,
+    val resolvedSettlement: ResolvedSettlement
+)
+
+data class ExpensePaymentStateRecord(
+    val expenseId: UUID,
+    val paymentStatus: PaymentStatus,
+    val amountPaid: BigDecimal
+)
+
 data class ExpenseAggregate(
     val batches: List<ExpenseBatchRecord>,
     val expenses: List<ExpenseRecord>,
     val payments: List<ExpensePaymentRecord>,
     val paymentVoids: List<ExpensePaymentVoidRecord>,
-    val expenseVoids: List<ExpenseVoidRecord>
+    val expenseVoids: List<ExpenseVoidRecord>,
+    val paymentStates: List<ExpensePaymentStateRecord> = emptyList()
 ) {
     fun forExpense(expenseId: UUID): ExpenseAggregate {
         val expensePayments = payments.filter { it.expenseId == expenseId }
@@ -71,7 +84,8 @@ data class ExpenseAggregate(
             expenses = expenses.filter { it.id == expenseId },
             payments = expensePayments,
             paymentVoids = paymentVoids.filter { it.paymentId in expensePaymentIds },
-            expenseVoids = expenseVoids.filter { it.expenseId == expenseId }
+            expenseVoids = expenseVoids.filter { it.expenseId == expenseId },
+            paymentStates = paymentStates.filter { it.expenseId == expenseId }
         )
     }
 }

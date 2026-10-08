@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePa
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
 import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.record.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentVoidedEvent
@@ -23,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Component
@@ -46,8 +48,12 @@ class ExpensePaymentOperations(
             val expenseRecord = expenseRecordsByReference.getValue(expenseReference)
             planPayments(expenseRecord, expenseAggregatesById.getValue(expenseRecord.id), resolvedPaymentRequests)
         }
-        saveAndPublish(expenseStore, pendingPayments, expenseAggregatesById)
-        return expenseAggregatesById.map { (expenseId, expenseAggregate) -> expenseResponseBuilder.buildSummary(expenseAggregate, expenseId) }
+        saveAndPublish(expenseStore, pendingPayments)
+        expenseStore.refreshPaymentStates(expenseRecordsByReference.values)
+        val summariesByReference = expenseResponseBuilder
+            .buildSummaries(expenseStore.loadForExpenses(expenseRecordsByReference.values.map { it.id }))
+            .associateBy { it.reference }
+        return resolvedPaymentRequestsByExpenseReference.keys.map { summariesByReference.getValue(it) }
     }
 
     private fun requireWithinRequestLimits(expensePaymentCreateRequests: List<ExpensePaymentCreateRequest>) {
@@ -61,9 +67,10 @@ class ExpensePaymentOperations(
         expensePaymentCreateRequests: List<ExpensePaymentCreateRequest>
     ): Map<String, List<ResolvedPaymentRequest>> {
         val defaultPaymentDate = DateTimes.Local.Now.organization()
+        val openDates = HashSet<LocalDate>()
         return expensePaymentCreateRequests
             .map {
-                val resolvedSettlement = expenseRowResolver.resolveSettlement(it.settlement, defaultPaymentDate)
+                val resolvedSettlement = expenseRowResolver.resolveSettlement(it.settlement, defaultPaymentDate, openDates)
                 ResolvedPaymentRequest(it, resolvedSettlement)
             }
             .groupBy { it.expensePaymentCreateRequest.expenseReference }
@@ -73,11 +80,11 @@ class ExpensePaymentOperations(
     private fun lockAndLoad(
         expenseStore: ExpenseStore,
         expenseRecords: Collection<ExpenseRecord>
-    ): MutableMap<UUID, ExpenseAggregate> {
+    ): Map<UUID, ExpenseAggregate> {
         val expenseIdsInLockOrder = expenseRecords.map { it.id }.sorted()
         expenseIdsInLockOrder.forEach { expenseStore.lockExpense(it) }
         val loadedAggregate = expenseStore.loadForExpenses(expenseIdsInLockOrder)
-        return expenseRecords.associate { it.id to loadedAggregate.forExpense(it.id) }.toMutableMap()
+        return expenseRecords.associate { it.id to loadedAggregate.forExpense(it.id) }
     }
 
     private fun planPayments(
@@ -105,32 +112,23 @@ class ExpensePaymentOperations(
         return pendingPayments
     }
 
-    private fun saveAndPublish(
-        expenseStore: ExpenseStore,
-        pendingPayments: List<PendingPayment>,
-        expenseAggregatesById: MutableMap<UUID, ExpenseAggregate>
-    ) {
+    private fun saveAndPublish(expenseStore: ExpenseStore, pendingPayments: List<PendingPayment>) {
         // saveAll returns entities in input order, which is what pairs each saved record with its pending payment.
         val savedPaymentRecords = expenseStore.savePayments(pendingPayments.map { it.expensePaymentDraft })
         pendingPayments.zip(savedPaymentRecords).forEach { (pendingPayment, expensePaymentRecord) ->
             publishPaymentRecorded(expenseStore, expensePaymentRecord, pendingPayment.expenseRecord)
-            val expenseAggregate = expenseAggregatesById.getValue(pendingPayment.expenseRecord.id)
-            expenseAggregatesById[pendingPayment.expenseRecord.id] =
-                expenseAggregate.copy(payments = expenseAggregate.payments + expensePaymentRecord)
         }
     }
 
-    fun settle(
-        expenseStore: ExpenseStore,
-        expenseRecord: ExpenseRecord,
-        amount: BigDecimal,
-        resolvedSettlement: ResolvedSettlement
-    ): ExpensePaymentRecord {
-        val expensePaymentRecord = expenseStore.savePayments(listOf(
-            ExpensePaymentDraft(expenseRecord.id, amount, resolvedSettlement))
-        ).single()
-        publishPaymentRecorded(expenseStore, expensePaymentRecord, expenseRecord)
-        return expensePaymentRecord
+    fun settleNewExpenses(expenseStore: ExpenseStore, settledExpenses: List<SettledExpense>) {
+        if (settledExpenses.isEmpty()) return
+        val savedPaymentRecords = expenseStore.savePayments(settledExpenses.map {
+            ExpensePaymentDraft(it.expenseRecord.id, it.expenseRecord.amount, it.resolvedSettlement)
+        })
+        settledExpenses.zip(savedPaymentRecords).forEach { (settledExpense, expensePaymentRecord) ->
+            publishPaymentRecorded(expenseStore, expensePaymentRecord, settledExpense.expenseRecord)
+        }
+        expenseStore.refreshPaymentStates(settledExpenses.map { it.expenseRecord })
     }
 
     fun voidPayment(expenseStore: ExpenseStore, expensePaymentVoidRequest: ExpensePaymentVoidRequest): ExpenseSummaryResponse {
@@ -145,10 +143,9 @@ class ExpensePaymentOperations(
         }
         val expenseRecord = expenseAggregate.expenses.single()
         val expensePaymentVoidRecord = expenseStore.savePaymentVoid(expensePaymentRecord.id, voidReason)
+        expenseStore.refreshPaymentStates(listOf(expenseRecord))
         publishPaymentVoided(expenseStore, expensePaymentVoidRecord, expensePaymentRecord, expenseRecord)
-        return expenseResponseBuilder.buildSummary(
-            expenseAggregate.copy(paymentVoids = expenseAggregate.paymentVoids + expensePaymentVoidRecord), expenseRecord.id
-        )
+        return expenseResponseBuilder.buildSummary(expenseStore.loadForExpenses(listOf(expenseRecord.id)), expenseRecord.id)
     }
 
     fun reissuePaymentRecorded(expenseStore: ExpenseStore, paymentId: UUID) {

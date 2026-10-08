@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.SearchGuards
 
 object PurchaseSearchValidator {
@@ -12,6 +11,12 @@ object PurchaseSearchValidator {
   private const val MAX_PAGE_SIZE = 200
 
   fun guardValidParameters(purchaseSearchParameters: PurchaseSearchParameters) {
+    SearchGuards.guardRangeSupplied(
+      purchaseSearchParameters.recordedFrom,
+      purchaseSearchParameters.recordedBefore,
+      "recordedFrom",
+      "recordedBefore"
+    )
     SearchGuards.guardMaxSize(
       purchaseSearchParameters.purchaseReferenceNumbers.size,
       MAX_PURCHASE_REFERENCE_NUMBERS,
@@ -29,6 +34,8 @@ object PurchaseSearchValidator {
       purchaseSearchParameters.maxAmount,
       "minAmount must not be greater than maxAmount"
     ) { min, max -> min > max }
+    SearchGuards.guardNonNegative(purchaseSearchParameters.minAmount, "minAmount")
+    SearchGuards.guardNonNegative(purchaseSearchParameters.maxAmount, "maxAmount")
 
     SearchGuards.guardRangeOrder(
       purchaseSearchParameters.recordedFrom,
@@ -45,11 +52,5 @@ object PurchaseSearchValidator {
 
   fun guardValidPageSize(requestedSize: Int) {
     SearchGuards.guardPageSize(requestedSize, MIN_PAGE_SIZE, MAX_PAGE_SIZE)
-  }
-
-  fun guardSummaryHasFilter(purchaseSearchParameters: PurchaseSearchParameters) {
-    if (purchaseSearchParameters == PurchaseSearchParameters()) {
-      throw RtsGenericException("At least one filter must be supplied to summarize purchases")
-    }
   }
 }

@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
+import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -15,4 +17,7 @@ data class PurchaseSearchParameters(
   val minAmount: BigDecimal? = null,
   val maxAmount: BigDecimal? = null,
   val purchaseReferenceNumbers: List<String> = emptyList()
-)
+) {
+
+  fun sanitized(): PurchaseSearchParameters = copy(purchaseReferenceNumbers = StringUtils.dropBlank(purchaseReferenceNumbers))
+}

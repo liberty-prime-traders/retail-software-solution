@@ -84,23 +84,68 @@ databaseChangeLog:
             tableName: org_expense
 
   - changeSet:
-      id: create-index-org-expense-created-on
+      id: create-index-org-expense-created-on-id
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_org_expense_created_on
+                indexName: idx_org_expense_created_on_id
       changes:
         - createIndex:
-            indexName: idx_org_expense_created_on
+            indexName: idx_org_expense_created_on_id
             tableName: org_expense
             columns:
               - column:
                   name: created_on
                   descending: true
+              - column:
+                  name: id
+                  descending: true
       rollback:
         - dropIndex:
-            indexName: idx_org_expense_created_on
+            indexName: idx_org_expense_created_on_id
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-expense-date
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_expense_date
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_expense_date
+            tableName: org_expense
+            columns:
+              - column:
+                  name: expense_date
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_expense_date
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-amount
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_amount
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_amount
+            tableName: org_expense
+            columns:
+              - column:
+                  name: amount
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_amount
             tableName: org_expense

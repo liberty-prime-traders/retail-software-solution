@@ -17,6 +17,10 @@ object StringUtils {
         }
     }
 
+    fun dropBlank(strings: Collection<String?>): List<String> {
+        return strings.mapNotNull { getValueOrNull(it) }
+    }
+
     fun requireHasValue(str: String?, exceptionMessage: String) {
         getValueOrException(str, exceptionMessage)
     }

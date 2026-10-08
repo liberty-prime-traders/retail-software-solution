@@ -84,23 +84,68 @@ databaseChangeLog:
             tableName: expense
 
   - changeSet:
-      id: create-index-expense-created-on
+      id: create-index-expense-created-on-id
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_expense_created_on
+                indexName: idx_expense_created_on_id
       changes:
         - createIndex:
-            indexName: idx_expense_created_on
+            indexName: idx_expense_created_on_id
             tableName: expense
             columns:
               - column:
                   name: created_on
                   descending: true
+              - column:
+                  name: id
+                  descending: true
       rollback:
         - dropIndex:
-            indexName: idx_expense_created_on
+            indexName: idx_expense_created_on_id
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-expense-date
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_expense_date
+      changes:
+        - createIndex:
+            indexName: idx_expense_expense_date
+            tableName: expense
+            columns:
+              - column:
+                  name: expense_date
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_expense_date
+            tableName: expense
+
+  - changeSet:
+      id: create-index-expense-amount
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_expense_amount
+      changes:
+        - createIndex:
+            indexName: idx_expense_amount
+            tableName: expense
+            columns:
+              - column:
+                  name: amount
+      rollback:
+        - dropIndex:
+            indexName: idx_expense_amount
             tableName: expense

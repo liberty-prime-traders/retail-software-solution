@@ -732,7 +732,10 @@ run** — i.e. as soon as the data it needs is in scope.
 - `SaleSearchSummaryResponseDto`'s `confirmedReceivableTotal` /
   `confirmedDiscountTotal` are read off the confirmed row, not summed across
   statuses — summing would add voided sales into a "real" total.
-- Summary requires at least one filter (`SaleSearchValidator.guardSummaryHasFilter`).
+- Both `createdFrom` and `createdBefore` are required on list and summary searches
+  (`SaleSearchValidator.guardValidParameters`), so every query is time-bounded. `createdBefore` is
+  exclusive. Total filters reject negative values; zero is allowed. `saleReferenceNumbers` drops null
+  and blank entries first (`SaleSearchParameters.sanitized`).
 - REST: `POST /secured/sales/search`, `POST /secured/sales/search/summary` on
   `SaleEndpoint`.
 

@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-expense-payment-state-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: expense_payment_state
+              - column:
+                  name: default_prefix
+                  value: EXPS
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Expense Payment State
+              - column:
+                  name: description
+                  value: Mutable payment status and paid amount for an expense
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}
