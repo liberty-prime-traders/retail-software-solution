@@ -7,15 +7,15 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.entities.Expense
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentStateBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseVoidBase
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseBatchRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentStateRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseVoidRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseBatchDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseVoidDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpense
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpenseBatch
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseBatchRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentStateRepositoryBase
@@ -36,14 +36,9 @@ abstract class JpaExpenseStore(
     private val expensePaymentStateRepository: ExpensePaymentStateRepositoryBase<out ExpensePaymentStateBase>
 ) : ExpenseStore {
 
-    protected abstract fun saveNewBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?): ExpenseBatchBase
+    protected abstract fun saveNewBatch(newExpenseBatch: NewExpenseBatch): ExpenseBatchBase
 
-    protected abstract fun saveNewExpense(
-        batchId: UUID,
-        sourceType: ExpenseSourceType,
-        sourceReference: String?,
-        resolvedExpenseRow: ResolvedExpenseRow
-    ): ExpenseBase
+    protected abstract fun saveNewExpense(newExpense: NewExpense): ExpenseBase
 
     protected abstract fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentBase>
 
@@ -51,48 +46,43 @@ abstract class JpaExpenseStore(
 
     protected abstract fun saveNewExpenseVoid(expenseId: UUID, reason: String): ExpenseVoidBase
 
-    override fun createBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?): ExpenseBatchRecord =
-        toRecord(saveNewBatch(description, sourceType, sourceReference))
+    override fun createBatch(newExpenseBatch: NewExpenseBatch): ExpenseBatchDto =
+        ExpenseDtoMapper.toDto(saveNewBatch(newExpenseBatch))
 
-    override fun findBatchBySource(sourceType: ExpenseSourceType, sourceReference: String): ExpenseBatchRecord? =
-        expenseBatchRepository.findBySourceTypeAndSourceReference(sourceType, sourceReference)?.let { toRecord(it) }
+    override fun findBatchBySource(sourceType: ExpenseSourceType, sourceReference: String): ExpenseBatchDto? =
+        expenseBatchRepository.findBySourceTypeAndSourceReference(sourceType, sourceReference)?.let { ExpenseDtoMapper.toDto(it) }
 
-    override fun saveExpense(
-        batchId: UUID,
-        sourceType: ExpenseSourceType,
-        sourceReference: String?,
-        resolvedExpenseRow: ResolvedExpenseRow
-    ): ExpenseRecord = toRecord(saveNewExpense(batchId, sourceType, sourceReference, resolvedExpenseRow))
+    override fun saveExpense(newExpense: NewExpense): ExpenseDto = ExpenseDtoMapper.toDto(saveNewExpense(newExpense))
 
-    override fun savePayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentRecord> =
-        saveNewPayments(expensePaymentDrafts).map { toRecord(it) }
+    override fun savePayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentDto> =
+        saveNewPayments(expensePaymentDrafts).map { ExpenseDtoMapper.toDto(it) }
 
-    override fun saveExpenseVoid(expenseId: UUID, reason: String): ExpenseVoidRecord =
-        toRecord(saveNewExpenseVoid(expenseId, reason))
+    override fun saveExpenseVoid(expenseId: UUID, reason: String): ExpenseVoidDto =
+        ExpenseDtoMapper.toDto(saveNewExpenseVoid(expenseId, reason))
 
-    override fun savePaymentVoid(paymentId: UUID, reason: String): ExpensePaymentVoidRecord =
-        toRecord(saveNewPaymentVoid(paymentId, reason))
+    override fun savePaymentVoid(paymentId: UUID, reason: String): ExpensePaymentVoidDto =
+        ExpenseDtoMapper.toDto(saveNewPaymentVoid(paymentId, reason))
 
-    override fun findExpenseById(expenseId: UUID): ExpenseRecord? =
-        expenseRepository.findById(expenseId).map { toRecord(it) }.orElse(null)
+    override fun findExpenseById(expenseId: UUID): ExpenseDto? =
+        expenseRepository.findById(expenseId).map { ExpenseDtoMapper.toDto(it) }.orElse(null)
 
-    override fun findExpenseByReference(referenceNumber: String): ExpenseRecord? =
-        expenseRepository.findByReferenceNumber(referenceNumber)?.let { toRecord(it) }
+    override fun findExpenseByReference(referenceNumber: String): ExpenseDto? =
+        expenseRepository.findByReferenceNumber(referenceNumber)?.let { ExpenseDtoMapper.toDto(it) }
 
-    override fun findExpensesByReferences(referenceNumbers: Collection<String>): List<ExpenseRecord> =
-        expenseRepository.findByReferenceNumberIn(referenceNumbers).map { toRecord(it) }
+    override fun findExpensesByReferences(referenceNumbers: Collection<String>): List<ExpenseDto> =
+        expenseRepository.findByReferenceNumberIn(referenceNumbers).map { ExpenseDtoMapper.toDto(it) }
 
-    override fun findPaymentById(paymentId: UUID): ExpensePaymentRecord? =
-        expensePaymentRepository.findById(paymentId).map { toRecord(it) }.orElse(null)
+    override fun findPaymentById(paymentId: UUID): ExpensePaymentDto? =
+        expensePaymentRepository.findById(paymentId).map { ExpenseDtoMapper.toDto(it) }.orElse(null)
 
-    override fun findPaymentByReference(referenceNumber: String): ExpensePaymentRecord? =
-        expensePaymentRepository.findByReferenceNumber(referenceNumber)?.let { toRecord(it) }
+    override fun findPaymentByReference(referenceNumber: String): ExpensePaymentDto? =
+        expensePaymentRepository.findByReferenceNumber(referenceNumber)?.let { ExpenseDtoMapper.toDto(it) }
 
-    override fun findExpenseVoidById(expenseVoidId: UUID): ExpenseVoidRecord? =
-        expenseVoidRepository.findById(expenseVoidId).map { toRecord(it) }.orElse(null)
+    override fun findExpenseVoidById(expenseVoidId: UUID): ExpenseVoidDto? =
+        expenseVoidRepository.findById(expenseVoidId).map { ExpenseDtoMapper.toDto(it) }.orElse(null)
 
-    override fun findPaymentVoidById(paymentVoidId: UUID): ExpensePaymentVoidRecord? =
-        expensePaymentVoidRepository.findById(paymentVoidId).map { toRecord(it) }.orElse(null)
+    override fun findPaymentVoidById(paymentVoidId: UUID): ExpensePaymentVoidDto? =
+        expensePaymentVoidRepository.findById(paymentVoidId).map { ExpenseDtoMapper.toDto(it) }.orElse(null)
 
     override fun loadForBatch(batchId: UUID): ExpenseAggregate {
         val batchEntity = expenseBatchRepository.findById(batchId)
@@ -122,44 +112,12 @@ abstract class JpaExpenseStore(
         val expenseVoidEntities = if (expenseIds.isEmpty()) emptyList() else expenseVoidRepository.findByExpenseIdIn(expenseIds)
         val paymentStateEntities = if (expenseIds.isEmpty()) emptyList() else expensePaymentStateRepository.findByExpenseIdIn(expenseIds)
         return ExpenseAggregate(
-            batches = batchEntities.map { toRecord(it) },
-            expenses = expenseEntities.map { toRecord(it) },
-            payments = paymentEntities.map { toRecord(it) },
-            paymentVoids = paymentVoidEntities.map { toRecord(it) },
-            expenseVoids = expenseVoidEntities.map { toRecord(it) },
-            paymentStates = paymentStateEntities.map { toRecord(it) }
+            batches = batchEntities.map { ExpenseDtoMapper.toDto(it) },
+            expenses = expenseEntities.map { ExpenseDtoMapper.toDto(it) },
+            payments = paymentEntities.map { ExpenseDtoMapper.toDto(it) },
+            paymentVoids = paymentVoidEntities.map { ExpenseDtoMapper.toDto(it) },
+            expenseVoids = expenseVoidEntities.map { ExpenseDtoMapper.toDto(it) },
+            paymentStates = paymentStateEntities.map { ExpenseDtoMapper.toDto(it) }
         )
     }
-
-    private fun toRecord(batch: ExpenseBatchBase) = ExpenseBatchRecord(
-        batch.id!!, batch.requiredReference(), batch.description, batch.requiredCreatedOn(), batch.requiredCreatedById()
-    )
-
-    private fun toRecord(expense: ExpenseBase) = ExpenseRecord(
-        expense.id!!, expense.requiredReference(), expense.expenseTypeId, expense.expenseAccountCode, expense.payeeContactId, expense.amount,
-        expense.expenseDate, expense.description, expense.sourceType, expense.sourceReference, expense.batchId,
-        expense.requiredCreatedOn(), expense.requiredCreatedById()
-    )
-
-    private fun toRecord(payment: ExpensePaymentBase) = ExpensePaymentRecord(
-        payment.id!!, payment.expenseId,
-        payment.requiredReference(),
-        payment.paymentMethodId, payment.paymentMethodAccountCode, payment.amount,
-        payment.providerReference, payment.paymentDate,
-        payment.requiredCreatedOn()
-    )
-
-    private fun toRecord(paymentVoid: ExpensePaymentVoidBase) = ExpensePaymentVoidRecord(
-        paymentVoid.id!!, paymentVoid.expensePaymentId,
-        paymentVoid.reason, paymentVoid.requiredCreatedOn()
-    )
-
-    private fun toRecord(paymentState: ExpensePaymentStateBase) = ExpensePaymentStateRecord(
-        paymentState.expenseId, paymentState.paymentStatus, paymentState.amountPaid
-    )
-
-    private fun toRecord(expenseVoid: ExpenseVoidBase) = ExpenseVoidRecord(
-        expenseVoid.id!!, expenseVoid.expenseId,
-        expenseVoid.reason, expenseVoid.requiredCreatedOn()
-    )
 }

@@ -1,13 +1,21 @@
 package me.ezra_home.retail_software_solution.locations.business.expense.api
 
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SourceDocument
+
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+
 import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperations
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperationsFactory
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseReadOperations
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseReissueOperations
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.TierExpenseOperations
 import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpensePaymentOperations
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpenseRowRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.RequiredPayeeExpenseRowRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.SaleExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.PurchaseExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.PurchaseExpenseRowRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.RequiredPayeeExpenseRowRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.SaleExpenseBatchRequest
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
@@ -30,12 +38,16 @@ class ExpenseServiceTest {
 
     private val expenseOperations = mock(ExpenseOperations::class.java)
     private val expensePaymentOperations = mock(ExpensePaymentOperations::class.java)
-    private val locationExpenseStore = mock(LocationExpenseStore::class.java)
+    private val locationExpenseTier = mock(LocationExpenseTier::class.java)
     private val purchaseDataFetcher = mock(PurchaseDataFetcher::class.java)
     private val saleDataFetcher = mock(SaleDataFetcher::class.java)
 
+    private val expenseOperationsFactory = mock(ExpenseOperationsFactory::class.java).also {
+        `when`(it.operationsFor(locationExpenseTier)).thenReturn(TierExpenseOperations(expenseOperations, expensePaymentOperations, mock(ExpenseReadOperations::class.java), mock(ExpenseReissueOperations::class.java)))
+    }
+
     private val expenseService = ExpenseService(
-        expenseOperations, expensePaymentOperations, locationExpenseStore, mock(ExpenseTypeService::class.java), purchaseDataFetcher, saleDataFetcher
+        expenseOperationsFactory, locationExpenseTier, mock(ExpenseTypeService::class.java), purchaseDataFetcher, saleDataFetcher
     )
 
     private val expenseDate = LocalDate.of(2026, 3, 10)
@@ -61,14 +73,14 @@ class ExpenseServiceTest {
         )
         `when`(
             expenseOperations.createForSourceDocument(
-                locationExpenseStore, ExpenseSourceType.PURCHASE, "PRCH01", purchaseId, expenseDate, expectedCommands
-            )
+            SourceDocument(ExpenseSourceType.PURCHASE, "PRCH01", purchaseId), ExpenseSubmission(expenseDate, expectedCommands)
+        )
         ).thenReturn(emptyList())
 
         expenseService.createForPurchase(purchaseRequest())
 
         verify(expenseOperations).createForSourceDocument(
-            locationExpenseStore, ExpenseSourceType.PURCHASE, "PRCH01", purchaseId, expenseDate, expectedCommands
+            SourceDocument(ExpenseSourceType.PURCHASE, "PRCH01", purchaseId), ExpenseSubmission(expenseDate, expectedCommands)
         )
     }
 
@@ -85,14 +97,14 @@ class ExpenseServiceTest {
         val expectedCommands = listOf(ExpenseRowCommand(expenseTypeId, explicitPayeeContactId, BigDecimal.TEN, null, null, null))
         `when`(
             expenseOperations.createForSourceDocument(
-                locationExpenseStore, ExpenseSourceType.SALE, "SALE01", saleId, expenseDate, expectedCommands
-            )
+            SourceDocument(ExpenseSourceType.SALE, "SALE01", saleId), ExpenseSubmission(expenseDate, expectedCommands)
+        )
         ).thenReturn(emptyList())
 
         expenseService.createForSale(saleRequest())
 
         verify(expenseOperations).createForSourceDocument(
-            locationExpenseStore, ExpenseSourceType.SALE, "SALE01", saleId, expenseDate, expectedCommands
+            SourceDocument(ExpenseSourceType.SALE, "SALE01", saleId), ExpenseSubmission(expenseDate, expectedCommands)
         )
     }
 

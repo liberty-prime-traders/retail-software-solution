@@ -1,8 +1,9 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PaymentInstruction
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
@@ -44,9 +45,7 @@ class ExpenseRowResolverTest {
     fun `a payee sharing any contact type with the expense type is accepted`() {
         stub(freightExpenseType, supplierContact)
 
-        val resolvedExpenseRows = expenseRowResolver.resolve(
-            ExpenseSourceType.ADHOC, batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact))
-        )
+        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact))))
 
         assertEquals(1, resolvedExpenseRows.size)
         assertEquals(supplierContact.id, resolvedExpenseRows.single().payee.id)
@@ -57,9 +56,7 @@ class ExpenseRowResolverTest {
         stub(freightExpenseType, employeeContact)
 
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(
-                ExpenseSourceType.ADHOC, batchExpenseDate, listOf(rowCommand(freightExpenseType, employeeContact))
-            )
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, employeeContact))))
         }
     }
 
@@ -68,9 +65,7 @@ class ExpenseRowResolverTest {
         stub(freightExpenseType, supplierContact)
 
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(
-                ExpenseSourceType.SALE, batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact))
-            )
+            expenseRowResolver.resolve(ExpenseSourceType.SALE, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact))))
         }
     }
 
@@ -79,15 +74,11 @@ class ExpenseRowResolverTest {
         stub(freightExpenseType, supplierContact)
         val overrideDate = LocalDate.of(2026, 2, 1)
 
-        val resolvedExpenseRows = expenseRowResolver.resolve(
-            ExpenseSourceType.ADHOC,
-            batchExpenseDate,
-            listOf(
+        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
                 rowCommand(freightExpenseType, supplierContact, expenseDateOverride = overrideDate),
                 rowCommand(freightExpenseType, supplierContact),
                 rowCommand(freightExpenseType, supplierContact)
-            )
-        )
+            )))
 
         assertEquals(overrideDate, resolvedExpenseRows[0].expenseDate)
         assertEquals(batchExpenseDate, resolvedExpenseRows[1].expenseDate)
@@ -102,14 +93,10 @@ class ExpenseRowResolverTest {
         `when`(paymentMethodService.findAccountCode(paymentMethodId)).thenReturn("001.001")
         val ownPaymentDate = LocalDate.of(2026, 3, 20)
 
-        val resolvedExpenseRows = expenseRowResolver.resolve(
-            ExpenseSourceType.ADHOC,
-            batchExpenseDate,
-            listOf(
+        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
                 rowCommand(freightExpenseType, supplierContact, settlement = PaymentInstruction(paymentMethodId)),
                 rowCommand(freightExpenseType, supplierContact, settlement = PaymentInstruction(paymentMethodId, paymentDate = ownPaymentDate))
-            )
-        )
+            )))
 
         assertEquals(batchExpenseDate, resolvedExpenseRows[0].settlement!!.paymentDate)
         assertEquals(ownPaymentDate, resolvedExpenseRows[1].settlement!!.paymentDate)
@@ -122,22 +109,14 @@ class ExpenseRowResolverTest {
         `when`(paymentMethodService.findAccountCode(paymentMethodId)).thenReturn(null)
 
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(
-                ExpenseSourceType.ADHOC,
-                batchExpenseDate,
-                listOf(rowCommand(freightExpenseType, supplierContact, settlement = PaymentInstruction(paymentMethodId)))
-            )
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, settlement = PaymentInstruction(paymentMethodId)))))
         }
     }
 
     @Test
     fun `non-positive amounts are rejected before anything is looked up`() {
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(
-                ExpenseSourceType.ADHOC,
-                batchExpenseDate,
-                listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal.ZERO))
-            )
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal.ZERO))))
         }
         verifyNoInteractions(expenseTypeService)
     }
@@ -146,11 +125,7 @@ class ExpenseRowResolverTest {
     fun `amounts are rounded to scale 4`() {
         stub(freightExpenseType, supplierContact)
 
-        val resolvedExpenseRows = expenseRowResolver.resolve(
-            ExpenseSourceType.ADHOC,
-            batchExpenseDate,
-            listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal("12.34567")))
-        )
+        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal("12.34567")))))
 
         assertEquals(BigDecimal("12.3457"), resolvedExpenseRows.single().amount)
     }
@@ -158,11 +133,11 @@ class ExpenseRowResolverTest {
     @Test
     fun `an empty or oversized request is rejected`() {
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, batchExpenseDate, emptyList())
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, emptyList()))
         }
         val tooManyRows = List(ExpenseRowResolver.MAXIMUM_ROWS_PER_REQUEST + 1) { rowCommand(freightExpenseType, supplierContact) }
         assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, batchExpenseDate, tooManyRows)
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, tooManyRows))
         }
     }
 

@@ -1,8 +1,8 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.api
+package me.ezra_home.retail_software_solution.cross_tier.expense.response
 
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
@@ -21,6 +21,7 @@ class ExpenseResponseBuilder(
 ) {
 
     fun buildSummaries(expenseAggregate: ExpenseAggregate): List<ExpenseSummaryResponse> {
+        if (expenseAggregate.expenses.isEmpty()) return emptyList()
         val expenseTypesById = expenseTypeService.getAll(null).associateBy { it.id }
         val contactsById = contactService.getAllContactDtos().associateBy { it.id }
         val paymentMethodNamesById = paymentMethodService.getNamesById()
@@ -69,9 +70,9 @@ class ExpenseResponseBuilder(
     }
 
     private fun toPaymentResponse(
-        payment: ExpensePaymentRecord,
+        payment: ExpensePaymentDto,
         paymentMethodName: String,
-        paymentVoid: ExpensePaymentVoidRecord?
+        paymentVoid: ExpensePaymentVoidDto?
     ) = ExpensePaymentResponse(
         reference = payment.referenceNumber,
         amount = payment.amount,

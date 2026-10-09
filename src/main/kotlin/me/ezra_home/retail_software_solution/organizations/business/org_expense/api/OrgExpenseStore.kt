@@ -1,15 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_expense.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpense
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpenseBatch
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpensePaymentStateMaintainer
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.JpaExpenseStore
-import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseBatchEntity
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseBatchRepository
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseEntity
@@ -23,9 +20,7 @@ import me.ezra_home.retail_software_solution.organizations.business.org_expense.
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseVoidEntity
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseVoidRepository
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Propagation
 import java.util.UUID
 
 @Component
@@ -36,35 +31,18 @@ class OrgExpenseStore(
     private val orgExpensePaymentRepository: OrgExpensePaymentRepository,
     private val orgExpensePaymentVoidRepository: OrgExpensePaymentVoidRepository,
     private val orgExpenseVoidRepository: OrgExpenseVoidRepository,
-    private val orgExpensePaymentStateRepository: OrgExpensePaymentStateRepository,
-    private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock
+    private val orgExpensePaymentStateRepository: OrgExpensePaymentStateRepository
 ) : JpaExpenseStore(
     orgExpenseBatchRepository, orgExpenseRepository, orgExpensePaymentRepository, orgExpensePaymentVoidRepository, orgExpenseVoidRepository,
     orgExpensePaymentStateRepository
 ) {
 
-    override fun sourceContext(): EventSourceContext =
-        EventSourceContext.OrgLevel(orgSchema = SessionContextProvider.getOrganizationSchema())
+    override fun saveNewBatch(newExpenseBatch: NewExpenseBatch) = orgExpenseBatchRepository.save(
+        OrgExpenseBatchEntity(newExpenseBatch.description, newExpenseBatch.source.type, newExpenseBatch.source.reference)
+    )
 
-    @TransactionalOnOrganizationSchema(propagation = Propagation.MANDATORY)
-    override fun lockExpense(expenseId: UUID) {
-        orgEntityAdvisoryLock.acquire(LockNamespaces.EXPENSE, expenseId.toString())
-    }
-
-    @TransactionalOnOrganizationSchema(propagation = Propagation.MANDATORY)
-    override fun lockSourceDocument(sourceDocumentId: UUID) {
-        orgEntityAdvisoryLock.acquire(LockNamespaces.EXPENSE_SOURCE, sourceDocumentId.toString())
-    }
-
-    override fun saveNewBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?) =
-        orgExpenseBatchRepository.save(OrgExpenseBatchEntity(description, sourceType, sourceReference))
-
-    override fun saveNewExpense(
-        batchId: UUID,
-        sourceType: ExpenseSourceType,
-        sourceReference: String?,
-        resolvedExpenseRow: ResolvedExpenseRow
-    ): OrgExpenseEntity {
+    override fun saveNewExpense(newExpense: NewExpense): OrgExpenseEntity {
+        val resolvedExpenseRow = newExpense.resolvedExpenseRow
         val orgExpenseEntity = orgExpenseRepository.save(
             OrgExpenseEntity(
                 expenseTypeId = resolvedExpenseRow.expenseType.id,
@@ -73,17 +51,17 @@ class OrgExpenseStore(
                 amount = resolvedExpenseRow.amount,
                 expenseDate = resolvedExpenseRow.expenseDate,
                 description = resolvedExpenseRow.description,
-                sourceType = sourceType,
-                sourceReference = sourceReference,
-                batchId = batchId
+                sourceType = newExpense.source.type,
+                sourceReference = newExpense.source.reference,
+                batchId = newExpense.batchId
             )
         )
         orgExpensePaymentStateRepository.save(OrgExpensePaymentStateEntity(expenseId = orgExpenseEntity.id!!))
         return orgExpenseEntity
     }
 
-    override fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>) =
-        ExpensePaymentStateMaintainer.refresh(orgExpensePaymentStateRepository, expenseRecords)
+    override fun refreshPaymentStates(expenseDtos: Collection<ExpenseDto>) =
+        ExpensePaymentStateMaintainer.refresh(orgExpensePaymentStateRepository, expenseDtos)
 
     override fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>) =
         orgExpensePaymentRepository.saveAll(

@@ -7,8 +7,8 @@ holds only what is location-specific.
 - Tables `expense_batch`, `expense`, `expense_payment`, `expense_payment_void`,
   `expense_void` and `expense_payment_state` are in the location schema, so `expense_type_id` and `payee_contact_id`
   are plain UUIDs (contact and expense type live in the organization schema).
-- `LocationExpenseStore` locks through `EntityAdvisoryLock` and publishes events with a
-  `LocationLevel` source context.
+- `LocationExpenseTier` is this schema's `ExpenseTier`: it exposes `LocationExpenseStore` for storage, locks
+  through `EntityAdvisoryLock` and supplies the `LocationLevel` source context events carry.
 - `ExpenseService` holds the source-document gates and request mapping:
   - Purchase: not `DRAFT`. Allowed from `ORDERED` onward, including `CANCELED`. The
     payee defaults to the purchase's supplier.
@@ -24,8 +24,8 @@ holds only what is location-specific.
 - `ExpensePaymentStateEntity` / `ExpensePaymentStateRepository` (the JPQL targets
   `ExpensePaymentEntity` / `ExpensePaymentVoidEntity`); `LocationExpenseStore` creates the row in
   `saveNewExpense` and delegates `refreshPaymentStates` to `ExpensePaymentStateMaintainer`.
-- `ExpenseSearchFetcher` binds the shared query builder to `ExpenseSearchTables.LOCATION` and the
-  location datasource; `ExpenseSearchService` runs `ExpenseSearchOperations` read-only on the
+- `ExpenseSearchService` builds the shared `ExpenseSearchFetcher` over `ExpenseSearchExecutor` (location
+  datasource) and `ExpenseSearchTables.LOCATION`, and runs `ExpenseSearchOperations` read-only on the
   location schema (`POST secured/expenses/search` and `.../search/summary`).
 - `ExpensePaymentStateConsistencyTest` pins the stored state to what `ExpenseResponseBuilder`
   derives from the payments.

@@ -1,6 +1,6 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.record
+package me.ezra_home.retail_software_solution.cross_tier.expense.model
 
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PaymentInstruction
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeDto
 import java.math.BigDecimal
@@ -36,4 +36,33 @@ data class ResolvedExpenseRow(
     val description: String?,
     val expenseDate: LocalDate,
     val settlement: ResolvedSettlement?
+)
+
+data class ExpenseSource(
+    val type: ExpenseSourceType,
+    val reference: String?
+)
+
+data class SourceDocument(
+    val type: ExpenseSourceType,
+    val reference: String,
+    val id: UUID
+) {
+    val source = ExpenseSource(type, reference)
+}
+
+data class ExpenseSubmission(
+    val expenseDate: LocalDate,
+    val rowCommands: List<ExpenseRowCommand>
+)
+
+data class NewExpenseBatch(
+    val description: String,
+    val source: ExpenseSource
+)
+
+data class NewExpense(
+    val batchId: UUID,
+    val source: ExpenseSource,
+    val resolvedExpenseRow: ResolvedExpenseRow
 )

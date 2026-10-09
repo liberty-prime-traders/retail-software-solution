@@ -16,19 +16,20 @@ everything those two share, and sits under `cross_tier/` for the same reason
 
 | Package | Holds |
 |---|---|
-| (root) | `ExpenseSourceType` |
-| `entities` | `@MappedSuperclass` bases (`ExpenseBase`, `ExpenseBatchBase`, `ExpensePaymentBase`, `ExpensePaymentVoidBase`, `ExpenseVoidBase`, `ExpensePaymentStateBase`) and `ExpenseSourceTypeConverter` |
-| `repository/` | `@NoRepositoryBean` bases the tier repositories extend |
-| `search/` | Advanced search: filters, SQL, validator, summary, and `ExpenseSearchOperations` (see Search) |
-| `store/` | `ExpenseStore` (the port) and `JpaExpenseStore` (shared reads; tiers only build and save new rows) |
-| `operation/` | `ExpenseOperations` (creation, expense voids, reads, expense reissue), `ExpensePaymentOperations` (bulk payments, payment voids, settlements, payment reissue), `ExpenseLookup` (lookups and guards both share), `ExpenseRowResolver` (per-row validation), `ExpenseReissuer` (implemented by each tier's service) |
-| `api/`, `record/` | request and response DTOs, `ExpenseResponseBuilder`, and the plain records stores return |
+| (root) | `ExpenseSourceType`, `ExpenseTier` (the seam between the two schemas, see Gotchas) |
+| `model/` | what the operations read and write: the `*Dto`s stores return (`ExpenseDto`, `ExpensePaymentDto`, ...), `ExpenseAggregate` (and the paid/voided rules over it), and the write-side inputs (`ExpenseSubmission`, `SourceDocument`, `NewExpense`, `PaymentInstruction`, ...) |
+| `request/`, `response/` | REST request bodies, `ExpenseSummaryResponse` and `ExpenseResponseBuilder`. Both depend on `model/`, never the reverse |
+| `entities/`, `repository/` | `@MappedSuperclass` bases and `@NoRepositoryBean` bases the tier entities and repositories extend |
+| `store/` | `ExpenseStore` (persistence only), `JpaExpenseStore` (shared reads; tiers only build and save new rows), `ExpenseDtoMapper`, `ExpensePaymentStateMaintainer` |
+| `operation/` | `ExpenseOperations` (creation, expense voids), `ExpenseReadOperations` (single, by-source and recent reads), `ExpensePaymentOperations` (bulk payments, payment voids, settlements), `ExpenseReissueOperations` (re-publishes the four ledger events for existing rows), `ExpenseEvents` (the four ledger events), `ExpenseLookup`, `ExpenseRowResolver` (per-row validation), `ExpenseOperationsFactory`, `ExpenseReissuer` (implemented by each tier's service) |
+| `search/` | Advanced search: filters, SQL, validator, summary, `ExpenseSearchFetcher` and `ExpenseSearchOperations` (see Search) |
 | `kafka_handler/` | the four `EventReissueHandler`s and `ExpenseReissuerResolver` |
 
 Each tier owns only its thin entities (`@Entity @Table @HasReference` over a
-base), its repositories, a store (`LocationExpenseStore`, `OrgExpenseStore`)
-and a service holding the source-document gates. Both schemas use the same
-column names, which is what lets one set of mapped superclasses serve both.
+base), its repositories, a store (`LocationExpenseStore`, `OrgExpenseStore`), an
+`ExpenseTier` (`LocationExpenseTier`, `OrgExpenseTier`) and a service holding the
+source-document gates. Both schemas use the same column names, which is what lets one set of
+mapped superclasses serve both.
 
 ## Model
 
@@ -36,7 +37,7 @@ column names, which is what lets one set of mapped superclasses serve both.
   submission. Contextual batches (purchase, sale, transfer) carry `source_type` /
   `source_reference`, and a submission appends to the existing batch for that source.
   A partial unique index on `(source_type, source_reference)` backs this;
-  `ExpenseStore.lockSourceDocument` serializes find-or-create so the loser of a race
+  `ExpenseTier.lockSourceDocument` serializes find-or-create so the loser of a race
   never hits the index.
 - `expense` — immutable: one amount, one payee, one expense type. `expense_account_code` is
   copied from the type at record time and is what every later posting uses, since an admin can
@@ -85,7 +86,7 @@ and org standalone screens both store `ADHOC`, so a type cannot be limited to on
   fiscal period for today, and the reversing entry posts on that same date.
 - Voiding or cancelling a source document does not touch its expenses and is not blocked
   by them; the money was spent either way.
-- `ExpenseStore.lockExpense` is taken before payments and voids.
+- `ExpenseTier.lockExpense` is taken before payments and voids.
 - `ExpenseStore.refreshPaymentStates` is called after every payment write (`recordPayments`,
   `settleNewExpenses`, `voidPayment`); no triggers. `recordPayments` and `voidPayment` run inside the
   lock they took; `settleNewExpenses` takes none because the expense was written in the same
@@ -93,14 +94,14 @@ and org standalone screens both store `ADHOC`, so a type cannot be limited to on
 
 ## Gotchas
 
-- `ExpenseOperations` is not schema-bound; callers run it inside their own schema's
-  transaction and pass their store. `ExpenseStore` is the one seam between the schemas:
-  storage, the advisory lock, and the event's source context are the only things that
-  differ, so they are the only things a tier supplies.
-- Reissue is the exception to "callers pass their store": the handlers have no schema in
-  hand, so `ExpenseReissuerResolver` picks the tier's service (`ExpenseReissuer`) by
-  whether the session has a location, and that service opens its own read-only
-  transaction.
+- `ExpenseOperations`, `ExpensePaymentOperations`, `ExpenseReadOperations` and `ExpenseReissueOperations` are plain classes bound to one `ExpenseTier` at
+  construction (`ExpenseOperationsFactory.operationsFor`); each tier's service builds its own and
+  runs them inside its schema's transaction. The tier is the one seam between the schemas: storage,
+  the advisory lock and the event's source context are the only things that differ, so they are the
+  only things it supplies.
+- The handlers have no schema in hand, so `ExpenseReissuerResolver` picks the tier's service
+  (`ExpenseReissuer`) by whether the session has a location, and that service opens its own
+  read-only transaction.
 - Tier stores are Spring beans with a class-level transaction annotation, so every
   member of `JpaExpenseStore` that they inherit must be open (override members are).
 - `@Converter(autoApply = true)` is not relied on anywhere here; every converted column
@@ -151,8 +152,9 @@ immutable, already-audited row.
 
 ## Search
 
-`ExpenseSearchOperations` is schema-agnostic like `ExpenseOperations`: a tier passes its
-`ExpenseSearchPort` (fetcher bound to its datasource and `ExpenseSearchTables`) and its store.
+`ExpenseSearchOperations` is bound to one tier's `ExpenseStore` and `ExpenseSearchFetcher` (executor on its
+datasource plus its `ExpenseSearchTables`); each tier's search service builds it through
+`ExpenseSearchOperationsFactory`.
 
 - The query returns only `(id, reference_number, created_on)`. The page's ids are loaded in one
   batch (`loadForExpenses`) and shaped by `ExpenseResponseBuilder`, so rows are the same

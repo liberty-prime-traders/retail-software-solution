@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.search
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseResponseBuilder
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeResponseDto
@@ -28,12 +28,12 @@ import java.util.UUID
 
 class ExpenseSearchOperationsTest {
 
-    private val expenseSearchPort = mock(ExpenseSearchPort::class.java)
+    private val expenseSearchFetcher = mock(ExpenseSearchFetcher::class.java)
     private val expenseTypeService = mock(ExpenseTypeService::class.java)
     private val expenseStore = mock(ExpenseStore::class.java)
     private val expenseResponseBuilder = mock(ExpenseResponseBuilder::class.java)
 
-    private val expenseSearchOperations = ExpenseSearchOperations(expenseTypeService, expenseResponseBuilder)
+    private val expenseSearchOperations = ExpenseSearchOperations(expenseSearchFetcher, expenseStore, expenseTypeService, expenseResponseBuilder)
 
     private val freightTypeId = UUID.randomUUID()
     private val wagesTypeId = UUID.randomUUID()
@@ -47,10 +47,10 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `a page is trimmed to the requested size and reports more when the extra row came back`() {
         val rows = listOf(rawRow("EXPN03", 3), rawRow("EXPN02", 2), rawRow("EXPN01", 1))
-        `when`(expenseSearchPort.search(rangedParameters, null, 2)).thenReturn(rows)
+        `when`(expenseSearchFetcher.search(rangedParameters, null, 2)).thenReturn(rows)
         stubSummaries(rows.take(2))
 
-        val page = expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 2, rangedParameters))
+        val page = expenseSearchOperations.search(PageRequest("", 2, rangedParameters))
 
         assertTrue(page.hasMore)
         assertEquals(listOf("EXPN03", "EXPN02"), page.contents.map { it.reference })
@@ -66,12 +66,12 @@ class ExpenseSearchOperationsTest {
             expenseReferenceNumbers = listOf<String?>("EXPN01", " ", "", null) as List<String>,
             sourceReferences = listOf(" PRCH01 ", "")
         )
-        `when`(expenseSearchPort.search(
+        `when`(expenseSearchFetcher.search(
             rangedParameters.copy(expenseReferenceNumbers = listOf("EXPN01"), sourceReferences = listOf("PRCH01")), null, 5
         )).thenReturn(rows)
         stubSummaries(rows)
 
-        val page = expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 5, dirtyParameters))
+        val page = expenseSearchOperations.search(PageRequest("", 5, dirtyParameters))
 
         assertEquals(listOf("EXPN01"), page.contents.map { it.reference })
     }
@@ -79,10 +79,10 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `a page that exactly fills the request reports nothing more`() {
         val rows = listOf(rawRow("EXPN02", 2), rawRow("EXPN01", 1))
-        `when`(expenseSearchPort.search(rangedParameters, null, 2)).thenReturn(rows)
+        `when`(expenseSearchFetcher.search(rangedParameters, null, 2)).thenReturn(rows)
         stubSummaries(rows)
 
-        val page = expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 2, rangedParameters))
+        val page = expenseSearchOperations.search(PageRequest("", 2, rangedParameters))
 
         assertFalse(page.hasMore)
         assertEquals(2, page.contents.size)
@@ -91,9 +91,9 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `an empty page keeps the incoming cursor and loads nothing`() {
         val incomingCursor = KeysetSearchCursor(baseCreatedOn, UUID.randomUUID()).encode()
-        `when`(expenseSearchPort.search(rangedParameters, KeysetSearchCursor.decode(incomingCursor), 5)).thenReturn(emptyList())
+        `when`(expenseSearchFetcher.search(rangedParameters, KeysetSearchCursor.decode(incomingCursor), 5)).thenReturn(emptyList())
 
-        val page = expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest(incomingCursor, 5, rangedParameters))
+        val page = expenseSearchOperations.search(PageRequest(incomingCursor, 5, rangedParameters))
 
         assertEquals(incomingCursor, page.currentCursor)
         assertTrue(page.contents.isEmpty())
@@ -103,10 +103,10 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `the page is loaded in one batch and returned in query order whatever order the builder answers in`() {
         val rows = listOf(rawRow("EXPN02", 2), rawRow("EXPN01", 1))
-        `when`(expenseSearchPort.search(rangedParameters, null, 10)).thenReturn(rows)
+        `when`(expenseSearchFetcher.search(rangedParameters, null, 10)).thenReturn(rows)
         stubSummaries(rows, builderOrder = rows.reversed())
 
-        val page = expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 10, rangedParameters))
+        val page = expenseSearchOperations.search(PageRequest("", 10, rangedParameters))
 
         assertEquals(listOf("EXPN02", "EXPN01"), page.contents.map { it.reference })
         verify(expenseStore, times(1)).loadForExpenses(rows.map { it.id })
@@ -115,28 +115,28 @@ class ExpenseSearchOperationsTest {
 
     @Test
     fun `an invalid page size or malformed cursor is rejected before any query runs`() {
-        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 501, rangedParameters)) }
-        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("not-a-cursor", 10, rangedParameters)) }
+        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(PageRequest("", 501, rangedParameters)) }
+        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(PageRequest("not-a-cursor", 10, rangedParameters)) }
 
-        verifyNoInteractions(expenseSearchPort)
+        verifyNoInteractions(expenseSearchFetcher)
     }
 
     @Test
     fun `a search or summary without a created range is rejected before any query runs`() {
         val unranged = ExpenseSearchParameters(voided = false)
 
-        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(expenseSearchPort, expenseStore, PageRequest("", 10, unranged)) }
-        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.summarize(expenseSearchPort, unranged) }
+        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.search(PageRequest("", 10, unranged)) }
+        assertThrows(RtsGenericException::class.java) { expenseSearchOperations.summarize(unranged) }
 
-        verifyNoInteractions(expenseSearchPort)
+        verifyNoInteractions(expenseSearchFetcher)
     }
 
     @Test
     fun `an empty summary still returns every bucket zero filled in a fixed order`() {
         val parameters = rangedParameters.copy(voided = false)
-        `when`(expenseSearchPort.summarize(parameters)).thenReturn(emptyList())
+        `when`(expenseSearchFetcher.summarize(parameters)).thenReturn(emptyList())
 
-        val summary = expenseSearchOperations.summarize(expenseSearchPort, parameters)
+        val summary = expenseSearchOperations.summarize(parameters)
 
         assertEquals(ExpenseSummaryBucket.entries, summary.byStatus.map { it.bucket })
         assertTrue(summary.byStatus.all { it.expenseCount == 0L && it.amountTotal.signum() == 0 })
@@ -149,7 +149,7 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `each type reports live figures and voided figures apart, and totals are summed across types`() {
         val parameters = rangedParameters.copy(expenseTypeIds = listOf(freightTypeId, wagesTypeId))
-        `when`(expenseSearchPort.summarize(parameters)).thenReturn(
+        `when`(expenseSearchFetcher.summarize(parameters)).thenReturn(
             listOf(
                 summaryRow(freightTypeId, false, PaymentStatus.UNPAID, count = 2, amount = "300", paid = "0", outstanding = "300"),
                 summaryRow(freightTypeId, false, PaymentStatus.PARTIALLY_SETTLED, count = 1, amount = "200", paid = "50", outstanding = "150"),
@@ -160,7 +160,7 @@ class ExpenseSearchOperationsTest {
         )
         `when`(expenseTypeService.getAll(null)).thenReturn(listOf(expenseType(wagesTypeId, "Wages"), expenseType(freightTypeId, "Freight")))
 
-        val summary = expenseSearchOperations.summarize(expenseSearchPort, parameters)
+        val summary = expenseSearchOperations.summarize(parameters)
 
         val byBucket = summary.byStatus.associateBy { it.bucket }
         assertEquals(2L, byBucket.getValue(ExpenseSummaryBucket.UNPAID).expenseCount)
@@ -190,10 +190,10 @@ class ExpenseSearchOperationsTest {
     @Test
     fun `a type whose matches are all voided still appears with zero live figures`() {
         val parameters = rangedParameters.copy(voided = true)
-        `when`(expenseSearchPort.summarize(parameters)).thenReturn(listOf(summaryRow(wagesTypeId, true, PaymentStatus.UNPAID, count = 2, amount = "70", paid = "0", outstanding = "0")))
+        `when`(expenseSearchFetcher.summarize(parameters)).thenReturn(listOf(summaryRow(wagesTypeId, true, PaymentStatus.UNPAID, count = 2, amount = "70", paid = "0", outstanding = "0")))
         `when`(expenseTypeService.getAll(null)).thenReturn(listOf(expenseType(wagesTypeId, "Wages")))
 
-        val wages = expenseSearchOperations.summarize(expenseSearchPort, parameters).byExpenseType.single()
+        val wages = expenseSearchOperations.summarize(parameters).byExpenseType.single()
 
         assertEquals(0L, wages.expenseCount)
         assertEquals(2L, wages.voidedCount)

@@ -1,37 +1,32 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.search
 
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseResponseBuilder
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
-import org.springframework.stereotype.Component
 import java.util.UUID
 
-// Not schema-bound: callers run it inside their own schema's transaction and pass their port and store.
-@Component
 class ExpenseSearchOperations(
+    private val expenseSearchFetcher: ExpenseSearchFetcher,
+    private val expenseStore: ExpenseStore,
     private val expenseTypeService: ExpenseTypeService,
     private val expenseResponseBuilder: ExpenseResponseBuilder
 ) {
 
-    fun search(
-        expenseSearchPort: ExpenseSearchPort,
-        expenseStore: ExpenseStore,
-        pageRequest: PageRequest<ExpenseSearchParameters, String>
-    ): PageResponse<ExpenseSummaryResponse, String> {
+    fun search(pageRequest: PageRequest<ExpenseSearchParameters, String>): PageResponse<ExpenseSummaryResponse, String> {
         val expenseSearchParameters = pageRequest.parameters.sanitized()
         ExpenseSearchValidator.guardValidParameters(expenseSearchParameters)
         ExpenseSearchValidator.guardValidPageSize(pageRequest.requestedSize)
         val cursor = KeysetSearchCursor.decode(pageRequest.previousCursor)
 
-        val rawRows = expenseSearchPort.search(expenseSearchParameters, cursor, pageRequest.requestedSize)
+        val rawRows = expenseSearchFetcher.search(expenseSearchParameters, cursor, pageRequest.requestedSize)
         val hasMore = rawRows.size > pageRequest.requestedSize
         val pageRows = if (hasMore) rawRows.take(pageRequest.requestedSize) else rawRows
 
-        val summariesByReference = summariesByReference(expenseStore, pageRows.map { it.id })
+        val summariesByReference = summariesByReference(pageRows.map { it.id })
         val contents = pageRows.map { summariesByReference.getValue(it.referenceNumber) }
 
         val currentCursor = pageRows.lastOrNull()
@@ -41,10 +36,10 @@ class ExpenseSearchOperations(
         return PageResponse(currentCursor = currentCursor, hasMore = hasMore, contents = contents)
     }
 
-    fun summarize(expenseSearchPort: ExpenseSearchPort, expenseSearchParameters: ExpenseSearchParameters): ExpenseSearchSummaryResponseDto {
+    fun summarize(expenseSearchParameters: ExpenseSearchParameters): ExpenseSearchSummaryResponseDto {
         val sanitizedExpenseSearchParameters = expenseSearchParameters.sanitized()
         ExpenseSearchValidator.guardValidParameters(sanitizedExpenseSearchParameters)
-        val rawRows = expenseSearchPort.summarize(sanitizedExpenseSearchParameters)
+        val rawRows = expenseSearchFetcher.summarize(sanitizedExpenseSearchParameters)
 
         val byStatus = toBucketSummaries(rawRows)
         val expenseTypeNamesById = expenseTypeNamesById()
@@ -76,7 +71,7 @@ class ExpenseSearchOperations(
         )
     }
 
-    private fun summariesByReference(expenseStore: ExpenseStore, expenseIds: List<UUID>): Map<String, ExpenseSummaryResponse> {
+    private fun summariesByReference(expenseIds: List<UUID>): Map<String, ExpenseSummaryResponse> {
         if (expenseIds.isEmpty()) return emptyMap()
         return expenseResponseBuilder.buildSummaries(expenseStore.loadForExpenses(expenseIds)).associateBy { it.reference }
     }

@@ -1,8 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.org_expense.api
 
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSource
+
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpense
+
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentStateRepositoryBase
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
@@ -15,7 +19,6 @@ import me.ezra_home.retail_software_solution.organizations.business.org_expense.
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpensePaymentVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseRepository
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.OrgExpenseVoidRepository
-import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -37,7 +40,7 @@ class OrgExpenseStoreTest {
     private val orgExpenseStore = OrgExpenseStore(
         mock(OrgExpenseBatchRepository::class.java), orgExpenseRepository, mock(OrgExpensePaymentRepository::class.java),
         mock(OrgExpensePaymentVoidRepository::class.java), mock(OrgExpenseVoidRepository::class.java),
-        orgExpensePaymentStateRepository, mock(OrgEntityAdvisoryLock::class.java)
+        orgExpensePaymentStateRepository
     )
 
     @Test
@@ -59,8 +62,10 @@ class OrgExpenseStoreTest {
         `when`(payee.id).thenReturn(UUID.randomUUID())
 
         orgExpenseStore.saveExpense(
-            orgExpenseEntity.batchId, ExpenseSourceType.ADHOC, null,
-            ResolvedExpenseRow(expenseType, payee, BigDecimal("100.0000"), null, LocalDate.of(2026, 3, 10), null)
+            NewExpense(
+                orgExpenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null),
+                ResolvedExpenseRow(expenseType, payee, BigDecimal("100.0000"), null, LocalDate.of(2026, 3, 10), null)
+            )
         )
 
         val savedState = ArgumentCaptor.forClass(OrgExpensePaymentStateEntity::class.java)
@@ -72,20 +77,20 @@ class OrgExpenseStoreTest {
 
     @Test
     fun `refreshing derives status and paid amount from the active payments`() {
-        val expenseRecord = ExpenseRecord(
+        val expenseDto = ExpenseDto(
             UUID.randomUUID(), "OXPN01", UUID.randomUUID(), "005.005", UUID.randomUUID(), BigDecimal("100"),
             LocalDate.of(2026, 3, 10), null, ExpenseSourceType.ADHOC, null, UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID()
         )
-        val state = OrgExpensePaymentStateEntity(expenseRecord.id)
+        val state = OrgExpensePaymentStateEntity(expenseDto.id)
         `when`(orgExpensePaymentStateRepository.sumActivePaidByExpenseId(anyCollection())).thenReturn(
             listOf(object : ExpensePaymentStateRepositoryBase.ActivePaidAmount {
-                override val expenseId = expenseRecord.id
+                override val expenseId = expenseDto.id
                 override val amountPaid = BigDecimal("40")
             })
         )
         `when`(orgExpensePaymentStateRepository.findByExpenseIdIn(anyCollection())).thenReturn(listOf(state))
 
-        orgExpenseStore.refreshPaymentStates(listOf(expenseRecord))
+        orgExpenseStore.refreshPaymentStates(listOf(expenseDto))
 
         assertEquals(PaymentStatus.PARTIALLY_SETTLED, state.paymentStatus)
         assertEquals(0, BigDecimal("40").compareTo(state.amountPaid))

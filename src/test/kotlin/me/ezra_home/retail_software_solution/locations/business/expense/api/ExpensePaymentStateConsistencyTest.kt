@@ -4,13 +4,13 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseResponseBuilder
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseBatchRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentStateRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseBatchDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentStateDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseBatchRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentStateEntity
@@ -19,7 +19,6 @@ import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseP
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseVoidRepository
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
@@ -45,13 +44,13 @@ class ExpensePaymentStateConsistencyTest {
     private val expenseTypeId = UUID.randomUUID()
     private val paymentMethodId = UUID.randomUUID()
     private val creatorId = UUID.randomUUID()
-    private val batchRecord = ExpenseBatchRecord(UUID.randomUUID(), "EXBT01", "Batch", OffsetDateTime.now(), creatorId)
+    private val batchDto = ExpenseBatchDto(UUID.randomUUID(), "EXBT01", "Batch", OffsetDateTime.now(), creatorId)
 
     private val expensePaymentStateRepository = mock(ExpensePaymentStateRepository::class.java)
     private val locationExpenseStore = LocationExpenseStore(
         mock(ExpenseBatchRepository::class.java), mock(ExpenseRepository::class.java), mock(ExpensePaymentRepository::class.java),
         mock(ExpensePaymentVoidRepository::class.java), mock(ExpenseVoidRepository::class.java),
-        expensePaymentStateRepository, mock(EntityAdvisoryLock::class.java)
+        expensePaymentStateRepository
     )
     private val expenseResponseBuilder = responseBuilder()
 
@@ -81,63 +80,63 @@ class ExpensePaymentStateConsistencyTest {
         )
 
         scenarios.forEach { paymentScenarios ->
-            val expenseRecord = expenseRecord("100")
-            val expenseAggregate = aggregate(expenseRecord, paymentScenarios)
-            val storedState = refreshedState(expenseRecord, expenseAggregate)
+            val expenseDto = expenseDto("100")
+            val expenseAggregate = aggregate(expenseDto, paymentScenarios)
+            val storedState = refreshedState(expenseDto, expenseAggregate)
 
             val expectedPaid = paymentScenarios.filterNot { it.voided }.sumOf { BigDecimal(it.amount) }
             val expectedStatus = when {
                 expectedPaid.signum() == 0 -> PaymentStatus.UNPAID
-                expectedPaid >= expenseRecord.amount -> PaymentStatus.FULLY_SETTLED
+                expectedPaid >= expenseDto.amount -> PaymentStatus.FULLY_SETTLED
                 else -> PaymentStatus.PARTIALLY_SETTLED
             }
             assertEquals(expectedStatus, storedState.paymentStatus, "status for $paymentScenarios")
             assertEquals(0, expectedPaid.compareTo(storedState.amountPaid), "amount paid for $paymentScenarios")
 
-            val storedStateRecord = ExpensePaymentStateRecord(expenseRecord.id, storedState.paymentStatus, storedState.amountPaid)
-            val builtSummary = expenseResponseBuilder.buildSummary(expenseAggregate.copy(paymentStates = listOf(storedStateRecord)), expenseRecord.id)
+            val storedStateRecord = ExpensePaymentStateDto(expenseDto.id, storedState.paymentStatus, storedState.amountPaid)
+            val builtSummary = expenseResponseBuilder.buildSummary(expenseAggregate.copy(paymentStates = listOf(storedStateRecord)), expenseDto.id)
             assertEquals(storedState.paymentStatus, builtSummary.status, "built status for $paymentScenarios")
             assertEquals(0, storedState.amountPaid.compareTo(builtSummary.amountPaid), "built amount paid for $paymentScenarios")
-            assertEquals(0, (expenseRecord.amount - storedState.amountPaid).compareTo(builtSummary.balanceRemaining), "balance for $paymentScenarios")
+            assertEquals(0, (expenseDto.amount - storedState.amountPaid).compareTo(builtSummary.balanceRemaining), "balance for $paymentScenarios")
         }
     }
 
     private data class PaymentScenario(val amount: String, val voided: Boolean)
 
     // Models the sumActivePaidByExpenseId JPQL: a payment counts unless a void row points at it.
-    private fun refreshedState(expenseRecord: ExpenseRecord, expenseAggregate: ExpenseAggregate): ExpensePaymentStateEntity {
+    private fun refreshedState(expenseDto: ExpenseDto, expenseAggregate: ExpenseAggregate): ExpensePaymentStateEntity {
         val voidedPaymentIds = expenseAggregate.paymentVoids.map { it.paymentId }.toSet()
         val activePaid = expenseAggregate.payments.filter { it.id !in voidedPaymentIds }.sumOf { it.amount }
         val activePaidAmounts = if (activePaid.signum() == 0) emptyList() else listOf(
             object : ExpensePaymentStateRepositoryBase.ActivePaidAmount {
-                override val expenseId = expenseRecord.id
+                override val expenseId = expenseDto.id
                 override val amountPaid = activePaid
             }
         )
-        val storedState = ExpensePaymentStateEntity(expenseRecord.id)
+        val storedState = ExpensePaymentStateEntity(expenseDto.id)
         `when`(expensePaymentStateRepository.sumActivePaidByExpenseId(anyCollection())).thenReturn(activePaidAmounts)
         `when`(expensePaymentStateRepository.findByExpenseIdIn(anyCollection())).thenReturn(listOf(storedState))
 
-        locationExpenseStore.refreshPaymentStates(listOf(expenseRecord))
+        locationExpenseStore.refreshPaymentStates(listOf(expenseDto))
         return storedState
     }
 
-    private fun aggregate(expenseRecord: ExpenseRecord, paymentScenarios: List<PaymentScenario>): ExpenseAggregate {
+    private fun aggregate(expenseDto: ExpenseDto, paymentScenarios: List<PaymentScenario>): ExpenseAggregate {
         val payments = paymentScenarios.map {
-            ExpensePaymentRecord(
-                UUID.randomUUID(), expenseRecord.id, "EXPY01", paymentMethodId, "001.001", BigDecimal(it.amount),
+            ExpensePaymentDto(
+                UUID.randomUUID(), expenseDto.id, "EXPY01", paymentMethodId, "001.001", BigDecimal(it.amount),
                 null, OffsetDateTime.now(), OffsetDateTime.now()
             )
         }
         val paymentVoids = payments.zip(paymentScenarios).filter { (_, scenario) -> scenario.voided }.map { (payment, _) ->
-            ExpensePaymentVoidRecord(UUID.randomUUID(), payment.id, "wrong", OffsetDateTime.now())
+            ExpensePaymentVoidDto(UUID.randomUUID(), payment.id, "wrong", OffsetDateTime.now())
         }
-        return ExpenseAggregate(listOf(batchRecord), listOf(expenseRecord), payments, paymentVoids, emptyList())
+        return ExpenseAggregate(listOf(batchDto), listOf(expenseDto), payments, paymentVoids, emptyList())
     }
 
-    private fun expenseRecord(amount: String) = ExpenseRecord(
+    private fun expenseDto(amount: String) = ExpenseDto(
         UUID.randomUUID(), "EXPN01", expenseTypeId, "005.005", UUID.randomUUID(), BigDecimal(amount),
-        LocalDate.of(2026, 3, 10), null, ExpenseSourceType.ADHOC, null, batchRecord.id, OffsetDateTime.now(), creatorId
+        LocalDate.of(2026, 3, 10), null, ExpenseSourceType.ADHOC, null, batchDto.id, OffsetDateTime.now(), creatorId
     )
 
     private fun responseBuilder(): ExpenseResponseBuilder {

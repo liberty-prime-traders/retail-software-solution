@@ -1,8 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.expense.api
 
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSource
+
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpense
+
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseBatchRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseEntity
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentRepository
@@ -12,7 +16,6 @@ import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseP
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpensePaymentVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseRepository
 import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseVoidRepository
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeDto
@@ -38,7 +41,7 @@ class LocationExpenseStoreTest {
     private val locationExpenseStore = LocationExpenseStore(
         mock(ExpenseBatchRepository::class.java), expenseRepository, mock(ExpensePaymentRepository::class.java),
         mock(ExpensePaymentVoidRepository::class.java), mock(ExpenseVoidRepository::class.java),
-        expensePaymentStateRepository, mock(EntityAdvisoryLock::class.java)
+        expensePaymentStateRepository
     )
 
     @Test
@@ -46,7 +49,7 @@ class LocationExpenseStoreTest {
         val expenseEntity = persistedExpenseEntity()
         `when`(expenseRepository.save(any(ExpenseEntity::class.java))).thenReturn(expenseEntity)
 
-        locationExpenseStore.saveExpense(expenseEntity.batchId, ExpenseSourceType.ADHOC, null, resolvedExpenseRow())
+        locationExpenseStore.saveExpense(NewExpense(expenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null), resolvedExpenseRow()))
 
         val savedState = ArgumentCaptor.forClass(ExpensePaymentStateEntity::class.java)
         verify(expensePaymentStateRepository).save(savedState.capture())
@@ -57,8 +60,8 @@ class LocationExpenseStoreTest {
 
     @Test
     fun `refreshing derives each expense's status and paid amount from its active payments`() {
-        val partiallyPaidExpense = expenseRecord("100")
-        val fullyPaidExpense = expenseRecord("50")
+        val partiallyPaidExpense = expenseDto("100")
+        val fullyPaidExpense = expenseDto("50")
         val partiallyPaidState = ExpensePaymentStateEntity(partiallyPaidExpense.id)
         val fullyPaidState = ExpensePaymentStateEntity(fullyPaidExpense.id)
         stubActivePaid(partiallyPaidExpense.id to "40", fullyPaidExpense.id to "50")
@@ -74,15 +77,15 @@ class LocationExpenseStoreTest {
 
     @Test
     fun `an expense whose payments are all voided drops back to unpaid`() {
-        val expenseRecord = expenseRecord("100")
-        val paidState = ExpensePaymentStateEntity(expenseRecord.id).apply {
+        val expenseDto = expenseDto("100")
+        val paidState = ExpensePaymentStateEntity(expenseDto.id).apply {
             paymentStatus = PaymentStatus.FULLY_SETTLED
             amountPaid = BigDecimal("100")
         }
         stubActivePaid()
         stubStates(paidState)
 
-        locationExpenseStore.refreshPaymentStates(listOf(expenseRecord))
+        locationExpenseStore.refreshPaymentStates(listOf(expenseDto))
 
         assertEquals(PaymentStatus.UNPAID, paidState.paymentStatus)
         assertEquals(0, BigDecimal.ZERO.compareTo(paidState.amountPaid))
@@ -109,7 +112,7 @@ class LocationExpenseStoreTest {
         `when`(expensePaymentStateRepository.findByExpenseIdIn(anyCollection())).thenReturn(states.toList())
     }
 
-    private fun expenseRecord(amount: String) = ExpenseRecord(
+    private fun expenseDto(amount: String) = ExpenseDto(
         UUID.randomUUID(), "EXPN01", UUID.randomUUID(), "005.005", UUID.randomUUID(), BigDecimal(amount),
         LocalDate.of(2026, 3, 10), null, ExpenseSourceType.ADHOC, null, UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID()
     )

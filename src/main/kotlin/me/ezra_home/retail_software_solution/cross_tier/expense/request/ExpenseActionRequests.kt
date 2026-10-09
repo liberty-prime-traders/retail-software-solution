@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.api
+package me.ezra_home.retail_software_solution.cross_tier.expense.request
 
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import java.math.BigDecimal
 
 data class ExpensePaymentCreateRequest(

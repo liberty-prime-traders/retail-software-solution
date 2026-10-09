@@ -4,21 +4,21 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseResponseBuilder
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PaymentInstruction
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.SettledExpense
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -52,10 +52,13 @@ class ExpensePaymentOperationsTest {
     private val expenseStore = mock(ExpenseStore::class.java)
     private val expenseResponseBuilder = mock(ExpenseResponseBuilder::class.java)
 
-    private val expensePaymentOperations = ExpensePaymentOperations(
-        expenseRowResolver, expenseResponseBuilder, ExpenseLookup(),
-        mock(FiscalPeriodService::class.java), eventPublisher
-    )
+    private val expenseTier = mock(ExpenseTier::class.java).also { `when`(it.expenseStore).thenReturn(expenseStore) }
+
+    private val tierExpenseOperations = ExpenseOperationsFactory(
+        expenseRowResolver, expenseResponseBuilder, eventPublisher
+    ).operationsFor(expenseTier)
+    private val expensePaymentOperations = tierExpenseOperations.expensePaymentOperations
+    private val expenseReissueOperations = tierExpenseOperations.expenseReissueOperations
 
     private val expenseDate = LocalDate.of(2026, 3, 10)
     private val settlementInstruction = PaymentInstruction(UUID.randomUUID())
@@ -70,7 +73,7 @@ class ExpensePaymentOperationsTest {
         )
         `when`(expenseRowResolver.resolveSettlement(settlementInstruction, DateTimes.Local.Now.organization()))
             .thenReturn(resolvedSettlement())
-        `when`(expenseStore.sourceContext()).thenReturn(EventSourceContext.OrgLevel(orgSchema = "org-a"))
+        `when`(expenseTier.sourceContext()).thenReturn(EventSourceContext.OrgLevel(orgSchema = "org-a"))
         `when`(expenseResponseBuilder.buildSummaries(anyAggregate())).thenAnswer { invocation ->
             (invocation.arguments[0] as ExpenseAggregate).expenses.map { summaryResponse(it.referenceNumber) }
         }
@@ -83,11 +86,11 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `a payment larger than the remaining balance is rejected`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = listOf("60"))
+        val expenseDto = stubExpense(amount = "100", activePayments = listOf("60"))
 
         assertThrows(RtsGenericException::class.java) {
             expensePaymentOperations.recordPayments(
-                expenseStore, listOf(ExpensePaymentCreateRequest(expenseRecord.referenceNumber, settlementInstruction, BigDecimal("50")))
+                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("50")))
             )
         }
         assertNoPaymentsSaved()
@@ -95,11 +98,11 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `payments to one expense are checked together and the error names the total and the excess`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
-        val sixtyEach = ExpensePaymentCreateRequest(expenseRecord.referenceNumber, settlementInstruction, BigDecimal("60"))
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
+        val sixtyEach = ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("60"))
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            expensePaymentOperations.recordPayments(expenseStore, listOf(sixtyEach, sixtyEach))
+            expensePaymentOperations.recordPayments(listOf(sixtyEach, sixtyEach))
         }
         assertTrue(exception.message.contains("120.00"), exception.message)
         assertTrue(exception.message.contains("20.00"), exception.message)
@@ -108,18 +111,18 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `payments to one expense are saved in a single batch`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
         val drafts = listOf(
-            ExpensePaymentDraft(expenseRecord.id, BigDecimal("30.0000"), resolvedSettlement()),
-            ExpensePaymentDraft(expenseRecord.id, BigDecimal("70.0000"), resolvedSettlement())
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()),
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("70.0000"), resolvedSettlement())
         )
         `when`(expenseStore.savePayments(drafts))
-            .thenReturn(listOf(paymentRecord(expenseRecord.id, "30"), paymentRecord(expenseRecord.id, "70")))
+            .thenReturn(listOf(paymentDto(expenseDto.id, "30"), paymentDto(expenseDto.id, "70")))
         val requests = listOf("30", "70").map {
-            ExpensePaymentCreateRequest(expenseRecord.referenceNumber, settlementInstruction, BigDecimal(it))
+            ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal(it))
         }
 
-        expensePaymentOperations.recordPayments(expenseStore, requests)
+        expensePaymentOperations.recordPayments(requests)
 
         verify(expenseStore).savePayments(drafts)
         assertEquals(2, mockingDetails(eventPublisher).invocations.size)
@@ -128,36 +131,35 @@ class ExpensePaymentOperationsTest {
     @Test
     fun `an empty payment collection is rejected`() {
         assertThrows(RtsGenericException::class.java) {
-            expensePaymentOperations.recordPayments(expenseStore, emptyList())
+            expensePaymentOperations.recordPayments(emptyList())
         }
         verifyNoInteractions(eventPublisher)
     }
 
     @Test
     fun `a bulk request locks expenses in id order and answers once, in request order`() {
-        val firstExpense = expenseRecord(BigDecimal("100"), "EXPN01")
-        val secondExpense = expenseRecord(BigDecimal("100"), "EXPN02")
+        val firstExpense = expenseDto(BigDecimal("100"), "EXPN01")
+        val secondExpense = expenseDto(BigDecimal("100"), "EXPN02")
         val (lowerIdExpense, higherIdExpense) = listOf(firstExpense, secondExpense).sortedBy { it.id }
         `when`(expenseStore.findExpensesByReferences(listOf(higherIdExpense.referenceNumber, lowerIdExpense.referenceNumber)))
             .thenReturn(listOf(firstExpense, secondExpense))
         `when`(expenseStore.savePayments(listOf(higherIdExpense, lowerIdExpense).map {
             ExpensePaymentDraft(it.id, BigDecimal("10.0000"), resolvedSettlement())
-        })).thenReturn(listOf(higherIdExpense, lowerIdExpense).map { paymentRecord(it.id, "10") })
+        })).thenReturn(listOf(higherIdExpense, lowerIdExpense).map { paymentDto(it.id, "10") })
         `when`(expenseStore.loadForExpenses(anyCollection())).thenReturn(
             ExpenseAggregate(emptyList(), listOf(lowerIdExpense, higherIdExpense), emptyList(), emptyList(), emptyList())
         )
 
         val summaries = expensePaymentOperations.recordPayments(
-            expenseStore,
             listOf(
                 ExpensePaymentCreateRequest(higherIdExpense.referenceNumber, settlementInstruction, BigDecimal("10")),
                 ExpensePaymentCreateRequest(lowerIdExpense.referenceNumber, settlementInstruction, BigDecimal("10"))
             )
         )
 
-        val locksInOrder = inOrder(expenseStore)
-        locksInOrder.verify(expenseStore).lockExpense(lowerIdExpense.id)
-        locksInOrder.verify(expenseStore).lockExpense(higherIdExpense.id)
+        val locksInOrder = inOrder(expenseTier)
+        locksInOrder.verify(expenseTier).lockExpense(lowerIdExpense.id)
+        locksInOrder.verify(expenseTier).lockExpense(higherIdExpense.id)
         assertEquals(listOf(higherIdExpense.referenceNumber, lowerIdExpense.referenceNumber), summaries.map { it.reference })
         assertEquals(1, mockingDetails(expenseResponseBuilder).invocations.count { it.method.name == "buildSummaries" })
     }
@@ -165,39 +167,39 @@ class ExpensePaymentOperationsTest {
     @Test
     fun `voiding a payment requires a reason`() {
         assertThrows(RtsGenericException::class.java) {
-            expensePaymentOperations.voidPayment(expenseStore, ExpensePaymentVoidRequest("EXPY01", ""))
+            expensePaymentOperations.voidPayment(ExpensePaymentVoidRequest("EXPY01", ""))
         }
     }
 
     @Test
     fun `a payment that was already voided cannot be voided again`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
-        val paymentRecord = paymentRecord(expenseRecord.id, "40")
-        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(paymentRecord)
-        `when`(expenseStore.loadForExpenses(listOf(expenseRecord.id))).thenReturn(
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
+        val paymentDto = paymentDto(expenseDto.id, "40")
+        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(paymentDto)
+        `when`(expenseStore.loadForExpenses(listOf(expenseDto.id))).thenReturn(
             ExpenseAggregate(
                 batches = emptyList(),
-                expenses = listOf(expenseRecord),
-                payments = listOf(paymentRecord),
-                paymentVoids = listOf(ExpensePaymentVoidRecord(UUID.randomUUID(), paymentRecord.id, "earlier", OffsetDateTime.now())),
+                expenses = listOf(expenseDto),
+                payments = listOf(paymentDto),
+                paymentVoids = listOf(ExpensePaymentVoidDto(UUID.randomUUID(), paymentDto.id, "earlier", OffsetDateTime.now())),
                 expenseVoids = emptyList()
             )
         )
 
         assertThrows(RtsGenericException::class.java) {
-            expensePaymentOperations.voidPayment(expenseStore, ExpensePaymentVoidRequest("EXPY01", "wrong method"))
+            expensePaymentOperations.voidPayment(ExpensePaymentVoidRequest("EXPY01", "wrong method"))
         }
-        verify(expenseStore, never()).savePaymentVoid(paymentRecord.id, "wrong method")
+        verify(expenseStore, never()).savePaymentVoid(paymentDto.id, "wrong method")
     }
 
     @Test
     fun `reissuing a recorded payment posts to the payment method account snapshotted when it was recorded`() {
-        val expenseRecord = expenseRecord(BigDecimal("10.0000"))
-        val expensePaymentRecord = paymentRecord(expenseRecord.id, "10")
-        `when`(expenseStore.findPaymentById(expensePaymentRecord.id)).thenReturn(expensePaymentRecord)
-        `when`(expenseStore.findExpenseById(expenseRecord.id)).thenReturn(expenseRecord)
+        val expenseDto = expenseDto(BigDecimal("10.0000"))
+        val expensePaymentDto = paymentDto(expenseDto.id, "10")
+        `when`(expenseStore.findPaymentById(expensePaymentDto.id)).thenReturn(expensePaymentDto)
+        `when`(expenseStore.findExpenseById(expenseDto.id)).thenReturn(expenseDto)
 
-        expensePaymentOperations.reissuePaymentRecorded(expenseStore, expensePaymentRecord.id)
+        expenseReissueOperations.reissuePaymentRecorded(expensePaymentDto.id)
 
         val publishedEvent = mockingDetails(eventPublisher).invocations.single().arguments[0] as ExpensePaymentRecordedEvent
         assertEquals(snapshottedPaymentMethodAccountCode, publishedEvent.paymentMethodAccountCode)
@@ -205,14 +207,14 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `reissuing a payment void posts to the payment method account snapshotted when the payment was recorded`() {
-        val expenseRecord = expenseRecord(BigDecimal("10.0000"))
-        val expensePaymentRecord = paymentRecord(expenseRecord.id, "10")
-        val expensePaymentVoidRecord = ExpensePaymentVoidRecord(UUID.randomUUID(), expensePaymentRecord.id, "wrong method", OffsetDateTime.now())
-        `when`(expenseStore.findPaymentVoidById(expensePaymentVoidRecord.id)).thenReturn(expensePaymentVoidRecord)
-        `when`(expenseStore.findPaymentById(expensePaymentRecord.id)).thenReturn(expensePaymentRecord)
-        `when`(expenseStore.findExpenseById(expenseRecord.id)).thenReturn(expenseRecord)
+        val expenseDto = expenseDto(BigDecimal("10.0000"))
+        val expensePaymentDto = paymentDto(expenseDto.id, "10")
+        val expensePaymentVoidDto = ExpensePaymentVoidDto(UUID.randomUUID(), expensePaymentDto.id, "wrong method", OffsetDateTime.now())
+        `when`(expenseStore.findPaymentVoidById(expensePaymentVoidDto.id)).thenReturn(expensePaymentVoidDto)
+        `when`(expenseStore.findPaymentById(expensePaymentDto.id)).thenReturn(expensePaymentDto)
+        `when`(expenseStore.findExpenseById(expenseDto.id)).thenReturn(expenseDto)
 
-        expensePaymentOperations.reissuePaymentVoided(expenseStore, expensePaymentVoidRecord.id)
+        expenseReissueOperations.reissuePaymentVoided(expensePaymentVoidDto.id)
 
         val publishedEvent = mockingDetails(eventPublisher).invocations.single().arguments[0] as ExpensePaymentVoidedEvent
         assertEquals(snapshottedPaymentMethodAccountCode, publishedEvent.paymentMethodAccountCode)
@@ -220,17 +222,17 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `voiding a payment posts to the payment method account snapshotted when it was recorded`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
-        val expensePaymentRecord = paymentRecord(expenseRecord.id, "40")
-        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(expensePaymentRecord)
-        `when`(expenseStore.loadForExpenses(listOf(expenseRecord.id))).thenReturn(
-            ExpenseAggregate(emptyList(), listOf(expenseRecord), listOf(expensePaymentRecord), emptyList(), emptyList())
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
+        val expensePaymentDto = paymentDto(expenseDto.id, "40")
+        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(expensePaymentDto)
+        `when`(expenseStore.loadForExpenses(listOf(expenseDto.id))).thenReturn(
+            ExpenseAggregate(emptyList(), listOf(expenseDto), listOf(expensePaymentDto), emptyList(), emptyList())
         )
-        `when`(expenseStore.savePaymentVoid(expensePaymentRecord.id, "wrong method")).thenReturn(
-            ExpensePaymentVoidRecord(UUID.randomUUID(), expensePaymentRecord.id, "wrong method", OffsetDateTime.now())
+        `when`(expenseStore.savePaymentVoid(expensePaymentDto.id, "wrong method")).thenReturn(
+            ExpensePaymentVoidDto(UUID.randomUUID(), expensePaymentDto.id, "wrong method", OffsetDateTime.now())
         )
 
-        expensePaymentOperations.voidPayment(expenseStore, ExpensePaymentVoidRequest("EXPY01", "wrong method"))
+        expensePaymentOperations.voidPayment(ExpensePaymentVoidRequest("EXPY01", "wrong method"))
 
         val publishedEvent = mockingDetails(eventPublisher).invocations.single().arguments[0] as ExpensePaymentVoidedEvent
         assertEquals(snapshottedPaymentMethodAccountCode, publishedEvent.paymentMethodAccountCode)
@@ -238,27 +240,27 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `recording payments refreshes the payment state of each paid expense after the payments are saved`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
-        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseRecord.id, BigDecimal("30.0000"), resolvedSettlement()))))
-            .thenReturn(listOf(paymentRecord(expenseRecord.id, "30")))
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
+        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()))))
+            .thenReturn(listOf(paymentDto(expenseDto.id, "30")))
 
         expensePaymentOperations.recordPayments(
-            expenseStore, listOf(ExpensePaymentCreateRequest(expenseRecord.referenceNumber, settlementInstruction, BigDecimal("30")))
+            listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("30")))
         )
 
-        assertRefreshedAfter("savePayments", listOf(expenseRecord))
+        assertRefreshedAfter("savePayments", listOf(expenseDto))
     }
 
     @Test
     fun `settling new expenses saves their payments in one batch and refreshes the payment states once`() {
-        val firstExpense = expenseRecord(BigDecimal("100"), "EXPN01")
-        val secondExpense = expenseRecord(BigDecimal("50"), "EXPN02")
+        val firstExpense = expenseDto(BigDecimal("100"), "EXPN01")
+        val secondExpense = expenseDto(BigDecimal("50"), "EXPN02")
         val drafts = listOf(firstExpense, secondExpense).map { ExpensePaymentDraft(it.id, it.amount, resolvedSettlement()) }
         `when`(expenseStore.savePayments(drafts))
-            .thenReturn(listOf(paymentRecord(firstExpense.id, "100"), paymentRecord(secondExpense.id, "50")))
+            .thenReturn(listOf(paymentDto(firstExpense.id, "100"), paymentDto(secondExpense.id, "50")))
 
         expensePaymentOperations.settleNewExpenses(
-            expenseStore, listOf(firstExpense, secondExpense).map { SettledExpense(it, resolvedSettlement()) }
+            listOf(firstExpense, secondExpense).map { SettledExpense(it, resolvedSettlement()) }
         )
 
         verify(expenseStore).savePayments(drafts)
@@ -268,7 +270,7 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `settling no expenses touches nothing`() {
-        expensePaymentOperations.settleNewExpenses(expenseStore, emptyList())
+        expensePaymentOperations.settleNewExpenses(emptyList())
 
         verifyNoInteractions(eventPublisher)
         assertTrue(mockingDetails(expenseStore).invocations.none { it.method.name == "savePayments" || it.method.name == "refreshPaymentStates" })
@@ -276,35 +278,35 @@ class ExpensePaymentOperationsTest {
 
     @Test
     fun `voiding a payment refreshes the payment state after the void is saved`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = emptyList())
-        val expensePaymentRecord = paymentRecord(expenseRecord.id, "40")
-        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(expensePaymentRecord)
-        `when`(expenseStore.loadForExpenses(listOf(expenseRecord.id))).thenReturn(
-            ExpenseAggregate(emptyList(), listOf(expenseRecord), listOf(expensePaymentRecord), emptyList(), emptyList())
+        val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
+        val expensePaymentDto = paymentDto(expenseDto.id, "40")
+        `when`(expenseStore.findPaymentByReference("EXPY01")).thenReturn(expensePaymentDto)
+        `when`(expenseStore.loadForExpenses(listOf(expenseDto.id))).thenReturn(
+            ExpenseAggregate(emptyList(), listOf(expenseDto), listOf(expensePaymentDto), emptyList(), emptyList())
         )
-        `when`(expenseStore.savePaymentVoid(expensePaymentRecord.id, "wrong method")).thenReturn(
-            ExpensePaymentVoidRecord(UUID.randomUUID(), expensePaymentRecord.id, "wrong method", OffsetDateTime.now())
+        `when`(expenseStore.savePaymentVoid(expensePaymentDto.id, "wrong method")).thenReturn(
+            ExpensePaymentVoidDto(UUID.randomUUID(), expensePaymentDto.id, "wrong method", OffsetDateTime.now())
         )
 
-        expensePaymentOperations.voidPayment(expenseStore, ExpensePaymentVoidRequest("EXPY01", "wrong method"))
+        expensePaymentOperations.voidPayment(ExpensePaymentVoidRequest("EXPY01", "wrong method"))
 
-        assertRefreshedAfter("savePaymentVoid", listOf(expenseRecord))
+        assertRefreshedAfter("savePaymentVoid", listOf(expenseDto))
     }
 
     @Test
     fun `a rejected payment leaves the payment state untouched`() {
-        val expenseRecord = stubExpense(amount = "100", activePayments = listOf("60"))
+        val expenseDto = stubExpense(amount = "100", activePayments = listOf("60"))
 
         assertThrows(RtsGenericException::class.java) {
             expensePaymentOperations.recordPayments(
-                expenseStore, listOf(ExpensePaymentCreateRequest(expenseRecord.referenceNumber, settlementInstruction, BigDecimal("50")))
+                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("50")))
             )
         }
 
         assertTrue(mockingDetails(expenseStore).invocations.none { it.method.name == "refreshPaymentStates" })
     }
 
-    private fun assertRefreshedAfter(writeMethodName: String, expectedExpenseRecords: List<ExpenseRecord>) {
+    private fun assertRefreshedAfter(writeMethodName: String, expectedExpenseRecords: List<ExpenseDto>) {
         val invocations = mockingDetails(expenseStore).invocations
         val writeIndex = invocations.indexOfFirst { it.method.name == writeMethodName }
         val refreshInvocations = invocations.filter { it.method.name == "refreshPaymentStates" }
@@ -315,12 +317,12 @@ class ExpensePaymentOperationsTest {
 
     private fun resolvedSettlement() = ResolvedSettlement(settlementInstruction.paymentMethodId, "001.001", null, expenseDate)
 
-    private fun expenseRecord(amount: BigDecimal, referenceNumber: String = "EXPN01") = ExpenseRecord(
+    private fun expenseDto(amount: BigDecimal, referenceNumber: String = "EXPN01") = ExpenseDto(
         UUID.randomUUID(), referenceNumber, expenseTypeId, expenseAccountCode, UUID.randomUUID(), amount, expenseDate, null,
         ExpenseSourceType.ADHOC, null, UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID()
     )
 
-    private fun paymentRecord(expenseId: UUID, amount: String) = ExpensePaymentRecord(
+    private fun paymentDto(expenseId: UUID, amount: String) = ExpensePaymentDto(
         UUID.randomUUID(), expenseId, "EXPY01", settlementInstruction.paymentMethodId, snapshottedPaymentMethodAccountCode, BigDecimal(amount),
         null, OffsetDateTime.now(), OffsetDateTime.now()
     )
@@ -340,18 +342,18 @@ class ExpensePaymentOperationsTest {
         assertTrue(mockingDetails(expenseStore).invocations.none { it.method.name == "savePayments" })
     }
 
-    private fun stubExpense(amount: String, activePayments: List<String>): ExpenseRecord {
-        val expenseRecord = expenseRecord(BigDecimal(amount))
-        `when`(expenseStore.findExpensesByReferences(listOf("EXPN01"))).thenReturn(listOf(expenseRecord))
-        `when`(expenseStore.loadForExpenses(listOf(expenseRecord.id))).thenReturn(
+    private fun stubExpense(amount: String, activePayments: List<String>): ExpenseDto {
+        val expenseDto = expenseDto(BigDecimal(amount))
+        `when`(expenseStore.findExpensesByReferences(listOf("EXPN01"))).thenReturn(listOf(expenseDto))
+        `when`(expenseStore.loadForExpenses(listOf(expenseDto.id))).thenReturn(
             ExpenseAggregate(
                 batches = emptyList(),
-                expenses = listOf(expenseRecord),
-                payments = activePayments.map { paymentRecord(expenseRecord.id, it) },
+                expenses = listOf(expenseDto),
+                payments = activePayments.map { paymentDto(expenseDto.id, it) },
                 paymentVoids = emptyList(),
                 expenseVoids = emptyList()
             )
         )
-        return expenseRecord
+        return expenseDto
     }
 }

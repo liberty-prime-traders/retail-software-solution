@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.record
+package me.ezra_home.retail_software_solution.cross_tier.expense.model
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-data class ExpenseBatchRecord(
+data class ExpenseBatchDto(
     val id: UUID,
     val referenceNumber: String,
     val description: String,
@@ -15,7 +15,7 @@ data class ExpenseBatchRecord(
     val createdById: UUID
 )
 
-data class ExpenseRecord(
+data class ExpenseDto(
     val id: UUID,
     val referenceNumber: String,
     val expenseTypeId: UUID,
@@ -31,7 +31,7 @@ data class ExpenseRecord(
     val createdById: UUID
 )
 
-data class ExpensePaymentRecord(
+data class ExpensePaymentDto(
     val id: UUID,
     val expenseId: UUID,
     val referenceNumber: String,
@@ -43,14 +43,14 @@ data class ExpensePaymentRecord(
     val createdOn: OffsetDateTime
 )
 
-data class ExpenseVoidRecord(
+data class ExpenseVoidDto(
     val id: UUID,
     val expenseId: UUID,
     val reason: String,
     val voidedOn: OffsetDateTime
 )
 
-data class ExpensePaymentVoidRecord(
+data class ExpensePaymentVoidDto(
     val id: UUID,
     val paymentId: UUID,
     val reason: String,
@@ -58,24 +58,35 @@ data class ExpensePaymentVoidRecord(
 )
 
 data class SettledExpense(
-    val expenseRecord: ExpenseRecord,
+    val expenseDto: ExpenseDto,
     val resolvedSettlement: ResolvedSettlement
 )
 
-data class ExpensePaymentStateRecord(
+data class ExpensePaymentStateDto(
     val expenseId: UUID,
     val paymentStatus: PaymentStatus,
     val amountPaid: BigDecimal
 )
 
 data class ExpenseAggregate(
-    val batches: List<ExpenseBatchRecord>,
-    val expenses: List<ExpenseRecord>,
-    val payments: List<ExpensePaymentRecord>,
-    val paymentVoids: List<ExpensePaymentVoidRecord>,
-    val expenseVoids: List<ExpenseVoidRecord>,
-    val paymentStates: List<ExpensePaymentStateRecord> = emptyList()
+    val batches: List<ExpenseBatchDto>,
+    val expenses: List<ExpenseDto>,
+    val payments: List<ExpensePaymentDto>,
+    val paymentVoids: List<ExpensePaymentVoidDto>,
+    val expenseVoids: List<ExpenseVoidDto>,
+    val paymentStates: List<ExpensePaymentStateDto> = emptyList()
 ) {
+    fun isVoided(expenseId: UUID): Boolean = expenseVoids.any { it.expenseId == expenseId }
+
+    fun hasActivePayments(expenseId: UUID): Boolean = activePaymentsOf(expenseId).isNotEmpty()
+
+    fun activePaidAmount(expenseId: UUID): BigDecimal = activePaymentsOf(expenseId).sumOf { it.amount }
+
+    private fun activePaymentsOf(expenseId: UUID): List<ExpensePaymentDto> {
+        val voidedPaymentIds = paymentVoids.map { it.paymentId }.toSet()
+        return payments.filter { it.expenseId == expenseId && it.id !in voidedPaymentIds }
+    }
+
     fun forExpense(expenseId: UUID): ExpenseAggregate {
         val expensePayments = payments.filter { it.expenseId == expenseId }
         val expensePaymentIds = expensePayments.map { it.id }.toSet()

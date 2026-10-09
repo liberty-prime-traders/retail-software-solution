@@ -2,18 +2,19 @@ package me.ezra_home.retail_software_solution.locations.business.expense.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.SaleExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.StandaloneExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.WageExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperations
-import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpensePaymentOperations
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpenseVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.PurchaseExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.SaleExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.StandaloneExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.WageExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperationsFactory
 import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseReissuer
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SourceDocument
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
@@ -28,29 +29,35 @@ import java.util.UUID
 @Service
 @TransactionalOnLocationSchema
 class ExpenseService(
-    private val expenseOperations: ExpenseOperations,
-    private val expensePaymentOperations: ExpensePaymentOperations,
-    private val locationExpenseStore: LocationExpenseStore,
+    expenseOperationsFactory: ExpenseOperationsFactory,
+    locationExpenseTier: LocationExpenseTier,
     private val expenseTypeService: ExpenseTypeService,
     private val purchaseDataFetcher: PurchaseDataFetcher,
     private val saleDataFetcher: SaleDataFetcher
 ) : ExpenseReissuer {
 
+    private val tierExpenseOperations = expenseOperationsFactory.operationsFor(locationExpenseTier)
+    private val expenseOperations = tierExpenseOperations.expenseOperations
+    private val expensePaymentOperations = tierExpenseOperations.expensePaymentOperations
+    private val expenseReadOperations = tierExpenseOperations.expenseReadOperations
+    private val expenseReissueOperations = tierExpenseOperations.expenseReissueOperations
+
     override val isLocationLevel = true
 
     fun createStandalone(standaloneExpenseBatchRequest: StandaloneExpenseBatchRequest): List<ExpenseSummaryResponse> =
-        expenseOperations.createStandalone(locationExpenseStore, standaloneExpenseBatchRequest)
+        expenseOperations.createStandalone(standaloneExpenseBatchRequest)
 
     fun createWages(wageExpenseBatchRequest: WageExpenseBatchRequest): List<ExpenseSummaryResponse> {
         val wageExpenseTypeId = expenseTypeService.getBySystemExpenseType(SystemExpenseType.WAGES).id
         return expenseOperations.createBatch(
-            locationExpenseStore,
             ExpenseSourceType.WAGES,
             "${ExpenseSourceType.WAGES.batchDescriptionLabel()} – ${wageExpenseBatchRequest.expenseDate}",
-            wageExpenseBatchRequest.expenseDate,
-            wageExpenseBatchRequest.rows.map {
-                ExpenseRowCommand(wageExpenseTypeId, it.employeeContactId, it.amount, null, it.expenseDateOverride, it.settlement)
-            }
+            ExpenseSubmission(
+                wageExpenseBatchRequest.expenseDate,
+                wageExpenseBatchRequest.rows.map {
+                    ExpenseRowCommand(wageExpenseTypeId, it.employeeContactId, it.amount, null, it.expenseDateOverride, it.settlement)
+                }
+            )
         )
     }
 
@@ -62,17 +69,16 @@ class ExpenseService(
             throw RtsGenericException("Purchase ${purchaseInfo.referenceNumber} is still a draft and cannot carry expenses")
         }
         return expenseOperations.createForSourceDocument(
-            locationExpenseStore,
-            ExpenseSourceType.PURCHASE,
-            purchaseInfo.referenceNumber,
-            purchaseInfo.id,
-            purchaseExpenseBatchRequest.expenseDate,
-            purchaseExpenseBatchRequest.rows.map {
-                ExpenseRowCommand(
-                    it.expenseTypeId, it.payeeContactId ?: purchaseInfo.supplierId, it.amount,
-                    it.description, it.expenseDateOverride, it.settlement
-                )
-            }
+            SourceDocument(ExpenseSourceType.PURCHASE, purchaseInfo.referenceNumber, purchaseInfo.id),
+            ExpenseSubmission(
+                purchaseExpenseBatchRequest.expenseDate,
+                purchaseExpenseBatchRequest.rows.map {
+                    ExpenseRowCommand(
+                        it.expenseTypeId, it.payeeContactId ?: purchaseInfo.supplierId, it.amount,
+                        it.description, it.expenseDateOverride, it.settlement
+                    )
+                }
+            )
         )
     }
 
@@ -86,44 +92,37 @@ class ExpenseService(
             SaleStatus.CONFIRMED, SaleStatus.VOIDED -> Unit
         }
         return expenseOperations.createForSourceDocument(
-            locationExpenseStore,
-            ExpenseSourceType.SALE,
-            saleHeader.referenceNumber,
-            saleHeader.id,
-            saleExpenseBatchRequest.expenseDate,
-            saleExpenseBatchRequest.rows.map { it.toRowCommand() }
+            SourceDocument(ExpenseSourceType.SALE, saleHeader.referenceNumber, saleHeader.id),
+            ExpenseSubmission(saleExpenseBatchRequest.expenseDate, saleExpenseBatchRequest.rows.map { it.toRowCommand() })
         )
     }
 
     fun recordPayments(expensePaymentCreateRequests: List<ExpensePaymentCreateRequest>): List<ExpenseSummaryResponse> =
-        expensePaymentOperations.recordPayments(locationExpenseStore, expensePaymentCreateRequests)
+        expensePaymentOperations.recordPayments(expensePaymentCreateRequests)
 
     fun voidExpense(expenseVoidRequest: ExpenseVoidRequest): ExpenseSummaryResponse =
-        expenseOperations.voidExpense(locationExpenseStore, expenseVoidRequest)
+        expenseOperations.voidExpense(expenseVoidRequest)
 
     fun voidPayment(expensePaymentVoidRequest: ExpensePaymentVoidRequest): ExpenseSummaryResponse =
-        expensePaymentOperations.voidPayment(locationExpenseStore, expensePaymentVoidRequest)
+        expensePaymentOperations.voidPayment(expensePaymentVoidRequest)
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getExpense(expenseReference: String): ExpenseSummaryResponse =
-        expenseOperations.getExpense(locationExpenseStore, expenseReference)
+        expenseReadOperations.getExpense(expenseReference)
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getBySource(sourceType: ExpenseSourceType, sourceReference: String): List<ExpenseSummaryResponse> =
-        expenseOperations.getBySource(locationExpenseStore, sourceType, sourceReference)
+        expenseReadOperations.getBySource(sourceType, sourceReference)
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun getRecent(limit: Int): List<ExpenseSummaryResponse> = expenseOperations.getRecent(locationExpenseStore, limit)
+    override fun reissueRecorded(expenseId: UUID) = expenseReissueOperations.reissueRecorded(expenseId)
 
     @TransactionalOnLocationSchema(readOnly = true)
-    override fun reissueRecorded(expenseId: UUID) = expenseOperations.reissueRecorded(locationExpenseStore, expenseId)
+    override fun reissueVoided(expenseVoidId: UUID) = expenseReissueOperations.reissueVoided(expenseVoidId)
 
     @TransactionalOnLocationSchema(readOnly = true)
-    override fun reissueVoided(expenseVoidId: UUID) = expenseOperations.reissueVoided(locationExpenseStore, expenseVoidId)
+    override fun reissuePaymentRecorded(paymentId: UUID) = expenseReissueOperations.reissuePaymentRecorded(paymentId)
 
     @TransactionalOnLocationSchema(readOnly = true)
-    override fun reissuePaymentRecorded(paymentId: UUID) = expensePaymentOperations.reissuePaymentRecorded(locationExpenseStore, paymentId)
-
-    @TransactionalOnLocationSchema(readOnly = true)
-    override fun reissuePaymentVoided(paymentVoidId: UUID) = expensePaymentOperations.reissuePaymentVoided(locationExpenseStore, paymentVoidId)
+    override fun reissuePaymentVoided(paymentVoidId: UUID) = expenseReissueOperations.reissuePaymentVoided(paymentVoidId)
 }

@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cross_tier.expense.store
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentStateBase
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentStateRepositoryBase
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -24,15 +24,15 @@ class ExpensePaymentStateMaintainerTest {
 
     @Test
     fun refreshFailsWhenAnExpenseHasNoPaymentStateRow() {
-        val expenseRecord = ExpenseRecord(
+        val expenseDto = ExpenseDto(
             UUID.randomUUID(), "EXPN01", UUID.randomUUID(), "005.005", UUID.randomUUID(), BigDecimal("100"),
             LocalDate.of(2026, 3, 10), null, ExpenseSourceType.ADHOC, null, UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID()
         )
-        `when`(expensePaymentStateRepository.sumActivePaidByExpenseId(setOf(expenseRecord.id))).thenReturn(emptyList())
-        `when`(expensePaymentStateRepository.findByExpenseIdIn(setOf(expenseRecord.id))).thenReturn(emptyList())
+        `when`(expensePaymentStateRepository.sumActivePaidByExpenseId(setOf(expenseDto.id))).thenReturn(emptyList())
+        `when`(expensePaymentStateRepository.findByExpenseIdIn(setOf(expenseDto.id))).thenReturn(emptyList())
 
         assertThrows(RtsGenericException::class.java) {
-            ExpensePaymentStateMaintainer.refresh(expensePaymentStateRepository, listOf(expenseRecord))
+            ExpensePaymentStateMaintainer.refresh(expensePaymentStateRepository, listOf(expenseDto))
         }
     }
 }

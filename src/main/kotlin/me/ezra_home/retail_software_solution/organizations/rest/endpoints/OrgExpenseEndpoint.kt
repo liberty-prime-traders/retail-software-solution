@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.StandaloneExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.StockTransferExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpenseVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.StandaloneExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.StockTransferExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchSummaryResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.org_expense.api.OrgExpenseSearchService
@@ -59,10 +59,6 @@ class OrgExpenseEndpoint(
     @PostMapping("void")
     fun voidExpense(@RequestBody expenseVoidRequest: ExpenseVoidRequest): ExpenseSummaryResponse =
         orgExpenseService.voidExpense(expenseVoidRequest)
-
-    @GetMapping("recent")
-    fun getRecent(@RequestParam(defaultValue = "50") limit: Int): List<ExpenseSummaryResponse> =
-        orgExpenseService.getRecent(limit)
 
     @GetMapping("by-source")
     fun getBySource(

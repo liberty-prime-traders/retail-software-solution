@@ -1,57 +1,50 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseResponseBuilder
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentVoidRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.SettledExpense
-import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentRecordedEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentVoidedEvent
-import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.context.ApplicationEventPublisher
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-@Component
 class ExpensePaymentOperations(
+    private val expenseTier: ExpenseTier,
+    private val expenseEvents: ExpenseEvents,
     private val expenseRowResolver: ExpenseRowResolver,
     private val expenseResponseBuilder: ExpenseResponseBuilder,
-    private val expenseLookup: ExpenseLookup,
-    private val fiscalPeriodService: FiscalPeriodService,
-    private val eventPublisher: ApplicationEventPublisher
+    private val expenseLookup: ExpenseLookup
 ) {
 
+    private val expenseStore = expenseTier.expenseStore
+
     fun recordPayments(
-        expenseStore: ExpenseStore,
         expensePaymentCreateRequests: List<ExpensePaymentCreateRequest>
     ): List<ExpenseSummaryResponse> {
         requireWithinRequestLimits(expensePaymentCreateRequests)
         val resolvedPaymentRequestsByExpenseReference = resolveByExpenseReference(expensePaymentCreateRequests)
-        val expenseRecordsByReference = expenseLookup.requireExpenses(expenseStore, resolvedPaymentRequestsByExpenseReference.keys.toList())
-        val expenseAggregatesById = lockAndLoad(expenseStore, expenseRecordsByReference.values)
-        val pendingPayments = resolvedPaymentRequestsByExpenseReference.flatMap { (expenseReference, resolvedPaymentRequests) ->
-            val expenseRecord = expenseRecordsByReference.getValue(expenseReference)
-            planPayments(expenseRecord, expenseAggregatesById.getValue(expenseRecord.id), resolvedPaymentRequests)
+        val expenseDtosByReference = expenseLookup.requireExpenses(resolvedPaymentRequestsByExpenseReference.keys.toList())
+        val expenseAggregatesById = lockAndLoad(expenseDtosByReference.values)
+        val expensePaymentDrafts = resolvedPaymentRequestsByExpenseReference.flatMap { (expenseReference, resolvedPaymentRequests) ->
+            val expenseDto = expenseDtosByReference.getValue(expenseReference)
+            planPayments(expenseDto, expenseAggregatesById.getValue(expenseDto.id), resolvedPaymentRequests)
         }
-        saveAndPublish(expenseStore, pendingPayments)
-        expenseStore.refreshPaymentStates(expenseRecordsByReference.values)
+        saveAndPublish(expensePaymentDrafts, expenseDtosByReference.values)
+        expenseStore.refreshPaymentStates(expenseDtosByReference.values)
         val summariesByReference = expenseResponseBuilder
-            .buildSummaries(expenseStore.loadForExpenses(expenseRecordsByReference.values.map { it.id }))
+            .buildSummaries(expenseStore.loadForExpenses(expenseDtosByReference.values.map { it.id }))
             .associateBy { it.reference }
         return resolvedPaymentRequestsByExpenseReference.keys.map { summariesByReference.getValue(it) }
     }
@@ -77,150 +70,76 @@ class ExpensePaymentOperations(
     }
 
     // Locks are taken in id order so two bulk requests over the same expenses cannot deadlock.
-    private fun lockAndLoad(
-        expenseStore: ExpenseStore,
-        expenseRecords: Collection<ExpenseRecord>
-    ): Map<UUID, ExpenseAggregate> {
-        val expenseIdsInLockOrder = expenseRecords.map { it.id }.sorted()
-        expenseIdsInLockOrder.forEach { expenseStore.lockExpense(it) }
+    private fun lockAndLoad(expenseDtos: Collection<ExpenseDto>): Map<UUID, ExpenseAggregate> {
+        val expenseIdsInLockOrder = expenseDtos.map { it.id }.sorted()
+        expenseIdsInLockOrder.forEach { expenseTier.lockExpense(it) }
         val loadedAggregate = expenseStore.loadForExpenses(expenseIdsInLockOrder)
-        return expenseRecords.associate { it.id to loadedAggregate.forExpense(it.id) }
+        return expenseDtos.associate { it.id to loadedAggregate.forExpense(it.id) }
     }
 
     private fun planPayments(
-        expenseRecord: ExpenseRecord,
+        expenseDto: ExpenseDto,
         expenseAggregate: ExpenseAggregate,
         resolvedPaymentRequests: List<ResolvedPaymentRequest>
-    ): List<PendingPayment> {
-        expenseLookup.requireNotVoided(expenseAggregate, expenseRecord)
-        val pendingPayments = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
+    ): List<ExpensePaymentDraft> {
+        expenseLookup.requireNotVoided(expenseAggregate, expenseDto)
+        val expensePaymentDrafts = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
             val paymentAmount = Decimals.roundToScale4(paymentRequest.amount)
             if (paymentAmount <= BigDecimal.ZERO) throw RtsGenericException("Payment amount must be greater than zero")
-            PendingPayment(expenseRecord, ExpensePaymentDraft(expenseRecord.id, paymentAmount, resolvedSettlement))
+            ExpensePaymentDraft(expenseDto.id, paymentAmount, resolvedSettlement)
         }
-        val remainingBalance = expenseRecord.amount - activePaidAmount(expenseAggregate)
-        val totalRequested = pendingPayments.sumOf { it.expensePaymentDraft.amount }
+        val remainingBalance = expenseDto.amount - expenseAggregate.activePaidAmount(expenseDto.id)
+        val totalRequested = expensePaymentDrafts.sumOf { it.amount }
         if (totalRequested > remainingBalance) {
             val formattedRemainingBalance = DisplayFormatters.formatCurrency(remainingBalance)
             val formattedTotalRequested = DisplayFormatters.formatCurrency(totalRequested)
             val formattedDifference = DisplayFormatters.formatCurrency(totalRequested - remainingBalance)
             throw RtsGenericException(
                 "Payments totalling $formattedTotalRequested exceed the remaining balance of $formattedRemainingBalance " +
-                    "on ${expenseRecord.referenceNumber} by $formattedDifference"
+                    "on ${expenseDto.referenceNumber} by $formattedDifference"
             )
         }
-        return pendingPayments
+        return expensePaymentDrafts
     }
 
-    private fun saveAndPublish(expenseStore: ExpenseStore, pendingPayments: List<PendingPayment>) {
-        // saveAll returns entities in input order, which is what pairs each saved record with its pending payment.
-        val savedPaymentRecords = expenseStore.savePayments(pendingPayments.map { it.expensePaymentDraft })
-        pendingPayments.zip(savedPaymentRecords).forEach { (pendingPayment, expensePaymentRecord) ->
-            publishPaymentRecorded(expenseStore, expensePaymentRecord, pendingPayment.expenseRecord)
-        }
+    private fun saveAndPublish(expensePaymentDrafts: List<ExpensePaymentDraft>, expenseDtos: Collection<ExpenseDto>) {
+        publishRecorded(expenseStore.savePayments(expensePaymentDrafts), expenseDtos)
     }
 
-    fun settleNewExpenses(expenseStore: ExpenseStore, settledExpenses: List<SettledExpense>) {
+    fun settleNewExpenses(settledExpenses: List<SettledExpense>) {
         if (settledExpenses.isEmpty()) return
-        val savedPaymentRecords = expenseStore.savePayments(settledExpenses.map {
-            ExpensePaymentDraft(it.expenseRecord.id, it.expenseRecord.amount, it.resolvedSettlement)
-        })
-        settledExpenses.zip(savedPaymentRecords).forEach { (settledExpense, expensePaymentRecord) ->
-            publishPaymentRecorded(expenseStore, expensePaymentRecord, settledExpense.expenseRecord)
+        val expensePaymentDrafts = settledExpenses.map {
+            ExpensePaymentDraft(it.expenseDto.id, it.expenseDto.amount, it.resolvedSettlement)
         }
-        expenseStore.refreshPaymentStates(settledExpenses.map { it.expenseRecord })
+        val expenseDtos = settledExpenses.map { it.expenseDto }
+        publishRecorded(expenseStore.savePayments(expensePaymentDrafts), expenseDtos)
+        expenseStore.refreshPaymentStates(expenseDtos)
     }
 
-    fun voidPayment(expenseStore: ExpenseStore, expensePaymentVoidRequest: ExpensePaymentVoidRequest): ExpenseSummaryResponse {
+    private fun publishRecorded(savedPaymentDtos: List<ExpensePaymentDto>, expenseDtos: Collection<ExpenseDto>) {
+        val expenseDtosById = expenseDtos.associateBy { it.id }
+        savedPaymentDtos.forEach { expensePaymentDto ->
+            expenseEvents.publishPaymentRecorded(expensePaymentDto, expenseDtosById.getValue(expensePaymentDto.expenseId))
+        }
+    }
+
+    fun voidPayment(expensePaymentVoidRequest: ExpensePaymentVoidRequest): ExpenseSummaryResponse {
         val voidReason = StringUtils.getValueOrException(expensePaymentVoidRequest.reason, "A void reason is required")
-        fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
-        val expensePaymentRecord = expenseStore.findPaymentByReference(expensePaymentVoidRequest.paymentReference)
+        expenseRowResolver.requireOpenPeriodToday()
+        val expensePaymentDto = expenseStore.findPaymentByReference(expensePaymentVoidRequest.paymentReference)
             ?: throw RtsGenericException("Expense payment ${expensePaymentVoidRequest.paymentReference} not found")
-        expenseStore.lockExpense(expensePaymentRecord.expenseId)
-        val expenseAggregate = expenseStore.loadForExpenses(listOf(expensePaymentRecord.expenseId))
-        if (expenseAggregate.paymentVoids.any { it.paymentId == expensePaymentRecord.id }) {
-            throw RtsGenericException("Payment ${expensePaymentRecord.referenceNumber} has already been voided")
+        expenseTier.lockExpense(expensePaymentDto.expenseId)
+        val expenseAggregate = expenseStore.loadForExpenses(listOf(expensePaymentDto.expenseId))
+        if (expenseAggregate.paymentVoids.any { it.paymentId == expensePaymentDto.id }) {
+            throw RtsGenericException("Payment ${expensePaymentDto.referenceNumber} has already been voided")
         }
-        val expenseRecord = expenseAggregate.expenses.single()
-        val expensePaymentVoidRecord = expenseStore.savePaymentVoid(expensePaymentRecord.id, voidReason)
-        expenseStore.refreshPaymentStates(listOf(expenseRecord))
-        publishPaymentVoided(expenseStore, expensePaymentVoidRecord, expensePaymentRecord, expenseRecord)
-        return expenseResponseBuilder.buildSummary(expenseStore.loadForExpenses(listOf(expenseRecord.id)), expenseRecord.id)
-    }
-
-    fun reissuePaymentRecorded(expenseStore: ExpenseStore, paymentId: UUID) {
-        val expensePaymentRecord = requirePaymentById(expenseStore, paymentId)
-        val expenseRecord = expenseLookup.requireExpenseById(expenseStore, expensePaymentRecord.expenseId)
-        publishPaymentRecorded(expenseStore, expensePaymentRecord, expenseRecord)
-    }
-
-    fun reissuePaymentVoided(expenseStore: ExpenseStore, paymentVoidId: UUID) {
-        val expensePaymentVoidRecord = expenseStore.findPaymentVoidById(paymentVoidId)
-            ?: throw RtsGenericException("Expense payment void $paymentVoidId not found")
-        val expensePaymentRecord = requirePaymentById(expenseStore, expensePaymentVoidRecord.paymentId)
-        val expenseRecord = expenseLookup.requireExpenseById(expenseStore, expensePaymentRecord.expenseId)
-        publishPaymentVoided(expenseStore, expensePaymentVoidRecord, expensePaymentRecord, expenseRecord)
-    }
-
-    private fun publishPaymentRecorded(
-        expenseStore: ExpenseStore,
-        expensePaymentRecord: ExpensePaymentRecord,
-        expenseRecord: ExpenseRecord
-    ) {
-        eventPublisher.publishEvent(
-            ExpensePaymentRecordedEvent(
-                eventId = UUID.randomUUID(),
-                sourceContext = expenseStore.sourceContext(),
-                timestamp = Instant.now(),
-                correlationId = null,
-                paymentId = expensePaymentRecord.id,
-                paymentReferenceNumber = expensePaymentRecord.referenceNumber,
-                expenseAccountCode = expenseRecord.expenseAccountCode,
-                payeeContactId = expenseRecord.payeeContactId,
-                paymentMethodAccountCode = expensePaymentRecord.paymentMethodAccountCode,
-                amount = expensePaymentRecord.amount,
-                paymentDate = expensePaymentRecord.paymentDate
-            )
-        )
-    }
-
-    private fun publishPaymentVoided(
-        expenseStore: ExpenseStore,
-        expensePaymentVoidRecord: ExpensePaymentVoidRecord,
-        expensePaymentRecord: ExpensePaymentRecord,
-        expenseRecord: ExpenseRecord
-    ) {
-        eventPublisher.publishEvent(
-            ExpensePaymentVoidedEvent(
-                eventId = UUID.randomUUID(),
-                sourceContext = expenseStore.sourceContext(),
-                timestamp = Instant.now(),
-                correlationId = null,
-                voidId = expensePaymentVoidRecord.id,
-                paymentId = expensePaymentRecord.id,
-                paymentReferenceNumber = expensePaymentRecord.referenceNumber,
-                expenseAccountCode = expenseRecord.expenseAccountCode,
-                payeeContactId = expenseRecord.payeeContactId,
-                paymentMethodAccountCode = expensePaymentRecord.paymentMethodAccountCode,
-                amount = expensePaymentRecord.amount,
-                voidedOn = DateTimes.Local.atOrganizationZone(expensePaymentVoidRecord.voidedOn)
-            )
-        )
-    }
-
-    private fun requirePaymentById(expenseStore: ExpenseStore, paymentId: UUID): ExpensePaymentRecord =
-        expenseStore.findPaymentById(paymentId) ?: throw RtsGenericException("Expense payment $paymentId not found")
-
-    private fun activePaidAmount(expenseAggregate: ExpenseAggregate): BigDecimal {
-        val voidedPaymentIds = expenseAggregate.paymentVoids.map { it.paymentId }.toSet()
-        return expenseAggregate.payments.filter { it.id !in voidedPaymentIds }.sumOf { it.amount }
+        val expenseDto = expenseAggregate.expenses.single()
+        val expensePaymentVoidDto = expenseStore.savePaymentVoid(expensePaymentDto.id, voidReason)
+        expenseStore.refreshPaymentStates(listOf(expenseDto))
+        expenseEvents.publishPaymentVoided(expensePaymentVoidDto, expensePaymentDto, expenseDto)
+        return expenseResponseBuilder.buildSummary(expenseStore.loadForExpenses(listOf(expenseDto.id)), expenseDto.id)
     }
 }
-
-private data class PendingPayment(
-    val expenseRecord: ExpenseRecord,
-    val expensePaymentDraft: ExpensePaymentDraft
-)
 
 private data class ResolvedPaymentRequest(
     val expensePaymentCreateRequest: ExpensePaymentCreateRequest,

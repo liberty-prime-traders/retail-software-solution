@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.store
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentStateBase
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentStateRepositoryBase
 import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -11,10 +11,10 @@ object ExpensePaymentStateMaintainer {
 
     fun <STATE : ExpensePaymentStateBase> refresh(
         expensePaymentStateRepository: ExpensePaymentStateRepositoryBase<STATE>,
-        expenseRecords: Collection<ExpenseRecord>
+        expenseDtos: Collection<ExpenseDto>
     ) {
-        if (expenseRecords.isEmpty()) return
-        val expenseAmountsById = expenseRecords.associate { it.id to it.amount }
+        if (expenseDtos.isEmpty()) return
+        val expenseAmountsById = expenseDtos.associate { it.id to it.amount }
         val activePaidAmountsByExpenseId = expensePaymentStateRepository
             .sumActivePaidByExpenseId(expenseAmountsById.keys)
             .associate { it.expenseId to it.amountPaid }

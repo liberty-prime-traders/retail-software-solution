@@ -1,6 +1,7 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.api
+package me.ezra_home.retail_software_solution.cross_tier.expense.request
 
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -21,12 +22,6 @@ data class StandaloneExpenseRowRequest(
 ) {
     fun toRowCommand() = ExpenseRowCommand(expenseTypeId, payeeContactId, amount, description, expenseDateOverride, settlement)
 }
-
-data class PaymentInstruction(
-    val paymentMethodId: UUID,
-    val paymentReference: String? = null,
-    val paymentDate: LocalDate? = null
-)
 
 data class WageExpenseBatchRequest(
     val expenseDate: LocalDate,

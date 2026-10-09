@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.cross_tier.expense.api
+package me.ezra_home.retail_software_solution.cross_tier.expense.response
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus

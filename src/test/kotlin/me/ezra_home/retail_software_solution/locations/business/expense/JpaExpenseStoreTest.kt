@@ -6,12 +6,12 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.entities.Expense
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpensePaymentVoidBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.entities.ExpenseVoidBase
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRecord
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpense
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.NewExpenseBatch
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.JpaExpenseStore
-import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -49,15 +49,11 @@ class JpaExpenseStoreTest {
         expenseBatchRepository, expenseRepository, expensePaymentRepository, expensePaymentVoidRepository, expenseVoidRepository,
         expensePaymentStateRepository
     ) {
-        override fun saveNewBatch(description: String, sourceType: ExpenseSourceType, sourceReference: String?): ExpenseBatchBase =
-            persisted(ExpenseBatchEntity(description, sourceType, sourceReference))
+        override fun saveNewBatch(newExpenseBatch: NewExpenseBatch): ExpenseBatchBase = persisted(
+            ExpenseBatchEntity(newExpenseBatch.description, newExpenseBatch.source.type, newExpenseBatch.source.reference)
+        )
 
-        override fun saveNewExpense(
-            batchId: UUID,
-            sourceType: ExpenseSourceType,
-            sourceReference: String?,
-            resolvedExpenseRow: ResolvedExpenseRow
-        ): ExpenseBase = persisted(expenseEntity(batchId))
+        override fun saveNewExpense(newExpense: NewExpense): ExpenseBase = persisted(expenseEntity(newExpense.batchId))
 
         override fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentBase> =
             expensePaymentDrafts.map { persisted(paymentEntity(it.expenseId, it.amount)) }
@@ -68,13 +64,7 @@ class JpaExpenseStoreTest {
         override fun saveNewExpenseVoid(expenseId: UUID, reason: String): ExpenseVoidBase =
             persisted(ExpenseVoidEntity(expenseId, reason))
 
-        override fun sourceContext() = EventSourceContext.OrgLevel(orgSchema = "org-a")
-
-        override fun lockExpense(expenseId: UUID) = Unit
-
-        override fun refreshPaymentStates(expenseRecords: Collection<ExpenseRecord>) = Unit
-
-        override fun lockSourceDocument(sourceDocumentId: UUID) = Unit
+        override fun refreshPaymentStates(expenseDtos: Collection<ExpenseDto>) = Unit
     }
 
     private val batchEntity = persisted(ExpenseBatchEntity("Wages", ExpenseSourceType.WAGES, null))
@@ -85,21 +75,21 @@ class JpaExpenseStoreTest {
     fun `a payment record carries the account code copied when it was recorded`() {
         `when`(expensePaymentRepository.findByReferenceNumber("EXPY01")).thenReturn(paymentEntity)
 
-        val expensePaymentRecord = expenseStore.findPaymentByReference("EXPY01")!!
+        val expensePaymentDto = expenseStore.findPaymentByReference("EXPY01")!!
 
-        assertEquals("001.099", expensePaymentRecord.paymentMethodAccountCode)
-        assertEquals(paymentEntity.paymentMethodId, expensePaymentRecord.paymentMethodId)
-        assertEquals(expenseEntity.id, expensePaymentRecord.expenseId)
+        assertEquals("001.099", expensePaymentDto.paymentMethodAccountCode)
+        assertEquals(paymentEntity.paymentMethodId, expensePaymentDto.paymentMethodId)
+        assertEquals(expenseEntity.id, expensePaymentDto.expenseId)
     }
 
     @Test
     fun `an expense record carries the expense account code copied when it was recorded`() {
         `when`(expenseRepository.findById(expenseEntity.id!!)).thenReturn(Optional.of(expenseEntity))
 
-        val expenseRecord = expenseStore.findExpenseById(expenseEntity.id!!)!!
+        val expenseDto = expenseStore.findExpenseById(expenseEntity.id!!)!!
 
-        assertEquals("005.005", expenseRecord.expenseAccountCode)
-        assertEquals(batchEntity.id, expenseRecord.batchId)
+        assertEquals("005.005", expenseDto.expenseAccountCode)
+        assertEquals(batchEntity.id, expenseDto.batchId)
     }
 
     @Test

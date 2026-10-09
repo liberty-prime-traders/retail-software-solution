@@ -1,14 +1,14 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentCreateRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpensePaymentVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.ExpenseVoidRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PurchaseExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.SaleExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.StandaloneExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.WageExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpenseVoidRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.PurchaseExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.SaleExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.StandaloneExpenseBatchRequest
+import me.ezra_home.retail_software_solution.cross_tier.expense.request.WageExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchSummaryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.expense.api.ExpenseSearchService
@@ -68,10 +68,6 @@ class ExpenseEndpoint(
     @PostMapping("search/summary")
     fun searchSummary(@RequestBody expenseSearchParameters: ExpenseSearchParameters): ExpenseSearchSummaryResponseDto =
         expenseSearchService.summarize(expenseSearchParameters)
-
-    @GetMapping("recent")
-    fun getRecent(@RequestParam(defaultValue = "50") limit: Int): List<ExpenseSummaryResponse> =
-        expenseService.getRecent(limit)
 
     @GetMapping("by-source")
     fun getBySource(

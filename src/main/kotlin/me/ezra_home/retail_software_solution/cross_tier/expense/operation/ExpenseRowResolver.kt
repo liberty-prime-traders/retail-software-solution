@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ExpenseRowCommand
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedExpenseRow
-import me.ezra_home.retail_software_solution.cross_tier.expense.record.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.api.PaymentInstruction
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedExpenseRow
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.organizations.business.expense_type
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -36,16 +37,12 @@ class ExpenseRowResolver(
         }
     }
 
-    fun resolve(
-        sourceType: ExpenseSourceType,
-        batchExpenseDate: LocalDate,
-        rowCommands: List<ExpenseRowCommand>
-    ): List<ResolvedExpenseRow> {
-        guardRowCount(rowCommands.size)
+    fun resolve(sourceType: ExpenseSourceType, expenseSubmission: ExpenseSubmission): List<ResolvedExpenseRow> {
+        guardRowCount(expenseSubmission.rowCommands.size)
         val expenseTypesById = HashMap<UUID, ExpenseTypeDto>()
         val payeesById = HashMap<UUID, ContactDto>()
         val openDates = HashSet<LocalDate>()
-        return rowCommands.map { rowCommand ->
+        return expenseSubmission.rowCommands.map { rowCommand ->
             if (rowCommand.amount <= BigDecimal.ZERO) {
                 throw RtsGenericException("Expense amount must be greater than zero")
             }
@@ -63,7 +60,7 @@ class ExpenseRowResolver(
                     "The selected payee (${payee.identity.displayName}) is not eligible for expense type: ${expenseType.name}"
                 )
             }
-            val expenseDate = rowCommand.expenseDateOverride ?: batchExpenseDate
+            val expenseDate = rowCommand.expenseDateOverride ?: expenseSubmission.expenseDate
             requireOpenPeriod(openDates, expenseDate)
             ResolvedExpenseRow(
                 expenseType = expenseType,
@@ -94,6 +91,8 @@ class ExpenseRowResolver(
             paymentDate = paymentDate
         )
     }
+
+    fun requireOpenPeriodToday() = fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
 
     private fun requireOpenPeriod(alreadyChecked: MutableSet<LocalDate>, date: LocalDate) {
         if (alreadyChecked.add(date)) fiscalPeriodService.requireOpenForDate(date)
