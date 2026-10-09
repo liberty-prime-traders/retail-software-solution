@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidInfoDto
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection

@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-org-expense-batch-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_batch_id
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_batch_id
+            tableName: org_expense
+            columns:
+              - column:
+                  name: batch_id
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_batch_id
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-expense-type-id-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_expense_type_id_created_on
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_expense_type_id_created_on
+            tableName: org_expense
+            columns:
+              - column:
+                  name: expense_type_id
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_expense_type_id_created_on
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-payee-contact-id-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_payee_contact_id_created_on
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_payee_contact_id_created_on
+            tableName: org_expense
+            columns:
+              - column:
+                  name: payee_contact_id
+              - column:
+                  name: created_on
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_payee_contact_id_created_on
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-source-type-reference
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_source_type_reference
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_source_type_reference
+            tableName: org_expense
+            columns:
+              - column:
+                  name: source_type
+              - column:
+                  name: source_reference
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_source_type_reference
+            tableName: org_expense
+
+  - changeSet:
+      id: create-index-org-expense-created-on-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_org_expense_created_on_id
+      changes:
+        - createIndex:
+            indexName: idx_org_expense_created_on_id
+            tableName: org_expense
+            columns:
+              - column:
+                  name: created_on
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_org_expense_created_on_id
+            tableName: org_expense

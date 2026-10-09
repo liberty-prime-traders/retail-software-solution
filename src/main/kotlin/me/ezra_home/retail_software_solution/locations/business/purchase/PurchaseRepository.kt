@@ -11,4 +11,6 @@ interface PurchaseRepository : JpaRepository<PurchaseEntity, UUID> {
 
   @Query("SELECT p FROM PurchaseEntity p")
   fun findTopN(pageable: Pageable): List<PurchaseEntity>
+
+  fun findByReferenceNumber(referenceNumber: String): PurchaseEntity?
 }

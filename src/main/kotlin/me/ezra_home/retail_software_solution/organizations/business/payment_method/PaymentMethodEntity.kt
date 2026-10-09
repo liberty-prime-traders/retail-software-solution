@@ -21,7 +21,7 @@ class PaymentMethodEntity (
     @Column(name = "description", length = 1000)
     var description: String? = null,
 
-    @Column(name = "account_code", length = 50)
+    @Column(name = "account_code", nullable = false, length = 50)
     var accountCode: String? = null
 
 ): HasReferenceEntity()

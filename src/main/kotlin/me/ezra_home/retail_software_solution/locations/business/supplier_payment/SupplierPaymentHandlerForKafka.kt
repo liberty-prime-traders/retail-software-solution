@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Del
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -18,7 +17,6 @@ import java.util.UUID
 class SupplierPaymentHandlerForKafka(
     private val supplierPaymentRepository: SupplierPaymentRepository,
     private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
-    private val paymentMethodService: PaymentMethodService,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -28,11 +26,10 @@ class SupplierPaymentHandlerForKafka(
         val payment = supplierPaymentRepository.findById(sourceDocumentId)
             .orElseThrow { RtsGenericException("Payment $sourceDocumentId not found") }
         val context = deliveryHandlerForPurchase.getDeliveryContext(payment.purchaseId)
-        val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId) ?: return
-        publish(payment, context.supplierId, accountCode)
+        publish(payment, context.supplierId)
     }
 
-    fun publish(payment: SupplierPaymentEntity, supplierId: UUID, paymentMethodAccountCode: String) {
+    fun publish(payment: SupplierPaymentEntity, supplierId: UUID) {
         eventPublisher.publishEvent(
             SupplierPaymentRecordedEvent(
                 eventId = UUID.randomUUID(),
@@ -44,7 +41,7 @@ class SupplierPaymentHandlerForKafka(
                 correlationId = null,
                 paymentId = payment.id!!,
                 supplierId = supplierId,
-                paymentMethodAccountCode = paymentMethodAccountCode,
+                paymentMethodAccountCode = payment.paymentMethodAccountCode,
                 amount = payment.amount,
                 paymentDate = payment.paymentDate,
                 paymentReferenceNumber = payment.requiredReference()

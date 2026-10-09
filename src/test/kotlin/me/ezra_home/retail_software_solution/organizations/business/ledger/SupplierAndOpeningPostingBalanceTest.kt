@@ -19,6 +19,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountPosting
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningStockAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryAccountingProcessor
@@ -51,18 +52,19 @@ class SupplierAndOpeningPostingBalanceTest {
 
     private val purchaseDeliveryProcessor = PurchaseDeliveryAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
     private val supplierPaymentProcessor = SupplierPaymentAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
-    private val supplierPaymentVoidProcessor = SupplierPaymentVoidAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
+    private val supplierPaymentVoidProcessor = SupplierPaymentVoidAccountingProcessor(contactService, LedgerPostingGate(ledgerEntryGroupRepository), ledgerPostingService)
     private val openingStockProcessor = OpeningStockAccountingProcessor(ledgerEntryGroupRepository, ledgerPostingService)
     private val openingBalanceProcessor = OpeningBalanceAccountingProcessor(ledgerEntryGroupRepository, ledgerPostingService)
 
     private val locationLevelContext = EventSourceContext.LocationLevel(orgSchema = "org-a", locationSchema = "loc-1")
+    private val locationId = UUID.randomUUID()
 
     @BeforeEach
     fun setSession() {
         SessionContextProvider.setSession(
             SessionContext(
                 organization = OrgSession(id = UUID.randomUUID(), schemaName = "org-a", timezone = "UTC"),
-                location = LocationSession(id = UUID.randomUUID(), schemaName = "loc-1")
+                location = LocationSession(id = locationId, schemaName = "loc-1")
             )
         )
     }
@@ -93,6 +95,11 @@ class SupplierAndOpeningPostingBalanceTest {
     fun `voiding a supplier payment restores cash and trade payables`() {
         post(purchaseDeliveryProcessor.prepareLedgerRequest(purchaseDeliveredEvent()))
         post(supplierPaymentProcessor.prepareLedgerRequest(supplierPaymentRecordedEvent("4.00")))
+        `when`(
+            ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
+                "SPAY-1", LedgerSourceType.SUPPLIER_PAYMENT, locationId
+            )
+        ).thenReturn(true)
         post(supplierPaymentVoidProcessor.prepareLedgerRequest(supplierPaymentVoidedEvent("4.00")))
 
         assertBalance("0.00", SystemAccount.CASH)

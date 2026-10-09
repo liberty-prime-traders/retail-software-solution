@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountAssertions
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCodeGenerator
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountRepository
@@ -91,22 +92,13 @@ class AccountService(
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
+    fun requireActiveExpenseLeafAccount(accountCode: String) {
+        AccountAssertions.assertActiveExpenseLeaf(accountCache.getAllFresh(), accountCode)
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
     fun assertPostable(accountPostings: List<AccountPosting>) {
-        val accounts = accountCache.getAllFresh()
-        val accountsByCode = accounts.associateBy { it.code }
-        val parentAccountCodes = accounts.mapNotNull { it.parentAccountCode }.toSet()
-        accountPostings.forEach { accountPosting ->
-            val code = accountPosting.accountCode
-            val account = accountsByCode[code] ?: throw RtsGenericException("Cannot post to unknown account $code")
-            if (code in parentAccountCodes) {
-                throw RtsGenericException("Cannot post to ${account.label}: accounts with children never post directly")
-            }
-            // An inactive account may still be drawn down (reversals, settling old balances), never built up.
-            val increasesBalance = accountPosting.entryType == account.accountType.normalBalance
-            if (account.accountIsActive.not() && increasesBalance) {
-                throw RtsGenericException("Cannot post an increase to inactive account ${account.label}")
-            }
-        }
+        AccountAssertions.assertPostable(accountCache.getAllFresh(), accountPostings)
     }
 
     fun patchBalances(accountPostings: List<AccountPosting>) {

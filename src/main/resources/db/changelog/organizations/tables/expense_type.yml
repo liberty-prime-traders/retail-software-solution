@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-expense-type-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: expense_type
+      changes:
+        - createTable:
+            tableName: expense_type
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: code
+                  type: varchar(5)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: uq_expense_type_code
+
+              - column:
+                  name: name
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_name_notnull
+
+              - column:
+                  name: expense_account_code
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_expense_account_code_notnull
+
+              - column:
+                  name: eligible_payee_types
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_eligible_payee_types_notnull
+
+              - column:
+                  name: eligible_source_types
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_eligible_source_types_notnull
+
+              - column:
+                  name: system_defined
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_system_defined_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_type_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: expense_type

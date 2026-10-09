@@ -38,6 +38,9 @@ object DateTimes {
             fun system(): OffsetDateTime = OffsetDateTime.now()
             fun organization(): OffsetDateTime = OffsetDateTime.now(organizationZoneId())
         }
+
+        fun atStartOfDayInOrganizationZone(localDate: LocalDate): OffsetDateTime =
+            localDate.atStartOfDay(organizationZoneId()).toOffsetDateTime()
     }
 
     private fun organizationZoneId(): ZoneId {

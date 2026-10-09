@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-expense-payment-state-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: expense_payment_state
+      changes:
+        - createTable:
+            tableName: expense_payment_state
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: expense_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_payment_state_expense_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_expense_payment_state_expense_id
+
+              - column:
+                  name: payment_status
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_payment_state_payment_status_notnull
+
+              - column:
+                  name: amount_paid
+                  type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_payment_state_amount_paid_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_payment_state_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_payment_state_version_notnull
+      rollback:
+        - dropTable:
+            tableName: expense_payment_state

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.search
 
 import jakarta.persistence.Tuple
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.business.mappers.DateQualifier
 import java.math.BigDecimal

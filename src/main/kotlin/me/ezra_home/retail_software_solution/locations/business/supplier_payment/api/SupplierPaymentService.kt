@@ -7,11 +7,9 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.PaymentsCalculatorService
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentAssembler
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentEntity
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentMapper
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentRepository
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidMapper
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.SupplierPaymentVoidRepository
@@ -19,10 +17,8 @@ import me.ezra_home.retail_software_solution.organizations.business.fiscal_perio
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
-import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.text.NumberFormat
@@ -75,12 +71,14 @@ class SupplierPaymentService(
             }
         }
 
-        val entity = supplierPaymentMapper.toEntity(supplierPaymentCreateDto)
+        val entity = supplierPaymentMapper.toEntity(
+            supplierPaymentCreateDto, paymentMethodService.findAccountCode(supplierPaymentCreateDto.paymentMethodId)
+        )
         supplierPaymentRepository.save(entity)
 
         val newStatus = purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid + supplierPaymentCreateDto.amount, ceiling)
         purchaseUpdater.updatePaymentStatus(supplierPaymentCreateDto.purchaseId, newStatus)
-        publishTransactionToKafka(supplierPaymentCreateDto, entity)
+        supplierPaymentHandlerForKafka.publish(entity, purchaseDataFetcher.getSupplierId(supplierPaymentCreateDto.purchaseId))
         return assembler.buildResponse(entity, null, newStatus)
     }
 
@@ -113,39 +111,8 @@ class SupplierPaymentService(
 
         val newStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(paymentEntity.purchaseId)
 
-        publishVoidTransactionToKafka(paymentEntity, voidEntity)
+        supplierPaymentVoidHandlerForKafka.publish(voidEntity, paymentEntity, purchaseDataFetcher.getSupplierId(paymentEntity.purchaseId))
         return assembler.buildResponse(paymentEntity, voidEntity, newStatus)
     }
 
-    private fun publishTransactionToKafka(supplierPaymentCreateDto: SupplierPaymentCreateDto, payment: SupplierPaymentEntity) {
-        val accountCode = paymentMethodService.findAccountCode(supplierPaymentCreateDto.paymentMethodId)
-        if (StringUtils.hasValue(accountCode)) {
-            val supplierId = purchaseDataFetcher.getSupplierId(supplierPaymentCreateDto.purchaseId)
-            supplierPaymentHandlerForKafka.publish(payment, supplierId, accountCode!!)
-        } else {
-            log.debug(
-                "Payment method {} has no account code — ledger entry skipped for payment {}",
-                supplierPaymentCreateDto.paymentMethodId,
-                payment.referenceNumber
-            )
-        }
-    }
-
-    private fun publishVoidTransactionToKafka(payment: SupplierPaymentEntity, voidEntity: SupplierPaymentVoidEntity) {
-        val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
-        if (StringUtils.hasValue(accountCode)) {
-            val supplierId = purchaseDataFetcher.getSupplierId(payment.purchaseId)
-            supplierPaymentVoidHandlerForKafka.publish(voidEntity, payment, supplierId, accountCode!!)
-        } else {
-            log.debug(
-                "Payment method {} has no account code — ledger entry skipped for void of {}",
-                payment.paymentMethodId,
-                payment.referenceNumber
-            )
-        }
-    }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(SupplierPaymentService::class.java)
-    }
 }

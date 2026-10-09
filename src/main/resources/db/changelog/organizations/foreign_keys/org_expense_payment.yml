@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-org-expense-payment-expense
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_payment_expense
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense_payment
+            baseColumnNames: expense_id
+            referencedTableName: org_expense
+            referencedColumnNames: id
+            constraintName: fk_org_expense_payment_expense
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense_payment
+            constraintName: fk_org_expense_payment_expense
+
+  - changeSet:
+      id: add-foreign-key-org-expense-payment-payment-method
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_payment_payment_method
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense_payment
+            baseColumnNames: payment_method_id
+            referencedTableName: payment_method
+            referencedColumnNames: id
+            constraintName: fk_org_expense_payment_payment_method
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense_payment
+            constraintName: fk_org_expense_payment_payment_method

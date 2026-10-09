@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-org-expense-payment-state-expense
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_org_expense_payment_state_expense
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: org_expense_payment_state
+            baseColumnNames: expense_id
+            referencedTableName: org_expense
+            referencedColumnNames: id
+            constraintName: fk_org_expense_payment_state_expense
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: org_expense_payment_state
+            constraintName: fk_org_expense_payment_state_expense

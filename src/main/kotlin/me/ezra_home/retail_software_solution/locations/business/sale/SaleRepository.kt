@@ -5,4 +5,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface SaleRepository : JpaRepository<SaleEntity, UUID>
+interface SaleRepository : JpaRepository<SaleEntity, UUID> {
+
+    fun findByReferenceNumber(referenceNumber: String): SaleEntity?
+}

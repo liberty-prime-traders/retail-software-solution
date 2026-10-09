@@ -1,6 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase.api
-
-import me.ezra_home.retail_software_solution.util.enums.HasCode
+package me.ezra_home.retail_software_solution.util.enums
 
 enum class PaymentStatus(override val code: String) : HasCode {
   UNPAID("UNP"),

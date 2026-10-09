@@ -7,9 +7,6 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentRecordedEvent
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
-import me.ezra_home.retail_software_solution.util.business.StringUtils
-import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -20,8 +17,6 @@ import java.util.UUID
 class SalePaymentHandlerForKafka(
     private val saleDataFetcher: SaleDataFetcher,
     private val salePaymentRepository: SalePaymentRepository,
-    private val salePaymentVoidRepository: SalePaymentVoidRepository,
-    private val paymentMethodService: PaymentMethodService,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -33,46 +28,21 @@ class SalePaymentHandlerForKafka(
         val contactId = saleDataFetcher.getSaleContactId(saleId)
         val payments = salePaymentRepository.findBySaleId(saleId)
         if (payments.isEmpty()) return
-        val voidedIds = salePaymentVoidRepository.findBySalePaymentIdIn(payments.map { it.id!! })
-            .mapTo(HashSet()) { it.salePaymentId }
-        val saleLines = payments.filter { it.id !in voidedIds }.mapNotNull { payment ->
-            val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
-            if (!StringUtils.hasValue(accountCode)) return@mapNotNull null
-            SalePaymentLineDto(
-                paymentReferenceNumber = payment.requiredReference(),
-                paymentMethodAccountCode = accountCode!!,
-                amount = payment.amount,
-                paymentDate = payment.paymentDate
-            )
-        }
-        if (saleLines.isEmpty()) return
-        publishEvent(saleId, contactId, saleLines)
+        publishEvent(saleId, contactId, payments.map { toLine(it) })
     }
 
     fun publish(saleId: UUID, contactId: UUID, payments: List<SalePaymentEntity>) {
-        val saleLines = payments.mapNotNull { payment ->
-            val accountCode = paymentMethodService.findAccountCode(payment.paymentMethodId)
-
-            if (!StringUtils.hasValue(accountCode)) {
-                log.debug(
-                    "Payment method {} has no account code — ledger entry skipped for payment {}",
-                    payment.paymentMethodId, payment.referenceNumber
-                )
-                return@mapNotNull null
-            }
-
-            SalePaymentLineDto(
-                paymentReferenceNumber = payment.requiredReference(),
-                paymentMethodAccountCode = accountCode!!,
-                amount = payment.amount,
-                paymentDate = payment.paymentDate
-            )
-        }
-
-        if (saleLines.isNotEmpty()) {
-            publishEvent(saleId, contactId, saleLines)
+        if (payments.isNotEmpty()) {
+            publishEvent(saleId, contactId, payments.map { toLine(it) })
         }
     }
+
+    private fun toLine(payment: SalePaymentEntity) = SalePaymentLineDto(
+        paymentReferenceNumber = payment.requiredReference(),
+        paymentMethodAccountCode = payment.paymentMethodAccountCode,
+        amount = payment.amount,
+        paymentDate = payment.paymentDate
+    )
 
     private fun publishEvent(saleId: UUID, contactId: UUID, payments: List<SalePaymentLineDto>) {
         eventPublisher.publishEvent(
@@ -89,9 +59,5 @@ class SalePaymentHandlerForKafka(
                 payments = payments
             )
         )
-    }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(SalePaymentHandlerForKafka::class.java)
     }
 }

@@ -1,0 +1,7 @@
+package me.ezra_home.retail_software_solution.organizations.business.org_expense
+
+import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpensePaymentVoidRepositoryBase
+import org.springframework.stereotype.Repository
+
+@Repository
+interface OrgExpensePaymentVoidRepository : ExpensePaymentVoidRepositoryBase<OrgExpensePaymentVoidEntity>

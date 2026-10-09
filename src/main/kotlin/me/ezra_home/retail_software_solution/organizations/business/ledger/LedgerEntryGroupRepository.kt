@@ -9,4 +9,5 @@ interface LedgerEntryGroupRepository : JpaRepository<LedgerEntryGroupEntity, UUI
     fun existsBySourceReferenceNumberAndSourceLocationId(reference: String, locationId: UUID): Boolean
     fun existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(reference: String, sourceType: LedgerSourceType, locationId: UUID): Boolean
     fun existsBySourceReferenceNumberAndSourceLocationIdIsNull(reference: String): Boolean
+    fun existsBySourceReferenceNumberAndSourceTypeAndSourceLocationIdIsNull(reference: String, sourceType: LedgerSourceType): Boolean
 }

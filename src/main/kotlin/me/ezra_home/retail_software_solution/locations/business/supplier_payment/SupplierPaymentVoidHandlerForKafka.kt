@@ -6,7 +6,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -20,7 +19,6 @@ class SupplierPaymentVoidHandlerForKafka(
     private val supplierPaymentRepository: SupplierPaymentRepository,
     private val supplierPaymentVoidRepository: SupplierPaymentVoidRepository,
     private val purchaseDataFetcher: PurchaseDataFetcher,
-    private val paymentMethodService: PaymentMethodService,
     private val eventPublisher: ApplicationEventPublisher
 ) : EventReissueHandler {
 
@@ -29,17 +27,11 @@ class SupplierPaymentVoidHandlerForKafka(
     override fun reissue(sourceDocumentId: UUID) {
         val paymentVoid = supplierPaymentVoidRepository.getReferenceById(sourceDocumentId)
         val supplierPayment = supplierPaymentRepository.getReferenceById(paymentVoid.supplierPaymentId)
-        val accountCode = paymentMethodService.findAccountCode(supplierPayment.paymentMethodId) ?: return
         val supplierId = purchaseDataFetcher.getSupplierId(supplierPayment.purchaseId)
-        publish(paymentVoid, supplierPayment, supplierId, accountCode)
+        publish(paymentVoid, supplierPayment, supplierId)
     }
 
-    fun publish(
-        paymentVoid: SupplierPaymentVoidEntity,
-        payment: SupplierPaymentEntity,
-        supplierId: UUID,
-        paymentMethodAccountCode: String
-    ) {
+    fun publish(paymentVoid: SupplierPaymentVoidEntity, payment: SupplierPaymentEntity, supplierId: UUID) {
         eventPublisher.publishEvent(
             SupplierPaymentVoidedEvent(
                 eventId = UUID.randomUUID(),
@@ -52,7 +44,7 @@ class SupplierPaymentVoidHandlerForKafka(
                 voidId = paymentVoid.id!!,
                 paymentId = payment.id!!,
                 supplierId = supplierId,
-                paymentMethodAccountCode = paymentMethodAccountCode,
+                paymentMethodAccountCode = payment.paymentMethodAccountCode,
                 amount = payment.amount,
                 voidedOn = DateTimes.Local.atOrganizationZone(paymentVoid.requiredCreatedOn()),
                 paymentReferenceNumber = payment.requiredReference()

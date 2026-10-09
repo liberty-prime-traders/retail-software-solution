@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-expense-void-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: expense_void
+      changes:
+        - createTable:
+            tableName: expense_void
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_void_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_expense_void_reference_number
+
+              - column:
+                  name: expense_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_void_expense_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_expense_void_expense_id
+
+              - column:
+                  name: reason
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_void_reason_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: expense_void_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: expense_void

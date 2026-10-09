@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale.search
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import org.junit.jupiter.api.Assertions.assertEquals

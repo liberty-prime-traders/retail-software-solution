@@ -25,6 +25,9 @@ class SupplierPaymentEntity(
     @Column(name = "payment_method_id", nullable = false, updatable = false)
     var paymentMethodId: UUID,
 
+    @Column(name = "payment_method_account_code", nullable = false, updatable = false, length = 30)
+    var paymentMethodAccountCode: String,
+
     @Column(name = "amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var amount: BigDecimal,
 

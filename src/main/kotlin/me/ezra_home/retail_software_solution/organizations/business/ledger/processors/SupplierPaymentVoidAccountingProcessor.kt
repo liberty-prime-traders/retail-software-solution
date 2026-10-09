@@ -1,12 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
@@ -19,28 +17,18 @@ import kotlin.reflect.KClass
 @Service
 class SupplierPaymentVoidAccountingProcessor(
     private val contactService: ContactService,
-    private val ledgerEntryGroupRepository: LedgerEntryGroupRepository,
+    private val ledgerPostingGate: LedgerPostingGate,
     ledgerPostingService: LedgerPostingService
 ) : AccountingEventProcessor<SupplierPaymentVoidedEvent>(ledgerPostingService) {
 
     override val eventType: KClass<SupplierPaymentVoidedEvent> = SupplierPaymentVoidedEvent::class
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: SupplierPaymentVoidedEvent): Boolean {
-        val locationId = SessionContextProvider.getLocationId()
-        val paymentWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-            event.paymentReferenceNumber,
-            LedgerSourceType.SUPPLIER_PAYMENT,
-            locationId
-        )
-        return paymentWasPosted && ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-            event.paymentReferenceNumber,
-            LedgerSourceType.SUPPLIER_PAYMENT_VOID,
-            locationId
-        ).not()
-    }
+    override fun shouldProcess(event: SupplierPaymentVoidedEvent): Boolean =
+        ledgerPostingGate.isPosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.SUPPLIER_PAYMENT_VOID).not()
 
     override fun prepareLedgerRequest(event: SupplierPaymentVoidedEvent): LedgerPostingRequest {
+        ledgerPostingGate.requirePosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.SUPPLIER_PAYMENT)
         val supplier = contactService.getContactById(event.supplierId)
 
         return LedgerPostingRequest(

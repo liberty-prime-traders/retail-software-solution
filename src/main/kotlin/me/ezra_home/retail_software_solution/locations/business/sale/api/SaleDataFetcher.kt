@@ -75,19 +75,16 @@ class SaleDataFetcher(
     }
 
     fun getSaleHeader(saleId: UUID): SaleHeaderDto {
-        val sale = saleRepository.findById(saleId).orElseThrow {
+        val saleEntity = saleRepository.findById(saleId).orElseThrow {
             RtsGenericException("Sale $saleId not found")
         }
-        return SaleHeaderDto(
-            id = sale.id!!,
-            referenceNumber = sale.requiredReference(),
-            version = sale.version,
-            status = sale.status,
-            contactId = sale.contactId,
-            soldById = sale.soldById,
-            dateSold = sale.dateSold,
-            notes = sale.notes,
-        )
+        return extractHeader(saleEntity)
+    }
+
+    fun getSaleHeaderByReferenceNumber(referenceNumber: String): SaleHeaderDto {
+        val saleEntity = saleRepository.findByReferenceNumber(referenceNumber)
+            ?: throw RtsGenericException("Sale $referenceNumber not found")
+        return extractHeader(saleEntity)
     }
 
     fun getSaleVoidInfo(saleId: UUID): SaleVoidInfoDto? {
@@ -115,5 +112,15 @@ class SaleDataFetcher(
             )
         }
     }
-}
 
+    private fun extractHeader(saleEntity: SaleEntity): SaleHeaderDto = SaleHeaderDto(
+        id = saleEntity.id!!,
+        referenceNumber = saleEntity.requiredReference(),
+        version = saleEntity.version,
+        status = saleEntity.status,
+        contactId = saleEntity.contactId,
+        soldById = saleEntity.soldById,
+        dateSold = saleEntity.dateSold,
+        notes = saleEntity.notes,
+    )
+}

@@ -73,7 +73,7 @@ Never `LocalDate.now()`. Never `ZoneOffset.UTC` for org-scoped date logic.
 
 ## Agent discipline
 
-- Write plan to `.claude/plan.txt` before starting; update as you go.
+- Write plan to `.claude-local/plan.txt` before starting; update as you go.
 - Read ≤3 files before making a first edit.
 - Checkpoint every 5 tool calls: state hypothesis, decide continue or back out.
 - If stuck, stop and reassess — don't loop.

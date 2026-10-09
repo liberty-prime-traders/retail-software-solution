@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-expense-type-aud-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: expense_type_aud
+      changes:
+        - createTable:
+            tableName: expense_type_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: varchar(200)
+
+              - column:
+                  name: expense_account_code
+                  type: varchar(30)
+
+              - column:
+                  name: eligible_payee_types
+                  type: text
+
+              - column:
+                  name: eligible_source_types
+                  type: text
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: expense_type_aud
+            columnNames: id, rev
+            constraintName: pk_expense_type_aud
+
+      rollback:
+        - dropTable:
+            tableName: expense_type_aud

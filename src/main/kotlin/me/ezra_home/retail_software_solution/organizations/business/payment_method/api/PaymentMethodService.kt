@@ -32,7 +32,7 @@ class PaymentMethodService(
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    fun findAccountCode(id: UUID): String? {
+    fun findAccountCode(id: UUID): String {
         val paymentMethod = paymentMethodCache.getAllPaymentMethods().find { it.id == id }
             ?: throw RtsGenericException("Payment method $id not found")
         return paymentMethod.accountCode
