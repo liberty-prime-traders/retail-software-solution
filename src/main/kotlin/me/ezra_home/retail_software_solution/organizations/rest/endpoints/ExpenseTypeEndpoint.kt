@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeRenameDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeUpdateDto
@@ -33,4 +34,8 @@ class ExpenseTypeEndpoint(
     @PutMapping
     fun update(@RequestBody expenseTypeUpdateDto: ExpenseTypeUpdateDto): ExpenseTypeResponseDto =
         expenseTypeService.update(expenseTypeUpdateDto)
+
+    @PutMapping("name")
+    fun rename(@RequestBody expenseTypeRenameDto: ExpenseTypeRenameDto): ExpenseTypeResponseDto =
+        expenseTypeService.rename(expenseTypeRenameDto)
 }

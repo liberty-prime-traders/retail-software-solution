@@ -41,23 +41,25 @@ class OrgExpenseStore(
         OrgExpenseBatchEntity(newExpenseBatch.description, newExpenseBatch.source.type, newExpenseBatch.source.reference)
     )
 
-    override fun saveNewExpense(newExpense: NewExpense): OrgExpenseEntity {
-        val resolvedExpenseRow = newExpense.resolvedExpenseRow
-        val orgExpenseEntity = orgExpenseRepository.save(
-            OrgExpenseEntity(
-                expenseTypeId = resolvedExpenseRow.expenseType.id,
-                expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
-                payeeContactId = resolvedExpenseRow.payee.id,
-                amount = resolvedExpenseRow.amount,
-                expenseDate = resolvedExpenseRow.expenseDate,
-                description = resolvedExpenseRow.description,
-                sourceType = newExpense.source.type,
-                sourceReference = newExpense.source.reference,
-                batchId = newExpense.batchId
-            )
+    override fun saveNewExpenses(newExpenses: List<NewExpense>): List<OrgExpenseEntity> {
+        val orgExpenseEntitys = orgExpenseRepository.saveAll(
+            newExpenses.map { newExpense ->
+                val resolvedExpenseRow = newExpense.resolvedExpenseRow
+                OrgExpenseEntity(
+                    expenseTypeId = resolvedExpenseRow.expenseType.id,
+                    expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
+                    payeeContactId = resolvedExpenseRow.payee.id,
+                    amount = resolvedExpenseRow.amount,
+                    expenseDate = resolvedExpenseRow.expenseDate,
+                    description = resolvedExpenseRow.description,
+                    sourceType = newExpense.source.type,
+                    sourceReference = newExpense.source.reference,
+                    batchId = newExpense.batchId
+                )
+            }
         )
-        orgExpensePaymentStateRepository.save(OrgExpensePaymentStateEntity(expenseId = orgExpenseEntity.id!!))
-        return orgExpenseEntity
+        orgExpensePaymentStateRepository.saveAll(orgExpenseEntitys.map { OrgExpensePaymentStateEntity(expenseId = it.id!!) })
+        return orgExpenseEntitys
     }
 
     override fun refreshPaymentStates(expenseDtos: Collection<ExpenseDto>) =

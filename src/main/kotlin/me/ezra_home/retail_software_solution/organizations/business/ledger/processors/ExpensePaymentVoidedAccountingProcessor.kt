@@ -1,41 +1,39 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentVoidedEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import org.springframework.stereotype.Service
+import java.util.UUID
 import kotlin.reflect.KClass
 
 @Service
 class ExpensePaymentVoidedAccountingProcessor(
-    private val contactService: ContactService,
-    private val expenseLedgerGate: ExpenseLedgerGate,
+    contactService: ContactService,
+    ledgerPostingGate: LedgerPostingGate,
     ledgerPostingService: LedgerPostingService
-) : AccountingEventProcessor<ExpensePaymentVoidedEvent>(ledgerPostingService) {
+) : ExpenseAccountingProcessor<ExpensePaymentVoidedEvent>(contactService, ledgerPostingGate, ledgerPostingService) {
 
     override val eventType: KClass<ExpensePaymentVoidedEvent> = ExpensePaymentVoidedEvent::class
 
-    override val idempotencyConstraintName: String get() = expenseLedgerGate.idempotencyConstraintName()
+    override val sourceType = LedgerSourceType.EXPENSE_PAYMENT_VOID
 
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: ExpensePaymentVoidedEvent): Boolean =
-        expenseLedgerGate.isPosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.EXPENSE_PAYMENT) &&
-            expenseLedgerGate.isPosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.EXPENSE_PAYMENT_VOID).not()
+    override val reversedSourceType = LedgerSourceType.EXPENSE_PAYMENT
 
-    override fun prepareLedgerRequest(event: ExpensePaymentVoidedEvent): LedgerPostingRequest {
-        val payee = contactService.getContactById(event.payeeContactId)
-        return ExpensePostingRequests.reverseSettle(
-            sourceType = LedgerSourceType.EXPENSE_PAYMENT_VOID,
+    override fun referenceNumberOf(event: ExpensePaymentVoidedEvent): String = event.paymentReferenceNumber
+
+    override fun payeeContactIdOf(event: ExpensePaymentVoidedEvent): UUID = event.payeeContactId
+
+    override fun buildRequest(event: ExpensePaymentVoidedEvent, payeeContactReferenceNumber: String): LedgerPostingRequest =
+        ExpensePostingRequests.reverseSettle(
+            sourceType = sourceType,
             paymentReference = event.paymentReferenceNumber,
             postingDate = event.voidedOn,
             expenseAccountCode = event.expenseAccountCode,
             paymentMethodAccountCode = event.paymentMethodAccountCode,
             amount = event.amount,
-            payeeContactReferenceNumber = payee.referenceNumber
+            payeeContactReferenceNumber = payeeContactReferenceNumber
         )
-    }
 }

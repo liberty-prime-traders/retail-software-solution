@@ -23,10 +23,10 @@ databaseChangeLog:
                   value: ORG
               - column:
                   name: display_name
-                  value: Org Expense Payment State
+                  value: Organization Expense Payment State
               - column:
                   name: description
-                  value: Mutable payment status and paid amount for an expense
+                  value: Mutable payment status and paid amount for an organization expense
               - column:
                   name: reference_number
                   valueComputed: ${table_registry_ref}

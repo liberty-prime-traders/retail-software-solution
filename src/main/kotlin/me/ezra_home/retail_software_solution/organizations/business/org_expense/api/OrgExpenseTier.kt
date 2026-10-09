@@ -25,6 +25,11 @@ class OrgExpenseTier(
     }
 
     @TransactionalOnOrganizationSchema(propagation = Propagation.MANDATORY)
+    override fun lockExpenses(expenseIds: Collection<UUID>) {
+        orgEntityAdvisoryLock.acquire(LockNamespaces.EXPENSE, expenseIds.map { it.toString() })
+    }
+
+    @TransactionalOnOrganizationSchema(propagation = Propagation.MANDATORY)
     override fun lockSourceDocument(sourceDocumentId: UUID) {
         orgEntityAdvisoryLock.acquire(LockNamespaces.EXPENSE_SOURCE, sourceDocumentId.toString())
     }

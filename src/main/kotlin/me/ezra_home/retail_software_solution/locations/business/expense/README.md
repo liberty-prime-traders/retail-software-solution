@@ -12,7 +12,9 @@ holds only what is location-specific.
 - `ExpenseService` holds the source-document gates and request mapping:
   - Purchase: not `DRAFT`. Allowed from `ORDERED` onward, including `CANCELED`. The
     payee defaults to the purchase's supplier.
-  - Sale: `CONFIRMED` or `VOIDED`. `DRAFT` and `DISCARDED` are rejected.
+  - Sale: `CONFIRMED` or `VOIDED`. `DRAFT` and `DISCARDED` are rejected; a discarded sale was never
+    confirmed, so nothing was sold. A cancelled (`VOIDED`) sale and a `CANCELED` purchase may still carry
+    expenses because the money was spent either way.
   - Wages: the type is fixed to the seeded wage type and the batch description is
     generated.
 
@@ -23,7 +25,7 @@ holds only what is location-specific.
 
 - `ExpensePaymentStateEntity` / `ExpensePaymentStateRepository` (the JPQL targets
   `ExpensePaymentEntity` / `ExpensePaymentVoidEntity`); `LocationExpenseStore` creates the row in
-  `saveNewExpense` and delegates `refreshPaymentStates` to `ExpensePaymentStateMaintainer`.
+  `saveNewExpenses` and delegates `refreshPaymentStates` to `ExpensePaymentStateMaintainer`.
 - `ExpenseSearchService` builds the shared `ExpenseSearchFetcher` over `ExpenseSearchExecutor` (location
   datasource) and `ExpenseSearchTables.LOCATION`, and runs `ExpenseSearchOperations` read-only on the
   location schema (`POST secured/expenses/search` and `.../search/summary`).

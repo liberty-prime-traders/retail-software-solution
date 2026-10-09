@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component
 @Component
 class PaymentAccountValidator(private val accountCache: AccountCache) {
 
-    fun validate(accountCode: String?) {
-        val code = StringUtils.getValueOrNull(accountCode) ?: return
+    fun validate(accountCode: String) {
+        val code = StringUtils.getValueOrException(accountCode, "A Payment Method must have an account")
         val allAccounts = accountCache.getAll()
         val account = allAccounts.firstOrNull { StringUtils.isEquivalent(it.code, code) }
             ?: throw RtsGenericException("Account not found: $code")

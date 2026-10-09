@@ -2,8 +2,11 @@ package me.ezra_home.retail_software_solution.util.queries
 
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 
 object SearchGuards {
+
+  private const val MAX_RANGE_YEARS = 1L
 
   fun guardPageSize(requestedSize: Int, minPageSize: Int, maxPageSize: Int) {
     if (requestedSize !in minPageSize..maxPageSize) {
@@ -17,9 +20,12 @@ object SearchGuards {
     }
   }
 
-  fun guardRangeSupplied(from: Any?, before: Any?, fromLabel: String, beforeLabel: String) {
+  fun guardBoundedRange(from: OffsetDateTime?, before: OffsetDateTime?, fromLabel: String, beforeLabel: String) {
     if (from == null || before == null) {
       throw RtsGenericException("$fromLabel and $beforeLabel are required")
+    }
+    if (before.isAfter(from.plusYears(MAX_RANGE_YEARS))) {
+      throw RtsGenericException("$fromLabel and $beforeLabel must be at most $MAX_RANGE_YEARS year apart")
     }
   }
 

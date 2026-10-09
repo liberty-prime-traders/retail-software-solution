@@ -12,7 +12,7 @@ object SaleSearchValidator {
   private const val MAX_PAGE_SIZE = 500
 
   fun guardValidParameters(saleSearchParameters: SaleSearchParameters) {
-    SearchGuards.guardRangeSupplied(
+    SearchGuards.guardBoundedRange(
       saleSearchParameters.createdFrom,
       saleSearchParameters.createdBefore,
       "createdFrom",

@@ -65,8 +65,7 @@ class ExpenseResponseBuilder(
     }
 
     fun buildSummary(expenseAggregate: ExpenseAggregate, expenseId: UUID): ExpenseSummaryResponse {
-        val expense = expenseAggregate.expenses.single { it.id == expenseId }
-        return buildSummaries(expenseAggregate).single { it.reference == expense.referenceNumber }
+        return buildSummaries(expenseAggregate.forExpense(expenseId)).single()
     }
 
     private fun toPaymentResponse(

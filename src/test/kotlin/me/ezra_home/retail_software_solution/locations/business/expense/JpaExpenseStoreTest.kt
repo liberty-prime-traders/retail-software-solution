@@ -19,17 +19,11 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyCollection
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -53,7 +47,8 @@ class JpaExpenseStoreTest {
             ExpenseBatchEntity(newExpenseBatch.description, newExpenseBatch.source.type, newExpenseBatch.source.reference)
         )
 
-        override fun saveNewExpense(newExpense: NewExpense): ExpenseBase = persisted(expenseEntity(newExpense.batchId))
+        override fun saveNewExpenses(newExpenses: List<NewExpense>): List<ExpenseBase> =
+            newExpenses.map { persisted(expenseEntity(it.batchId)) }
 
         override fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentBase> =
             expensePaymentDrafts.map { persisted(paymentEntity(it.expenseId, it.amount)) }
@@ -159,18 +154,6 @@ class JpaExpenseStoreTest {
         expenseStore.loadForExpenses(listOf(expenseId))
 
         verify(expensePaymentVoidRepository, never()).findByExpensePaymentIdIn(anyCollection())
-    }
-
-    @Test
-    fun `recent expenses are the newest first, with the id breaking ties`() {
-        `when`(expenseRepository.findAll(any(Pageable::class.java))).thenReturn(PageImpl(listOf(expenseEntity)))
-        `when`(expenseBatchRepository.findAllById(setOf(batchEntity.id!!))).thenReturn(listOf(batchEntity))
-
-        expenseStore.loadRecent(25)
-
-        val pageRequestCaptor = ArgumentCaptor.forClass(Pageable::class.java)
-        verify(expenseRepository).findAll(pageRequestCaptor.capture())
-        assertEquals(PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "createdOn", "id")), pageRequestCaptor.value)
     }
 
     @Test

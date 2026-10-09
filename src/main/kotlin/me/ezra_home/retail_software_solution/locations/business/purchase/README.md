@@ -431,10 +431,10 @@ quantityOrdered` for every line. Once true, the ceiling **locks** to
    - `paid > ceiling` → `OVERPAID`
    - `paid == ceiling` → `FULLY_SETTLED`
    - else → `PARTIALLY_SETTLED`
-7. Publish `SupplierPaymentEvent` **only when the payment method had an
-   account code at record time** (cash-only methods skip the ledger event).
-   The code is copied onto the payment as `payment_method_account_code`; void
-   and reissue use that copy, never the method's current account.
+7. Publish `SupplierPaymentEvent`. The payment method's account code (always
+   present) is copied onto the payment as the non-null
+   `payment_method_account_code`; void and reissue use that copy, never the
+   method's current account.
 
 ### Void payment
 
@@ -759,8 +759,8 @@ Add new guards as early as the data they need is in scope.
   `patchThenReturnPaymentStatus` — see §7 for why this is the one
   exception to that rule.
 - `SupplierPaymentMapper.toEntity` takes the method's current account code and
-  stores it as `paymentMethodAccountCode`; the Kafka event is emitted only if
-  that copy is non-blank.
+  stores it as the non-null `paymentMethodAccountCode`; the Kafka event is
+  always emitted.
 
 ### `SupplierPaymentService.voidPayment(SupplierPaymentVoidCreateDto)`
 - Locks the purchase via `PurchaseDataFetcher.lockPurchase` (resolved
@@ -769,8 +769,7 @@ Add new guards as early as the data they need is in scope.
   `supplierPaymentVoidRepository.existsBySupplierPaymentId`.
 - Persists `SupplierPaymentVoidEntity` and recomputes the purchase
   payment status via `patchThenReturnPaymentStatus`.
-- Kafka void event emitted only if the payment's copied account code is non-blank,
-  and posts to that copy.
+- Kafka void event is always emitted and posts to the payment's copied account code.
 
 ### `PurchaseUpdater.updateNotes(id, Optional<String>?)` / `updatePaymentStatus(id, status)`
 - Direct field updates by id; no business validation.
@@ -821,8 +820,8 @@ Add new guards as early as the data they need is in scope.
   `totalOrdered - totalPaid` (the ordered basis): a `PAID` purchase can still show non-zero
   outstanding if more was ordered than delivered. `totalPaid` always excludes voided
   `supplier_payment` rows (joined via `supplier_payment_void`), same as everywhere else paid amounts
-  appear. Both `recordedFrom` and `recordedBefore` are required on list and summary searches, so no
-  query is an unbounded full-table scan. `recordedBefore` is exclusive. Amount filters reject
+  appear. Both `recordedFrom` and `recordedBefore` are required on list and summary searches and may span
+  at most one year (`SearchGuards.guardBoundedRange`), so no query is an unbounded full-table scan. `recordedBefore` is exclusive. Amount filters reject
   negative values; zero is allowed. `purchaseReferenceNumbers` drops null and blank entries first
   (`PurchaseSearchParameters.sanitized`).
 - Out of scope by design: no outstanding-amount filter, no payment-method filter, no delivery-date

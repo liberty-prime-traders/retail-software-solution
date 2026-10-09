@@ -50,3 +50,6 @@ databaseChangeLog:
               - column:
                   name: account_code
                   type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: payment_method_account_code_notnull

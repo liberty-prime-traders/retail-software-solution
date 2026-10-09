@@ -84,12 +84,14 @@ class ExpenseOperations(
         resolvedExpenseRows: List<ResolvedExpenseRow>
     ): ExpenseAggregate {
         val settledExpenses = ArrayList<SettledExpense>()
-        val writtenExpenseIds = resolvedExpenseRows.map { resolvedExpenseRow ->
-            val expenseDto = expenseStore.saveExpense(NewExpense(expenseBatchDto.id, expenseSource, resolvedExpenseRow))
+        val expenseDtos = expenseStore.saveExpenses(
+            resolvedExpenseRows.map { NewExpense(expenseBatchDto.id, expenseSource, it) }
+        )
+        expenseDtos.forEachIndexed { rowIndex, expenseDto ->
             expenseEvents.publishRecorded(expenseDto)
-            resolvedExpenseRow.settlement?.let { settledExpenses.add(SettledExpense(expenseDto, it)) }
-            expenseDto.id
+            resolvedExpenseRows[rowIndex].settlement?.let { settledExpenses.add(SettledExpense(expenseDto, it)) }
         }
+        val writtenExpenseIds = expenseDtos.map { it.id }
         expensePaymentOperations.settleNewExpenses(settledExpenses)
         val writtenAggregate = expenseStore.loadForExpenses(writtenExpenseIds)
         val writtenOrderByExpenseId = writtenExpenseIds.withIndex().associate { (index, expenseId) -> expenseId to index }

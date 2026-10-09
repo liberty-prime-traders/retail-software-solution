@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockingDetails
-import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -63,15 +62,7 @@ class SupplierPaymentHandlersForKafkaTest {
         assertEquals("001.099", publishedEvent.paymentMethodAccountCode)
     }
 
-    @Test
-    fun `a payment recorded without an account code publishes neither the payment nor its void`() {
-        supplierPaymentHandlerForKafka.publish(payment(null), supplierId)
-        supplierPaymentVoidHandlerForKafka.publish(voidOf(), payment(null), supplierId)
-
-        verifyNoInteractions(eventPublisher)
-    }
-
-    private fun payment(paymentMethodAccountCode: String?) = SupplierPaymentEntity(
+    private fun payment(paymentMethodAccountCode: String) = SupplierPaymentEntity(
         purchaseId = UUID.randomUUID(),
         paymentMethodId = UUID.randomUUID(),
         paymentMethodAccountCode = paymentMethodAccountCode,

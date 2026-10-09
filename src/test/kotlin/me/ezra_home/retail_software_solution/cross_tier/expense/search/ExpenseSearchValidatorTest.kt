@@ -27,6 +27,14 @@ class ExpenseSearchValidatorTest {
     }
 
     @Test
+    fun `the created range may span at most one year`() {
+        assertDoesNotThrow {
+            ExpenseSearchValidator.guardValidParameters(rangedParameters(createdBefore = createdFrom.plusYears(1)))
+        }
+        assertRejected(rangedParameters(createdBefore = createdFrom.plusYears(1).plusSeconds(1)))
+    }
+
+    @Test
     fun `reference lists are capped at 20`() {
         val twenty = List(20) { "REF$it" }
         val twentyOne = twenty + "REF20"
@@ -102,7 +110,8 @@ class ExpenseSearchValidatorTest {
         expenseDateFrom: LocalDate? = null,
         expenseDateBefore: LocalDate? = null,
         minAmount: BigDecimal? = null,
-        maxAmount: BigDecimal? = null
+        maxAmount: BigDecimal? = null,
+        createdBefore: OffsetDateTime = this.createdBefore
     ) = ExpenseSearchParameters(
         expenseReferenceNumbers = expenseReferenceNumbers,
         sourceReferences = sourceReferences,

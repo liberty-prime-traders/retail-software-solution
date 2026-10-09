@@ -22,8 +22,8 @@ import me.ezra_home.retail_software_solution.organizations.business.expense_type
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyCollection
+import org.mockito.ArgumentMatchers.anyIterable
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -47,15 +47,17 @@ class LocationExpenseStoreTest {
     @Test
     fun `saving an expense creates its payment state as unpaid with nothing paid`() {
         val expenseEntity = persistedExpenseEntity()
-        `when`(expenseRepository.save(any(ExpenseEntity::class.java))).thenReturn(expenseEntity)
+        `when`(expenseRepository.saveAll(anyIterable<ExpenseEntity>())).thenReturn(listOf(expenseEntity))
 
-        locationExpenseStore.saveExpense(NewExpense(expenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null), resolvedExpenseRow()))
+        locationExpenseStore.saveExpenses(listOf(NewExpense(expenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null), resolvedExpenseRow())))
 
-        val savedState = ArgumentCaptor.forClass(ExpensePaymentStateEntity::class.java)
-        verify(expensePaymentStateRepository).save(savedState.capture())
-        assertEquals(expenseEntity.id, savedState.value.expenseId)
-        assertEquals(PaymentStatus.UNPAID, savedState.value.paymentStatus)
-        assertEquals(0, BigDecimal.ZERO.compareTo(savedState.value.amountPaid))
+        @Suppress("UNCHECKED_CAST")
+        val savedStates = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<ExpensePaymentStateEntity>>
+        verify(expensePaymentStateRepository).saveAll(savedStates.capture())
+        val savedState = savedStates.value.single()
+        assertEquals(expenseEntity.id, savedState.expenseId)
+        assertEquals(PaymentStatus.UNPAID, savedState.paymentStatus)
+        assertEquals(0, BigDecimal.ZERO.compareTo(savedState.amountPaid))
     }
 
     @Test

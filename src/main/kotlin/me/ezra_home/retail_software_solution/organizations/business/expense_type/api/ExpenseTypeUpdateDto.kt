@@ -11,9 +11,6 @@ data class ExpenseTypeUpdateDto(
     val eligiblePayeeTypes: Set<ContactType>? = null,
     val eligibleSourceTypes: Set<ExpenseSourceType>? = null
 ) {
-    fun changesAnythingButName(): Boolean =
-        expenseAccountCode != null || eligiblePayeeTypes != null || eligibleSourceTypes != null
-
     fun applyTo(existingExpenseTypeDto: ExpenseTypeDto): ExpenseTypeDto = existingExpenseTypeDto.copy(
         name = name ?: existingExpenseTypeDto.name,
         expenseAccountCode = expenseAccountCode ?: existingExpenseTypeDto.expenseAccountCode,

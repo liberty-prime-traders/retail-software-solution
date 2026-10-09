@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.kafka_log.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.configuration.session.withLocationSession
 import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogEntity
 import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogRepository
 import me.ezra_home.retail_software_solution.organizations.business.kafka_log.EventProcessingLogResolutionType
@@ -46,14 +46,8 @@ class EventRetryService(
             log.error("No reissue handler for event type '${entry.eventType}' — manual intervention required for log entry $logId")
             throw RtsGenericException("No reissue handler registered for event type '${entry.eventType}'")
         }
-        val callerLocationSession = SessionContextProvider.getLocationSession()
-        SessionContextProvider.setLocationSession(null)
-        try {
-            entry.sourceLocationId?.let { SessionContextProvider.initLocation(locationService.getById(it)) }
-            handler.reissue(entry.sourceDocumentId)
-        } finally {
-            SessionContextProvider.setLocationSession(callerLocationSession)
-        }
+        val sourceLocation = entry.sourceLocationId?.let { locationService.getById(it) }
+        withLocationSession(sourceLocation) { handler.reissue(entry.sourceDocumentId) }
         logService.markProcessed(entry, EventProcessingLogResolutionType.REISSUED)
     }
 

@@ -103,17 +103,6 @@ class ExpenseRowResolverTest {
     }
 
     @Test
-    fun `a payment method without an account code cannot settle`() {
-        stub(freightExpenseType, supplierContact)
-        val paymentMethodId = UUID.randomUUID()
-        `when`(paymentMethodService.findAccountCode(paymentMethodId)).thenReturn(null)
-
-        assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, settlement = PaymentInstruction(paymentMethodId)))))
-        }
-    }
-
-    @Test
     fun `non-positive amounts are rejected before anything is looked up`() {
         assertThrows(RtsGenericException::class.java) {
             expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal.ZERO))))

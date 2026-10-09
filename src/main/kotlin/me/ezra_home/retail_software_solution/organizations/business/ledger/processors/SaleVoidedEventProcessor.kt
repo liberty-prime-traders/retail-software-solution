@@ -1,12 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
@@ -19,7 +17,7 @@ import kotlin.reflect.KClass
 @Service
 class SaleVoidedEventProcessor(
     private val contactService: ContactService,
-    private val ledgerEntryGroupRepository: LedgerEntryGroupRepository,
+    private val ledgerPostingGate: LedgerPostingGate,
     private val saleTaxLedgerEntriesBuilder: SaleTaxLedgerEntriesBuilder,
     ledgerPostingService: LedgerPostingService
 ) : AccountingEventProcessor<SaleVoidedEvent>(ledgerPostingService) {
@@ -27,19 +25,11 @@ class SaleVoidedEventProcessor(
     override val eventType: KClass<SaleVoidedEvent> = SaleVoidedEvent::class
 
     @TransactionalOnOrganizationSchema(readOnly = true)
-    override fun shouldProcess(event: SaleVoidedEvent): Boolean {
-        val locationId = SessionContextProvider.getLocationId()
-        val saleWasPosted = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-            event.saleReferenceNumber, LedgerSourceType.SALE, locationId
-        )
-        if (!saleWasPosted) return false
-        val alreadyReversed = ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-            event.saleReferenceNumber, LedgerSourceType.SALE_VOID, locationId
-        )
-        return !alreadyReversed
-    }
+    override fun shouldProcess(event: SaleVoidedEvent): Boolean =
+        ledgerPostingGate.isPosted(event.sourceContext, event.saleReferenceNumber, LedgerSourceType.SALE_VOID).not()
 
     override fun prepareLedgerRequest(event: SaleVoidedEvent): LedgerPostingRequest {
+        ledgerPostingGate.requirePosted(event.sourceContext, event.saleReferenceNumber, LedgerSourceType.SALE)
         val contact = contactService.getContactById(event.contactId)
         val taxableAmount = event.taxableAmount
         val amountOwed = taxableAmount.add(event.taxBilled)

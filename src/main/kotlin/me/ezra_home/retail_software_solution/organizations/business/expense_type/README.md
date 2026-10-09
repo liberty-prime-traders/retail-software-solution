@@ -18,12 +18,14 @@ posts to and which payees and entry points may use it. Endpoint: `secured/expens
 
 ## Rules
 
+- `create`, `update` and `rename` trim the name before validating, so the stored name never carries leading or trailing spaces.
 - Names are unique by `StringUtils.isEquivalent` (case and spacing insensitive). No database
   constraint can express that, so create and rename take `OrgEntityAdvisoryLock`
   (`LockNamespaces.EXPENSE_TYPE`, key `name`) and then read every row. Serializing all name changes
   is acceptable because the table is small and rarely written.
-- A system-defined type can only be renamed; any change to its account or eligibility is rejected
-  (`ExpenseTypeUpdateDto.changesAnythingButName`).
+- A system-defined type can only be renamed, through `PUT secured/expense-types/name`
+  (`ExpenseTypeRenameDto`, any type). The general update route rejects system-defined types outright,
+  so a full-object resend can never trip over unchanged account or eligibility fields.
 - `ExpenseTypeSeeder` (an `OrgDataSeeder`) inserts every `SystemExpenseType` whose code is not
   present yet, so it is idempotent. Existing organizations receive new system types through the
   organization profile's seed-defaults call.

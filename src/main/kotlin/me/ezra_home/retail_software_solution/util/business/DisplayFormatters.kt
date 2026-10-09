@@ -4,12 +4,13 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.Currency
+import java.util.Locale
 
 object DisplayFormatters {
 
     // DecimalFormat keeps mutable parse/format buffers, so a shared instance corrupts output under concurrent calls.
     private fun buildCurrencyFormatter(): DecimalFormat {
-        val formatter = NumberFormat.getCurrencyInstance() as DecimalFormat
+        val formatter = NumberFormat.getCurrencyInstance(Locale.US) as DecimalFormat
         formatter.currency = Currency.getInstance("KES")
         val symbols = formatter.decimalFormatSymbols
         symbols.currencySymbol = "KES "

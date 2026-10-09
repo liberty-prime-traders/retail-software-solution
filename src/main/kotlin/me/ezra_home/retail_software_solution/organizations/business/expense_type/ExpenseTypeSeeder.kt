@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.expense_type
 
-import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.SystemExpenseType
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.SystemExpenseType
 import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgDataSeeder
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component

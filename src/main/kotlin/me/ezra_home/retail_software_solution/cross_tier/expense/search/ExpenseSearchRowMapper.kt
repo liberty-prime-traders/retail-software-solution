@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.search
 
 import jakarta.persistence.Tuple
-import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
+import me.ezra_home.retail_software_solution.util.enums.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.util.business.mappers.DateQualifier
 import java.math.BigDecimal
 import java.time.Instant
@@ -18,7 +18,7 @@ object ExpenseSearchRowMapper {
     fun summaryFromTuple(tuple: Tuple): ExpenseSummaryRawRow = ExpenseSummaryRawRow(
         expenseTypeId = tuple.get("expense_type_id", UUID::class.java),
         voided = tuple.get("voided", Boolean::class.javaObjectType),
-        paymentStatus = PaymentStatus.entries.first { it.code == tuple.get("payment_status", String::class.java) },
+        paymentStatus = PaymentStatusConverter().convertToEntityAttribute(tuple.get("payment_status", String::class.java))!!,
         expenseCount = tuple.get("expense_count", Number::class.java).toLong(),
         amountTotal = tuple.get("amount_total", BigDecimal::class.java),
         paidTotal = tuple.get("paid_total", BigDecimal::class.java),

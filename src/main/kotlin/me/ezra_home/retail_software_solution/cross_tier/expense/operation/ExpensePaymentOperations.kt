@@ -69,11 +69,10 @@ class ExpensePaymentOperations(
             .groupBy { it.expensePaymentCreateRequest.expenseReference }
     }
 
-    // Locks are taken in id order so two bulk requests over the same expenses cannot deadlock.
     private fun lockAndLoad(expenseDtos: Collection<ExpenseDto>): Map<UUID, ExpenseAggregate> {
-        val expenseIdsInLockOrder = expenseDtos.map { it.id }.sorted()
-        expenseIdsInLockOrder.forEach { expenseTier.lockExpense(it) }
-        val loadedAggregate = expenseStore.loadForExpenses(expenseIdsInLockOrder)
+        val expenseIds = expenseDtos.map { it.id }
+        expenseTier.lockExpenses(expenseIds)
+        val loadedAggregate = expenseStore.loadForExpenses(expenseIds)
         return expenseDtos.associate { it.id to loadedAggregate.forExpense(it.id) }
     }
 

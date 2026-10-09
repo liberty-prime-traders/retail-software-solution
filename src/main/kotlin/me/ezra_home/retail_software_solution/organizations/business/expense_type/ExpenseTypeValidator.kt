@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.expense_type
 
-import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeInsertDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
+import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
@@ -18,7 +20,7 @@ class ExpenseTypeValidator(
 
     fun guardInsertable(expenseTypeInsertDto: ExpenseTypeInsertDto) {
         guardNameAvailable(expenseTypeInsertDto.name, null)
-        guardEligibilityNotEmpty(expenseTypeInsertDto.eligiblePayeeTypes.size, expenseTypeInsertDto.eligibleSourceTypes.size)
+        guardEligibilityNotEmpty(expenseTypeInsertDto.eligiblePayeeTypes, expenseTypeInsertDto.eligibleSourceTypes)
         accountService.requireActiveExpenseLeafAccount(expenseTypeInsertDto.expenseAccountCode)
     }
 
@@ -31,9 +33,9 @@ class ExpenseTypeValidator(
             ?.let { throw RtsGenericException("An expense type named '$requiredName' already exists") }
     }
 
-    fun guardEligibilityNotEmpty(eligiblePayeeTypeCount: Int, eligibleSourceTypeCount: Int) {
-        if (eligiblePayeeTypeCount == 0) throw RtsGenericException("At least one eligible payee type is required")
-        if (eligibleSourceTypeCount == 0) throw RtsGenericException("At least one eligible entry point is required")
+    fun guardEligibilityNotEmpty(eligiblePayeeTypes: Set<ContactType>, eligibleSourceTypes: Set<ExpenseSourceType>) {
+        if (eligiblePayeeTypes.isEmpty()) throw RtsGenericException("At least one eligible payee type is required")
+        if (eligibleSourceTypes.isEmpty()) throw RtsGenericException("At least one eligible entry point is required")
     }
 
     private companion object {

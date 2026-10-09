@@ -7,8 +7,6 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.StringUtils
-import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -38,18 +36,6 @@ class SalePaymentVoidHandlerForKafka(
     }
 
     fun publish(payment: SalePaymentEntity, voidEntity: SalePaymentVoidEntity, contactId: UUID) {
-        val accountCode = payment.paymentMethodAccountCode
-        if (!StringUtils.hasValue(accountCode)) {
-            log.debug(
-                "Payment method {} had no account code when payment {} was recorded — ledger entry skipped for its void",
-                payment.paymentMethodId, payment.referenceNumber
-            )
-            return
-        }
-        publishEvent(payment, voidEntity, contactId, accountCode!!)
-    }
-
-    private fun publishEvent(payment: SalePaymentEntity, voidEntity: SalePaymentVoidEntity, contactId: UUID, accountCode: String) {
         eventPublisher.publishEvent(
             SalePaymentVoidedEvent(
                 eventId = UUID.randomUUID(),
@@ -62,15 +48,11 @@ class SalePaymentVoidHandlerForKafka(
                 sourceDocumentId = payment.saleId,
                 contactId = contactId,
                 paymentReferenceNumber = payment.requiredReference(),
-                paymentMethodAccountCode = accountCode,
+                paymentMethodAccountCode = payment.paymentMethodAccountCode,
                 amount = payment.amount,
                 voidedOn = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
                     ?: DateTimes.Local.Now.organization()
             )
         )
-    }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(SalePaymentVoidHandlerForKafka::class.java)
     }
 }

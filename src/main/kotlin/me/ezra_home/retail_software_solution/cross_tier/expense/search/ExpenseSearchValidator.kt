@@ -13,7 +13,7 @@ object ExpenseSearchValidator {
     private const val MAX_PAGE_SIZE = 500
 
     fun guardValidParameters(expenseSearchParameters: ExpenseSearchParameters) {
-        SearchGuards.guardRangeSupplied(
+        SearchGuards.guardBoundedRange(
             expenseSearchParameters.createdFrom,
             expenseSearchParameters.createdBefore,
             "createdFrom",

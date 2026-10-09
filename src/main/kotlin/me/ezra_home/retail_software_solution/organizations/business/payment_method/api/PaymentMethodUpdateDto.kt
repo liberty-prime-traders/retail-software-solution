@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.io.Serializable
 import java.util.Optional
 import java.util.UUID
@@ -17,5 +18,6 @@ data class PaymentMethodUpdateDto(
         name = name?.orElse(existing.name) ?: existing.name,
         description = StringUtils.useIfProvided(description, existing.description),
         accountCode = StringUtils.useIfProvided(accountCode, existing.accountCode)
+            ?: throw RtsGenericException("A Payment Method must have an account")
     )
 }

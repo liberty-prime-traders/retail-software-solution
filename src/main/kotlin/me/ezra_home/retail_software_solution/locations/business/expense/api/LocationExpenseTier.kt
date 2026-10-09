@@ -27,6 +27,11 @@ class LocationExpenseTier(
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
+    override fun lockExpenses(expenseIds: Collection<UUID>) {
+        entityAdvisoryLock.acquire(LockNamespaces.EXPENSE, expenseIds)
+    }
+
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     override fun lockSourceDocument(sourceDocumentId: UUID) {
         entityAdvisoryLock.acquire(LockNamespaces.EXPENSE_SOURCE, sourceDocumentId)
     }

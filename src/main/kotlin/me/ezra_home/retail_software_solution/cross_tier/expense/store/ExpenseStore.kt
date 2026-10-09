@@ -18,7 +18,7 @@ interface ExpenseStore {
 
     fun findBatchBySource(sourceType: ExpenseSourceType, sourceReference: String): ExpenseBatchDto?
 
-    fun saveExpense(newExpense: NewExpense): ExpenseDto
+    fun saveExpenses(newExpenses: List<NewExpense>): List<ExpenseDto>
 
     fun savePayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentDto>
 
@@ -45,6 +45,4 @@ interface ExpenseStore {
     fun loadForBatch(batchId: UUID): ExpenseAggregate
 
     fun loadForExpenses(expenseIds: Collection<UUID>): ExpenseAggregate
-
-    fun loadRecent(limit: Int): ExpenseAggregate
 }

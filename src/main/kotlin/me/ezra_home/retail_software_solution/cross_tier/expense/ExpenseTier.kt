@@ -12,5 +12,7 @@ interface ExpenseTier {
 
     fun lockExpense(expenseId: UUID)
 
+    fun lockExpenses(expenseIds: Collection<UUID>)
+
     fun lockSourceDocument(sourceDocumentId: UUID)
 }

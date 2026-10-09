@@ -17,12 +17,17 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountPosting
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleConfirmedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SalePaymentRecordedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SalePaymentVoidedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleTaxLedgerEntriesBuilder
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleVoidedEventProcessor
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -53,16 +58,17 @@ class LedgerPostingBalanceTest {
         `when`(builder.buildTransactionLevelEntries("SALE-1")).thenReturn(emptyList())
         `when`(builder.buildTransactionLevelReversalEntries("SALE-1")).thenReturn(emptyList())
     }
+    private val ledgerPostingGate = LedgerPostingGate(ledgerEntryGroupRepository)
     private val ledgerPostingService = mock(LedgerPostingService::class.java)
 
     private val saleConfirmedProcessor =
         SaleConfirmedEventProcessor(contactService, ledgerEntryGroupRepository, saleTaxLedgerEntriesBuilder, ledgerPostingService)
     private val saleVoidedProcessor =
-        SaleVoidedEventProcessor(contactService, ledgerEntryGroupRepository, saleTaxLedgerEntriesBuilder, ledgerPostingService)
+        SaleVoidedEventProcessor(contactService, ledgerPostingGate, saleTaxLedgerEntriesBuilder, ledgerPostingService)
     private val salePaymentRecordedProcessor =
         SalePaymentRecordedEventProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
     private val salePaymentVoidedProcessor =
-        SalePaymentVoidedEventProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
+        SalePaymentVoidedEventProcessor(contactService, ledgerPostingGate, ledgerPostingService)
 
     @BeforeEach
     fun setLocationSession() {
@@ -89,6 +95,7 @@ class LedgerPostingBalanceTest {
     @Test
     fun `voiding a sale returns every account to zero`() {
         post(saleConfirmedProcessor.prepareLedgerRequest(saleConfirmedEvent()))
+        markPosted("SALE-1", LedgerSourceType.SALE)
         post(saleVoidedProcessor.prepareLedgerRequest(saleVoidedEvent()))
 
         listOf(SystemAccount.TRADE_RECEIVABLES, SystemAccount.GROSS_SALES, SystemAccount.SALES_DISCOUNTS).forEach {
@@ -110,10 +117,39 @@ class LedgerPostingBalanceTest {
     fun `voiding a payment puts cash back down and receivables back up`() {
         post(saleConfirmedProcessor.prepareLedgerRequest(saleConfirmedEvent()))
         post(salePaymentRecordedProcessor.prepareLedgerRequests(salePaymentRecordedEvent(BigDecimal("40.00"))).single())
+        markPosted("PAY-1", LedgerSourceType.SALE_PAYMENT)
         post(salePaymentVoidedProcessor.prepareLedgerRequest(salePaymentVoidedEvent(BigDecimal("40.00"))))
 
         assertEquals(0, BigDecimal.ZERO.compareTo(balance(SystemAccount.CASH)))
         assertEquals(0, BigDecimal("90.00").compareTo(balance(SystemAccount.TRADE_RECEIVABLES)))
+    }
+
+    @Test
+    fun `a sale void is skipped once the void is posted and fails while the sale itself is unposted`() {
+        assertTrue(saleVoidedProcessor.shouldProcess(saleVoidedEvent()))
+        assertThrows(RtsGenericException::class.java) { saleVoidedProcessor.prepareLedgerRequest(saleVoidedEvent()) }
+
+        markPosted("SALE-1", LedgerSourceType.SALE_VOID)
+        assertFalse(saleVoidedProcessor.shouldProcess(saleVoidedEvent()))
+    }
+
+    @Test
+    fun `a payment void is skipped once the void is posted and fails while the payment itself is unposted`() {
+        assertTrue(salePaymentVoidedProcessor.shouldProcess(salePaymentVoidedEvent(BigDecimal("40.00"))))
+        assertThrows(RtsGenericException::class.java) {
+            salePaymentVoidedProcessor.prepareLedgerRequest(salePaymentVoidedEvent(BigDecimal("40.00")))
+        }
+
+        markPosted("PAY-1", LedgerSourceType.SALE_PAYMENT_VOID)
+        assertFalse(salePaymentVoidedProcessor.shouldProcess(salePaymentVoidedEvent(BigDecimal("40.00"))))
+    }
+
+    private fun markPosted(reference: String, sourceType: LedgerSourceType) {
+        `when`(
+            ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
+                reference, sourceType, SessionContextProvider.getLocationId()
+            )
+        ).thenReturn(true)
     }
 
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {

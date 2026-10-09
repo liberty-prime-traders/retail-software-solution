@@ -41,23 +41,25 @@ class LocationExpenseStore(
         ExpenseBatchEntity(newExpenseBatch.description, newExpenseBatch.source.type, newExpenseBatch.source.reference)
     )
 
-    override fun saveNewExpense(newExpense: NewExpense): ExpenseEntity {
-        val resolvedExpenseRow = newExpense.resolvedExpenseRow
-        val expenseEntity = expenseRepository.save(
-            ExpenseEntity(
-                expenseTypeId = resolvedExpenseRow.expenseType.id,
-                expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
-                payeeContactId = resolvedExpenseRow.payee.id,
-                amount = resolvedExpenseRow.amount,
-                expenseDate = resolvedExpenseRow.expenseDate,
-                description = resolvedExpenseRow.description,
-                sourceType = newExpense.source.type,
-                sourceReference = newExpense.source.reference,
-                batchId = newExpense.batchId
-            )
+    override fun saveNewExpenses(newExpenses: List<NewExpense>): List<ExpenseEntity> {
+        val expenseEntitys = expenseRepository.saveAll(
+            newExpenses.map { newExpense ->
+                val resolvedExpenseRow = newExpense.resolvedExpenseRow
+                ExpenseEntity(
+                    expenseTypeId = resolvedExpenseRow.expenseType.id,
+                    expenseAccountCode = resolvedExpenseRow.expenseType.expenseAccountCode,
+                    payeeContactId = resolvedExpenseRow.payee.id,
+                    amount = resolvedExpenseRow.amount,
+                    expenseDate = resolvedExpenseRow.expenseDate,
+                    description = resolvedExpenseRow.description,
+                    sourceType = newExpense.source.type,
+                    sourceReference = newExpense.source.reference,
+                    batchId = newExpense.batchId
+                )
+            }
         )
-        expensePaymentStateRepository.save(ExpensePaymentStateEntity(expenseId = expenseEntity.id!!))
-        return expenseEntity
+        expensePaymentStateRepository.saveAll(expenseEntitys.map { ExpensePaymentStateEntity(expenseId = it.id!!) })
+        return expenseEntitys
     }
 
     override fun refreshPaymentStates(expenseDtos: Collection<ExpenseDto>) =

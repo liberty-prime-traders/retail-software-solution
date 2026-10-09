@@ -132,8 +132,6 @@ object ExpenseSearchQueryBuilder {
 
         return SqlQuery(sql, params, ExpenseSearchQueryMetadata("expense_search"))
     }
-
-    // Voided expenses report 0 paid and outstanding; why that is correct is in the expense README (Search).
     fun buildSummaryQuery(predicate: QueryBuilderContext, tables: ExpenseSearchTables): SqlQuery {
         val sql = """
             SELECT

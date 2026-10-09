@@ -600,17 +600,13 @@ Events produced by this package:
 | `SalePaymentRecordedEvent`  | Any payment recorded with the commit or stand-alone    | accounting/external systems    |
 | `SalePaymentVoidedEvent`    | `SalePaymentService.voidPayment`                       | accounting/external systems    |
 
-The two payment events are **conditional on the payment method carrying an
-`accountCode` when the payment is recorded**. `SalePaymentWriter` copies it onto
-the payment as `payment_method_account_code` (null when the method had none), and
-every later publish, void and reissue uses that copy, never the method's current
-account — re-pointing a payment method cannot split a payment and its reversal
-across two accounts, and a code added later does not make an unposted payment
-reversible. `SalePaymentHandlerForKafka.publish` drops payment lines with no
-copied code; if every line drops, no event is published.
-`SalePaymentVoidHandlerForKafka.publish` skips the void event for such a payment.
-The sale itself is still persisted/voided — only the downstream accounting
-fan-out is suppressed.
+A payment method always carries an `accountCode`: it is required when the method is created
+or updated. `SalePaymentWriter` copies it onto the payment as the non-null
+`payment_method_account_code`, and every later publish, void and reissue uses that copy, never
+the method's current account — re-pointing a payment method cannot split a payment and its
+reversal across two accounts. `SalePaymentHandlerForKafka.publish` and
+`SalePaymentVoidHandlerForKafka.publish` therefore publish for every payment.
+`SalePaymentHandlerForKafka.reissue` rebuilds the recorded event from every payment on the sale, voided ones included: the recorded-event processor skips payments already posted, and a voided payment whose original never posted must be posted before its void can.
 
 General Kafka processor rules (`shouldProcess` idempotency check backed by
 a unique DB constraint on the natural key, re-entrancy, transactional
@@ -732,8 +728,10 @@ run** — i.e. as soon as the data it needs is in scope.
 - `SaleSearchSummaryResponseDto`'s `confirmedReceivableTotal` /
   `confirmedDiscountTotal` are read off the confirmed row, not summed across
   statuses — summing would add voided sales into a "real" total.
-- Both `createdFrom` and `createdBefore` are required on list and summary searches
-  (`SaleSearchValidator.guardValidParameters`), so every query is time-bounded. `createdBefore` is
+- Both `createdFrom` and `createdBefore` are required on list and summary searches and may span at
+  most one year (`SaleSearchValidator.guardValidParameters` via `SearchGuards.guardBoundedRange`), so
+  every query is time-bounded. Sale payment search applies the same rule to `recordedFrom` and
+  `recordedBefore`. `createdBefore` is
   exclusive. Total filters reject negative values; zero is allowed. `saleReferenceNumbers` drops null
   and blank entries first (`SaleSearchParameters.sanitized`).
 - REST: `POST /secured/sales/search`, `POST /secured/sales/search/summary` on

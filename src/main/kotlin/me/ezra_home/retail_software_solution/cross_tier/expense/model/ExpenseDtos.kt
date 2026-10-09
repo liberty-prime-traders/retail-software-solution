@@ -76,27 +76,31 @@ data class ExpenseAggregate(
     val expenseVoids: List<ExpenseVoidDto>,
     val paymentStates: List<ExpensePaymentStateDto> = emptyList()
 ) {
-    fun isVoided(expenseId: UUID): Boolean = expenseVoids.any { it.expenseId == expenseId }
+    private val voidedPaymentIds: Set<UUID> = paymentVoids.map { it.paymentId }.toSet()
+    private val expensesById: Map<UUID, List<ExpenseDto>> = expenses.groupBy { it.id }
+    private val paymentsByExpenseId: Map<UUID, List<ExpensePaymentDto>> = payments.groupBy { it.expenseId }
+    private val paymentVoidsByPaymentId: Map<UUID, List<ExpensePaymentVoidDto>> = paymentVoids.groupBy { it.paymentId }
+    private val expenseVoidsByExpenseId: Map<UUID, List<ExpenseVoidDto>> = expenseVoids.groupBy { it.expenseId }
+    private val paymentStatesByExpenseId: Map<UUID, List<ExpensePaymentStateDto>> = paymentStates.groupBy { it.expenseId }
+
+    fun isVoided(expenseId: UUID): Boolean = expenseId in expenseVoidsByExpenseId
 
     fun hasActivePayments(expenseId: UUID): Boolean = activePaymentsOf(expenseId).isNotEmpty()
 
     fun activePaidAmount(expenseId: UUID): BigDecimal = activePaymentsOf(expenseId).sumOf { it.amount }
 
-    private fun activePaymentsOf(expenseId: UUID): List<ExpensePaymentDto> {
-        val voidedPaymentIds = paymentVoids.map { it.paymentId }.toSet()
-        return payments.filter { it.expenseId == expenseId && it.id !in voidedPaymentIds }
-    }
+    private fun activePaymentsOf(expenseId: UUID): List<ExpensePaymentDto> =
+        paymentsByExpenseId[expenseId].orEmpty().filter { it.id !in voidedPaymentIds }
 
     fun forExpense(expenseId: UUID): ExpenseAggregate {
-        val expensePayments = payments.filter { it.expenseId == expenseId }
-        val expensePaymentIds = expensePayments.map { it.id }.toSet()
+        val expensePayments = paymentsByExpenseId[expenseId].orEmpty()
         return ExpenseAggregate(
             batches = batches,
-            expenses = expenses.filter { it.id == expenseId },
+            expenses = expensesById[expenseId].orEmpty(),
             payments = expensePayments,
-            paymentVoids = paymentVoids.filter { it.paymentId in expensePaymentIds },
-            expenseVoids = expenseVoids.filter { it.expenseId == expenseId },
-            paymentStates = paymentStates.filter { it.expenseId == expenseId }
+            paymentVoids = expensePayments.flatMap { paymentVoidsByPaymentId[it.id].orEmpty() },
+            expenseVoids = expenseVoidsByExpenseId[expenseId].orEmpty(),
+            paymentStates = paymentStatesByExpenseId[expenseId].orEmpty()
         )
     }
 }

@@ -23,8 +23,6 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.repository.Expen
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseRepositoryBase
 import me.ezra_home.retail_software_solution.cross_tier.expense.repository.ExpenseVoidRepositoryBase
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import java.util.UUID
 
 abstract class JpaExpenseStore(
@@ -38,7 +36,7 @@ abstract class JpaExpenseStore(
 
     protected abstract fun saveNewBatch(newExpenseBatch: NewExpenseBatch): ExpenseBatchBase
 
-    protected abstract fun saveNewExpense(newExpense: NewExpense): ExpenseBase
+    protected abstract fun saveNewExpenses(newExpenses: List<NewExpense>): List<ExpenseBase>
 
     protected abstract fun saveNewPayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentBase>
 
@@ -52,7 +50,8 @@ abstract class JpaExpenseStore(
     override fun findBatchBySource(sourceType: ExpenseSourceType, sourceReference: String): ExpenseBatchDto? =
         expenseBatchRepository.findBySourceTypeAndSourceReference(sourceType, sourceReference)?.let { ExpenseDtoMapper.toDto(it) }
 
-    override fun saveExpense(newExpense: NewExpense): ExpenseDto = ExpenseDtoMapper.toDto(saveNewExpense(newExpense))
+    override fun saveExpenses(newExpenses: List<NewExpense>): List<ExpenseDto> =
+        saveNewExpenses(newExpenses).map { ExpenseDtoMapper.toDto(it) }
 
     override fun savePayments(expensePaymentDrafts: List<ExpensePaymentDraft>): List<ExpensePaymentDto> =
         saveNewPayments(expensePaymentDrafts).map { ExpenseDtoMapper.toDto(it) }
@@ -94,13 +93,6 @@ abstract class JpaExpenseStore(
         val expenseEntities = expenseRepository.findAllById(expenseIds)
         val missingExpenseIds = expenseIds.toSet() - expenseEntities.map { it.id!! }.toSet()
         if (missingExpenseIds.isNotEmpty()) throw RtsGenericException("Expense $missingExpenseIds not found")
-        return assemble(expenseBatchRepository.findAllById(expenseEntities.map { it.batchId }.toSet()), expenseEntities)
-    }
-
-    override fun loadRecent(limit: Int): ExpenseAggregate {
-        val expenseEntities = expenseRepository
-            .findAll(PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdOn", "id")))
-            .content
         return assemble(expenseBatchRepository.findAllById(expenseEntities.map { it.batchId }.toSet()), expenseEntities)
     }
 

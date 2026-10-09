@@ -150,8 +150,14 @@ class ExpenseOperationsTest {
         val secondRecord = expenseDto(BigDecimal("20.0000"), "EXPN02")
         `when`(expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(expenseDate, emptyList()))).thenReturn(listOf(firstRow, secondRow))
         `when`(expenseStore.createBatch(NewExpenseBatch("Freight run", ExpenseSource(ExpenseSourceType.ADHOC, null)))).thenReturn(batchDto)
-        `when`(expenseStore.saveExpense(NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), firstRow))).thenReturn(firstRecord)
-        `when`(expenseStore.saveExpense(NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), secondRow))).thenReturn(secondRecord)
+        `when`(
+            expenseStore.saveExpenses(
+                listOf(
+                    NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), firstRow),
+                    NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), secondRow)
+                )
+            )
+        ).thenReturn(listOf(firstRecord, secondRecord))
         `when`(expenseStore.loadForExpenses(listOf(firstRecord.id, secondRecord.id))).thenReturn(
             ExpenseAggregate(emptyList(), listOf(secondRecord, firstRecord), emptyList(), emptyList(), emptyList())
         )
@@ -172,7 +178,7 @@ class ExpenseOperationsTest {
         val expenseDto = expenseDto(BigDecimal("100.0000"))
         `when`(expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(expenseDate, emptyList()))).thenReturn(listOf(resolvedRow))
         `when`(expenseStore.createBatch(NewExpenseBatch("Freight run", ExpenseSource(ExpenseSourceType.ADHOC, null)))).thenReturn(batchDto)
-        `when`(expenseStore.saveExpense(NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), resolvedRow))).thenReturn(expenseDto)
+        `when`(expenseStore.saveExpenses(listOf(NewExpense(batchDto.id, ExpenseSource(ExpenseSourceType.ADHOC, null), resolvedRow)))).thenReturn(listOf(expenseDto))
         `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("100.0000"), resolvedRow.settlement!!))))
             .thenReturn(listOf(paymentDto(expenseDto.id, "100")))
         `when`(expenseStore.loadForExpenses(listOf(expenseDto.id))).thenReturn(

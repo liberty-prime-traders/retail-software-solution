@@ -16,11 +16,11 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseLedgerGate
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpensePaymentRecordedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpensePaymentVoidedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseRecordedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseVoidedAccountingProcessor
+import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -51,12 +51,12 @@ class ExpensePostingBalanceTest {
     }
     private val ledgerEntryGroupRepository = mock(LedgerEntryGroupRepository::class.java)
     private val ledgerPostingService = mock(LedgerPostingService::class.java)
-    private val expenseLedgerGate = ExpenseLedgerGate(ledgerEntryGroupRepository)
+    private val ledgerPostingGate = LedgerPostingGate(ledgerEntryGroupRepository)
 
-    private val expenseRecordedProcessor = ExpenseRecordedAccountingProcessor(contactService, expenseLedgerGate, ledgerPostingService)
-    private val expenseVoidedProcessor = ExpenseVoidedAccountingProcessor(contactService, expenseLedgerGate, ledgerPostingService)
-    private val expensePaymentRecordedProcessor = ExpensePaymentRecordedAccountingProcessor(contactService, expenseLedgerGate, ledgerPostingService)
-    private val expensePaymentVoidedProcessor = ExpensePaymentVoidedAccountingProcessor(contactService, expenseLedgerGate, ledgerPostingService)
+    private val expenseRecordedProcessor = ExpenseRecordedAccountingProcessor(contactService, ledgerPostingGate, ledgerPostingService)
+    private val expenseVoidedProcessor = ExpenseVoidedAccountingProcessor(contactService, ledgerPostingGate, ledgerPostingService)
+    private val expensePaymentRecordedProcessor = ExpensePaymentRecordedAccountingProcessor(contactService, ledgerPostingGate, ledgerPostingService)
+    private val expensePaymentVoidedProcessor = ExpensePaymentVoidedAccountingProcessor(contactService, ledgerPostingGate, ledgerPostingService)
 
     private val locationLevelContext = EventSourceContext.LocationLevel(orgSchema = "org-a", locationSchema = "loc-1")
     private val orgLevelContext = EventSourceContext.OrgLevel(orgSchema = "org-a")
@@ -107,6 +107,7 @@ class ExpensePostingBalanceTest {
     fun `voiding a settlement restores the liability`() {
         post(expenseRecordedProcessor.prepareLedgerRequest(expenseRecordedEvent(SystemAccount.RENT_EXPENSE)))
         post(expensePaymentRecordedProcessor.prepareLedgerRequest(expensePaymentRecordedEvent(SystemAccount.RENT_EXPENSE)))
+        stubPosted("EXPY01", LedgerSourceType.EXPENSE_PAYMENT)
         post(expensePaymentVoidedProcessor.prepareLedgerRequest(expensePaymentVoidedEvent(SystemAccount.RENT_EXPENSE)))
 
         assertBalance("100.0000", SystemAccount.TRADE_PAYABLES)
@@ -115,6 +116,7 @@ class ExpensePostingBalanceTest {
     @Test
     fun `voiding an expense is the only entry that credits the expense account`() {
         post(expenseRecordedProcessor.prepareLedgerRequest(expenseRecordedEvent(SystemAccount.RENT_EXPENSE)))
+        stubPosted("EXPN01", LedgerSourceType.EXPENSE)
         post(expenseVoidedProcessor.prepareLedgerRequest(expenseVoidedEvent(SystemAccount.RENT_EXPENSE)))
 
         assertBalance("0", SystemAccount.RENT_EXPENSE)
@@ -134,17 +136,23 @@ class ExpensePostingBalanceTest {
     }
 
     @Test
-    fun `a void is only processed once the original posting exists`() {
+    fun `a void is skipped once it is already posted and processed otherwise`() {
         val voidEvent = expenseVoidedEvent(SystemAccount.RENT_EXPENSE)
 
-        assertFalse(expenseVoidedProcessor.shouldProcess(voidEvent))
-
-        `when`(
-            ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-                "EXPN01", LedgerSourceType.EXPENSE, locationId
-            )
-        ).thenReturn(true)
         assertTrue(expenseVoidedProcessor.shouldProcess(voidEvent))
+
+        stubPosted("EXPN01", LedgerSourceType.EXPENSE_VOID)
+        assertFalse(expenseVoidedProcessor.shouldProcess(voidEvent))
+    }
+
+    @Test
+    fun `a void whose original is not posted fails instead of being dropped`() {
+        assertThrows(RtsGenericException::class.java) {
+            expenseVoidedProcessor.prepareLedgerRequest(expenseVoidedEvent(SystemAccount.RENT_EXPENSE))
+        }
+        assertThrows(RtsGenericException::class.java) {
+            expensePaymentVoidedProcessor.prepareLedgerRequest(expensePaymentVoidedEvent(SystemAccount.RENT_EXPENSE))
+        }
     }
 
     @Test
@@ -169,18 +177,27 @@ class ExpensePostingBalanceTest {
     }
 
     @Test
-    fun `an org void is only processed once the org posting exists`() {
+    fun `an org void whose org original is not posted fails`() {
         setOrgOnlySession()
-        val voidEvent = expenseVoidedEvent(SystemAccount.RENT_EXPENSE, orgLevelContext)
 
-        assertFalse(expenseVoidedProcessor.shouldProcess(voidEvent))
+        assertThrows(RtsGenericException::class.java) {
+            expenseVoidedProcessor.prepareLedgerRequest(expenseVoidedEvent(SystemAccount.RENT_EXPENSE, orgLevelContext))
+        }
 
         `when`(
             ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationIdIsNull(
                 "EXPN01", LedgerSourceType.EXPENSE
             )
         ).thenReturn(true)
-        assertTrue(expenseVoidedProcessor.shouldProcess(voidEvent))
+        assertEquals("PAYEE-1", expenseVoidedProcessor.prepareLedgerRequest(
+            expenseVoidedEvent(SystemAccount.RENT_EXPENSE, orgLevelContext)
+        ).subledgerEntries.single().contactReferenceNumber)
+    }
+
+    private fun stubPosted(reference: String, sourceType: LedgerSourceType) {
+        `when`(
+            ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(reference, sourceType, locationId)
+        ).thenReturn(true)
     }
 
     private fun setOrgOnlySession() {

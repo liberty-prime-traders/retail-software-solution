@@ -59,9 +59,10 @@ as `AccountPosting`s.
 ## Expense processors
 
 `ExpensePostingRequests` builds all four expense postings; the four processors
-(`Expense{Recorded,Voided,PaymentRecorded,PaymentVoided}AccountingProcessor`) only gate
-`shouldProcess` through `ExpenseLedgerGate` and resolve the payee's contact reference.
-They serve both location and org expenses.
+(`Expense{Recorded,Voided,PaymentRecorded,PaymentVoided}AccountingProcessor`) extend
+`ExpenseAccountingProcessor`, which gates `shouldProcess` through `LedgerPostingGate` and
+resolves the payee's contact reference; each subclass supplies only its source type, reference,
+payee and request. They serve both location and org expenses.
 
 | Event | Entries | Subledger (payee) |
 |---|---|---|
@@ -78,8 +79,12 @@ Voiding an expense is the only entry that credits the expense account; a refund-
 reversal of a payment never touches it.
 
 Idempotency is keyed on `(reference, source type, location)` in `ledger_entry_group`. A
-void and its original share a reference and differ only by source type, so a void's
-`shouldProcess` also requires the original posting to exist. `ExpenseLedgerGate` picks the
+void and its original share a reference and differ only by source type. A void's
+`shouldProcess` only checks that the void itself is not yet posted; preparing the void
+requires the original posting and throws if it is missing, so the event fails, is logged and
+can be retried once the original posts. A skipped void would never be revisited. The same rule
+holds for `SupplierPaymentVoidAccountingProcessor`, `SaleVoidedEventProcessor` and
+`SalePaymentVoidedEventProcessor`. `LedgerPostingGate` picks the
 location-keyed or the `...SourceLocationIdIsNull` check from the event's `sourceContext`,
 and a location-level event processed outside that location's session is rejected rather than
 keyed elsewhere. An org-level expense is stored with a null `source_location_id`, which

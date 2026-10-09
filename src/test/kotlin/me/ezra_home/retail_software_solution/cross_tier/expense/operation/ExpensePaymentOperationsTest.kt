@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyCollection
-import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -137,7 +136,7 @@ class ExpensePaymentOperationsTest {
     }
 
     @Test
-    fun `a bulk request locks expenses in id order and answers once, in request order`() {
+    fun `a bulk request locks its expenses in one call and answers once, in request order`() {
         val firstExpense = expenseDto(BigDecimal("100"), "EXPN01")
         val secondExpense = expenseDto(BigDecimal("100"), "EXPN02")
         val (lowerIdExpense, higherIdExpense) = listOf(firstExpense, secondExpense).sortedBy { it.id }
@@ -157,9 +156,7 @@ class ExpensePaymentOperationsTest {
             )
         )
 
-        val locksInOrder = inOrder(expenseTier)
-        locksInOrder.verify(expenseTier).lockExpense(lowerIdExpense.id)
-        locksInOrder.verify(expenseTier).lockExpense(higherIdExpense.id)
+        verify(expenseTier).lockExpenses(listOf(firstExpense.id, secondExpense.id))
         assertEquals(listOf(higherIdExpense.referenceNumber, lowerIdExpense.referenceNumber), summaries.map { it.reference })
         assertEquals(1, mockingDetails(expenseResponseBuilder).invocations.count { it.method.name == "buildSummaries" })
     }

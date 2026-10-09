@@ -12,7 +12,7 @@ object SalePaymentSearchValidator {
   private const val MAX_PAGE_SIZE = 500
 
   fun guardValidParameters(salePaymentSearchParameters: SalePaymentSearchParameters) {
-    SearchGuards.guardRangeSupplied(
+    SearchGuards.guardBoundedRange(
       salePaymentSearchParameters.recordedFrom,
       salePaymentSearchParameters.recordedBefore,
       "recordedFrom",

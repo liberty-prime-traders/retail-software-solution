@@ -13,7 +13,7 @@ location owns. Rules, model and ledger behavior are shared with the location exp
 - Source types are `ADHOC` (the org-level standalone screen) and `STOCK_TRANSFER`. A
   transfer is looked up by reference in the organization schema (not filtered by the
   caller's location) and is rejected only while `DRAFT`; `CANCELLED` and `DISPATCHED`
-  are allowed.
+  are allowed; a cancelled transfer may still carry expenses because the money was spent either way.
 - Payment state and search follow `cross_tier/expense/README.md`: `OrgExpensePaymentStateEntity` /
   `OrgExpensePaymentStateRepository`, created and refreshed by `OrgExpenseStore`;
   `OrgExpenseSearchService` builds the shared `ExpenseSearchFetcher` over `OrgExpenseSearchExecutor` and

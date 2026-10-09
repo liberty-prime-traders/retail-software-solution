@@ -23,15 +23,15 @@ class ExpenseReissuerResolverTest {
 
     @Test
     fun `a location in session selects the location tier`() {
-        SessionContextProvider.setLocationSession(LocationSession(UUID.randomUUID(), "loc-1", "UTC"))
+        SessionContextProvider.getSession().location = LocationSession(UUID.randomUUID(), "loc-1", "UTC")
 
         assertSame(locationExpenseReissuer, expenseReissuerResolver.current())
     }
 
     @Test
     fun `clearing the session location selects the org tier again`() {
-        SessionContextProvider.setLocationSession(LocationSession(UUID.randomUUID(), "loc-1", "UTC"))
-        SessionContextProvider.setLocationSession(null)
+        SessionContextProvider.getSession().location = LocationSession(UUID.randomUUID(), "loc-1", "UTC")
+        SessionContextProvider.getSession().location = null
 
         assertSame(orgExpenseReissuer, expenseReissuerResolver.current())
     }

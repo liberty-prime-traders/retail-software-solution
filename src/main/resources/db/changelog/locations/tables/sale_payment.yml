@@ -45,6 +45,9 @@ databaseChangeLog:
               - column:
                   name: payment_method_account_code
                   type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_payment_payment_method_account_code_notnull
 
               - column:
                   name: amount

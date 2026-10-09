@@ -6,9 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Del
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
-import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -32,14 +30,6 @@ class SupplierPaymentHandlerForKafka(
     }
 
     fun publish(payment: SupplierPaymentEntity, supplierId: UUID) {
-        val paymentMethodAccountCode = payment.paymentMethodAccountCode
-        if (!StringUtils.hasValue(paymentMethodAccountCode)) {
-            log.debug(
-                "Payment method {} had no account code when payment {} was recorded — ledger entry skipped",
-                payment.paymentMethodId, payment.referenceNumber
-            )
-            return
-        }
         eventPublisher.publishEvent(
             SupplierPaymentRecordedEvent(
                 eventId = UUID.randomUUID(),
@@ -51,15 +41,11 @@ class SupplierPaymentHandlerForKafka(
                 correlationId = null,
                 paymentId = payment.id!!,
                 supplierId = supplierId,
-                paymentMethodAccountCode = paymentMethodAccountCode!!,
+                paymentMethodAccountCode = payment.paymentMethodAccountCode,
                 amount = payment.amount,
                 paymentDate = payment.paymentDate,
                 paymentReferenceNumber = payment.requiredReference()
             )
         )
-    }
-
-    companion object {
-        private val log = LoggerFactory.getLogger(SupplierPaymentHandlerForKafka::class.java)
     }
 }

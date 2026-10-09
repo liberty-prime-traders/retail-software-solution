@@ -1,23 +1,25 @@
 databaseChangeLog:
   - changeSet:
-      id: create-index-org-expense-payment-expense-id
+      id: create-index-org-expense-payment-expense-id-payment-method-id
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_org_expense_payment_expense_id
+                indexName: idx_org_expense_payment_expense_id_payment_method_id
       changes:
         - createIndex:
-            indexName: idx_org_expense_payment_expense_id
+            indexName: idx_org_expense_payment_expense_id_payment_method_id
             tableName: org_expense_payment
             columns:
               - column:
                   name: expense_id
+              - column:
+                  name: payment_method_id
       rollback:
         - dropIndex:
-            indexName: idx_org_expense_payment_expense_id
+            indexName: idx_org_expense_payment_expense_id_payment_method_id
             tableName: org_expense_payment
 
   - changeSet:

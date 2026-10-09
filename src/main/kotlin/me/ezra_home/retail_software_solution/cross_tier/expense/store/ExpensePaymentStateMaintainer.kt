@@ -15,10 +15,11 @@ object ExpensePaymentStateMaintainer {
     ) {
         if (expenseDtos.isEmpty()) return
         val expenseAmountsById = expenseDtos.associate { it.id to it.amount }
+        // The states load before the sum so a writer that skipped the expense lock fails on @Version instead of persisting a stale sum.
+        val expensePaymentStates = expensePaymentStateRepository.findByExpenseIdIn(expenseAmountsById.keys)
         val activePaidAmountsByExpenseId = expensePaymentStateRepository
             .sumActivePaidByExpenseId(expenseAmountsById.keys)
             .associate { it.expenseId to it.amountPaid }
-        val expensePaymentStates = expensePaymentStateRepository.findByExpenseIdIn(expenseAmountsById.keys)
         val expenseIdsMissingState = expenseAmountsById.keys - expensePaymentStates.map { it.expenseId }.toSet()
         if (expenseIdsMissingState.isNotEmpty()) {
             throw RtsGenericException("Expense payment state is missing for expenses $expenseIdsMissingState")

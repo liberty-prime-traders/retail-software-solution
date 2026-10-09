@@ -10,5 +10,5 @@ data class PaymentMethodDto(
     val referenceNumber: String,
     val name: String? = null,
     val description: String? = null,
-    val accountCode: String? = null
+    val accountCode: String
 )

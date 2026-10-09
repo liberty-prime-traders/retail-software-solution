@@ -1,12 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
@@ -19,7 +17,7 @@ import kotlin.reflect.KClass
 @Service
 class SalePaymentVoidedEventProcessor(
     private val contactService: ContactService,
-    private val ledgerEntryGroupRepository: LedgerEntryGroupRepository,
+    private val ledgerPostingGate: LedgerPostingGate,
     ledgerPostingService: LedgerPostingService
 ) : AccountingEventProcessor<SalePaymentVoidedEvent>(ledgerPostingService) {
 
@@ -27,13 +25,10 @@ class SalePaymentVoidedEventProcessor(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     override fun shouldProcess(event: SalePaymentVoidedEvent): Boolean =
-        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceTypeAndSourceLocationId(
-            event.paymentReferenceNumber,
-            LedgerSourceType.SALE_PAYMENT_VOID,
-            SessionContextProvider.getLocationId()
-        ).not()
+        ledgerPostingGate.isPosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.SALE_PAYMENT_VOID).not()
 
     override fun prepareLedgerRequest(event: SalePaymentVoidedEvent): LedgerPostingRequest {
+        ledgerPostingGate.requirePosted(event.sourceContext, event.paymentReferenceNumber, LedgerSourceType.SALE_PAYMENT)
         val contact = contactService.getContactById(event.contactId)
 
         return LedgerPostingRequest(

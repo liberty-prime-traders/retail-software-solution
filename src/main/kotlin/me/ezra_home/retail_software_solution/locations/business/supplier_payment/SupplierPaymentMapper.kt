@@ -15,5 +15,5 @@ interface SupplierPaymentMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     @Mapping(target = "createdById", ignore = true)
     @Mapping(target = "createdOn", ignore = true)
-    fun toEntity(dto: SupplierPaymentCreateDto, paymentMethodAccountCode: String?): SupplierPaymentEntity
+    fun toEntity(dto: SupplierPaymentCreateDto, paymentMethodAccountCode: String): SupplierPaymentEntity
 }

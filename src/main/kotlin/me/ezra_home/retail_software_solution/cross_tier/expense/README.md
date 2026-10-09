@@ -21,7 +21,7 @@ everything those two share, and sits under `cross_tier/` for the same reason
 | `request/`, `response/` | REST request bodies, `ExpenseSummaryResponse` and `ExpenseResponseBuilder`. Both depend on `model/`, never the reverse |
 | `entities/`, `repository/` | `@MappedSuperclass` bases and `@NoRepositoryBean` bases the tier entities and repositories extend |
 | `store/` | `ExpenseStore` (persistence only), `JpaExpenseStore` (shared reads; tiers only build and save new rows), `ExpenseDtoMapper`, `ExpensePaymentStateMaintainer` |
-| `operation/` | `ExpenseOperations` (creation, expense voids), `ExpenseReadOperations` (single, by-source and recent reads), `ExpensePaymentOperations` (bulk payments, payment voids, settlements), `ExpenseReissueOperations` (re-publishes the four ledger events for existing rows), `ExpenseEvents` (the four ledger events), `ExpenseLookup`, `ExpenseRowResolver` (per-row validation), `ExpenseOperationsFactory`, `ExpenseReissuer` (implemented by each tier's service) |
+| `operation/` | `ExpenseOperations` (creation, expense voids), `ExpenseReadOperations` (single and by-source reads), `ExpensePaymentOperations` (bulk payments, payment voids, settlements), `ExpenseReissueOperations` (re-publishes the four ledger events for existing rows), `ExpenseEvents` (the four ledger events), `ExpenseLookup`, `ExpenseRowResolver` (per-row validation), `ExpenseOperationsFactory`, `ExpenseReissuer` (implemented by each tier's service) |
 | `search/` | Advanced search: filters, SQL, validator, summary, `ExpenseSearchFetcher` and `ExpenseSearchOperations` (see Search) |
 | `kafka_handler/` | the four `EventReissueHandler`s and `ExpenseReissuerResolver` |
 
@@ -79,14 +79,16 @@ and org standalone screens both store `ADHOC`, so a type cannot be limited to on
   Revisit with paging only if that stops holding.
 - A payment is not tied to its expense's date: an expense can be prepaid or paid long after, and
   the only date rule is that the payment date's fiscal period is open.
-- A payment method with no account code is rejected (supplier and sale payments skip the
-  ledger silently in that case; expenses do not, because the liability would stay
-  un-debited while the expense shows settled).
+- A payment method always has an account code (required on create and update), so every
+  payment has a ledger account to post to; the liability would otherwise stay un-debited while the
+  expense shows settled.
 - Voiding an expense requires every payment on it to be voided first. Voids check the
   fiscal period for today, and the reversing entry posts on that same date.
 - Voiding or cancelling a source document does not touch its expenses and is not blocked
-  by them; the money was spent either way.
-- `ExpenseTier.lockExpense` is taken before payments and voids.
+  by them; the money was spent either way. Expenses may likewise be recorded against a cancelled
+  sale (`VOIDED`), purchase (`CANCELED`) or stock transfer (`CANCELLED`); only drafts, and discarded
+  sales that never existed, are refused.
+- `ExpenseTier.lockExpense` is taken before voids, and `ExpenseTier.lockExpenses` before bulk payments; both rely on the advisory-lock helpers acquiring keys in sorted order, so two bulk requests over the same expenses cannot deadlock.
 - `ExpenseStore.refreshPaymentStates` is called after every payment write (`recordPayments`,
   `settleNewExpenses`, `voidPayment`); no triggers. `recordPayments` and `voidPayment` run inside the
   lock they took; `settleNewExpenses` takes none because the expense was written in the same
@@ -135,11 +137,12 @@ per tier (`expense_payment_state`, `org_expense_payment_state`; `ExpensePaymentS
 `payment_status`, `amount_paid`, optimistic `version`). It is not audited: every input is an
 immutable, already-audited row.
 
-- Each tier's `saveNewExpense` creates the row as `UNPAID` / 0 in the same save.
+- Each tier's `saveNewExpenses` saves every row of a submission in one `saveAll` and creates each row's state as `UNPAID` / 0 in a second `saveAll`.
 - `ExpensePaymentStateMaintainer.refresh` recomputes `amount_paid` from active (non-voided)
   payments (`sumActivePaidByExpenseId`, JPQL per tier) and the status with `PaymentStatusResolver`.
   It throws when an expense has no state row: search joins the state table, so a missing row would
   hide the expense from search and summary.
+  Callers must hold the expense lock: the state rows load before the sum is read, so a caller that skipped the lock fails on the state row's `@Version` instead of persisting a stale sum.
 - Voiding an expense does not touch the row: it requires every payment voided first, so it already
   reads `UNPAID` / 0. "Voided" is never a `PaymentStatus`; it is derived from the void table.
 - Reads take status and `amountPaid` from this row: `JpaExpenseStore` loads the rows into
@@ -167,8 +170,8 @@ datasource plus its `ExpenseSearchTables`); each tier's search service builds it
   source-type filter.
 - Paging is keyset on `(created_on, id)` descending, backed by `idx_expense_created_on_id` /
   `idx_org_expense_created_on_id`; one extra row is fetched to compute `hasMore`.
-- `createdFrom` and `createdBefore` are both required on list and summary searches, so every query is
-  time-bounded. Every `*Before` bound is exclusive: `expenseDateBefore = 10-08` excludes 10-08, and
+- `createdFrom` and `createdBefore` are both required on list and summary searches and may span at most
+  one year (`SearchGuards.guardBoundedRange`), so every query is time-bounded. Every `*Before` bound is exclusive: `expenseDateBefore = 10-08` excludes 10-08, and
   equal bounds select nothing. Amount bounds reject negatives; zero is allowed.
 - Reference lists (`expenseReferenceNumbers`, `sourceReferences`) drop null and blank entries
   (`ExpenseSearchParameters.sanitized`, built on `StringUtils.dropBlank`) before validation, so blanks

@@ -86,7 +86,7 @@ class EventRetryServiceTest {
 
     @Test
     fun `a caller with no location still has none after a location row is retried`() {
-        SessionContextProvider.setLocationSession(null)
+        SessionContextProvider.getSession().location = null
         val logId = stubLogEntry(sourceLocationId = rowLocationId)
 
         eventRetryService.retry(logId)

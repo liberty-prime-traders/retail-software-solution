@@ -13,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.mockingDetails
-import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -23,8 +22,7 @@ class SalePaymentHandlersForKafkaTest {
 
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val salePaymentHandlerForKafka = SalePaymentHandlerForKafka(
-        mock(SaleDataFetcher::class.java), mock(SalePaymentRepository::class.java),
-        mock(SalePaymentVoidRepository::class.java), eventPublisher
+        mock(SaleDataFetcher::class.java), mock(SalePaymentRepository::class.java), eventPublisher
     )
     private val salePaymentVoidHandlerForKafka = SalePaymentVoidHandlerForKafka(
         mock(SaleDataFetcher::class.java), mock(SalePaymentRepository::class.java),
@@ -64,15 +62,7 @@ class SalePaymentHandlersForKafkaTest {
         assertEquals("001.099", publishedEvent.paymentMethodAccountCode)
     }
 
-    @Test
-    fun `a payment recorded without an account code publishes neither the payment nor its void`() {
-        salePaymentHandlerForKafka.publish(saleId, contactId, listOf(payment(null)))
-        salePaymentVoidHandlerForKafka.publish(payment(null), voidOf(), contactId)
-
-        verifyNoInteractions(eventPublisher)
-    }
-
-    private fun payment(paymentMethodAccountCode: String?) = SalePaymentEntity(
+    private fun payment(paymentMethodAccountCode: String) = SalePaymentEntity(
         saleId = saleId,
         paymentMethodId = UUID.randomUUID(),
         paymentMethodAccountCode = paymentMethodAccountCode,

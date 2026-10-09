@@ -43,7 +43,8 @@ class ExpenseRowResolver(
         val payeesById = HashMap<UUID, ContactDto>()
         val openDates = HashSet<LocalDate>()
         return expenseSubmission.rowCommands.map { rowCommand ->
-            if (rowCommand.amount <= BigDecimal.ZERO) {
+            val roundedAmount = Decimals.roundToScale4(rowCommand.amount)
+            if (roundedAmount <= BigDecimal.ZERO) {
                 throw RtsGenericException("Expense amount must be greater than zero")
             }
             val expenseType = expenseTypesById.getOrPut(rowCommand.expenseTypeId) {
@@ -65,7 +66,7 @@ class ExpenseRowResolver(
             ResolvedExpenseRow(
                 expenseType = expenseType,
                 payee = payee,
-                amount = Decimals.roundToScale4(rowCommand.amount),
+                amount = roundedAmount,
                 description = StringUtils.getValueOrNull(rowCommand.description),
                 expenseDate = expenseDate,
                 settlement = rowCommand.settlement?.let { resolveSettlement(it, expenseDate, openDates) }
@@ -79,14 +80,11 @@ class ExpenseRowResolver(
         openDates: MutableSet<LocalDate> = HashSet()
     ): ResolvedSettlement {
         val paymentMethodAccountCode = paymentMethodService.findAccountCode(paymentInstruction.paymentMethodId)
-        if (StringUtils.hasValue(paymentMethodAccountCode).not()) {
-            throw RtsGenericException("The selected payment method has no account code and cannot settle an expense")
-        }
         val paymentDate = paymentInstruction.paymentDate ?: defaultPaymentDate
         requireOpenPeriod(openDates, paymentDate)
         return ResolvedSettlement(
             paymentMethodId = paymentInstruction.paymentMethodId,
-            paymentMethodAccountCode = paymentMethodAccountCode!!,
+            paymentMethodAccountCode = paymentMethodAccountCode,
             providerReference = StringUtils.getValueOrNull(paymentInstruction.paymentReference),
             paymentDate = paymentDate
         )

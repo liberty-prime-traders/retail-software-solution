@@ -22,8 +22,8 @@ import me.ezra_home.retail_software_solution.organizations.business.org_expense.
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyCollection
+import org.mockito.ArgumentMatchers.anyIterable
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -54,25 +54,29 @@ class OrgExpenseStoreTest {
             createdById = UUID.randomUUID()
             referenceNumber = "OXPN000001"
         }
-        `when`(orgExpenseRepository.save(any(OrgExpenseEntity::class.java))).thenReturn(orgExpenseEntity)
+        `when`(orgExpenseRepository.saveAll(anyIterable<OrgExpenseEntity>())).thenReturn(listOf(orgExpenseEntity))
         val expenseType = mock(ExpenseTypeDto::class.java)
         `when`(expenseType.id).thenReturn(UUID.randomUUID())
         `when`(expenseType.expenseAccountCode).thenReturn("005.005")
         val payee = mock(ContactDto::class.java)
         `when`(payee.id).thenReturn(UUID.randomUUID())
 
-        orgExpenseStore.saveExpense(
-            NewExpense(
-                orgExpenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null),
-                ResolvedExpenseRow(expenseType, payee, BigDecimal("100.0000"), null, LocalDate.of(2026, 3, 10), null)
+        orgExpenseStore.saveExpenses(
+            listOf(
+                NewExpense(
+                    orgExpenseEntity.batchId, ExpenseSource(ExpenseSourceType.ADHOC, null),
+                    ResolvedExpenseRow(expenseType, payee, BigDecimal("100.0000"), null, LocalDate.of(2026, 3, 10), null)
+                )
             )
         )
 
-        val savedState = ArgumentCaptor.forClass(OrgExpensePaymentStateEntity::class.java)
-        verify(orgExpensePaymentStateRepository).save(savedState.capture())
-        assertEquals(orgExpenseEntity.id, savedState.value.expenseId)
-        assertEquals(PaymentStatus.UNPAID, savedState.value.paymentStatus)
-        assertEquals(0, BigDecimal.ZERO.compareTo(savedState.value.amountPaid))
+        @Suppress("UNCHECKED_CAST")
+        val savedStates = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<OrgExpensePaymentStateEntity>>
+        verify(orgExpensePaymentStateRepository).saveAll(savedStates.capture())
+        val savedState = savedStates.value.single()
+        assertEquals(orgExpenseEntity.id, savedState.expenseId)
+        assertEquals(PaymentStatus.UNPAID, savedState.paymentStatus)
+        assertEquals(0, BigDecimal.ZERO.compareTo(savedState.amountPaid))
     }
 
     @Test
