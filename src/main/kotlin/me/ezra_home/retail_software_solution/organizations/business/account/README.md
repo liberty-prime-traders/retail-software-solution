@@ -17,7 +17,7 @@ a balance).
   segment (`001.001` → `1.1`).
 - `api/AccountResponseDto` — outbound projection enriched with rolled-up
   `currentBalance`, `parentAccount` (label), `accountIsExtensible`,
-  `balanceSignal`, and rolled-up `openingBalance`.
+  `netBalanceSignal`, and rolled-up `openingBalance`.
 
 `AccountCache` (`@CacheSchemaLevel(ORGANIZATION)`) is the only path to
 `AccountRepository` for anything but balance increments — `getAll()` is

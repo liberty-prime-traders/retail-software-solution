@@ -30,7 +30,7 @@ class LocationUserService(
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getLocationUserSummaries(): Collection<MembershipUserSummary> {
-        val usersById = sysUserService.getAllUsers().associateBy { it.id }
+        val usersById = sysUserService.getUsersById()
         return locationUserCache.getMembershipSummaries()
             .map { row -> toMembershipUserSummary(row, usersById[row.userId]) }
     }
@@ -64,7 +64,7 @@ class LocationUserService(
             return emptyList()
         }
         val saved = locationUserCache.createAll(userIds.map { LocationUserInsertDto(userId = it) })
-        val usersById = sysUserService.getAllUsers().associateBy { it.id }
+        val usersById = sysUserService.getUsersById()
         val membershipSummaryRowsByUserId = locationUserCache.getMembershipSummaries().associateBy { it.userId }
         return saved.map { locationUserDto ->
             toMembershipUserSummary(membershipSummaryRowsByUserId.getValue(locationUserDto.userId), usersById[locationUserDto.userId])
@@ -95,9 +95,6 @@ class LocationUserService(
             locationUserMapper.toDto(saved)
         }
     }
-
-    @TransactionalOnLocationSchema(readOnly = true)
-    fun getActiveMembershipId(userId: UUID): UUID = getActiveMembershipIds(listOf(userId)).getValue(userId)
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getActiveMembershipIds(userIds: Collection<UUID>): Map<UUID, UUID> {

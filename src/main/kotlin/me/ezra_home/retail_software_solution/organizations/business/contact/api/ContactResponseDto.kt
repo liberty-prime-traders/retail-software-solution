@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
 import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -20,6 +21,10 @@ data class ContactResponseDto(
     val phone: String? = null,
     val address: String? = null,
     val creditLimit: BigDecimal? = null,
+    val receivableBalance: BigDecimal,
+    val payableBalance: BigDecimal,
+    val netBalance: BigDecimal,
+    val balanceSignal: BalanceSignal,
     val notes: String? = null,
     val status: ContactStatus,
     val systemDefined: Boolean

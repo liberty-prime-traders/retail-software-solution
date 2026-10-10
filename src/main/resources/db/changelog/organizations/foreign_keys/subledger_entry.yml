@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-subledger-entry-group-reference-number
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_subledger_entry_group_reference_number
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: subledger_entry
+            baseColumnNames: group_reference_number
+            referencedTableName: ledger_entry_group
+            referencedColumnNames: reference_number
+            constraintName: fk_subledger_entry_group_reference_number
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: subledger_entry
+            constraintName: fk_subledger_entry_group_reference_number

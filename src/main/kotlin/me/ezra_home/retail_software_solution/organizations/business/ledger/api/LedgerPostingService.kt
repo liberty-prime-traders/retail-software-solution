@@ -10,11 +10,11 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Ledge
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryRepository
+import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerBalanceRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.time.Instant
 
 @Service
@@ -23,6 +23,7 @@ class LedgerPostingService(
     private val groupRepository: LedgerEntryGroupRepository,
     private val entryRepository: LedgerEntryRepository,
     private val subledgerRepository: SubledgerEntryRepository,
+    private val subledgerBalanceRepository: SubledgerBalanceRepository,
     private val accountsAndLedgerLock: AccountsAndLedgerLock,
     private val fiscalPeriodService: FiscalPeriodService,
     private val accountService: AccountService,
@@ -76,19 +77,25 @@ class LedgerPostingService(
     }
 
     private fun saveSubledgerEntries(groupReferenceNumber: String, ledgerPostingRequest: LedgerPostingRequest) {
+        if (ledgerPostingRequest.subledgerEntries.isEmpty()) return
         val contactReferenceNumbers = ledgerPostingRequest.subledgerEntries.map { it.contactReferenceNumber }.toSet()
-        val latestByContact = subledgerRepository.findLatestForContacts(contactReferenceNumbers)
+        val balancesByContact = subledgerBalanceRepository.findByContactReferenceNumberIn(contactReferenceNumbers)
             .associateBy { it.contactReferenceNumber }
 
         subledgerRepository.saveAll(
             ledgerPostingRequest.subledgerEntries.map { subledgerEntryRequest ->
+                val subledgerBalanceEntity = balancesByContact[subledgerEntryRequest.contactReferenceNumber]
+                    ?: throw RtsGenericException("No subledger balance exists for contact ${subledgerEntryRequest.contactReferenceNumber}")
+                // Managed entity: dirty checking flushes the new totals with the entry rows.
+                subledgerBalanceEntity.runningPayable += subledgerEntryRequest.payableAmount
+                subledgerBalanceEntity.runningReceivable += subledgerEntryRequest.receivableAmount
                 SubledgerEntryEntity(
                     groupReferenceNumber = groupReferenceNumber,
                     contactReferenceNumber = subledgerEntryRequest.contactReferenceNumber,
                     payableAmount = subledgerEntryRequest.payableAmount,
                     receivableAmount = subledgerEntryRequest.receivableAmount,
-                    runningPayable = (latestByContact[subledgerEntryRequest.contactReferenceNumber]?.runningPayable ?: BigDecimal.ZERO) + subledgerEntryRequest.payableAmount,
-                    runningReceivable = (latestByContact[subledgerEntryRequest.contactReferenceNumber]?.runningReceivable ?: BigDecimal.ZERO) + subledgerEntryRequest.receivableAmount
+                    runningPayable = subledgerBalanceEntity.runningPayable,
+                    runningReceivable = subledgerBalanceEntity.runningReceivable
                 )
             }
         )

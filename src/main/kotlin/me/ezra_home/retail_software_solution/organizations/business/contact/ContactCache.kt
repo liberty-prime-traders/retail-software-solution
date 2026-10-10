@@ -9,7 +9,6 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
-import java.util.UUID
 
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
@@ -37,12 +36,8 @@ class ContactCache(
     }
 
     @CacheEvict(allEntries = true)
-    fun save(contactEntity: ContactEntity) {
-        contactRepository.save(contactEntity)
-    }
-
-    @CacheEvict(allEntries = true)
-    fun deleteContact(id: UUID) {
-        contactRepository.deleteById(id)
+    fun save(contactEntity: ContactEntity): ContactDto {
+        val saved = contactRepository.save(contactEntity)
+        return contactMapper.toDomainDto(saved)
     }
 }

@@ -37,7 +37,7 @@ class OrganizationUserService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getOrganizationUserSummaries(): Collection<MembershipUserSummary> {
-        val usersById = sysUserService.getAllUsers().associateBy { it.id }
+        val usersById = sysUserService.getUsersById()
         return organizationUserCache.getMembershipSummaries()
             .map { row ->
                 val user = usersById[row.userId]

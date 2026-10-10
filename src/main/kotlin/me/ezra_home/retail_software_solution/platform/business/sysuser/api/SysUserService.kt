@@ -19,13 +19,16 @@ class SysUserService(
     fun getAllUsers(): Collection<SysUserWithProfileDto> = sysUserCache.getAllUsers()
 
     @TransactionalOnPlatformSchema(readOnly = true)
+    fun getUsersById(): Map<UUID, SysUserWithProfileDto> = sysUserCache.getUsersById()
+
+    @TransactionalOnPlatformSchema(readOnly = true)
     fun getEndUsers(): Collection<SysUserWithProfileDto> = sysUserCache.getEndUsers()
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun findByEmail(email: String): SysUserWithProfileDto? = getAllUsers().find { it.email == email }
 
     @TransactionalOnPlatformSchema(readOnly = true)
-    fun findById(userId: UUID): SysUserWithProfileDto? = getAllUsers().find { it.id == userId }
+    fun findById(userId: UUID): SysUserWithProfileDto? = getUsersById()[userId]
 
     @TransactionalOnPlatformSchema(readOnly = true)
     fun throwIfAccountIsDisabled(userId: UUID) {

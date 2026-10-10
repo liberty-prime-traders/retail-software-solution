@@ -56,6 +56,42 @@ takes the closing accounts and Retained Earnings through
 `AccountStructureLock` directly, and `ledger` hands `account` its posting lines
 as `AccountPosting`s.
 
+## Reading the subledger: `SubledgerService`
+
+`api/SubledgerService` is the only read path other domains use.
+
+- `getCurrentBalances` returns each contact's current `running_payable` /
+  `running_receivable`; `ContactService` uses it for the glance balances on
+  `ContactResponseDto` (a contact with no rows reads as `SubledgerBalanceDto.ZERO`).
+  `SubledgerBalanceDto` also derives `netBalance` (absolute `receivable - payable`) and a
+  `BalanceSignal`: `MONEY_OUT` when they owe us, `MONEY_IN` when we owe them, `ZERO_BALANCE` when
+  equal. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
+  `transactionBalanceSignal` from the entry's own payable/receivable delta; the raw payable and
+  receivable figures are not exposed.
+- `subledger_balance` holds one row per contact with its current `running_payable` /
+  `running_receivable`, and `getCurrentBalances` reads it. The row is created with the contact
+  (`ContactService.createContact`, and `ContactSeeder` for the system Walk-In contact, both through
+  `SubledgerService.openBalance`). Balances are stored at scale 4, and `SubledgerBalanceDto.ZERO`
+  matches it. `LedgerPostingService` updates it in the same transaction as each
+  `subledger_entry` insert, under the `SUBLEDGER_CONTACT` advisory lock, and fails the posting if
+  the contact has no row. Besides posting, only `SubledgerService.reconcileBalances` writes it:
+  `SubledgerBalanceReconciliationJob` runs it for every provisioned organization nightly at 02:30,
+  which also catches up an organization that predates the table and resets any drifted row. It
+  locks the contacts, then sets each row to the sum of that contact's entry amounts (creating
+  missing rows) and logs a warning for every row it had to change. Seed defaults does not
+  reconcile; it only opens the Walk-In contact's row when it creates that contact.
+- `subledger_entry` stays the append-only history; each row carries the running figures as of its
+  posting. The balance row is a derived total and is not audited. Entries are ordered by
+  `created_on` for display only; no total depends on that order, so clock skew between nodes
+  cannot corrupt a balance.
+- `getEntries` pages one contact's rows newest first, keyset on `(created_on, id)` via
+  `KeysetSearchCursor`, over-fetching one row to set `hasMore`. Because the query is filtered by
+  the contact's reference number, a cursor only means something against the contact it came
+  from — each contact pages its own history. Page size is 1..200. Each row is enriched with the
+  source type and source reference of its `ledger_entry_group`, fetched in one query per page.
+- Exposed as `POST secured/contacts/{id}/ledger` with the standard `PageRequest` body (`parameters` is an empty object); contacts are
+  never deleted, only status-changed, so the history always has an owner.
+
 ## Expense processors
 
 `ExpensePostingRequests` builds all four expense postings; the four processors

@@ -31,7 +31,7 @@ class OrganizationAdminService(
     }
 
     private fun validateUserExists(adminId: UUID) {
-        sysUserService.getAllUsers().find { it.id == adminId }
+        sysUserService.findById(adminId)
             ?: throw RtsGenericException("User with id $adminId not found")
     }
 

@@ -10,6 +10,7 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @CacheConfig(cacheNames = [CacheNames.USER])
@@ -26,6 +27,11 @@ class SysUserCache(
     @Cacheable
     fun getAllUsers(): Collection<SysUserWithProfileDto> {
         return getSystemUsers().map { toProfileDto(it) }
+    }
+
+    @Cacheable
+    fun getUsersById(): Map<UUID, SysUserWithProfileDto> {
+        return getAllUsers().associateBy { it.id }
     }
 
     @Cacheable
