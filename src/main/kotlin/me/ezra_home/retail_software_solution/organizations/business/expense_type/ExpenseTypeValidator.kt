@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.expense_type
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.api.AccountSelectionRule
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.api.AccountSelectionService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
@@ -13,7 +14,7 @@ import java.util.UUID
 
 @Component
 class ExpenseTypeValidator(
-    private val accountService: AccountService,
+    private val accountSelectionService: AccountSelectionService,
     private val expenseTypeRepository: ExpenseTypeRepository,
     private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock
 ) {
@@ -21,7 +22,11 @@ class ExpenseTypeValidator(
     fun guardInsertable(expenseTypeInsertDto: ExpenseTypeInsertDto) {
         guardNameAvailable(expenseTypeInsertDto.name, null)
         guardEligibilityNotEmpty(expenseTypeInsertDto.eligiblePayeeTypes, expenseTypeInsertDto.eligibleSourceTypes)
-        accountService.requireActiveExpenseLeafAccount(expenseTypeInsertDto.expenseAccountCode)
+        guardAccountSelectable(expenseTypeInsertDto.expenseAccountCode)
+    }
+
+    fun guardAccountSelectable(expenseAccountCode: String) {
+        accountSelectionService.requireSelectable(AccountSelectionRule.EXPENSE_TYPE, expenseAccountCode)
     }
 
     fun guardNameAvailable(name: String, expenseTypeId: UUID?) {

@@ -40,7 +40,7 @@ class ChildAccountCreator(
         ensureParentCanGainChild(parent)
         preventNameCollisionAmongSiblings(childCreateRequest, siblings)
         preventSystemAccountGainingGrandChild(parent, accountsByCode)
-        accountUsagesFinder.failOnUsagesForCode(parent.code)
+        accountUsagesFinder.failOnUsagesForCode(parent.code, "have children added to it")
     }
 
     private fun ensureParentCanGainChild(parent: AccountDto) {

@@ -160,7 +160,12 @@ Update Flow
 -------------
 - UpdateDto should have an applyTo(existing: XxxDomainDto): XxxDomainDto method that handles the merge.
 - Only updatable fields are mentioned
-- Other than the id, most fields show be Optional<TYPE>?. 
+- Decide per field. Where the caller must be able to clear the value to null (e.g. `notes`, `email`), use
+  `Optional<TYPE>? = null`; model it on `ContactUpdateDto`: `email = email?.orElse(existing.email) ?: existing.email`.
+- Where null is not a legal value (line updates, unit conversions, required fields), plain `TYPE? = null` is
+  enough — null already means "not provided".
+- A dedicated single-field endpoint (e.g. `SaleNotesUpdateDto`) that always overwrites needs neither.
+- Before writing a new UpdateDto, open `ContactUpdateDto` for the shape.
 - The nullability allows us to distinguish between "not provided" and "explicitly set to null/empty".
 - We have a generic OptionalQualifier to help, but applyTo can handle it on its own.
 - generated fields(id, referenceNumber, createdOn, createdById) are carried through automatically by copy().

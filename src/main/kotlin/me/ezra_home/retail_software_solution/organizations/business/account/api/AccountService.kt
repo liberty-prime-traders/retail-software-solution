@@ -22,7 +22,8 @@ class AccountService(
     private val accountRepository: AccountRepository,
     private val accountResponseBuilder: AccountResponseBuilder,
     private val childAccountCreator: ChildAccountCreator,
-    private val accountStructureLock: AccountStructureLock
+    private val accountStructureLock: AccountStructureLock,
+    private val accountUsagesFinder: AccountUsagesFinder
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -79,6 +80,9 @@ class AccountService(
         if (existing.accountIsActive == setActive) {
             return accountResponseBuilder.buildResponse(existing)
         }
+        if (!setActive) {
+            accountUsagesFinder.failOnUsagesForCode(existing.code, "be deactivated")
+        }
         val saved = accountCache.update(existing.copy(accountIsActive = setActive))
         return accountResponseBuilder.buildResponse(saved)
     }
@@ -89,11 +93,6 @@ class AccountService(
             ?: throw RtsGenericException("Account not found")
         accountStructureLock.acquire(accountCode)
         return accountCache.getAllFresh().first { it.id == id }
-    }
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun requireActiveExpenseLeafAccount(accountCode: String) {
-        AccountAssertions.assertActiveExpenseLeaf(accountCache.getAllFresh(), accountCode)
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)

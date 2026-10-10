@@ -34,3 +34,7 @@ posts to and which payees and entry points may use it. Endpoint: `secured/expens
 - Eligibility is enforced per expense row by `ExpenseRowResolver`, not here.
 - `getAll(sourceType)` returns types ordered by name, filtered to those listing `sourceType` when it
   is given.
+- A custom type's account must be a leaf `EXPENSE` account that no flow posts to directly (the reserved set is owned
+  by `AccountSelectionRule.EXPENSE_TYPE` in `account_selection/`). `ExpenseTypeValidator.guardAccountSelectable`
+  enforces it on create and on account change; the same rule drives the `expenseTypes` selection tree. System types
+  seed past the validator.
