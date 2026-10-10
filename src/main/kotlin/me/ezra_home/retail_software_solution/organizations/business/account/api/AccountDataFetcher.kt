@@ -13,6 +13,12 @@ class AccountDataFetcher(
     private val accountCache: AccountCache
 ) {
 
+    fun getSelectionCandidates(): List<AccountSelectionCandidate> =
+        AccountSelectionCandidate.fromAccounts(accountCache.getAll())
+
+    fun getFreshSelectionCandidates(): List<AccountSelectionCandidate> =
+        AccountSelectionCandidate.fromAccounts(accountCache.getAllFresh())
+
     fun getByCode(accountCode: String): AccountLookupDto {
         val account = accountCache.getAll().firstOrNull { it.code == accountCode }
             ?: throw RtsGenericException("Account $accountCode does not exist")

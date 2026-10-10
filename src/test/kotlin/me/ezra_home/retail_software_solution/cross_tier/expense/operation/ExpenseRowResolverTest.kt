@@ -37,7 +37,7 @@ class ExpenseRowResolverTest {
     private val supplierContact = contactDto(setOf(ContactType.SUPPLIER))
     private val employeeContact = contactDto(setOf(ContactType.EMPLOYEE))
     private val freightExpenseType = expenseTypeDto(
-        eligiblePayeeTypes = setOf(ContactType.SUPPLIER, ContactType.CONTRACTOR),
+        eligiblePayeeTypes = setOf(ContactType.SUPPLIER, ContactType.SERVICE_PROVIDER),
         eligibleSourceTypes = setOf(ExpenseSourceType.ADHOC, ExpenseSourceType.PURCHASE)
     )
 

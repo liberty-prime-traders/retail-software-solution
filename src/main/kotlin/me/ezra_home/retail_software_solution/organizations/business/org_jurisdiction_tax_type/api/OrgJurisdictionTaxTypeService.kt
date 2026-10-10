@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.organizations.business.org_jurisdi
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
-import me.ezra_home.retail_software_solution.organizations.business.account.api.TaxAccountsValidator
 import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.OrgJurisdictionTaxTypeCache
+import me.ezra_home.retail_software_solution.organizations.business.org_jurisdiction_tax_type.TaxAccountsValidator
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxRecoveryType

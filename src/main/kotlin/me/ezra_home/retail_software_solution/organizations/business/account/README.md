@@ -76,8 +76,10 @@ Five base types plus five "contra" counterparts, each declaring its
 
 A fixed chart-of-accounts skeleton (Assets → Current Assets → Cash, etc.),
 each entry carrying its own `code`/`name`/`type`/`parent`. `CoaDefaultsInserter`
-seeds any `SystemAccount` missing from `AccountCache.getAll()` on org setup —
-safe to re-run, since it only inserts codes not already present.
+is an `OrgDataSeeder` ordered before `ExpenseTypeSeeder`, so every org's seed-defaults
+call creates any `SystemAccount` missing from the cache, whether or not
+`CHART_OF_ACCOUNTS` is activated (the feature activator calls it too). Safe to
+re-run, since it only inserts codes not already present.
 
 - `accountIsSystemMaintained = true` accounts cannot be renamed, deactivated,
   or renumbered — `AccountService.rename`/`toggleActive` reject them outright.
@@ -115,8 +117,8 @@ safe to re-run, since it only inserts codes not already present.
     (blocks a 3rd-level insert under an extensible system branch — e.g. you
     can add a payment account under Digital Payments, but not a child of
     that payment account),
-  - `AccountUsagesFinder.failOnUsagesForCode(parent.code)` — a parent already
-    referenced by a payment method or tax type cannot gain children.
+  - `AccountUsagesFinder.failOnUsagesForCode(parent.code, ...)` — a parent already
+    referenced by a payment method, tax type or expense type cannot gain children.
 
   Before any of that, `AccountService.createChild` takes
   `OrgEntityAdvisoryLock.acquire(LockNamespaces.ACCOUNT, parentAccountCode)`.
@@ -133,19 +135,25 @@ this interface so `AccountUsagesFinder` can report/forbid conflicting edits:
 
 - `PaymentMethodAccountUsageProvider` (`payment_method/`)
 - `TaxAccountReferenceProviders` (`org_jurisdiction_tax_type/`)
+- `ExpenseTypeAccountUsageProvider` (`expense_type/`)
 
 `AccountUsagesFinder.findUsagesForAccountCode` fans out to every provider and
-returns the non-empty ones; `failOnUsagesForCode` throws if any exist.
+returns the non-empty ones; `failOnUsagesForCode(code, blockedAction)` throws if any exist.
+Callers: `createChild` (blocks "have children added to it") and `toggleActive` when
+deactivating (blocks "be deactivated"). Both run under the account's
+`AccountStructureLock`, and `AccountSelectionService.requireSelectable` takes the same
+lock before a payment method, tax type or expense type saves its reference, so a reference
+and a deactivation or new child cannot interleave.
 
-## Validators
+Usages are only the org-level references above. Expense rows and sale payments hold
+payment method ids, and nothing blocks deleting a payment method that they reference.
 
-- `PaymentAccountValidator` — a payment method's linked account must be
-  active, `ASSET`, and either `SystemAccount.CASH` or a child of
-  `DIGITAL_PAYMENTS` (system) / any active non-system asset (org-defined).
-- `TaxAccountsValidator` — payable account must be `LIABILITY` (or a child of
-  `TAX_PAYABLE`); recoverable account is required iff
-  `TaxRecoveryType.RECOVERABLE` and must be `ASSET` (or a child of
-  `TAX_RECOVERABLE`).
+## Account validation for other domains
+
+Which accounts a payment method, tax type or expense type may point at is owned by
+`account_selection/` (rules, selection trees, `requireSelectable`), not here. This domain
+exposes `AccountSelectionCandidate` (via `AccountDataFetcher.getSelectionCandidates` /
+`getFreshSelectionCandidates`) as the view those rules read.
 
 ## Balances
 
@@ -159,7 +167,7 @@ returns the non-empty ones; `failOnUsagesForCode` throws if any exist.
   an inactive account — i.e. whose `EntryType` equals the account's
   `normalBalance`. Entries that draw an inactive account down are allowed.
   It reads `getAllFresh()` after `ledger` takes the account locks; every
-  writer of those facts (`createChild`, `seedDefaults`, `rename`,
+  writer of those facts (`createChild`, `CoaDefaultsInserter.seed`, `rename`,
   `toggleActive`, opening-balance upsert) takes `AccountStructureLock` on the
   account and, where it reads before writing, reads `getAllFresh()` once the
   lock is held. `rename` and `toggleActive` write the whole row, so a stale
@@ -188,12 +196,3 @@ returns the non-empty ones; `failOnUsagesForCode` throws if any exist.
   - **Known gap** (see TODO in the class): this mutates running balances
     without writing offsetting ledger entries. A proper close should post a
     `ledger_entry_group` with `source_type = YEAR_END_CLOSE` instead.
-
-## Selection trees (`api/AccountTreeBuilder`)
-
-Builds three `TreeNode<String>` forests off the same account list for
-different UI pickers — `payable`, `recoverable`, `paymentMethods` — pruning
-any branch that is neither selectable nor an ancestor of a selectable node.
-Selectability mirrors the validators above (e.g. `paymentMethods` accepts
-`CASH`, system children of `DIGITAL_PAYMENTS`, or any active non-system
-asset).

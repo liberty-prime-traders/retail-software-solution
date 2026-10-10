@@ -23,6 +23,7 @@ class LocationProductForSaleAssembler(
                 quantityOnHand = availability.quantityOnHand,
                 quantityReserved = availability.quantityReserved,
                 quantityAvailable = availability.quantityAvailable,
+                defaultSalePrice = locationProductDto.defaultSalePrice!!
             )
         }
     }

@@ -2,16 +2,19 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountCache
+import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgDataSeeder
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 @Component
 @TransactionalOnOrganizationSchema
+@Order(OrgDataSeeder.CHART_OF_ACCOUNTS)
 class CoaDefaultsInserter(
     private val accountCache: AccountCache,
     private val accountStructureLock: AccountStructureLock
-) {
+) : OrgDataSeeder {
 
-    fun seedDefaults() {
+    override fun seed() {
         accountStructureLock.acquire(SystemAccount.entries.mapNotNull { it.parent?.code }.toSet())
         val allAccounts = accountCache.getAllFresh().map { it.code }.toSet()
         val toInsert = SystemAccount.entries.filter { it.code !in allAccounts }

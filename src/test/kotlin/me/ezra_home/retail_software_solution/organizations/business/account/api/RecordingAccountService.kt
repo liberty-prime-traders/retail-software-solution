@@ -37,7 +37,8 @@ class RecordingAccountService(accountDtos: List<AccountDto> = systemAccountDtos(
             recordingAccountRepository,
             mock(AccountResponseBuilder::class.java),
             mock(ChildAccountCreator::class.java),
-            mock(AccountStructureLock::class.java)
+            mock(AccountStructureLock::class.java),
+            mock(AccountUsagesFinder::class.java)
         )
     }
 

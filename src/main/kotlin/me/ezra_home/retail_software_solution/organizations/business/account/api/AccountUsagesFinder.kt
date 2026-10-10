@@ -14,10 +14,10 @@ class AccountUsagesFinder(
             .filter { it.references.isNotEmpty() }
     }
 
-    fun failOnUsagesForCode(code: String) {
+    fun failOnUsagesForCode(code: String, blockedAction: String) {
         val references = findUsagesForAccountCode(code)
         if (references.isNotEmpty()) {
-            throw RtsGenericException("Account is in use and cannot have children added to it", references)
+            throw RtsGenericException("Account is in use and cannot $blockedAction", references)
         }
     }
 }

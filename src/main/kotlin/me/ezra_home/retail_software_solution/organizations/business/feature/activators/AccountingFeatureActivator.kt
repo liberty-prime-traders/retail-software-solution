@@ -16,7 +16,7 @@ class AccountingFeatureActivator(
     override val feature = Feature.CHART_OF_ACCOUNTS
 
     override fun onActivate() {
-        coaDefaultsInserter.seedDefaults()
+        coaDefaultsInserter.seed()
         orgAccountingConfigService.initialize()
     }
 }

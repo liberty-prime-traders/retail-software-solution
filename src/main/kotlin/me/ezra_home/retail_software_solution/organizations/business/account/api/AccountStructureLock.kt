@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 // Guards an account's position in the tree — specifically, whether it's a leaf (has no
 // children) — against features that each run a check-then-write on that same fact: createChild,
-// seedDefaults, OpeningBalanceService.upsert, and ledger postings (via AccountsAndLedgerLock).
+// CoaDefaultsInserter.seed, OpeningBalanceService.upsert, and ledger postings (via AccountsAndLedgerLock).
 //
 // Without a shared lock they can interleave: a posting or opening balance reads "no children yet",
 // a child is created under that account before it writes, and the non-leaf account still receives
