@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
-import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -25,4 +24,4 @@ data class PurchaseResponseDto(
   val deliveredTotal: BigDecimal,
   val paymentCeiling: BigDecimal,
   val deliveries: List<PurchaseDeliveryResponseDto>
-) : Serializable
+)

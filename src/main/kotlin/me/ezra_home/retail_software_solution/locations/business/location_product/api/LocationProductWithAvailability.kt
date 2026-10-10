@@ -11,4 +11,5 @@ data class LocationProductWithAvailability(
     val quantityOnHand: BigDecimal,
     val quantityReserved: BigDecimal,
     val quantityAvailable: BigDecimal,
+    val defaultSalePrice: BigDecimal,
 )

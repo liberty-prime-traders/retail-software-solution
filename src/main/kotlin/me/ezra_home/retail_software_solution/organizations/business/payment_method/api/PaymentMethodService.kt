@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.payment_met
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
-import me.ezra_home.retail_software_solution.organizations.business.account.api.PaymentAccountValidator
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodCache
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.PaymentMethodMapper
 import me.ezra_home.retail_software_solution.util.business.StringUtils

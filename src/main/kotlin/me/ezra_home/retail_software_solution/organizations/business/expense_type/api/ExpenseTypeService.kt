@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.organizations.business.expense_typ
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.ExpenseTypeMapper
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.ExpenseTypeRepository
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.ExpenseTypeValidator
@@ -17,8 +16,7 @@ import java.util.UUID
 class ExpenseTypeService(
     private val expenseTypeRepository: ExpenseTypeRepository,
     private val expenseTypeMapper: ExpenseTypeMapper,
-    private val expenseTypeValidator: ExpenseTypeValidator,
-    private val accountService: AccountService
+    private val expenseTypeValidator: ExpenseTypeValidator
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -52,7 +50,7 @@ class ExpenseTypeService(
 
     fun update(expenseTypeUpdateDto: ExpenseTypeUpdateDto): ExpenseTypeResponseDto {
         val trimmedExpenseTypeUpdateDto = expenseTypeUpdateDto.copy(
-            name = expenseTypeUpdateDto.name?.let { StringUtils.getValueOrException(it, EXPENSE_TYPE_NAME_REQUIRED) }
+            name = expenseTypeUpdateDto.name?.map { StringUtils.getValueOrException(it, EXPENSE_TYPE_NAME_REQUIRED) }
         )
         val expenseTypeEntity = expenseTypeRepository.findById(trimmedExpenseTypeUpdateDto.id)
             .orElseThrow { UpdatingNonExistingRecordException() }
@@ -67,7 +65,7 @@ class ExpenseTypeService(
             updatedExpenseTypeDto.eligibleSourceTypes
         )
         if (updatedExpenseTypeDto.expenseAccountCode != existingExpenseTypeDto.expenseAccountCode) {
-            accountService.requireActiveExpenseLeafAccount(updatedExpenseTypeDto.expenseAccountCode)
+            expenseTypeValidator.guardAccountSelectable(updatedExpenseTypeDto.expenseAccountCode)
         }
         expenseTypeEntity.name = updatedExpenseTypeDto.name
         expenseTypeEntity.expenseAccountCode = updatedExpenseTypeDto.expenseAccountCode

@@ -19,17 +19,6 @@ object AccountAssertions {
         }
     }
 
-    fun assertActiveExpenseLeaf(accounts: Collection<AccountDto>, accountCode: String) {
-        val account = requireKnown(accounts.associateBy { it.code }, accountCode)
-        requireLeaf(account, parentAccountCodesOf(accounts))
-        if (account.accountType != AccountType.EXPENSE) {
-            throw RtsGenericException("${account.label} is not an expense account")
-        }
-        if (account.accountIsActive.not()) {
-            throw RtsGenericException("${account.label} is inactive")
-        }
-    }
-
     private fun parentAccountCodesOf(accounts: Collection<AccountDto>): Set<String> =
         accounts.mapNotNull { it.parentAccountCode }.toSet()
 

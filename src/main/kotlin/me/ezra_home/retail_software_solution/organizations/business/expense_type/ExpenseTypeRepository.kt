@@ -8,4 +8,6 @@ import java.util.UUID
 interface ExpenseTypeRepository : JpaRepository<ExpenseTypeEntity, UUID> {
 
     fun findByCode(code: String): ExpenseTypeEntity?
+
+    fun findAllByExpenseAccountCode(expenseAccountCode: String): List<ExpenseTypeEntity>
 }
