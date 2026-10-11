@@ -1,7 +1,11 @@
 # opening_balance
 
 Lets org admins declare a starting balance for any postable (leaf, active)
-account. `opening_balance` rows are **append-only** — a correction inserts a
+account, except `TRADE_RECEIVABLES` and `TRADE_PAYABLES`: those are the
+subledger control accounts, rejected by
+`OpeningBalanceAccountValidator.requireNotSubledgerControl`, because their
+totals must equal the sum of the contacts' balances and so can only come
+from contact opening balances (`contact_opening_balance/README.md`). `opening_balance` rows are **append-only** — a correction inserts a
 new row rather than mutating an old one, so every past declaration stays
 exactly as it was posted.
 

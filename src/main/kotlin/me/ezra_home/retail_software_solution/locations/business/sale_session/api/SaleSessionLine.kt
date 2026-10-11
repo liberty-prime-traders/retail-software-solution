@@ -9,6 +9,7 @@ data class SaleSessionLine(
     val identity: SessionIdentity,
     override val locationProductId: UUID,
     val productLabel: String,
+    val productPrintLabel: String,
     override val quantity: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,

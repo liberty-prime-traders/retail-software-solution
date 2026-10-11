@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-subledger-balance-contact-reference-number
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_subledger_balance_contact_reference_number
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: subledger_balance
+            baseColumnNames: contact_reference_number
+            referencedTableName: contact
+            referencedColumnNames: reference_number
+            constraintName: fk_subledger_balance_contact_reference_number
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: subledger_balance
+            constraintName: fk_subledger_balance_contact_reference_number

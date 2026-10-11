@@ -101,10 +101,12 @@ class SaleDataFetcher(
         if (lines.isEmpty()) return emptyList()
         val productSummaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId })
         return lines.map { line ->
+            val productSummary = productSummaries.getValue(line.locationProductId)
             SaleLineDto(
                 id = line.id!!,
                 locationProductId = line.locationProductId,
-                productLabel = productSummaries[line.locationProductId]?.label ?: line.locationProductId.toString(),
+                productLabel = productSummary.label,
+                productPrintLabel = productSummary.printLabel,
                 quantity = line.quantity,
                 unitId = line.unitId,
                 conversionRatio = line.conversionRatio(),

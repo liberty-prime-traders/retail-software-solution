@@ -17,7 +17,7 @@ so the account alone can't say which one an event is. Keeping direction
 independent of account type is also what makes the balanced-entries check
 meaningful — a flipped leg fails it instead of producing a balanced, wrong
 posting. The processors with a runtime direction (`OpeningBalanceAccountingProcessor`,
-`SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor.
+`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor.
 
 ## What `post` enforces, in order
 
@@ -55,6 +55,63 @@ Accounts are always acquired before contacts. `acquire` takes a
 takes the closing accounts and Retained Earnings through
 `AccountStructureLock` directly, and `ledger` hands `account` its posting lines
 as `AccountPosting`s.
+
+## Subledger columns
+
+`receivable` is the column that moves a contact's net (`receivable - payable`) **up**, i.e. toward
+them owing us; `payable` is the column that moves it **down**. Both only ever grow — a reversal
+posts to the opposite column rather than a negative amount. A debit on `TRADE_RECEIVABLES`,
+`TRADE_PAYABLES` or an expense liability moves net up; a credit moves it down.
+
+| Posting | Control-account leg | Column |
+|---|---|---|
+| sale, sale payment void | debit receivables | receivable |
+| sale void, sale payment | credit receivables | payable |
+| supplier payment, expense void, expense payment | debit payables / liability | receivable |
+| delivery, supplier payment void, expense, expense payment void | credit payables / liability | payable |
+| contact opening balance: receivable raised, payable reduced | debit receivables / payables | receivable |
+| contact opening balance: payable raised, receivable reduced | credit payables / receivables | payable |
+
+## Reading the subledger: `SubledgerService`
+
+`api/SubledgerService` is the only read path other domains use.
+
+- `getCurrentBalances` returns each contact's current `running_payable` /
+  `running_receivable`; `ContactService` uses it for the glance balances on
+  `ContactResponseDto` (a contact with no rows reads as `SubledgerBalanceDto.ZERO`).
+  `SubledgerBalanceDto` also derives `netBalance` (absolute `receivable - payable`) and a
+  `BalanceSignal` read from the org's side: `MONEY_IN` when they owe us (net up), `MONEY_OUT` when we
+  owe them, `ZERO_BALANCE` when equal — the same mapping as `AccountType.balanceSignal()`, where an
+  asset is `MONEY_IN` and a liability `MONEY_OUT`. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
+  `transactionBalanceSignal` from the entry's own payable/receivable delta; the raw payable and
+  receivable figures are not exposed.
+- `subledger_balance` holds one row per contact with its current `running_payable` /
+  `running_receivable`, and `getCurrentBalances` reads it. The row is created with the contact
+  (`ContactService.createContact`, and `ContactSeeder` for the system Walk-In contact, both through
+  `SubledgerService.openBalance`). Balances are stored at scale 4, and `SubledgerBalanceDto.ZERO`
+  matches it. `LedgerPostingService` updates it in the same transaction as each
+  `subledger_entry` insert, under the `SUBLEDGER_CONTACT` advisory lock, and fails the posting if
+  the contact has no row. Besides posting, only `SubledgerService.reconcileBalances` writes it:
+  `SubledgerBalanceReconciliationJob` runs it for every provisioned organization nightly at 02:30,
+  which also catches up an organization that predates the table and resets any drifted row. It
+  locks the contacts, then sets each row to the sum of that contact's entry amounts (creating
+  missing rows) and logs a warning for every row it had to change. `ContactSeeder` also
+  runs it after seeding, so seeding defaults for an organization creates any missing rows and
+  corrects drift immediately. That hook is a stopgap until reconciliation has its own trigger.
+- `subledger_entry` stays the append-only history; each row carries the running figures as of its
+  posting. The balance row is a derived total and is not audited. Entries are ordered by
+  `created_on` for display only; no total depends on that order, so clock skew between nodes
+  cannot corrupt a balance.
+- `getEntries` pages one contact's rows newest first, keyset on `(created_on, id)` via
+  `KeysetSearchCursor`, over-fetching one row to set `hasMore`. Because the query is filtered by
+  the contact's reference number, a cursor only means something against the contact it came
+  from — each contact pages its own history. Page size is 1..200. Each row is enriched with the
+  source type and source reference of its `ledger_entry_group`, fetched in one query per page.
+- Exposed as `POST secured/contacts/{id}/ledger` with the standard `PageRequest` body (`parameters` is an empty object); contacts are
+  never deleted, only status-changed, so the history always has an owner.
+
+- Contact opening balances post through `ContactOpeningBalanceAccountingProcessor`; a downward
+  revision goes in the opposite column like any other reversal. See `contact_opening_balance/README.md`.
 
 ## Expense processors
 

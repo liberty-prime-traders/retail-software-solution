@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-subledger-balance-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: subledger_balance
+      changes:
+        - createTable:
+            tableName: subledger_balance
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: contact_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_balance_contact_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_subledger_balance_contact_reference_number
+
+              - column:
+                  name: running_payable
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_balance_running_payable_notnull
+
+              - column:
+                  name: running_receivable
+                  type: decimal(19,4)
+                  defaultValueNumeric: "0.00"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_balance_running_receivable_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: subledger_balance_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: subledger_balance

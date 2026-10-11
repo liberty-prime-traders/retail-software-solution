@@ -29,6 +29,7 @@ class OpeningBalanceService(
         if (upsertDto.newAmount < BigDecimal.ZERO) {
             throw RtsGenericException("Opening balance amount must not be negative")
         }
+        OpeningBalanceAccountValidator.assertManualOpeningBalanceAccepted(upsertDto.accountCode)
         val postingDate = DateTimes.Local.Now.organization()
         fiscalPeriodService.requireOpenForDate(postingDate)
         accountStructureLock.acquire(upsertDto.accountCode)

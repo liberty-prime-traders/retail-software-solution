@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-subledger-balance-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: subledger_balance
+              - column:
+                  name: default_prefix
+                  value: SBBAL
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Subledger Balance
+              - column:
+                  name: description
+                  value: Current payable and receivable totals per contact
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

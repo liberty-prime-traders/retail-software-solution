@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-contact-opening-balance-contact-subledger-direction-created-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_contact_opening_balance_contact_subledger_direction_created_on
+      changes:
+        - createIndex:
+            indexName: idx_contact_opening_balance_contact_subledger_direction_created_on
+            tableName: contact_opening_balance
+            columns:
+              - column:
+                  name: contact_reference_number
+              - column:
+                  name: subledger_direction
+              - column:
+                  name: created_on
+      rollback:
+        - dropIndex:
+            tableName: contact_opening_balance
+            indexName: idx_contact_opening_balance_contact_subledger_direction_created_on

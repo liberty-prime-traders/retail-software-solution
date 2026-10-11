@@ -44,6 +44,7 @@ data class SaleSessionLineResponse(
     val identity: SessionIdentity,
     val locationProductId: UUID,
     val productLabel: String,
+    val productPrintLabel: String,
     val quantity: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,

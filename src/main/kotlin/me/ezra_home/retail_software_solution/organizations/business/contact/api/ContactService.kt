@@ -2,19 +2,27 @@ package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
-import me.ezra_home.retail_software_solution.organizations.business.contact.ContactMapper
+import me.ezra_home.retail_software_solution.organizations.business.contact.ContactResponseMapper
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactValidator
+import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceReader
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerBalanceDto
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryResponse
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 @TransactionalOnOrganizationSchema
 class ContactService(
-    private val contactMapper: ContactMapper,
+    private val contactResponseMapper: ContactResponseMapper,
     private val contactCache: ContactCache,
-    private val contactValidator: ContactValidator
+    private val contactValidator: ContactValidator,
+    private val subledgerService: SubledgerService,
+    private val contactOpeningBalanceReader: ContactOpeningBalanceReader
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -35,7 +43,36 @@ class ContactService(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAllContacts(): Collection<ContactResponseDto> {
-        return contactCache.getAllContacts().map { contactMapper.toResponseDto(it) }
+        return toResponseDtos(contactCache.getAllContacts())
+    }
+
+    fun reconcileSubledgerBalances() {
+        subledgerService.reconcileBalances(contactCache.getAllContacts().map { it.referenceNumber }.toSet())
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getLedger(
+        id: UUID,
+        pageRequest: PageRequest<ContactLedgerSearchParameters, String>
+    ): PageResponse<SubledgerEntryResponse, String> {
+        val contactDto = getContactById(id)
+        return subledgerService.getEntries(contactDto.referenceNumber, pageRequest.previousCursor, pageRequest.requestedSize)
+    }
+
+    private fun toResponseDtos(contactDtos: Collection<ContactDto>): List<ContactResponseDto> {
+        val balancesByContactReferenceNumber = subledgerService.getCurrentBalances(
+            contactDtos.map { it.referenceNumber }.toSet()
+        )
+        val openingBalancesByContactReferenceNumber = contactOpeningBalanceReader.getOpeningBalances(
+            contactDtos.map { it.referenceNumber }.toSet()
+        )
+        return contactDtos.map { contactDto ->
+            val subledgerBalanceDto = balancesByContactReferenceNumber[contactDto.referenceNumber]
+                ?: SubledgerBalanceDto.ZERO
+            val openingBalanceDto = openingBalancesByContactReferenceNumber[contactDto.referenceNumber]
+                ?: SubledgerBalanceDto.ZERO
+            contactResponseMapper.toResponseDto(contactDto, subledgerBalanceDto, openingBalanceDto)
+        }
     }
 
     fun createContact(contactInsertDto: ContactInsertDto): ContactResponseDto {
@@ -48,7 +85,8 @@ class ContactService(
         val cleanedInsert = cleanupIncompatibleFields(contactInsertDto)
         contactValidator.validateUniqueness(cleanedInsert.identity)
         val dto = contactCache.create(cleanedInsert)
-        return contactMapper.toResponseDto(dto)
+        subledgerService.openBalance(dto.referenceNumber)
+        return contactResponseMapper.toResponseDto(dto, SubledgerBalanceDto.ZERO, SubledgerBalanceDto.ZERO)
     }
 
     private fun cleanupIncompatibleFields(insertDto: ContactInsertDto): ContactInsertDto {
@@ -75,8 +113,8 @@ class ContactService(
         contactValidator.validateContactTypes(updated.contactTypes)
 
         val identityType = contactUpdateDto.identityType
-            ?.let { it.orElseGet { determineIdentityType(updated) } }
-            ?: determineIdentityType(updated)
+            ?.let { it.orElseGet { updated.identity.identityType } }
+            ?: updated.identity.identityType
 
         contactValidator.validateIdentity(
             identityType,
@@ -86,19 +124,6 @@ class ContactService(
         updated = cleanupIncompatibleFields(updated, identityType)
         contactValidator.validateUniqueness(updated.identity, id)
         val saved = contactCache.save(updated)
-        return contactMapper.toResponseDto(saved)
-    }
-
-    private fun determineIdentityType(dto: ContactDto): IdentityType {
-        return when (dto.identity) {
-            is ContactIdentity.Organization -> IdentityType.ORGANIZATION
-            is ContactIdentity.Individual -> IdentityType.INDIVIDUAL
-        }
-    }
-
-    fun deleteContact(id: UUID) {
-        val existing = contactCache.getAllContacts().find { it.id == id } ?: return
-        if (existing.systemDefined) throw RtsGenericException("System-defined contacts cannot be deleted")
-        contactCache.deleteContact(id)
+        return toResponseDtos(listOf(saved)).single()
     }
 }

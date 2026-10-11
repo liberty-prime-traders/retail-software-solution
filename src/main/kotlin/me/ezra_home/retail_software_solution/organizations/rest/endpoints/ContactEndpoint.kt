@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactLedgerSearchParameters
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactUpdateDto
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryResponse
+import me.ezra_home.retail_software_solution.util.paging.PageRequest
+import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -31,9 +32,9 @@ class ContactEndpoint(private val contactService: ContactService) {
     fun updateContact(@RequestBody contactUpdateDto: ContactUpdateDto): ContactResponseDto =
         contactService.updateContact(contactUpdateDto)
 
-    @DeleteMapping("{id}")
-    fun deleteContact(@PathVariable id: UUID): ResponseEntity<HttpStatus> {
-        contactService.deleteContact(id)
-        return ResponseEntity(HttpStatus.NO_CONTENT)
-    }
+    @PostMapping("{id}/ledger")
+    fun getLedger(
+        @PathVariable id: UUID,
+        @RequestBody pageRequest: PageRequest<ContactLedgerSearchParameters, String>
+    ): PageResponse<SubledgerEntryResponse, String> = contactService.getLedger(id, pageRequest)
 }

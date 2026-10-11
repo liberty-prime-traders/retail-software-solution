@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-contact-opening-balance-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: contact_opening_balance
+      changes:
+        - createTable:
+            tableName: contact_opening_balance
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_balance_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_contact_opening_balance_reference_number
+
+              - column:
+                  name: contact_reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_balance_contact_reference_number_notnull
+
+              - column:
+                  name: subledger_direction
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_balance_subledger_direction_notnull
+
+              - column:
+                  name: amount
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_balance_amount_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_balance_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: contact_opening_balance
