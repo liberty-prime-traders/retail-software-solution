@@ -10,10 +10,11 @@ data class SubledgerBalanceDto(
 ) {
     val netBalance: BigDecimal = receivable.subtract(payable).abs()
 
+    // Read from the org's POV: the contact owing us is money the org stands to receive.
     val balanceSignal: BalanceSignal = when {
         receivable.compareTo(payable) == 0 -> BalanceSignal.ZERO_BALANCE
-        receivable > payable -> BalanceSignal.MONEY_OUT
-        else -> BalanceSignal.MONEY_IN
+        receivable > payable -> BalanceSignal.MONEY_IN
+        else -> BalanceSignal.MONEY_OUT
     }
 
     companion object {

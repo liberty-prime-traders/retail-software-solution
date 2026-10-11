@@ -16,5 +16,13 @@ interface ContactResponseMapper {
     @Mapping(source = "contactDto.identity.displayName", target = "fullName")
     @Mapping(source = "subledgerBalanceDto.receivable", target = "receivableBalance")
     @Mapping(source = "subledgerBalanceDto.payable", target = "payableBalance")
-    fun toResponseDto(contactDto: ContactDto, subledgerBalanceDto: SubledgerBalanceDto): ContactResponseDto
+    @Mapping(source = "subledgerBalanceDto.netBalance", target = "netBalance")
+    @Mapping(source = "subledgerBalanceDto.balanceSignal", target = "balanceSignal")
+    @Mapping(source = "openingBalanceDto.netBalance", target = "netOpeningBalance")
+    @Mapping(source = "openingBalanceDto.balanceSignal", target = "netOpeningBalanceSignal")
+    fun toResponseDto(
+        contactDto: ContactDto,
+        subledgerBalanceDto: SubledgerBalanceDto,
+        openingBalanceDto: SubledgerBalanceDto
+    ): ContactResponseDto
 }

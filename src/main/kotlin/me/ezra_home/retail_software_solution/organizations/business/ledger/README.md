@@ -17,7 +17,7 @@ so the account alone can't say which one an event is. Keeping direction
 independent of account type is also what makes the balanced-entries check
 meaningful — a flipped leg fails it instead of producing a balanced, wrong
 posting. The processors with a runtime direction (`OpeningBalanceAccountingProcessor`,
-`SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor.
+`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor.
 
 ## What `post` enforces, in order
 
@@ -56,6 +56,22 @@ takes the closing accounts and Retained Earnings through
 `AccountStructureLock` directly, and `ledger` hands `account` its posting lines
 as `AccountPosting`s.
 
+## Subledger columns
+
+`receivable` is the column that moves a contact's net (`receivable - payable`) **up**, i.e. toward
+them owing us; `payable` is the column that moves it **down**. Both only ever grow — a reversal
+posts to the opposite column rather than a negative amount. A debit on `TRADE_RECEIVABLES`,
+`TRADE_PAYABLES` or an expense liability moves net up; a credit moves it down.
+
+| Posting | Control-account leg | Column |
+|---|---|---|
+| sale, sale payment void | debit receivables | receivable |
+| sale void, sale payment | credit receivables | payable |
+| supplier payment, expense void, expense payment | debit payables / liability | receivable |
+| delivery, supplier payment void, expense, expense payment void | credit payables / liability | payable |
+| contact opening balance: receivable raised, payable reduced | debit receivables / payables | receivable |
+| contact opening balance: payable raised, receivable reduced | credit payables / receivables | payable |
+
 ## Reading the subledger: `SubledgerService`
 
 `api/SubledgerService` is the only read path other domains use.
@@ -64,8 +80,9 @@ as `AccountPosting`s.
   `running_receivable`; `ContactService` uses it for the glance balances on
   `ContactResponseDto` (a contact with no rows reads as `SubledgerBalanceDto.ZERO`).
   `SubledgerBalanceDto` also derives `netBalance` (absolute `receivable - payable`) and a
-  `BalanceSignal`: `MONEY_OUT` when they owe us, `MONEY_IN` when we owe them, `ZERO_BALANCE` when
-  equal. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
+  `BalanceSignal` read from the org's side: `MONEY_IN` when they owe us (net up), `MONEY_OUT` when we
+  owe them, `ZERO_BALANCE` when equal — the same mapping as `AccountType.balanceSignal()`, where an
+  asset is `MONEY_IN` and a liability `MONEY_OUT`. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
   `transactionBalanceSignal` from the entry's own payable/receivable delta; the raw payable and
   receivable figures are not exposed.
 - `subledger_balance` holds one row per contact with its current `running_payable` /
@@ -91,6 +108,9 @@ as `AccountPosting`s.
   source type and source reference of its `ledger_entry_group`, fetched in one query per page.
 - Exposed as `POST secured/contacts/{id}/ledger` with the standard `PageRequest` body (`parameters` is an empty object); contacts are
   never deleted, only status-changed, so the history always has an owner.
+
+- Contact opening balances post through `ContactOpeningBalanceAccountingProcessor`; a downward
+  revision goes in the opposite column like any other reversal. See `contact_opening_balance/README.md`.
 
 ## Expense processors
 

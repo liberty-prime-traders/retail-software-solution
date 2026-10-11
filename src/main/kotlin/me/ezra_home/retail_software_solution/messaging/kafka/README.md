@@ -15,7 +15,7 @@ delivery, opening balance upserts, and the like.
   on the natural key, so retries — manual (`EventRetryService`, `secured/kafka-event-log/{id}/retry`)
   or swept (`EventProcessingLogSweeperJob`, every 5 minutes) — are idempotent.
 - Dispatch and logging both key off `event.sourceContext`: `EventSourceContext.OrgLevel` for
-  org-scoped events (e.g. `OpeningBalanceUpsertedEvent`), `EventSourceContext.LocationLevel` for
+  org-scoped events (e.g. `OpeningBalanceUpsertedEvent`, `ContactOpeningBalanceUpsertedEvent`), `EventSourceContext.LocationLevel` for
   location-scoped ones. `event_processing_log` itself lives in the **org** schema regardless —
   its `source_location_id` column records which location a `LocationLevel` event came from
   (`null` for `OrgLevel`), mirroring `ledger_entry_group.source_location_id`.

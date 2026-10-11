@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactCache
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactResponseMapper
 import me.ezra_home.retail_software_solution.organizations.business.contact.ContactValidator
+import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceReader
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerBalanceDto
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryResponse
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
@@ -20,7 +21,8 @@ class ContactService(
     private val contactResponseMapper: ContactResponseMapper,
     private val contactCache: ContactCache,
     private val contactValidator: ContactValidator,
-    private val subledgerService: SubledgerService
+    private val subledgerService: SubledgerService,
+    private val contactOpeningBalanceReader: ContactOpeningBalanceReader
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -61,10 +63,15 @@ class ContactService(
         val balancesByContactReferenceNumber = subledgerService.getCurrentBalances(
             contactDtos.map { it.referenceNumber }.toSet()
         )
+        val openingBalancesByContactReferenceNumber = contactOpeningBalanceReader.getOpeningBalances(
+            contactDtos.map { it.referenceNumber }.toSet()
+        )
         return contactDtos.map { contactDto ->
             val subledgerBalanceDto = balancesByContactReferenceNumber[contactDto.referenceNumber]
                 ?: SubledgerBalanceDto.ZERO
-            contactResponseMapper.toResponseDto(contactDto, subledgerBalanceDto)
+            val openingBalanceDto = openingBalancesByContactReferenceNumber[contactDto.referenceNumber]
+                ?: SubledgerBalanceDto.ZERO
+            contactResponseMapper.toResponseDto(contactDto, subledgerBalanceDto, openingBalanceDto)
         }
     }
 
@@ -79,7 +86,7 @@ class ContactService(
         contactValidator.validateUniqueness(cleanedInsert.identity)
         val dto = contactCache.create(cleanedInsert)
         subledgerService.openBalance(dto.referenceNumber)
-        return contactResponseMapper.toResponseDto(dto, SubledgerBalanceDto.ZERO)
+        return contactResponseMapper.toResponseDto(dto, SubledgerBalanceDto.ZERO, SubledgerBalanceDto.ZERO)
     }
 
     private fun cleanupIncompatibleFields(insertDto: ContactInsertDto): ContactInsertDto {

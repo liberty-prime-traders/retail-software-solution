@@ -27,6 +27,7 @@ object TableNames {
     const val ADDRESS = "address"
     const val ADJUSTMENT_REASON = "adjustment_reason"
     const val CONTACT = "contact"
+    const val CONTACT_OPENING_BALANCE = "contact_opening_balance"
     const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val EXPENSE_TYPE = "expense_type"
     const val FISCAL_PERIOD = "fiscal_period"

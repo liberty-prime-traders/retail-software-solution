@@ -92,6 +92,7 @@ class SaleSessionLineHandler(
                 identity = SessionIdentity.mintFreshIdentity(),
                 locationProductId = lineAddDto.locationProductId,
                 productLabel = productSummary.label,
+                productPrintLabel = productSummary.printLabel,
                 quantity = lineAddDto.quantity,
                 unitId = productSummary.baseUnitId,
                 baseUnitId = productSummary.baseUnitId,

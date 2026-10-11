@@ -84,9 +84,9 @@ class SubledgerServiceTest {
         val pageEntry = pageResponse.contents.single()
         assertEquals(LedgerSourceType.SALE, pageEntry.sourceType)
         assertEquals(0, BigDecimal("5").compareTo(pageEntry.transactionAmount))
-        assertEquals(BalanceSignal.MONEY_OUT, pageEntry.transactionBalanceSignal)
+        assertEquals(BalanceSignal.MONEY_IN, pageEntry.transactionBalanceSignal)
         assertEquals(0, BigDecimal("10").compareTo(pageEntry.netBalance))
-        assertEquals(BalanceSignal.MONEY_OUT, pageEntry.netBalanceSignal)
+        assertEquals(BalanceSignal.MONEY_IN, pageEntry.netBalanceSignal)
         verify(subledgerEntryRepository, never()).findFirstPage(contactReferenceNumber, 3)
     }
 
@@ -208,9 +208,9 @@ class SubledgerServiceTest {
         val weOweThem = SubledgerBalanceDto(payable = BigDecimal("50"), receivable = BigDecimal("20"))
         val settled = SubledgerBalanceDto(payable = BigDecimal("20.0"), receivable = BigDecimal("20.0000"))
 
-        assertEquals(BalanceSignal.MONEY_OUT, theyOweUs.balanceSignal)
+        assertEquals(BalanceSignal.MONEY_IN, theyOweUs.balanceSignal)
         assertEquals(0, BigDecimal("30").compareTo(theyOweUs.netBalance))
-        assertEquals(BalanceSignal.MONEY_IN, weOweThem.balanceSignal)
+        assertEquals(BalanceSignal.MONEY_OUT, weOweThem.balanceSignal)
         assertEquals(0, BigDecimal("30").compareTo(weOweThem.netBalance))
         assertEquals(BalanceSignal.ZERO_BALANCE, settled.balanceSignal)
         assertEquals(0, BigDecimal.ZERO.compareTo(settled.netBalance))

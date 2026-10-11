@@ -11,6 +11,7 @@ enum class LedgerSourceType(override val code: String) : HasCode {
     SUPPLIER_PAYMENT("SP"),
     SUPPLIER_PAYMENT_VOID("SPV"),
     OPENING_BALANCE("OB"),
+    CONTACT_OPENING_BALANCE("COB"),
     OPENING_STOCK("OS"),
     EXPENSE("EXP"),
     EXPENSE_VOID("EXPV"),

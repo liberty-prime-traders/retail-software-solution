@@ -25,6 +25,8 @@ data class ContactResponseDto(
     val payableBalance: BigDecimal,
     val netBalance: BigDecimal,
     val balanceSignal: BalanceSignal,
+    val netOpeningBalance: BigDecimal,
+    val netOpeningBalanceSignal: BalanceSignal,
     val notes: String? = null,
     val status: ContactStatus,
     val systemDefined: Boolean
