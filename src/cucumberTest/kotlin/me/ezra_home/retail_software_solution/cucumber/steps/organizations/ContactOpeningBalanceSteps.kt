@@ -7,8 +7,6 @@ import me.ezra_home.retail_software_solution.cucumber.fixtures.organizations.Con
 import me.ezra_home.retail_software_solution.cucumber.support.ApiClient
 import me.ezra_home.retail_software_solution.cucumber.support.context.InjectContext
 import me.ezra_home.retail_software_solution.cucumber.support.context.TransientKey
-import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceSetDto
-import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
 import java.math.BigDecimal
 import kotlin.test.assertEquals
 
@@ -23,11 +21,11 @@ class ContactOpeningBalanceSteps(
     injectContext.store(TransientKey.CONTACT, contactFixtureBuilder.create())
   }
 
-  @When("I set the contact's {word} opening balance to {string}")
-  fun setOpeningBalance(subledgerDirection: String, amount: String) {
+  @When("I set the contact's opening balances to payable {string} and receivable {string}")
+  fun setOpeningBalances(payable: String, receivable: String) {
     apiClient.post(
-      "/secured/contacts/${injectContext.get(TransientKey.CONTACT)}/opening-balances",
-      ContactOpeningBalanceSetDto(ContactSubledgerDirection.valueOf(subledgerDirection), BigDecimal(amount))
+      "/secured/contact-opening-balances/${injectContext.get(TransientKey.CONTACT)}",
+      mapOf("payable" to BigDecimal(payable), "receivable" to BigDecimal(receivable))
     )
   }
 

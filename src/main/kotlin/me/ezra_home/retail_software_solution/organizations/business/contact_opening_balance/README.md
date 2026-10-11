@@ -15,17 +15,19 @@ are revised independently.
 
 `ContactOpeningBalanceService.set`:
 
-1. Rejects a negative amount, an inactive contact
+1. Rejects a negative target payable or receivable (neither side is written), an inactive contact
    (`ContactStatus` other than `ACTIVE`), and a closed fiscal period for today.
 2. Takes `OrgEntityAdvisoryLock` on `LockNamespaces.CONTACT_OPENING_BALANCE`
-   per contact reference number. Rows are append-only, so a `FOR UPDATE` on the
+   per contact reference number, once for both sides. Rows are append-only, so a `FOR UPDATE` on the
    latest row cannot serialize two revisions (both read the same latest row and
    insert siblings), and a first revision has no row to lock.
    This namespace is separate from `SUBLEDGER_CONTACT`, which the ledger post
    takes later in its own transaction.
-3. The amount is rounded to scale 4 (`Decimals.roundToScale4`) before it is compared or stored, so the
+3. `ContactOpeningBalanceSetDto` is partial: `payable` / `receivable` are `Optional<BigDecimal>?`, where null
+   leaves that side at its latest row, `Optional.empty()` clears it to zero and `Optional.of(x)` sets it
+   (`applyTo(existing)` yields the target balance). Each side is revised against its own latest row. The amount is rounded to scale 4 (`Decimals.roundToScale4`) before it is compared or stored, so the
    delta is measured between two stored-scale values. `signedDelta = roundedAmount - latest.amount`.
-   Zero returns without a row or event.
+   A side whose delta is zero writes no row and publishes no event, so a call may write one row, two, or none.
 4. Inserts the revision and publishes `ContactOpeningBalanceUpsertedEvent`
    through `ContactOpeningBalanceHandlerForKafka.publish`, bound to the commit.
 
@@ -64,9 +66,16 @@ so a late DLT retry reproduces the original delta.
 
 ## REST surface
 
-`ContactOpeningBalanceEndpoint` (`secured/contacts/{contactId}/opening-balances`,
-`Feature.CHART_OF_ACCOUNTS`): `POST` (body: `ContactOpeningBalanceSetDto` —
-`subledgerDirection`, `amount`) → `set`. There is no history endpoint.
+`ContactOpeningBalanceEndpoint` (`secured/contact-opening-balances`, `Feature.CHART_OF_ACCOUNTS`):
+
+- `POST {contactId}` (body: `ContactOpeningBalanceSetDto` — `payable`, `receivable`, each optional) → `set`.
+- `GET history?contactReferenceNumber=` → `getHistory`: every revision of that contact, both
+  sides, oldest first, as `ContactOpeningBalanceRevisionDto`: the `subledgerDirection`, the claimed
+  `amount` and its `balanceSignal`, with `changedAt` and `changedBy` (the creator's full name, empty when the user is
+  gone). The signal is the claim read from the organization's side: a receivable is `MONEY_IN`, a
+  payable is `MONEY_OUT`, and a claim of zero is `ZERO_BALANCE`. The history records what was claimed, not
+  its ledger effect; deltas and postings belong to the contact's subledger history
+  (`POST secured/contacts/{id}/ledger`).
 
 ## Reading: `ContactOpeningBalanceReader`
 

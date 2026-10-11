@@ -8,6 +8,7 @@ data class SaleLineDto(
     val id: UUID,
     val locationProductId: UUID,
     val productLabel: String,
+    val productPrintLabel: String,
     val quantity: BigDecimal,
     val unitId: UUID,
     val conversionRatio: ConversionRatio,

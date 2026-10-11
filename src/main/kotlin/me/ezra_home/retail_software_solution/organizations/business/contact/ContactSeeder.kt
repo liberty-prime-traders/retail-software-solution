@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactStatus
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component
 @TransactionalOnOrganizationSchema
 class ContactSeeder(
     private val contactCache: ContactCache,
+    private val contactService: ContactService,
     private val subledgerService: SubledgerService
 ) : OrgDataSeeder {
 
@@ -27,5 +29,6 @@ class ContactSeeder(
             val walkInContact = contactCache.save(entity)
             subledgerService.openBalance(walkInContact.referenceNumber)
         }
+        contactService.reconcileSubledgerBalances()
     }
 }

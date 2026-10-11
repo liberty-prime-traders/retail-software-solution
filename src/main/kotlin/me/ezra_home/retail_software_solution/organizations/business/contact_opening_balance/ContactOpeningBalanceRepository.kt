@@ -21,6 +21,8 @@ interface ContactOpeningBalanceRepository : JpaRepository<ContactOpeningBalanceE
         createdOn: OffsetDateTime
     ): ContactOpeningBalanceEntity?
 
+    fun findByContactReferenceNumberOrderByCreatedOnAsc(contactReferenceNumber: String): List<ContactOpeningBalanceEntity>
+
     @Query("""
         SELECT * FROM contact_opening_balance
         WHERE id IN (

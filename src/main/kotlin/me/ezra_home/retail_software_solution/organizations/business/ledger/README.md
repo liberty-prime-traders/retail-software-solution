@@ -95,8 +95,9 @@ posts to the opposite column rather than a negative amount. A debit on `TRADE_RE
   `SubledgerBalanceReconciliationJob` runs it for every provisioned organization nightly at 02:30,
   which also catches up an organization that predates the table and resets any drifted row. It
   locks the contacts, then sets each row to the sum of that contact's entry amounts (creating
-  missing rows) and logs a warning for every row it had to change. Seed defaults does not
-  reconcile; it only opens the Walk-In contact's row when it creates that contact.
+  missing rows) and logs a warning for every row it had to change. `ContactSeeder` also
+  runs it after seeding, so seeding defaults for an organization creates any missing rows and
+  corrects drift immediately. That hook is a stopgap until reconciliation has its own trigger.
 - `subledger_entry` stays the append-only history; each row carries the running figures as of its
   posting. The balance row is a derived total and is not audited. Entries are ordered by
   `created_on` for display only; no total depends on that order, so clock skew between nodes

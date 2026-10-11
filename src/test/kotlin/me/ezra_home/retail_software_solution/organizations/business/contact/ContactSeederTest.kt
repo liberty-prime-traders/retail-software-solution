@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact
 
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
@@ -19,8 +20,9 @@ import java.util.UUID
 class ContactSeederTest {
 
     private val contactCache = mock(ContactCache::class.java)
+    private val contactService = mock(ContactService::class.java)
     private val subledgerService = mock(SubledgerService::class.java)
-    private val contactSeeder = ContactSeeder(contactCache, subledgerService)
+    private val contactSeeder = ContactSeeder(contactCache, contactService, subledgerService)
 
     private val walkInContact = contactDto(SystemContact.WALK_IN.id, "CT000009", "Walk-In Customer")
 
@@ -34,16 +36,18 @@ class ContactSeederTest {
 
         assertTrue(savedContactEntities())
         verify(subledgerService).openBalance(walkInContact.referenceNumber)
+        verify(contactService).reconcileSubledgerBalances()
     }
 
     @Test
-    fun `re-seeding an existing organization leaves its contacts and balances alone`() {
+    fun `re-seeding an existing organization leaves its contacts alone and reconciles balances`() {
         `when`(contactCache.getAllContacts()).thenReturn(listOf(walkInContact))
 
         contactSeeder.seed()
 
         assertFalse(savedContactEntities())
         verifyNoInteractions(subledgerService)
+        verify(contactService).reconcileSubledgerBalances()
     }
 
     private fun savedContactEntities() =
