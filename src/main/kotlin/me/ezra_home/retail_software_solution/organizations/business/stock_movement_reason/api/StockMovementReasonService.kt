@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.StockMovementReasonCache
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.StockMovementReasonMapper
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.StockMovementReasonValidator

@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
