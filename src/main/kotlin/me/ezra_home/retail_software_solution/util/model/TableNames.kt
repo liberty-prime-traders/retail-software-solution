@@ -56,7 +56,6 @@ object TableNames {
     const val PRODUCT_TAG = "product_tag"
     const val STOCK_ITEM_SOURCE = "stock_item_source"
     const val STOCK_MOVEMENT_REASON = "stock_movement_reason"
-    const val STOCK_MOVEMENT_REASON_TYPE = "stock_movement_reason_type"
     const val SUBLEDGER_BALANCE = "subledger_balance"
     const val SUBLEDGER_ENTRY = "subledger_entry"
     const val TAG = "tag"

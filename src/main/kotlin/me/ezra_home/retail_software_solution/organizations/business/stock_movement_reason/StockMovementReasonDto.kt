@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.MovementType
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -11,5 +12,6 @@ data class StockMovementReasonDto(
     val code: String? = null,
     val name: String,
     val description: String?,
+    val movementTypes: Set<MovementType>,
     val systemDefined: Boolean
 )

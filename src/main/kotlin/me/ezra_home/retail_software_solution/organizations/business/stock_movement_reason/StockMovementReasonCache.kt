@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 @Component
 @CacheSchemaLevel(SchemaLevel.ORGANIZATION)
@@ -31,6 +32,11 @@ class StockMovementReasonCache(
     fun save(dto: StockMovementReasonDto): StockMovementReasonDto {
         val saved = repository.save(mapper.toEntity(dto))
         return mapper.toDomainDto(saved)
+    }
+
+    @CacheEvict(allEntries = true)
+    fun delete(id: UUID) {
+        repository.deleteById(id)
     }
 
     @CacheEvict(allEntries = true)

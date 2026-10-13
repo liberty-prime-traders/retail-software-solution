@@ -47,6 +47,13 @@ databaseChangeLog:
                   type: text
 
               - column:
+                  name: movement_types
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_reason_movement_types_notnull
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:
