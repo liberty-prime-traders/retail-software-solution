@@ -1,8 +1,10 @@
 package me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -21,6 +23,10 @@ class StockMovementReasonEntity(
 
   @Column(name = "description")
   var description: String? = null,
+
+  @Convert(converter = MovementTypeSetConverter::class)
+  @Column(name = "movement_types", nullable = false)
+  var movementTypes: Set<MovementType>,
 
   @Column(name = "system_defined", nullable = false, updatable = false)
   var systemDefined: Boolean = false

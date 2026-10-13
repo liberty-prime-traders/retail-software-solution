@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSe
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchParameters
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchSummaryResponseDto
 import me.ezra_home.retail_software_solution.cross_tier.expense.search.ExpenseSearchTables
-import me.ezra_home.retail_software_solution.locations.business.expense.search.ExpenseSearchExecutor
+import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseSearchExecutor
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.stereotype.Service

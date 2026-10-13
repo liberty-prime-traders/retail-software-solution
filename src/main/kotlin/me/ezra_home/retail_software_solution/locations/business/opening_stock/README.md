@@ -18,8 +18,8 @@ every other movement.
 
 If an opening stock declaration turns out to be wrong, it is **not**
 corrected here. It's fixed the same way any other stock error is: a
-future stock-adjustment feature (`MovementType.STOCK_ADJUSTMENT` already
-exists as scaffolding, no service implements it yet). That feature —
+future stock-adjustment feature (`MovementType.STOCK_ADJUSTMENT_INCREASE` and
+`STOCK_ADJUSTMENT_DECREASE` already exist as scaffolding, no service implements them yet). That feature —
 not this one — is where `StockEntryEntity.priority` gets used
 deliberately: an adjustment lot should be ordered relative to the
 original opening-stock lot (and any other source) rather than

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.expense.search
+package me.ezra_home.retail_software_solution.locations.business.expense
 
 import jakarta.persistence.Tuple
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
