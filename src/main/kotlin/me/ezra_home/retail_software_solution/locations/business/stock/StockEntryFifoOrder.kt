@@ -1,6 +1,5 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.api
+package me.ezra_home.retail_software_solution.locations.business.stock
 
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import java.time.OffsetDateTime
 
 private val nullsLastInstant: Comparator<OffsetDateTime?> = nullsLast()

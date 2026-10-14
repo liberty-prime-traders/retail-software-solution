@@ -3,17 +3,16 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.stock.FifoConsumptionRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.FifoStockConsumer
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -29,7 +28,9 @@ class SaleStockUpdater(
         if (saleLineStockRequests.isEmpty()) return emptyList()
         val locationProductIds = saleLineStockRequests.map { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
-        val fifoEntriesByLocationProductId = loadFifoEntriesByLocationProductId(locationProductIds)
+        val fifoEntriesByLocationProductId = FifoStockConsumer.groupInFifoOrder(
+            stockEntryRepository.findFifoEntriesForProducts(locationProductIds)
+        )
         val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
         val productSummariesByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(saleLineStockRequests.map { it.locationProductId }.toSet())
@@ -37,80 +38,28 @@ class SaleStockUpdater(
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
         val saleLineConsumedCosts = saleLineStockRequests.map { saleLineStockRequest ->
-            val productLabel = productSummariesByLocationProductId[saleLineStockRequest.locationProductId]?.label
-                ?: saleLineStockRequest.locationProductId.toString()
-            consumeStockForLine(
-                saleLineStockRequest = saleLineStockRequest,
-                fifoEntries = fifoEntriesByLocationProductId[saleLineStockRequest.locationProductId].orEmpty(),
-                runningBalancesByLocationProductId = runningBalancesByLocationProductId,
-                saleRefNumber = saleRefNumber,
-                productLabel = productLabel,
-                modifiedEntries = modifiedEntries,
-                movements = movements,
+            val locationProductId = saleLineStockRequest.locationProductId
+            val fifoConsumptionResult = FifoStockConsumer.consume(
+                fifoConsumptionRequest = FifoConsumptionRequest(
+                    locationProductId = locationProductId,
+                    baseQuantity = saleLineStockRequest.baseQuantity,
+                    unitId = saleLineStockRequest.unitId,
+                    conversionRatio = saleLineStockRequest.conversionRatio,
+                    movementType = MovementType.SALE,
+                    externalReferenceNumber = saleRefNumber,
+                ),
+                fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
+                startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                productLabel = productSummariesByLocationProductId[locationProductId]?.label ?: locationProductId.toString(),
             )
+            runningBalancesByLocationProductId[locationProductId] = fifoConsumptionResult.endingBalance
+            modifiedEntries.addAll(fifoConsumptionResult.touchedEntries)
+            movements.addAll(fifoConsumptionResult.movements)
+            SaleLineConsumedCost(saleLineStockRequest.saleLineId, fifoConsumptionResult.cost)
         }
         stockEntryRepository.saveAll(modifiedEntries)
         stockMovementRepository.saveAll(movements)
         return saleLineConsumedCosts
-    }
-
-    private fun loadFifoEntriesByLocationProductId(locationProductIds: List<UUID>): Map<UUID, List<StockEntryEntity>> {
-        return stockEntryRepository.findFifoEntriesForProducts(locationProductIds)
-            .groupBy { it.locationProductId }
-            .mapValues { (_, stockEntries) -> stockEntries.sortedWith(stockEntryFifoComparator) }
-    }
-
-    private fun consumeStockForLine(
-        saleLineStockRequest: SaleLineStockRequest,
-        fifoEntries: List<StockEntryEntity>,
-        runningBalancesByLocationProductId: MutableMap<UUID, BigDecimal>,
-        saleRefNumber: String,
-        productLabel: String,
-        modifiedEntries: MutableList<StockEntryEntity>,
-        movements: MutableList<StockMovementEntity>,
-    ): SaleLineConsumedCost {
-        var runningBalance = runningBalancesByLocationProductId[saleLineStockRequest.locationProductId] ?: BigDecimal.ZERO
-        var unsatisfiedQuantity = saleLineStockRequest.baseQuantity
-        var consumedCost = BigDecimal.ZERO
-        for (stockEntry in fifoEntries) {
-            if (unsatisfiedQuantity <= BigDecimal.ZERO) break
-            val takenQuantityInBaseUnit = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
-            modifiedEntries.add(stockEntry)
-            runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
-            val conversionRatio = saleLineStockRequest.conversionRatio
-            movements.add(
-                StockMovementEntity(
-                    stockEntryId = stockEntry.id!!,
-                    locationProductId = saleLineStockRequest.locationProductId,
-                    movementType = MovementType.SALE,
-                    movedQuantity = conversionRatio.invert().applyTo(takenQuantityInBaseUnit),
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = saleRefNumber,
-                    unitId = saleLineStockRequest.unitId,
-                    conversionNumerator = conversionRatio.numerator,
-                    conversionDenominator = conversionRatio.denominator,
-                )
-            )
-            unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
-            consumedCost = consumedCost.add(takenQuantityInBaseUnit.multiply(stockEntry.unitCost))
-        }
-        throwIfNotFulfilled(saleLineStockRequest, unsatisfiedQuantity, productLabel)
-        runningBalancesByLocationProductId[saleLineStockRequest.locationProductId] = runningBalance
-        return SaleLineConsumedCost(saleLineStockRequest.saleLineId, Decimals.roundToScale4(consumedCost))
-    }
-
-    private fun throwIfNotFulfilled(
-        saleLineStockRequest: SaleLineStockRequest,
-        unsatisfiedQuantity: BigDecimal,
-        productLabel: String
-    ) {
-        if (unsatisfiedQuantity <= BigDecimal.ZERO) return
-        val formattedAvailable = Decimals.stripZeroesAndRound(saleLineStockRequest.baseQuantity.subtract(unsatisfiedQuantity))
-        val formattedRequested = Decimals.stripZeroesAndRound(saleLineStockRequest.baseQuantity)
-        throw RtsGenericException(
-            "Insufficient stock for $productLabel. Available: $formattedAvailable, Requested: $formattedRequested"
-        )
     }
 
     fun restoreStock(saleRefNumber: String) {
@@ -119,7 +68,8 @@ class SaleStockUpdater(
         if (saleMovements.isEmpty()) return
         val saleMovementsByLocationProductId = saleMovements.groupBy { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleMovementsByLocationProductId.keys)
-        val stockEntriesById = loadStockEntriesByMovementId(saleMovements)
+        val stockEntriesById = stockEntryRepository.findAllById(saleMovements.map { it.stockEntryId }.distinct())
+            .associateBy { it.id!! }
         val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
             saleMovementsByLocationProductId.keys.toList()
         ).toMutableMap()
@@ -127,58 +77,17 @@ class SaleStockUpdater(
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val newMovements = mutableListOf<StockMovementEntity>()
         saleMovementsByLocationProductId.forEach { (locationProductId, saleMovementsForProduct) ->
-            val endingBalance = restoreStockForProduct(
-                locationProductId = locationProductId,
-                saleMovementsForProduct = saleMovementsForProduct,
+            val fifoRestorationResult = FifoStockConsumer.restore(
+                movementsToReverse = saleMovementsForProduct,
                 stockEntriesById = stockEntriesById,
                 startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
-                saleRefNumber = saleRefNumber,
-                modifiedEntries = modifiedEntries,
-                newMovements = newMovements,
+                reversalType = MovementType.SALE_VOID,
             )
-            runningBalancesByLocationProductId[locationProductId] = endingBalance
+            runningBalancesByLocationProductId[locationProductId] = fifoRestorationResult.endingBalance
+            modifiedEntries.addAll(fifoRestorationResult.touchedEntries)
+            newMovements.addAll(fifoRestorationResult.movements)
         }
         stockEntryRepository.saveAll(modifiedEntries)
         stockMovementRepository.saveAll(newMovements)
-    }
-
-    private fun loadStockEntriesByMovementId(
-        saleMovements: List<StockMovementEntity>,
-    ): Map<UUID, StockEntryEntity> =
-        stockEntryRepository.findAllById(saleMovements.map { it.stockEntryId }.distinct())
-            .associateBy { it.id!! }
-
-    private fun restoreStockForProduct(
-        locationProductId: UUID,
-        saleMovementsForProduct: List<StockMovementEntity>,
-        stockEntriesById: Map<UUID, StockEntryEntity>,
-        startingBalance: BigDecimal,
-        saleRefNumber: String,
-        modifiedEntries: MutableList<StockEntryEntity>,
-        newMovements: MutableList<StockMovementEntity>,
-    ): BigDecimal {
-        var runningBalance = startingBalance
-        saleMovementsForProduct.forEach { saleMovement ->
-            val stockEntry = stockEntriesById[saleMovement.stockEntryId]!!
-            val conversionRatio = saleMovement.conversionRatio()
-            val restoredBaseQuantity = conversionRatio.applyTo(saleMovement.movedQuantity)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBaseQuantity)
-            modifiedEntries.add(stockEntry)
-            runningBalance = runningBalance.add(restoredBaseQuantity)
-            newMovements.add(
-                StockMovementEntity(
-                    stockEntryId = saleMovement.stockEntryId,
-                    locationProductId = locationProductId,
-                    movementType = MovementType.SALE_VOID,
-                    movedQuantity = saleMovement.movedQuantity,
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = saleRefNumber,
-                    unitId = saleMovement.unitId,
-                    conversionNumerator = conversionRatio.numerator,
-                    conversionDenominator = conversionRatio.denominator,
-                )
-            )
-        }
-        return runningBalance
     }
 }
