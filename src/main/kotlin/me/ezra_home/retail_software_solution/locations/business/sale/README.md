@@ -354,6 +354,8 @@ Two distinct mechanisms protect inventory:
   trace stock out → sale.
 - On `VOIDED`, `SaleStockUpdater.restoreStock` reverses the FIFO consumption
   for that reference.
+- The layer walk and its reversal live in `FifoStockConsumer`, shared with `StockTransferStockUpdater`; the updaters
+  own locking, balance loading and saving.
 - `consumeStock` returns a `SaleLineConsumedCost` per sale line (Σ `takenQuantityInBaseUnit × StockEntryEntity.unitCost`
   across layers, rounded once to scale 4). `ConfirmedSalePersister.consumeStockAndRecordCogs` stores it
   in `SaleLineEntity.cogsTotal`. Drafts keep `cogsTotal = null`; a void leaves it untouched.

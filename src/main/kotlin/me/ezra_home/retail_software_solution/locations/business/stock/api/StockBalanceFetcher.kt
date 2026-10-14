@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.stockEntryFifoComparator
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
