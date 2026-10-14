@@ -25,24 +25,24 @@ class SaleStockUpdater(
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
-    fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String) {
-        if (saleLineStockRequests.isEmpty()) return
+    fun consumeStock(saleLineStockRequests: List<SaleLineStockRequest>, saleRefNumber: String): List<SaleLineConsumedCost> {
+        if (saleLineStockRequests.isEmpty()) return emptyList()
         val locationProductIds = saleLineStockRequests.map { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val fifoEntriesByLocationProductId = loadFifoEntriesByLocationProductId(locationProductIds)
-        val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
+        val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
         val productSummariesByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(saleLineStockRequests.map { it.locationProductId }.toSet())
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
-        saleLineStockRequests.forEach { saleLineStockRequest ->
+        val saleLineConsumedCosts = saleLineStockRequests.map { saleLineStockRequest ->
             val productLabel = productSummariesByLocationProductId[saleLineStockRequest.locationProductId]?.label
                 ?: saleLineStockRequest.locationProductId.toString()
             consumeStockForLine(
                 saleLineStockRequest = saleLineStockRequest,
                 fifoEntries = fifoEntriesByLocationProductId[saleLineStockRequest.locationProductId].orEmpty(),
-                startingBalance = balancesByLocationProductId[saleLineStockRequest.locationProductId] ?: BigDecimal.ZERO,
+                runningBalancesByLocationProductId = runningBalancesByLocationProductId,
                 saleRefNumber = saleRefNumber,
                 productLabel = productLabel,
                 modifiedEntries = modifiedEntries,
@@ -51,6 +51,7 @@ class SaleStockUpdater(
         }
         stockEntryRepository.saveAll(modifiedEntries)
         stockMovementRepository.saveAll(movements)
+        return saleLineConsumedCosts
     }
 
     private fun loadFifoEntriesByLocationProductId(locationProductIds: List<UUID>): Map<UUID, List<StockEntryEntity>> {
@@ -62,14 +63,15 @@ class SaleStockUpdater(
     private fun consumeStockForLine(
         saleLineStockRequest: SaleLineStockRequest,
         fifoEntries: List<StockEntryEntity>,
-        startingBalance: BigDecimal,
+        runningBalancesByLocationProductId: MutableMap<UUID, BigDecimal>,
         saleRefNumber: String,
         productLabel: String,
         modifiedEntries: MutableList<StockEntryEntity>,
         movements: MutableList<StockMovementEntity>,
-    ) {
-        var runningBalance = startingBalance
+    ): SaleLineConsumedCost {
+        var runningBalance = runningBalancesByLocationProductId[saleLineStockRequest.locationProductId] ?: BigDecimal.ZERO
         var unsatisfiedQuantity = saleLineStockRequest.baseQuantity
+        var consumedCost = BigDecimal.ZERO
         for (stockEntry in fifoEntries) {
             if (unsatisfiedQuantity <= BigDecimal.ZERO) break
             val takenQuantityInBaseUnit = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
@@ -91,8 +93,11 @@ class SaleStockUpdater(
                 )
             )
             unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
+            consumedCost = consumedCost.add(takenQuantityInBaseUnit.multiply(stockEntry.unitCost))
         }
         throwIfNotFulfilled(saleLineStockRequest, unsatisfiedQuantity, productLabel)
+        runningBalancesByLocationProductId[saleLineStockRequest.locationProductId] = runningBalance
+        return SaleLineConsumedCost(saleLineStockRequest.saleLineId, Decimals.roundToScale4(consumedCost))
     }
 
     private fun throwIfNotFulfilled(

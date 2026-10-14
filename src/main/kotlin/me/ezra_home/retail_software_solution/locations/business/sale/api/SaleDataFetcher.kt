@@ -60,6 +60,10 @@ class SaleDataFetcher(
         return saleRepository.getReferenceById(saleId).contactId
     }
 
+    fun getSaleCogsTotal(saleId: UUID): BigDecimal {
+        return saleLineRepository.findBySaleId(saleId).sumOf { it.cogsTotal ?: BigDecimal.ZERO }
+    }
+
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun loadDraftAtVersion(saleId: UUID, expectedVersion: Long?): SaleEntity {
         val sale = lockAndGetSale(saleId)

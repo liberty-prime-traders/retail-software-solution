@@ -43,7 +43,7 @@ object StockTransferFifoAllocator {
         productLabel: String
     ): List<CostGroupAllocation> {
         val costGroups = fifoEntries
-            .groupBy { it.unitCost ?: BigDecimal.ZERO }
+            .groupBy { it.unitCost }
             .map { (cost, entries) -> CostGroupAllocation(cost, entries.sumOf { it.quantityRemaining }) }
 
         var remaining = baseQtyNeeded

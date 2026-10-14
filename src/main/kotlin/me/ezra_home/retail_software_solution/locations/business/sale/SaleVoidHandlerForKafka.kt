@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
@@ -18,6 +19,7 @@ import java.util.UUID
 class SaleVoidHandlerForKafka(
     private val saleRepository: SaleRepository,
     private val saleVoidRepository: SaleVoidRepository,
+    private val saleDataFetcher: SaleDataFetcher,
     private val eventPublisher: ApplicationEventPublisher,
 ) : EventReissueHandler {
 
@@ -47,7 +49,8 @@ class SaleVoidHandlerForKafka(
                 taxBilled = sale.taxBilled ?: BigDecimal.ZERO,
                 discountTotal = sale.discountTotal(),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
-                dateVoided = DateTimes.Local.atOrganizationZone(voidEntity.requiredCreatedOn())
+                dateVoided = DateTimes.Local.atOrganizationZone(voidEntity.requiredCreatedOn()),
+                cogsTotal = saleDataFetcher.getSaleCogsTotal(sale.id!!)
             )
         )
     }
