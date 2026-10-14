@@ -78,6 +78,10 @@ databaseChangeLog:
                     notNullConstraintName: sale_line_conversion_denominator_notnull
 
               - column:
+                  name: cogs_total
+                  type: numeric(19, 4)
+
+              - column:
                   name: created_by_id
                   type: uuid
                   constraints:

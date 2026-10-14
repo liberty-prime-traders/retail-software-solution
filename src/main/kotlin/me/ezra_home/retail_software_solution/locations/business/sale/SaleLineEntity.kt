@@ -38,7 +38,10 @@ class SaleLineEntity(
     override var conversionNumerator: Long,
 
     @Column(name = "conversion_denominator", nullable = false)
-    override var conversionDenominator: Long
+    override var conversionDenominator: Long,
+
+    @Column(name = "cogs_total", precision = 19, scale = 4)
+    var cogsTotal: BigDecimal? = null
 
 ) : HasReferenceEntity(), ProductLineWithPrice, HasConversionRatio {
 

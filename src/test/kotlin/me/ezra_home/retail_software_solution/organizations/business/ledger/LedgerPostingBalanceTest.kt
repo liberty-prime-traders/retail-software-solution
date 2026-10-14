@@ -176,7 +176,8 @@ class LedgerPostingBalanceTest {
         taxableAmount = BigDecimal("90.00"),
         taxBilled = BigDecimal.ZERO,
         discountTotal = BigDecimal("10.00"),
-        dateSold = LocalDate.of(2026, 1, 15)
+        dateSold = LocalDate.of(2026, 1, 15),
+        cogsTotal = BigDecimal.ZERO
     )
 
     private fun saleVoidedEvent() = SaleVoidedEvent(
@@ -191,7 +192,8 @@ class LedgerPostingBalanceTest {
         taxBilled = BigDecimal.ZERO,
         discountTotal = BigDecimal("10.00"),
         dateSold = LocalDate.of(2026, 1, 15),
-        dateVoided = LocalDate.of(2026, 1, 16)
+        dateVoided = LocalDate.of(2026, 1, 16),
+        cogsTotal = BigDecimal.ZERO
     )
 
     private fun salePaymentRecordedEvent(amount: BigDecimal) = SalePaymentRecordedEvent(

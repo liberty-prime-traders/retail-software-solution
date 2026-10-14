@@ -354,6 +354,12 @@ Two distinct mechanisms protect inventory:
   trace stock out → sale.
 - On `VOIDED`, `SaleStockUpdater.restoreStock` reverses the FIFO consumption
   for that reference.
+- `consumeStock` returns a `SaleLineConsumedCost` per sale line (Σ `takenQuantityInBaseUnit × StockEntryEntity.unitCost`
+  across layers, rounded once to scale 4). `ConfirmedSalePersister.consumeStockAndRecordCogs` stores it
+  in `SaleLineEntity.cogsTotal`. Drafts keep `cogsTotal = null`; a void leaves it untouched.
+- `SaleConfirmedEvent` and `SaleVoidedEvent` carry `cogsTotal`, summed from the persisted lines by
+  `SaleDataFetcher.getSaleCogsTotal` (null cost counts as zero) so `reissue` reproduces it.
+  `restoreStock` returns nothing: the void reverses the stored line costs.
 
 ### Locking discipline
 

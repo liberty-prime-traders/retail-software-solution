@@ -56,7 +56,7 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: decimal(15,2)
+                  type: decimal(19,4)
 
               - column:
                   name: revend

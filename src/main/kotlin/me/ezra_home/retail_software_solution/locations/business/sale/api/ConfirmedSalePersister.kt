@@ -59,7 +59,7 @@ class ConfirmedSalePersister(
             lineSyncResult = lineSyncResult,
         )
 
-        runFifoConsumption(saleEntity, lineSyncResult.persistedSaleLines)
+        consumeStockAndRecordCogs(saleEntity, lineSyncResult.persistedSaleLines)
         saleTaxFinalizer.finalizeTaxForConfirm(saleEntity)
         saleConfirmedHandlerForKafka.publish(saleEntity)
 
@@ -84,7 +84,7 @@ class ConfirmedSalePersister(
         saleValidator.guardSufficientStockForSale(saleId, baseQuantitiesByLocationProductId, productSummariesByLocationProductId)
     }
 
-    private fun runFifoConsumption(
+    private fun consumeStockAndRecordCogs(
         saleEntity: SaleEntity,
         saleLineEntities: List<SaleLineEntity>,
     ) {
@@ -98,10 +98,14 @@ class ConfirmedSalePersister(
             )
         }
 
-        saleStockUpdater.consumeStock(
+        val consumedCostsBySaleLineId = saleStockUpdater.consumeStock(
             saleLineStockRequests,
             saleEntity.requiredReference()
-        )
+        ).associateBy { it.saleLineId }
+        saleLineEntities.forEach { saleLineEntity ->
+            saleLineEntity.cogsTotal = consumedCostsBySaleLineId.getValue(saleLineEntity.id!!).cost
+        }
+        saleLineRepository.saveAll(saleLineEntities)
     }
 
     private fun loadOrCreate(saleSaveRequest: SaleSaveRequest, effectiveDateSold: java.time.OffsetDateTime): SaleEntity {

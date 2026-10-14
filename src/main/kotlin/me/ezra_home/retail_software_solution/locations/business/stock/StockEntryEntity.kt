@@ -39,7 +39,7 @@ class StockEntryEntity(
   @Column(name = "priority")
   var priority: Int,
 
-  @Column(name = "unit_cost", precision = 15, scale = 2)
-  var unitCost: BigDecimal? = null
+  @Column(name = "unit_cost", nullable = false, precision = 19, scale = 4)
+  var unitCost: BigDecimal
 
 ) : HasReferenceEntity()

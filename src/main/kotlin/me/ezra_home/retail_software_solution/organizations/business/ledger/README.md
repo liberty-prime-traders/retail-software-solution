@@ -163,3 +163,9 @@ each processor's real output through the real `AccountService.patchBalances`
 there when adding or changing a processor — the balanced-entries check
 cannot catch a processor that flips both legs.
 Not yet covered: `SaleTaxLedgerEntriesBuilder`.
+
+## Sale cost of goods sold
+
+`SaleConfirmedEventProcessor` adds `COST_OF_GOODS_SOLD` debit / `INVENTORY` credit for `event.cogsTotal` to the sale's
+group (dated `dateSold`); `SaleVoidedEventProcessor` posts the reverse (dated `dateVoided`). Both skip only when the
+total is exactly zero. A negative total is posted on purpose so `LedgerEntriesValidator` fails loudly.
