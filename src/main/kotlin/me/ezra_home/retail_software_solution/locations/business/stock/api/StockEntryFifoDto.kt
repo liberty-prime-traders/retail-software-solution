@@ -5,6 +5,6 @@ import java.util.UUID
 
 data class StockEntryFifoDto(
     val locationProductId: UUID,
-    val unitCost: BigDecimal?,
+    val unitCost: BigDecimal,
     val quantityRemaining: BigDecimal
 )

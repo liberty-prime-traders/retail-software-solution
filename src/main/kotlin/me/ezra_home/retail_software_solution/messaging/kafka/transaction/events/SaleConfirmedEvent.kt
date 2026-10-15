@@ -17,5 +17,6 @@ data class SaleConfirmedEvent(
     val taxableAmount: BigDecimal,
     val taxBilled: BigDecimal,
     val discountTotal: BigDecimal,
-    val dateSold: LocalDate
+    val dateSold: LocalDate,
+    val cogsTotal: BigDecimal
 ) : TransactionEvent()

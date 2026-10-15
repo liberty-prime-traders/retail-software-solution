@@ -18,5 +18,6 @@ data class SaleVoidedEvent(
     val taxBilled: BigDecimal,
     val discountTotal: BigDecimal,
     val dateSold: LocalDate,
-    val dateVoided: LocalDate
+    val dateVoided: LocalDate,
+    val cogsTotal: BigDecimal
 ) : TransactionEvent()

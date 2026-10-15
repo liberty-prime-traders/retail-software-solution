@@ -58,6 +58,10 @@ databaseChangeLog:
                   type: bigint
 
               - column:
+                  name: cogs_total
+                  type: numeric(19, 4)
+
+              - column:
                   name: revend
                   type: bigint
 

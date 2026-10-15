@@ -42,6 +42,10 @@ class SaleVoidedEventProcessor(
             if (event.discountTotal.signum() > 0) {
                 add(LedgerEntryRequest.credit(SystemAccount.SALES_DISCOUNTS.code, event.discountTotal))
             }
+            if (event.cogsTotal.signum() != 0) {
+                add(LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, event.cogsTotal))
+                add(LedgerEntryRequest.credit(SystemAccount.COST_OF_GOODS_SOLD.code, event.cogsTotal))
+            }
         }
 
         return LedgerPostingRequest(
