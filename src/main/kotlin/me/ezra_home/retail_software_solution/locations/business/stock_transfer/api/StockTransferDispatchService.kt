@@ -86,7 +86,7 @@ class StockTransferDispatchService(
         dispatchEntity.status = StockTransferStatus.DISPATCHED
         stockTransferDispatchRepository.save(dispatchEntity)
 
-        val totalDispatchedCost = dispatchLines.sumOf { Decimals.multiplyScale4(it.unitCost, it.quantityDispatched) }
+        val totalDispatchedCost = dispatchLines.sumOf { Decimals.Scale4.multiply(it.unitCost, it.quantityDispatched) }
         stockTransferOrderService.setDispatchSummary(
             referenceNumber = orderRef,
             lineCount = dispatchLines.size,
@@ -122,7 +122,7 @@ class StockTransferDispatchService(
                 quantity = dispatchLine.quantityDispatched,
                 unitId = dispatchLine.unitId,
                 baseUnitId = dispatchLine.baseUnitId,
-                conversionFactor = dispatchLine.conversionRatio().factor(),
+                conversionFactor = dispatchLine.conversionRatio().displayFactor(),
                 unitCost = dispatchLine.unitCost,
                 quantityReceived = null
             )
@@ -140,7 +140,8 @@ class StockTransferDispatchService(
                 unitId = dispatchLine.unitId,
                 unitCost = dispatchLine.unitCost,
                 conversionRatio = ratio,
-                baseUnitId = dispatchLine.baseUnitId
+                baseUnitId = dispatchLine.baseUnitId,
+                enteredQuantity = dispatchLine.quantityDispatched,
             )
         }
 

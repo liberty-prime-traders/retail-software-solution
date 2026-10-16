@@ -67,14 +67,14 @@ object TaxAmountCalculator {
         val includedPercentageSum = included
             .filter { it.calculationMethod == CalculationMethod.PERCENTAGE }
             .fold(BigDecimal.ZERO) { acc, taxType -> acc + requirePercentage(taxType) }
-        val includedPercentageRateSum = Decimals.divideScale4(includedPercentageSum, BigDecimal(100))
-        return Decimals.divideScale4(taxableAmount - includedFlatAmounts, BigDecimal.ONE + includedPercentageRateSum)
+        val includedPercentageRateSum = Decimals.Scale4.divide(includedPercentageSum, BigDecimal(100))
+        return Decimals.Scale4.divide(taxableAmount - includedFlatAmounts, BigDecimal.ONE + includedPercentageRateSum)
     }
 
     private fun taxAmountFor(activeTaxType: ActiveTaxTypeForCalculation, netBase: BigDecimal): BigDecimal =
         when (activeTaxType.calculationMethod) {
             CalculationMethod.PERCENTAGE ->
-                Decimals.multiplyScale4(netBase, Decimals.divideScale4(requirePercentage(activeTaxType), BigDecimal(100)))
+                Decimals.Scale4.multiply(netBase, Decimals.Scale4.divide(requirePercentage(activeTaxType), BigDecimal(100)))
             CalculationMethod.FIXED_VALUE ->
                 requireFlatAmount(activeTaxType).setScale(4, RoundingMode.HALF_UP)
         }

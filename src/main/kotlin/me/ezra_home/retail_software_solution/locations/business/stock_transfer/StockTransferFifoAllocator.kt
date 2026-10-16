@@ -21,12 +21,19 @@ object StockTransferFifoAllocator {
             val baseQtyNeeded = ratio.applyTo(draftLine.quantity)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
             val productLabel = productLabelByLocationProductId.getValue(draftLine.locationProductId)
-            allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
+            val allocations = allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel)
+            var enteredQuantityLeft = draftLine.quantity
+            allocations.mapIndexed { allocationIndex, allocation ->
+                // The last cost group takes the remainder so the dispatched quantities sum to the entered quantity,
+                // which a round trip through the scale-4 base quantity would not.
+                val quantityDispatched = if (allocationIndex == allocations.lastIndex) enteredQuantityLeft
+                else ratio.invert().applyTo(allocation.baseQuantity)
+                enteredQuantityLeft -= quantityDispatched
                 StockTransferDispatchLineEntity(
                     stockTransferDispatchId = dispatchId,
                     orgProductId = orgProductIdByLocationProductId.getValue(draftLine.locationProductId),
                     locationProductId = draftLine.locationProductId,
-                    quantityDispatched = ratio.invert().applyTo(allocation.baseQuantity),
+                    quantityDispatched = quantityDispatched,
                     unitId = draftLine.unitId,
                     unitCost = allocation.unitCost,
                     conversionNumerator = ratio.numerator,

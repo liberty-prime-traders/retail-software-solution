@@ -20,5 +20,5 @@ data class SaleSessionLine(
     val quantityAvailable: BigDecimal = BigDecimal.ZERO,
 
 ) : ProductLineWithPrice {
-    override val unitPrice: BigDecimal = conversionRatio.applyTo(defaultSalePrice)
+    override val unitPrice: BigDecimal = conversionRatio.applyToPrice(defaultSalePrice)
 }

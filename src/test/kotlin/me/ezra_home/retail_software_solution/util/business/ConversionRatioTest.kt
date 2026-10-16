@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.util.business
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
+import java.math.RoundingMode
 import kotlin.test.assertEquals
 
 class ConversionRatioTest {
@@ -34,15 +35,28 @@ class ConversionRatioTest {
     }
 
     @Test
-    fun `factor divides numerator by denominator at scale 4`() {
+    fun `factor divides numerator by denominator at the quantity scale`() {
         val ratio = ConversionRatio(1L, 3L)
-        assertEquals(BigDecimal("0.3333"), ratio.factor())
+        assertEquals(BigDecimal("0.3333333333"), ratio.factor())
+        assertEquals(BigDecimal("0.3333"), ratio.displayFactor())
     }
 
     @Test
-    fun `applyTo multiplies then divides at scale 4`() {
+    fun `applyTo multiplies then divides at the quantity scale`() {
         val ratio = ConversionRatio(1L, 2L)
-        assertEquals(BigDecimal("5.0000"), ratio.applyTo(BigDecimal("10")))
+        assertEquals(BigDecimal("5.0000000000"), ratio.applyTo(BigDecimal("10")))
+    }
+
+    @Test
+    fun `applyToPrice keeps money at scale 4`() {
+        assertEquals(BigDecimal("3.3333"), ConversionRatio(1L, 3L).applyToPrice(BigDecimal("10")))
+    }
+
+    @Test
+    fun `a quantity in a smaller unit survives a round trip through the stock unit exactly`() {
+        val piecesToBale = ConversionRatio(1L, 18L)
+        val inBale = piecesToBale.applyTo(BigDecimal("26"))
+        assertEquals(0, BigDecimal("26").compareTo(piecesToBale.invert().applyTo(inBale).setScale(4, RoundingMode.HALF_UP)))
     }
 
     @Test
@@ -69,7 +83,7 @@ class ConversionRatioTest {
 
     @Test
     fun `identity applyTo returns the same quantity`() {
-        assertEquals(BigDecimal("7.0000"), ConversionRatio.IDENTITY.applyTo(BigDecimal("7")))
+        assertEquals(BigDecimal("7.0000000000"), ConversionRatio.IDENTITY.applyTo(BigDecimal("7")))
     }
 
     @Test

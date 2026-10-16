@@ -9,10 +9,16 @@ data class ConversionRatio(val numerator: Long, val denominator: Long) {
         require(denominator > 0) { "denominator must be positive" }
     }
 
-    fun factor(): BigDecimal = Decimals.divideScale4(numerator.toBigDecimal(), denominator.toBigDecimal())
+    fun factor(): BigDecimal = Decimals.Scale10.divide(numerator.toBigDecimal(), denominator.toBigDecimal())
+
+    fun displayFactor(): BigDecimal = Decimals.Scale4.round(factor())
 
     fun applyTo(quantity: BigDecimal): BigDecimal =
-        Decimals.divideScale4(quantity.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
+        Decimals.Scale10.divide(quantity.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
+
+    // Money has two decimals fewer than a quantity needs, so a converted price must not carry quantity precision.
+    fun applyToPrice(price: BigDecimal): BigDecimal =
+        Decimals.Scale4.divide(price.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
 
     fun isEquivalentTo(other: ConversionRatio): Boolean = numerator * other.denominator == other.numerator * denominator
 

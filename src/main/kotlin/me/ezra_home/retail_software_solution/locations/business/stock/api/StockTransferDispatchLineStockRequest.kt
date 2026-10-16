@@ -11,5 +11,6 @@ data class StockTransferDispatchLineStockRequest(
     val unitId: UUID,
     val unitCost: BigDecimal,
     val conversionRatio: ConversionRatio,
-    val baseUnitId: UUID
+    val baseUnitId: UUID,
+    val enteredQuantity: BigDecimal = conversionRatio.invert().applyTo(baseQuantity),
 )

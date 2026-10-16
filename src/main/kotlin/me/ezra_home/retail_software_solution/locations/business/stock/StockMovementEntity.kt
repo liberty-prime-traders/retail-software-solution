@@ -36,10 +36,10 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
-  @Column(name = "moved_quantity", nullable = false, precision = 15, scale = 3)
+  @Column(name = "moved_quantity", nullable = false, precision = 28, scale = 10)
   var movedQuantity: BigDecimal,
 
-  @Column(name = "remaining_quantity", nullable = false, precision = 15, scale = 3)
+  @Column(name = "remaining_quantity", nullable = false, precision = 28, scale = 10)
   var remainingQuantity: BigDecimal,
 
   @Column(name = "external_reference_number", length = 30)

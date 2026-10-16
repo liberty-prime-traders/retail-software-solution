@@ -44,7 +44,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity
-                  type: numeric(15,4)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_transfer_draft_line_quantity_notnull

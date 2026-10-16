@@ -12,7 +12,7 @@ object AdjustmentAmountCalculator {
             CalculationMethod.FIXED_VALUE -> {
                 if (dto.locationProductId != null) {
                     val targetLine = lines.first { it.locationProductId == dto.locationProductId }
-                    Decimals.multiplyScale4(dto.value, targetLine.quantity)
+                    Decimals.Scale4.multiply(dto.value, targetLine.quantity)
                 } else {
                     dto.value
                 }
@@ -23,7 +23,7 @@ object AdjustmentAmountCalculator {
                 } else {
                     lines.sumOf { it.lineTotal }
                 }
-                Decimals.multiplyScale4(Decimals.divideScale4(dto.value, BigDecimal(100)), basePrice)
+                Decimals.Scale4.multiply(Decimals.Scale4.divide(dto.value, BigDecimal(100)), basePrice)
             }
         }
 }

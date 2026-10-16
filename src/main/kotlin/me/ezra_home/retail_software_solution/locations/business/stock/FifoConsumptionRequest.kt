@@ -11,5 +11,7 @@ data class FifoConsumptionRequest(
     val unitId: UUID,
     val conversionRatio: ConversionRatio,
     val movementType: MovementType,
-    val externalReferenceNumber: String
+    val externalReferenceNumber: String,
+    // The quantity as entered, in the unit: the last layer takes what the earlier ones left of it, so the movements sum to it exactly.
+    val enteredQuantity: BigDecimal = conversionRatio.invert().applyTo(baseQuantity),
 )

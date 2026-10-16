@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -44,7 +45,7 @@ class PurchaseCanceller(
     }
 
     private fun resolvePurchaseStatus(lines: List<PurchaseLineEntity>): PurchaseStatus? {
-        val allAccountedFor = lines.all { (it.quantityDelivered + it.quantityCanceled).compareTo(it.quantityOrdered) == 0 }
+        val allAccountedFor = lines.all { Decimals.Scale4.compare(it.quantityDelivered + it.quantityCanceled, it.quantityOrdered) == 0 }
         val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }
         return when {
             allAccountedFor && !anyDelivered -> PurchaseStatus.CANCELED

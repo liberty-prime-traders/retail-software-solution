@@ -30,10 +30,10 @@ class StockEntryEntity(
   @Column(name = "external_reference_number", length = 30)
   var externalReferenceNumber: String? = null,
 
-  @Column(name = "batch_size", nullable = false, precision = 15, scale = 3, updatable = false)
+  @Column(name = "batch_size", nullable = false, precision = 28, scale = 10, updatable = false)
   var batchSize: BigDecimal,
 
-  @Column(name = "quantity_remaining", nullable = false, precision = 15, scale = 3)
+  @Column(name = "quantity_remaining", nullable = false, precision = 28, scale = 10)
   var quantityRemaining: BigDecimal,
 
   @Column(name = "priority")

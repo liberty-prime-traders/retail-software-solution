@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
 import java.util.UUID
@@ -26,13 +27,13 @@ class ReconciledTransferLineFetcher(
             ReconciledTransferLine(
                 dispatchLineRef = line.requiredReference(),
                 productLabel = labels.getValue(line.locationProductId).label,
-                quantity = line.quantity,
+                quantity = Decimals.Scale4.round(line.quantity),
                 unitId = line.unitId,
                 baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionRatio().factor(),
+                conversionFactor = line.conversionRatio().displayFactor(),
                 unitCost = null,
                 quantityReceived = null,
-                quantityAvailable = availability.quantityAvailable
+                quantityAvailable = Decimals.Scale4.round(availability.quantityAvailable)
             )
         }
     }
@@ -45,12 +46,12 @@ class ReconciledTransferLineFetcher(
             ReconciledTransferLine(
                 dispatchLineRef = line.requiredReference(),
                 productLabel = labels.getValue(line.locationProductId).label,
-                quantity = line.quantityDispatched,
+                quantity = Decimals.Scale4.round(line.quantityDispatched),
                 unitId = line.unitId,
                 baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionRatio().factor(),
+                conversionFactor = line.conversionRatio().displayFactor(),
                 unitCost = line.unitCost,
-                quantityReceived = if (line.requiredReference() in confirmedRefs) line.quantityDispatched else null
+                quantityReceived = if (line.requiredReference() in confirmedRefs) Decimals.Scale4.round(line.quantityDispatched) else null
             )
         }
     }

@@ -39,7 +39,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity
-                  type: numeric(15,3)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: opening_stock_quantity_notnull

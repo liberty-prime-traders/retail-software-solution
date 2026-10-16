@@ -24,7 +24,7 @@ class StockTransferDraftLineEntity(
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,
 
-    @Column(name = "quantity", nullable = false, precision = 15, scale = 4)
+    @Column(name = "quantity", nullable = false, precision = 28, scale = 10)
     var quantity: BigDecimal,
 
     @Column(name = "unit_id", nullable = false)

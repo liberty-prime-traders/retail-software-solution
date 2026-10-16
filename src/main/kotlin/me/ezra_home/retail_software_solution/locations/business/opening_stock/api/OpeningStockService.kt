@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.Openin
 import me.ezra_home.retail_software_solution.locations.business.stock.api.OpeningStockStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
@@ -84,7 +85,7 @@ class OpeningStockService(
         referenceNumber = openingStock.requiredReference(),
         locationProductId = openingStock.locationProductId,
         productLabel = productLabel,
-        quantity = openingStock.quantity,
+        quantity = Decimals.Scale4.round(openingStock.quantity),
         unitCost = openingStock.unitCost,
         declaredBy = userQualifier.getCreatorFullName(openingStock.requiredCreatedById()),
         declaredAt = openingStock.requiredCreatedOn()

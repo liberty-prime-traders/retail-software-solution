@@ -38,7 +38,7 @@ class PurchaseDeliveryService(
     val deliveryLines = dto.lines.map { line ->
       val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
       val factor = unitConversionGraphFacade.getFactor(line.unitId, purchaseLine.unitId)
-      DeliveryLineQuantity(line.purchaseLineId, Decimals.multiplyScale4(line.quantityDelivered, factor))
+      DeliveryLineQuantity(line.purchaseLineId, Decimals.Scale4.multiply(line.quantityDelivered, factor))
     }
 
     val deliveryRecord = persistDelivery(dto)

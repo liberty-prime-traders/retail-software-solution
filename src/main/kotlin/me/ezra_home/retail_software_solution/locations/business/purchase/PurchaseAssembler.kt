@@ -99,7 +99,7 @@ class PurchaseAssembler(
         referenceNumber = line.requiredReference(),
         quantityOrdered = line.quantityOrdered,
         unitId = line.unitId,
-        conversionFactor = line.conversionRatio().factor(),
+        conversionFactor = line.conversionRatio().displayFactor(),
         unitCost = line.unitCost,
         lineTotal = line.getTotalCost(),
         quantityDelivered = line.quantityDelivered,

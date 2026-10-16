@@ -12,10 +12,10 @@ data class ConversionTargetDto(
     val code: String,
     val numerator: Long,
     val denominator: Long,
-    val factor: BigDecimal = Decimals.divideScale4(numerator.toBigDecimal(), denominator.toBigDecimal())
+    val factor: BigDecimal = Decimals.Scale10.divide(numerator.toBigDecimal(), denominator.toBigDecimal())
 ) {
 
-    fun applyTo(quantity: BigDecimal): BigDecimal = Decimals.divideScale4(
+    fun applyTo(quantity: BigDecimal): BigDecimal = Decimals.Scale10.divide(
         quantity.multiply(numerator.toBigDecimal()),
         denominator.toBigDecimal()
     )

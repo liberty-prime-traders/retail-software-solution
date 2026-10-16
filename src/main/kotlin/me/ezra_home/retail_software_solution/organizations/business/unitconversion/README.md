@@ -76,7 +76,7 @@ Every edge and every compounded path is a `ConversionRatio`
 (`util/business/ConversionRatio.kt`) — the graph is built entirely from
 integers. `BigDecimal` only appears at the very edge of this package,
 as `ConversionTargetDto.factor`, a **derived** convenience field
-computed via `Decimals.divideScale4(numerator, denominator)` for
+computed via `Decimals.Scale4.divide(numerator, denominator)` for
 callers that just want a display decimal.
 
 **Use `getRatio()` when you're about to store the result** (an entity

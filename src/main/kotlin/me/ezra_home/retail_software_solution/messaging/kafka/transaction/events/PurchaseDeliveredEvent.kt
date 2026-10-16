@@ -20,5 +20,5 @@ data class PurchaseDeliveredEvent(
   val lines: List<PurchaseDeliveredLineDto>
 ) : TransactionEvent() {
   override val sourceDocumentId: UUID get() = deliveryId
-  val deliveryTotal: BigDecimal get() = lines.sumOf { Decimals.multiplyScale4(it.quantityDelivered, it.unitCost) }
+  val deliveryTotal: BigDecimal get() = lines.sumOf { Decimals.Scale4.multiply(it.quantityDelivered, it.unitCost) }
 }

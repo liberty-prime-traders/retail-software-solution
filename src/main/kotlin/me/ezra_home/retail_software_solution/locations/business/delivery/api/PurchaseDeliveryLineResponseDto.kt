@@ -14,5 +14,5 @@ data class PurchaseDeliveryLineResponseDto(
   val unitId: UUID,
   val unitCost: BigDecimal,
 ) {
-  val lineTotal: BigDecimal get() = Decimals.multiplyScale4(quantityDelivered, unitCost)
+  val lineTotal: BigDecimal get() = Decimals.Scale4.multiply(quantityDelivered, unitCost)
 }

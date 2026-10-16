@@ -94,7 +94,7 @@ class SaleSessionAssembler(
                     AdjustmentDirection.BOTH -> calculatedAmount.negate()
                 }
             }
-            Decimals.divideScale4(saleSessionLine.lineTotal + netAdjustmentAmount, saleSessionLine.quantity)
+            Decimals.Scale4.divide(saleSessionLine.lineTotal + netAdjustmentAmount, saleSessionLine.quantity)
         }
 
         return LineMappingContext(

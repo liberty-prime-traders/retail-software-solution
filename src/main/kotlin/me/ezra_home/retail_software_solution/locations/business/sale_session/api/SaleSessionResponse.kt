@@ -56,8 +56,8 @@ data class SaleSessionLineResponse(
     val quantityReserved: BigDecimal,
     val quantityAvailable: BigDecimal,
 ) {
-    val baseQuantity: BigDecimal = Decimals.multiplyScale4(quantity, conversionFactor)
-    val lineTotal = Decimals.multiplyScale4(quantity, netUnitPrice)
+    val baseQuantity: BigDecimal = Decimals.Scale4.multiply(quantity, conversionFactor)
+    val lineTotal = Decimals.Scale4.multiply(quantity, netUnitPrice)
 }
 
 data class SaleSessionAdjustmentResponse(
