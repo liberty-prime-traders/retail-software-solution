@@ -52,6 +52,6 @@ class PurchaseLineEntity(
 
   fun getRemainingQuantity(): BigDecimal = getExpectedQuantity() - quantityDelivered
 
-  fun getTotalCost(): BigDecimal = Decimals.multiplyScale4(unitCost, getExpectedQuantity())
+  fun getTotalCost(): BigDecimal = Decimals.Scale4.multiply(unitCost, getExpectedQuantity())
 
 }

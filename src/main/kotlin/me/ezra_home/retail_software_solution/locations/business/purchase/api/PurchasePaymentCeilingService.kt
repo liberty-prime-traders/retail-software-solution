@@ -25,7 +25,7 @@ class PurchasePaymentCeilingService(
     }
 
     fun computeCeiling(lines: List<PurchaseLineEntity>, deliveredTotal: BigDecimal): PaymentCeiling {
-        val poTotal = lines.sumOf { Decimals.multiplyScale4(it.unitCost, it.getExpectedQuantity()) }
+        val poTotal = lines.sumOf { Decimals.Scale4.multiply(it.unitCost, it.getExpectedQuantity()) }
         val isFullyDelivered = deliveredTotal > BigDecimal.ZERO &&
             lines.all { it.getRemainingQuantity() <= BigDecimal.ZERO }
         val ceiling = when {

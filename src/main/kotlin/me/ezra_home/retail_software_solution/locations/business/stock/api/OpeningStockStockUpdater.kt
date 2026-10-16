@@ -33,7 +33,7 @@ class OpeningStockStockUpdater(
         val entriesByProductId = lines.associate { line ->
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
             val baseQty = unitConversionGraph.getTarget(line.unitId, baseUnitId).applyTo(line.quantity)
-            val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantity), baseQty)
+            val baseCost = Decimals.Scale4.divide(Decimals.Scale4.multiply(line.unitCost, line.quantity), baseQty)
             line.locationProductId to StockEntryEntity(
                 locationProductId = line.locationProductId,
                 sourceType = StockItemSource.OPENING_STOCK,

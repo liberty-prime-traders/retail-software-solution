@@ -51,7 +51,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_dispatched
-                  type: numeric(15,4)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_transfer_dispatch_line_quantity_dispatched_notnull

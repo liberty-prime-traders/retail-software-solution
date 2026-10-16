@@ -53,7 +53,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_received
-                  type: numeric(15,4)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_transfer_receipt_line_quantity_received_notnull

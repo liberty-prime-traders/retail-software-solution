@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductWithAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Component
 
 @Component
@@ -20,9 +21,9 @@ class LocationProductForSaleAssembler(
                 referenceNumber = locationProductDto.referenceNumber,
                 productName = locationProductDto.productName,
                 productGroupName = locationProductDto.productGroupName,
-                quantityOnHand = availability.quantityOnHand,
-                quantityReserved = availability.quantityReserved,
-                quantityAvailable = availability.quantityAvailable,
+                quantityOnHand = Decimals.Scale4.round(availability.quantityOnHand),
+                quantityReserved = Decimals.Scale4.round(availability.quantityReserved),
+                quantityAvailable = Decimals.Scale4.round(availability.quantityAvailable),
                 defaultSalePrice = locationProductDto.defaultSalePrice!!
             )
         }

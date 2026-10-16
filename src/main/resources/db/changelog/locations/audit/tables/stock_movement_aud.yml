@@ -44,11 +44,11 @@ databaseChangeLog:
 
               - column:
                   name: moved_quantity
-                  type: decimal(15,3)
+                  type: numeric(28,10)
 
               - column:
                   name: remaining_quantity
-                  type: decimal(15,3)
+                  type: numeric(28,10)
 
               - column:
                   name: external_reference_number

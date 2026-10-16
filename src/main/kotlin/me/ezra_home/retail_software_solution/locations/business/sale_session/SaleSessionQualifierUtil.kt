@@ -67,10 +67,10 @@ object SaleSessionQualifierUtil {
 
     @SaleLineDefaultSalePrice
     fun deriveDefaultSalePrice(saleLineDto: SaleLineDto): BigDecimal =
-        saleLineDto.conversionRatio.invert().applyTo(saleLineDto.unitPrice)
+        saleLineDto.conversionRatio.invert().applyToPrice(saleLineDto.unitPrice)
 
     @LineConversionFactor
-    fun toConversionFactor(saleSessionLine: SaleSessionLine): BigDecimal = saleSessionLine.conversionRatio.factor()
+    fun toConversionFactor(saleSessionLine: SaleSessionLine): BigDecimal = saleSessionLine.conversionRatio.displayFactor()
 
     @SaleLineBaseUnitId
     fun resolveBaseUnitId(

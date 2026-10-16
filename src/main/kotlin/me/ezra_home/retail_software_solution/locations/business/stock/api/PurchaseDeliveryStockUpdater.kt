@@ -34,7 +34,7 @@ class PurchaseDeliveryStockUpdater(
         val entriesByLineId = event.lines.associate { line ->
             val baseUnitId = baseUnitsByProductId.getValue(line.locationProductId)
             val baseQty = unitConversionGraph.getTarget(line.unitId, baseUnitId).applyTo(line.quantityDelivered)
-            val baseCost = Decimals.divideScale4(Decimals.multiplyScale4(line.unitCost, line.quantityDelivered), baseQty)
+            val baseCost = Decimals.Scale4.divide(Decimals.Scale4.multiply(line.unitCost, line.quantityDelivered), baseQty)
             line.deliveryLineId to StockEntryEntity(
                 locationProductId = line.locationProductId,
                 sourceType = StockItemSource.PURCHASE,

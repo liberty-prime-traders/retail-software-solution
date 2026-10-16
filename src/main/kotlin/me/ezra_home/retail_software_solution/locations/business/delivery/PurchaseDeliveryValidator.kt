@@ -41,7 +41,7 @@ class PurchaseDeliveryValidator(
         throw RtsGenericException("Unit cost must be greater than zero for '${orderedProduct.label}'.")
 
       val factor = unitConversionGraphFacade.getFactor(lineDto.unitId, purchaseLine.unitId)
-      val deliveredInPurchaseLineUnit = Decimals.multiplyScale4(lineDto.quantityDelivered, factor)
+      val deliveredInPurchaseLineUnit = Decimals.Scale4.multiply(lineDto.quantityDelivered, factor)
       val remaining = purchaseLine.remainingQuantity
       if (deliveredInPurchaseLineUnit > remaining)
         throw RtsGenericException(

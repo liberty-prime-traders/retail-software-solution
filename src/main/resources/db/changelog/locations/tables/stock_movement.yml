@@ -55,14 +55,14 @@ databaseChangeLog:
 
               - column:
                   name: moved_quantity
-                  type: decimal(15,3)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_movement_moved_quantity_notnull
 
               - column:
                   name: remaining_quantity
-                  type: decimal(15,3)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_movement_remaining_quantity_notnull

@@ -9,5 +9,6 @@ data class SaleLineStockRequest(
     val locationProductId: UUID,
     val baseQuantity: BigDecimal,
     val unitId: UUID,
-    val conversionRatio: ConversionRatio
+    val conversionRatio: ConversionRatio,
+    val enteredQuantity: BigDecimal = conversionRatio.invert().applyTo(baseQuantity),
 )

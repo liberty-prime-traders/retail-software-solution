@@ -42,7 +42,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_reserved
-                  type: numeric(15, 4)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: sale_line_stock_reservation_quantity_reserved_notnull

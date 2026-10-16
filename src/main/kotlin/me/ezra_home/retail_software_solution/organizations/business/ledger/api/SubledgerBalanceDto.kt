@@ -19,8 +19,8 @@ data class SubledgerBalanceDto(
 
     companion object {
         val ZERO = SubledgerBalanceDto(
-            payable = Decimals.roundToScale4(BigDecimal.ZERO),
-            receivable = Decimals.roundToScale4(BigDecimal.ZERO)
+            payable = Decimals.Scale4.round(BigDecimal.ZERO),
+            receivable = Decimals.Scale4.round(BigDecimal.ZERO)
         )
     }
 }

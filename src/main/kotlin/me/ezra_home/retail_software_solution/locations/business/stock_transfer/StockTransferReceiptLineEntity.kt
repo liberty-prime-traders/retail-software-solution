@@ -26,7 +26,7 @@ class StockTransferReceiptLineEntity(
     @Column(name = "location_product_id", nullable = false, updatable = false)
     var locationProductId: UUID,
 
-    @Column(name = "quantity_received", nullable = false, precision = 15, scale = 4)
+    @Column(name = "quantity_received", nullable = false, precision = 28, scale = 10)
     var quantityReceived: BigDecimal
 
 ) : HasReferenceEntity()

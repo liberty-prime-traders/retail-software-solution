@@ -57,6 +57,7 @@ class StockTransferStockUpdater(
                         conversionRatio = dispatchLineRequest.conversionRatio,
                         movementType = MovementType.TRANSFER_OUT,
                         externalReferenceNumber = dispatchLineRequest.dispatchLineRef,
+                        enteredQuantity = dispatchLineRequest.enteredQuantity,
                     ),
                     fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
                     startingBalance = runningBalance,

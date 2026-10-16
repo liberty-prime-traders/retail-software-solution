@@ -28,8 +28,8 @@ class FifoStockConsumerTest {
         assertEquals(BigDecimal("16.0000"), fifoConsumptionResult.cost)
         assertEquals(BigDecimal("8.0000"), fifoConsumptionResult.endingBalance)
         assertEquals(listOf(BigDecimal("10.0000"), BigDecimal("8.0000")), fifoConsumptionResult.movements.map { it.remainingQuantity })
-        assertEquals(BigDecimal("0.0000"), olderLayer.quantityRemaining)
-        assertEquals(BigDecimal("8.0000"), newerLayer.quantityRemaining)
+        assertEquals(0, BigDecimal("0.0000").compareTo(olderLayer.quantityRemaining))
+        assertEquals(0, BigDecimal("8.0000").compareTo(newerLayer.quantityRemaining))
     }
 
     @Test
@@ -50,9 +50,9 @@ class FifoStockConsumerTest {
             reversalType = MovementType.SALE_VOID,
         )
 
-        assertEquals(BigDecimal("14.0000"), fifoRestorationResult.endingBalance)
-        assertEquals(BigDecimal("4.0000"), olderLayer.quantityRemaining)
-        assertEquals(BigDecimal("10.0000"), newerLayer.quantityRemaining)
+        assertEquals(0, BigDecimal("14").compareTo(fifoRestorationResult.endingBalance))
+        assertEquals(0, BigDecimal("4.0000").compareTo(olderLayer.quantityRemaining))
+        assertEquals(0, BigDecimal("10.0000").compareTo(newerLayer.quantityRemaining))
         assertEquals(setOf(MovementType.SALE_VOID), fifoRestorationResult.movements.map { it.movementType }.toSet())
         assertEquals(setOf("SALE-1"), fifoRestorationResult.movements.map { it.externalReferenceNumber }.toSet())
     }
@@ -75,9 +75,57 @@ class FifoStockConsumerTest {
             reversalType = MovementType.SALE_VOID,
         )
 
-        assertEquals(listOf(BigDecimal("0.5000")), fifoConsumptionResult.movements.map { it.movedQuantity })
-        assertEquals(BigDecimal("10.0000"), layer.quantityRemaining)
-        assertEquals(BigDecimal("10.0000"), fifoRestorationResult.endingBalance)
+        assertEquals(listOf(0), fifoConsumptionResult.movements.map { BigDecimal("0.5").compareTo(it.movedQuantity) })
+        assertEquals(0, BigDecimal("10.0000").compareTo(layer.quantityRemaining))
+        assertEquals(0, BigDecimal("10").compareTo(fifoRestorationResult.endingBalance))
+    }
+
+    @Test
+    fun `26 pieces at 1 over 18 move exactly 26 and a void restores the layer to exactly its original quantity`() {
+        val layer = stockEntry(priority = 0, quantity = "10.0000000000", unitCost = "2.0000")
+        val piecesPerBale = ConversionRatio(1L, 18L)
+        val consumption = FifoStockConsumer.consume(
+            fifoConsumptionRequest = request(piecesPerBale.applyTo(BigDecimal("26")).toPlainString(), piecesPerBale, enteredQuantity = BigDecimal("26")),
+            fifoEntries = listOf(layer),
+            startingBalance = BigDecimal("10"),
+            productLabel = "Bella",
+        )
+
+        assertEquals(listOf(0), consumption.movements.map { BigDecimal("26").compareTo(it.movedQuantity) })
+
+        FifoStockConsumer.restore(
+            movementsToReverse = consumption.movements,
+            stockEntriesById = mapOf(layer.id!! to layer),
+            startingBalance = consumption.endingBalance,
+            reversalType = MovementType.SALE_VOID,
+        )
+
+        assertEquals(0, BigDecimal("10").compareTo(layer.quantityRemaining))
+    }
+
+    @Test
+    fun `movements across layers sum to the entered quantity and a void restores every layer exactly`() {
+        val olderLayer = stockEntry(priority = 0, quantity = "0.5000000000", unitCost = "2.0000")
+        val newerLayer = stockEntry(priority = 1, quantity = "2.0000000000", unitCost = "3.0000")
+        val piecesPerBale = ConversionRatio(1L, 18L)
+        val consumption = FifoStockConsumer.consume(
+            fifoConsumptionRequest = request(piecesPerBale.applyTo(BigDecimal("26")).toPlainString(), piecesPerBale, enteredQuantity = BigDecimal("26")),
+            fifoEntries = listOf(olderLayer, newerLayer),
+            startingBalance = BigDecimal("2.5"),
+            productLabel = "Bella",
+        )
+
+        assertEquals(0, BigDecimal("26").compareTo(consumption.movements.sumOf { it.movedQuantity }))
+
+        FifoStockConsumer.restore(
+            movementsToReverse = consumption.movements,
+            stockEntriesById = listOf(olderLayer, newerLayer).associateBy { it.id!! },
+            startingBalance = consumption.endingBalance,
+            reversalType = MovementType.SALE_VOID,
+        )
+
+        assertEquals(0, BigDecimal("0.5").compareTo(olderLayer.quantityRemaining))
+        assertEquals(0, BigDecimal("2").compareTo(newerLayer.quantityRemaining))
     }
 
     @Test
@@ -91,13 +139,18 @@ class FifoStockConsumerTest {
         assertEquals("Insufficient stock for Widget. Available: 2, Requested: 5", exception.message)
     }
 
-    private fun request(baseQuantity: String, conversionRatio: ConversionRatio = ConversionRatio.IDENTITY) = FifoConsumptionRequest(
+    private fun request(
+        baseQuantity: String,
+        conversionRatio: ConversionRatio = ConversionRatio.IDENTITY,
+        enteredQuantity: BigDecimal = conversionRatio.invert().applyTo(BigDecimal(baseQuantity)),
+    ) = FifoConsumptionRequest(
         locationProductId = locationProductId,
         baseQuantity = BigDecimal(baseQuantity),
         unitId = UUID.randomUUID(),
         conversionRatio = conversionRatio,
         movementType = MovementType.SALE,
         externalReferenceNumber = "SALE-1",
+        enteredQuantity = enteredQuantity,
     )
 
     private fun stockEntry(priority: Int, quantity: String, unitCost: String) = StockEntryEntity(

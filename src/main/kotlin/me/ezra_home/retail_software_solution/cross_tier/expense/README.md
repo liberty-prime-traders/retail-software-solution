@@ -127,7 +127,7 @@ as sale and purchase. See `organizations/business/ledger/README.md`.
 
 ## Amounts and dates
 
-Money is `numeric(19, 4)` and rounded with `Decimals.roundToScale4`. Expense dates are
+Money is `numeric(19, 4)` and rounded with `Decimals.Scale4.round`. Expense dates are
 `date`; payment dates are `timestamptz` at the start of the day in the organization zone.
 
 ## Payment state

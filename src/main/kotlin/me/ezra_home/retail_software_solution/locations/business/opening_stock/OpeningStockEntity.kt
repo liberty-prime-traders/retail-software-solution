@@ -18,7 +18,7 @@ class OpeningStockEntity(
     @Column(name = "location_product_id", nullable = false, updatable = false, unique = true)
     var locationProductId: UUID,
 
-    @Column(name = "quantity", nullable = false, updatable = false, precision = 15, scale = 3)
+    @Column(name = "quantity", nullable = false, updatable = false, precision = 28, scale = 10)
     var quantity: BigDecimal,
 
     @Column(name = "unit_cost", nullable = false, updatable = false, precision = 15, scale = 2)

@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.adjustment_r
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -105,7 +106,7 @@ class PriceOverrideReconciler(
                 AdjustmentDirection.BOTH -> throw IllegalStateException("PRICE_OVERRIDE adjustment cannot have direction BOTH")
             }
         } ?: preUpdateSaleSessionLine.unitPrice
-        return submittedUnitPriceOverride.compareTo(preUpdateUnitPriceOverride) != 0
+        return Decimals.Scale4.compare(submittedUnitPriceOverride, preUpdateUnitPriceOverride) != 0
     }
 
     private fun resolveOverrideUpsert(

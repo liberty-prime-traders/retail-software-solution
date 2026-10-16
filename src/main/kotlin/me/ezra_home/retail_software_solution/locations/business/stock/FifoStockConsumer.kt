@@ -22,12 +22,16 @@ object FifoStockConsumer {
         var runningBalance = startingBalance
         var unsatisfiedQuantity = fifoConsumptionRequest.baseQuantity
         var consumedCost = BigDecimal.ZERO
+        var movedQuantityLeft = fifoConsumptionRequest.enteredQuantity
         val touchedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
         val conversionRatio = fifoConsumptionRequest.conversionRatio
         for (stockEntry in fifoEntries) {
             if (unsatisfiedQuantity <= BigDecimal.ZERO) break
             val takenQuantityInBaseUnit = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
+            val takesTheRest = takenQuantityInBaseUnit.compareTo(unsatisfiedQuantity) == 0
+            val movedQuantity = if (takesTheRest) movedQuantityLeft else conversionRatio.invert().applyTo(takenQuantityInBaseUnit)
+            movedQuantityLeft = movedQuantityLeft.subtract(movedQuantity)
             stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
             touchedEntries.add(stockEntry)
             runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
@@ -36,7 +40,7 @@ object FifoStockConsumer {
                     stockEntryId = stockEntry.id!!,
                     locationProductId = fifoConsumptionRequest.locationProductId,
                     movementType = fifoConsumptionRequest.movementType,
-                    movedQuantity = conversionRatio.invert().applyTo(takenQuantityInBaseUnit),
+                    movedQuantity = movedQuantity,
                     remainingQuantity = runningBalance,
                     externalReferenceNumber = fifoConsumptionRequest.externalReferenceNumber,
                     unitId = fifoConsumptionRequest.unitId,
@@ -48,7 +52,7 @@ object FifoStockConsumer {
             consumedCost = consumedCost.add(takenQuantityInBaseUnit.multiply(stockEntry.unitCost))
         }
         throwIfNotFulfilled(fifoConsumptionRequest, unsatisfiedQuantity, productLabel)
-        return FifoConsumptionResult(movements, touchedEntries, Decimals.roundToScale4(consumedCost), runningBalance)
+        return FifoConsumptionResult(movements, touchedEntries, Decimals.Scale4.round(consumedCost), runningBalance)
     }
 
     fun restore(

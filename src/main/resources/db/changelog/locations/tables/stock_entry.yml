@@ -45,14 +45,14 @@ databaseChangeLog:
 
               - column:
                   name: batch_size
-                  type: decimal(15,3)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_entry_batch_size_notnull
 
               - column:
                   name: quantity_remaining
-                  type: decimal(15,3)
+                  type: numeric(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_entry_quantity_remaining_notnull

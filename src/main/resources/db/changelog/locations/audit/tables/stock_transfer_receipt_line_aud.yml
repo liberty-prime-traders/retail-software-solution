@@ -44,7 +44,7 @@ databaseChangeLog:
 
               - column:
                   name: quantity_received
-                  type: numeric(15,4)
+                  type: numeric(28,10)
 
               - column:
                   name: revend

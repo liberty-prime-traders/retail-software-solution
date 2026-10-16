@@ -4,14 +4,31 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 object Decimals {
-    fun roundToScale4(value: BigDecimal): BigDecimal = value.setScale(4, RoundingMode.HALF_UP)
 
-    fun multiplyScale4(value: BigDecimal, factor: BigDecimal): BigDecimal =
-        value.multiply(factor).setScale(4, RoundingMode.HALF_UP)
+    object Scale4 {
+        private const val SCALE = 4
 
-    fun divideScale4(value: BigDecimal, divisor: BigDecimal): BigDecimal {
-        return value.divide(divisor, 4, RoundingMode.HALF_UP)
+        fun round(value: BigDecimal): BigDecimal = value.setScale(SCALE, RoundingMode.HALF_UP)
+
+        fun multiply(value: BigDecimal, factor: BigDecimal): BigDecimal =
+            value.multiply(factor).setScale(SCALE, RoundingMode.HALF_UP)
+
+        fun divide(value: BigDecimal, divisor: BigDecimal): BigDecimal =
+            value.divide(divisor, SCALE, RoundingMode.HALF_UP)
+
+        fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, SCALE)
     }
+
+    // Stock quantities are stored at this scale, so a conversion rounded here is not rounded again on save.
+    object Scale10 {
+        private const val SCALE = 10
+
+        fun divide(value: BigDecimal, divisor: BigDecimal): BigDecimal =
+            value.divide(divisor, SCALE, RoundingMode.HALF_UP)
+    }
+
+    fun compareAtScale(first: BigDecimal, second: BigDecimal, scale: Int): Int =
+        first.setScale(scale, RoundingMode.HALF_UP).compareTo(second.setScale(scale, RoundingMode.HALF_UP))
 
     fun stripZeroesAndRound(quantity: BigDecimal): String {
         return when {

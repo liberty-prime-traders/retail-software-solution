@@ -47,6 +47,7 @@ class SaleStockUpdater(
                     conversionRatio = saleLineStockRequest.conversionRatio,
                     movementType = MovementType.SALE,
                     externalReferenceNumber = saleRefNumber,
+                    enteredQuantity = saleLineStockRequest.enteredQuantity,
                 ),
                 fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
                 startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,

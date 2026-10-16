@@ -15,5 +15,5 @@ data class ReconciledTransferLine(
     val quantityReceived: BigDecimal?,
     val quantityAvailable: BigDecimal? = null,
 ) {
-    val totalCost: BigDecimal? = unitCost?.let { Decimals.multiplyScale4(quantity, it) }
+    val totalCost: BigDecimal? = unitCost?.let { Decimals.Scale4.multiply(quantity, it) }
 }
