@@ -111,10 +111,11 @@ class SaleDataFetcher(
                 locationProductId = line.locationProductId,
                 productLabel = productSummary.label,
                 productPrintLabel = productSummary.printLabel,
-                quantity = line.quantity,
+                userProvidedQuantity = line.userProvidedQuantity,
                 unitId = line.unitId,
-                conversionRatio = line.conversionRatio(),
-                unitPrice = line.unitPrice,
+                storageUnitsPerUnit = line.storageUnitsPerUnit,
+                lineTotal = line.lineTotal,
+                defaultSalePrice = line.defaultSalePrice,
             )
         }
     }

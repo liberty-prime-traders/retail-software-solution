@@ -141,20 +141,21 @@ Rules:
 ### Identity
 
 - A `SaleLineEntity` belongs to exactly one `SaleEntity` (`sale_id`, FK).
-- A sale line carries: `locationProductId`, `quantity`, `unitId`, an exact
-  rational conversion ratio to the product's base unit
-  (`conversionNumerator`/`conversionDenominator`, wrapped by
-  `conversionRatio()`), and a frozen `unitPrice`.
-- **`sale_line.quantity` is stored in the line's `unitId`**, not the base
-  unit. The conversion ratio is stored alongside; `baseQty()` is a derived
-  helper (`conversionRatio().applyTo(quantity)`). What gets *persisted* as
-  base qty is `sale_line_stock_reservation.quantity_reserved` and the
-  FIFO stock requests — never the sale line itself.
-- `unitPrice` is **captured from the product at line add time** (when the
-  user adds the line to a session) and frozen for the life of that line —
-  a price change on the product does not retro-affect existing lines.
-- `lineTotal = quantity * unitPrice` (scale 4, half-up via `Decimals`).
-- `baseQty() = conversionRatio().applyTo(quantity)` (scale 4).
+- A sale line carries: `locationProductId`, `userProvidedQuantity` (what the cashier typed, in `unitId`), `unitId`,
+  `storageUnitsPerUnit` (the line unit's size in the storage unit, captured when the line is created or its unit
+  changes), the gross `lineTotal`, and the `defaultSalePrice` it came from (per product base unit, `numeric(28,10)`).
+  There is no stored unit price and no base-quantity column.
+- **`sale_line.user_provided_quantity` is stored in the line's `unitId`.** The storage quantity is
+  `userProvidedQuantity x storageUnitsPerUnit`, exact (`SaleLineEntity.storageQuantity()`, an `ExactQuantity`). That
+  figure is what `sale_line_stock_reservation.storage_quantity_reserved` and the FIFO stock requests carry, never the
+  sale line itself. The storage unit is the root of the product's unit group (see `util/quantity/README.md`).
+- **`lineTotal` is gross of any price override** and is computed by `LinePricing.lineTotal` when the line is added or
+  edited in an open session: `defaultSalePrice x userProvidedQuantity x storageUnitsPerUnit ÷ baseUnitSizeInRoot`,
+  divided once and rounded once to scale 4 half-up. One Bale and 18 Pieces of a product priced 1000.00 per Bale both
+  total 1000.0000. A saved line's total is loaded as stored and never recomputed on load, so confirm reprices nothing.
+- The **unit price is derived**, never stored: `ProductLineWithPrice.unitPrice = lineTotal ÷ userProvidedQuantity`, half-up
+  to scale 4. The Pieces line above shows 55.5556 per Piece against a total of 1000.0000, so a client must never rebuild
+  a total from a derived unit price.
 
 ### Per-line invariants
 
@@ -166,10 +167,13 @@ Rules:
    when adding a line to a session. A product deactivated after it has been
    put on the cart does **not** block subsequent draft saves or confirm —
    the line stays valid once it has been accepted.
-4. `unitId` must be a valid unit reachable in the `UnitConversionGraph` to
-   the product's base unit; otherwise `getRatio` throws.
-5. `unitPrice` must be set on the product summary at add time; the session
-   line handler rejects with `"Product X has no unit price"` otherwise.
+4. `unitId` must belong to the product's unit group: its root (`UnitConversionGraph.getStorageUnitId`) must equal the
+   root of the product's base unit, or `LocationProductDataFetcher.getStorageUnitsPerUnit` rejects it. A Miscellaneous
+   product can therefore only use its base unit.
+5. `defaultSalePrice` must be set on the product at add time; the session
+   line handler rejects with `"Product X has no default sale price"` otherwise.
+6. `userProvidedQuantity` has at most `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` (2) decimals, checked in the
+   `init` block of the session line request classes.
 
 ### Sync semantics at commit
 
@@ -199,15 +203,12 @@ persistence model, lifecycle, and reconciliation logic.
   carries through to a `sale_line_id` after commit) or **order-level**
   (no `lineId`).
 - `direction`: `DISC` (reduces the receivable) or `SRCH` (adds to the receivable).
-- `calculationMethod`: `FIXED_VALUE` or `PERCENTAGE`.
-  - **`value` is stored per-unit for line-level adjustments**; the calculator
-    scales by line `quantity` at compute time
-    (`AdjustmentAmountCalculator.calculateAmount`). A $2 line-level
-    `FIXED_VALUE` discount on a qty=3 line yields a `calculatedAmount` of $6.
-  - For **order-level** `FIXED_VALUE` there is no per-line concept — `value`
-    is the whole sale-wide amount and the calculator returns it as-is.
+- `calculationMethod`: `PERCENTAGE` or `FIXED_LINE_TOTAL` (the last only from a price override).
   - `PERCENTAGE` line-level applies to the line's `lineTotal`
-    (`quantity * unitPrice`); order-level applies to the sale subtotal.
+    (the stored gross `lineTotal`, before any price override); order-level applies to the sum of all line totals.
+    The amount is rounded once to scale 4.
+  - `PriceAdjustmentMethod.FIXED_LINE_TOTAL` is the whole amount, never multiplied by a quantity. Only a price override creates one
+    (`SaleSessionAdjustmentHandler` rejects it from a client).
 - Every adjustment references an `adjustment_reason_id` (org-schema lookup).
   The session validator validates the reason exists and that
   `AdjustmentReasonService.requireCanApply(reasonId, direction)` succeeds.
@@ -256,7 +257,7 @@ survives any number of draft saves.
 
 ### Totals contribution
 
-Adjustments **never modify `sale_line.unitPrice`**. They live as separate
+Adjustments **never modify `sale_line.lineTotal`**. They live as separate
 `SaleAdjustmentEntity` rows whose frozen `calculatedAmount` is summed into
 **four persisted buckets** on `SaleEntity` (populated by
 `SaleTotalsApplier`):
@@ -319,8 +320,9 @@ Two distinct mechanisms protect inventory:
 
 ### Reservations (drafts only)
 
-- `StockReservationEntity` holds **`quantity_reserved`** per sale
-  line (always written as `line.baseQty()`).
+- `StockReservationEntity` holds **`storage_quantity_reserved`** per sale
+  line (always written as `line.storageQuantity()`). Changing a line's unit recaptures its ratio and the next save
+  rewrites its reservation from the new figure.
 - Every `DraftSalePersister.saveDraft` invocation clears all reservations
   for the sale (`clearBySale`) **before** running `SaleLineSync.sync`, then
   re-issues fresh reservations for the surviving line set. This avoids
@@ -356,9 +358,26 @@ Two distinct mechanisms protect inventory:
   for that reference.
 - The layer walk and its reversal live in `FifoStockConsumer`, shared with `StockTransferStockUpdater`; the updaters
   own locking, balance loading and saving.
-- `consumeStock` returns a `SaleLineConsumedCost` per sale line (Σ `takenQuantityInBaseUnit × StockEntryEntity.unitCost`
-  across layers, rounded once to scale 4). `ConfirmedSalePersister.consumeStockAndRecordCogs` stores it
-  in `SaleLineEntity.cogsTotal`. Drafts keep `cogsTotal = null`; a void leaves it untouched.
+- `SaleLineStockRequest` carries the line's `userProvidedQuantity`, `unitId` and captured `storageUnitsPerUnit`, and its
+  reference number as the movement's `detail_reference` (the sale's reference is the `document_reference`). Each layer a
+  sale line consumes gets one `StockMovementEntity` with `storageMovedQuantity` (that layer's exact share, so the rows
+  sum to the line's storage quantity) and the **same** `userProvidedMovedQuantity` (the whole line's figure, never a
+  share, so it must not be summed). `restoreStock` adds back exactly each movement's `storageMovedQuantity` and
+  `movedCost`, and its reversal movements copy the references and the entered quantity.
+- Nothing rounds on the way into stock. Stock sufficiency is exact and strict: available must be at least the
+  requested storage quantity, with no tolerance, so one storage unit too many is rejected. Insufficient-stock messages
+  and the availability shown to a cashier are breakdowns ("1 Bale 8 Pieces"), built from one plan per base unit
+  (`QuantityBreakdownFactory`). The session's `quantityOnHand` / `quantityReserved` / `quantityAvailable` keep their wire
+  meaning (the product's base unit): they are derived from exact storage figures at response time, on hand and available
+  rounded down and reserved rounded up, so the figure shown never exceeds what can be sold. Exact `storageQuantity*`
+  fields and breakdown texts ride along.
+- `consumeStock` returns a `SaleLineConsumedCost` per sale line: the sum of its movements' `moved_cost`.
+  A take of quantity `q` from a layer holding `Q` costs `cost_remaining x q ÷ Q`, rounded once to scale 4, and the take
+  that empties the layer costs all of its `cost_remaining`, so a layer's takes sum exactly to its `batch_cost`.
+  `ConfirmedSalePersister.consumeStockAndRecordCogs` stores the sum in `SaleLineEntity.cogsTotal`. Drafts keep
+  `cogsTotal = null`; a void leaves it untouched.
+- A layer stores its totals (`batch_cost`, `cost_remaining`); `StockEntryEntity.unitCost` is a rate per storage unit at
+  scale 10 for display and grouping only, and a total is never recovered by multiplying it by a quantity.
 - `SaleConfirmedEvent` and `SaleVoidedEvent` carry `cogsTotal`, summed from the persisted lines by
   `SaleDataFetcher.getSaleCogsTotal` (null cost counts as zero) so `reissue` reproduces it.
   `restoreStock` returns nothing: the void reverses the stored line costs.
@@ -584,7 +603,7 @@ convention, no `@MappingTarget`, entity rules) live in
 
 - Entity helpers in this package: `SaleEntity.receivableTotal()`,
   `SaleEntity.taxableAmount()`, `SaleEntity.displaySubtotal()`,
-  `SaleLineEntity.baseQty()`, `SaleLineEntity.lineTotal`. No business logic
+  `SaleLineEntity.storageQuantity()`. No business logic
   beyond these.
 - Domain DTOs (`SaleSummary`, `SaleLineDto`) abstract DB
   details and are what cross package boundaries on the read path.

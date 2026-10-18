@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockEntity
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockRepository
@@ -45,11 +46,16 @@ class OpeningStockService(
             .map { it.locationProductId }.toSet()
         OpeningStockValidator.guardNotAlreadyDeclared(alreadyDeclared, productIds, labelsByProductId)
 
+        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+            lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
+        )
         val savedOpeningStocks = openingStockRepository.saveAll(
             lines.map { line ->
                 OpeningStockEntity(
                     locationProductId = line.locationProductId,
-                    quantity = line.quantity,
+                    userProvidedQuantity = line.userProvidedQuantity,
+                    unitId = line.unitId,
+                    storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId),
                     unitCost = line.unitCost
                 )
             }
@@ -61,10 +67,11 @@ class OpeningStockService(
                 val openingStock = savedByProductId.getValue(line.locationProductId)
                 OpeningStockLineStockRequest(
                     locationProductId = line.locationProductId,
-                    quantity = line.quantity,
-                    unitId = line.unitId,
-                    unitCost = line.unitCost,
-                    externalReferenceNumber = openingStock.requiredReference()
+                    userProvidedQuantity = openingStock.userProvidedQuantity,
+                    unitId = openingStock.unitId,
+                    storageUnitsPerUnit = openingStock.storageUnitsPerUnit,
+                    unitCost = openingStock.unitCost,
+                    documentReference = openingStock.requiredReference()
                 )
             }
         )
@@ -84,7 +91,8 @@ class OpeningStockService(
         referenceNumber = openingStock.requiredReference(),
         locationProductId = openingStock.locationProductId,
         productLabel = productLabel,
-        quantity = openingStock.quantity,
+        userProvidedQuantity = openingStock.userProvidedQuantity,
+        unitId = openingStock.unitId,
         unitCost = openingStock.unitCost,
         declaredBy = userQualifier.getCreatorFullName(openingStock.requiredCreatedById()),
         declaredAt = openingStock.requiredCreatedOn()

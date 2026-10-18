@@ -1,8 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayerState
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
+import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -17,83 +21,96 @@ object FifoStockConsumer {
         fifoConsumptionRequest: FifoConsumptionRequest,
         fifoEntries: List<StockEntryEntity>,
         startingBalance: BigDecimal,
+        quantityBreakdown: QuantityBreakdown,
         productLabel: String
     ): FifoConsumptionResult {
-        var runningBalance = startingBalance
-        var unsatisfiedQuantity = fifoConsumptionRequest.baseQuantity
+        val plannedTakes = FifoTakePlanner.planTakes(
+            fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining) },
+            fifoConsumptionRequest.storageQuantity
+        )
+        throwIfNotFulfilled(fifoConsumptionRequest, plannedTakes, quantityBreakdown, productLabel)
+        var runningBalance = ExactQuantity.ofStorage(startingBalance)
         var consumedCost = BigDecimal.ZERO
         val touchedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
-        val conversionRatio = fifoConsumptionRequest.conversionRatio
-        for (stockEntry in fifoEntries) {
-            if (unsatisfiedQuantity <= BigDecimal.ZERO) break
-            val takenQuantityInBaseUnit = unsatisfiedQuantity.min(stockEntry.quantityRemaining)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.subtract(takenQuantityInBaseUnit)
+        plannedTakes.forEach { plannedTake ->
+            val stockEntry = fifoEntries[plannedTake.layerIndex]
+            stockEntry.storageQuantityRemaining =
+                (ExactQuantity.ofStorage(stockEntry.storageQuantityRemaining) - plannedTake.storageQuantity).toStorageQuantity()
+            stockEntry.costRemaining = stockEntry.costRemaining.subtract(plannedTake.movedCost)
             touchedEntries.add(stockEntry)
-            runningBalance = runningBalance.subtract(takenQuantityInBaseUnit)
+            runningBalance -= plannedTake.storageQuantity
             movements.add(
                 StockMovementEntity(
                     stockEntryId = stockEntry.id!!,
                     locationProductId = fifoConsumptionRequest.locationProductId,
                     movementType = fifoConsumptionRequest.movementType,
-                    movedQuantity = conversionRatio.invert().applyTo(takenQuantityInBaseUnit),
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = fifoConsumptionRequest.externalReferenceNumber,
+                    storageMovedQuantity = plannedTake.storageQuantity.toStorageQuantity(),
+                    userProvidedMovedQuantity = fifoConsumptionRequest.userProvidedQuantity,
+                    storageRemainingQuantity = runningBalance.toStorageQuantity(),
+                    movedCost = plannedTake.movedCost,
+                    storageMovedBreakdownText = quantityBreakdown.render(plannedTake.storageQuantity),
+                    storageRemainingBreakdownText = quantityBreakdown.render(runningBalance),
+                    documentReference = fifoConsumptionRequest.documentReference,
+                    detailReference = fifoConsumptionRequest.detailReference,
                     unitId = fifoConsumptionRequest.unitId,
-                    conversionNumerator = conversionRatio.numerator,
-                    conversionDenominator = conversionRatio.denominator,
+                    storageUnitsPerUnit = fifoConsumptionRequest.storageUnitsPerUnit,
                 )
             )
-            unsatisfiedQuantity = unsatisfiedQuantity.subtract(takenQuantityInBaseUnit)
-            consumedCost = consumedCost.add(takenQuantityInBaseUnit.multiply(stockEntry.unitCost))
+            consumedCost = consumedCost.add(plannedTake.movedCost)
         }
-        throwIfNotFulfilled(fifoConsumptionRequest, unsatisfiedQuantity, productLabel)
-        return FifoConsumptionResult(movements, touchedEntries, Decimals.roundToScale4(consumedCost), runningBalance)
+        return FifoConsumptionResult(movements, touchedEntries, consumedCost, runningBalance.toStorageQuantity())
     }
 
     fun restore(
         movementsToReverse: List<StockMovementEntity>,
         stockEntriesById: Map<UUID, StockEntryEntity>,
         startingBalance: BigDecimal,
+        quantityBreakdown: QuantityBreakdown,
         reversalType: MovementType
     ): FifoRestorationResult {
-        var runningBalance = startingBalance
+        var runningBalance = ExactQuantity.ofStorage(startingBalance)
         val touchedEntries = mutableListOf<StockEntryEntity>()
         val reversalMovements = mutableListOf<StockMovementEntity>()
         movementsToReverse.forEach { movementToReverse ->
             val stockEntry = stockEntriesById.getValue(movementToReverse.stockEntryId)
-            val conversionRatio = movementToReverse.conversionRatio()
-            val restoredBaseQuantity = conversionRatio.applyTo(movementToReverse.movedQuantity)
-            stockEntry.quantityRemaining = stockEntry.quantityRemaining.add(restoredBaseQuantity)
+            val restoredQuantity = ExactQuantity.ofStorage(movementToReverse.storageMovedQuantity)
+            stockEntry.storageQuantityRemaining = (ExactQuantity.ofStorage(stockEntry.storageQuantityRemaining) + restoredQuantity).toStorageQuantity()
+            stockEntry.costRemaining = stockEntry.costRemaining.add(movementToReverse.movedCost)
             touchedEntries.add(stockEntry)
-            runningBalance = runningBalance.add(restoredBaseQuantity)
+            runningBalance += restoredQuantity
             reversalMovements.add(
                 StockMovementEntity(
                     stockEntryId = movementToReverse.stockEntryId,
                     locationProductId = movementToReverse.locationProductId,
                     movementType = reversalType,
-                    movedQuantity = movementToReverse.movedQuantity,
-                    remainingQuantity = runningBalance,
-                    externalReferenceNumber = movementToReverse.externalReferenceNumber,
+                    storageMovedQuantity = restoredQuantity.toStorageQuantity(),
+                    userProvidedMovedQuantity = movementToReverse.userProvidedMovedQuantity,
+                    storageRemainingQuantity = runningBalance.toStorageQuantity(),
+                    movedCost = movementToReverse.movedCost,
+                    storageMovedBreakdownText = quantityBreakdown.render(restoredQuantity),
+                    storageRemainingBreakdownText = quantityBreakdown.render(runningBalance),
+                    documentReference = movementToReverse.documentReference,
+                    detailReference = movementToReverse.detailReference,
                     unitId = movementToReverse.unitId,
-                    conversionNumerator = conversionRatio.numerator,
-                    conversionDenominator = conversionRatio.denominator,
+                    storageUnitsPerUnit = movementToReverse.storageUnitsPerUnit,
                 )
             )
         }
-        return FifoRestorationResult(reversalMovements, touchedEntries, runningBalance)
+        return FifoRestorationResult(reversalMovements, touchedEntries, runningBalance.toStorageQuantity())
     }
 
     private fun throwIfNotFulfilled(
         fifoConsumptionRequest: FifoConsumptionRequest,
-        unsatisfiedQuantity: BigDecimal,
+        plannedTakes: List<PlannedTake>,
+        quantityBreakdown: QuantityBreakdown,
         productLabel: String
     ) {
-        if (unsatisfiedQuantity <= BigDecimal.ZERO) return
-        val formattedAvailable = Decimals.stripZeroesAndRound(fifoConsumptionRequest.baseQuantity.subtract(unsatisfiedQuantity))
-        val formattedRequested = Decimals.stripZeroesAndRound(fifoConsumptionRequest.baseQuantity)
+        val availableQuantity = plannedTakes.fold(ExactQuantity.ZERO) { sum, plannedTake -> sum + plannedTake.storageQuantity }
+        if (availableQuantity >= fifoConsumptionRequest.storageQuantity) return
         throw RtsGenericException(
-            "Insufficient stock for $productLabel. Available: $formattedAvailable, Requested: $formattedRequested"
+            "Insufficient stock for $productLabel. Available: ${quantityBreakdown.render(availableQuantity)}, " +
+                "Requested: ${quantityBreakdown.render(fifoConsumptionRequest.storageQuantity)}"
         )
     }
 }

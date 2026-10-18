@@ -40,7 +40,7 @@ class OpeningStockHandlerForKafka(
                 openingStockId = requireNotNull(openingStock.id),
                 ledgerSourceReferenceNumber = openingStock.requiredReference(),
                 locationProductId = openingStock.locationProductId,
-                quantity = openingStock.quantity,
+                userProvidedQuantity = openingStock.userProvidedQuantity,
                 unitCost = openingStock.unitCost,
                 postingDate = DateTimes.Local.atOrganizationZone(openingStock.requiredCreatedOn())
             )

@@ -23,7 +23,7 @@ object DisplayFormatters {
     }
 
     fun pluralize(text: String, quantity: BigDecimal): String {
-        return if (quantity.compareTo(BigDecimal.ONE) == 0) {
+        return if (Decimals.Scale4.compare(quantity, BigDecimal.ONE) == 0) {
             text
         } else {
             "${text}s"

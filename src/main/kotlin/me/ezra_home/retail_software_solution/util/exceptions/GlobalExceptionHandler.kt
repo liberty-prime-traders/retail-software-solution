@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -22,6 +23,19 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(ex.statusCode)
             .body(ApiError(ex.message, ex.payload))
+    }
+
+    // Jackson wraps an exception thrown from a request class's init block, so the business error is in the cause chain
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(ex: HttpMessageNotReadableException, req: HttpServletRequest): ResponseEntity<ApiError> {
+        val businessError = generateSequence<Throwable>(ex) { it.cause }.filterIsInstance<RtsGenericException>().firstOrNull()
+        if (businessError != null) {
+            return handleRts(businessError, req)
+        }
+        log.warn("Unreadable request body on ${req.method} ${req.requestURI}: ${ex.message}")
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiError("The request body could not be read"))
     }
 
     @ExceptionHandler(DataAccessException::class)

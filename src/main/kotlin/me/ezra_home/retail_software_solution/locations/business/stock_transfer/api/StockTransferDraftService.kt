@@ -38,21 +38,17 @@ class StockTransferDraftService(
         val locationProductBaseUnitIds = locationProductSummariesById.mapValues { it.value.baseUnitId }
         guardNoDuplicateAdditionProducts(lineRequestDto.additions, existingLines, locationProductSummariesById)
 
-        val conversionRatiosByLocationProductId = locationProductDataFetcher.getConversionRatios(
-            conversionRatioRequests(lineRequestDto, existingLinesByRef, locationProductBaseUnitIds)
+        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+            storageUnitRequests(lineRequestDto, existingLinesByRef, locationProductBaseUnitIds)
         )
 
         val newDraftLines = lineRequestDto.additions.map { addition ->
-            val baseUnitId = locationProductBaseUnitIds.getValue(addition.locationProductId)
-            val ratio = conversionRatiosByLocationProductId.getValue(addition.locationProductId)
             StockTransferDraftLineEntity(
                 stockTransferDispatchId = dispatch.id!!,
                 locationProductId = addition.locationProductId,
-                quantity = addition.quantityDispatched,
-                unitId = baseUnitId,
-                conversionNumerator = ratio.numerator,
-                conversionDenominator = ratio.denominator,
-                baseUnitId = baseUnitId
+                userProvidedQuantity = addition.quantityDispatched,
+                unitId = locationProductBaseUnitIds.getValue(addition.locationProductId),
+                storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(addition.locationProductId)
             )
         }
 
@@ -60,11 +56,9 @@ class StockTransferDraftService(
             val existingLine = existingLinesByRef.getValue(update.lineRef)
             val newUnitId = update.unitId ?: existingLine.unitId
             if (newUnitId != existingLine.unitId) {
-                val ratio = conversionRatiosByLocationProductId.getValue(existingLine.locationProductId)
-                existingLine.conversionNumerator = ratio.numerator
-                existingLine.conversionDenominator = ratio.denominator
+                existingLine.storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(existingLine.locationProductId)
             }
-            existingLine.quantity = update.quantityDispatched ?: existingLine.quantity
+            existingLine.userProvidedQuantity = update.quantityDispatched ?: existingLine.userProvidedQuantity
             existingLine.unitId = newUnitId
             existingLine
         }
@@ -74,7 +68,7 @@ class StockTransferDraftService(
         return buildDraftResponse(orderRef, dispatch)
     }
 
-    private fun conversionRatioRequests(
+    private fun storageUnitRequests(
         lineRequestDto: StockTransferLineRequestDto,
         existingLinesByRef: Map<String, StockTransferDraftLineEntity>,
         locationProductBaseUnitIds: Map<UUID, UUID>

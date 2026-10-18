@@ -1,8 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.Optional
@@ -21,15 +24,25 @@ data class SaleSessionStartDto(
 
 data class SaleSessionLineAddDto(
     val locationProductId: UUID,
-    val quantity: BigDecimal,
-)
+    @param:JsonProperty("quantity")
+    val userProvidedQuantity: BigDecimal,
+) {
+    init {
+        Decimals.requireMaxDecimalPlaces(userProvidedQuantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
+    }
+}
 
 data class SaleSessionLineUpdateDto(
     val identity: SessionIdentity,
-    val quantity: BigDecimal,
+    @param:JsonProperty("quantity")
+    val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
     val unitPriceOverride: BigDecimal,
-)
+) {
+    init {
+        Decimals.requireMaxDecimalPlaces(userProvidedQuantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
+    }
+}
 
 data class SaleSessionLineRequestDto(
     val additions: List<SaleSessionLineAddDto> = emptyList(),
@@ -44,7 +57,7 @@ data class SaleSessionAdjustmentAddDto(
     val relatedSaleLineIdentity: SessionIdentity? = null,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
-    val calculationMethod: CalculationMethod,
+    val calculationMethod: PriceAdjustmentMethod,
     val value: BigDecimal,
     val note: String? = null,
     val approvedById: UUID? = null,

@@ -43,11 +43,11 @@ databaseChangeLog:
                     notNullConstraintName: purchase_line_location_product_id_notnull
 
               - column:
-                  name: quantity_ordered
+                  name: user_provided_quantity_ordered
                   type: numeric(19, 4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_line_quantity_ordered_notnull
+                    notNullConstraintName: purchase_line_user_provided_quantity_ordered_notnull
 
               - column:
                   name: unit_cost
@@ -64,34 +64,25 @@ databaseChangeLog:
                     notNullConstraintName: purchase_line_unit_id_notnull
 
               - column:
-                  name: quantity_delivered
-                  type: numeric(19, 4)
-                  defaultValueNumeric: "0"
+                  name: storage_quantity_delivered
+                  type: numeric(28, 4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_line_quantity_delivered_notnull
+                    notNullConstraintName: purchase_line_storage_quantity_delivered_notnull
 
               - column:
-                  name: quantity_canceled
-                  type: numeric(19, 4)
-                  defaultValueNumeric: "0"
+                  name: storage_quantity_canceled
+                  type: numeric(28, 4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_line_quantity_canceled_notnull
+                    notNullConstraintName: purchase_line_storage_quantity_canceled_notnull
 
               - column:
-                  name: conversion_numerator
+                  name: storage_units_per_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_line_conversion_numerator_notnull
-
-              - column:
-                  name: conversion_denominator
-                  type: bigint
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: purchase_line_conversion_denominator_notnull
+                    notNullConstraintName: purchase_line_storage_units_per_unit_notnull
 
               - column:
                   name: created_by_id

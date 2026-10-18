@@ -5,12 +5,17 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
+import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 
 @Service
@@ -20,7 +25,9 @@ class PurchaseAssembler(
   private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
   private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
   private val contactService: ContactService,
-  private val userQualifier: UserQualifier
+  private val userQualifier: UserQualifier,
+  private val stockBreakdownProvider: StockBreakdownProvider,
+  private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
   fun buildResponses(purchases: List<PurchaseEntity>): List<PurchaseResponseDto> {
@@ -92,20 +99,36 @@ class PurchaseAssembler(
     lines: List<PurchaseLineEntity>,
     productSummaries: Map<UUID, LocationProductSummaryDto>
   ): List<PurchaseLineResponseDto> {
+    val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+    val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
     return lines.map { line ->
       val product = productSummaries[line.locationProductId]!!
+      val quantityBreakdown = breakdownByLocationProductId.getValue(line.locationProductId)
+      val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(product.baseUnitId)
+      val delivered = ExactQuantity.ofStorage(line.storageQuantityDelivered)
+      val canceled = ExactQuantity.ofStorage(line.storageQuantityCanceled)
+      val expected = line.storageQuantityExpected()
+      val remaining = line.storageQuantityRemaining()
       PurchaseLineResponseDto(
         id = line.id!!,
         referenceNumber = line.requiredReference(),
-        quantityOrdered = line.quantityOrdered,
+        userProvidedQuantityOrdered = line.userProvidedQuantityOrdered,
         unitId = line.unitId,
-        conversionFactor = line.conversionRatio().factor(),
+        conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUnit, baseUnitSizeInRoot),
         unitCost = line.unitCost,
         lineTotal = line.getTotalCost(),
-        quantityDelivered = line.quantityDelivered,
-        quantityYetToBeDelivered = line.getRemainingQuantity(),
-        quantityCanceled = line.quantityCanceled,
-        quantityExpected = line.getExpectedQuantity(),
+        quantityDelivered = delivered.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
+        quantityYetToBeDelivered = remaining.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
+        quantityCanceled = canceled.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
+        quantityExpected = expected.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
+        storageQuantityDelivered = delivered.toStorageQuantity(),
+        storageQuantityYetToBeDelivered = remaining.toStorageQuantity(),
+        storageQuantityCanceled = canceled.toStorageQuantity(),
+        storageQuantityExpected = expected.toStorageQuantity(),
+        quantityDeliveredBreakdown = quantityBreakdown.render(delivered),
+        quantityYetToBeDeliveredBreakdown = quantityBreakdown.render(remaining),
+        quantityCanceledBreakdown = quantityBreakdown.render(canceled),
+        quantityExpectedBreakdown = quantityBreakdown.render(expected),
         locationProduct = LocationProductSummaryDto(
           id = product.id,
           referenceNumber = product.referenceNumber,

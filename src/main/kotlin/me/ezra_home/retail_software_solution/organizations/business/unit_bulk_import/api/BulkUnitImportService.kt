@@ -3,9 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.unit_bulk_i
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.BulkUnitImportValidator
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.UnitValueDependencyGraph
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionService
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.SystemUnitGroup
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
@@ -26,8 +23,7 @@ class BulkUnitImportService(
     private val bulkUnitImportValidator: BulkUnitImportValidator,
     private val unitGroupService: UnitGroupService,
     private val unitValueService: UnitValueService,
-    private val unitValueFetcher: UnitValueFetcher,
-    private val unitConversionService: UnitConversionService
+    private val unitValueFetcher: UnitValueFetcher
 ) {
 
     fun bulkImport(bulkUnitImportRequestDto: BulkUnitImportRequestDto): Collection<UnitGroupResponseDto> {
@@ -54,7 +50,6 @@ class BulkUnitImportService(
         }
 
         saveValidatedUnitValues(bulkUnitImportRequestDto, groupIdByName)
-        saveConversions(bulkUnitImportRequestDto)
 
         val reusedGroups = bulkUnitImportRequestDto.unitGroups.mapNotNull { findExistingSystemDefinedGroup(it.name) }
         return createdGroups + reusedGroups
@@ -69,7 +64,8 @@ class BulkUnitImportService(
         val description: String?,
         val unitGroupId: UUID,
         val baseUnitCode: String?,
-        val unitsOfBasePerUnit: Long?
+        val unitsOfBasePerUnit: Long?,
+        val systemDefined: Boolean = false
     )
 
     private fun saveValidatedUnitValues(
@@ -98,7 +94,8 @@ class BulkUnitImportService(
                 description = pendingValue.description,
                 unitGroupId = pendingValue.unitGroupId,
                 baseUnit = pendingValue.baseUnitCode?.let { resolvedIds[it] },
-                unitsOfBasePerUnit = pendingValue.unitsOfBasePerUnit
+                unitsOfBasePerUnit = pendingValue.unitsOfBasePerUnit,
+                systemDefined = pendingValue.systemDefined
             )
         }
         return unitValueService.bulkCreateValidatedList(topologicallyOrderedEntries)
@@ -111,12 +108,11 @@ class BulkUnitImportService(
         existingSystemDefinedCodes: Set<String>
     ): List<PendingUnitValue> {
         val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(groupName)
-        val referencesPiece = unitValues.any { it.baseUnitCode == BulkUnitImportValidator.PIECE_BASE_UNIT_CODE }
         val pieceCode = SystemUnitValue.pieceCodeForGroup(groupName)
         val pieceAlreadyExists = unitValueFetcher.getUnitValuesForUnitGroup(groupId).any { it.code == pieceCode }
 
         return buildList {
-            if (referencesPiece && !excludedFromPiece && !pieceAlreadyExists) {
+            if (!excludedFromPiece && !pieceAlreadyExists) {
                 add(createDefaultPiece(groupId, pieceCode))
             }
             // A unit value whose code already matches a system-defined row (see SystemUnitValue /
@@ -134,7 +130,8 @@ class BulkUnitImportService(
         description = "Base unit representing a single item",
         unitGroupId = groupId,
         baseUnitCode = null,
-        unitsOfBasePerUnit = null
+        unitsOfBasePerUnit = null,
+        systemDefined = true
     )
 
     private fun createPendingUnitValue(groupId: UUID, pieceCode: String, unitValueDto: UnitValueBulkInsertDto): PendingUnitValue {
@@ -164,20 +161,5 @@ class BulkUnitImportService(
             }
         }
         return graph.topologicalOrder().map { byCode.getValue(it) }
-    }
-
-    private fun saveConversions(bulkUnitImportRequestDto: BulkUnitImportRequestDto): List<UnitConversionDto> {
-        if (bulkUnitImportRequestDto.unitConversions.isEmpty()) return emptyList()
-        val idByCode = unitValueFetcher.getAllUnitValues().associate { it.code to it.id }
-
-        val insertDtos = bulkUnitImportRequestDto.unitConversions.map {
-            UnitConversionInsertDto(
-                fromUnitId = idByCode.getValue(it.fromUnitCode!!),
-                toUnitId = idByCode.getValue(it.toUnitCode!!),
-                numerator = it.numerator!!,
-                denominator = it.denominator!!
-            )
-        }
-        return unitConversionService.bulkInsertValidatedList(insertDtos)
     }
 }

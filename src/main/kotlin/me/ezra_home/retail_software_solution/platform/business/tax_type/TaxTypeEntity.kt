@@ -4,8 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethodConverter
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxRecoveryType
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTrigger
@@ -27,9 +27,9 @@ class TaxTypeEntity(
     @Column(name = "description", length = 500)
     var description: String? = null,
 
-    @Convert(converter = CalculationMethodConverter::class)
+    @Convert(converter = TaxCalculationMethodConverter::class)
     @Column(name = "calculation_method", length = 5, nullable = false)
-    var calculationMethod: CalculationMethod,
+    var calculationMethod: TaxCalculationMethod,
 
     @Convert(converter = TaxRecoveryTypeConverter::class)
     @Column(name = "tax_recovery_type", length = 5, nullable = false)

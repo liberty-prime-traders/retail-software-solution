@@ -23,7 +23,9 @@ enum class SystemUnitValue(
     DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 12L),
     HALF_DOZEN("hdz", "Half Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 6L),
     CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 24L),
-    TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 30L);
+    TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 30L),
+
+    MISC_PIECE("misc-pc", "Piece", SystemUnitGroup.MISC);
 
     companion object {
         private const val PIECE_CODE_SUFFIX = "-pc"

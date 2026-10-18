@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitgroup.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -18,6 +20,7 @@ class UnitGroupService(
     private val unitGroupMapper: UnitGroupMapper,
     private val unitGroupCache: UnitGroupCache,
     private val unitValueService: UnitValueService,
+    private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock,
 ) {
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -48,8 +51,9 @@ class UnitGroupService(
         if (name.none { it.isLetterOrDigit() }) {
             throw RtsGenericException("A unit group name must contain at least one letter or digit")
         }
+        orgEntityAdvisoryLock.acquire(LockNamespaces.UNIT_GROUP_NAME, UNIT_GROUP_NAME_LOCK_KEY)
         unitGroupCache.getAllUnitGroups()
-            .find { StringUtils.isEquivalent(it.name, name) && !Objects.equals(it.id, id) }
+            .find { StringUtils.isEquivalentOnAlphanumerics(it.name, name) && !Objects.equals(it.id, id) }
             ?.let { throw RtsGenericException("An UnitGroup using the name '$name' already exists") }
     }
 
@@ -69,5 +73,9 @@ class UnitGroupService(
                 if (this.systemDefined) throw RtsGenericException("System-defined unit groups cannot be deleted")
                 unitGroupCache.deleteUnitGroup(id)
             }
+    }
+
+    companion object {
+        private const val UNIT_GROUP_NAME_LOCK_KEY = "names"
     }
 }

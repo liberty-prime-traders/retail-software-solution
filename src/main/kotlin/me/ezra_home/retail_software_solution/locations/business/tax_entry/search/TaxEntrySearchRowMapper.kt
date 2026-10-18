@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.tax_entry.searc
 import jakarta.persistence.Tuple
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.util.business.mappers.DateQualifier
 import java.math.BigDecimal
 import java.time.Instant
@@ -20,7 +20,7 @@ object TaxEntrySearchRowMapper {
         taxTypeName = tuple.get("tax_type_name", String::class.java),
         jurisdictionName = tuple.get("jurisdiction_name", String::class.java),
         fiscalPeriodId = tuple.get("fiscal_period_id", UUID::class.java),
-        calculationMethod = CalculationMethod.entries.first { it.code == tuple.get("calculation_method", String::class.java) },
+        calculationMethod = TaxCalculationMethod.entries.first { it.code == tuple.get("calculation_method", String::class.java) },
         rate = tuple.get("rate", BigDecimal::class.java),
         taxIsBilledToCustomerSeparately = tuple.get("tax_is_billed_to_customer_separately", Boolean::class.javaObjectType),
         taxIsIncludedInTaxableAmount = tuple.get("tax_is_included_in_taxable_amount", Boolean::class.javaObjectType),

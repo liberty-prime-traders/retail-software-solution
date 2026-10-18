@@ -41,13 +41,13 @@ class DraftSalePersister(
         stockReserver.clearBySale(saleEntity.id!!)
         val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         if (lineSyncResult.persistedSaleLines.isNotEmpty()) {
-            val resolvedBaseQuantitiesByLocationProductId = lineSyncResult.persistedSaleLines
-                .associate { it.locationProductId to it.baseQty() }
+            val storageQuantitiesByLocationProductId = lineSyncResult.persistedSaleLines
+                .associate { it.locationProductId to it.storageQuantity() }
             val productSummariesByLocationProductId = locationProductDataFetcher
-                .findSummaryByIds(resolvedBaseQuantitiesByLocationProductId.keys)
+                .findSummaryByIds(storageQuantitiesByLocationProductId.keys)
             saleValidator.guardSufficientStockForSale(
                 saleEntity.id!!,
-                resolvedBaseQuantitiesByLocationProductId,
+                storageQuantitiesByLocationProductId,
                 productSummariesByLocationProductId,
             )
             val newStockReservations = lineSyncResult.persistedSaleLines.map { saleLine ->
@@ -55,7 +55,7 @@ class DraftSalePersister(
                     saleId = saleEntity.id!!,
                     saleLineId = saleLine.id!!,
                     locationProductId = saleLine.locationProductId,
-                    quantityReserved = saleLine.baseQty(),
+                    storageQuantityReserved = saleLine.storageQuantity().toStorageQuantity(),
                 )
             }
             stockReserver.reserve(newStockReservations)

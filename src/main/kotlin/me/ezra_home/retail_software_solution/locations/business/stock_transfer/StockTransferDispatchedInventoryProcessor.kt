@@ -29,6 +29,6 @@ class StockTransferDispatchedInventoryProcessor(
 
     private fun findUnprocessedDispatchLineRefs(event: StockTransferDispatchedEvent): Set<String> {
         val lineRefs = event.lines.map { it.dispatchLineReferenceNumber }
-        return stockTransferReceiptStockUpdater.findUnprocessedLineRefs(lineRefs)
+        return stockTransferReceiptStockUpdater.findUnprocessedLineRefs(event.dispatchReferenceNumber, lineRefs)
     }
 }

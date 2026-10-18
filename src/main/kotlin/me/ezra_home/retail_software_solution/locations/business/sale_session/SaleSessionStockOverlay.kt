@@ -26,9 +26,9 @@ class SaleSessionStockOverlay(
                 reservationsByLocationProductId[saleSessionLine.locationProductId]?.forSale(saleId)
             } ?: BigDecimal.ZERO
             saleSessionLine.copy(
-                quantityOnHand = availability.quantityOnHand,
-                quantityReserved = availability.quantityReserved.subtract(ownReservation),
-                quantityAvailable = availability.quantityAvailable.add(ownReservation),
+                storageQuantityOnHand = availability.quantityOnHand,
+                storageQuantityReserved = availability.quantityReserved.subtract(ownReservation),
+                storageQuantityAvailable = availability.quantityAvailable.add(ownReservation),
             )
         }
         return saleSession.copy(saleLines = populatedSaleLines)

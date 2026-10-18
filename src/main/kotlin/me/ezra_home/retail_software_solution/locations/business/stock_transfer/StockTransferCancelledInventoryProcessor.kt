@@ -25,7 +25,7 @@ class StockTransferCancelledInventoryProcessor(
 
     @TransactionalOnLocationSchema
     override fun handle(event: StockTransferCancelledEvent) {
-        stockTransferStockUpdater.restoreStockForLines(findUnrestoredRefs(event.dispatchReferenceNumber))
+        stockTransferStockUpdater.restoreStockForLines(event.dispatchReferenceNumber, findUnrestoredRefs(event.dispatchReferenceNumber))
     }
 
     private fun findUnrestoredRefs(dispatchReferenceNumber: String): Set<String> {
@@ -37,6 +37,6 @@ class StockTransferCancelledInventoryProcessor(
         val lineRefs = stockTransferDispatchLineRepository
             .findByStockTransferDispatchId(dispatch.id!!)
             .map { it.requiredReference() }
-        return stockTransferStockUpdater.findUnrestoredLineRefs(lineRefs)
+        return stockTransferStockUpdater.findUnrestoredLineRefs(dispatchReferenceNumber, lineRefs)
     }
 }

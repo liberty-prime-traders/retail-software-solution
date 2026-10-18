@@ -40,7 +40,7 @@ class LocationProductEntity(
   @Column(name = "base_unit_id", nullable = false)
   var baseUnitId: UUID,
 
-  @Column(name = "default_sale_price", precision = 15, scale = 2)
+  @Column(name = "default_sale_price", precision = 28, scale = 10)
   var defaultSalePrice: BigDecimal? = null,
 
   @Column(name = "min_stock_level")

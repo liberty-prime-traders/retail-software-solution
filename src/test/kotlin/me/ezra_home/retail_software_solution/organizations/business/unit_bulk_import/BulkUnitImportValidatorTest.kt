@@ -1,11 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import
 
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.BulkUnitImportRequestDto
-import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.UnitConversionBulkInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.UnitGroupBulkInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api.UnitValueBulkInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionService
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
@@ -23,19 +20,16 @@ class BulkUnitImportValidatorTest {
 
     private lateinit var unitGroupService: UnitGroupService
     private lateinit var unitValueFetcher: UnitValueFetcher
-    private lateinit var unitConversionService: UnitConversionService
     private lateinit var validator: BulkUnitImportValidator
 
     @BeforeEach
     fun setUp() {
         unitGroupService = mock(UnitGroupService::class.java)
         unitValueFetcher = mock(UnitValueFetcher::class.java)
-        unitConversionService = mock(UnitConversionService::class.java)
-        validator = BulkUnitImportValidator(unitGroupService, unitValueFetcher, unitConversionService)
+        validator = BulkUnitImportValidator(unitGroupService, unitValueFetcher)
 
         `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(emptyList())
         `when`(unitValueFetcher.getAllUnitValues()).thenReturn(emptyList())
-        `when`(unitConversionService.getAll()).thenReturn(emptyList())
     }
 
     private fun unitValue(
@@ -71,7 +65,7 @@ class BulkUnitImportValidatorTest {
                 group(
                     name = "Nescafe",
                     unitValues = listOf(
-                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Outer", code = "nescafe-out", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1L),
                         unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "nescafe-out", unitsOfBasePerUnit = 6L)
                     )
                 ),
@@ -81,9 +75,6 @@ class BulkUnitImportValidatorTest {
                         unitValue(name = "Generic Carton", code = "ctn", baseUnitCode = null, unitsOfBasePerUnit = null)
                     )
                 )
-            ),
-            unitConversions = listOf(
-                UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "egg-dz", numerator = 42L, denominator = 1L)
             )
         )
 
@@ -232,14 +223,14 @@ class BulkUnitImportValidatorTest {
 
         val errors = validator.validate(request)
 
-        assertTrue(errors.any { it.contains("is not valid inside the 'Miscellaneous' group") })
+        assertTrue(errors.any { it.contains("a Miscellaneous unit stands alone") })
     }
 
     @Test
     fun `same unit value name is allowed across different groups`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
-                group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = null, unitsOfBasePerUnit = null))),
+                group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "nescafe-ctn", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L))),
                 group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = null, unitsOfBasePerUnit = null)))
             )
         )
@@ -325,27 +316,102 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
-    fun `conversion duplicated against an existing database conversion is rejected`() {
-        val fromId = UUID.randomUUID()
-        val toId = UUID.randomUUID()
-        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
-            listOf(
-                unitValueResponseDto(id = fromId, code = "ctn", unitGroupId = UUID.randomUUID()),
-                unitValueResponseDto(id = toId, code = "dz", unitGroupId = UUID.randomUUID())
-            )
-        )
-        `when`(unitConversionService.getAll()).thenReturn(
-            listOf(UnitConversionDto(id = UUID.randomUUID(), fromUnitId = fromId, toUnitId = toId, numerator = 42L, denominator = 1L))
-        )
-
+    fun `a Miscellaneous unit with a base unit is rejected`() {
         val request = BulkUnitImportRequestDto(
-            unitGroups = emptyList(),
-            unitConversions = listOf(UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 10L, denominator = 1L))
+            unitGroups = listOf(
+                group(name = "Miscellaneous", unitValues = listOf(unitValue(name = "Carton", code = "ctn", baseUnitCode = "pc", unitsOfBasePerUnit = 6L)))
+            )
         )
 
         val errors = validator.validate(request)
 
-        assertTrue(errors.any { it.contains("already exists in the database") })
+        assertTrue(errors.any { it.contains("a Miscellaneous unit stands alone") })
+    }
+
+    @Test
+    fun `a unit outside Miscellaneous without a base unit is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Eggs", unitValues = listOf(unitValue(name = "Tray", code = "egg-tray", baseUnitCode = null, unitsOfBasePerUnit = null)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("needs a baseUnitCode") })
+    }
+
+    @Test
+    fun `a payload unit named Piece in a custom group is rejected because the root Piece is automatic`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Eggs", unitValues = listOf(unitValue(name = "Piece", code = "egg-piece", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1L)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("root Piece is created automatically") })
+    }
+
+    @Test
+    fun `group names equal on alphanumerics are rejected as duplicates`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Pack Size", unitValues = emptyList()),
+                group(name = "Pack-Size", unitValues = emptyList())
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("duplicates another group name") })
+    }
+
+    @Test
+    fun `two long group names sharing a Piece code slug are rejected with a clear error`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "A very long group name one", unitValues = emptyList()),
+                group(name = "A very long group name two", unitValues = emptyList())
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("generated Piece code") })
+    }
+
+    @Test
+    fun `unitsOfBasePerUnit above the size cap is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Eggs", unitValues = listOf(unitValue(name = "Pallet", code = "egg-pallet", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1_000_000_001L)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("1,000,000,000") })
+    }
+
+    @Test
+    fun `a chain whose size in the root exceeds the cap is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(
+                    name = "Eggs",
+                    unitValues = listOf(
+                        unitValue(name = "Tray", code = "egg-tray", baseUnitCode = "__piece__", unitsOfBasePerUnit = 100_000L),
+                        unitValue(name = "Pallet", code = "egg-pallet", baseUnitCode = "egg-tray", unitsOfBasePerUnit = 100_000L)
+                    )
+                )
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.startsWith("Unit chain rejected:") })
     }
 
     private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID, systemDefined: Boolean = false) = UnitValueResponseDto(

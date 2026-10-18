@@ -43,11 +43,11 @@ databaseChangeLog:
                     notNullConstraintName: purchase_delivery_line_purchase_line_id_notnull
 
               - column:
-                  name: quantity_delivered
+                  name: user_provided_quantity_delivered
                   type: numeric(19, 4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_delivery_line_quantity_delivered_notnull
+                    notNullConstraintName: purchase_delivery_line_user_provided_quantity_delivered_notnull
 
               - column:
                   name: unit_cost
@@ -62,6 +62,14 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_delivery_line_unit_id_notnull
+
+
+              - column:
+                  name: storage_units_per_unit
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_storage_units_per_unit_notnull
 
               - column:
                   name: created_by_id

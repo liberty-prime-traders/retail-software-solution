@@ -27,19 +27,28 @@ class StockEntryEntity(
   @Convert(converter = StockItemSourceConverter::class)
   var sourceType: StockItemSource? = null,
 
-  @Column(name = "external_reference_number", length = 30)
-  var externalReferenceNumber: String? = null,
+  @Column(name = "document_reference", length = 30)
+  var documentReference: String? = null,
 
-  @Column(name = "batch_size", nullable = false, precision = 15, scale = 3, updatable = false)
-  var batchSize: BigDecimal,
+  @Column(name = "detail_reference", length = 30)
+  var detailReference: String? = null,
 
-  @Column(name = "quantity_remaining", nullable = false, precision = 15, scale = 3)
-  var quantityRemaining: BigDecimal,
+  @Column(name = "storage_batch_size", nullable = false, precision = 28, scale = 4, updatable = false)
+  var storageBatchSize: BigDecimal,
+
+  @Column(name = "storage_quantity_remaining", nullable = false, precision = 28, scale = 4)
+  var storageQuantityRemaining: BigDecimal,
 
   @Column(name = "priority")
   var priority: Int,
 
-  @Column(name = "unit_cost", nullable = false, precision = 19, scale = 4)
-  var unitCost: BigDecimal
+  @Column(name = "unit_cost", nullable = false, precision = 28, scale = 10)
+  var unitCost: BigDecimal,
+
+  @Column(name = "batch_cost", nullable = false, precision = 28, scale = 4, updatable = false)
+  var batchCost: BigDecimal,
+
+  @Column(name = "cost_remaining", nullable = false, precision = 28, scale = 4)
+  var costRemaining: BigDecimal
 
 ) : HasReferenceEntity()

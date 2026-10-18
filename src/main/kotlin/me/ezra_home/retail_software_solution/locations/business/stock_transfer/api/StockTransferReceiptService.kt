@@ -70,7 +70,7 @@ class StockTransferReceiptService(
                     stockTransferReceiptId = receipt.id!!,
                     stockTransferDispatchLineRef = dispatchLineRef,
                     locationProductId = destinationLocationProductId,
-                    quantityReceived = dispatchLine.quantityDispatched
+                    storageQuantityReceived = dispatchLine.storageQuantityDispatched
                 )
             )
         }

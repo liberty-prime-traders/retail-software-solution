@@ -52,11 +52,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_receipt_line_location_product_id_notnull
 
               - column:
-                  name: quantity_received
-                  type: numeric(15,4)
+                  name: storage_quantity_received
+                  type: numeric(28,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_receipt_line_quantity_received_notnull
+                    notNullConstraintName: stock_transfer_receipt_line_storage_quantity_received_notnull
 
               - column:
                   name: created_by_id

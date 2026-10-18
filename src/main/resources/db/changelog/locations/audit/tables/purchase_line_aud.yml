@@ -39,7 +39,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity_ordered
+                  name: user_provided_quantity_ordered
                   type: numeric(19, 4)
 
               - column:
@@ -51,19 +51,15 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity_delivered
-                  type: numeric(19, 4)
+                  name: storage_quantity_delivered
+                  type: numeric(28, 4)
 
               - column:
-                  name: quantity_canceled
-                  type: numeric(19, 4)
+                  name: storage_quantity_canceled
+                  type: numeric(28, 4)
 
               - column:
-                  name: conversion_numerator
-                  type: bigint
-
-              - column:
-                  name: conversion_denominator
+                  name: storage_units_per_unit
                   type: bigint
 
               - column:

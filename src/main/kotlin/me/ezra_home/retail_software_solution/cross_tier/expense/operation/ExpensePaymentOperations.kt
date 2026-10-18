@@ -83,7 +83,7 @@ class ExpensePaymentOperations(
     ): List<ExpensePaymentDraft> {
         expenseLookup.requireNotVoided(expenseAggregate, expenseDto)
         val expensePaymentDrafts = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
-            val paymentAmount = Decimals.roundToScale4(paymentRequest.amount)
+            val paymentAmount = Decimals.Scale4.round(paymentRequest.amount)
             if (paymentAmount <= BigDecimal.ZERO) throw RtsGenericException("Payment amount must be greater than zero")
             ExpensePaymentDraft(expenseDto.id, paymentAmount, resolvedSettlement)
         }

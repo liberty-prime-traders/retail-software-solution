@@ -1,23 +1,27 @@
 # unit_bulk_import
 
-Lets a caller submit a whole payload of unit groups, their unit values, and
-cross-group unit conversions in one request (`POST secured/unitgroups/bulk`)
-instead of building them up one at a time through `unitgroup`'s, `unitvalue`'s,
-and `unitconversion`'s single-item endpoints. This domain only ever imports
-from those three domains' `api/` packages — it owns no entities of its own.
+Lets a caller submit a whole payload of unit groups and their unit values in one
+request (`POST secured/unitgroups/bulk`) instead of building them up one at a
+time through `unitgroup`'s and `unitvalue`'s single-item endpoints. This domain
+only ever imports from those domains' `api/` packages — it owns no entities of
+its own. There are no manual conversions to import (see `unitconversion`).
 
 ## Two phases: validate everything, then save everything
 
 `BulkUnitImportService.bulkImport` runs `BulkUnitImportValidator.validate`
 first, which returns a `List<String>` of every problem in the payload —
-duplicate/invalid names, duplicate/oversized codes, missing or cross-group
-base-unit references, cyclic base-unit chains — instead of throwing on the
+duplicate/invalid names (compared on alphanumerics), duplicate/oversized codes,
+missing or cross-group base-unit references, a unit outside Miscellaneous
+without a base unit, a Miscellaneous unit with one, a payload unit named
+"Piece" in a custom group, two groups whose generated Piece codes collide,
+cyclic base-unit chains, and chains whose size in the root exceeds 1,000,000,000
+(`UnitChainResolver`) — instead of throwing on the
 first one like the single-item validators do. If that list is non-empty,
 `bulkImport` throws `RtsGenericException("Bulk unit import validation
 failed", errors)` before anything is saved; `GlobalExceptionHandler` puts the
 list in `ApiError.body`. Only once validation is fully clean does phase two
-run: groups, then unit values, then conversions, in that order, since each
-depends on the previous step's saved ids.
+run: groups, then unit values, in that order, since units depend on the
+saved group ids.
 
 ## Why bulk save paths exist instead of looping single-item creates
 
@@ -31,11 +35,8 @@ would mean N full-cache evictions for one import. Instead:
   per-item validation — the whole batch was already validated in phase one)
   and persist through `UnitGroupCache.saveAll` / a new `UnitValueCache.saveAll`,
   each a single `@CacheEvict`.
-- `UnitConversionService.bulkInsertValidatedList` has no cache to evict, but
-  still calls `unitConversionGraphFacade.invalidate()` once instead of once
-  per conversion.
 
-The `ValidatedList` suffix on all three names is deliberate — it's the
+The `ValidatedList` suffix on both names is deliberate — it's the
 caller's contract that the list has already been validated, so the method
 body can skip straight to persistence. See `.claude/instructions.md`'s
 Comments section for why this is a naming convention, not a comment above
@@ -91,28 +92,33 @@ payload-internal duplicate; only the database-collision error is suppressed.
 a code, even across different groups. Unit value **names**, by contrast, are
 checked only within the same group (`UnitValueValidator`,
 `BulkUnitImportValidator.isDuplicateUnitValueName`) — the same name can
-repeat in different groups. Group names remain unique org-wide either way,
-and must contain at least one letter or digit (`UnitGroupService.createUnitGroup`'s
+repeat in different groups. Both comparisons use
+`StringUtils.isEquivalentOnAlphanumerics`, so "Pack Size" and "Pack-Size"
+collide. A payload group name that matches a system group under
+`StringUtils.isEquivalent` is a reuse, but one that only matches on
+alphanumerics ("Co-unt") is rejected as a duplicate. Group names remain unique
+org-wide either way, and must contain at least one letter or digit (`UnitGroupService.createUnitGroup`'s
 `validateNameOnSave`, and `BulkUnitImportValidator.validateGroupNames`) — a
 group name that's only symbols/whitespace would otherwise produce an empty
 slug for the Piece-code generation below.
 
 ## Default "Piece" unit is auto-provisioned, and its code is group-scoped
 
-Any group that isn't Miscellaneous/Weight/Volume (`SystemUnitGroup`) is
-expected to have a "Piece" base unit for other values in that group to chain
-off. Two flows provision it:
+Every group outside the system groups (`SystemUnitGroup`) has exactly one
+root: the Piece provisioned when the group is created. Every other unit in the
+group chains off it, directly or through another unit, so a payload unit in a
+custom group references it with the reserved marker
+`BulkUnitImportValidator.PIECE_BASE_UNIT_CODE` ("__piece__") and a
+payload unit named "Piece" is rejected. Two flows provision it, both with
+`systemDefined = true`:
 
-- **Bulk**: only if some unit value in that group actually references the
-  reserved marker `BulkUnitImportValidator.PIECE_BASE_UNIT_CODE` ("__piece__")
-  as its `baseUnitCode` — `generatePendingUnitValuesForGroup` checks
-  `referencesPiece` before adding it.
-- **Single-item group creation**: unconditionally, via
-  `UnitValueService.ensurePieceUnitExists`, called from
-  `UnitGroupService.createUnitGroup` right after the group saves — every new
-  (non-excluded) group gets a Piece unit whether or not one was explicitly
-  requested, since the single-item `UnitGroupInsertDto` has no unit-values
-  payload to check a reference against.
+- **Bulk**: for every new custom group, whether or not a unit references the
+  marker (`generatePendingUnitValuesForGroup`).
+- **Single-item group creation**: via `UnitValueService.ensurePieceUnitExists`,
+  called from `UnitGroupService.createUnitGroup` right after the group saves.
+
+A Miscellaneous payload unit cannot carry a `baseUnitCode`, and a unit in any
+other group must.
 
 Since codes are globally unique, every group's Piece can't literally be
 `SystemUnitValue.PIECE.code` ("pc") — two groups would collide. Both flows
@@ -138,8 +144,7 @@ came directly from this feature.
 
 `UnitGroupEndpoint` (`secured/unitgroups`):
 
-- `POST bulk` (body: `BulkUnitImportRequestDto` — `unitGroups`, optional
-  `unitConversions`) → `BulkUnitImportService.bulkImport`, returning the
+- `POST bulk` (body: `BulkUnitImportRequestDto` — `unitGroups`) → `BulkUnitImportService.bulkImport`, returning the
   newly created groups (`Collection<UnitGroupResponseDto>`) — not the whole
   org's group list, and not a bulk-specific response shape; deliberately
   matches `createUnitGroup`'s single-item return convention.

@@ -15,6 +15,11 @@ class OpeningStockAmountsFetcher(
     fun getAmountsByProductIds(locationProductIds: Collection<UUID>): Map<UUID, OpeningStockAmountsDto> {
         if (locationProductIds.isEmpty()) return emptyMap()
         return openingStockRepository.findByLocationProductIdIn(locationProductIds)
-            .associate { it.locationProductId to OpeningStockAmountsDto(quantity = it.quantity, unitCost = it.unitCost) }
+            .associate { it.locationProductId to OpeningStockAmountsDto(
+                userProvidedQuantity = it.userProvidedQuantity,
+                unitId = it.unitId,
+                storageUnitsPerUnit = it.storageUnitsPerUnit,
+                unitCost = it.unitCost
+            ) }
     }
 }

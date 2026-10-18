@@ -7,7 +7,9 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoi
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
@@ -27,6 +29,8 @@ class SaleSessionAssembler(
     private val adjustmentReasonService: AdjustmentReasonService,
     private val sessionToResponseMapper: SessionToResponseMapper,
     private val saleDataFetcher: SaleDataFetcher,
+    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
     private val activeWarningSeconds: Long = 300
@@ -72,11 +76,12 @@ class SaleSessionAssembler(
         val unitPriceOverrideByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
             val overrideAdjustment = unitPriceOverrideAdjustmentsByLineKey[lineKey]
             overrideAdjustment?.let {
-                when (it.direction) {
-                    AdjustmentDirection.DISCOUNT -> saleSessionLine.unitPrice - it.value
-                    AdjustmentDirection.SURCHARGE -> saleSessionLine.unitPrice + it.value
+                val overrideTotal = when (it.direction) {
+                    AdjustmentDirection.DISCOUNT -> saleSessionLine.lineTotal - it.value
+                    AdjustmentDirection.SURCHARGE -> saleSessionLine.lineTotal + it.value
                     AdjustmentDirection.BOTH -> null
                 }
+                overrideTotal?.let { total -> Decimals.Scale4.divide(total, saleSessionLine.userProvidedQuantity) }
             } ?: saleSessionLine.unitPrice
         }
 
@@ -84,7 +89,7 @@ class SaleSessionAssembler(
             .filter { it.relatedSaleLineIdentity != null }
             .groupBy { it.relatedSaleLineIdentity!!.key() }
 
-        val netUnitPriceByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
+        val netLineTotalByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
             val lineAdjustments = lineAdjustmentsByLineKey[lineKey] ?: emptyList()
             val netAdjustmentAmount = lineAdjustments.sumOf { saleSessionAdjustment ->
                 val calculatedAmount = SaleSessionTotalsCalculator.calculateAdjustmentAmount(saleSessionAdjustment, saleSession.saleLines)
@@ -94,12 +99,22 @@ class SaleSessionAssembler(
                     AdjustmentDirection.BOTH -> calculatedAmount.negate()
                 }
             }
-            Decimals.divideScale4(saleSessionLine.lineTotal + netAdjustmentAmount, saleSessionLine.quantity)
+            saleSessionLine.lineTotal + netAdjustmentAmount
         }
 
+        val netUnitPriceByLineKey = netLineTotalByLineKey.mapValues { (lineKey, netLineTotal) ->
+            Decimals.Scale4.divide(netLineTotal, saleSessionLinesByKey.getValue(lineKey).userProvidedQuantity)
+        }
+
+        val baseUnitSizeInRootByBaseUnitId = unitConversionGraphFacade.getOrLoad().let { unitConversionGraph ->
+            saleSession.saleLines.map { it.baseUnitId }.distinct().associateWith { unitConversionGraph.getSizeInRoot(it) }
+        }
         return LineMappingContext(
             unitPriceOverrideByLineKey = unitPriceOverrideByLineKey,
             netUnitPriceByLineKey = netUnitPriceByLineKey,
+            netLineTotalByLineKey = netLineTotalByLineKey,
+            baseUnitSizeInRootByBaseUnitId = baseUnitSizeInRootByBaseUnitId,
+            breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(saleSession.saleLines.map { it.locationProductId }.distinct()),
         )
     }
 

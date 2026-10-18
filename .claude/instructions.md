@@ -184,6 +184,6 @@ KAFKA
 - For concurrency safety, we need db constraints on entities that can be created by kafka.
 - These are examples of such constraints:
   - `add-unique-constraint-tax-entry-source-ref-type-tax-type` for `SaleTaxReversalProcessor` and `SaleTaxFinalizationProcessor`
-  - `add-unique-constraint-stock-movement-ext-ref-type-product` for `PurchaseDeliveryStockUpdater`
+  - `add-unique-index-stock-movement-doc-detail-type-product-entry-reason` for `PurchaseDeliveryStockUpdater`
 - When adding processors, reason about this idempotency surface and add constraints as needed.
 - If the processor creates a new entity, there should be a unique constraint on the natural key of that entity to prevent duplicates during retries.

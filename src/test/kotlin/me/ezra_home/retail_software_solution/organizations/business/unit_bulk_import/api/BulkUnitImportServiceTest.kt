@@ -1,9 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.api
 
 import me.ezra_home.retail_software_solution.organizations.business.unit_bulk_import.BulkUnitImportValidator
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionInsertDto
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionService
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
@@ -31,7 +28,6 @@ class BulkUnitImportServiceTest {
         val unitGroupService = mock(UnitGroupService::class.java)
         val unitValueService = mock(UnitValueService::class.java)
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
-        val unitConversionService = mock(UnitConversionService::class.java)
 
         // A custom countable group, not the system "Count" group - only a custom group gets an
         // auto-inserted Piece, since the system "Count" group already has the real one. Codes must
@@ -68,7 +64,7 @@ class BulkUnitImportServiceTest {
         }
 
         val service = BulkUnitImportService(
-            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher
         )
 
         val result = service.bulkImport(request)
@@ -95,7 +91,6 @@ class BulkUnitImportServiceTest {
         val unitGroupService = mock(UnitGroupService::class.java)
         val unitValueService = mock(UnitValueService::class.java)
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
-        val unitConversionService = mock(UnitConversionService::class.java)
 
         val weightGroupId = UUID.randomUUID()
         val kilogramId = UUID.randomUUID()
@@ -128,7 +123,7 @@ class BulkUnitImportServiceTest {
         }
 
         val service = BulkUnitImportService(
-            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher
         )
 
         val result = service.bulkImport(request)
@@ -145,64 +140,48 @@ class BulkUnitImportServiceTest {
         val unitGroupService = mock(UnitGroupService::class.java)
         val unitValueService = mock(UnitValueService::class.java)
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
-        val unitConversionService = mock(UnitConversionService::class.java)
 
         val request = BulkUnitImportRequestDto(unitGroups = emptyList())
         val validationErrors = listOf("Group at position 1: name is required")
         `when`(bulkUnitImportValidator.validate(request)).thenReturn(validationErrors)
 
         val service = BulkUnitImportService(
-            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
+            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher
         )
 
         val exception = assertThrows(RtsGenericException::class.java) { service.bulkImport(request) }
 
         assertEquals(validationErrors, exception.payload)
-        verifyNoInteractions(unitGroupService, unitValueService, unitConversionService)
+        verifyNoInteractions(unitGroupService, unitValueService)
     }
 
     @Test
-    fun `saveConversions resolves codes to ids and passes numerator and denominator through`() {
+    fun `bulkImport creates the system-defined root Piece for a custom group even when no unit references it`() {
         val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
         val unitGroupService = mock(UnitGroupService::class.java)
         val unitValueService = mock(UnitValueService::class.java)
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
-        val unitConversionService = mock(UnitConversionService::class.java)
 
-        val fromId = UUID.randomUUID()
-        val toId = UUID.randomUUID()
         val request = BulkUnitImportRequestDto(
-            unitGroups = emptyList(),
-            unitConversions = listOf(UnitConversionBulkInsertDto(fromUnitCode = "ctn", toUnitCode = "dz", numerator = 42L, denominator = 1L))
+            unitGroups = listOf(UnitGroupBulkInsertDto(name = "Eggs", description = null, unitValues = emptyList()))
         )
-
+        val eggsGroupId = UUID.randomUUID()
         `when`(bulkUnitImportValidator.validate(request)).thenReturn(emptyList())
-        `when`(unitGroupService.bulkCreateValidatedList(emptyList())).thenReturn(emptyList())
-        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
-            listOf(
-                unitValueResponseDto(id = fromId, code = "ctn", unitGroupId = UUID.randomUUID()),
-                unitValueResponseDto(id = toId, code = "dz", unitGroupId = UUID.randomUUID())
-            )
-        )
+        `when`(unitGroupService.bulkCreateValidatedList(listOf(UnitGroupInsertDto(name = "Eggs", description = null))))
+            .thenReturn(listOf(unitGroupResponseDto(eggsGroupId, "Eggs")))
+        `when`(unitValueFetcher.getUnitValuesForUnitGroup(eggsGroupId)).thenReturn(emptyList())
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(emptyList())
 
-        var insertedConversions: List<UnitConversionInsertDto> = emptyList()
-        `when`(unitConversionService.bulkInsertValidatedList(anyList<UnitConversionInsertDto>())).thenAnswer { invocation ->
-            insertedConversions = invocation.getArgument(0)
-            emptyList<UnitConversionDto>()
+        var savedEntries: List<UnitValueBulkSaveEntry> = emptyList()
+        `when`(unitValueService.bulkCreateValidatedList(anyList())).thenAnswer { invocation ->
+            savedEntries = invocation.getArgument(0)
+            emptyList<UnitValueResponseDto>()
         }
 
-        val service = BulkUnitImportService(
-            bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher, unitConversionService
-        )
+        BulkUnitImportService(bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher).bulkImport(request)
 
-        service.bulkImport(request)
-
-        assertEquals(1, insertedConversions.size)
-        val insertDto = insertedConversions.first()
-        assertEquals(fromId, insertDto.fromUnitId)
-        assertEquals(toId, insertDto.toUnitId)
-        assertEquals(42L, insertDto.numerator)
-        assertEquals(1L, insertDto.denominator)
+        assertEquals(listOf("eggs-pc"), savedEntries.map { it.code })
+        assertEquals(true, savedEntries.single().systemDefined)
     }
 
     private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID, systemDefined: Boolean = false) = UnitValueResponseDto(

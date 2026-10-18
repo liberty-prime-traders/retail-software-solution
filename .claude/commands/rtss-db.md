@@ -15,6 +15,22 @@ Apply these rules to every Liquibase, entity, or repository change.
 - Not-null on table create: `<tblname>_<colname>_notnull`
 - Full pattern: `tblname_colname_constrainttype`
 
+## Quantity and reference column naming
+
+- Every quantity column is labelled, native or not. `user_provided_` marks what the user typed;
+  `storage_` marks a quantity in the storage unit (the root of the product's unit group). No
+  quantity column is unmarked.
+  - Document lines: `user_provided_quantity`, `user_provided_quantity_ordered`.
+  - Storage counters on a document line: `storage_quantity_delivered`, `storage_quantity_canceled`.
+  - `stock_entry`: `storage_quantity_remaining`.
+  - `stock_movement`: `storage_moved_quantity`, `user_provided_moved_quantity`, `storage_remaining_quantity`.
+  - Reservations: `storage_quantity_reserved`.
+- A line's captured ratio to the storage unit is one `BIGINT` column, `storage_units_per_unit`
+  (a whole number, at least 1) — not a numerator/denominator pair.
+- "Base" names only the product's base unit; never use it for a storage quantity.
+- Reference columns spell out "reference", never `ref`: `document_reference` (the document that
+  created or moved the stock) and `detail_reference` (its line, nullable).
+
 ## Changelog load order (within each layer)
 
 ```

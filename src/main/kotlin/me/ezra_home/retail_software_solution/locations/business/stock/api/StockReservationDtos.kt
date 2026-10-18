@@ -6,7 +6,7 @@ import java.util.UUID
 data class ProductReservationRow(
     val locationProductId: UUID,
     val saleId: UUID,
-    val quantityReserved: BigDecimal,
+    val storageQuantityReserved: BigDecimal,
 )
 
 data class ProductReservations(
@@ -21,5 +21,5 @@ data class NewStockReservation(
     val saleId: UUID,
     val saleLineId: UUID,
     val locationProductId: UUID,
-    val quantityReserved: BigDecimal,
+    val storageQuantityReserved: BigDecimal,
 )

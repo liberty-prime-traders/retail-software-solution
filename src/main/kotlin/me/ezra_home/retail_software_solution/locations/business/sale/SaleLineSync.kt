@@ -16,8 +16,8 @@ object SaleLineSync {
             PersistedSaleLine(
                 id = saleLineEntity.id!!,
                 locationProductId = saleLineEntity.locationProductId,
-                quantity = saleLineEntity.quantity,
-                unitPrice = saleLineEntity.unitPrice,
+                userProvidedQuantity = saleLineEntity.userProvidedQuantity,
+                lineTotal = saleLineEntity.lineTotal,
             )
         }
     }
@@ -37,11 +37,11 @@ object SaleLineSync {
             val saleLineEntity = if (saleLineSaveRequest.existingId != null) {
                 existingSaleLinesById[saleLineSaveRequest.existingId]?.also { existingSaleLineEntity ->
                     existingSaleLineEntity.locationProductId = saleLineSaveRequest.locationProductId
-                    existingSaleLineEntity.quantity = saleLineSaveRequest.quantity
+                    existingSaleLineEntity.userProvidedQuantity = saleLineSaveRequest.userProvidedQuantity
                     existingSaleLineEntity.unitId = saleLineSaveRequest.unitId
-                    existingSaleLineEntity.unitPrice = saleLineSaveRequest.unitPrice
-                    existingSaleLineEntity.conversionNumerator = saleLineSaveRequest.conversionRatio.numerator
-                    existingSaleLineEntity.conversionDenominator = saleLineSaveRequest.conversionRatio.denominator
+                    existingSaleLineEntity.lineTotal = saleLineSaveRequest.lineTotal
+                    existingSaleLineEntity.defaultSalePrice = saleLineSaveRequest.defaultSalePrice
+                    existingSaleLineEntity.storageUnitsPerUnit = saleLineSaveRequest.storageUnitsPerUnit
                 } ?: throw RtsGenericException("Sale line ${saleLineSaveRequest.existingId} no longer exists")
             } else {
                 saleLineSaveRequest.toEntity(saleId)
@@ -58,10 +58,10 @@ object SaleLineSync {
     private fun SaleLineSaveRequest.toEntity(saleId: UUID) = SaleLineEntity(
         saleId = saleId,
         locationProductId = locationProductId,
-        quantity = quantity,
+        userProvidedQuantity = userProvidedQuantity,
         unitId = unitId,
-        unitPrice = unitPrice,
-        conversionNumerator = conversionRatio.numerator,
-        conversionDenominator = conversionRatio.denominator,
+        lineTotal = lineTotal,
+        defaultSalePrice = defaultSalePrice,
+        storageUnitsPerUnit = storageUnitsPerUnit,
     )
 }

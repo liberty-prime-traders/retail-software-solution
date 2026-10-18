@@ -19,7 +19,7 @@ object OpeningStockValidator {
     fun guardPositiveQuantitiesAndCosts(lines: List<OpeningStockLineDto>, labelsByProductId: Map<UUID, String>) {
         lines.forEach { line ->
             val label = labelsByProductId[line.locationProductId] ?: line.locationProductId.toString()
-            if (line.quantity <= BigDecimal.ZERO) {
+            if (line.userProvidedQuantity <= BigDecimal.ZERO) {
                 throw RtsGenericException("Opening stock quantity must be positive for product $label")
             }
             if (line.unitCost <= BigDecimal.ZERO) {

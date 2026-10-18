@@ -21,14 +21,15 @@ class StockTransferStockUpdater(
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val stockBalanceFetcher: StockBalanceFetcher,
+    private val stockBreakdownProvider: StockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun findUnrestoredLineRefs(lineRefs: Collection<String>): Set<String> {
+    fun findUnrestoredLineRefs(dispatchReference: String, lineRefs: Collection<String>): Set<String> {
         if (lineRefs.isEmpty()) return emptySet()
-        val consumedLineRefs = stockMovementRepository.findPresentRefs(lineRefs, MovementType.TRANSFER_OUT)
-        val restoredLineRefs = stockMovementRepository.findPresentRefs(lineRefs, MovementType.TRANSFER_CANCELLED)
+        val consumedLineRefs = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_OUT)
+        val restoredLineRefs = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_CANCELLED)
         return consumedLineRefs - restoredLineRefs
     }
 
@@ -41,6 +42,7 @@ class StockTransferStockUpdater(
         )
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
         val productSummariesByLocationProductId = locationProductDataFetcher.findSummaryByIds(locationProductIds.toSet())
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds.toSet())
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
@@ -52,14 +54,17 @@ class StockTransferStockUpdater(
                 val fifoConsumptionResult = FifoStockConsumer.consume(
                     fifoConsumptionRequest = FifoConsumptionRequest(
                         locationProductId = locationProductId,
-                        baseQuantity = dispatchLineRequest.baseQuantity,
+                        storageQuantity = dispatchLineRequest.storageQuantity,
+                        userProvidedQuantity = dispatchLineRequest.userProvidedQuantity,
                         unitId = dispatchLineRequest.unitId,
-                        conversionRatio = dispatchLineRequest.conversionRatio,
+                        storageUnitsPerUnit = dispatchLineRequest.storageUnitsPerUnit,
                         movementType = MovementType.TRANSFER_OUT,
-                        externalReferenceNumber = dispatchLineRequest.dispatchLineRef,
+                        documentReference = dispatchLineRequest.dispatchReference,
+                        detailReference = dispatchLineRequest.dispatchLineReference,
                     ),
                     fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
                     startingBalance = runningBalance,
+                    quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                     productLabel = productLabel,
                 )
                 runningBalance = fifoConsumptionResult.endingBalance
@@ -71,10 +76,11 @@ class StockTransferStockUpdater(
         stockMovementRepository.saveAll(movements)
     }
 
-    fun restoreStockForLines(dispatchLineRefs: Collection<String>) {
+    fun restoreStockForLines(dispatchReference: String, dispatchLineRefs: Collection<String>) {
         if (dispatchLineRefs.isEmpty()) return
         val transferOutMovements = stockMovementRepository
-            .findByExternalReferenceNumberInAndMovementType(dispatchLineRefs, MovementType.TRANSFER_OUT)
+            .findByDocumentReferenceAndMovementType(dispatchReference, MovementType.TRANSFER_OUT)
+            .filter { it.detailReference in dispatchLineRefs }
         if (transferOutMovements.isEmpty()) return
 
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, transferOutMovements.map { it.locationProductId }.toSet())
@@ -85,6 +91,7 @@ class StockTransferStockUpdater(
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
             transferOutMovements.map { it.locationProductId }.distinct()
         )
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(transferOutMovements.map { it.locationProductId }.toSet())
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val newMovements = mutableListOf<StockMovementEntity>()
@@ -93,6 +100,7 @@ class StockTransferStockUpdater(
                 movementsToReverse = stockMovementsForProduct,
                 stockEntriesById = stockEntriesById,
                 startingBalance = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 reversalType = MovementType.TRANSFER_CANCELLED,
             )
             modifiedEntries.addAll(fifoRestorationResult.touchedEntries)

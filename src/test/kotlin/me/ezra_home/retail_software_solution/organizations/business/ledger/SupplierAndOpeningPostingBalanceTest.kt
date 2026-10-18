@@ -162,8 +162,9 @@ class SupplierAndOpeningPostingBalanceTest {
                 deliveryLineId = UUID.randomUUID(),
                 lineReferenceNumber = "DEL-1-1",
                 locationProductId = UUID.randomUUID(),
-                quantityDelivered = BigDecimal("2"),
+                userProvidedQuantityDelivered = BigDecimal("2"),
                 unitId = UUID.randomUUID(),
+                storageUnitsPerUnit = 1L,
                 unitCost = BigDecimal("5.00")
             )
         )
@@ -204,7 +205,7 @@ class SupplierAndOpeningPostingBalanceTest {
         openingStockId = UUID.randomUUID(),
         ledgerSourceReferenceNumber = "OS-1",
         locationProductId = UUID.randomUUID(),
-        quantity = BigDecimal("3"),
+        userProvidedQuantity = BigDecimal("3"),
         unitCost = BigDecimal("2.00"),
         postingDate = LocalDate.of(2026, 1, 1)
     )

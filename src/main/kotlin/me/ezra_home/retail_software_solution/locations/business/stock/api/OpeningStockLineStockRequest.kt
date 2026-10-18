@@ -5,8 +5,9 @@ import java.util.UUID
 
 data class OpeningStockLineStockRequest(
     val locationProductId: UUID,
-    val quantity: BigDecimal,
+    val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
+    val storageUnitsPerUnit: Long,
     val unitCost: BigDecimal,
-    val externalReferenceNumber: String
+    val documentReference: String
 )

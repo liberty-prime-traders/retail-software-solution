@@ -26,5 +26,7 @@ interface LocationProductMapper {
     @Mapping(target = "stockBalance", expression = "java(ctx.getBalance())")
     @Mapping(target = "openingStockQuantity", expression = "java(ctx.getOpeningStockQuantity())")
     @Mapping(target = "openingStockUnitCost", expression = "java(ctx.getOpeningStockUnitCost())")
+    @Mapping(target = "stockBalanceBreakdown", expression = "java(ctx.getBalanceBreakdown())")
+    @Mapping(target = "openingStockBreakdown", expression = "java(ctx.getOpeningStockBreakdown())")
     fun toResponseDto(dto: LocationProductDto, @Context ctx: LocationProductContext): LocationProductResponseDto
 }

@@ -43,7 +43,7 @@ class ExpenseRowResolver(
         val payeesById = HashMap<UUID, ContactDto>()
         val openDates = HashSet<LocalDate>()
         return expenseSubmission.rowCommands.map { rowCommand ->
-            val roundedAmount = Decimals.roundToScale4(rowCommand.amount)
+            val roundedAmount = Decimals.Scale4.round(rowCommand.amount)
             if (roundedAmount <= BigDecimal.ZERO) {
                 throw RtsGenericException("Expense amount must be greater than zero")
             }

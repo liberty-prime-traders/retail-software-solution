@@ -5,10 +5,10 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.hibernate.envers.Audited
 import java.math.BigDecimal
 import java.util.UUID
@@ -25,25 +25,26 @@ class SaleLineEntity(
     @Column(name = "location_product_id", nullable = false)
     override var locationProductId: UUID,
 
-    @Column(name = "quantity", nullable = false, precision = 19, scale = 4)
-    override var quantity: BigDecimal,
+    @Column(name = "user_provided_quantity", nullable = false, precision = 19, scale = 4)
+    override var userProvidedQuantity: BigDecimal,
 
     @Column(name = "unit_id", nullable = false)
     var unitId: UUID,
 
-    @Column(name = "unit_price", nullable = false, precision = 19, scale = 4)
-    override var unitPrice: BigDecimal,
+    // Gross, before any price override; the unit price is derived and never stored
+    @Column(name = "line_total", nullable = false, precision = 19, scale = 4)
+    override var lineTotal: BigDecimal,
 
-    @Column(name = "conversion_numerator", nullable = false)
-    override var conversionNumerator: Long,
+    @Column(name = "default_sale_price", nullable = false, precision = 28, scale = 10)
+    var defaultSalePrice: BigDecimal,
 
-    @Column(name = "conversion_denominator", nullable = false)
-    override var conversionDenominator: Long,
+    @Column(name = "storage_units_per_unit", nullable = false)
+    var storageUnitsPerUnit: Long,
 
     @Column(name = "cogs_total", precision = 19, scale = 4)
     var cogsTotal: BigDecimal? = null
 
-) : HasReferenceEntity(), ProductLineWithPrice, HasConversionRatio {
+) : HasReferenceEntity(), ProductLineWithPrice {
 
-    fun baseQty(): BigDecimal = conversionRatio().applyTo(quantity)
+    fun storageQuantity(): ExactQuantity = ExactQuantity.ofUserProvided(userProvidedQuantity, storageUnitsPerUnit)
 }

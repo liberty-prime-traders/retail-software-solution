@@ -46,7 +46,7 @@ class PurchaseDeliveryAssembler(
         PurchaseDeliveryLineResponseDto(
           id = dl.id!!,
           referenceNumber = dl.requiredReference(),
-          quantityDelivered = dl.quantityDelivered,
+          userProvidedQuantityDelivered = dl.userProvidedQuantityDelivered,
           unitId = dl.unitId,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,

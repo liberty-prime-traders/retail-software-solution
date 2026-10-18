@@ -63,7 +63,7 @@ Always use `PurchasePaymentCeilingService.computeCeiling` — never sum lines or
 ## Kafka idempotency
 
 - `PurchaseDeliveryInventoryProcessor.shouldProcess` checks delivery not already `RECEIVED`.
-- DB constraint `add-unique-constraint-stock-movement-ext-ref-type-product` blocks duplicate stock movements.
+- DB constraint `add-unique-index-stock-movement-doc-detail-type-product-entry-reason` blocks duplicate stock movements.
 - Supplier payment events only emitted when the payment method has an account code.
 
 ## Validation ordering (preserve when adding guards)

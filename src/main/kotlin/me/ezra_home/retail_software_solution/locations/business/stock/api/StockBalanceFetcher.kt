@@ -19,7 +19,8 @@ class StockBalanceFetcher(private val stockEntryRepository: StockEntryRepository
                     StockEntryFifoDto(
                         locationProductId = entry.locationProductId,
                         unitCost = entry.unitCost,
-                        quantityRemaining = entry.quantityRemaining
+                        storageQuantityRemaining = entry.storageQuantityRemaining,
+                        costRemaining = entry.costRemaining
                     )
                 }
             }
@@ -28,7 +29,7 @@ class StockBalanceFetcher(private val stockEntryRepository: StockEntryRepository
         val balancesByProduct = stockEntryRepository.sumRemainingByProducts(locationProductIds)
             .associateBy { it.getLocationProductId() }
         return locationProductIds.associateWith {
-            balancesByProduct[it]?.getRemainingQuantity() ?: BigDecimal.ZERO
+            balancesByProduct[it]?.getStorageRemainingQuantity() ?: BigDecimal.ZERO
         }
     }
 }

@@ -43,11 +43,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_draft_line_location_product_id_notnull
 
               - column:
-                  name: quantity
-                  type: numeric(15,4)
+                  name: user_provided_quantity
+                  type: numeric(19,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_draft_line_quantity_notnull
+                    notNullConstraintName: stock_transfer_draft_line_user_provided_quantity_notnull
 
               - column:
                   name: unit_id
@@ -57,25 +57,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_draft_line_unit_id_notnull
 
               - column:
-                  name: conversion_numerator
+                  name: storage_units_per_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_draft_line_conversion_numerator_notnull
-
-              - column:
-                  name: conversion_denominator
-                  type: bigint
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_transfer_draft_line_conversion_denominator_notnull
-
-              - column:
-                  name: base_unit_id
-                  type: uuid
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_transfer_draft_line_base_unit_id_notnull
+                    notNullConstraintName: stock_transfer_draft_line_storage_units_per_unit_notnull
 
               - column:
                   name: created_by_id

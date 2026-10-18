@@ -43,8 +43,12 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity_dispatched
-                  type: numeric(15,4)
+                  name: whole_line_user_provided_quantity
+                  type: numeric(19,4)
+
+              - column:
+                  name: storage_quantity_dispatched
+                  type: numeric(28,4)
 
               - column:
                   name: unit_id
@@ -52,18 +56,16 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: numeric(19,4)
+                  type: numeric(28,10)
+
 
               - column:
-                  name: conversion_numerator
-                  type: bigint
-              - column:
-                  name: conversion_denominator
-                  type: bigint
+                  name: cost_dispatched
+                  type: numeric(28,4)
 
               - column:
-                  name: base_unit_id
-                  type: uuid
+                  name: storage_units_per_unit
+                  type: bigint
 
               - column:
                   name: revend

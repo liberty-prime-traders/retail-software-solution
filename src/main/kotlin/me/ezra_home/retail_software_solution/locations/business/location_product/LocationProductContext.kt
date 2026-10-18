@@ -6,5 +6,7 @@ data class LocationProductContext(
     val unitName: String?,
     val balance: BigDecimal? = null,
     val openingStockQuantity: BigDecimal? = null,
-    val openingStockUnitCost: BigDecimal? = null
+    val openingStockUnitCost: BigDecimal? = null,
+    val balanceBreakdown: String? = null,
+    val openingStockBreakdown: String? = null
 )

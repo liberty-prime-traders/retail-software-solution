@@ -7,10 +7,11 @@ import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -22,6 +23,7 @@ class SaleValidator(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
     private val stockReserver: StockReserver,
+    private val stockBreakdownProvider: StockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -52,31 +54,24 @@ class SaleValidator(
 
     fun guardSufficientStockForSale(
         saleId: UUID,
-        requested: Map<UUID, BigDecimal>,
+        requested: Map<UUID, ExactQuantity>,
         productSummaries: Map<UUID, LocationProductSummaryDto>
     ) {
         if (requested.isEmpty()) return
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, requested.keys)
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
         val reservations = stockReserver.loadReservationBreakdown(requested.keys)
-        requested.forEach { (locationProductId, quantity) ->
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(requested.keys)
+        requested.forEach { (locationProductId, storageQuantity) ->
             val reservedByOthers = reservations[locationProductId]?.excludingSale(saleId) ?: BigDecimal.ZERO
-            val available = balances.getValue(locationProductId).subtract(reservedByOthers)
-            throwIfOverSelling(available, quantity, locationProductId, productSummaries)
-        }
-    }
-
-    fun throwIfOverSelling(
-        available: BigDecimal,
-        quantity: BigDecimal,
-        locationProductId: UUID,
-        productSummaries: Map<UUID, LocationProductSummaryDto>
-    ) {
-        if (available < quantity) {
-            val label = productSummaries[locationProductId]?.label ?: locationProductId.toString()
-            val formattedAvailable = Decimals.stripZeroesAndRound(available)
-            val formattedRequested = Decimals.stripZeroesAndRound(quantity)
-            throw RtsGenericException("Insufficient stock for $label. Available: $formattedAvailable, Requested: $formattedRequested")
+            val available = ExactQuantity.ofStorage(balances.getValue(locationProductId)) - ExactQuantity.ofStorage(reservedByOthers)
+            if (available < storageQuantity) {
+                val label = productSummaries[locationProductId]?.label ?: locationProductId.toString()
+                val quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId)
+                throw RtsGenericException(
+                    "Insufficient stock for $label. Available: ${quantityBreakdown.render(available)}, Requested: ${quantityBreakdown.render(storageQuantity)}"
+                )
+            }
         }
     }
 

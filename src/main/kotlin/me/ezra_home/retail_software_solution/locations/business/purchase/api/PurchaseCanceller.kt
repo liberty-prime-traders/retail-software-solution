@@ -7,6 +7,10 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -19,6 +23,8 @@ class PurchaseCanceller(
     private val purchaseAssembler: PurchaseAssembler,
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
     private val purchaseDataFetcher: PurchaseDataFetcher,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val stockBreakdownProvider: StockBreakdownProvider,
 ) {
 
     fun cancel(purchaseId: UUID, lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto {
@@ -34,18 +40,30 @@ class PurchaseCanceller(
 
     private fun cancelLines(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseCancelLinesDto>) {
         val linesById = existingLines.associateBy { it.id!! }
-        val toSave = cancels.mapNotNull { cancel ->
-            linesById[cancel.purchaseLineId]?.also { line ->
-                PurchaseValidator.guardCancelQuantity(line, cancel.quantityCanceled)
-                line.quantityCanceled = cancel.quantityCanceled
+        val cancelledLines = cancels.mapNotNull { cancel -> linesById[cancel.purchaseLineId]?.let { it to cancel } }
+        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+            cancelledLines
+                .filter { (line, cancel) -> cancel.unitId != null && cancel.unitId != line.unitId }
+                .map { (line, cancel) -> LocationProductUnitRequestDto(line.locationProductId, cancel.unitId!!) }
+        )
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(cancelledLines.map { (line, _) -> line.locationProductId }.toSet())
+        val toSave = cancelledLines.map { (line, cancel) ->
+            val storageUnitsPerUnit = if (cancel.unitId == null || cancel.unitId == line.unitId) {
+                line.storageUnitsPerUnit
+            } else {
+                storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId)
             }
+            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled, storageUnitsPerUnit)
+            PurchaseValidator.guardCancelQuantity(line, storageQuantityToCancel, breakdownByLocationProductId.getValue(line.locationProductId))
+            line.storageQuantityCanceled = storageQuantityToCancel.toStorageQuantity()
+            line
         }
         purchaseLineRepository.saveAll(toSave)
     }
 
     private fun resolvePurchaseStatus(lines: List<PurchaseLineEntity>): PurchaseStatus? {
-        val allAccountedFor = lines.all { (it.quantityDelivered + it.quantityCanceled).compareTo(it.quantityOrdered) == 0 }
-        val anyDelivered = lines.any { it.quantityDelivered > BigDecimal.ZERO }
+        val allAccountedFor = lines.none { it.storageQuantityRemaining().isPositive() }
+        val anyDelivered = lines.any { it.storageQuantityDelivered > BigDecimal.ZERO }
         return when {
             allAccountedFor && !anyDelivered -> PurchaseStatus.CANCELED
             allAccountedFor -> PurchaseStatus.FULLY_DELIVERED

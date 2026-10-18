@@ -21,24 +21,24 @@ databaseChangeLog:
             tableName: stock_movement
 
   - changeSet:
-      id: create-index-stock-movement-external_reference_number
+      id: create-index-stock-movement-document-reference
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
             - indexExists:
-                indexName: idx_stock_movement_external_reference_number
+                indexName: idx_stock_movement_document_reference
       changes:
         - createIndex:
-            indexName: idx_stock_movement_external_reference_number
+            indexName: idx_stock_movement_document_reference
             tableName: stock_movement
             columns:
               - column:
-                  name: external_reference_number
+                  name: document_reference
       rollback:
         - dropIndex:
-            indexName: idx_stock_movement_external_reference_number
+            indexName: idx_stock_movement_document_reference
             tableName: stock_movement
 
   - changeSet:
@@ -56,6 +56,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: location_product_id
+
               - column:
                   name: created_on
                   descending: true
@@ -65,21 +66,20 @@ databaseChangeLog:
             tableName: stock_movement
 
   - changeSet:
-      id: add-unique-constraint-stock-movement-ext-ref-type-product
+      id: add-unique-index-stock-movement-doc-detail-type-product-entry-reason
       author: ezra
       labels: 1.0.0
       preConditions:
         - onFail: MARK_RAN
         - not:
-            - uniqueConstraintExists:
-                tableName: stock_movement
-                constraintName: uq_stock_movement_ext_ref_type_product_entry
+            - indexExists:
+                indexName: uq_stock_movement_doc_detail_type_product_entry_reason
       changes:
-        - addUniqueConstraint:
-            tableName: stock_movement
-            constraintName: uq_stock_movement_ext_ref_type_product_entry
-            columnNames: external_reference_number, movement_type, location_product_id, stock_entry_id
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_stock_movement_doc_detail_type_product_entry_reason ON stock_movement
+              (document_reference, COALESCE(detail_reference, ''), movement_type, location_product_id, stock_entry_id,
+              COALESCE(reason_id, '00000000-0000-0000-0000-000000000000'::uuid))
       rollback:
-        - dropUniqueConstraint:
-            tableName: stock_movement
-            constraintName: uq_stock_movement_ext_ref_type_product_entry
+        - sql:
+            sql: DROP INDEX IF EXISTS uq_stock_movement_doc_detail_type_product_entry_reason

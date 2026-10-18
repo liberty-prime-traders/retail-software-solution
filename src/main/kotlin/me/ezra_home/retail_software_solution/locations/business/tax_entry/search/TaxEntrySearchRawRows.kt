@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.tax_entry.searc
 
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -16,7 +16,7 @@ data class TaxEntrySearchRawRow(
     val taxTypeName: String,
     val jurisdictionName: String,
     val fiscalPeriodId: UUID,
-    val calculationMethod: CalculationMethod,
+    val calculationMethod: TaxCalculationMethod,
     val rate: BigDecimal,
     val taxIsBilledToCustomerSeparately: Boolean,
     val taxIsIncludedInTaxableAmount: Boolean,

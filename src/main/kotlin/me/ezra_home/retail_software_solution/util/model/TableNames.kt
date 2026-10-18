@@ -62,7 +62,6 @@ object TableNames {
     const val SUBLEDGER_ENTRY = "subledger_entry"
     const val TAG = "tag"
     const val TAX_RATE = "tax_rate"
-    const val UNIT_CONVERSION = "unit_conversion"
     const val UNIT_GROUP = "unit_group"
     const val UNIT_VALUE = "unit_value"
 
@@ -128,7 +127,6 @@ object TableNames {
     const val PRODUCT_GROUP_AUDIT = "product_group_aud"
     const val TAG_AUDIT = "tag_aud"
     const val TAX_RATE_AUDIT = "tax_rate_aud"
-    const val UNIT_CONVERSION_AUDIT = "unit_conversion_aud"
     const val UNIT_GROUP_AUDIT = "unit_group_aud"
     const val UNIT_VALUE_AUDIT = "unit_value_aud"
 

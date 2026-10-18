@@ -1,12 +1,14 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.SystemUnitGroup
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueCache
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueEntity
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.UnitValueValidator
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -19,10 +21,12 @@ class UnitValueService(
     private val unitValueCache: UnitValueCache,
     private val unitValueMapper: UnitValueMapper,
     private val unitValueValidator: UnitValueValidator,
-    private val unitConversionGraphFacade: UnitConversionGraphFacade
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
+    private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock
 ) {
 
     fun createUnitValue(unitValueInsertDto: UnitValueInsertDto): UnitValueResponseDto {
+        lockUnitGroup(unitValueInsertDto.unitGroupId)
         unitValueValidator.validateUnitValueInsert(unitValueInsertDto)
         val dto = unitValueCache.create(unitValueInsertDto)
         unitConversionGraphFacade.invalidate()
@@ -39,7 +43,7 @@ class UnitValueService(
                 unitGroupId = entry.unitGroupId,
                 baseUnit = entry.baseUnit,
                 unitsOfBasePerUnit = entry.unitsOfBasePerUnit,
-                systemDefined = false
+                systemDefined = entry.systemDefined
             ).also { it.id = entry.id }
         }
         val saved = unitValueCache.saveAll(entities)
@@ -51,21 +55,22 @@ class UnitValueService(
         }
     }
 
-    /** Provisions the group's default Piece base unit unless the group is Miscellaneous, Weight,
-     * or Volume (those have their own base units) or a Piece unit already exists in the group. */
+    // System groups are seeded with their own roots
     fun ensurePieceUnitExists(unitGroupId: UUID, unitGroupName: String?): UnitValueResponseDto? {
         val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(unitGroupName)
         if (excludedFromPiece) return null
 
+        lockUnitGroup(unitGroupId)
         val pieceCode = SystemUnitValue.pieceCodeForGroup(unitGroupName)
         if (unitValueCache.getByUnitGroupId(unitGroupId).any { it.code == pieceCode }) return null
+        unitValueValidator.validateRootUnitInsert(unitGroupId, SystemUnitValue.PIECE.unitName, pieceCode)
 
         val saved = unitValueCache.save(
             UnitValueEntity(
                 name = SystemUnitValue.PIECE.unitName,
                 code = pieceCode,
                 unitGroupId = unitGroupId,
-                systemDefined = false
+                systemDefined = true
             )
         )
         unitConversionGraphFacade.invalidate()
@@ -73,9 +78,10 @@ class UnitValueService(
     }
 
     fun updateUnitValue(unitValueUpdateDto: UnitValueUpdateDto): UnitValueResponseDto {
-        unitValueValidator.validateUnitValueUpdate(unitValueUpdateDto)
         val existing = unitValueCache.getAllUnitValues().find { Objects.equals(it.id, unitValueUpdateDto.id) }
             ?: throw UpdatingNonExistingRecordException()
+        lockUnitGroup(existing.unitGroupId)
+        unitValueValidator.validateUnitValueUpdate(unitValueUpdateDto)
         if (existing.systemDefined) throw RtsGenericException("System-defined unit values cannot be modified")
         val updated = unitValueUpdateDto.applyTo(existing)
         val saved = unitValueCache.save(updated)
@@ -84,12 +90,22 @@ class UnitValueService(
     }
 
     fun deleteUnitValue(id: UUID?) {
-        unitValueCache.getAllUnitValues()
+        val allUnitValues = unitValueCache.getAllUnitValues()
+        allUnitValues
             .find { it.id == id }
             ?.apply {
                 if (systemDefined) throw RtsGenericException("System-defined unit values cannot be deleted")
+                if (allUnitValues.any { it.baseUnit == id }) throw RtsGenericException(UNIT_IS_BASE_OF_ANOTHER_UNIT)
                 unitValueCache.deleteUnitValue(id)
                 unitConversionGraphFacade.invalidate()
             }
+    }
+
+    private fun lockUnitGroup(unitGroupId: UUID?) {
+        unitGroupId?.let { orgEntityAdvisoryLock.acquire(LockNamespaces.UNIT_GROUP, it.toString()) }
+    }
+
+    companion object {
+        const val UNIT_IS_BASE_OF_ANOTHER_UNIT = "A unit that is the base unit of another unit cannot be deleted"
     }
 }

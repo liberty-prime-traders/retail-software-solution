@@ -2,17 +2,19 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockInboundLayers
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -20,13 +22,15 @@ class StockTransferReceiptStockUpdater(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val stockBalanceFetcher: StockBalanceFetcher,
-    private val locationProductDataFetcher: LocationProductDataFetcher
+    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
-    fun findUnprocessedLineRefs(lineRefs: Collection<String>): Set<String> {
+    fun findUnprocessedLineRefs(dispatchReference: String, lineRefs: Collection<String>): Set<String> {
         if (lineRefs.isEmpty()) return emptySet()
-        val processed = stockMovementRepository.findPresentRefs(lineRefs, MovementType.TRANSFER_IN)
+        val processed = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_IN)
         return lineRefs.toSet() - processed
     }
 
@@ -39,41 +43,51 @@ class StockTransferReceiptStockUpdater(
         }
 
         val locationProductIds = locationProductIdByOrgProductId.values.toList()
+        guardSameStorageUnit(event, locationProductIdByOrgProductId)
         val runningBalances = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds)
 
-        val entriesByDispatchLineRef = event.lines.associate { line ->
-            val locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId)
-            val ratio = ConversionRatio(line.conversionNumerator, line.conversionDenominator)
-            val baseQty = ratio.applyTo(line.quantityDispatched)
-            line.dispatchLineReferenceNumber to StockEntryEntity(
-                locationProductId = locationProductId,
+        val layerSpecs = event.lines.map { line ->
+            InboundLayerSpec(
+                locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId),
                 sourceType = StockItemSource.TRANSFER_IN,
-                externalReferenceNumber = line.dispatchLineReferenceNumber,
-                batchSize = baseQty,
-                quantityRemaining = baseQty,
-                unitCost = line.unitCost,
-                priority = 0
+                movementType = MovementType.TRANSFER_IN,
+                documentReference = event.dispatchReferenceNumber,
+                detailReference = line.dispatchLineReferenceNumber,
+                storageQuantity = ExactQuantity.ofStorage(line.storageQuantityDispatched),
+                batchCost = line.costDispatched,
+                userProvidedQuantity = line.wholeLineUserProvidedQuantity,
+                unitId = line.unitId,
+                storageUnitsPerUnit = line.storageUnitsPerUnit,
             )
         }
-        stockEntryRepository.saveAll(entriesByDispatchLineRef.values)
+        val entries = stockEntryRepository.saveAll(layerSpecs.map { StockInboundLayers.newLayer(it) })
 
-        val movements = event.lines.map { line ->
-            val locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId)
-            val entry = entriesByDispatchLineRef[line.dispatchLineReferenceNumber]!!
-            val newBalance = (runningBalances[locationProductId] ?: BigDecimal.ZERO) + entry.batchSize
-            runningBalances[locationProductId] = newBalance
-            StockMovementEntity(
-                stockEntryId = entry.id!!,
-                locationProductId = locationProductId,
-                movementType = MovementType.TRANSFER_IN,
-                movedQuantity = line.quantityDispatched,
-                remainingQuantity = newBalance,
-                externalReferenceNumber = line.dispatchLineReferenceNumber,
-                unitId = line.unitId,
-                conversionNumerator = line.conversionNumerator,
-                conversionDenominator = line.conversionDenominator
-            )
+        val movements = layerSpecs.zip(entries).map { (layerSpec, entry) ->
+            val newBalance = ExactQuantity.ofStorage(runningBalances[layerSpec.locationProductId] ?: BigDecimal.ZERO) + layerSpec.storageQuantity
+            runningBalances[layerSpec.locationProductId] = newBalance.toStorageQuantity()
+            StockInboundLayers.inboundMovement(layerSpec, entry, newBalance, breakdownByLocationProductId.getValue(layerSpec.locationProductId))
         }
         stockMovementRepository.saveAll(movements)
+    }
+
+    // The dispatch quantity is in the source's storage unit, so the destination must count stock in the same root
+    private fun guardSameStorageUnit(
+        event: StockTransferDispatchedEvent,
+        locationProductIdByOrgProductId: Map<UUID, UUID>
+    ) {
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
+        val baseUnitIdByLocationProductId = locationProductDataFetcher.getBaseUnitIds(locationProductIdByOrgProductId.values)
+        event.lines.forEach { line ->
+            val destinationBaseUnitId = baseUnitIdByLocationProductId.getValue(locationProductIdByOrgProductId.getValue(line.orgProductId))
+            if (unitConversionGraph.getStorageUnitId(line.unitId) != unitConversionGraph.getStorageUnitId(destinationBaseUnitId)) {
+                throw RtsGenericException(SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER)
+            }
+        }
+    }
+
+    companion object {
+        const val SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER =
+            "The source and destination products count stock in different storage units, so the transfer cannot be received"
     }
 }

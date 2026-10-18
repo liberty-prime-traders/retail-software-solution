@@ -12,8 +12,8 @@ import java.util.UUID
 data class PersistedSaleLine(
     val id: UUID,
     override val locationProductId: UUID,
-    override val quantity: BigDecimal,
-    override val unitPrice: BigDecimal,
+    override val userProvidedQuantity: BigDecimal,
+    override val lineTotal: BigDecimal,
 ) : ProductLineWithPrice
 
 @Service

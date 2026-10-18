@@ -14,7 +14,7 @@ data class OpeningStockDeclaredEvent(
     val openingStockId: UUID,
     val ledgerSourceReferenceNumber: String,
     val locationProductId: UUID,
-    val quantity: BigDecimal,
+    val userProvidedQuantity: BigDecimal,
     val unitCost: BigDecimal,
     val postingDate: LocalDate
 ) : TransactionEvent() {

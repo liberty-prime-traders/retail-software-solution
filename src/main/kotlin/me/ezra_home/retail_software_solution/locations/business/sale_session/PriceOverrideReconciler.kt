@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LinePricing
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineUpdateDto
@@ -7,7 +8,9 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
+import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -61,6 +64,7 @@ class PriceOverrideReconciler(
         return mergedExisting + newAdjustments
     }
 
+    // An override is the difference between the line's computed total and typed price x quantity; the typed price is never stored
     private fun reconcileLineOverride(
         saleSessionLineUpdateDto: SaleSessionLineUpdateDto,
         preUpdateOverridesByLineKey: Map<UUID, SaleSessionAdjustment>,
@@ -80,8 +84,14 @@ class PriceOverrideReconciler(
         if (unitChanged && !overrideChanged) {
             return if (preUpdateOverride != null) LineOverrideUpdate.Remove else LineOverrideUpdate.NoChange
         }
-
         if (overrideChanged) {
+            // Checked here, not in the request's init: the response's unitPriceOverride is a derived price that can have 4 decimals,
+            // and the client echoes it back unchanged on every edit. Only a price that differs from it is a typed override.
+            Decimals.requireMaxDecimalPlaces(
+                saleSessionLineUpdateDto.unitPriceOverride, QuantityLimits.MAX_PRICE_OVERRIDE_DECIMAL_PLACES, "Price override"
+            )
+        }
+        if (overrideChanged || preUpdateOverride != null) {
             return resolveOverrideUpsert(
                 saleSessionLineUpdateDto.unitPriceOverride,
                 preUpdateOverride,
@@ -89,7 +99,6 @@ class PriceOverrideReconciler(
                 priceOverrideReasonId,
             )
         }
-
         return LineOverrideUpdate.NoChange
     }
 
@@ -99,13 +108,14 @@ class PriceOverrideReconciler(
         preUpdateSaleSessionLine: SaleSessionLine,
     ): Boolean {
         val preUpdateUnitPriceOverride = preUpdateOverride?.let {
-            when (it.direction) {
-                AdjustmentDirection.DISCOUNT -> preUpdateSaleSessionLine.unitPrice - it.value
-                AdjustmentDirection.SURCHARGE -> preUpdateSaleSessionLine.unitPrice + it.value
+            val preUpdateOverrideTotal = when (it.direction) {
+                AdjustmentDirection.DISCOUNT -> preUpdateSaleSessionLine.lineTotal - it.value
+                AdjustmentDirection.SURCHARGE -> preUpdateSaleSessionLine.lineTotal + it.value
                 AdjustmentDirection.BOTH -> throw IllegalStateException("PRICE_OVERRIDE adjustment cannot have direction BOTH")
             }
+            Decimals.Scale4.divide(preUpdateOverrideTotal, preUpdateSaleSessionLine.userProvidedQuantity)
         } ?: preUpdateSaleSessionLine.unitPrice
-        return submittedUnitPriceOverride.compareTo(preUpdateUnitPriceOverride) != 0
+        return Decimals.Scale4.compare(submittedUnitPriceOverride, preUpdateUnitPriceOverride) != 0
     }
 
     private fun resolveOverrideUpsert(
@@ -114,19 +124,20 @@ class PriceOverrideReconciler(
         postUpdateSaleSessionLine: SaleSessionLine,
         priceOverrideReasonId: UUID,
     ): LineOverrideUpdate {
-        val priceDifference = postUpdateSaleSessionLine.unitPrice.subtract(submittedUnitPriceOverride)
-        if (priceDifference.signum() == 0) {
+        val overrideTotal = LinePricing.overrideTotal(submittedUnitPriceOverride, postUpdateSaleSessionLine.userProvidedQuantity)
+        val totalDifference = postUpdateSaleSessionLine.lineTotal.subtract(overrideTotal)
+        if (totalDifference.signum() == 0) {
             return if (preUpdateOverride == null) LineOverrideUpdate.NoChange else LineOverrideUpdate.Remove
         }
-        val direction = if (priceDifference.signum() > 0) AdjustmentDirection.DISCOUNT else AdjustmentDirection.SURCHARGE
-        val adjustment = preUpdateOverride?.copy(value = priceDifference.abs(), direction = direction)
+        val direction = if (totalDifference.signum() > 0) AdjustmentDirection.DISCOUNT else AdjustmentDirection.SURCHARGE
+        val adjustment = preUpdateOverride?.copy(value = totalDifference.abs(), direction = direction)
             ?: SaleSessionAdjustment(
                 identity = SessionIdentity.mintFreshIdentity(),
                 relatedSaleLineIdentity = postUpdateSaleSessionLine.identity,
                 adjustmentReasonId = priceOverrideReasonId,
                 direction = direction,
-                calculationMethod = CalculationMethod.FIXED_VALUE,
-                value = priceDifference.abs(),
+                calculationMethod = PriceAdjustmentMethod.FIXED_LINE_TOTAL,
+                value = totalDifference.abs(),
                 note = null,
                 approvedById = null,
             )

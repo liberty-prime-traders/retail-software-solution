@@ -41,11 +41,11 @@ databaseChangeLog:
                     notNullConstraintName: sale_line_stock_reservation_location_product_id_notnull
 
               - column:
-                  name: quantity_reserved
-                  type: numeric(15, 4)
+                  name: storage_quantity_reserved
+                  type: numeric(28,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: sale_line_stock_reservation_quantity_reserved_notnull
+                    notNullConstraintName: sale_line_stock_reservation_storage_quantity_reserved_notnull
 
               - column:
                   name: created_by_id

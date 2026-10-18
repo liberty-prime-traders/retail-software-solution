@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.util.business
 
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import java.text.Normalizer
 import java.util.Optional
 
 object StringUtils {
@@ -69,6 +70,21 @@ object StringUtils {
         return normalize(str)
             .replace("\\s+".toRegex(), "")
             .lowercase()
+    }
+
+    fun alphanumericKey(str: String): String {
+        return Normalizer.normalize(str, Normalizer.Form.NFKC)
+            .filter { it.isLetterOrDigit() }
+            .lowercase()
+    }
+
+    // Two blank names are not equivalent: the caller must reject an empty key, never match it
+    fun isEquivalentOnAlphanumerics(str1: String?, str2: String?): Boolean {
+        if (str1.isNullOrBlank() || str2.isNullOrBlank()) {
+            return false
+        }
+        val alphanumericKey1 = alphanumericKey(str1)
+        return alphanumericKey1.isNotEmpty() && alphanumericKey1 == alphanumericKey(str2)
     }
 
     fun useIfProvided(optional: Optional<String>?, existing: String?): String? {

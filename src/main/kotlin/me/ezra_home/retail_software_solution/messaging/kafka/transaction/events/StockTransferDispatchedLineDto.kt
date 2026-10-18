@@ -3,13 +3,13 @@ package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 import java.math.BigDecimal
 import java.util.UUID
 
+// wholeLineUserProvidedQuantity, unitId and storageUnitsPerUnit are the draft line's whole-line values, repeated on every cost group: never sum them
 data class StockTransferDispatchedLineDto(
     val dispatchLineReferenceNumber: String,
     val orgProductId: UUID,
-    val quantityDispatched: BigDecimal,
+    val wholeLineUserProvidedQuantity: BigDecimal,
+    val storageQuantityDispatched: BigDecimal,
+    val costDispatched: BigDecimal,
     val unitId: UUID,
-    val baseUnitId: UUID,
-    val conversionNumerator: Long,
-    val conversionDenominator: Long,
-    val unitCost: BigDecimal
+    val storageUnitsPerUnit: Long
 )

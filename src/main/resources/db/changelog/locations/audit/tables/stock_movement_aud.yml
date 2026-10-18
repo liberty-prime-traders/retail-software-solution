@@ -43,15 +43,35 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: moved_quantity
-                  type: decimal(15,3)
+                  name: storage_moved_quantity
+                  type: numeric(28,4)
 
               - column:
-                  name: remaining_quantity
-                  type: decimal(15,3)
+                  name: user_provided_moved_quantity
+                  type: numeric(19,4)
 
               - column:
-                  name: external_reference_number
+                  name: storage_remaining_quantity
+                  type: numeric(28,4)
+
+              - column:
+                  name: moved_cost
+                  type: numeric(28,4)
+
+              - column:
+                  name: storage_moved_breakdown_text
+                  type: varchar(200)
+
+              - column:
+                  name: storage_remaining_breakdown_text
+                  type: varchar(200)
+
+              - column:
+                  name: document_reference
+                  type: varchar(30)
+
+              - column:
+                  name: detail_reference
                   type: varchar(30)
 
               - column:
@@ -59,10 +79,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: conversion_numerator
-                  type: bigint
-              - column:
-                  name: conversion_denominator
+                  name: storage_units_per_unit
                   type: bigint
 
               - column:

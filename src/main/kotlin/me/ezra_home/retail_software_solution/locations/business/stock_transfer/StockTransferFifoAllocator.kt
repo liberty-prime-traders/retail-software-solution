@@ -1,68 +1,84 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayerState
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
+import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import java.math.BigDecimal
 import java.util.UUID
 
-
 object StockTransferFifoAllocator {
 
+    // Cost groups are runs, not a group-by, so consuming them in order walks the layers in the order they were planned
     fun allocateDispatchLines(
         dispatchId: UUID,
         draftLines: List<StockTransferDraftLineEntity>,
         fifoEntriesByProduct: Map<UUID, List<StockEntryFifoDto>>,
         orgProductIdByLocationProductId: Map<UUID, UUID>,
+        quantityBreakdownByLocationProductId: Map<UUID, QuantityBreakdown>,
         productLabelByLocationProductId: Map<UUID, String>
     ): List<StockTransferDispatchLineEntity> {
         return draftLines.flatMap { draftLine ->
-            val ratio = draftLine.conversionRatio()
-            val baseQtyNeeded = ratio.applyTo(draftLine.quantity)
+            val storageQuantityNeeded = ExactQuantity.ofUserProvided(draftLine.userProvidedQuantity, draftLine.storageUnitsPerUnit)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
-            val productLabel = productLabelByLocationProductId.getValue(draftLine.locationProductId)
-            allocateByCostGroup(fifoEntries, baseQtyNeeded, productLabel).map { allocation ->
+            val plannedTakes = FifoTakePlanner.planTakes(
+                fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining) },
+                storageQuantityNeeded
+            )
+            guardFulfilled(
+                plannedTakes, storageQuantityNeeded,
+                quantityBreakdownByLocationProductId.getValue(draftLine.locationProductId),
+                productLabelByLocationProductId.getValue(draftLine.locationProductId)
+            )
+            groupIntoCostRuns(plannedTakes, fifoEntries).map { costRun ->
                 StockTransferDispatchLineEntity(
                     stockTransferDispatchId = dispatchId,
                     orgProductId = orgProductIdByLocationProductId.getValue(draftLine.locationProductId),
                     locationProductId = draftLine.locationProductId,
-                    quantityDispatched = ratio.invert().applyTo(allocation.baseQuantity),
+                    wholeLineUserProvidedQuantity = draftLine.userProvidedQuantity,
+                    storageQuantityDispatched = costRun.storageQuantity.toStorageQuantity(),
                     unitId = draftLine.unitId,
-                    unitCost = allocation.unitCost,
-                    conversionNumerator = ratio.numerator,
-                    conversionDenominator = ratio.denominator,
-                    baseUnitId = draftLine.baseUnitId
+                    unitCost = Decimals.Scale10.divide(costRun.cost, costRun.storageQuantity.toStorageQuantity()),
+                    costDispatched = costRun.cost,
+                    storageUnitsPerUnit = draftLine.storageUnitsPerUnit
                 )
             }
         }
     }
 
-    private fun allocateByCostGroup(
-        fifoEntries: List<StockEntryFifoDto>,
-        baseQtyNeeded: BigDecimal,
-        productLabel: String
-    ): List<CostGroupAllocation> {
-        val costGroups = fifoEntries
-            .groupBy { it.unitCost }
-            .map { (cost, entries) -> CostGroupAllocation(cost, entries.sumOf { it.quantityRemaining }) }
+    private fun groupIntoCostRuns(plannedTakes: List<PlannedTake>, fifoEntries: List<StockEntryFifoDto>): List<CostRun> {
+        val costRuns = mutableListOf<CostRun>()
+        var currentRate: BigDecimal? = null
+        plannedTakes.forEach { plannedTake ->
+            val rate = Decimals.Scale4.round(fifoEntries[plannedTake.layerIndex].unitCost)
+            val currentRun = costRuns.lastOrNull()
+            if (currentRun != null && rate.compareTo(currentRate) == 0) {
+                costRuns[costRuns.lastIndex] = CostRun(currentRun.storageQuantity + plannedTake.storageQuantity, currentRun.cost.add(plannedTake.movedCost))
+            } else {
+                costRuns.add(CostRun(plannedTake.storageQuantity, plannedTake.movedCost))
+                currentRate = rate
+            }
+        }
+        return costRuns
+    }
 
-        var remaining = baseQtyNeeded
-        val allocations = mutableListOf<CostGroupAllocation>()
-        for ((unitCost, baseQuantity) in costGroups) {
-            if (remaining <= BigDecimal.ZERO) break
-            val taken = remaining.min(baseQuantity)
-            allocations.add(CostGroupAllocation(unitCost = unitCost, baseQuantity = taken))
-            remaining = remaining.subtract(taken)
-        }
-        if (remaining > BigDecimal.ZERO) {
-            val available = Decimals.stripZeroesAndRound(baseQtyNeeded.subtract(remaining))
-            val requested = Decimals.stripZeroesAndRound(baseQtyNeeded)
-            throw RtsGenericException(
-                "Insufficient stock for $productLabel. Available: $available, Requested: $requested"
-            )
-        }
-        return allocations
+    private fun guardFulfilled(
+        plannedTakes: List<PlannedTake>,
+        storageQuantityNeeded: ExactQuantity,
+        quantityBreakdown: QuantityBreakdown,
+        productLabel: String
+    ) {
+        val available = plannedTakes.fold(ExactQuantity.ZERO) { sum, plannedTake -> sum + plannedTake.storageQuantity }
+        if (available >= storageQuantityNeeded) return
+        throw RtsGenericException(
+            "Insufficient stock for $productLabel. Available: ${quantityBreakdown.render(available)}, " +
+                "Requested: ${quantityBreakdown.render(storageQuantityNeeded)}"
+        )
     }
 }
 
-private data class CostGroupAllocation(val unitCost: BigDecimal, val baseQuantity: BigDecimal)
+private data class CostRun(val storageQuantity: ExactQuantity, val cost: BigDecimal)

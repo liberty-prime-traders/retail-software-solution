@@ -10,7 +10,7 @@ data class StockTransferReceiptLineDomainDto(
     val stockTransferReceiptId: UUID,
     val stockTransferDispatchLineRef: String,
     val locationProductId: UUID,
-    val quantityReceived: BigDecimal,
+    val storageQuantityReceived: BigDecimal,
     val createdById: UUID,
     val createdOn: OffsetDateTime
 )
