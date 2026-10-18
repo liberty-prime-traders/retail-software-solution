@@ -18,6 +18,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockR
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
@@ -78,10 +79,10 @@ class ConfirmedSalePersister(
 
     private fun guardStockAvailability(saleId: UUID, saleLineEntities: List<SaleLineEntity>) {
         if (saleLineEntities.isEmpty()) return
-        val baseQuantitiesByLocationProductId = saleLineEntities.associate { it.locationProductId to it.baseQty() }
+        val storageQuantitiesByLocationProductId = saleLineEntities.associate { it.locationProductId to it.storageQuantity() }
         val productSummariesByLocationProductId = locationProductDataFetcher
-            .findSummaryByIds(baseQuantitiesByLocationProductId.keys)
-        saleValidator.guardSufficientStockForSale(saleId, baseQuantitiesByLocationProductId, productSummariesByLocationProductId)
+            .findSummaryByIds(storageQuantitiesByLocationProductId.keys)
+        saleValidator.guardSufficientStockForSale(saleId, storageQuantitiesByLocationProductId, productSummariesByLocationProductId)
     }
 
     private fun consumeStockAndRecordCogs(
@@ -91,11 +92,11 @@ class ConfirmedSalePersister(
         val saleLineStockRequests = saleLineEntities.map { saleLineEntity ->
             SaleLineStockRequest(
                 saleLineId = saleLineEntity.id!!,
+                saleLineReferenceNumber = saleLineEntity.requiredReference(),
                 locationProductId = saleLineEntity.locationProductId,
-                baseQuantity = saleLineEntity.baseQty(),
+                userProvidedQuantity = saleLineEntity.userProvidedQuantity,
                 unitId = saleLineEntity.unitId,
-                conversionRatio = saleLineEntity.conversionRatio(),
-                enteredQuantity = saleLineEntity.quantity,
+                storageUnitsPerUnit = saleLineEntity.storageUnitsPerUnit,
             )
         }
 
@@ -109,7 +110,7 @@ class ConfirmedSalePersister(
         saleLineRepository.saveAll(saleLineEntities)
     }
 
-    private fun loadOrCreate(saleSaveRequest: SaleSaveRequest, effectiveDateSold: java.time.OffsetDateTime): SaleEntity {
+    private fun loadOrCreate(saleSaveRequest: SaleSaveRequest, effectiveDateSold: OffsetDateTime): SaleEntity {
         val saleId = saleSaveRequest.saleId ?: return SaleEntity(
             contactId = saleSaveRequest.contactId,
             soldById = saleSaveRequest.soldById,

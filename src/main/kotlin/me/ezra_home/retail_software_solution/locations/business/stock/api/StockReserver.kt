@@ -16,8 +16,8 @@ class StockReserver(
             .groupBy { it.locationProductId }
             .mapValues { (_, rows) ->
                 ProductReservations(
-                    total = rows.sumOf { it.quantityReserved },
-                    bySale = rows.associate { it.saleId to it.quantityReserved },
+                    total = rows.sumOf { it.storageQuantityReserved },
+                    bySale = rows.associate { it.saleId to it.storageQuantityReserved },
                 )
             }
     }
@@ -29,7 +29,7 @@ class StockReserver(
                 saleId = it.saleId,
                 saleLineId = it.saleLineId,
                 locationProductId = it.locationProductId,
-                quantityReserved = it.quantityReserved,
+                storageQuantityReserved = it.storageQuantityReserved,
             )
         }
         stockReservationRepository.saveAll(entities)

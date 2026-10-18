@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnPlatformSchema
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction.api.JurisdictionFetcher
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.JurisdictionTaxTypeCache
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.PlatformTaxTypeDto
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxTypeDto
@@ -20,7 +20,7 @@ class JurisdictionTaxTypeFetcher(
     private val taxTypeFetcher: TaxTypeFetcher
 ) {
 
-    fun getCalculationMethod(jurisdictionTaxTypeId: UUID): CalculationMethod {
+    fun getCalculationMethod(jurisdictionTaxTypeId: UUID): TaxCalculationMethod {
         return getTaxType(jurisdictionTaxTypeId).calculationMethod
     }
 

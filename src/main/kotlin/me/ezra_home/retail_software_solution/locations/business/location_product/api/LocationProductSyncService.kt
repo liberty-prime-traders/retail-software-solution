@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 
@@ -23,6 +24,8 @@ class LocationProductSyncService(
         val existing = locationProductRepository.findByOrgProductId(syncDto.orgProductId)
 
         if (existing != null) {
+            // Stock is counted in the storage unit of the base unit's group, so a different base unit would re-meaning every stored quantity.
+            if (existing.baseUnitId != syncDto.baseUnitId) throw RtsGenericException(BASE_UNIT_CANNOT_CHANGE)
             if (fieldsMatch(existing, syncDto)) return false
 
             val dto = locationProductMapper.toDomainDto(existing)
@@ -52,6 +55,10 @@ class LocationProductSyncService(
             )
         )
         return true
+    }
+
+    companion object {
+        const val BASE_UNIT_CANNOT_CHANGE = "A product's base unit cannot change once it is stocked at a location"
     }
 
     private fun fieldsMatch(existing: LocationProductEntity, syncDto: LocationProductSyncDto): Boolean =

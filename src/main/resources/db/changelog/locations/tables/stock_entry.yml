@@ -40,22 +40,26 @@ databaseChangeLog:
                   type: varchar(5)
 
               - column:
-                  name: external_reference_number
+                  name: document_reference
                   type: varchar(30)
 
               - column:
-                  name: batch_size
-                  type: numeric(28,10)
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_entry_batch_size_notnull
+                  name: detail_reference
+                  type: varchar(30)
 
               - column:
-                  name: quantity_remaining
-                  type: numeric(28,10)
+                  name: storage_batch_size
+                  type: numeric(28,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_entry_quantity_remaining_notnull
+                    notNullConstraintName: stock_entry_storage_batch_size_notnull
+
+              - column:
+                  name: storage_quantity_remaining
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_storage_quantity_remaining_notnull
 
               - column:
                   name: priority
@@ -66,10 +70,24 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: decimal(19,4)
+                  type: decimal(28,10)
                   constraints:
                     nullable: false
                     notNullConstraintName: stock_entry_unit_cost_notnull
+
+              - column:
+                  name: batch_cost
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_batch_cost_notnull
+
+              - column:
+                  name: cost_remaining
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_cost_remaining_notnull
 
               - column:
                   name: created_by_id

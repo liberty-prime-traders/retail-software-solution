@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
+
 
 fun StockTransferDispatchEntity.toDomainDto() = StockTransferDispatchDomainDto(
     id = id!!,
@@ -18,10 +20,9 @@ fun StockTransferDraftLineEntity.toDomainDto() = StockTransferDraftLineDomainDto
     referenceNumber = requiredReference(),
     stockTransferDispatchId = stockTransferDispatchId,
     locationProductId = locationProductId,
-    quantity = quantity,
+    userProvidedQuantity = userProvidedQuantity,
     unitId = unitId,
-    conversionRatio = conversionRatio(),
-    baseUnitId = baseUnitId,
+    storageUnitsPerUnit = storageUnitsPerUnit,
     createdById = requiredCreatedById(),
     createdOn = requiredCreatedOn()
 )
@@ -31,11 +32,12 @@ fun StockTransferDispatchLineEntity.toDomainDto() = StockTransferDispatchLineDom
     referenceNumber = requiredReference(),
     stockTransferDispatchId = stockTransferDispatchId,
     locationProductId = locationProductId,
-    quantityDispatched = quantityDispatched,
+    wholeLineUserProvidedQuantity = wholeLineUserProvidedQuantity,
+    storageQuantityDispatched = storageQuantityDispatched,
     unitId = unitId,
     unitCost = unitCost,
-    conversionRatio = conversionRatio(),
-    baseUnitId = baseUnitId,
+    costDispatched = costDispatched,
+    storageUnitsPerUnit = storageUnitsPerUnit,
     createdById = requiredCreatedById(),
     createdOn = requiredCreatedOn()
 )
@@ -58,7 +60,17 @@ fun StockTransferReceiptLineEntity.toDomainDto() = StockTransferReceiptLineDomai
     stockTransferReceiptId = stockTransferReceiptId,
     stockTransferDispatchLineRef = stockTransferDispatchLineRef,
     locationProductId = locationProductId,
-    quantityReceived = quantityReceived,
+    storageQuantityReceived = storageQuantityReceived,
     createdById = requiredCreatedById(),
     createdOn = requiredCreatedOn()
+)
+
+fun StockTransferDispatchLineEntity.toDispatchedLineDto() = StockTransferDispatchedLineDto(
+    dispatchLineReferenceNumber = requiredReference(),
+    orgProductId = orgProductId,
+    wholeLineUserProvidedQuantity = wholeLineUserProvidedQuantity,
+    storageQuantityDispatched = storageQuantityDispatched,
+    costDispatched = costDispatched,
+    unitId = unitId,
+    storageUnitsPerUnit = storageUnitsPerUnit
 )

@@ -39,7 +39,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity_delivered
+                  name: user_provided_quantity_delivered
                   type: numeric(19, 4)
 
               - column:
@@ -49,6 +49,11 @@ databaseChangeLog:
               - column:
                   name: unit_id
                   type: uuid
+
+
+              - column:
+                  name: storage_units_per_unit
+                  type: bigint
 
               - column:
                   name: revend

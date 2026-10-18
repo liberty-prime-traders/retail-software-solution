@@ -94,7 +94,7 @@ class SaleSessionValidator(
     }
 
     private fun guardPositiveLineQuantities(saleSessionLines: List<SaleSessionLine>) {
-        if (saleSessionLines.any { it.quantity.signum() <= 0 }) {
+        if (saleSessionLines.any { it.userProvidedQuantity.signum() <= 0 }) {
             throw RtsGenericException("Line quantity must be positive")
         }
     }

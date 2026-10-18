@@ -13,7 +13,7 @@ interface StockReservationRepository : JpaRepository<StockReservationEntity, UUI
 
     @Query(
         "SELECT new me.ezra_home.retail_software_solution.locations.business.stock.api.ProductReservationRow(" +
-                "r.locationProductId, r.saleId, SUM(r.quantityReserved)) " +
+                "r.locationProductId, r.saleId, SUM(r.storageQuantityReserved)) " +
                 "FROM StockReservationEntity r " +
                 "WHERE r.locationProductId IN :locationProductIds " +
                 "GROUP BY r.locationProductId, r.saleId"

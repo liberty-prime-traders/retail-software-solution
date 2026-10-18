@@ -3,6 +3,8 @@ package me.ezra_home.retail_software_solution.locations.business.purchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import java.math.BigDecimal
 
 object PurchaseValidator {
@@ -19,7 +21,7 @@ object PurchaseValidator {
   }
 
   fun guardPositiveLineQuantities(lines: List<PurchaseLineCreateDto>) {
-    if (lines.any { it.quantityOrdered.signum() <= 0 })
+    if (lines.any { it.userProvidedQuantityOrdered.signum() <= 0 })
       throw RtsGenericException("Line quantity must be positive.")
   }
 
@@ -55,12 +57,15 @@ object PurchaseValidator {
     }
   }
 
-  fun guardCancelQuantity(line: PurchaseLineEntity, cancelQty: BigDecimal) {
-    val maxCancelable = line.quantityOrdered - line.quantityDelivered
-    if (cancelQty > maxCancelable)
+  // Cancel is absolute: it replaces the counter, which plus delivered may not exceed ordered, in storage units
+  fun guardCancelQuantity(line: PurchaseLineEntity, storageQuantityToCancel: ExactQuantity, quantityBreakdown: QuantityBreakdown) {
+    val maxCancelable = line.storageQuantityOrdered() - ExactQuantity.ofStorage(line.storageQuantityDelivered)
+    if (storageQuantityToCancel > maxCancelable)
       throw RtsGenericException(
-        "Cannot cancel $cancelQty items of line ${line.id}. " +
-          "Ordered: ${line.quantityOrdered}, Delivered: ${line.quantityDelivered}, Max cancelable: $maxCancelable"
+        "Cannot cancel ${quantityBreakdown.render(storageQuantityToCancel)} of line ${line.requiredReference()}. " +
+          "Ordered: ${quantityBreakdown.render(line.storageQuantityOrdered())}, " +
+          "Delivered: ${quantityBreakdown.render(ExactQuantity.ofStorage(line.storageQuantityDelivered))}, " +
+          "Max cancelable: ${quantityBreakdown.render(maxCancelable)}"
       )
   }
 }

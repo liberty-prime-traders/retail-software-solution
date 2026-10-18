@@ -1,5 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery.api
 
+import me.ezra_home.retail_software_solution.configuration.serializer.StripZeroesAndRound
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.annotation.JsonProperty
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
@@ -10,9 +13,11 @@ data class PurchaseDeliveryLineResponseDto(
   val referenceNumber: String,
   val purchaseLineId: UUID,
   val locationProduct: LocationProductSummaryDto,
-  val quantityDelivered: BigDecimal,
+  @get:JsonProperty("quantityDelivered")
+  val userProvidedQuantityDelivered: BigDecimal,
   val unitId: UUID,
+  @field:JsonSerialize(using = StripZeroesAndRound::class)
   val unitCost: BigDecimal,
 ) {
-  val lineTotal: BigDecimal get() = Decimals.Scale4.multiply(quantityDelivered, unitCost)
+  val lineTotal: BigDecimal get() = Decimals.Scale4.multiply(userProvidedQuantityDelivered, unitCost)
 }

@@ -5,7 +5,9 @@ import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityA
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
+import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
+import java.time.OffsetDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyList
@@ -21,19 +23,21 @@ class SaleStockUpdaterTest {
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
     private val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
     private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
+    private val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
 
     private val saleStockUpdater = SaleStockUpdater(
         stockEntryRepository = stockEntryRepository,
         stockMovementRepository = mock(StockMovementRepository::class.java),
         locationProductDataFetcher = locationProductDataFetcher,
         stockBalanceFetcher = stockBalanceFetcher,
+        stockBreakdownProvider = stockBreakdownProvider,
         entityAdvisoryLock = mock(EntityAdvisoryLock::class.java),
     )
 
     @Test
-    fun `consumption spanning layers with different costs sums each layer at its own unit cost`() {
+    fun `consumption spanning layers with different costs sums each layer at its own cost`() {
         val saleLineId = UUID.randomUUID()
-        givenLayers(listOf("4.0000" to "2.5000", "10.0000" to "3.0000"))
+        givenLayers(listOf("4.0000" to "10.0000", "10.0000" to "30.0000"))
 
         val costsBySaleLineId = consume(saleLineId, "6.0000")
 
@@ -41,21 +45,20 @@ class SaleStockUpdaterTest {
     }
 
     @Test
-    fun `cost is rounded once to scale 4 after summing every layer`() {
+    fun `a partial take costs a proportion of the layer cost rounded once to scale 4`() {
         val saleLineId = UUID.randomUUID()
-        givenLayers(listOf("0.5000" to "0.0003", "0.5000" to "0.0003"))
+        givenLayers(listOf("3.0000" to "10.0000"))
 
         val costsBySaleLineId = consume(saleLineId, "1.0000")
 
-        // Each layer costs 0.00015; rounding per layer would give 0.0004, summing first gives 0.0003.
-        assertEquals(BigDecimal("0.0003"), costsBySaleLineId.getValue(saleLineId).cost)
+        assertEquals(BigDecimal("3.3333"), costsBySaleLineId.getValue(saleLineId).cost)
     }
 
     @Test
     fun `each sale line gets its own cost keyed by sale line id`() {
         val firstLineId = UUID.randomUUID()
         val secondLineId = UUID.randomUUID()
-        givenLayers(listOf("10.0000" to "2.0000", "10.0000" to "5.0000"))
+        givenLayers(listOf("10.0000" to "20.0000", "10.0000" to "50.0000"))
 
         val costsBySaleLineId = saleStockUpdater.consumeStock(
             listOf(request(firstLineId, "10.0000"), request(secondLineId, "2.0000")),
@@ -71,32 +74,43 @@ class SaleStockUpdaterTest {
         assertEquals(emptyList<SaleLineConsumedCost>(), saleStockUpdater.consumeStock(emptyList(), "SALE-1"))
     }
 
-    private fun consume(saleLineId: UUID, baseQuantity: String) =
-        saleStockUpdater.consumeStock(listOf(request(saleLineId, baseQuantity)), "SALE-1").associateBy { it.saleLineId }
+    private fun consume(saleLineId: UUID, storageQuantity: String) =
+        saleStockUpdater.consumeStock(listOf(request(saleLineId, storageQuantity)), "SALE-1").associateBy { it.saleLineId }
 
     private fun givenLayers(layers: List<Pair<String, String>>) {
-        val stockEntries = layers.mapIndexed { index, (quantityRemaining, unitCost) ->
+        val stockEntries = layers.mapIndexed { index, (storageQuantityRemaining, batchCost) ->
             StockEntryEntity(
                 locationProductId = locationProductId,
-                batchSize = BigDecimal(quantityRemaining),
-                quantityRemaining = BigDecimal(quantityRemaining),
+                storageBatchSize = BigDecimal(storageQuantityRemaining),
+                storageQuantityRemaining = BigDecimal(storageQuantityRemaining),
                 priority = index,
-                unitCost = BigDecimal(unitCost),
+                unitCost = BigDecimal.ONE,
+                batchCost = BigDecimal(batchCost),
+                costRemaining = BigDecimal(batchCost),
             ).also { it.id = UUID.randomUUID() }
         }
         `when`(stockEntryRepository.findFifoEntriesForProducts(anyList()))
             .thenReturn(stockEntries)
         `when`(stockBalanceFetcher.getLatestBalances(anyList()))
-            .thenReturn(mapOf(locationProductId to stockEntries.sumOf { it.quantityRemaining }))
+            .thenReturn(mapOf(locationProductId to stockEntries.sumOf { it.storageQuantityRemaining }))
         `when`(locationProductDataFetcher.findSummaryByIds(anySet()))
             .thenReturn(emptyMap())
+        val pieceId = UUID.randomUUID()
+        `when`(stockBreakdownProvider.forLocationProducts(anySet())).thenReturn(
+            mapOf(
+                locationProductId to QuantityBreakdown.forBaseUnit(
+                    listOf(BreakdownUnit(pieceId, "Piece", 1L, pieceId, OffsetDateTime.now())), pieceId
+                )
+            )
+        )
     }
 
-    private fun request(saleLineId: UUID, baseQuantity: String) = SaleLineStockRequest(
+    private fun request(saleLineId: UUID, storageQuantity: String) = SaleLineStockRequest(
         saleLineId = saleLineId,
+        saleLineReferenceNumber = "SALN-$saleLineId".take(30),
         locationProductId = locationProductId,
-        baseQuantity = BigDecimal(baseQuantity),
+        userProvidedQuantity = BigDecimal(storageQuantity),
         unitId = UUID.randomUUID(),
-        conversionRatio = ConversionRatio.IDENTITY,
+        storageUnitsPerUnit = 1L,
     )
 }

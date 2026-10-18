@@ -10,7 +10,7 @@ data class TaxTypeDto(
     val referenceNumber: String,
     val name: String,
     val description: String? = null,
-    val calculationMethod: CalculationMethod,
+    val calculationMethod: TaxCalculationMethod,
     val taxRecoveryType: TaxRecoveryType,
     val taxApplicationLevel: TaxApplicationLevel,
     val taxTriggers: Set<TaxTrigger>

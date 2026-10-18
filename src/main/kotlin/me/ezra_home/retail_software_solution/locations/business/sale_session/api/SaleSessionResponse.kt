@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidInfoDto
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -45,27 +45,36 @@ data class SaleSessionLineResponse(
     val locationProductId: UUID,
     val productLabel: String,
     val productPrintLabel: String,
-    val quantity: BigDecimal,
+    @get:JsonProperty("quantity")
+    val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,
     val conversionFactor: BigDecimal,
     val unitPrice: BigDecimal,
     val unitPriceOverride: BigDecimal,
     val netUnitPrice: BigDecimal,
-    val quantityOnHand: BigDecimal,
-    val quantityReserved: BigDecimal,
-    val quantityAvailable: BigDecimal,
-) {
-    val baseQuantity: BigDecimal = Decimals.Scale4.multiply(quantity, conversionFactor)
-    val lineTotal = Decimals.Scale4.multiply(quantity, netUnitPrice)
-}
+    val lineTotal: BigDecimal,
+    @get:JsonProperty("baseQuantity")
+    val quantityInProductBaseUnit: BigDecimal,
+    @get:JsonProperty("quantityOnHand")
+    val onHandInProductBaseUnit: BigDecimal,
+    @get:JsonProperty("quantityReserved")
+    val reservedInProductBaseUnit: BigDecimal,
+    @get:JsonProperty("quantityAvailable")
+    val availableInProductBaseUnit: BigDecimal,
+    val storageQuantityOnHand: BigDecimal,
+    val storageQuantityReserved: BigDecimal,
+    val storageQuantityAvailable: BigDecimal,
+    val quantityOnHandBreakdown: String,
+    val quantityAvailableBreakdown: String,
+)
 
 data class SaleSessionAdjustmentResponse(
     val identity: SessionIdentity,
     val relatedSaleLineIdentity: SessionIdentity?,
     val adjustmentReason: String?,
     val direction: AdjustmentDirection,
-    val calculationMethod: CalculationMethod,
+    val calculationMethod: PriceAdjustmentMethod,
     val value: BigDecimal,
     val calculatedAmount: BigDecimal,
     val note: String?,

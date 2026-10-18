@@ -7,7 +7,6 @@ import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementTypeConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -36,22 +35,35 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
-  @Column(name = "moved_quantity", nullable = false, precision = 28, scale = 10)
-  var movedQuantity: BigDecimal,
+  @Column(name = "storage_moved_quantity", nullable = false, precision = 28, scale = 4)
+  var storageMovedQuantity: BigDecimal,
 
-  @Column(name = "remaining_quantity", nullable = false, precision = 28, scale = 10)
-  var remainingQuantity: BigDecimal,
+  // The source line's whole figure, identical on every movement the line produced: never sum it.
+  @Column(name = "user_provided_moved_quantity", nullable = false, precision = 19, scale = 4)
+  var userProvidedMovedQuantity: BigDecimal,
 
-  @Column(name = "external_reference_number", length = 30)
-  var externalReferenceNumber: String? = null,
+  @Column(name = "storage_remaining_quantity", nullable = false, precision = 28, scale = 4)
+  var storageRemainingQuantity: BigDecimal,
+
+  @Column(name = "moved_cost", nullable = false, precision = 28, scale = 4)
+  var movedCost: BigDecimal,
+
+  @Column(name = "storage_moved_breakdown_text", nullable = false, length = 200, updatable = false)
+  var storageMovedBreakdownText: String,
+
+  @Column(name = "storage_remaining_breakdown_text", nullable = false, length = 200, updatable = false)
+  var storageRemainingBreakdownText: String,
+
+  @Column(name = "document_reference", length = 30)
+  var documentReference: String? = null,
+
+  @Column(name = "detail_reference", length = 30)
+  var detailReference: String? = null,
 
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "conversion_numerator", nullable = false, updatable = false)
-  override var conversionNumerator: Long,
+  @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
+  var storageUnitsPerUnit: Long
 
-  @Column(name = "conversion_denominator", nullable = false, updatable = false)
-  override var conversionDenominator: Long
-
-) : HasReferenceEntity(), HasConversionRatio
+) : HasReferenceEntity()

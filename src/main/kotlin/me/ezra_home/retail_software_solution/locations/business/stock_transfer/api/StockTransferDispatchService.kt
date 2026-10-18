@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityA
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLine
@@ -18,12 +19,19 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.S
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferFifoAllocator
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferSchemaGateway
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineEntity
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.toDispatchedLineDto
+import me.ezra_home.retail_software_solution.configuration.session.withLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
+import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -45,6 +53,10 @@ class StockTransferDispatchService(
     private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val stockAvailabilityValidator: StockAvailabilityValidator,
+    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
+    private val stockTransferSchemaGateway: StockTransferSchemaGateway,
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
     @TransactionalOnLocationSchema
@@ -61,23 +73,30 @@ class StockTransferDispatchService(
         val summariesByLocationProductId = locationProductDataFetcher.findSummaryByIds(locationProductIds)
         val productLabelByLocationProductId = summariesByLocationProductId.mapValues { (_, summary) -> summary.label }
 
-        val baseQuantityNeededByLocationProductId = draftLines.associate {
-            it.locationProductId to it.conversionRatio().applyTo(it.quantity)
+        val storageQuantityNeededByLocationProductId = draftLines.associate {
+            it.locationProductId to ExactQuantity.ofUserProvided(it.userProvidedQuantity, it.storageUnitsPerUnit)
         }
-        stockAvailabilityValidator.guardSufficientStock(baseQuantityNeededByLocationProductId, productLabelByLocationProductId)
+        stockAvailabilityValidator.guardSufficientStock(storageQuantityNeededByLocationProductId, productLabelByLocationProductId)
+        guardDestinationCountsInSameStorageUnit(
+            stockTransferOrderDataFetcher.getByReferenceNumber(orderRef).destinationLocationId,
+            draftLines,
+            summariesByLocationProductId,
+            orgProductIdByLocationProductId
+        )
 
         val dispatchLines = StockTransferFifoAllocator.allocateDispatchLines(
             dispatchId = dispatchEntity.id!!,
             draftLines = draftLines,
             fifoEntriesByProduct = fifoEntriesByProduct,
             orgProductIdByLocationProductId = orgProductIdByLocationProductId,
+            quantityBreakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds.toSet()),
             productLabelByLocationProductId = productLabelByLocationProductId
         )
 
         stockTransferDraftLineRepository.deleteByStockTransferDispatchId(dispatchEntity.id!!)
         stockTransferDispatchLineRepository.saveAll(dispatchLines)
 
-        stockTransferStockUpdater.consumeStockForDispatch(toStockRequests(dispatchLines))
+        stockTransferStockUpdater.consumeStockForDispatch(toStockRequests(dispatchEntity.requiredReference(), dispatchLines))
 
         val dispatchedAt = DateTimes.Offset.Now.organization()
         val dispatchedUserId = SessionContextProvider.getUserId()
@@ -86,7 +105,7 @@ class StockTransferDispatchService(
         dispatchEntity.status = StockTransferStatus.DISPATCHED
         stockTransferDispatchRepository.save(dispatchEntity)
 
-        val totalDispatchedCost = dispatchLines.sumOf { Decimals.Scale4.multiply(it.unitCost, it.quantityDispatched) }
+        val totalDispatchedCost = dispatchLines.sumOf { it.costDispatched }
         stockTransferOrderService.setDispatchSummary(
             referenceNumber = orderRef,
             lineCount = dispatchLines.size,
@@ -102,63 +121,83 @@ class StockTransferDispatchService(
             dispatchRef = dispatchEntity.requiredReference(),
             sourceSchema = SessionContextProvider.getLocationSchema(),
             destinationSchema = locationService.getSchemaByLocationId(order.destinationLocationId),
-            lines = toDispatchedLineDtos(dispatchLines)
+            lines = dispatchLines.map { it.toDispatchedLineDto() }
         )
         return stockTransferResponseAssembler.buildDispatchOnly(
             orderDomainDto = order,
             dispatchEntity = dispatchEntity,
-            lines = toReconciledLines(dispatchLines, productLabelByLocationProductId)
+            lines = toReconciledLines(dispatchLines, summariesByLocationProductId)
         )
     }
 
     private fun toReconciledLines(
         dispatchLines: List<StockTransferDispatchLineEntity>,
-        productLabelByLocationProductId: Map<UUID, String>
-    ): List<ReconciledTransferLine> =
-        dispatchLines.map { dispatchLine ->
+        summariesByLocationProductId: Map<UUID, LocationProductSummaryDto>
+    ): List<ReconciledTransferLine> {
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(summariesByLocationProductId.keys)
+        return dispatchLines.map { dispatchLine ->
+            val summary = summariesByLocationProductId.getValue(dispatchLine.locationProductId)
             ReconciledTransferLine(
                 dispatchLineRef = dispatchLine.requiredReference(),
-                productLabel = productLabelByLocationProductId.getValue(dispatchLine.locationProductId),
-                quantity = dispatchLine.quantityDispatched,
+                productLabel = summary.label,
+                quantity = dispatchLine.wholeLineUserProvidedQuantity,
                 unitId = dispatchLine.unitId,
-                baseUnitId = dispatchLine.baseUnitId,
-                conversionFactor = dispatchLine.conversionRatio().displayFactor(),
+                baseUnitId = summary.baseUnitId,
+                conversionFactor = BaseUnitDisplay.conversionFactor(
+                    dispatchLine.storageUnitsPerUnit, unitConversionGraph.getSizeInRoot(summary.baseUnitId)
+                ),
                 unitCost = dispatchLine.unitCost,
-                quantityReceived = null
+                totalCost = dispatchLine.costDispatched,
+                quantityReceived = null,
+                storageQuantity = dispatchLine.storageQuantityDispatched,
+                storageBreakdownText = breakdownByLocationProductId.getValue(dispatchLine.locationProductId)
+                    .render(ExactQuantity.ofStorage(dispatchLine.storageQuantityDispatched))
             )
         }
+    }
 
     private fun toStockRequests(
+        dispatchReference: String,
         dispatchLines: List<StockTransferDispatchLineEntity>
     ): List<StockTransferDispatchLineStockRequest> =
         dispatchLines.map { dispatchLine ->
-            val ratio = dispatchLine.conversionRatio()
             StockTransferDispatchLineStockRequest(
-                dispatchLineRef = dispatchLine.requiredReference(),
+                dispatchReference = dispatchReference,
+                dispatchLineReference = dispatchLine.requiredReference(),
                 locationProductId = dispatchLine.locationProductId,
-                baseQuantity = ratio.applyTo(dispatchLine.quantityDispatched),
+                storageQuantity = ExactQuantity.ofStorage(dispatchLine.storageQuantityDispatched),
+                userProvidedQuantity = dispatchLine.wholeLineUserProvidedQuantity,
                 unitId = dispatchLine.unitId,
-                unitCost = dispatchLine.unitCost,
-                conversionRatio = ratio,
-                baseUnitId = dispatchLine.baseUnitId,
-                enteredQuantity = dispatchLine.quantityDispatched,
+                storageUnitsPerUnit = dispatchLine.storageUnitsPerUnit,
             )
         }
 
-    private fun toDispatchedLineDtos(
-        dispatchLines: List<StockTransferDispatchLineEntity>
-    ): List<StockTransferDispatchedLineDto> =
-        dispatchLines.map { dispatchLine ->
-            val ratio = dispatchLine.conversionRatio()
-            StockTransferDispatchedLineDto(
-                dispatchLineReferenceNumber = dispatchLine.requiredReference(),
-                orgProductId = dispatchLine.orgProductId,
-                quantityDispatched = dispatchLine.quantityDispatched,
-                unitId = dispatchLine.unitId,
-                baseUnitId = dispatchLine.baseUnitId,
-                conversionNumerator = ratio.numerator,
-                conversionDenominator = ratio.denominator,
-                unitCost = dispatchLine.unitCost
-            )
+    // The dispatched quantity is in the source's storage unit, so the destination must count stock in the same root; checked before any stock event
+    private fun guardDestinationCountsInSameStorageUnit(
+        destinationLocationId: UUID,
+        draftLines: List<StockTransferDraftLineEntity>,
+        summariesByLocationProductId: Map<UUID, LocationProductSummaryDto>,
+        orgProductIdByLocationProductId: Map<UUID, UUID>
+    ) {
+        val destinationSchema = locationService.getSchemaByLocationId(destinationLocationId)
+        val destinationBaseUnitIdByOrgProductId = locationService.withLocationSchema(destinationSchema) {
+            stockTransferSchemaGateway.readBaseUnitIdsByOrgProductId(orgProductIdByLocationProductId.values)
         }
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
+        draftLines.forEach { draftLine ->
+            val sourceStorageUnitId = unitConversionGraph.getStorageUnitId(summariesByLocationProductId.getValue(draftLine.locationProductId).baseUnitId)
+            val orgProductId = orgProductIdByLocationProductId.getValue(draftLine.locationProductId)
+            val destinationBaseUnitId = destinationBaseUnitIdByOrgProductId[orgProductId]
+                ?: throw RtsGenericException("The destination location does not stock product $orgProductId")
+            if (unitConversionGraph.getStorageUnitId(destinationBaseUnitId) != sourceStorageUnitId) {
+                throw RtsGenericException(SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER)
+            }
+        }
+    }
+
+    companion object {
+        const val SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER =
+            "The source and destination products count stock in different storage units, so the transfer cannot be dispatched"
+    }
 }

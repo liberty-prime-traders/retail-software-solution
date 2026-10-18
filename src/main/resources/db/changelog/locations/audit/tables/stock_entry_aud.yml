@@ -39,16 +39,20 @@ databaseChangeLog:
                   type: varchar(10)
 
               - column:
-                  name: external_reference_number
+                  name: document_reference
                   type: varchar(30)
 
               - column:
-                  name: batch_size
-                  type: numeric(28,10)
+                  name: detail_reference
+                  type: varchar(30)
 
               - column:
-                  name: quantity_remaining
-                  type: numeric(28,10)
+                  name: storage_batch_size
+                  type: numeric(28,4)
+
+              - column:
+                  name: storage_quantity_remaining
+                  type: numeric(28,4)
 
               - column:
                   name: priority
@@ -56,7 +60,15 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: decimal(19,4)
+                  type: decimal(28,10)
+
+              - column:
+                  name: batch_cost
+                  type: numeric(28,4)
+
+              - column:
+                  name: cost_remaining
+                  type: numeric(28,4)
 
               - column:
                   name: revend

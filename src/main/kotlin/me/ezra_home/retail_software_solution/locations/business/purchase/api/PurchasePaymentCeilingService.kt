@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -25,9 +24,9 @@ class PurchasePaymentCeilingService(
     }
 
     fun computeCeiling(lines: List<PurchaseLineEntity>, deliveredTotal: BigDecimal): PaymentCeiling {
-        val poTotal = lines.sumOf { Decimals.Scale4.multiply(it.unitCost, it.getExpectedQuantity()) }
+        val poTotal = lines.sumOf { it.getTotalCost() }
         val isFullyDelivered = deliveredTotal > BigDecimal.ZERO &&
-            lines.all { it.getRemainingQuantity() <= BigDecimal.ZERO }
+            lines.none { it.storageQuantityRemaining().isPositive() }
         val ceiling = when {
             isFullyDelivered -> deliveredTotal
             deliveredTotal > BigDecimal.ZERO -> poTotal.max(deliveredTotal)

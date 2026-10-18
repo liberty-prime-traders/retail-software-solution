@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
@@ -20,6 +21,9 @@ class SaleSessionAdjustmentHandler(
     fun add(sessionId: UUID, adjustmentAddDto: SaleSessionAdjustmentAddDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.guardMutable(saleSession)
+        if (adjustmentAddDto.calculationMethod == PriceAdjustmentMethod.FIXED_LINE_TOTAL) {
+            throw RtsGenericException("FIXED_LINE_TOTAL adjustments are created by price overrides only")
+        }
         if (adjustmentAddDto.relatedSaleLineIdentity != null) {
             val targetLineKey = adjustmentAddDto.relatedSaleLineIdentity.key()
             if (saleSession.saleLines.none { it.identity.key() == targetLineKey }) {

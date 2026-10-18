@@ -6,8 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxDirection
 import me.ezra_home.retail_software_solution.locations.business.tax_entry.api.TaxSourceType
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethodConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -45,9 +45,9 @@ class TaxEntryEntity(
     @Column(name = "fiscal_period_id", nullable = false, updatable = false)
     var fiscalPeriodId: UUID,
 
-    @Convert(converter = CalculationMethodConverter::class)
+    @Convert(converter = TaxCalculationMethodConverter::class)
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
-    var calculationMethod: CalculationMethod,
+    var calculationMethod: TaxCalculationMethod,
 
     @Column(name = "rate", nullable = false, precision = 19, scale = 4, updatable = false)
     var rate: BigDecimal,

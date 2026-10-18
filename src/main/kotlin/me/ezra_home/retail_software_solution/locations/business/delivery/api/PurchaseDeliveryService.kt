@@ -9,13 +9,16 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -25,31 +28,43 @@ class PurchaseDeliveryService(
   private val deliveryLineRepository: PurchaseDeliveryLineRepository,
   private val deliveryHandlerForKafka: DeliveryHandlerForKafka,
   private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
-  private val unitConversionGraphFacade: UnitConversionGraphFacade,
+  private val locationProductDataFetcher: LocationProductDataFetcher,
   private val purchasePaymentStatusService: PurchasePaymentStatusService,
   private val fiscalPeriodService: FiscalPeriodService
 ) {
 
-  fun recordDelivery(dto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
-    fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))
-    val context = deliveryHandlerForPurchase.prepareForDelivery(dto.purchaseId)
-    purchaseDeliveryValidator.validate(dto, context.purchaseLineById)
+  fun recordDelivery(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
+    fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(purchaseDeliveryCreateDto.deliveredAt))
+    val context = deliveryHandlerForPurchase.prepareForDelivery(purchaseDeliveryCreateDto.purchaseId)
+    purchaseDeliveryValidator.validate(purchaseDeliveryCreateDto, context.purchaseLineById)
+    val storageUnitsPerUnitByPurchaseLineId = captureStorageUnitsPerUnit(purchaseDeliveryCreateDto, context.purchaseLineById)
+    purchaseDeliveryValidator.guardWithinRemaining(purchaseDeliveryCreateDto, context.purchaseLineById, storageUnitsPerUnitByPurchaseLineId)
 
-    val deliveryLines = dto.lines.map { line ->
-      val purchaseLine = context.purchaseLineById[line.purchaseLineId]!!
-      val factor = unitConversionGraphFacade.getFactor(line.unitId, purchaseLine.unitId)
-      DeliveryLineQuantity(line.purchaseLineId, Decimals.Scale4.multiply(line.quantityDelivered, factor))
+    val deliveryLines = purchaseDeliveryCreateDto.lines.map { line ->
+      DeliveryLineQuantity(
+        line.purchaseLineId,
+        ExactQuantity.ofUserProvided(line.userProvidedQuantityDelivered, storageUnitsPerUnitByPurchaseLineId.getValue(line.purchaseLineId))
+      )
     }
 
-    val deliveryRecord = persistDelivery(dto)
-    val response = deliveryHandlerForPurchase.commitDelivery(dto.purchaseId, deliveryLines)
+    val deliveryRecord = persistDelivery(purchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId)
+    val response = deliveryHandlerForPurchase.commitDelivery(purchaseDeliveryCreateDto.purchaseId, deliveryLines)
     deliveryHandlerForKafka.publish(context, deliveryRecord)
-    return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(dto.purchaseId))
+    return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseDeliveryCreateDto.purchaseId))
   }
 
-  private fun persistDelivery(dto: PurchaseDeliveryCreateDto): DeliveryRecord {
-    val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(dto))
-    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, dto)
+  private fun captureStorageUnitsPerUnit(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineDto>): Map<UUID, Long> {
+    val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+      purchaseDeliveryCreateDto.lines.map { LocationProductUnitRequestDto(purchaseLineById.getValue(it.purchaseLineId).locationProductId, it.unitId) }
+    )
+    return purchaseDeliveryCreateDto.lines.associate {
+      it.purchaseLineId to storageUnitsPerUnitByLocationProductId.getValue(purchaseLineById.getValue(it.purchaseLineId).locationProductId)
+    }
+  }
+
+  private fun persistDelivery(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId: Map<UUID, Long>): DeliveryRecord {
+    val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(purchaseDeliveryCreateDto))
+    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, purchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId)
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
   }

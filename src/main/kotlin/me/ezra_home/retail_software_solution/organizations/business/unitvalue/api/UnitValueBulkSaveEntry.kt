@@ -9,5 +9,6 @@ data class UnitValueBulkSaveEntry(
     val description: String?,
     val unitGroupId: UUID,
     val baseUnit: UUID?,
-    val unitsOfBasePerUnit: Long?
+    val unitsOfBasePerUnit: Long?,
+    val systemDefined: Boolean = false
 )

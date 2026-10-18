@@ -10,18 +10,13 @@ import java.util.UUID
 @Repository
 interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
 
-  fun findByExternalReferenceNumberAndMovementType(
-    externalReferenceNumber: String,
+  fun findByDocumentReferenceAndMovementType(
+    documentReference: String,
     movementType: MovementType
   ): List<StockMovementEntity>
 
-  @Query("SELECT DISTINCT sm.externalReferenceNumber FROM StockMovementEntity sm WHERE sm.externalReferenceNumber IN :refs AND sm.movementType = :movementType")
-  fun findPresentRefs(refs: Collection<String>, movementType: MovementType): Set<String>
-
-  fun findByExternalReferenceNumberInAndMovementType(
-    externalReferenceNumbers: Collection<String>,
-    movementType: MovementType
-  ): List<StockMovementEntity>
+  @Query("SELECT DISTINCT sm.detailReference FROM StockMovementEntity sm WHERE sm.documentReference = :documentReference AND sm.detailReference IN :detailReferences AND sm.movementType = :movementType")
+  fun findPresentDetailReferences(documentReference: String, detailReferences: Collection<String>, movementType: MovementType): Set<String>
 
   fun findByLocationProductId(locationProductId: UUID, pageable: Pageable): List<StockMovementEntity>
 }

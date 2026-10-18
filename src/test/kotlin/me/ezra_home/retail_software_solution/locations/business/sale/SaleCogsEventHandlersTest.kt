@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDat
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -65,8 +64,8 @@ class SaleCogsEventHandlersTest {
         `when`(saleRepository.getReferenceById(saleId)).thenReturn(saleEntity)
         `when`(saleLineRepository.findBySaleId(saleId)).thenReturn(
             listOf(
-                saleLine(firstProductId, quantity = "1.0000", ratio = ConversionRatio(12, 1), cogsTotal = BigDecimal("30.0000")),
-                saleLine(secondProductId, quantity = "1.0000", ratio = ConversionRatio.IDENTITY, cogsTotal = null),
+                saleLine(firstProductId, quantity = "1.0000", storageUnitsPerUnit = 12L, cogsTotal = BigDecimal("30.0000")),
+                saleLine(secondProductId, quantity = "1.0000", storageUnitsPerUnit = 1L, cogsTotal = null),
             )
         )
         val saleVoidEntity = mock(SaleVoidEntity::class.java)
@@ -113,15 +112,15 @@ class SaleCogsEventHandlersTest {
         return eventClass.cast(captor.value)
     }
 
-    private fun saleLine(locationProductId: UUID, quantity: String, ratio: ConversionRatio, cogsTotal: BigDecimal?) =
+    private fun saleLine(locationProductId: UUID, quantity: String, storageUnitsPerUnit: Long, cogsTotal: BigDecimal?) =
         SaleLineEntity(
             saleId = saleId,
             locationProductId = locationProductId,
-            quantity = BigDecimal(quantity),
+            userProvidedQuantity = BigDecimal(quantity),
             unitId = UUID.randomUUID(),
-            unitPrice = BigDecimal("10.0000"),
-            conversionNumerator = ratio.numerator,
-            conversionDenominator = ratio.denominator,
+            lineTotal = BigDecimal("10.0000").multiply(BigDecimal(quantity)),
+            defaultSalePrice = BigDecimal("10.0000"),
+            storageUnitsPerUnit = storageUnitsPerUnit,
             cogsTotal = cogsTotal,
         )
 }

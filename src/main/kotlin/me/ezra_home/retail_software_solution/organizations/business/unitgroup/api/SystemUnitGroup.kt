@@ -10,9 +10,9 @@ enum class SystemUnitGroup(override val code: String, val groupName: String, val
     COUNTABLE("CNT", "Count", "Units based on discrete countable items");
 
     companion object {
-        // All four system groups already have their real base unit seeded (see SystemUnitValue /
-        // UnitValueSeeder), and bulk import never targets Count - auto-insert exists only to give a
-        // custom org group a synthetic Piece to convert from, so Count is excluded like the rest.
+        // Weight, Volume and Count are seeded with a real root (Gram, Millilitre, Piece) and Miscellaneous with
+        // a standalone Piece (see SystemUnitValue / UnitValueSeeder). Auto-insert exists only to give a custom
+        // org group its root Piece, so every system group is excluded.
         private val EXCLUDED_FROM_PIECE_AUTO_INSERT = setOf(MISC, WEIGHT, VOLUME, COUNTABLE)
 
         fun isExcludedFromPieceAutoInsert(groupName: String?): Boolean =

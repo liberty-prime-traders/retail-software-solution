@@ -10,20 +10,21 @@ import java.util.UUID
 
 object PurchaseDeliveryMapper {
 
-  fun toEntity(dto: PurchaseDeliveryCreateDto) = PurchaseDeliveryEntity(
-    purchaseId = dto.purchaseId,
-    deliveredAt = dto.deliveredAt,
-    notes = dto.notes
+  fun toEntity(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto) = PurchaseDeliveryEntity(
+    purchaseId = purchaseDeliveryCreateDto.purchaseId,
+    deliveredAt = purchaseDeliveryCreateDto.deliveredAt,
+    notes = purchaseDeliveryCreateDto.notes
   )
 
-  fun toLineEntities(deliveryId: UUID, dto: PurchaseDeliveryCreateDto) =
-    dto.lines.map { lineDto ->
+  fun toLineEntities(deliveryId: UUID, purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId: Map<UUID, Long>) =
+    purchaseDeliveryCreateDto.lines.map { lineDto ->
       PurchaseDeliveryLineEntity(
         purchaseDeliveryId = deliveryId,
         purchaseLineId = lineDto.purchaseLineId,
-        quantityDelivered = lineDto.quantityDelivered,
+        userProvidedQuantityDelivered = lineDto.userProvidedQuantityDelivered,
         unitCost = lineDto.unitCost,
-        unitId = lineDto.unitId
+        unitId = lineDto.unitId,
+        storageUnitsPerUnit = storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
     }
 
@@ -49,8 +50,9 @@ object PurchaseDeliveryMapper {
         deliveryLineId = dl.id!!,
         lineReferenceNumber = dl.requiredReference(),
         locationProductId = pl.locationProductId,
-        quantityDelivered = dl.quantityDelivered,
+        userProvidedQuantityDelivered = dl.userProvidedQuantityDelivered,
         unitId = dl.unitId,
+        storageUnitsPerUnit = dl.storageUnitsPerUnit,
         unitCost = dl.unitCost
       )
     }

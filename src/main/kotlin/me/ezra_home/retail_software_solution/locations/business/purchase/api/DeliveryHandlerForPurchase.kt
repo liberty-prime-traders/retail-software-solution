@@ -8,12 +8,12 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.Purchas
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
-data class DeliveryLineQuantity(val purchaseLineId: UUID, val qty: BigDecimal)
+data class DeliveryLineQuantity(val purchaseLineId: UUID, val storageQuantity: ExactQuantity)
 
 @Service
 class DeliveryHandlerForPurchase(
@@ -51,9 +51,9 @@ class DeliveryHandlerForPurchase(
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         val lineById = purchaseLines.associateBy { it.id!! }
-        val toSave = deliveryLines.map { (lineId, qty) ->
+        val toSave = deliveryLines.map { (lineId, storageQuantity) ->
             lineById[lineId]?.also {
-                it.quantityDelivered = it.quantityDelivered.add(qty)
+                it.storageQuantityDelivered = (ExactQuantity.ofStorage(it.storageQuantityDelivered) + storageQuantity).toStorageQuantity()
             } ?: throw RtsGenericException("Purchase line $lineId not found")
         }
         purchaseLineRepository.saveAll(toSave)
@@ -63,7 +63,7 @@ class DeliveryHandlerForPurchase(
     }
 
     private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
-        val fullyDelivered = purchaseLines.all { it.getRemainingQuantity() <= BigDecimal.ZERO }
+        val fullyDelivered = purchaseLines.none { it.storageQuantityRemaining().isPositive() }
         return if (fullyDelivered) PurchaseStatus.FULLY_DELIVERED else PurchaseStatus.PARTIALLY_DELIVERED
     }
 }

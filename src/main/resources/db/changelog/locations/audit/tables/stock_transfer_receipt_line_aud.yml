@@ -43,8 +43,8 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity_received
-                  type: numeric(28,10)
+                  name: storage_quantity_received
+                  type: numeric(28,4)
 
               - column:
                   name: revend

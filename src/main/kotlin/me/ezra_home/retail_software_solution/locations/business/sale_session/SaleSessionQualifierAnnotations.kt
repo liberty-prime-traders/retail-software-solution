@@ -50,11 +50,6 @@ annotation class SaleSessionPaymentStatus
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
-annotation class SaleLineDefaultSalePrice
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.FUNCTION)
 annotation class SaleLineBaseUnitId
 
 @Qualifier
@@ -71,3 +66,38 @@ annotation class LineNetUnitPrice
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
 annotation class LineConversionFactor
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineBaseQuantity
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineNetTotal
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineOnHandInProductBaseUnit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineReservedInProductBaseUnit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineAvailableInProductBaseUnit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineOnHandBreakdown
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineAvailableBreakdown

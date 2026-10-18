@@ -38,10 +38,13 @@ cost. `OpeningStockEntity` exists alongside them purely to:
 - Anchor the "already declared for this product" guard
   (`OpeningStockRepository.findByLocationProductIdIn`, backed by the
   unique constraint) — the one thing `stock/` has no natural row for.
+- Carry the declaration's **unit**: `opening_stock` stores `user_provided_quantity`, `unit_id` and
+  `storage_units_per_unit` (the unit's size in the product's storage unit, captured at declaration, which also rejects a
+  unit outside the product's unit group) beside `unit_cost` (per `unit_id`). `OpeningStockAmountsFetcher` returns the
+  unit with the quantity.
 - Carry its own `HasReferenceEntity` reference number, which becomes both
-  `StockEntryEntity.externalReferenceNumber` (idempotency, same as
-  `PurchaseDeliveryStockUpdater`'s use of a delivery line's reference) and
-  the Kafka event's `sourceReferenceNumber` for ledger posting / DLT
+  `StockEntryEntity.documentReference` (idempotency, with a null `detailReference`: an opening stock has no line
+  reference) and the Kafka event's `sourceReferenceNumber` for ledger posting / DLT
   reissue.
 
 ## Flow (`OpeningStockService.declareInitialStock`)
@@ -61,16 +64,15 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `LocationProductSummaryDto.label`) up front — every guard from here on
    reports the human-readable label, not a bare `locationProductId`, in
    its failure message.
-5. Guard positive quantity / non-negative unit cost per line, then
+5. Guard positive quantity (at most 2 decimals, checked in `OpeningStockLineDto`'s `init`) / non-negative unit cost per line, then
    `locationProductService.guardAllActive` — same guard used at
    purchase-creation time.
 6. Guard none of the requested products already have an `opening_stock`
-   row.
+   row. Two concurrent declarations for one product leave one: the second fails on
+   `uq_opening_stock_location_product_id`.
 7. Persist the `OpeningStockEntity` rows in one `saveAll` (not a
-   per-line `save` in a loop), storing quantity/cost exactly as declared
-   — `OpeningStockEntity` has no `unitId` column, unlike `stock/`'s
-   entities; the unit only matters for the base-unit conversion below,
-   which is `stock/`'s concern, not this domain's.
+   per-line `save` in a loop), storing the typed quantity, its unit, the captured
+   `storage_units_per_unit` and the unit cost exactly as declared.
 8. Call `stock/api/OpeningStockStockUpdater.recordOpeningStock` — the
    only cross-domain call this service makes into `stock/`, since
    `ArchitectureTest` forbids reaching past its `api/` package.
@@ -81,7 +83,8 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    multi-step status machine to protect, so this doesn't need
    `InventoryEventProcessor`'s async hop. The `OpeningStockEntity`'s
    reference number is what ties the two together
-   (`StockEntryEntity.externalReferenceNumber`).
+   (`StockEntryEntity.documentReference`). The layer's `batch_cost` is the declaration's line total
+   (`unitCost × userProvidedQuantity`, rounded once to scale 4) and its storage quantity is exact.
 9. Publish one `OpeningStockDeclaredEvent` per line via
    `OpeningStockHandlerForKafka.publish`. Ledger posting still has to be
    async — it crosses into the organization datasource — handled by
@@ -97,7 +100,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
 - `POST` (body: `lines: [{locationProductId, quantity, unitId, unitCost}]`)
   → `OpeningStockService.declareInitialStock`. Response is
   `List<OpeningStockResponseDto>` — `referenceNumber`, `locationProductId`,
-  `productLabel`, `quantity`, `unitCost`, `declaredBy`, `declaredAt`.
+  `productLabel`, `quantity`, `unitId`, `unitCost`, `declaredBy`, `declaredAt`.
 - `GET` → `OpeningStockService.getAll` (all declarations for the current
   location, used by the UI to grey out products that already have an
   opening stock).
@@ -110,7 +113,8 @@ Both are thin delegators; all validation/locking/posting logic lives in
 `location_product`'s `LocationProductEnricher` surfaces
 `openingStockQuantity`/`openingStockUnitCost` (both nullable — absent
 means never declared) on every `LocationProductResponseDto`, the same
-way `stockBalance` is rolled up there today. It does **not** call
+way `stockBalance` is rolled up there today. Quantities are shown in the product's base unit (rounded down, from the
+exact storage figure), with `stockBalanceBreakdown` / `openingStockBreakdown` texts alongside. It does **not** call
 `OpeningStockService` to get them — it depends on
 `OpeningStockAmountsFetcher`, a separate, dependency-free bean that only
 wraps `OpeningStockRepository.findByLocationProductIdIn`.

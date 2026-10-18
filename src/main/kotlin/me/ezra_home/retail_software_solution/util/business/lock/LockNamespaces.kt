@@ -2,6 +2,8 @@ package me.ezra_home.retail_software_solution.util.business.lock
 
 object LockNamespaces {
     const val PRODUCT = "product"
+    const val UNIT_GROUP = "unit_group"
+    const val UNIT_GROUP_NAME = "unit_group_name"
     const val SALE = "sale"
     const val PURCHASE = "purchase"
     const val STOCK_TRANSFER_ORDER = "stock_transfer_order"

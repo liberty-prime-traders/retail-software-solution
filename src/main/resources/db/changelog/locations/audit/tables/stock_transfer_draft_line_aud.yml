@@ -39,23 +39,16 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity
-                  type: numeric(28,10)
+                  name: user_provided_quantity
+                  type: numeric(19,4)
 
               - column:
                   name: unit_id
                   type: uuid
 
               - column:
-                  name: conversion_numerator
+                  name: storage_units_per_unit
                   type: bigint
-              - column:
-                  name: conversion_denominator
-                  type: bigint
-
-              - column:
-                  name: base_unit_id
-                  type: uuid
 
               - column:
                   name: revend

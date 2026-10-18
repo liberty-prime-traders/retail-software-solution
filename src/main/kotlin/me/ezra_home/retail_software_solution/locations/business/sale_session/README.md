@@ -51,8 +51,9 @@ sale/         → knows nothing about sale_session (convention)
 ```
 
 `sale_session → stock/api/` is used by `SaleSessionStockOverlay` to populate the
-three per-line quantities (`quantityOnHand`, `quantityReserved`,
-`quantityAvailable`). It calls `StockAvailabilityFetcher.fetch` (shared with
+three per-line storage quantities (`storageQuantityOnHand`, `storageQuantityReserved`,
+`storageQuantityAvailable`), held exact and unrounded; the response derives its `quantityOnHand` / `quantityReserved` /
+`quantityAvailable` (product base unit) from them. It calls `StockAvailabilityFetcher.fetch` (shared with
 `LocationProductForSaleAssembler` and `stock_transfer`'s
 `ReconciledTransferLineFetcher.draftLines`) for the sale-agnostic baseline —
 on-hand balance netted against the **total** of live reservations, no
@@ -184,11 +185,11 @@ SessionIdentity
 - On commit:
   - `id != null`:
     - **lines** are updated in place — `SaleLineSync` writes the
-      current session values for `locationProductId`, `quantity`, `unitId`,
-      `unitPrice`, `conversionRatio` onto the existing entity.
+      current session values for `locationProductId`, `userProvidedQuantity`, `unitId`,
+      `lineTotal`, `storageUnitsPerUnit` onto the existing entity.
       `locationProductId` never changes (no session handler mutates it);
-      `unitPrice` is recalculated by `SaleSessionLineHandler.applyLineChanges`
-      whenever an update entry edits the line (see Pitfalls §8).
+      `lineTotal` is recalculated by `SaleSessionLineHandler.applyLineChanges`
+      whenever an add or update entry touches the line, and only then (see Pitfalls §8).
     - **adjustments** and **payments** are kept untouched — there are no
       "update" handlers for these in-session, so existing rows can only be
       retained or removed/voided, never mutated
@@ -394,30 +395,24 @@ session before finalize.
 - **`SaleSessionRedisStore` is the only class that touches Redis.** Nothing
   else in the app imports `RedisTemplate` / `StringRedisTemplate` — Redis
   access is fully encapsulated behind the `SaleSessionStore` interface.
-- **Line `unitPrice` is a derived, unit-aware property.**
-  `SaleSessionLine` stores `defaultSalePrice` (per base unit, captured on
-  addition from `location_product.default_sale_price`), `baseUnitId`
-  (snapshotted from `location_product.base_unit_id` on addition / on
-  hydration), and `conversionRatio` (line unit → base unit, an exact
-  rational — see `util/business/ConversionRatio`). `unitPrice`
-  is a computed getter: `conversionRatio.applyTo(defaultSalePrice)`, so the
-  per-line-unit price tracks the unit automatically —
-  `SaleSessionLineHandler.applyLineChanges` only has to set
-  `defaultSalePrice` / `conversionRatio`. Addition entries do not accept
-  a `unitId`: new lines always start at the product's base unit
-  (`unitId = baseUnitId`, `conversionRatio = ConversionRatio.IDENTITY`).
-  Switching the line to a non-base unit is the job of an update entry in
-  `applyLineChanges`. Update entries do **not** re-fetch `defaultSalePrice`;
-  the value is held on the line for the life of the session.
-  `DomainToSessionMapper` rehydrates `defaultSalePrice` for persisted
-  lines via `unitPrice / conversionRatio.factor()`, and `baseUnitId` via a
-  one-shot batch lookup (`LocationProductDataFetcher.getBaseUnitIds`)
-  supplied by `SaleSessionLoader.loadFromSale`, so the DB price and base
-  unit flow back in unchanged on session reload. The outbound
-  `SaleSessionLineResponse` still exposes a single derived
-  `conversionFactor` decimal — the exact ratio never needs to leave the
-  server.
-
+- **A session line holds its gross `lineTotal`.** `SaleSessionLine` stores `defaultSalePrice` (per product base unit,
+  captured on addition from `location_product.default_sale_price`), `baseUnitId` (snapshotted from
+  `location_product.base_unit_id`), `storageUnitsPerUnit` (the line unit's size in the storage unit, captured when the
+  line is added or its unit changes) and `lineTotal`, loaded from the persisted line and **never recomputed on load**.
+  `SaleSessionLineHandler.applyLineChanges` recomputes it with `LinePricing.lineTotal` from the current base unit size
+  only when an add or update entry touches the line; confirm trusts the loaded total and the captured ratio and
+  reprices nothing. `unitPrice` is derived (`lineTotal ÷ userProvidedQuantity`, half-up, scale 4) and never stored.
+  Addition entries do not accept a `unitId`: new lines start at the product's base unit
+  (`storageUnitsPerUnit` = the base unit's size). Switching to another unit of the product's group is an update entry;
+  a unit outside the group is rejected by `LocationProductDataFetcher.getStorageUnitsPerUnit`. Update entries do **not**
+  re-fetch `defaultSalePrice`. `DomainToSessionMapper` copies the persisted `default_sale_price`, `line_total` and
+  `storage_units_per_unit` straight back onto the line.
+  The outbound `SaleSessionLineResponse` keeps its wire fields: `conversionFactor` and `baseQuantity` are display-only
+  (`BaseUnitDisplay`: one division from the exact storage figures, `conversionFactor` half-up and `baseQuantity` rounded
+  down, both at 4 decimals, computed with the base unit's current size, so a base-unit line is exactly 1). `lineTotal` is
+  the **net** line total (stored gross total plus its adjustments, via `LineMappingContext`), never
+  `quantity × netUnitPrice`. The stored gross total is not on the wire under that name. New additive fields:
+  `storageQuantityOnHand`, `storageQuantityReserved`, `storageQuantityAvailable` and the breakdown texts.
 ---
 
 ## 9. Price Override
@@ -426,39 +421,40 @@ A cashier sets a custom price on a line by supplying `unitPriceOverride` in a
 `SaleSessionLineUpdateDto`. The client always sends this field (non-nullable); on line add
 the response always carries `unitPriceOverride == unitPrice`. The server owns the adjustment
 model — the client never knows about `PRICE_OVERRIDE` adjustments, it only sees and echoes
-`unitPriceOverride`.
+`unitPriceOverride`. The quantity has at most 2 decimals (`QuantityLimits`), checked in the update DTO's `init`. A
+typed price override has at most 2 decimals too, so `price × quantity` is exact at 4 decimals, but that limit is checked in
+`PriceOverrideReconciler`, and only for a price that differs from the one the cashier was shown: the derived
+`unitPrice` the response echoes (for example 55.5556 per Piece) can have 4 decimals and must pass back unchanged.
 
 - `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
-  computes `unitDiff = unitPrice − unitPriceOverride` and upserts a
-  `PRICE_OVERRIDE` adjustment with `value = |unitDiff|` and direction
-  `DISCOUNT` / `SURCHARGE` per sign. Storage is **per-unit** — the
-  `AdjustmentAmountCalculator` scales by line `quantity` at compute time,
-  so qty changes need no recalc. If the diff is zero the override is
-  removed. **Unit change clears the override unless a new price is supplied:**
-  when a line's unit changes and the client echoes back the existing effective
-  price, `PriceOverrideReconciler` drops the `PRICE_OVERRIDE`; when the client
-  supplies a different `unitPriceOverride`, the reconciler treats it as a new
-  explicit override computed against the new unit's `unitPrice`. Non-price-override
-  line adjustments are always cleared on a unit change: `SaleSessionLineHandler.applyLineChanges`
-  filters any remaining line-level adjustment whose `relatedSaleLineIdentity` targets
-  a unit-changed line. **Echo detection:** the reconciler always derives the previous
-  effective price — `unitPrice ± storedValue` when an override exists, otherwise
-  `unitPrice` — and treats a submitted value that matches as a no-op. This keeps
-  all business logic server-side; the client echoes the full line state without
-  consequence.
+  works in **totals**. The override total is `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`,
+  rounded once to scale 4). The `PRICE_OVERRIDE` adjustment's `value` is `|computed line total − override total|`,
+  method `FIXED_LINE_TOTAL`, direction `DISCOUNT` when the override total is lower and `SURCHARGE` when higher. It is never
+  a per-unit delta times a quantity, so no per-unit rounding enters. Equal totals mean no adjustment.
+  The typed price is not stored. Because the amount is a total, it is recomputed against the updated line on every
+  edit, including a quantity-only edit.
+  **Unit change clears the override unless a new price is supplied:** when a line's unit changes and the client echoes
+  back the existing effective price, the reconciler drops the `PRICE_OVERRIDE`; when the client supplies a different
+  `unitPriceOverride`, it is a new explicit override against the updated line. Non-price-override line adjustments are
+  always cleared on a unit change: `SaleSessionLineAdjustmentReconciler` drops any remaining line-level adjustment
+  whose `relatedSaleLineIdentity` targets a unit-changed line. **Echo detection:** the reconciler derives the previous
+  effective price — `(gross line total ∓ stored value) ÷ quantity` when an override exists, otherwise the derived list
+  `unitPrice` — and treats a submitted value that matches as unchanged. With both limits at 2 decimals the rebuilt price
+  equals the typed price exactly. A client must echo a derived `unitPrice` (for example 55.5556 per Piece) back
+  unchanged; sending it as a new override would store a 0.0008 surcharge, which echo detection prevents.
 - `unitPriceOverride == 0` is allowed (cashier giveaway). Negative is
   rejected by `SaleSessionValidator.guardNonNegativeEffectivePrices`.
 - The `PRICE_OVERRIDE` adjustment is stored in Redis just like any other
   adjustment and persisted to the DB at `saveDraft` / `confirm` via
   `SaleAdjustmentSyncer`.
 - `unitPriceOverride` on `SaleSessionLineResponse` is always populated:
-  `SaleSessionAssembler.buildLineMappingContext` derives it by reversing the
-  stored adjustment (`unitPrice ± value`) when an override exists, and falls
-  back to `unitPrice` otherwise — never stored in Redis or the DB directly.
+  `SaleSessionAssembler.buildLineMappingContext` derives it as `(gross ∓ value) ÷ quantity` when an override exists, and
+  falls back to the derived `unitPrice` otherwise — never stored in Redis or the DB directly.
 - Mutual exclusivity (a line cannot carry both a `PRICE_OVERRIDE` and any
   other adjustment) is enforced structurally inside `validate()` via
   `guardLineOverrideExclusivity`, so it holds regardless of which entry
-  point produced the state (line update, adjustment add, load-from-DB).
+  point produced the state (line update, adjustment add, load-from-DB). It also keeps a percentage adjustment, whose
+  base is the gross total, from stacking on an override.
 
 ## 10. Where Things Live
 

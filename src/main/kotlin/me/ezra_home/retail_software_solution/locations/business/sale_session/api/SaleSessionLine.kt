@@ -1,24 +1,23 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import java.math.BigDecimal
 import java.util.UUID
 
+// lineTotal is gross and recalculated only when the line is added or edited; stock figures are exact storage quantities
 data class SaleSessionLine(
     val identity: SessionIdentity,
     override val locationProductId: UUID,
     val productLabel: String,
     val productPrintLabel: String,
-    override val quantity: BigDecimal,
+    override val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
     val baseUnitId: UUID,
-    val conversionRatio: ConversionRatio,
+    val storageUnitsPerUnit: Long,
+    override val lineTotal: BigDecimal,
     val defaultSalePrice: BigDecimal,
-    val quantityOnHand: BigDecimal = BigDecimal.ZERO,
-    val quantityReserved: BigDecimal = BigDecimal.ZERO,
-    val quantityAvailable: BigDecimal = BigDecimal.ZERO,
+    val storageQuantityOnHand: BigDecimal = BigDecimal.ZERO,
+    val storageQuantityReserved: BigDecimal = BigDecimal.ZERO,
+    val storageQuantityAvailable: BigDecimal = BigDecimal.ZERO,
 
-) : ProductLineWithPrice {
-    override val unitPrice: BigDecimal = conversionRatio.applyToPrice(defaultSalePrice)
-}
+) : ProductLineWithPrice

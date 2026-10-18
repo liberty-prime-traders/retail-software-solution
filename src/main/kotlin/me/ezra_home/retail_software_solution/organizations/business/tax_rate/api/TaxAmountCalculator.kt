@@ -1,10 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.tax_rate.api
 
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.UUID
 
 object TaxAmountCalculator {
@@ -12,14 +11,14 @@ object TaxAmountCalculator {
     data class ActiveTaxTypeForCalculation(
         val orgJurisdictionTaxTypeId: UUID,
         val jurisdictionTaxTypeId: UUID,
-        val calculationMethod: CalculationMethod,
+        val calculationMethod: TaxCalculationMethod,
         val activeTaxRateDto: ActiveTaxRateDto
     )
 
     data class TaxCalculationEntry(
         val orgJurisdictionTaxTypeId: UUID,
         val jurisdictionTaxTypeId: UUID,
-        val calculationMethod: CalculationMethod,
+        val calculationMethod: TaxCalculationMethod,
         val rate: BigDecimal,
         val taxIsBilledToCustomerSeparately: Boolean,
         val taxIsIncludedInTaxableAmount: Boolean,
@@ -62,21 +61,20 @@ object TaxAmountCalculator {
     private fun resolveTaxableBase(taxableAmount: BigDecimal, activeTaxTypes: List<ActiveTaxTypeForCalculation>): BigDecimal {
         val included = activeTaxTypes.filter { it.activeTaxRateDto.taxIsIncludedInTaxableAmount }
         val includedFlatAmounts = included
-            .filter { it.calculationMethod == CalculationMethod.FIXED_VALUE }
+            .filter { it.calculationMethod == TaxCalculationMethod.FIXED_VALUE }
             .fold(BigDecimal.ZERO) { acc, taxType -> acc + requireFlatAmount(taxType) }
         val includedPercentageSum = included
-            .filter { it.calculationMethod == CalculationMethod.PERCENTAGE }
+            .filter { it.calculationMethod == TaxCalculationMethod.PERCENTAGE }
             .fold(BigDecimal.ZERO) { acc, taxType -> acc + requirePercentage(taxType) }
-        val includedPercentageRateSum = Decimals.Scale4.divide(includedPercentageSum, BigDecimal(100))
-        return Decimals.Scale4.divide(taxableAmount - includedFlatAmounts, BigDecimal.ONE + includedPercentageRateSum)
+        return Decimals.Scale4.divide((taxableAmount - includedFlatAmounts) * BigDecimal(100), BigDecimal(100) + includedPercentageSum)
     }
 
     private fun taxAmountFor(activeTaxType: ActiveTaxTypeForCalculation, netBase: BigDecimal): BigDecimal =
         when (activeTaxType.calculationMethod) {
-            CalculationMethod.PERCENTAGE ->
-                Decimals.Scale4.multiply(netBase, Decimals.Scale4.divide(requirePercentage(activeTaxType), BigDecimal(100)))
-            CalculationMethod.FIXED_VALUE ->
-                requireFlatAmount(activeTaxType).setScale(4, RoundingMode.HALF_UP)
+            TaxCalculationMethod.PERCENTAGE ->
+                Decimals.Scale4.divide(netBase * requirePercentage(activeTaxType), BigDecimal(100))
+            TaxCalculationMethod.FIXED_VALUE ->
+                Decimals.Scale4.round(requireFlatAmount(activeTaxType))
         }
 
     private fun requirePercentage(activeTaxType: ActiveTaxTypeForCalculation): BigDecimal =

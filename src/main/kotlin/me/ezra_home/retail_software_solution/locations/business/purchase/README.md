@@ -102,8 +102,8 @@ Rules:
 - A `DRAFT` becomes `ORDERED` only through
   `PurchaseService.convertDraftToOrder`, which requires ≥1 surviving line.
 - Once `ORDERED`, deliveries move the purchase to `PARTIALLY_DELIVERED`
-  and then to `FULLY_DELIVERED` when every line's `remainingQuantity ≤ 0`
-  (i.e. `quantityDelivered + quantityCanceled ≥ quantityOrdered`). The
+  and then to `FULLY_DELIVERED` when no line has a positive remaining storage quantity
+  (`storageQuantityDelivered + storageQuantityCanceled ≥` ordered, compared exactly in storage units). The
   status transition is computed inside
   `DeliveryHandlerForPurchase.commitDelivery`.
 - `PurchaseCanceller.cancel` recomputes status differently: if every line
@@ -166,37 +166,38 @@ not currently set by any flow.
 
 ### Identity & quantities
 
-A `PurchaseLineEntity` belongs to exactly one `PurchaseEntity`. Each line
-tracks **three quantities** that together describe its lifecycle:
+A `PurchaseLineEntity` belongs to exactly one `PurchaseEntity`. What was ordered is a typed quantity in the line's unit;
+what was delivered and canceled are counters in **storage units** (the root of the product's unit group) with no typed
+twin, so all three compare exactly:
 
-| Field               | Meaning                                                              |
-|---------------------|----------------------------------------------------------------------|
-| `quantityOrdered`   | What the supplier was asked to send (in the line's `unitId`).        |
-| `quantityDelivered` | Cumulative quantity received across all deliveries (line's unit).    |
-| `quantityCanceled`  | Quantity the buyer has canceled (will not be received).              |
+| Field                           | Meaning                                                                                           |
+|---------------------------------|---------------------------------------------------------------------------------------------------|
+| `userProvidedQuantityOrdered`   | What the supplier was asked to send, in the line's `unitId`. `numeric(19,4)`.                      |
+| `storageUnitsPerUnit`           | The line unit's size in the storage unit, captured when the line is created or its unit changes.   |
+| `storageQuantityDelivered`      | Cumulative storage quantity received across all deliveries. `numeric(28,4)`.                      |
+| `storageQuantityCanceled`       | Storage quantity the buyer has canceled (will not be received). `numeric(28,4)`.                  |
 
-Derived values (`PurchaseLineEntity`):
+Derived values (`PurchaseLineEntity`, all `ExactQuantity` in storage units):
 
-- `getExpectedQuantity() = quantityOrdered − quantityCanceled`
-- `getRemainingQuantity() = getExpectedQuantity() − quantityDelivered`
-- `getTotalCost() = unitCost × getExpectedQuantity()` (scale 4)
+- `storageQuantityOrdered() = userProvidedQuantityOrdered × storageUnitsPerUnit`
+- `storageQuantityExpected() = storageQuantityOrdered() − storageQuantityCanceled`
+- `storageQuantityRemaining() = storageQuantityExpected() − storageQuantityDelivered`
+- `getTotalCost()` is the ordered total (`unitCost × userProvidedQuantityOrdered`, scale 4) scaled by
+  expected ÷ ordered in storage units and rounded once; nothing canceled gives the exact ordered total.
 
 `locationProductId` is `updatable = false` on the entity — once a line is
 created the product is fixed. Quantity, cost, and unit can change while
-the purchase is in `DRAFT`; only `quantityDelivered` / `quantityCanceled`
+the purchase is in `DRAFT`; only the two storage counters
 change after `ORDERED`.
 
 ### Per-line invariants
 
-1. `quantityOrdered` carries the unit chosen by the user (`unitId`).
-   `conversionNumerator`/`conversionDenominator` are the exact rational
-   multiplier to the product's base unit (`conversionRatio()` builds a
-   `ConversionRatio` from them) and are resolved by
-   `locationProductDataFetcher.getConversionRatios`. The REST response
-   (`PurchaseLineResponseDto`) exposes a single derived `conversionFactor`
-   decimal instead — nothing outside this domain needs the exact
-   numerator/denominator.
-2. **`quantityOrdered` must be positive** on create
+1. `userProvidedQuantityOrdered` carries the unit chosen by the user (`unitId`; wire name `quantityOrdered`). The unit must
+   belong to the product's unit group, and `storageUnitsPerUnit` is resolved by
+   `LocationProductDataFetcher.getStorageUnitsPerUnit`, which rejects a unit whose root differs from the product's storage
+   unit. The REST response (`PurchaseLineResponseDto`) keeps its `quantity*` fields (the counters in the ordered unit,
+   for display, so they can lose digits) and adds exact `storageQuantity*` fields and breakdown texts.
+2. **`userProvidedQuantityOrdered` must be positive** on create, with at most 2 decimals (checked in the create and update DTOs' `init`)
    (`PurchaseValidator.guardPositiveLineQuantities`, enforced by
    `PurchaseService.createDraft` / `createOrder` and inside
    `PurchaseLinesResolver.computeAdditions` for additions during an
@@ -283,8 +284,10 @@ live in the `delivery/` package and are coordinated through
    - No duplicate purchase line ids in the delivery payload.
    - Each delivery line points to a real purchase line.
    - Quantity > 0; unit cost > 0.
-   - Quantity converted to the purchase line's `unitId` must not exceed
-     `remainingQuantity` (`quantityOrdered − quantityCanceled − quantityDelivered`).
+   - `PurchaseDeliveryValidator.guardWithinRemaining` compares in storage units: the delivery's exact storage quantity
+     (typed quantity × the delivery line's own captured `storageUnitsPerUnit`) must not exceed the line's
+     `storageQuantityRemaining` (ordered − canceled − delivered). One storage unit over is rejected and one under
+     leaves the line open.
    - There is **no product-active check** here. Active status is enforced
      only on the purchase-side flows (create / convertDraftToOrder /
      update lines). Once a purchase has been ordered, the supplier is on
@@ -292,9 +295,9 @@ live in the `delivery/` package and are coordinated through
      product is later deactivated locally.
 4. Persist a `PurchaseDeliveryEntity` (status `PROCESSING`) + its
    `PurchaseDeliveryLineEntity` rows.
-5. `commitDelivery` adds `quantityDelivered` to each purchase line (in
-   the line's own unit, after a unit conversion) and updates the purchase
-   status to `PARTIALLY_DELIVERED` / `FULLY_DELIVERED`.
+5. `commitDelivery` adds each delivery line's exact storage quantity to the purchase line's `storageQuantityDelivered`
+   and updates the purchase status to `PARTIALLY_DELIVERED` / `FULLY_DELIVERED`. Nothing rounds: 18 single Pieces
+   complete a 1-Bale line exactly, and delivering in Cartons against a line in Pieces (or the reverse) is exact.
 6. Publish `PurchaseDeliveredEvent`. The synchronous transaction returns
    the response **before** stock is updated.
 7. `PurchaseDeliveryInventoryProcessor.handle` (async, separate
@@ -306,22 +309,19 @@ live in the `delivery/` package and are coordinated through
 8. Payment status is recomputed at the end of `recordDelivery`
    (`purchasePaymentStatusService.patchThenReturnPaymentStatus`).
 
-### Delivery line ↔ purchase line unit conversion
+### Delivery line ↔ purchase line units
 
-Suppliers may deliver in a unit different from the purchase line's
-`unitId`. `PurchaseDeliveryValidator` calls
-`unitConversionGraphFacade.getFactor(lineDto.unitId, purchaseLine.unitId)`
-to convert and check against `remainingQuantity`. The delivery line
-itself stores `quantityDelivered` in its **own** `unitId`. The
-**purchase line** accumulates `quantityDelivered` in the **purchase
-line's** `unitId` (after conversion). Be mindful of this when reasoning
-about stock totals.
+Suppliers may deliver in a unit different from the purchase line's `unitId`, as long as it belongs to the product's
+unit group. The delivery line stores its typed `userProvidedQuantityDelivered`, its own `unitId` and the
+`storageUnitsPerUnit` it captured when recorded (`PurchaseDeliveryService.captureStorageUnitsPerUnit`). The purchase
+line keeps only the storage-unit counter, so a later change to a unit's size moves neither a recorded delivery nor the
+line's captured ratio.
 
 ### Idempotency
 
 - `PurchaseDeliveryInventoryProcessor.shouldProcess` checks the delivery
   is not already `RECEIVED`.
-- The DB constraint `add-unique-constraint-stock-movement-ext-ref-type-product`
+- The DB constraint `add-unique-index-stock-movement-doc-detail-type-product-entry-reason`
   ensures the stock-movement table cannot record the same delivery twice.
 - Combined, retries are safe: a retried event either skips (already
   RECEIVED) or no-ops at the stock layer (constraint blocks the duplicate
@@ -338,17 +338,18 @@ Two distinct flavors of "cancel" exist; do not confuse them.
 - Allowed only on `ORDERED` or `PARTIALLY_DELIVERED` purchases
   (`guardCanCancelLines`).
 - **Cancellation is absolute, not incremental.** Each
-  `PurchaseCancelLinesDto(purchaseLineId, quantityCanceled)` *sets* the
-  line's `quantityCanceled` to that exact value — there is no "cancel an
-  additional N" operation. Callers should always send the cumulative
-  total they want recorded.
-- `guardCancelQuantity` rejects `quantityCanceled > (quantityOrdered − quantityDelivered)`
-  — already-delivered units cannot be canceled. The DTO value replaces the prior
-  `quantityCanceled` outright, so reducing a prior cancellation is also legal — pass
-  a smaller number.
+  `PurchaseCancelLinesDto(purchaseLineId, quantityCanceled, unitId?)` *sets* the
+  line's `storageQuantityCanceled` — there is no "cancel an additional N" operation. Callers should always send the
+  cumulative total they want recorded. The typed quantity is in `unitId`, or the line's ordered unit when absent, so a
+  user can cancel an exact remainder in a smaller unit (13 Pieces of a 1-Bale line). `unitId` must be in the product's
+  unit group and is not stored; the counter becomes `quantityCanceled × that unit's size in the root`.
+- `guardCancelQuantity` rejects a counter that, with `storageQuantityDelivered`, exceeds the ordered storage quantity
+  — already-delivered units cannot be canceled. The value replaces the prior counter outright, so reducing a prior
+  cancellation is also legal. After 5 Pieces are delivered against a 1-Bale line, canceling 13 Pieces completes the line
+  exactly, while canceling 0.72 Bale (default unit) leaves a sliver open.
 - After applying cancellations, the purchase status is recomputed by
   `resolvePurchaseStatus`:
-  - All lines accounted for (`delivered + canceled == ordered`) **and at
+  - All lines accounted for (no positive remaining storage quantity) **and at
     least one line had a delivery** → `FULLY_DELIVERED`.
   - All lines accounted for **but nothing was ever delivered** →
     `CANCELED`.
@@ -385,8 +386,8 @@ question for a given purchase. It compares two views of value:
 
 | Number           | Formula                                                         | Source                                      |
 |------------------|-----------------------------------------------------------------|---------------------------------------------|
-| `poTotal`        | Σ over lines: `unitCost × (quantityOrdered − quantityCanceled)` | The agreed PO price for what still stands.  |
-| `deliveredTotal` | Σ over delivery lines: `unitCost × quantityDelivered`           | The actual cost of what has shipped so far. |
+| `poTotal`        | Σ over lines: `PurchaseLineEntity.getTotalCost()` (ordered total scaled to the expected storage quantity) | The agreed PO price for what still stands.  |
+| `deliveredTotal` | Σ over delivery lines: `unitCost × userProvidedQuantityDelivered`           | The actual cost of what has shipped so far. |
 
 The two can differ in two ways:
 
@@ -404,8 +405,8 @@ The ceiling reconciles those views by stage:
 | Fully delivered (every line's remaining ≤ 0) | `deliveredTotal`               | The PO is now historical; what we *actually received* is what we owe.                                                                            |
 
 "Fully delivered" requires `deliveredTotal > 0` AND every line's
-`remainingQuantity ≤ 0` — i.e. `quantityDelivered + quantityCanceled ≥
-quantityOrdered` for every line. Once true, the ceiling **locks** to
+no positive `storageQuantityRemaining` — i.e. `storageQuantityDelivered + storageQuantityCanceled ≥
+` the ordered storage quantity for every line. Once true, the ceiling **locks** to
 `deliveredTotal` and the `recordPayment` guard kicks in (see below).
 
 ### Record payment (`SupplierPaymentService.recordPayment`)
@@ -529,7 +530,7 @@ of which acquire the lock first. `updateNotes` writes only the notes
 column — low contention risk; we accept the lack of locking there.
 
 The DB unique constraint
-`add-unique-constraint-stock-movement-ext-ref-type-product` provides a
+`add-unique-index-stock-movement-doc-detail-type-product-entry-reason` provides a
 second layer of safety inside the async `PurchaseDeliveryInventoryProcessor`
 — it guarantees retries can never double-post the same delivery to
 stock.
@@ -546,8 +547,8 @@ called out here because the purchase package is a common reference point.
 - Entities (`PurchaseEntity`, `PurchaseLineEntity`, `PurchaseDeliveryEntity`,
   `PurchaseDeliveryLineEntity`, `SupplierPaymentEntity`) carry only column
   annotations and insert/update restrictions. Tiny helpers live on the
-  *line* entities: `PurchaseLineEntity.getExpectedQuantity` /
-  `getRemainingQuantity` / `getTotalCost` and
+  *line* entities: `PurchaseLineEntity.storageQuantityExpected` /
+  `storageQuantityRemaining` / `getTotalCost` and
   `PurchaseDeliveryLineEntity.lineTotal`. The header entities have no
   helper methods.
 - Domain DTOs (`PurchaseLineDto`, `PurchaseDeliveryContext`,
@@ -619,7 +620,7 @@ Rules every new processor must follow:
 1. Implement `shouldProcess` as a fast existence check on the natural key
    of whatever the processor writes.
 2. Back that check with a **unique DB constraint** on the natural key.
-   Example: `add-unique-constraint-stock-movement-ext-ref-type-product`
+   Example: `add-unique-index-stock-movement-doc-detail-type-product-entry-reason`
    blocks duplicate stock movements per (delivery, product).
 3. Be re-entrant: a retried event must produce the same end state.
 4. Wrap `handle` in `@TransactionalOnLocationSchema`; `shouldProcess` may

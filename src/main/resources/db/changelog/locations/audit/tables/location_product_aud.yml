@@ -17,49 +17,63 @@ databaseChangeLog:
                   type: uuid
                   constraints:
                     nullable: false
+
               - column:
                   name: rev
                   type: bigint
                   constraints:
                     nullable: false
+
               - column:
                   name: revtype
                   type: smallint
                   constraints:
                     nullable: false
+
               - column:
                   name: product_id
                   type: uuid
+
               - column:
                   name: name
                   type: varchar(100)
+
               - column:
                   name: description
                   type: nvarchar2(1000)
+
               - column:
                   name: product_group_name
                   type: varchar(100)
+
               - column:
                   name: category_id
                   type: uuid
+
               - column:
                   name: base_unit_id
                   type: uuid
+
               - column:
                   name: default_sale_price
-                  type: decimal(15,2)
+                  type: decimal(28,10)
+
               - column:
                   name: min_stock_level
                   type: integer
+
               - column:
                   name: status
                   type: varchar(5)
+
               - column:
                   name: revend
                   type: bigint
+
               - column:
                   name: revend_tstmp
                   type: timestamp
+
               - column:
                   name: last_purchase_price
                   type: decimal(15,2)

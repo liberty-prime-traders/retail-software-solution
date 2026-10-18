@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -27,9 +26,9 @@ class SaleSessionStockOverlay(
                 reservationsByLocationProductId[saleSessionLine.locationProductId]?.forSale(saleId)
             } ?: BigDecimal.ZERO
             saleSessionLine.copy(
-                quantityOnHand = Decimals.Scale4.round(availability.quantityOnHand),
-                quantityReserved = Decimals.Scale4.round(availability.quantityReserved.subtract(ownReservation)),
-                quantityAvailable = Decimals.Scale4.round(availability.quantityAvailable.add(ownReservation)),
+                storageQuantityOnHand = availability.quantityOnHand,
+                storageQuantityReserved = availability.quantityReserved.subtract(ownReservation),
+                storageQuantityAvailable = availability.quantityAvailable.add(ownReservation),
             )
         }
         return saleSession.copy(saleLines = populatedSaleLines)

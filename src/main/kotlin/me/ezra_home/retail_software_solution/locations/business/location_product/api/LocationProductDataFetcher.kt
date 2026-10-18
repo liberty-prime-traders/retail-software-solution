@@ -9,7 +9,6 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
@@ -99,6 +98,9 @@ class LocationProductDataFetcher(
         locationProductRepository.findAllById(locationProductIds)
             .associate { it.id!! to it.baseUnitId }
 
+    fun getBaseUnitIdsByOrgProductIds(orgProductIds: Collection<UUID>): Map<UUID, UUID> =
+        locationProductRepository.findByOrgProductIdIn(orgProductIds).associate { it.orgProductId to it.baseUnitId }
+
     fun getOrgProductIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
         locationProductRepository.findAllById(locationProductIds)
             .associate { it.id!! to it.orgProductId }
@@ -118,23 +120,21 @@ class LocationProductDataFetcher(
                 )
             }
 
-    fun getConversionRatios(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, ConversionRatio> {
+    // A unit outside the product's unit group is rejected
+    fun getStorageUnitsPerUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
         if (productUnitRequests.isEmpty()) return emptyMap()
-        return populateConversionInfo(productUnitRequests).associate { it.locationProductId to it.conversionRatio }
-    }
-
-    private fun populateConversionInfo(productUnitRequests: List<LocationProductUnitRequestDto>): List<LocationProductUnitDto> {
-        if (productUnitRequests.isEmpty()) return emptyList()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
-        return productUnitRequests.map { (locationProductId, unitId) ->
-            val baseUnitId = baseUnitIds[locationProductId]!!
-            LocationProductUnitDto(
-                locationProductId = locationProductId,
-                unitId = unitId,
-                baseUnitId = baseUnitId,
-                conversionRatio = unitConversionGraph.getRatio(unitId, baseUnitId)
-            )
+        return productUnitRequests.associate { (locationProductId, unitId) ->
+            val baseUnitId = baseUnitIds.getValue(locationProductId)
+            if (unitConversionGraph.getStorageUnitId(unitId) != unitConversionGraph.getStorageUnitId(baseUnitId)) {
+                throw RtsGenericException(UNIT_OUTSIDE_PRODUCT_GROUP)
+            }
+            locationProductId to unitConversionGraph.getSizeInRoot(unitId)
         }
+    }
+
+    companion object {
+        const val UNIT_OUTSIDE_PRODUCT_GROUP = "The unit must belong to the same unit group as the product's base unit"
     }
 }

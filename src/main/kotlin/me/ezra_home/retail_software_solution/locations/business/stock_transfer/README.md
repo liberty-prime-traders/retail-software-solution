@@ -30,7 +30,19 @@ All three events (`StockTransferDispatchedEvent`, `StockTransferCancelledEvent`,
 
 ## FIFO allocation
 
-`StockTransferFifoAllocator` splits a draft line into one or more dispatch lines, one per cost group. A single draft line for a product with stock at two different unit costs produces two dispatch lines. This means any consumer of those lines must accumulate a running balance per `locationProductId` across lines — not use a single pre-fetched balance for each line — because multiple lines for the same product share the same balance accumulator. Both `recordTransferReceipt` in `StockTransferReceiptStockUpdater` and `consumeStockForDispatch` in `StockTransferStockUpdater` follow this: they group their incoming lines by `locationProductId` and thread the running balance across a product's own lines before moving to the next product.
+`StockTransferFifoAllocator` splits a draft line into one or more dispatch lines, one per cost group. A single draft line for a product with stock at two different rates produces two dispatch lines. This means any consumer of those lines must accumulate a running balance per `locationProductId` across lines — not use a single pre-fetched balance for each line — because multiple lines for the same product share the same balance accumulator. Both `recordTransferReceipt` in `StockTransferReceiptStockUpdater` and `consumeStockForDispatch` in `StockTransferStockUpdater` follow this: they group their incoming lines by `locationProductId` and thread the running balance across a product's own lines before moving to the next product.
+
+A transfer draft line stores the typed `userProvidedQuantity`, its `unitId` and the `storageUnitsPerUnit` captured when the line was added or its unit changed (there is no `base_unit_id`: the product's base unit is immutable). The allocator plans the whole line once with `FifoTakePlanner.planTakes` (the same walk and cost rule `FifoStockConsumer` uses) and groups the planned takes into **cost groups: runs of consecutive FIFO layers whose derived rate matches at scale 4**. A run, not a group-by, so consuming the groups one after another walks the layers in the order they were planned. Each group becomes one `StockTransferDispatchLineEntity`:
+
+- `storageQuantityDispatched` is the group's exact share and `costDispatched` the cost consumed for it (the sum of its takes' `moved_cost`), so the groups' costs sum to the cost consumed and a layer's cost is conserved across locations. `unitCost` is the derived rate (`costDispatched ÷ storageQuantityDispatched`, scale 10) for display; a total is never recovered by multiplying it back.
+- `wholeLineUserProvidedQuantity`, `unitId` and `storageUnitsPerUnit` are the **draft line's whole-line values, identical on every cost-group row of that line** and never a share of it (the column is `whole_line_user_provided_quantity`, and the Kafka line DTO carries the same name). Never sum `wholeLineUserProvidedQuantity` across a line's rows. Its wire field `quantity` is that whole figure, and `storageQuantity` / `storageBreakdownText` carry the row's own share.
+- The source consumes, and the destination receives, exactly `storageQuantityDispatched` (`StockTransferDispatchedLineDto`), so neither side converts anything.
+
+The movements a dispatch line produces use the dispatch's reference as `document_reference` and the dispatch line's reference as `detail_reference`, which also makes the several cost-group lines of one transfer distinct in the unique indexes. Cancel and receipt idempotency check `detail_reference` within the dispatch's `document_reference`.
+
+## Storage unit match
+
+Dispatch quantities are in the source product's storage unit (the root of its unit group), so the destination product must count stock in the same root. Two locations can hold different base units for the same org product, so the check compares roots, not product ids. `StockTransferDispatchService.dispatch` checks it before any stock event (`guardDestinationCountsInSameStorageUnit`, reading the destination's base units through `StockTransferSchemaGateway.readBaseUnitIdsByOrgProductId`); `StockTransferReceiptStockUpdater` re-checks it as a backstop before creating any layer.
 
 ## Reservation-aware dispatch guard
 
@@ -38,14 +50,14 @@ All three events (`StockTransferDispatchedEvent`, `StockTransferCancelledEvent`,
 lines' `locationProductId`s before reading any `stock_entry` rows — including the
 `getFifoEntriesByProduct` read that feeds `StockTransferFifoAllocator`'s cost-group split.
 This closes the window where a concurrent sale or transfer could otherwise change the FIFO
-cost layers between that read and the dispatch lines being persisted, which would leave the
-recorded `unitCost`/`totalDispatchedCost` inconsistent with what `StockTransferStockUpdater`
+layers between that read and the dispatch lines being persisted, which would leave the
+recorded `costDispatched` / `totalDispatchedCost` inconsistent with what `StockTransferStockUpdater`
 actually decrements moments later. Before `StockTransferFifoAllocator` runs, `dispatch` also
 calls `StockAvailabilityValidator.guardSufficientStock` (`stock/api/`) with each draft line's
-base quantity. This nets on-hand balance against the **total** of any live sale
+exact storage quantity. This nets on-hand balance against the **total** of any live sale
 reservations (`StockReserver.loadReservationBreakdown(...).total`) for the same
-`locationProductId`, and throws before allocation if a transfer would take stock a sale
-has already reserved. Unlike `SaleValidator.guardSufficientStockForSale`, this call never
+`locationProductId`, compares exactly with no tolerance, and throws before allocation if a transfer would take
+stock a sale has already reserved. Unlike `SaleValidator.guardSufficientStockForSale`, this call never
 excludes anything — draft transfers hold no reservation of their own today, so there is no
 "self" to exclude. If transfers ever need to hold stock across a real draft window (not
 just draft → immediate dispatch), that's the trigger to give transfers their own
@@ -70,7 +82,7 @@ protection can't depend on which caller remembers to ask for it).
 ## Draft line availability display
 
 `ReconciledTransferLineFetcher.draftLines` populates each `ReconciledTransferLine`'s
-`quantityAvailable` via `StockAvailabilityFetcher.fetch` (`stock/api/`) — the same shared
+`quantityAvailable` (in the product's base unit, rounded down) via `StockAvailabilityFetcher.fetch` (`stock/api/`) — the same shared
 component `LocationProductForSaleAssembler` and `SaleSessionStockOverlay` use for their own
 availability displays. The underlying `quantityAvailable` nets on-hand balance against the
 **total** of live sale reservations, with no exclusion, matching `guardSufficientStock`'s

@@ -1,18 +1,11 @@
 # Unit Value Package — Rules & Expectations
 
-This document is the canonical reference for **how a unit of measure
-behaves** in RTSS. It is intended to be consumed by humans browsing the
-codebase **and** by RAG agents that need to answer questions like *"why
-does HALF_LITRE convert to MILLILITRE and not LITRE?"* without re-reading
-every class.
+This document is the canonical reference for **how a unit of measure behaves** in RTSS. It is intended to be
+consumed by humans browsing the codebase **and** by RAG agents that need to answer questions like *"which unit is
+stock counted in?"* without re-reading every class.
 
-This package defines the org-scoped catalog of units (`unit_value`) and
-each unit's relationship to its group's atomic base unit. It is the
-smaller, simpler half of the unit-conversion story — see
-`organizations/business/unitconversion/README.md` for the graph that
-combines this package's hierarchy with manually-declared cross-group
-edges, and `util/business/ConversionRatio.kt` for the shared
-numerator/denominator value type both packages use.
+This package defines the org-scoped catalog of units (`unit_value`) and each unit's place in its group's chain. The
+index and graph built from it live in `organizations/business/unitconversion/README.md`.
 
 ---
 
@@ -20,77 +13,101 @@ numerator/denominator value type both packages use.
 
 ```
 organizations/business/unitvalue/       — unit catalog, hierarchy, seeding
-organizations/business/unitvalue/api/   — public surface (UnitValueFetcher, UnitValueService, DTOs)
+organizations/business/unitvalue/api/   — public surface (UnitValueFetcher, UnitValueService, UnitChainResolver, DTOs)
 ```
 
-Cross-domain callers **MUST** go through `api/` (enforced by
-`ArchitectureTest`). `UnitValueCache`, `UnitValueMapper`,
-`UnitValueValidator`, `UnitValueSeeder`, and `SystemUnitValue` are
-internal to this package.
+Cross-domain callers **MUST** go through `api/` (enforced by `ArchitectureTest`). `UnitValueCache`,
+`UnitValueMapper`, `UnitValueValidator` and `UnitValueSeeder` are internal to this package.
 
-| Class                | Purpose                                            |
-|----------------------|----------------------------------------------------|
-| `UnitValueEntity`    | One row per unit (`unit_value` table)              |
-| `UnitValueCache`     | Cached repository access, keyed by org schema      |
-| `UnitValueValidator` | Insert/update validation                           |
-| `SystemUnitValue`    | Seed data enum — every org starts with these units |
-| `UnitValueSeeder`    | Persists `SystemUnitValue` entries on org creation |
-| `UnitValueFetcher`   | Read-only public surface (names, response DTOs)    |
-| `UnitValueService`   | Public write surface (create/update/delete)        |
+| Class                | Purpose                                                                                    |
+|----------------------|--------------------------------------------------------------------------------------------|
+| `UnitValueEntity`    | One row per unit (`unit_value` table)                                                      |
+| `UnitValueCache`     | Cached repository access, keyed by org schema                                              |
+| `UnitValueValidator` | Insert/update validation                                                                   |
+| `SystemUnitValue`    | Seed data enum: every org starts with these units                                          |
+| `UnitValueSeeder`    | Persists `SystemUnitValue` entries on org creation, matching existing rows by code         |
+| `UnitChainResolver`  | Resolves every unit's root and size in that root; the one place that checks cycles and size |
+| `UnitValueFetcher`   | Read-only public surface (names, response DTOs)                                            |
+| `UnitValueService`   | Public write surface (create/update/delete)                                                |
 
-## 2. The core invariant: always "1 of this unit = N of its base unit"
+## 2. One root per group
 
-Every `unit_value` row with a non-null `baseUnit` is, by construction,
-framed as **"1 of this unit equals `unitsOfBasePerUnit` of its base
-unit."** The "1" side is never stored — it's implicit. That means the
-table only needs **one** integer column
-(`unitsOfBasePerUnit: Long?`), not a numerator/denominator pair, to
-represent the relationship exactly.
+Every group has exactly one **root**: the unit with no `baseUnit`. It is fixed when the group is created and is
+never searched for at runtime. Following `baseUnit` from any unit ends at the root.
 
-This only works because the invariant is enforced:
+| Group                    | Root                                                                                       |
+|--------------------------|--------------------------------------------------------------------------------------------|
+| Weight, Volume, Count    | Seeded: Gram, Millilitre, Piece (`SystemUnitValue`)                                        |
+| A custom group           | The Piece inserted by `UnitValueService.ensurePieceUnitExists`, with `systemDefined = true` |
+| Miscellaneous            | None shared: every MISC unit is its own root                                               |
 
-- `UnitValueValidator` rejects `unitsOfBasePerUnit < 1` on both insert
-  and update. A unit can never be defined as "0.5 of its base unit" —
-  if you need a fractional relationship, point the smaller unit at the
-  group's true atomic base instead (see below).
-- Units with no `baseUnit` (e.g. `GRAM`, `MILLILITRE`, `PIECE`) are a
-  group's **atomic root** — the unit everything else in that group is
-  ultimately expressed in whole numbers of.
+Because the roots are `systemDefined`, `UnitValueService` rejects editing or deleting them. The auto Piece's code
+comes from `SystemUnitValue.pieceCodeForGroup`, which truncates the group name slug, so two long group names can
+produce the same code; `validateRootUnitInsert` rejects that collision with a clear error.
 
-**Concrete example — why `HALF_LITRE` points at `MILLILITRE`, not
-`LITRE`:** a half-litre is 0.5 litres, which would violate the
-whole-number invariant if `LITRE` were its base unit. Instead
-`HALF_LITRE.baseUnit = MILLILITRE` with `unitsOfBasePerUnit = 500` — a
-clean whole number. **Rule of thumb: always anchor a unit's `baseUnit`
-to its group's ultimate atomic root, never to an intermediate unit,**
-even when the intermediate unit "looks" more natural — otherwise you
-risk landing on a fraction the validator will reject.
+## 3. The chain and a unit's size in the root
 
-See `SystemUnitValue.kt` for the full seed hierarchy
-(WEIGHT: `GRAM` ← `KILOGRAM` ← `TONNE`; VOLUME: `MILLILITRE` ←
-`LITRE`, `HALF_LITRE`; COUNTABLE: `PIECE` ← `DOZEN`, `CRATE`, `TRAY`).
+A unit's `baseUnit` may be **any unit in the same group**, so Tonne → Kilogram → Gram is valid. Each unit is
+"1 of this unit = `unitsOfBasePerUnit` of its base unit", a whole number of at least 1. A unit's size in the root is
+the product of `unitsOfBasePerUnit` along the chain, computed by `UnitChainResolver` with `Math.multiplyExact`.
 
-## 3. Why this doesn't generalize to unit_conversion
+`UnitChainResolver` rejects:
 
-`organizations/business/unitconversion` (the manual, cross-group edge
-table) is a genuinely free ratio — "1 box of nails = 2.3 kg" is not
-integer-reducible on either side, and `UnitConversionValidator`
-explicitly forbids same-group pairs (same-group units are already
-connected via this package's hierarchy). That table stores a full
-`factorNumerator`/`factorDenominator` pair. Don't be tempted to apply
-this package's single-column simplification there.
+- a cycle or self-reference;
+- a `baseUnit` that does not exist;
+- a chain product that overflows `Long`;
+- a size in the root above 1,000,000,000 (`MAX_SIZE_IN_ROOT`). 1,000,000,000 times the largest `numeric(19,4)`
+  user quantity is 10^24 − 10^5, which fits `numeric(28,4)`.
 
-## 4. Wire surface
+`UnitValueValidator` resolves the **whole group** with the edited or new unit applied, so updating a mid-chain unit
+re-validates every unit whose chain passes through it.
 
-`UnitValueInsertDto` / `UnitValueUpdateDto` / `UnitValueResponseDto`
-all expose `unitsOfBasePerUnit: Long?` directly — it's already a plain
-whole number, so there's no derived decimal to compute for display.
+Units of equal size in one group are allowed, including a unit with `unitsOfBasePerUnit = 1`.
 
-## 5. Cache invalidation
+## 4. Insert and update rules
 
-`UnitValueCache` is keyed by org schema and evicted wholesale
-(`@CacheEvict(allEntries = true)`) on every create/save/delete.
-`UnitValueService` also calls
-`unitConversionGraphFacade.invalidate()` after every mutation — the
-graph in `unitconversion/` is built from this package's data, so a
-stale unit hierarchy would otherwise linger in the graph cache.
+- Outside Miscellaneous, an insert requires a `baseUnit` and `unitsOfBasePerUnit`: the only unit without one is the
+  root, and it already exists.
+- A Miscellaneous unit cannot have a `baseUnit`, and no unit can name a Miscellaneous unit as its `baseUnit`
+  (a base must be in the same group, and MISC units stand alone).
+- An update cannot give a root a `baseUnit`. `UnitValueUpdateDto.applyTo` cannot clear a `baseUnit`, because an
+  empty `Optional` keeps the existing value.
+- A unit's group cannot change (`UnitValueUpdateDto` has no group).
+- A used unit's `unitsOfBasePerUnit` and `baseUnit` can change while the chain still ends at the root with whole
+  numbers. Stock is counted in the root and lines keep their captured ratio, so neither moves; only the meaning of
+  the unit from then on changes.
+- A unit that is another unit's `baseUnit` cannot be deleted.
+
+### Names
+
+Unit names are unique within their group, and group names within the organization, compared on alphanumerics only:
+case, whitespace and punctuation are ignored ("Pack Size", "Pack-Size" and "packsize" are the same name).
+`StringUtils.isEquivalentOnAlphanumerics` does the comparison (NFKC, Unicode letters and digits), and a name with no
+letter or digit is rejected. `StringUtils.isEquivalent` is unchanged and keeps punctuation.
+
+Name checks run against `UnitValueCache` inside an advisory lock: unit mutations lock
+`LockNamespaces.UNIT_GROUP` on the group id, and group creation locks `LockNamespaces.UNIT_GROUP_NAME`. Two
+concurrent requests cannot both pass the cycle or name check. There is no normalized-name column.
+
+## 5. Miscellaneous
+
+`SystemUnitValue.MISC_PIECE` (code `misc-pc`) is seeded in Miscellaneous and is distinct from Count's Piece (`pc`).
+The seeder matches rows by code, so seeding twice leaves one. Miscellaneous is excluded from Piece auto-insert like
+every system group (`SystemUnitGroup`).
+
+## 6. Wire surface
+
+`UnitValueInsertDto` / `UnitValueUpdateDto` / `UnitValueResponseDto` all expose `unitsOfBasePerUnit: Long?`
+directly.
+
+## 7. Cache invalidation
+
+`UnitValueCache` is keyed by org schema and evicted wholesale (`@CacheEvict(allEntries = true)`) on every
+create/save/delete. `UnitValueService` also calls `unitConversionGraphFacade.invalidate()` after every mutation;
+that call evicts immediately and again after the transaction completes (see the `unitconversion` README).
+
+Both caches are per node. `UnitValueCache` is Caffeine (`maximumSize=100`, no TTL) and the graph is a per-JVM map,
+so eviction reaches only the node that handled the write. In a multi-node deployment the other nodes keep serving
+the old unit hierarchy until they restart or evict by size. A line's ratio is captured once, when the line is
+created or its unit changes, so a capture on a stale node stores the old factor permanently. This is an accepted
+risk, because unit edits are rare admin actions.

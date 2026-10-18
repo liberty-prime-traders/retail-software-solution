@@ -1,16 +1,18 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineDto
 import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionUiOptions
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
+import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.mapstruct.Context
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 
 
@@ -65,12 +67,67 @@ object SaleSessionQualifierUtil {
         @Context paymentMethodNamesById: Map<UUID, String>,
     ): String? = paymentMethodNamesById[paymentMethodId]
 
-    @SaleLineDefaultSalePrice
-    fun deriveDefaultSalePrice(saleLineDto: SaleLineDto): BigDecimal =
-        saleLineDto.conversionRatio.invert().applyToPrice(saleLineDto.unitPrice)
-
     @LineConversionFactor
-    fun toConversionFactor(saleSessionLine: SaleSessionLine): BigDecimal = saleSessionLine.conversionRatio.displayFactor()
+    fun toConversionFactor(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = BaseUnitDisplay.conversionFactor(
+        saleSessionLine.storageUnitsPerUnit, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine)
+    )
+
+    @LineBaseQuantity
+    fun toLineBaseQuantity(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = BaseUnitDisplay.baseQuantity(
+        saleSessionLine.userProvidedQuantity,
+        saleSessionLine.storageUnitsPerUnit,
+        lineMappingContext.baseUnitSizeInRootFor(saleSessionLine),
+        RoundingMode.DOWN,
+    )
+
+    // On hand and available round down and reserved rounds up, so the displayed available never exceeds what can be sold.
+    @LineOnHandInProductBaseUnit
+    fun toLineOnHandInProductBaseUnit(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
+        saleSessionLine.storageQuantityOnHand, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.DOWN
+    )
+
+    @LineReservedInProductBaseUnit
+    fun toLineReservedInProductBaseUnit(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
+        saleSessionLine.storageQuantityReserved, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.UP
+    )
+
+    @LineAvailableInProductBaseUnit
+    fun toLineAvailableInProductBaseUnit(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
+        saleSessionLine.storageQuantityAvailable, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.DOWN
+    )
+
+    @LineOnHandBreakdown
+    fun toLineOnHandBreakdown(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): String = lineMappingContext.breakdownFor(saleSessionLine).render(ExactQuantity.ofStorage(saleSessionLine.storageQuantityOnHand))
+
+    @LineAvailableBreakdown
+    fun toLineAvailableBreakdown(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): String = lineMappingContext.breakdownFor(saleSessionLine).render(ExactQuantity.ofStorage(saleSessionLine.storageQuantityAvailable))
+
+    @LineNetTotal
+    fun toLineNetTotal(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): BigDecimal = lineMappingContext.netLineTotalFor(saleSessionLine)
 
     @SaleLineBaseUnitId
     fun resolveBaseUnitId(

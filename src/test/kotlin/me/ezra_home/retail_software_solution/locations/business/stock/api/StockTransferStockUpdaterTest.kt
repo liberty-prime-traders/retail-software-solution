@@ -6,7 +6,11 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockEntry
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
+import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
+import org.mockito.ArgumentMatchers.anyCollection
+import java.time.OffsetDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
@@ -22,31 +26,33 @@ class StockTransferStockUpdaterTest {
     fun `consumeStockForDispatch accumulates a running balance across multiple dispatch lines for the same product`() {
         val locationProductId = UUID.randomUUID()
         val firstDispatchLineRequest = StockTransferDispatchLineStockRequest(
-            dispatchLineRef = "DISPATCH-LINE-1",
+            dispatchReference = "DISPATCH-1",
+            dispatchLineReference = "DISPATCH-LINE-1",
             locationProductId = locationProductId,
-            baseQuantity = BigDecimal("10.0000"),
+            storageQuantity = ExactQuantity.ofStorage(BigDecimal("10.0000")),
+            userProvidedQuantity = BigDecimal("10.0000"),
             unitId = UUID.randomUUID(),
-            unitCost = BigDecimal("5.00"),
-            conversionRatio = ConversionRatio.IDENTITY,
-            baseUnitId = UUID.randomUUID(),
+            storageUnitsPerUnit = 1L,
         )
         val secondDispatchLineRequest = StockTransferDispatchLineStockRequest(
-            dispatchLineRef = "DISPATCH-LINE-2",
+            dispatchReference = "DISPATCH-1",
+            dispatchLineReference = "DISPATCH-LINE-2",
             locationProductId = locationProductId,
-            baseQuantity = BigDecimal("15.0000"),
+            storageQuantity = ExactQuantity.ofStorage(BigDecimal("15.0000")),
+            userProvidedQuantity = BigDecimal("15.0000"),
             unitId = UUID.randomUUID(),
-            unitCost = BigDecimal("6.00"),
-            conversionRatio = ConversionRatio.IDENTITY,
-            baseUnitId = UUID.randomUUID(),
+            storageUnitsPerUnit = 1L,
         )
         val locationProductIds = listOf(locationProductId, locationProductId)
 
         val stockEntry = StockEntryEntity(
             locationProductId = locationProductId,
-            batchSize = BigDecimal("100.0000"),
-            quantityRemaining = BigDecimal("100.0000"),
+            storageBatchSize = BigDecimal("100.0000"),
+            storageQuantityRemaining = BigDecimal("100.0000"),
             priority = 0,
             unitCost = BigDecimal("5.00"),
+            batchCost = BigDecimal("500.0000"),
+            costRemaining = BigDecimal("500.0000"),
         )
         stockEntry.id = UUID.randomUUID()
 
@@ -55,6 +61,15 @@ class StockTransferStockUpdaterTest {
         val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
         val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
         val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
+        val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
+        val pieceId = UUID.randomUUID()
+        `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(
+            mapOf(
+                locationProductId to QuantityBreakdown.forBaseUnit(
+                    listOf(BreakdownUnit(pieceId, "Piece", 1L, pieceId, OffsetDateTime.now())), pieceId
+                )
+            )
+        )
 
         `when`(stockEntryRepository.findFifoEntriesForProducts(locationProductIds)).thenReturn(listOf(stockEntry))
         `when`(stockBalanceFetcher.getLatestBalances(locationProductIds))
@@ -66,6 +81,7 @@ class StockTransferStockUpdaterTest {
             stockMovementRepository = stockMovementRepository,
             locationProductDataFetcher = locationProductDataFetcher,
             stockBalanceFetcher = stockBalanceFetcher,
+            stockBreakdownProvider = stockBreakdownProvider,
             entityAdvisoryLock = entityAdvisoryLock,
         )
 
@@ -74,10 +90,10 @@ class StockTransferStockUpdaterTest {
         @Suppress("UNCHECKED_CAST")
         val movementsCaptor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<StockMovementEntity>>
         verify(stockMovementRepository).saveAll(movementsCaptor.capture())
-        val movementsByDispatchLineRef = movementsCaptor.value.associateBy { it.externalReferenceNumber }
+        val movementsByDispatchLineRef = movementsCaptor.value.associateBy { it.detailReference }
 
         // Second line's balance must reflect the first line's consumption, not the original pre-dispatch balance.
-        assertEquals(BigDecimal("90.0000"), movementsByDispatchLineRef.getValue("DISPATCH-LINE-1").remainingQuantity)
-        assertEquals(BigDecimal("75.0000"), movementsByDispatchLineRef.getValue("DISPATCH-LINE-2").remainingQuantity)
+        assertEquals(BigDecimal("90.0000"), movementsByDispatchLineRef.getValue("DISPATCH-LINE-1").storageRemainingQuantity)
+        assertEquals(BigDecimal("75.0000"), movementsByDispatchLineRef.getValue("DISPATCH-LINE-2").storageRemainingQuantity)
     }
 }

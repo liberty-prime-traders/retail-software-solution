@@ -5,14 +5,15 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.hibernate.envers.Audited
 import java.math.BigDecimal
 import java.util.UUID
 
+// Delivered and canceled counters have no user-provided twin, so ordered, delivered and canceled compare exactly in storage units
 @Audited
 @Entity
 @Table(name = TableNames.PURCHASE_LINE)
@@ -25,8 +26,8 @@ class PurchaseLineEntity(
   @Column(name = "location_product_id", nullable = false, updatable = false)
   override var locationProductId: UUID,
 
-  @Column(name = "quantity_ordered", nullable = false, precision = 19, scale = 4)
-  var quantityOrdered: BigDecimal,
+  @Column(name = "user_provided_quantity_ordered", nullable = false, precision = 19, scale = 4)
+  var userProvidedQuantityOrdered: BigDecimal,
 
   @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
   override var unitCost: BigDecimal,
@@ -34,24 +35,32 @@ class PurchaseLineEntity(
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "conversion_numerator", nullable = false)
-  override var conversionNumerator: Long,
+  @Column(name = "storage_units_per_unit", nullable = false)
+  var storageUnitsPerUnit: Long,
 
-  @Column(name = "conversion_denominator", nullable = false)
-  override var conversionDenominator: Long,
+  @Column(name = "storage_quantity_delivered", nullable = false, precision = 28, scale = 4)
+  var storageQuantityDelivered: BigDecimal = BigDecimal.ZERO,
 
-  @Column(name = "quantity_delivered", nullable = false, precision = 19, scale = 4)
-  var quantityDelivered: BigDecimal = BigDecimal.ZERO,
+  @Column(name = "storage_quantity_canceled", nullable = false, precision = 28, scale = 4)
+  var storageQuantityCanceled: BigDecimal = BigDecimal.ZERO
 
-  @Column(name = "quantity_canceled", nullable = false, precision = 19, scale = 4)
-  var quantityCanceled: BigDecimal = BigDecimal.ZERO
+) : HasLocationProduct, HasUnitCost, HasReferenceEntity() {
 
-) : HasLocationProduct, HasUnitCost, HasReferenceEntity(), HasConversionRatio {
+  fun storageQuantityOrdered(): ExactQuantity = ExactQuantity.ofUserProvided(userProvidedQuantityOrdered, storageUnitsPerUnit)
 
-  fun getExpectedQuantity(): BigDecimal = quantityOrdered.subtract(quantityCanceled)
+  fun storageQuantityExpected(): ExactQuantity = storageQuantityOrdered() - ExactQuantity.ofStorage(storageQuantityCanceled)
 
-  fun getRemainingQuantity(): BigDecimal = getExpectedQuantity() - quantityDelivered
+  fun storageQuantityRemaining(): ExactQuantity = storageQuantityExpected() - ExactQuantity.ofStorage(storageQuantityDelivered)
 
-  fun getTotalCost(): BigDecimal = Decimals.Scale4.multiply(unitCost, getExpectedQuantity())
+  // Nothing canceled gives the exact ordered total; otherwise it is scaled once and rounded
+  fun getTotalCost(): BigDecimal {
+    val orderedTotal = Decimals.Scale4.multiply(unitCost, userProvidedQuantityOrdered)
+    val orderedStorageQuantity = storageQuantityOrdered().toStorageQuantity()
+    if (storageQuantityCanceled.signum() == 0) return orderedTotal
+    return Decimals.Scale4.divide(
+      orderedTotal.multiply(storageQuantityExpected().toStorageQuantity()),
+      orderedStorageQuantity
+    )
+  }
 
 }

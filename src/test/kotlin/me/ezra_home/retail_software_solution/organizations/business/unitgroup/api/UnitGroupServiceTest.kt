@@ -1,9 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitgroup.api
 
+import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
@@ -30,7 +33,7 @@ class UnitGroupServiceTest {
         `when`(unitGroupCache.create(insertDto)).thenReturn(groupDto)
         `when`(unitGroupMapper.toResponseDto(groupDto)).thenReturn(responseDto)
 
-        val service = UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService)
+        val service = UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService, mock(OrgEntityAdvisoryLock::class.java))
 
         val result = service.createUnitGroup(insertDto)
 
@@ -44,11 +47,29 @@ class UnitGroupServiceTest {
         val unitGroupCache = mock(UnitGroupCache::class.java)
         val unitValueService = mock(UnitValueService::class.java)
 
-        val service = UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService)
+        val service = UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService, mock(OrgEntityAdvisoryLock::class.java))
 
         service.bulkCreateValidatedList(emptyList())
 
         verifyNoInteractions(unitValueService)
+    }
+
+    @Test
+    fun `createUnitGroup rejects a name equal to an existing group on alphanumerics only`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(listOf(unitGroupDto(UUID.randomUUID(), "Pack Size")))
+        val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, mock(UnitValueService::class.java), mock(OrgEntityAdvisoryLock::class.java))
+
+        assertThrows(RtsGenericException::class.java) { service.createUnitGroup(UnitGroupInsertDto(name = "Pack-Size", description = null)) }
+    }
+
+    @Test
+    fun `createUnitGroup rejects a name equal to a system group on alphanumerics only`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(listOf(unitGroupDto(UUID.randomUUID(), "Count")))
+        val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, mock(UnitValueService::class.java), mock(OrgEntityAdvisoryLock::class.java))
+
+        assertThrows(RtsGenericException::class.java) { service.createUnitGroup(UnitGroupInsertDto(name = "Co-unt", description = null)) }
     }
 
     private fun unitGroupDto(id: UUID, name: String) = UnitGroupDto(

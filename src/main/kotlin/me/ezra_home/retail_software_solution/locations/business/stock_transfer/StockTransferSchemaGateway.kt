@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
+import java.util.UUID
 
 @Component
 class StockTransferSchemaGateway(
@@ -13,7 +15,13 @@ class StockTransferSchemaGateway(
     private val stockTransferReceiptRepository: StockTransferReceiptRepository,
     private val stockTransferReceiptLineRepository: StockTransferReceiptLineRepository,
     private val reconciledTransferLineFetcher: ReconciledTransferLineFetcher,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
+
+    @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    fun readBaseUnitIdsByOrgProductId(orgProductIds: Collection<UUID>): Map<UUID, UUID> =
+        locationProductDataFetcher.getBaseUnitIdsByOrgProductIds(orgProductIds)
+
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     fun readDispatchLine(dispatchLineRef: String): StockTransferDispatchLineEntity =

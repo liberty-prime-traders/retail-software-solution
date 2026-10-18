@@ -14,7 +14,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLi
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -57,12 +56,15 @@ class ConfirmedSalePersisterCogsTest {
     private val saleLineEntity = SaleLineEntity(
         saleId = saleId,
         locationProductId = UUID.randomUUID(),
-        quantity = BigDecimal("2.0000"),
+        userProvidedQuantity = BigDecimal("2.0000"),
         unitId = UUID.randomUUID(),
-        unitPrice = BigDecimal("10.0000"),
-        conversionNumerator = 1,
-        conversionDenominator = 1,
-    ).also { it.id = saleLineId }
+        lineTotal = BigDecimal("20.0000"),
+        defaultSalePrice = BigDecimal("10.0000"),
+        storageUnitsPerUnit = 1L,
+    ).also {
+        it.id = saleLineId
+        it.referenceNumber = "SALN000001"
+    }
 
     @BeforeEach
     fun setUp() {
@@ -119,10 +121,11 @@ class ConfirmedSalePersisterCogsTest {
                 clientKey = saleLineClientKey,
                 existingId = saleLineId,
                 locationProductId = saleLineEntity.locationProductId,
-                quantity = saleLineEntity.quantity,
+                userProvidedQuantity = saleLineEntity.userProvidedQuantity,
                 unitId = saleLineEntity.unitId,
-                conversionRatio = ConversionRatio.IDENTITY,
-                unitPrice = saleLineEntity.unitPrice,
+                storageUnitsPerUnit = saleLineEntity.storageUnitsPerUnit,
+                lineTotal = saleLineEntity.lineTotal,
+                defaultSalePrice = saleLineEntity.defaultSalePrice,
             )
         ),
         saleAdjustments = emptyList(),

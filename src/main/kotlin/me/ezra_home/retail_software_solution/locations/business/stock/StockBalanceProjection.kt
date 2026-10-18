@@ -5,5 +5,5 @@ import java.util.UUID
 
 interface StockBalanceProjection {
   fun getLocationProductId(): UUID
-  fun getRemainingQuantity(): BigDecimal
+  fun getStorageRemainingQuantity(): BigDecimal
 }

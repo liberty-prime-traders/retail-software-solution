@@ -1,17 +1,17 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.ConversionRatio
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import java.math.BigDecimal
 import java.util.UUID
 
 data class FifoConsumptionRequest(
     val locationProductId: UUID,
-    val baseQuantity: BigDecimal,
+    val storageQuantity: ExactQuantity,
+    val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val conversionRatio: ConversionRatio,
+    val storageUnitsPerUnit: Long,
     val movementType: MovementType,
-    val externalReferenceNumber: String,
-    // The quantity as entered, in the unit: the last layer takes what the earlier ones left of it, so the movements sum to it exactly.
-    val enteredQuantity: BigDecimal = conversionRatio.invert().applyTo(baseQuantity),
+    val documentReference: String,
+    val detailReference: String?,
 )

@@ -4,7 +4,6 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
-import me.ezra_home.retail_software_solution.util.business.HasConversionRatio
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -24,19 +23,13 @@ class StockTransferDraftLineEntity(
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,
 
-    @Column(name = "quantity", nullable = false, precision = 28, scale = 10)
-    var quantity: BigDecimal,
+    @Column(name = "user_provided_quantity", nullable = false, precision = 19, scale = 4)
+    var userProvidedQuantity: BigDecimal,
 
     @Column(name = "unit_id", nullable = false)
     var unitId: UUID,
 
-    @Column(name = "conversion_numerator", nullable = false)
-    override var conversionNumerator: Long,
+    @Column(name = "storage_units_per_unit", nullable = false)
+    var storageUnitsPerUnit: Long
 
-    @Column(name = "conversion_denominator", nullable = false)
-    override var conversionDenominator: Long,
-
-    @Column(name = "base_unit_id", nullable = false)
-    var baseUnitId: UUID
-
-) : HasReferenceEntity(), HasConversionRatio
+) : HasReferenceEntity()

@@ -45,6 +45,13 @@ interface SessionToResponseMapper {
     @Mapping(target = "unitPriceOverride", source = ".", qualifiedBy = [LineUnitPriceOverride::class])
     @Mapping(target = "netUnitPrice", source = ".", qualifiedBy = [LineNetUnitPrice::class])
     @Mapping(target = "conversionFactor", source = ".", qualifiedBy = [LineConversionFactor::class])
+    @Mapping(target = "quantityInProductBaseUnit", source = ".", qualifiedBy = [LineBaseQuantity::class])
+    @Mapping(target = "onHandInProductBaseUnit", source = ".", qualifiedBy = [LineOnHandInProductBaseUnit::class])
+    @Mapping(target = "reservedInProductBaseUnit", source = ".", qualifiedBy = [LineReservedInProductBaseUnit::class])
+    @Mapping(target = "availableInProductBaseUnit", source = ".", qualifiedBy = [LineAvailableInProductBaseUnit::class])
+    @Mapping(target = "quantityOnHandBreakdown", source = ".", qualifiedBy = [LineOnHandBreakdown::class])
+    @Mapping(target = "quantityAvailableBreakdown", source = ".", qualifiedBy = [LineAvailableBreakdown::class])
+    @Mapping(target = "lineTotal", source = ".", qualifiedBy = [LineNetTotal::class])
     fun toLineDto(
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,

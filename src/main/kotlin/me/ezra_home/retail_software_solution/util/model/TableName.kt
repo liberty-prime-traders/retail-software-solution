@@ -64,7 +64,6 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUBLEDGER_ENTRY(TableNames.SUBLEDGER_ENTRY, SchemaLevel.ORGANIZATION),
   TAG(TableNames.TAG, SchemaLevel.ORGANIZATION),
   TAX_RATE(TableNames.TAX_RATE, SchemaLevel.ORGANIZATION),
-  UNIT_CONVERSION(TableNames.UNIT_CONVERSION, SchemaLevel.ORGANIZATION),
   UNIT_GROUP(TableNames.UNIT_GROUP, SchemaLevel.ORGANIZATION),
   UNIT_VALUE(TableNames.UNIT_VALUE, SchemaLevel.ORGANIZATION),
 
@@ -130,7 +129,6 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PRODUCT_GROUP_AUDIT(TableNames.PRODUCT_GROUP_AUDIT, SchemaLevel.ORGANIZATION),
   TAG_AUDIT(TableNames.TAG_AUDIT, SchemaLevel.ORGANIZATION),
   TAX_RATE_AUDIT(TableNames.TAX_RATE_AUDIT, SchemaLevel.ORGANIZATION),
-  UNIT_CONVERSION_AUDIT(TableNames.UNIT_CONVERSION_AUDIT, SchemaLevel.ORGANIZATION),
   UNIT_GROUP_AUDIT(TableNames.UNIT_GROUP_AUDIT, SchemaLevel.ORGANIZATION),
   UNIT_VALUE_AUDIT(TableNames.UNIT_VALUE_AUDIT, SchemaLevel.ORGANIZATION),
 

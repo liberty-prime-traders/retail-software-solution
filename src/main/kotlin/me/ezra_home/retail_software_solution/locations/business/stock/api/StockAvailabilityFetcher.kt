@@ -7,10 +7,11 @@ import java.util.UUID
 data class StockAvailability(
     val quantityOnHand: BigDecimal,
     val quantityReserved: BigDecimal,
-    val quantityAvailable: BigDecimal,
 ) {
+    val quantityAvailable: BigDecimal get() = quantityOnHand - quantityReserved
+
     companion object {
-        val ZERO = StockAvailability(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)
+        val ZERO = StockAvailability(BigDecimal.ZERO, BigDecimal.ZERO)
     }
 }
 
@@ -30,7 +31,6 @@ class StockAvailabilityFetcher(
             StockAvailability(
                 quantityOnHand = quantityOnHand,
                 quantityReserved = quantityReserved,
-                quantityAvailable = quantityOnHand - quantityReserved,
             )
         }
     }

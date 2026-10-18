@@ -21,7 +21,7 @@ class StockReservationEntity(
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,
 
-    @Column(name = "quantity_reserved", nullable = false, precision = 28, scale = 10)
-    var quantityReserved: BigDecimal,
+    @Column(name = "storage_quantity_reserved", nullable = false, precision = 28, scale = 4)
+    var storageQuantityReserved: BigDecimal,
 
 ) : HasCreatorEntity()

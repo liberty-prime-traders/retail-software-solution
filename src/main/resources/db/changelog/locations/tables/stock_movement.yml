@@ -54,21 +54,53 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: moved_quantity
-                  type: numeric(28,10)
+                  name: storage_moved_quantity
+                  type: numeric(28,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_moved_quantity_notnull
+                    notNullConstraintName: stock_movement_storage_moved_quantity_notnull
 
               - column:
-                  name: remaining_quantity
-                  type: numeric(28,10)
+                  name: user_provided_moved_quantity
+                  type: numeric(19,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_remaining_quantity_notnull
+                    notNullConstraintName: stock_movement_user_provided_moved_quantity_notnull
 
               - column:
-                  name: external_reference_number
+                  name: storage_remaining_quantity
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_storage_remaining_quantity_notnull
+
+              - column:
+                  name: moved_cost
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_moved_cost_notnull
+
+              - column:
+                  name: storage_moved_breakdown_text
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_storage_moved_breakdown_text_notnull
+
+              - column:
+                  name: storage_remaining_breakdown_text
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_movement_storage_remaining_breakdown_text_notnull
+
+              - column:
+                  name: document_reference
+                  type: varchar(30)
+
+              - column:
+                  name: detail_reference
                   type: varchar(30)
 
               - column:
@@ -79,18 +111,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_movement_unit_id_notnull
 
               - column:
-                  name: conversion_numerator
+                  name: storage_units_per_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_conversion_numerator_notnull
-
-              - column:
-                  name: conversion_denominator
-                  type: bigint
-                  constraints:
-                    nullable: false
-                    notNullConstraintName: stock_movement_conversion_denominator_notnull
+                    notNullConstraintName: stock_movement_storage_units_per_unit_notnull
 
               - column:
                   name: created_by_id

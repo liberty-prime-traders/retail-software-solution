@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -21,6 +22,7 @@ class SaleStockUpdater(
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val stockBalanceFetcher: StockBalanceFetcher,
+    private val stockBreakdownProvider: StockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -34,6 +36,7 @@ class SaleStockUpdater(
         val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
         val productSummariesByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(saleLineStockRequests.map { it.locationProductId }.toSet())
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds.toSet())
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
@@ -42,15 +45,19 @@ class SaleStockUpdater(
             val fifoConsumptionResult = FifoStockConsumer.consume(
                 fifoConsumptionRequest = FifoConsumptionRequest(
                     locationProductId = locationProductId,
-                    baseQuantity = saleLineStockRequest.baseQuantity,
+                    storageQuantity = ExactQuantity.ofUserProvided(
+                        saleLineStockRequest.userProvidedQuantity, saleLineStockRequest.storageUnitsPerUnit
+                    ),
+                    userProvidedQuantity = saleLineStockRequest.userProvidedQuantity,
                     unitId = saleLineStockRequest.unitId,
-                    conversionRatio = saleLineStockRequest.conversionRatio,
+                    storageUnitsPerUnit = saleLineStockRequest.storageUnitsPerUnit,
                     movementType = MovementType.SALE,
-                    externalReferenceNumber = saleRefNumber,
-                    enteredQuantity = saleLineStockRequest.enteredQuantity,
+                    documentReference = saleRefNumber,
+                    detailReference = saleLineStockRequest.saleLineReferenceNumber,
                 ),
                 fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
                 startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 productLabel = productSummariesByLocationProductId[locationProductId]?.label ?: locationProductId.toString(),
             )
             runningBalancesByLocationProductId[locationProductId] = fifoConsumptionResult.endingBalance
@@ -65,7 +72,7 @@ class SaleStockUpdater(
 
     fun restoreStock(saleRefNumber: String) {
         val saleMovements = stockMovementRepository
-            .findByExternalReferenceNumberAndMovementType(saleRefNumber, MovementType.SALE)
+            .findByDocumentReferenceAndMovementType(saleRefNumber, MovementType.SALE)
         if (saleMovements.isEmpty()) return
         val saleMovementsByLocationProductId = saleMovements.groupBy { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, saleMovementsByLocationProductId.keys)
@@ -74,6 +81,7 @@ class SaleStockUpdater(
         val runningBalancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
             saleMovementsByLocationProductId.keys.toList()
         ).toMutableMap()
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(saleMovementsByLocationProductId.keys)
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val newMovements = mutableListOf<StockMovementEntity>()
@@ -82,6 +90,7 @@ class SaleStockUpdater(
                 movementsToReverse = saleMovementsForProduct,
                 stockEntriesById = stockEntriesById,
                 startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 reversalType = MovementType.SALE_VOID,
             )
             runningBalancesByLocationProductId[locationProductId] = fifoRestorationResult.endingBalance

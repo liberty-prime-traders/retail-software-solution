@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
@@ -107,7 +107,7 @@ class TaxRateValidator(
         rateFlatAmount: BigDecimal?
     ) {
         when (jurisdictionTaxTypeFetcher.getCalculationMethod(jurisdictionTaxTypeId)) {
-            CalculationMethod.PERCENTAGE -> {
+            TaxCalculationMethod.PERCENTAGE -> {
                 if (ratePercentage == null)
                     throw RtsGenericException("ratePercentage is required for PERCENTAGE tax types")
                 if (ratePercentage < BigDecimal.ZERO)
@@ -117,7 +117,7 @@ class TaxRateValidator(
                 if (rateFlatAmount != null)
                     throw RtsGenericException("rateFlatAmount must not be provided for PERCENTAGE tax types")
             }
-            CalculationMethod.FIXED_VALUE -> {
+            TaxCalculationMethod.FIXED_VALUE -> {
                 if (rateFlatAmount == null)
                     throw RtsGenericException("rateFlatAmount is required for FIXED_VALUE tax types")
                 if (rateFlatAmount < BigDecimal.ZERO)

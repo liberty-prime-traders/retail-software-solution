@@ -39,7 +39,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: quantity
+                  name: user_provided_quantity
                   type: numeric(19, 4)
 
               - column:
@@ -47,14 +47,15 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: unit_price
+                  name: line_total
                   type: numeric(19, 4)
 
               - column:
-                  name: conversion_numerator
-                  type: bigint
+                  name: default_sale_price
+                  type: numeric(28, 10)
+
               - column:
-                  name: conversion_denominator
+                  name: storage_units_per_unit
                   type: bigint
 
               - column:

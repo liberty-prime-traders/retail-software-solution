@@ -24,12 +24,12 @@ class PurchaseLinesResolver(
     private val locationProductDataFetcher: LocationProductDataFetcher
 ) {
 
-    fun detanglePurchaseLines(purchaseId: UUID, dto: PurchaseUpdateDto): LineUpdateResult {
+    fun detanglePurchaseLines(purchaseId: UUID, purchaseUpdateDto: PurchaseUpdateDto): LineUpdateResult {
         val existingLines = purchaseLineRepository.findByPurchaseIdIn(listOf(purchaseId))
         val existingLinesById = existingLines.associateBy { it.id!! }
 
-        val toCreate = computeAdditions(purchaseId, dto.linesToAdd)
-        val (toDelete, toUpdate) = computeUpdates(dto.linesToUpdate, existingLinesById)
+        val toCreate = computeAdditions(purchaseId, purchaseUpdateDto.linesToAdd)
+        val (toDelete, toUpdate) = computeUpdates(purchaseUpdateDto.linesToUpdate, existingLinesById)
 
         val deletedIds = toDelete.mapTo(HashSet()) { it.id }
         val updatedIds = toUpdate.mapTo(HashSet()) { it.id }
@@ -41,13 +41,11 @@ class PurchaseLinesResolver(
     private fun computeAdditions(purchaseId: UUID, linesToAdd: List<PurchaseLineCreateDto>): List<PurchaseLineEntity> {
         PurchaseValidator.guardPositiveLineQuantities(linesToAdd)
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
-        val conversionRatios = locationProductDataFetcher.getConversionRatios(
+        val storageUnitsPerUnitByProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
             linesToAdd.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         return linesToAdd.map {
-            PurchaseMapper.toNewLineEntity(
-                purchaseId, it, conversionRatios.getValue(it.locationProductId)
-            )
+            PurchaseMapper.toNewLineEntity(purchaseId, it, storageUnitsPerUnitByProductId.getValue(it.locationProductId))
         }
     }
 
@@ -66,25 +64,23 @@ class PurchaseLinesResolver(
         val changedUnitLineDtos = linesToUpdate.filter { lineDto ->
             existingLinesById[lineDto.id]?.unitId != lineDto.unitId
         }
-        val conversionRatiosForChangedProducts = locationProductDataFetcher.getConversionRatios(
+        val storageUnitsPerUnitForChangedProducts = locationProductDataFetcher.getStorageUnitsPerUnit(
             changedUnitLineDtos.map {
                 LocationProductUnitRequestDto(existingLinesById[it.id]!!.locationProductId, it.unitId)
             }
         )
 
-        for ((id, quantityOrdered, unitId, unitCost) in linesToUpdate) {
+        for ((id, userProvidedQuantityOrdered, unitId, unitCost) in linesToUpdate) {
             val existing = existingLinesById[id] ?: continue
-            PurchaseValidator.guardNonNegativeUpdateQuantity(quantityOrdered)
-            if (quantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
+            PurchaseValidator.guardNonNegativeUpdateQuantity(userProvidedQuantityOrdered)
+            if (userProvidedQuantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
                 toDelete.add(existing)
             } else {
-                existing.quantityOrdered = quantityOrdered
+                existing.userProvidedQuantityOrdered = userProvidedQuantityOrdered
                 existing.unitCost = unitCost
                 if (existing.unitId != unitId) {
                     existing.unitId = unitId
-                    val ratio = conversionRatiosForChangedProducts.getValue(existing.locationProductId)
-                    existing.conversionNumerator = ratio.numerator
-                    existing.conversionDenominator = ratio.denominator
+                    existing.storageUnitsPerUnit = storageUnitsPerUnitForChangedProducts.getValue(existing.locationProductId)
                 }
                 toSave.add(existing)
             }

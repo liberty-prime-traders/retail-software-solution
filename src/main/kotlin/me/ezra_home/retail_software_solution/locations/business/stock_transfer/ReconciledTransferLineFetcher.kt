@@ -4,9 +4,13 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation
+import java.math.RoundingMode
 import java.util.UUID
 
 @Component
@@ -14,26 +18,36 @@ class ReconciledTransferLineFetcher(
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val stockAvailabilityFetcher: StockAvailabilityFetcher
+    private val stockAvailabilityFetcher: StockAvailabilityFetcher,
+    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.MANDATORY)
     fun draftLines(dispatchId: UUID): List<ReconciledTransferLine> {
         val lines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatchId)
-        val labels = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
+        val summaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
         val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(lines.map { it.locationProductId }.toSet())
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return lines.map { line ->
+            val summary = summaries.getValue(line.locationProductId)
+            val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(summary.baseUnitId)
             val availability = availabilityByLocationProductId[line.locationProductId] ?: StockAvailability.ZERO
+            val storageQuantity = ExactQuantity.ofUserProvided(line.userProvidedQuantity, line.storageUnitsPerUnit)
             ReconciledTransferLine(
                 dispatchLineRef = line.requiredReference(),
-                productLabel = labels.getValue(line.locationProductId).label,
-                quantity = Decimals.Scale4.round(line.quantity),
+                productLabel = summary.label,
+                quantity = line.userProvidedQuantity,
                 unitId = line.unitId,
-                baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionRatio().displayFactor(),
+                baseUnitId = summary.baseUnitId,
+                conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUnit, baseUnitSizeInRoot),
                 unitCost = null,
+                totalCost = null,
                 quantityReceived = null,
-                quantityAvailable = Decimals.Scale4.round(availability.quantityAvailable)
+                quantityAvailable = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityAvailable, baseUnitSizeInRoot, RoundingMode.DOWN),
+                storageQuantity = storageQuantity.toStorageQuantity(),
+                storageBreakdownText = breakdownByLocationProductId.getValue(line.locationProductId).render(storageQuantity)
             )
         }
     }
@@ -41,17 +55,25 @@ class ReconciledTransferLineFetcher(
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.MANDATORY)
     fun dispatchLines(dispatchId: UUID, confirmedRefs: Set<String>): List<ReconciledTransferLine> {
         val lines = stockTransferDispatchLineRepository.findByStockTransferDispatchId(dispatchId)
-        val labels = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
+        val summaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
+        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return lines.map { line ->
+            val summary = summaries.getValue(line.locationProductId)
+            val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(summary.baseUnitId)
             ReconciledTransferLine(
                 dispatchLineRef = line.requiredReference(),
-                productLabel = labels.getValue(line.locationProductId).label,
-                quantity = Decimals.Scale4.round(line.quantityDispatched),
+                productLabel = summary.label,
+                quantity = line.wholeLineUserProvidedQuantity,
                 unitId = line.unitId,
-                baseUnitId = line.baseUnitId,
-                conversionFactor = line.conversionRatio().displayFactor(),
+                baseUnitId = summary.baseUnitId,
+                conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUnit, baseUnitSizeInRoot),
                 unitCost = line.unitCost,
-                quantityReceived = if (line.requiredReference() in confirmedRefs) Decimals.Scale4.round(line.quantityDispatched) else null
+                totalCost = line.costDispatched,
+                quantityReceived = if (line.requiredReference() in confirmedRefs) line.wholeLineUserProvidedQuantity else null,
+                storageQuantity = line.storageQuantityDispatched,
+                storageBreakdownText = breakdownByLocationProductId.getValue(line.locationProductId)
+                    .render(ExactQuantity.ofStorage(line.storageQuantityDispatched))
             )
         }
     }

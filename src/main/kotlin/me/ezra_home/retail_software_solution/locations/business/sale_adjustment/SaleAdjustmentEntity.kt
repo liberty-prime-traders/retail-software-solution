@@ -6,8 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirectionConverter
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethod
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.CalculationMethodConverter
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethodConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -32,9 +32,9 @@ class SaleAdjustmentEntity(
     @Column(name = "direction", nullable = false, length = 5, updatable = false)
     var direction: AdjustmentDirection,
 
-    @Convert(converter = CalculationMethodConverter::class)
+    @Convert(converter = PriceAdjustmentMethodConverter::class)
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
-    var calculationMethod: CalculationMethod,
+    var calculationMethod: PriceAdjustmentMethod,
 
     @Column(name = "value", nullable = false, precision = 19, scale = 4, updatable = false)
     var value: BigDecimal,
