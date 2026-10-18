@@ -61,11 +61,11 @@ Five base types plus five "contra" counterparts, each declaring its
 | LIABILITY | CREDIT         | LIABILITY_CONTRA (DEBIT) |
 | EQUITY    | CREDIT         | EQUITY_CONTRA (DEBIT)    |
 | REVENUE   | CREDIT         | REVENUE_CONTRA (DEBIT)   |
-| EXPENSE   | DEBIT          | —                        |
+| EXPENSE   | DEBIT          | EXPENSE_CONTRA (CREDIT)  |
 
 - `canBeRoot()` — only ASSET/LIABILITY/EQUITY/REVENUE/EXPENSE (not the
   contras) may be created as root accounts (`AccountService.createRoot`).
-- `isClosingType()` — REVENUE, REVENUE_CONTRA, EXPENSE; the set zeroed out at
+- `isClosingType()` — REVENUE, REVENUE_CONTRA, EXPENSE, EXPENSE_CONTRA; the set zeroed out at
   year-end.
 - `balanceSignal()` — maps to `BalanceSignal.MONEY_IN`/`MONEY_OUT` for
   display; overridden to `ZERO_BALANCE`/`IRREGULAR_BALANCE` in
@@ -188,7 +188,7 @@ exposes `AccountSelectionCandidate` (via `AccountDataFetcher.getSelectionCandida
   directly rather than through `AccountDataFetcher`).
 - Year-end close (`api/DenormalizedYearEndBalanceTransfer`) zeroes every
   `isClosingType()` account with a non-zero balance and transfers net income
-  (revenue − contra − expense) into `SystemAccount.RETAINED_EARNINGS`, all via
+  (revenue − revenue contra − (expense − expense contra)) into `SystemAccount.RETAINED_EARNINGS`, all via
   direct `incrementBalance` calls. It takes the closing accounts' and Retained
   Earnings' locks through `ledger`'s `AccountsAndLedgerLock` *before* reading
   balances, so it waits for in-flight postings and then reads fresh values

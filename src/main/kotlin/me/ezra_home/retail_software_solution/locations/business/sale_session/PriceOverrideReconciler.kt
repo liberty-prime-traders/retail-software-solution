@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LinePricing
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLine
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionLineUpdateDto
@@ -8,7 +9,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
 import org.springframework.stereotype.Service

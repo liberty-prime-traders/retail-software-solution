@@ -6,10 +6,12 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 // Flows post to these directly; a custom expense type pointing at one would mix its entries into them.
 private val RESERVED_EXPENSE_ACCOUNTS: Set<SystemAccount> = setOf(
     SystemAccount.COST_OF_GOODS_SOLD,
+    SystemAccount.FREE_GOODS_RECEIVED,
     SystemAccount.WAGES_EXPENSE,
     SystemAccount.INBOUND_FREIGHT,
     SystemAccount.OUTBOUND_FREIGHT,
     SystemAccount.SHRINKAGE_AND_LOSSES,
+    SystemAccount.INTERNAL_USE_EXPENSE,
     SystemAccount.BAD_DEBT_EXPENSE,
     SystemAccount.TAX_EXPENSE
 )

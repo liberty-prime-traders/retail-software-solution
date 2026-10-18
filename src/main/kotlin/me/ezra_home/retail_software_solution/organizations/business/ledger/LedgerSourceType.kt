@@ -13,6 +13,7 @@ enum class LedgerSourceType(override val code: String) : HasCode {
     OPENING_BALANCE("OB"),
     CONTACT_OPENING_BALANCE("COB"),
     OPENING_STOCK("OS"),
+    STOCK_ADJUSTMENT("SA"),
     EXPENSE("EXP"),
     EXPENSE_VOID("EXPV"),
     EXPENSE_PAYMENT("EXPPY"),

@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementTypeConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
@@ -64,6 +65,12 @@ class StockMovementEntity(
   var unitId: UUID,
 
   @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
-  var storageUnitsPerUnit: Long
+  var storageUnitsPerUnit: Long,
+
+  @Column(name = "category", length = 5)
+  var category: StockAdjustmentCategory? = null,
+
+  @Column(name = "note", length = 500)
+  var note: String? = null
 
 ) : HasReferenceEntity()

@@ -1,0 +1,109 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-adjustment-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_adjustment
+      changes:
+        - createTable:
+            tableName: stock_adjustment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_adjustment_reference_number
+
+              - column:
+                  name: location_product_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_location_product_id_notnull
+
+              - column:
+                  name: category
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_category_notnull
+
+              - column:
+                  name: direction
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_direction_notnull
+
+              - column:
+                  name: user_provided_quantity
+                  type: numeric(19,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_user_provided_quantity_notnull
+
+              - column:
+                  name: unit_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_unit_id_notnull
+
+              - column:
+                  name: storage_units_per_unit
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_storage_units_per_unit_notnull
+
+              - column:
+                  name: storage_quantity
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_storage_quantity_notnull
+
+              - column:
+                  name: total_cost
+                  type: numeric(28,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_total_cost_notnull
+
+              - column:
+                  name: stock_movement_reason_id
+                  type: uuid
+
+              - column:
+                  name: note
+                  type: varchar(500)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+
+      rollback:
+        - dropTable:
+            tableName: stock_adjustment

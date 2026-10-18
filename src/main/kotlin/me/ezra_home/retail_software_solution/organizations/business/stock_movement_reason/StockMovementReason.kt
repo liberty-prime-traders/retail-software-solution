@@ -17,10 +17,6 @@ enum class StockMovementReason(
         "QI", "Quality Issue", "Stock removed due to quality concerns",
         setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.CUSTOMER_RETURN, MovementType.SUPPLIER_RETURN)
     ),
-    SURPLUS(
-        "SUR", "Surplus", "Excess stock removed or redistributed",
-        setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.SUPPLIER_RETURN)
-    ),
     THEFT(
         "THF", "Theft", "Stock lost due to theft or unexplained shrinkage",
         setOf(MovementType.STOCK_ADJUSTMENT_DECREASE)
@@ -32,9 +28,5 @@ enum class StockMovementReason(
     EXPIRED(
         "EXP", "Expired", "Stock removed because it has passed its expiry date",
         setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.CUSTOMER_RETURN, MovementType.SUPPLIER_RETURN)
-    ),
-    INTERNAL_USE(
-        "IU", "Internal Use", "Goods used by the business, such as supplies, samples or staff use",
-        setOf(MovementType.STOCK_ADJUSTMENT_DECREASE)
     )
 }

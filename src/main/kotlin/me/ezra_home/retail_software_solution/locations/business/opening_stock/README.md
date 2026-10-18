@@ -18,14 +18,10 @@ every other movement.
 
 If an opening stock declaration turns out to be wrong, it is **not**
 corrected here. It's fixed the same way any other stock error is: a
-future stock-adjustment feature (`MovementType.STOCK_ADJUSTMENT_INCREASE` and
-`STOCK_ADJUSTMENT_DECREASE` already exist as scaffolding, no service implements them yet). That feature —
-not this one — is where `StockEntryEntity.priority` gets used
-deliberately: an adjustment lot should be ordered relative to the
-original opening-stock lot (and any other source) rather than
-defaulting to `priority = 0` for everything, the way
-`PurchaseDeliveryStockUpdater` and `OpeningStockStockUpdater` both do
-today. Making `opening_stock` itself correctable was tried and reverted
+stock adjustment (`stock_adjustment/`, `MovementType.STOCK_ADJUSTMENT_INCREASE` /
+`STOCK_ADJUSTMENT_DECREASE`). An adjustment lot is created with `priority = 0`, the way
+`PurchaseDeliveryStockUpdater` and `OpeningStockStockUpdater` do, so it is ordered by creation time rather than
+relative to the original opening-stock lot. Making `opening_stock` itself correctable was tried and reverted
 — it required drawing down/topping up the original lot via signed
 deltas with no real way to express priority for the correction, which is
 exactly the adjustment feature's job, not this one's.

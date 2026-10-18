@@ -9,6 +9,7 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
     ASSET_CONTRA("AC", EntryType.CREDIT),
 
     EXPENSE("X", EntryType.DEBIT),
+    EXPENSE_CONTRA("XC", EntryType.CREDIT),
 
     LIABILITY("L", EntryType.CREDIT),
     LIABILITY_CONTRA("LC", EntryType.DEBIT),
@@ -23,15 +24,16 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
         ASSET_CONTRA -> baseType == ASSET
         LIABILITY_CONTRA -> baseType == LIABILITY
         EQUITY_CONTRA -> baseType == EQUITY
+        EXPENSE_CONTRA -> baseType == EXPENSE
         REVENUE_CONTRA -> baseType == REVENUE
         else -> false
     }
 
     fun canBeRoot() = this in setOf(ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE)
-    fun isClosingType() = this in setOf(REVENUE, REVENUE_CONTRA, EXPENSE)
+    fun isClosingType() = this in setOf(REVENUE, REVENUE_CONTRA, EXPENSE, EXPENSE_CONTRA)
 
     fun balanceSignal() = when (this) {
-        ASSET, REVENUE, EQUITY, LIABILITY_CONTRA -> BalanceSignal.MONEY_IN
+        ASSET, REVENUE, EQUITY, LIABILITY_CONTRA, EXPENSE_CONTRA -> BalanceSignal.MONEY_IN
         LIABILITY, EXPENSE, ASSET_CONTRA, EQUITY_CONTRA, REVENUE_CONTRA -> BalanceSignal.MONEY_OUT
     }
 }

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-stock-adjustment-location-product
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: stock_adjustment
+                indexName: idx_stock_adjustment_location_product_id
+      changes:
+        - createIndex:
+            tableName: stock_adjustment
+            indexName: idx_stock_adjustment_location_product_id
+            columns:
+              - column:
+                  name: location_product_id
+      rollback:
+        - dropIndex:
+            tableName: stock_adjustment
+            indexName: idx_stock_adjustment_location_product_id

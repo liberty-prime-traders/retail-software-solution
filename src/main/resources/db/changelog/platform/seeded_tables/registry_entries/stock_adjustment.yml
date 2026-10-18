@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-stock-adjustment-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: stock_adjustment
+              - column:
+                  name: default_prefix
+                  value: STADJ
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_1_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Stock Adjustment
+              - column:
+                  name: description
+                  value: Append-only increases and decreases of a location product's stock
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}
