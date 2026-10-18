@@ -149,6 +149,25 @@ is what separates it from a location expense. Both share the `EXPENSE*` source t
 the two partial indexes (`uq_ledger_entry_grp_ref_type_loc` / `_org`) keep their
 references from colliding. `idempotencyConstraintName` follows the same session check.
 
+## Fund movement (synchronous caller)
+
+`fund_movement` is the one caller of `LedgerPostingService.post` outside the event processors. It builds the
+`LedgerPostingRequest` through `api/FundMovementPostingRequests`, which takes the reference, accounts, amount and date as
+plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. It posts inside the transaction
+that saves its row.
+
+| Event | Entries | Posting date |
+|---|---|---|
+| fund movement | debit the row's `debit_account_code`, credit its `credit_account_code` | `movement_date` |
+| fund movement void | the same two accounts with the legs swapped | the void's `void_date` (today) |
+
+No subledger entries. The org-level request carries no location, so `source_location_id` is null and the group falls
+under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source type)` for any source type. A void shares its
+movement's reference and differs only by source type. A posting failure (closed fiscal period, an inactive account being
+increased) propagates and rolls the movement row back; a void is the exception for inactive accounts: its request sets
+`reversal = true`, so `post` calls `AccountService.assertPostableReversal`, which lets an inactive account be built up but
+still rejects an unknown account or one with children; there is no event, DLT or reissue. See `fund_movement/README.md`.
+
 ## Contra accounts
 
 Contras are posted like any other account, in their own normal direction

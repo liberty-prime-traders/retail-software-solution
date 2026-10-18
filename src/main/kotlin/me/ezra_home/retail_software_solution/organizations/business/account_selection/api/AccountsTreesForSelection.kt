@@ -7,4 +7,5 @@ data class AccountsTreesForSelection(
     val recoverable: List<TreeNode<String>>,
     val paymentMethods: List<TreeNode<String>>,
     val expenseTypes: List<TreeNode<String>>,
+    val fundMovements: List<TreeNode<String>>,
 )

@@ -17,15 +17,13 @@ private val RESERVED_EXPENSE_ACCOUNTS: Set<SystemAccount> = setOf(
 enum class AccountSelectionRule(val accountDescription: String) {
 
     PAYMENT_METHOD("Payment method account") {
-        override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? {
-            if (!candidate.isAsset()) return "$accountDescription must be of type Asset"
-            if (candidate.systemAccount == SystemAccount.CASH) return null
-            val parent = candidate.parent ?: return "$accountDescription has no parent: ${candidate.code}"
-            if (parent.accountIsSystemMaintained && parent.systemAccount != SystemAccount.DIGITAL_PAYMENTS) {
-                return "System-defined payment method account must be a direct child of Digital Payments"
-            }
-            return null
-        }
+        override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? =
+            moneyHoldingAccountRejectionReason(candidate)
+    },
+
+    FUND_MOVEMENT("Fund movement account") {
+        override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? =
+            moneyHoldingAccountRejectionReason(candidate)
     },
 
     TAX_PAYABLE("Payable tax account") {
@@ -63,6 +61,17 @@ enum class AccountSelectionRule(val accountDescription: String) {
     }
 
     fun isSelectable(candidate: AccountSelectionCandidate): Boolean = rejectionReason(candidate) == null
+
+    // Cash, or an org-defined account, or a child of Digital Payments; shared by every rule that picks where money sits.
+    protected fun moneyHoldingAccountRejectionReason(candidate: AccountSelectionCandidate): String? {
+        if (!candidate.isAsset()) return "$accountDescription must be of type Asset"
+        if (candidate.systemAccount == SystemAccount.CASH) return null
+        val parent = candidate.parent ?: return "$accountDescription has no parent: ${candidate.code}"
+        if (parent.accountIsSystemMaintained && parent.systemAccount != SystemAccount.DIGITAL_PAYMENTS) {
+            return "System-defined ${accountDescription.replaceFirstChar { it.lowercase() }} must be a direct child of Digital Payments"
+        }
+        return null
+    }
 
     protected fun systemParentRejectionReason(candidate: AccountSelectionCandidate, requiredParent: SystemAccount): String? {
         val parent = candidate.parent ?: return "$accountDescription has no parent: ${candidate.code}"

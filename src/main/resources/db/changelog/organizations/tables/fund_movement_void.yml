@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fund-movement-void-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: fund_movement_void
+      changes:
+        - createTable:
+            tableName: fund_movement_void
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_void_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_fund_movement_void_reference_number
+
+              - column:
+                  name: fund_movement_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_void_fund_movement_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_fund_movement_void_fund_movement_id
+
+              - column:
+                  name: void_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_void_void_date_notnull
+
+              - column:
+                  name: reason
+                  type: varchar(500)
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_void_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: fund_movement_void

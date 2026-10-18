@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-fund-movement-void-fund-movement
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_fund_movement_void_fund_movement
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: fund_movement_void
+            baseColumnNames: fund_movement_id
+            referencedTableName: fund_movement
+            referencedColumnNames: id
+            constraintName: fk_fund_movement_void_fund_movement
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: fund_movement_void
+            constraintName: fk_fund_movement_void_fund_movement

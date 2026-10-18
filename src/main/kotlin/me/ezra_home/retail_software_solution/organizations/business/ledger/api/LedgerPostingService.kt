@@ -39,7 +39,11 @@ class LedgerPostingService(
                 entryType = ledgerEntryRequest.entryType
             )
         }
-        accountService.assertPostable(accountPostings)
+        if (ledgerPostingRequest.reversal) {
+            accountService.assertPostableReversal(accountPostings)
+        } else {
+            accountService.assertPostable(accountPostings)
+        }
         val group = saveLedgerGroup(ledgerPostingRequest)
         val groupReference = group.requiredReference()
         saveLedgerEntries(groupReference, ledgerPostingRequest)

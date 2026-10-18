@@ -31,6 +31,8 @@ object TableNames {
     const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val EXPENSE_TYPE = "expense_type"
     const val FISCAL_PERIOD = "fiscal_period"
+    const val FUND_MOVEMENT = "fund_movement"
+    const val FUND_MOVEMENT_VOID = "fund_movement_void"
     const val JOB_TITLE = "job_title"
     const val LEDGER_ENTRY = "ledger_entry"
     const val LEDGER_ENTRY_GROUP = "ledger_entry_group"

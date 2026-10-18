@@ -5,7 +5,11 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object AccountAssertions {
 
-    fun assertPostable(accounts: Collection<AccountDto>, accountPostings: List<AccountPosting>) {
+    fun assertPostable(
+        accounts: Collection<AccountDto>,
+        accountPostings: List<AccountPosting>,
+        inactiveAccountsMayIncrease: Boolean = false
+    ) {
         val accountsByCode = accounts.associateBy { it.code }
         val parentAccountCodes = parentAccountCodesOf(accounts)
         accountPostings.forEach { accountPosting ->
@@ -13,7 +17,7 @@ object AccountAssertions {
             requireLeaf(account, parentAccountCodes)
             // An inactive account may still be drawn down (reversals, settling old balances), never built up.
             val increasesBalance = accountPosting.entryType == account.accountType.normalBalance
-            if (account.accountIsActive.not() && increasesBalance) {
+            if (account.accountIsActive.not() && increasesBalance && !inactiveAccountsMayIncrease) {
                 throw RtsGenericException("Cannot post an increase to inactive account ${account.label}")
             }
         }

@@ -19,6 +19,11 @@ class AccountDataFetcher(
     fun getFreshSelectionCandidates(): List<AccountSelectionCandidate> =
         AccountSelectionCandidate.fromAccounts(accountCache.getAllFresh())
 
+    fun getLabelsByCodes(accountCodes: Set<String>): Map<String, String> =
+        accountCache.getAll()
+            .filter { it.code in accountCodes }
+            .associate { it.code to it.label }
+
     fun getByCode(accountCode: String): AccountLookupDto {
         val account = accountCache.getAll().firstOrNull { it.code == accountCode }
             ?: throw RtsGenericException("Account $accountCode does not exist")

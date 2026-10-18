@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-fund-movement-debit-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_fund_movement_debit_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: fund_movement
+            baseColumnNames: debit_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_fund_movement_debit_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: fund_movement
+            constraintName: fk_fund_movement_debit_account_code
+
+  - changeSet:
+      id: add-foreign-key-fund-movement-credit-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_fund_movement_credit_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: fund_movement
+            baseColumnNames: credit_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_fund_movement_credit_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: fund_movement
+            constraintName: fk_fund_movement_credit_account_code

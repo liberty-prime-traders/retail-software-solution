@@ -100,6 +100,11 @@ class AccountService(
         AccountAssertions.assertPostable(accountCache.getAllFresh(), accountPostings)
     }
 
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun assertPostableReversal(accountPostings: List<AccountPosting>) {
+        AccountAssertions.assertPostable(accountCache.getAllFresh(), accountPostings, inactiveAccountsMayIncrease = true)
+    }
+
     fun patchBalances(accountPostings: List<AccountPosting>) {
         val accountsByCode = accountCache.getAll().associateBy { it.code }
         accountPostings.forEach { accountPosting ->

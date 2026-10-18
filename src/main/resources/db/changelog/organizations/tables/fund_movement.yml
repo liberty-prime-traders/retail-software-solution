@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-fund-movement-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: fund_movement
+      changes:
+        - createTable:
+            tableName: fund_movement
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_fund_movement_reference_number
+
+              - column:
+                  name: type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_type_notnull
+
+              - column:
+                  name: debit_account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_debit_account_code_notnull
+
+              - column:
+                  name: credit_account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_credit_account_code_notnull
+
+              - column:
+                  name: amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_amount_notnull
+
+              - column:
+                  name: movement_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_movement_date_notnull
+
+              - column:
+                  name: note
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: fund_movement_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: fund_movement

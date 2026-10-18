@@ -51,6 +51,20 @@ class AccountServiceAssertPostableTest {
     }
 
     @Test
+    fun `a reversal may build up an inactive account but still never posts to one with children`() {
+        val accountDtos = RecordingAccountService.systemAccountDtos()
+            .map { if (it.code == SystemAccount.CASH.code) it.copy(accountIsActive = false) else it }
+        val inactiveCashService = RecordingAccountService(accountDtos).accountService
+
+        assertDoesNotThrow {
+            inactiveCashService.assertPostableReversal(listOf(debit(SystemAccount.CASH.code, BigDecimal.TEN)))
+        }
+        assertThrows(RtsGenericException::class.java) {
+            inactiveCashService.assertPostableReversal(listOf(debit(SystemAccount.ACCOUNTS_RECEIVABLE.code, BigDecimal.TEN)))
+        }
+    }
+
+    @Test
     fun `direction is judged against the account's own normal balance`() {
         val accountDtos = RecordingAccountService.systemAccountDtos()
             .map { if (it.code == SystemAccount.SALES_DISCOUNTS.code) it.copy(accountIsActive = false) else it }
