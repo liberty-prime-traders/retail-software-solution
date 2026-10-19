@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.Decimals
@@ -19,6 +20,7 @@ data class InboundLayerSpec(
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
     val storageUnitsPerUnit: Long,
+    val adjustmentDetails: StockAdjustmentMovementDetails? = null,
 )
 
 object StockInboundLayers {
@@ -54,6 +56,7 @@ object StockInboundLayers {
         stockEntryId = stockEntry.id!!,
         locationProductId = inboundLayerSpec.locationProductId,
         movementType = inboundLayerSpec.movementType,
+        reasonId = inboundLayerSpec.adjustmentDetails?.reasonId,
         storageMovedQuantity = inboundLayerSpec.storageQuantity.toStorageQuantity(),
         userProvidedMovedQuantity = inboundLayerSpec.userProvidedQuantity,
         storageRemainingQuantity = balanceAfterMovement.toStorageQuantity(),
@@ -64,5 +67,7 @@ object StockInboundLayers {
         detailReference = inboundLayerSpec.detailReference,
         unitId = inboundLayerSpec.unitId,
         storageUnitsPerUnit = inboundLayerSpec.storageUnitsPerUnit,
+        category = inboundLayerSpec.adjustmentDetails?.category,
+        note = inboundLayerSpec.adjustmentDetails?.note,
     )
 }

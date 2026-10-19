@@ -45,6 +45,7 @@ object FifoStockConsumer {
                     stockEntryId = stockEntry.id!!,
                     locationProductId = fifoConsumptionRequest.locationProductId,
                     movementType = fifoConsumptionRequest.movementType,
+                    reasonId = fifoConsumptionRequest.adjustmentDetails?.reasonId,
                     storageMovedQuantity = plannedTake.storageQuantity.toStorageQuantity(),
                     userProvidedMovedQuantity = fifoConsumptionRequest.userProvidedQuantity,
                     storageRemainingQuantity = runningBalance.toStorageQuantity(),
@@ -55,6 +56,8 @@ object FifoStockConsumer {
                     detailReference = fifoConsumptionRequest.detailReference,
                     unitId = fifoConsumptionRequest.unitId,
                     storageUnitsPerUnit = fifoConsumptionRequest.storageUnitsPerUnit,
+                    category = fifoConsumptionRequest.adjustmentDetails?.category,
+                    note = fifoConsumptionRequest.adjustmentDetails?.note,
                 )
             )
             consumedCost = consumedCost.add(plannedTake.movedCost)

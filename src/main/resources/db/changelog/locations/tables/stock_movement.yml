@@ -54,6 +54,14 @@ databaseChangeLog:
                   type: uuid
 
               - column:
+                  name: category
+                  type: varchar(5)
+
+              - column:
+                  name: note
+                  type: varchar(500)
+
+              - column:
                   name: storage_moved_quantity
                   type: numeric(28,4)
                   constraints:

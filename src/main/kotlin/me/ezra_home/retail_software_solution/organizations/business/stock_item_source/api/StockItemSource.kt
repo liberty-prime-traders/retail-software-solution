@@ -7,5 +7,6 @@ enum class StockItemSource(override val code: String, val displayName: String, v
     CUSTOMER_RETURN("CR", "Customer Return", "Stock returned by a customer and re-shelved"),
     GIFT("GFT", "Gift", "Stock received as a gift or donation"),
     OPENING_STOCK("OPS", "Opening Stock", "Initial stock entered when setting up inventory"),
-    TRANSFER_IN("TI", "Transfer In", "Stock transferred in from another location")
+    TRANSFER_IN("TI", "Transfer In", "Stock transferred in from another location"),
+    STOCK_ADJUSTMENT("ADJ", "Stock Adjustment", "Stock added by a manual stock adjustment")
 }

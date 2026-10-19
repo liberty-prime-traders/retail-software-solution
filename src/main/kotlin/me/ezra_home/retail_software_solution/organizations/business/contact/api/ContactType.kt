@@ -8,5 +8,6 @@ enum class ContactType(override val code: String) : HasCode {
     SUPPLIER("SUP"),
     EMPLOYEE("EMP"),
     GOVERNMENT("GOV"),
+    LENDER("LEND"),
     OTHER("OTH")
 }

@@ -40,8 +40,11 @@ class DenormalizedYearEndBalanceTransfer(
                 if (closingAccount.accountType == AccountType.REVENUE) runningTotal + currentBalance else runningTotal - currentBalance
             }
         val expenseNet = closingAccounts
-            .filter { it.accountType == AccountType.EXPENSE }
-            .fold(BigDecimal.ZERO) { runningTotal, closingAccount -> runningTotal + currentBalancesByCode.getValue(closingAccount.code) }
+            .filter { it.accountType == AccountType.EXPENSE || it.accountType == AccountType.EXPENSE_CONTRA }
+            .fold(BigDecimal.ZERO) { runningTotal, closingAccount ->
+                val currentBalance = currentBalancesByCode.getValue(closingAccount.code)
+                if (closingAccount.accountType == AccountType.EXPENSE) runningTotal + currentBalance else runningTotal - currentBalance
+            }
         val netIncome = revenueNet - expenseNet
 
         closingAccounts.forEach { closingAccount ->

@@ -87,6 +87,7 @@ object TableNames {
     const val SALE_PAYMENT = "sale_payment"
     const val SALE_PAYMENT_VOID = "sale_payment_void"
     const val SALE_VOID = "sale_void"
+    const val STOCK_ADJUSTMENT = "stock_adjustment"
     const val STOCK_ENTRY = "stock_entry"
     const val STOCK_MOVEMENT = "stock_movement"
     const val STOCK_TRANSFER_DISPATCH = "stock_transfer_dispatch"

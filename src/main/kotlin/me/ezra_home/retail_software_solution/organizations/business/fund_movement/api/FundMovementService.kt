@@ -107,7 +107,7 @@ class FundMovementService(
         movementDate: LocalDate,
         note: String?
     ): FundMovementResponse {
-        val roundedAmount = Decimals.roundToScale4(amount)
+        val roundedAmount = Decimals.Scale4.round(amount)
         if (roundedAmount.signum() <= 0) {
             throw RtsGenericException("Amount must be greater than zero")
         }

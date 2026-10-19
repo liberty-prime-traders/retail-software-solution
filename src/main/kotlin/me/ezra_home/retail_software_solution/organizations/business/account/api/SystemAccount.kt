@@ -58,7 +58,9 @@ enum class SystemAccount(
 
     // Expenses
     EXPENSES("005", "Expenses", AccountType.EXPENSE),
-    COST_OF_GOODS_SOLD("005.001", "Cost of Goods Sold", AccountType.EXPENSE, parent = EXPENSES),
+    COST_OF_SALES("005.001", "Cost of Sales", AccountType.EXPENSE, parent = EXPENSES),
+    COST_OF_GOODS_SOLD("005.001.001", "Cost of Goods Sold", AccountType.EXPENSE, parent = COST_OF_SALES),
+    FREE_GOODS_RECEIVED("005.001.002", "Free Goods Received", AccountType.EXPENSE_CONTRA, parent = COST_OF_SALES),
     WAGES_EXPENSE("005.002", "Wages Expense", AccountType.EXPENSE, parent = EXPENSES),
     RENT_EXPENSE("005.003", "Rent Expense", AccountType.EXPENSE, parent = EXPENSES),
     UTILITIES_EXPENSE("005.004", "Utilities Expense", AccountType.EXPENSE, parent = EXPENSES),
@@ -71,7 +73,8 @@ enum class SystemAccount(
     SHRINKAGE_AND_LOSSES("005.011", "Shrinkage & Losses", AccountType.EXPENSE, parent = EXPENSES),
     BAD_DEBT_EXPENSE("005.012", "Bad Debt Expense", AccountType.EXPENSE, parent = EXPENSES),
     OTHER_OPERATING_EXPENSES("005.013", "Other Operating Expenses", AccountType.EXPENSE, parent = EXPENSES),
-    TAX_EXPENSE("005.014", "Tax Expense", AccountType.EXPENSE, parent = EXPENSES);
+    TAX_EXPENSE("005.014", "Tax Expense", AccountType.EXPENSE, parent = EXPENSES),
+    INTERNAL_USE_EXPENSE("005.015", "Internal Use Expense", AccountType.EXPENSE, parent = EXPENSES);
 
     fun isSingleLevelExtensionPoint(): Boolean = this in singleLevelExtensionPoints
 

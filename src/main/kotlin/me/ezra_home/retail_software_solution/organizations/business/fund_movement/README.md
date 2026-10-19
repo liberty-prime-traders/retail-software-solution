@@ -26,7 +26,7 @@ type (`transfer`, `capital`, `draw`) so each can carry its own static authorizat
 
 ## Rules
 
-- Validation is in `FundMovementService`, not on the DTOs. Amount is rounded with `Decimals.roundToScale4` and must then be
+- Validation is in `FundMovementService`, not on the DTOs. Amount is rounded with `Decimals.Scale4.round` (half-up) and must then be
   positive; `movementDate` must not be after today in the organization zone; a transfer needs two different accounts; note and reason are blank-to-null and at most 500 characters.
 - Every user-picked account goes through `FundMovementAccountValidator`, which calls
   `AccountSelectionService.requireSelectable(AccountSelectionRule.FUND_MOVEMENT, code)` in sorted code order, so two

@@ -5,7 +5,7 @@ will likely generate `create table x_old as x; drop table x; user executes liqui
 Note that you do not write sql to migrate the schema. We already have an enpoint for that. You just need to clean DDL 
 and changelogs, as well as restoring (with defaults if needed) after user says endpoint worked.
 
-Use exact changelog ids
+Use exact changelog ids. Brand-new changelogs are safe and need no action.
 
 Ask for clarify where to diff with if you can't see the relevant changes. this is also schema based.
 

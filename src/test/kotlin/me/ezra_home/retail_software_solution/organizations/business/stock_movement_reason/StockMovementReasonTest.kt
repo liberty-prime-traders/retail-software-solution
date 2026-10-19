@@ -13,9 +13,7 @@ class StockMovementReasonTest {
             StockMovementReason.DAMAGED to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.CUSTOMER_RETURN, MovementType.SUPPLIER_RETURN),
             StockMovementReason.QUALITY_ISSUE to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.CUSTOMER_RETURN, MovementType.SUPPLIER_RETURN),
             StockMovementReason.EXPIRED to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.CUSTOMER_RETURN, MovementType.SUPPLIER_RETURN),
-            StockMovementReason.THEFT to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE),
-            StockMovementReason.INTERNAL_USE to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE),
-            StockMovementReason.SURPLUS to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.SUPPLIER_RETURN)
+            StockMovementReason.THEFT to setOf(MovementType.STOCK_ADJUSTMENT_DECREASE)
         )
 
         assertEquals(expectedMovementTypesByReason.keys, StockMovementReason.entries.toSet())

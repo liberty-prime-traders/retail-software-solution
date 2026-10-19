@@ -91,6 +91,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SALE_PAYMENT(TableNames.SALE_PAYMENT, SchemaLevel.LOCATION),
   SALE_PAYMENT_VOID(TableNames.SALE_PAYMENT_VOID, SchemaLevel.LOCATION),
   SALE_VOID(TableNames.SALE_VOID, SchemaLevel.LOCATION),
+  STOCK_ADJUSTMENT(TableNames.STOCK_ADJUSTMENT, SchemaLevel.LOCATION),
   STOCK_ENTRY(TableNames.STOCK_ENTRY, SchemaLevel.LOCATION),
   STOCK_MOVEMENT(TableNames.STOCK_MOVEMENT, SchemaLevel.LOCATION),
   STOCK_TRANSFER_DISPATCH(TableNames.STOCK_TRANSFER_DISPATCH, SchemaLevel.LOCATION),
