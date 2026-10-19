@@ -43,10 +43,10 @@ class StockAdjustmentStockUpdater(
             storageUnitsPerUnit = stockAdjustmentIncreaseStockRequest.storageUnitsPerUnit,
             adjustmentDetails = stockAdjustmentIncreaseStockRequest.adjustmentDetails,
         )
-        val stockEntry = stockEntryRepository.save(StockInboundLayers.newLayer(inboundLayerSpec))
         val balanceAfterMovement = ExactQuantity.ofStorage(
             stockBalanceFetcher.getLatestBalances(listOf(locationProductId))[locationProductId] ?: BigDecimal.ZERO
         ) + inboundLayerSpec.storageQuantity
+        val stockEntry = stockEntryRepository.save(StockInboundLayers.newLayer(inboundLayerSpec))
         val quantityBreakdown = stockBreakdownProvider.forLocationProducts(listOf(locationProductId)).getValue(locationProductId)
         stockMovementRepository.save(
             StockInboundLayers.inboundMovement(inboundLayerSpec, stockEntry, balanceAfterMovement, quantityBreakdown)
