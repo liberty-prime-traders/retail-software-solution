@@ -38,7 +38,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/** Same approach as [SupplierAndOpeningPostingBalanceTest], for the expense processors. */
 class ExpensePostingBalanceTest {
 
     private val recordingAccountService = RecordingAccountService()

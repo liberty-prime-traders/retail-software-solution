@@ -120,7 +120,6 @@ class LocationProductDataFetcher(
                 )
             }
 
-    // A unit outside the product's unit group is rejected
     fun getStorageUnitsPerUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
         if (productUnitRequests.isEmpty()) return emptyMap()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })

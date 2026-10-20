@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import java.math.BigDecimal
 import java.util.UUID
 
-// lineTotal is gross and recalculated only when the line is added or edited; stock figures are exact storage quantities
 data class SaleSessionLine(
     val identity: SessionIdentity,
     override val locationProductId: UUID,

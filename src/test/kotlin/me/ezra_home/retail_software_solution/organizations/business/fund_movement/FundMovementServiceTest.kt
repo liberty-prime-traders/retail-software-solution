@@ -194,7 +194,6 @@ class FundMovementServiceTest {
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
     }
 
-    // Rolling the row back relies on the exception leaving the transactional service; the rollback itself needs a real database.
     @Test
     fun `a ledger posting failure reaches the caller and the service rolls back on any exception`() {
         doThrow(RtsGenericException("No open fiscal period")).`when`(ledgerPostingService).post(anyNonNull(LedgerPostingRequest::class.java))
@@ -243,7 +242,6 @@ class FundMovementServiceTest {
         assertTrue(postedRequests.isEmpty())
     }
 
-    // Mockito's any() returns null, which Kotlin rejects for the mapper's non-null parameters.
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(type: Class<T>): T {
         any(type)

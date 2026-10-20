@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 
-/** Real posting requests through the real AccountService.patchBalances; every balance is in the account's own normal direction. */
 class FundMovementPostingRequestsBalanceTest {
 
     private val recordingAccountService = RecordingAccountService()

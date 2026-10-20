@@ -156,9 +156,10 @@ not currently set by any flow.
 - Unlike sale's `dateSold`, **no future-date guard** and **no fiscal-period
   guard** is applied at order time. Fiscal-period validation only happens
   on `recordDelivery` and on supplier payments (`recordPayment` /
-  `voidPayment`, see below), and for delivery it operates on a `LocalDate` derived from the
-  delivery's `OffsetDateTime` at the org timezone:
-  `fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))`.
+  `voidPayment`, see below). `recordDelivery` also rejects a future delivery: both checks operate on a
+  `LocalDate` derived from the delivery's `OffsetDateTime` at the org timezone
+  (`DateTimes.Local.atOrganizationZone(dto.deliveredAt)`), so `deliveredAt` later in the org's today is rejected
+  with "Delivery date cannot be in the future" (`DateTimes.Local.requireNotInFuture`).
 
 ---
 
@@ -268,10 +269,10 @@ live in the `delivery/` package and are coordinated through
 
 ### Flow
 
-1. `fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(dto.deliveredAt))`
-   — gating first; stock movement requires an open period. The DTO's
-   `deliveredAt` is an `OffsetDateTime`, converted to a `LocalDate` at
-   the organization's timezone before the check.
+1. `DateTimes.Local.requireNotInFuture(deliveredDate, "Delivery date")`, then
+   `fiscalPeriodService.requireOpenForDate(deliveredDate)` — gating first; stock movement requires an open period.
+   The DTO's `deliveredAt` is an `OffsetDateTime`, converted to the `LocalDate` `deliveredDate` at
+   the organization's timezone before either check.
 2. `deliveryHandlerForPurchase.prepareForDelivery(purchaseId)` — calls
    `PurchaseDataFetcher.lockAndGetPurchase` (acquires the purchase
    advisory lock + loads the entity), runs
@@ -733,7 +734,7 @@ Add new guards as early as the data they need is in scope.
 - Recomputes payment status.
 
 ### `PurchaseDeliveryService.recordDelivery(PurchaseDeliveryCreateDto)`
-- Requires open fiscal period for `deliveredAt`.
+- Rejects a `deliveredAt` that falls on a future org-zone date, and requires an open fiscal period for it.
 - `prepareForDelivery` loads via `PurchaseDataFetcher.lockAndGetPurchase`
   (lock taken inside that call).
 - Purchase status must be `ORDERED` or `PARTIALLY_DELIVERED`

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
 
-// We will need to handle item-level taxes in the future, but for now, we will only handle transaction-level taxes.
 @Service
 @TransactionalOnLocationSchema
 class SaleTaxFinalizer(

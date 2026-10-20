@@ -31,7 +31,6 @@ class SaleLineEntity(
     @Column(name = "unit_id", nullable = false)
     var unitId: UUID,
 
-    // Gross, before any price override; the unit price is derived and never stored
     @Column(name = "line_total", nullable = false, precision = 19, scale = 4)
     override var lineTotal: BigDecimal,
 

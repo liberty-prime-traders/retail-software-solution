@@ -37,7 +37,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/** Same approach as [LedgerPostingBalanceTest], for the purchase, supplier payment and opening processors. */
 class SupplierAndOpeningPostingBalanceTest {
 
     private val recordingAccountService = RecordingAccountService()

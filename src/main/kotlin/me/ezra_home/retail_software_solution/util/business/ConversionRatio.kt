@@ -10,7 +10,6 @@ data class ConversionRatio(val numerator: Long, val denominator: Long) {
         require(denominator > 0) { "denominator must be positive" }
     }
 
-    // Prices are scale 4.
     fun convertPriceRoundingHalfUp(price: BigDecimal): BigDecimal =
         Decimals.Scale4.divide(price.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
 

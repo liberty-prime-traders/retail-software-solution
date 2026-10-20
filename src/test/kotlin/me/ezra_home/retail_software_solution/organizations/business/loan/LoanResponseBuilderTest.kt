@@ -175,7 +175,6 @@ class LoanResponseBuilderTest {
         entity.createdOn = OffsetDateTime.now()
     }
 
-    // Mockito's any() returns null, which Kotlin rejects for non-null parameters.
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(type: Class<T>): T {
         any(type)

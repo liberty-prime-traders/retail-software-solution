@@ -408,8 +408,8 @@ session before finalize.
   re-fetch `defaultSalePrice`. `DomainToSessionMapper` copies the persisted `default_sale_price`, `line_total` and
   `storage_units_per_unit` straight back onto the line.
   The outbound `SaleSessionLineResponse` keeps its wire fields: `conversionFactor` and `baseQuantity` are display-only
-  (`BaseUnitDisplay`: one division from the exact storage figures, `conversionFactor` half-up and `baseQuantity` rounded
-  down, both at 4 decimals, computed with the base unit's current size, so a base-unit line is exactly 1). `lineTotal` is
+  (`BaseUnitDisplay`: one division from the exact storage figures, `conversionFactor` half-up at 10 decimals, like the unit
+  graph's factor, and `baseQuantity` rounded down at 4 decimals, computed with the base unit's current size, so a base-unit line is exactly 1). `lineTotal` is
   the **net** line total (stored gross total plus its adjustments, via `LineMappingContext`), never
   `quantity × netUnitPrice`. The stored gross total is not on the wire under that name. New additive fields:
   `storageQuantityOnHand`, `storageQuantityReserved`, `storageQuantityAvailable` and the breakdown texts.

@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
 import java.util.UUID
 
-// unitPrice is derived for display and never stored; discounts and adjustments work from the gross lineTotal
 interface ProductLineWithPrice {
     val locationProductId: UUID
     val userProvidedQuantity: BigDecimal

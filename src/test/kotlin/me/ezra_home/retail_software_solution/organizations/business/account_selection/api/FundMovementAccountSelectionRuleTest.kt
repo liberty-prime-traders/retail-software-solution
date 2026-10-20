@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-// FUND_MOVEMENT must offer exactly the accounts PAYMENT_METHOD offers, without needing a payment method row.
 class FundMovementAccountSelectionRuleTest {
 
     private val candidatesByCode = AccountSelectionCandidate

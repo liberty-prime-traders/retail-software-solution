@@ -12,7 +12,6 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/** A real AccountService over every SystemAccount, recording each balance delta it would persist. */
 class RecordingAccountService(accountDtos: List<AccountDto> = systemAccountDtos()) {
 
     private val deltasByAccountCode = mutableMapOf<String, BigDecimal>()
