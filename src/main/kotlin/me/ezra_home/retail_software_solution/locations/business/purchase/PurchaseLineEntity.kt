@@ -13,7 +13,6 @@ import org.hibernate.envers.Audited
 import java.math.BigDecimal
 import java.util.UUID
 
-// Delivered and canceled counters have no user-provided twin, so ordered, delivered and canceled compare exactly in storage units
 @Audited
 @Entity
 @Table(name = TableNames.PURCHASE_LINE)
@@ -52,15 +51,9 @@ class PurchaseLineEntity(
 
   fun storageQuantityRemaining(): ExactQuantity = storageQuantityExpected() - ExactQuantity.ofStorage(storageQuantityDelivered)
 
-  // Nothing canceled gives the exact ordered total; otherwise it is scaled once and rounded
-  fun getTotalCost(): BigDecimal {
-    val orderedTotal = Decimals.Scale4.multiply(unitCost, userProvidedQuantityOrdered)
-    val orderedStorageQuantity = storageQuantityOrdered().toStorageQuantity()
-    if (storageQuantityCanceled.signum() == 0) return orderedTotal
-    return Decimals.Scale4.divide(
-      orderedTotal.multiply(storageQuantityExpected().toStorageQuantity()),
-      orderedStorageQuantity
-    )
-  }
+  fun getTotalCost(): BigDecimal = Decimals.Scale4.divide(
+    unitCost.multiply(storageQuantityExpected().toStorageQuantity()),
+    BigDecimal.valueOf(storageUnitsPerUnit)
+  )
 
 }

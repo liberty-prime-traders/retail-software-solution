@@ -17,7 +17,9 @@ object PurchaseSearchQueryBuilder {
   // filters `purchase` first and only sums each surviving row's own lines — not the whole table.
   private const val ORDERED_TOTAL_JOIN = """
     LEFT JOIN LATERAL (
-      SELECT COALESCE(SUM(ROUND(unit_cost * (quantity_ordered - quantity_canceled), 4)), 0) AS ordered_total
+      SELECT COALESCE(SUM(ROUND(
+        unit_cost * (user_provided_quantity_ordered * storage_units_per_unit - storage_quantity_canceled) / storage_units_per_unit, 4
+      )), 0) AS ordered_total
       FROM ${TableNames.PURCHASE_LINE}
       WHERE purchase_id = ${PurchaseSearchAliases.PURCHASE}.id
     ) ${PurchaseSearchAliases.ORDERED_TOTAL} ON true

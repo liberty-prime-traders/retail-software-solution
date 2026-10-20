@@ -182,8 +182,8 @@ Derived values (`PurchaseLineEntity`, all `ExactQuantity` in storage units):
 - `storageQuantityOrdered() = userProvidedQuantityOrdered × storageUnitsPerUnit`
 - `storageQuantityExpected() = storageQuantityOrdered() − storageQuantityCanceled`
 - `storageQuantityRemaining() = storageQuantityExpected() − storageQuantityDelivered`
-- `getTotalCost()` is the ordered total (`unitCost × userProvidedQuantityOrdered`, scale 4) scaled by
-  expected ÷ ordered in storage units and rounded once; nothing canceled gives the exact ordered total.
+- `getTotalCost()` is `unitCost × storageQuantityExpected ÷ storageUnitsPerUnit`, rounded once to scale 4;
+  nothing canceled gives `unitCost × userProvidedQuantityOrdered`.
 
 `locationProductId` is `updatable = false` on the entity — once a line is
 created the product is fixed. Quantity, cost, and unit can change while
@@ -386,7 +386,7 @@ question for a given purchase. It compares two views of value:
 
 | Number           | Formula                                                         | Source                                      |
 |------------------|-----------------------------------------------------------------|---------------------------------------------|
-| `poTotal`        | Σ over lines: `PurchaseLineEntity.getTotalCost()` (ordered total scaled to the expected storage quantity) | The agreed PO price for what still stands.  |
+| `poTotal`        | Σ over lines: `PurchaseLineEntity.getTotalCost()` (unit cost × expected quantity, rounded once) | The agreed PO price for what still stands.  |
 | `deliveredTotal` | Σ over delivery lines: `unitCost × userProvidedQuantityDelivered`           | The actual cost of what has shipped so far. |
 
 The two can differ in two ways:
@@ -801,8 +801,9 @@ Add new guards as early as the data they need is in scope.
   the payload per row is much heavier.
 - **Amount filter** (`minAmount`/`maxAmount`) is the one predicate that isn't a plain column
   compare: it's a `LEFT JOIN LATERAL` to a `purchase_line` subquery, correlated on
-  `purchase_id = p.id`, summing `unit_cost * (quantity_ordered - quantity_canceled)` for that one
-  purchase — the same expression `PurchaseAssembler` sums into `orderedTotal`. Being `LATERAL` (and
+  `purchase_id = p.id`, summing `PurchaseLineEntity.getTotalCost()`'s expression in SQL (`unit_cost * (ordered storage quantity −
+  storage_quantity_canceled) / storage_units_per_unit`, rounded once) for that one
+  purchase — the same figure `PurchaseAssembler` sums into `orderedTotal`. Being `LATERAL` (and
   backed by `idx_purchase_line_purchase_id`) means the planner filters `purchase` first and only sums
   each surviving row's own lines, rather than aggregating the whole `purchase_line` table up front. For
   the **list** query the join is still only added when `minAmount`/`maxAmount` is actually supplied —
