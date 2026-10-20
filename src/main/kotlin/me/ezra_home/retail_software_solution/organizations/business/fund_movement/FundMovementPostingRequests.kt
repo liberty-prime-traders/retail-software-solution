@@ -1,6 +1,8 @@
-package me.ezra_home.retail_software_solution.organizations.business.ledger.api
+package me.ezra_home.retail_software_solution.organizations.business.fund_movement
 
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import java.math.BigDecimal
 import java.time.LocalDate
 

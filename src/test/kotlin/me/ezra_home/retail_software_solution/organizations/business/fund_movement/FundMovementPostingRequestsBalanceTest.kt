@@ -1,9 +1,11 @@
-package me.ezra_home.retail_software_solution.organizations.business.ledger.api
+package me.ezra_home.retail_software_solution.organizations.business.fund_movement
 
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountPosting
 import me.ezra_home.retail_software_solution.organizations.business.account.api.RecordingAccountService
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -55,8 +57,8 @@ class FundMovementPostingRequestsBalanceTest {
             post(movement.voided())
         }
 
-        listOf(SystemAccount.CASH, SystemAccount.INVENTORY, SystemAccount.OWNERS_CAPITAL, SystemAccount.OWNERS_DRAWS).forEach {
-            assertEquals(0, BigDecimal.ZERO.compareTo(balance(it)), "${it.name} should be back to zero")
+        listOf(SystemAccount.CASH, SystemAccount.INVENTORY, SystemAccount.OWNERS_CAPITAL, SystemAccount.OWNERS_DRAWS).forEach { systemAccount ->
+            assertEquals(0, BigDecimal.ZERO.compareTo(balance(systemAccount)), "${systemAccount.name} should be back to zero")
         }
     }
 

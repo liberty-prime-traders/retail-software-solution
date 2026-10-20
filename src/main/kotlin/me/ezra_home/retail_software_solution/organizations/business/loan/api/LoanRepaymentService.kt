@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.organizations.business.loan.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LoanPostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanFinder
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanMapper
+import me.ezra_home.retail_software_solution.organizations.business.loan.LoanPostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepaymentEntity
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepaymentRepository
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepaymentValidator

@@ -3,7 +3,6 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryRepository
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -20,11 +19,11 @@ class LedgerMovementReader(
         from: LocalDate,
         before: LocalDate,
         accountCodes: Set<String>,
-        sources: Set<LedgerMovementSource>,
+        sources: Set<LedgerSourceType>,
         locationId: UUID?
     ): List<LedgerMovement> {
         val dayStarts = dayStartsFor(from, before)
-        val sourceTypeCodes = sources.map { source -> LedgerSourceType.valueOf(source.name).code }.toSet()
+        val sourceTypeCodes = sources.map { source -> source.code }.toSet()
         val rangeStart = dayStarts.first()
         val rangeEnd = dayStarts.last()
         val dayStartsLiteral = toArrayLiteral(dayStarts)
@@ -40,9 +39,7 @@ class LedgerMovementReader(
                 localDate = from.plusDays(bucketMovement.bucket - 1L),
                 accountCode = bucketMovement.accountCode,
                 entryType = EntryType.entries.first { entryType -> entryType.code == bucketMovement.entryTypeCode },
-                source = LedgerMovementSource.valueOf(
-                    LedgerSourceType.entries.first { sourceType -> sourceType.code == bucketMovement.sourceTypeCode }.name
-                ),
+                source = LedgerSourceType.entries.first { sourceType -> sourceType.code == bucketMovement.sourceTypeCode },
                 amount = bucketMovement.amount
             )
         }

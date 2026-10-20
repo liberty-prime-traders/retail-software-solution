@@ -4,7 +4,6 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryRepository
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -34,10 +33,5 @@ class LedgerMovementReaderTest {
         )
         val postedOn = Instant.parse("2026-03-08T21:30:00Z")
         assertEquals(2, dayStarts.count { dayStart -> !dayStart.isAfter(postedOn) })
-    }
-
-    @Test
-    fun `every movement source maps to a ledger source type of the same name`() {
-        LedgerMovementSource.entries.forEach { movementSource -> LedgerSourceType.valueOf(movementSource.name) }
     }
 }

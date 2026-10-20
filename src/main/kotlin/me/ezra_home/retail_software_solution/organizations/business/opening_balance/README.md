@@ -67,10 +67,9 @@ previously location-only:
   `existsBySourceReferenceNumberAndSourceLocationIdIsNull` so the idempotency
   check works for a null location too.
 
-`LedgerSourceType.OPENING_BALANCE` stays **internal** to the `ledger` domain
-on purpose — only `OpeningBalanceAccountingProcessor` (same domain)
-references it. `opening_balance` never imports anything from `ledger` at
-all; it only ever emits the event.
+Only `OpeningBalanceAccountingProcessor` (in `ledger`) references
+`LedgerSourceType.OPENING_BALANCE`. `opening_balance` never imports anything
+from `ledger` at all; it only ever emits the event.
 
 ## Reissue (`OpeningBalanceHandlerForKafka.reissue`)
 

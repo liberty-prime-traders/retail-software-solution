@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.organizations.business.fund_movemen
 import me.ezra_home.retail_software_solution.organizations.business.fund_movement.FundMovementVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.fund_movement.FundMovementWithVoid
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.FundMovementPostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.DateTimes
@@ -21,6 +20,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import me.ezra_home.retail_software_solution.organizations.business.fund_movement.FundMovementPostingRequests
 
 @Service
 @TransactionalOnOrganizationSchema

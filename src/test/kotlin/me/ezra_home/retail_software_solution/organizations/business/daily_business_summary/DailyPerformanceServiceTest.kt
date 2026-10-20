@@ -15,7 +15,7 @@ import me.ezra_home.retail_software_solution.organizations.business.daily_busine
 import me.ezra_home.retail_software_solution.organizations.business.daily_business_summary.api.PeriodStatus
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerMovement
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerMovementReader
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerMovementSource
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,7 +44,7 @@ class DailyPerformanceServiceTest {
     private val dailyBusinessSummaryRequest = DailyBusinessSummaryRequest(from = day8, before = LocalDate.of(2026, 3, 11))
 
     private var requestedLocationId: UUID? = null
-    private var requestedSources: Set<LedgerMovementSource> = emptySet()
+    private var requestedSources: Set<LedgerSourceType> = emptySet()
 
     @BeforeEach
     fun setOrganizationSession() {
@@ -95,7 +95,7 @@ class DailyPerformanceServiceTest {
     fun `a sale void processed on a later day reduces that later day only`() {
         val dailyPerformanceResponse = perform(
             sale(day8, EntryType.CREDIT to SystemAccount.GROSS_SALES to 100),
-            movements(day9, LedgerMovementSource.SALE_VOID, EntryType.DEBIT to SystemAccount.GROSS_SALES to 100)
+            movements(day9, LedgerSourceType.SALE_VOID, EntryType.DEBIT to SystemAccount.GROSS_SALES to 100)
         )
 
         assertAmount(100, figuresOn(dailyPerformanceResponse, day8).netSales)
@@ -106,8 +106,8 @@ class DailyPerformanceServiceTest {
     @Test
     fun `an expense and its void land on their own days and cancel in the totals`() {
         val dailyPerformanceResponse = perform(
-            movements(day8, LedgerMovementSource.EXPENSE, EntryType.DEBIT to SystemAccount.RENT_EXPENSE to 50),
-            movements(day9, LedgerMovementSource.EXPENSE_VOID, EntryType.CREDIT to SystemAccount.RENT_EXPENSE to 50)
+            movements(day8, LedgerSourceType.EXPENSE, EntryType.DEBIT to SystemAccount.RENT_EXPENSE to 50),
+            movements(day9, LedgerSourceType.EXPENSE_VOID, EntryType.CREDIT to SystemAccount.RENT_EXPENSE to 50)
         )
 
         assertAmount(50, figuresOn(dailyPerformanceResponse, day8).expensesTotal)
@@ -120,10 +120,10 @@ class DailyPerformanceServiceTest {
     fun `stock adjustments feed expense lines and free goods reduce cost of goods sold`() {
         val dailyPerformanceResponse = perform(
             sale(day8, EntryType.DEBIT to SystemAccount.COST_OF_GOODS_SOLD to 60),
-            movements(day8, LedgerMovementSource.STOCK_ADJUSTMENT, EntryType.DEBIT to SystemAccount.INTERNAL_USE_EXPENSE to 20,
+            movements(day8, LedgerSourceType.STOCK_ADJUSTMENT, EntryType.DEBIT to SystemAccount.INTERNAL_USE_EXPENSE to 20,
                 EntryType.CREDIT to SystemAccount.FREE_GOODS_RECEIVED to 12),
-            movements(day9, LedgerMovementSource.STOCK_ADJUSTMENT, EntryType.DEBIT to SystemAccount.SHRINKAGE_AND_LOSSES to 15),
-            movements(day10, LedgerMovementSource.STOCK_ADJUSTMENT, EntryType.CREDIT to SystemAccount.SHRINKAGE_AND_LOSSES to 30)
+            movements(day9, LedgerSourceType.STOCK_ADJUSTMENT, EntryType.DEBIT to SystemAccount.SHRINKAGE_AND_LOSSES to 15),
+            movements(day10, LedgerSourceType.STOCK_ADJUSTMENT, EntryType.CREDIT to SystemAccount.SHRINKAGE_AND_LOSSES to 30)
         )
 
         assertAmount(48, figuresOn(dailyPerformanceResponse, day8).costOfGoodsSold)
@@ -139,8 +139,8 @@ class DailyPerformanceServiceTest {
 
         assertEquals(
             setOf(
-                LedgerMovementSource.SALE, LedgerMovementSource.SALE_VOID, LedgerMovementSource.EXPENSE, LedgerMovementSource.EXPENSE_VOID,
-                LedgerMovementSource.STOCK_ADJUSTMENT, LedgerMovementSource.SALE_PAYMENT, LedgerMovementSource.SALE_PAYMENT_VOID
+                LedgerSourceType.SALE, LedgerSourceType.SALE_VOID, LedgerSourceType.EXPENSE, LedgerSourceType.EXPENSE_VOID,
+                LedgerSourceType.STOCK_ADJUSTMENT, LedgerSourceType.SALE_PAYMENT, LedgerSourceType.SALE_PAYMENT_VOID
             ),
             requestedSources
         )
@@ -149,9 +149,9 @@ class DailyPerformanceServiceTest {
     @Test
     fun `sale payments are collected by payment account and a payment void takes the amount back`() {
         val dailyPerformanceResponse = perform(
-            movements(day9, LedgerMovementSource.SALE_PAYMENT, EntryType.DEBIT to SystemAccount.CASH to 40,
+            movements(day9, LedgerSourceType.SALE_PAYMENT, EntryType.DEBIT to SystemAccount.CASH to 40,
                 EntryType.DEBIT to digitalWalletCode to 50, EntryType.CREDIT to SystemAccount.TRADE_RECEIVABLES to 90),
-            movements(day9, LedgerMovementSource.SALE_PAYMENT_VOID, EntryType.CREDIT to SystemAccount.CASH to 40,
+            movements(day9, LedgerSourceType.SALE_PAYMENT_VOID, EntryType.CREDIT to SystemAccount.CASH to 40,
                 EntryType.DEBIT to SystemAccount.TRADE_RECEIVABLES to 40)
         )
 
@@ -225,14 +225,14 @@ class DailyPerformanceServiceTest {
     @Suppress("UNCHECKED_CAST")
     private fun readerReturning(movements: List<LedgerMovement>): LedgerMovementReader =
         mock(LedgerMovementReader::class.java) { invocation ->
-            requestedSources = invocation.arguments[3] as Set<LedgerMovementSource>
+            requestedSources = invocation.arguments[3] as Set<LedgerSourceType>
             requestedLocationId = invocation.arguments[4] as UUID?
             movements
         }
 
-    private fun sale(date: LocalDate, vararg legs: Pair<Pair<EntryType, Any>, Int>) = movements(date, LedgerMovementSource.SALE, *legs)
+    private fun sale(date: LocalDate, vararg legs: Pair<Pair<EntryType, Any>, Int>) = movements(date, LedgerSourceType.SALE, *legs)
 
-    private fun movements(date: LocalDate, source: LedgerMovementSource, vararg legs: Pair<Pair<EntryType, Any>, Int>) =
+    private fun movements(date: LocalDate, source: LedgerSourceType, vararg legs: Pair<Pair<EntryType, Any>, Int>) =
         legs.map { (typeAndAccount, amount) ->
             val (entryType, account) = typeAndAccount
             LedgerMovement(date, if (account is SystemAccount) account.code else account as String, entryType, source, BigDecimal(amount))

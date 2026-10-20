@@ -154,9 +154,9 @@ references from colliding. `idempotencyConstraintName` follows the same session 
 ## Fund movement (synchronous caller)
 
 `fund_movement` is, with `loan` (below), a caller of `LedgerPostingService.post` outside the event processors. It builds the
-`LedgerPostingRequest` through `api/FundMovementPostingRequests`, which takes the reference, accounts, amount and date as
-plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. It posts inside the transaction
-that saves its row.
+`LedgerPostingRequest` through `FundMovementPostingRequests` (in `fund_movement`), which takes the reference, accounts,
+amount and date as plain values and picks the source type from the public `api/LedgerSourceType`. It posts inside the
+transaction that saves its row.
 
 | Event | Entries | Posting date |
 |---|---|---|
@@ -172,8 +172,8 @@ still rejects an unknown account or one with children; there is no event, DLT or
 
 ## Loans (synchronous caller)
 
-`loan` posts through `api/LoanPostingRequests`, which takes the reference, asset account, lender contact reference,
-amount and date as plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. Like
+`loan` posts through `LoanPostingRequests` (in `loan`), which takes the reference, asset account, lender contact reference,
+amount and date as plain values and picks the source type from `api/LedgerSourceType`. Like
 `fund_movement`, it calls `LedgerPostingService.post` inside the transaction that saves its row; a posting failure rolls
 the row back. See `loan/README.md`.
 
@@ -193,9 +193,9 @@ fall under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source ty
 `api/LedgerMovementReader` is the read path for `daily_business_summary`: summed entry amounts grouped by local date
 (`ledger_entry_group.posted_on` bucketed with `width_bucket` over day starts computed in Kotlin in the organization
 zone), account, entry type and, for `getMovements`, source. `getMovements` covers `[from, before)` for an account set and a
-`LedgerMovementSource` whitelist and an optional location; `getAccountMovementsFrom` is organization-wide, all source
+`LedgerSourceType` whitelist and an optional location; `getAccountMovementsFrom` is organization-wide, all source
 types, from the start of `from` onward, reporting anything dated at or after `before` under `before`.
-`LedgerMovementSource` mirrors the internal source types by name. `idx_ledger_entry_grp_posted_on` serves the range scan.
+`idx_ledger_entry_grp_posted_on` serves the range scan.
 
 ## Contra accounts
 
@@ -211,6 +211,11 @@ each processor's real output through the real `AccountService.patchBalances`
 there when adding or changing a processor — the balanced-entries check
 cannot catch a processor that flips both legs.
 Not yet covered: `SaleTaxLedgerEntriesBuilder`.
+
+The synchronous callers' builders are tested in their own domains (`FundMovementPostingRequestsBalanceTest`,
+`LoanPostingRequestsBalanceTest`), which run each request's entries through `AccountService` and check the subledger
+amounts on the request. The posting rules they rely on (closed fiscal period, reversal postability, null source
+location) are covered by `LedgerPostingServiceOrgLevelTest`.
 
 ## Sale cost of goods sold
 

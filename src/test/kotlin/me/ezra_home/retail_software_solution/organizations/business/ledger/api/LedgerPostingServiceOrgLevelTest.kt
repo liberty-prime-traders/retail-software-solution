@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.api
 
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerEntryGroupEntity
@@ -11,9 +10,12 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
@@ -81,6 +83,28 @@ class LedgerPostingServiceOrgLevelTest {
             LedgerPostingRequest("FMOV000001", LedgerSourceType.FUND_MOVEMENT_VOID, postingDate, entries, emptyList(), reversal = true)
         )
         verify(accountService).assertPostableReversal(anyList())
+    }
+
+    @Test
+    fun `a posting into a closed fiscal period is rejected and saves nothing`() {
+        val closedDate = LocalDate.of(2026, 2, 1)
+        `when`(fiscalPeriodService.findOpenForDate(closedDate)).thenReturn(null)
+
+        assertThrows(RtsGenericException::class.java) {
+            ledgerPostingService.post(
+                LedgerPostingRequest(
+                    sourceReferenceNumber = "FMOV000002",
+                    sourceType = LedgerSourceType.FUND_MOVEMENT,
+                    postingDate = closedDate,
+                    entries = listOf(
+                        LedgerEntryRequest.debit("001.001.001", BigDecimal("10.0000")),
+                        LedgerEntryRequest.credit("003.001", BigDecimal("10.0000"))
+                    ),
+                    subledgerEntries = emptyList()
+                )
+            )
+        }
+        assertTrue(savedGroups.isEmpty())
     }
 
     @Test

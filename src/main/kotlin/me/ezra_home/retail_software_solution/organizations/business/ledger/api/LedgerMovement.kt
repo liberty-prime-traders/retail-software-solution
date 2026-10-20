@@ -4,21 +4,11 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import java.math.BigDecimal
 import java.time.LocalDate
 
-enum class LedgerMovementSource {
-    SALE,
-    SALE_VOID,
-    SALE_PAYMENT,
-    SALE_PAYMENT_VOID,
-    EXPENSE,
-    EXPENSE_VOID,
-    STOCK_ADJUSTMENT
-}
-
 data class LedgerMovement(
     val localDate: LocalDate,
     val accountCode: String,
     val entryType: EntryType,
-    val source: LedgerMovementSource,
+    val source: LedgerSourceType,
     val amount: BigDecimal
 )
 

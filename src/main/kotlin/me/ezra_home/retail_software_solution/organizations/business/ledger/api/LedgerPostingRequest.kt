@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger.api
 
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
-import me.ezra_home.retail_software_solution.organizations.business.ledger.LedgerSourceType
 import java.math.BigDecimal
 import java.time.LocalDate
 
