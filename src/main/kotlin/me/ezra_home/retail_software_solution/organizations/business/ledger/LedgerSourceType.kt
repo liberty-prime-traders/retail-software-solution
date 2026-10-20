@@ -19,5 +19,9 @@ enum class LedgerSourceType(override val code: String) : HasCode {
     EXPENSE_PAYMENT("EXPPY"),
     EXPENSE_PAYMENT_VOID("EXPPV"),
     FUND_MOVEMENT("FM"),
-    FUND_MOVEMENT_VOID("FMV")
+    FUND_MOVEMENT_VOID("FMV"),
+    LOAN("LN"),
+    LOAN_VOID("LNV"),
+    LOAN_REPAYMENT("LNR"),
+    LOAN_REPAYMENT_VOID("LNRV")
 }

@@ -78,7 +78,7 @@ class FundMovementService(
     }
 
     fun voidFundMovement(fundMovementVoidRequest: FundMovementVoidRequest): FundMovementResponse {
-        val reason = limitedText(fundMovementVoidRequest.reason, "Reason")
+        val reason = StringUtils.getValueOrNull(fundMovementVoidRequest.reason)
         orgEntityAdvisoryLock.acquire(LockNamespaces.FUND_MOVEMENT, fundMovementVoidRequest.id.toString())
         val fundMovementEntity = fundMovementRepository.findById(fundMovementVoidRequest.id)
             .orElseThrow { RtsGenericException("Fund movement not found") }
@@ -107,14 +107,9 @@ class FundMovementService(
         movementDate: LocalDate,
         note: String?
     ): FundMovementResponse {
-        val roundedAmount = Decimals.Scale4.round(amount)
-        if (roundedAmount.signum() <= 0) {
-            throw RtsGenericException("Amount must be greater than zero")
-        }
-        if (movementDate.isAfter(DateTimes.Local.Now.organization())) {
-            throw RtsGenericException("Movement date cannot be in the future")
-        }
-        val trimmedNote = limitedText(note, "Note")
+        val roundedAmount = Decimals.Scale4.requirePositiveAmount(amount)
+        DateTimes.Local.requireNotInFuture(movementDate, "Movement date")
+        val trimmedNote = StringUtils.getValueOrNull(note)
         fundMovementAccountValidator.requireSelectable(userPickedAccountCodes)
         val fundMovementDto = fundMovementMapper.toDto(
             fundMovementRepository.save(
@@ -126,17 +121,5 @@ class FundMovementService(
                 fundMovementDto.amount, fundMovementDto.movementDate
             ))
         return fundMovementResponseBuilder.buildResponses(listOf(FundMovementWithVoid(fundMovementDto, null))).single()
-    }
-
-    private fun limitedText(text: String?, label: String): String? {
-        val normalizedText = StringUtils.getValueOrNull(text)
-        if (normalizedText != null && normalizedText.length > MAXIMUM_TEXT_LENGTH) {
-            throw RtsGenericException("$label must be at most $MAXIMUM_TEXT_LENGTH characters")
-        }
-        return normalizedText
-    }
-
-    private companion object {
-        const val MAXIMUM_TEXT_LENGTH = 500
     }
 }

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
@@ -8,9 +9,7 @@ import java.math.BigDecimal
 object SalePaymentValidator {
 
     fun guardPositiveAmount(amount: BigDecimal) {
-        if (amount <= BigDecimal.ZERO) {
-            throw RtsGenericException("Payment amount must be greater than zero")
-        }
+        Decimals.requirePositive(amount, "Payment amount")
     }
 
     fun guardNotExceedingSaleTotal(totalSubmitted: BigDecimal, receivableTotal: BigDecimal) {

@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-loan-table
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: loan
+      changes:
+        - createTable:
+            tableName: loan
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_loan_reference_number
+
+              - column:
+                  name: lender_contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_lender_contact_id_notnull
+
+              - column:
+                  name: asset_account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_asset_account_code_notnull
+
+              - column:
+                  name: amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_amount_notnull
+
+              - column:
+                  name: loan_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_loan_date_notnull
+
+              - column:
+                  name: note
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: loan_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: loan

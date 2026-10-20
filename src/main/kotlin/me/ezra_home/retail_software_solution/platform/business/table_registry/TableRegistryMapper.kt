@@ -14,7 +14,7 @@ import org.mapstruct.Mapping
 )
 interface TableRegistryMapper {
 
-    fun toDomainDto(entity: TableRegistryEntity): TableRegistryDto
+    fun toDomainDto(tableRegistryEntity: TableRegistryEntity): TableRegistryDto
 
     fun toEntity(dto: TableRegistryDto): TableRegistryEntity
 

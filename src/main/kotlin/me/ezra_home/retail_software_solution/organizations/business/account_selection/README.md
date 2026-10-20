@@ -5,7 +5,7 @@ selection tree and the validators cannot diverge.
 
 ## Rules (`api/AccountSelectionRule`)
 
-One enum entry per use: `PAYMENT_METHOD`, `FUND_MOVEMENT`, `TAX_PAYABLE`, `TAX_RECOVERABLE`, `EXPENSE_TYPE`.
+One enum entry per use: `PAYMENT_METHOD`, `FUND_MOVEMENT`, `LOAN`, `TAX_PAYABLE`, `TAX_RECOVERABLE`, `EXPENSE_TYPE`.
 `rejectionReason(candidate)` returns `null` when selectable, otherwise the message a validator throws;
 `isSelectable` is that `== null`. Rules read an `AccountSelectionCandidate` (owned by `account/api`), never
 `AccountDto`. They do not check "exists" or "active" — `AccountSelectionService.requireSelectable` and
@@ -17,6 +17,8 @@ Every rule offers leaf accounts only, because ledger postings are rejected on a 
 - `PAYMENT_METHOD` — `ASSET`; `CASH`, or a parent that is not system-maintained, or the `DIGITAL_PAYMENTS` parent.
 - `FUND_MOVEMENT` — the same type and placement as `PAYMENT_METHOD` (both go through one shared check), without requiring a
   payment method row. Used for every account a user picks on a fund movement.
+- `LOAN` — the same type and placement as `PAYMENT_METHOD`, without requiring a payment method row. Used for the asset
+  account a user picks on a loan and on a loan repayment.
 - `TAX_PAYABLE` / `TAX_RECOVERABLE` — a system-maintained account must sit directly under `TAX_PAYABLE` /
   `TAX_RECOVERABLE`; an org-defined one must be `LIABILITY` / `ASSET`.
 - `EXPENSE_TYPE` — `EXPENSE` and not in the reserved set (`COST_OF_GOODS_SOLD`, `WAGES_EXPENSE`, `INBOUND_FREIGHT`,
@@ -27,10 +29,10 @@ Every rule offers leaf accounts only, because ledger postings are rejected on a 
 
 - Validators call `AccountSelectionService.requireSelectable(rule, accountCode)`: `PaymentAccountValidator`
   (`payment_method/`), `TaxAccountsValidator` (`org_jurisdiction_tax_type/`), `ExpenseTypeValidator`
-  (`expense_type/`), `FundMovementAccountValidator` (`fund_movement/`). They keep only what is specific to their domain (blank code, recoverable-vs-not-recoverable
+  (`expense_type/`), `FundMovementAccountValidator` (`fund_movement/`), `LoanAccountValidator` (`loan/`). They keep only what is specific to their domain (blank code, recoverable-vs-not-recoverable
   tax types). `requireSelectable` reads committed state (`getFreshSelectionCandidates`), not the cache.
 - `AccountSelectionService.buildTreesForSelection` builds `AccountsTreesForSelection` (`payable`, `recoverable`,
-  `paymentMethods`, `expenseTypes`, `fundMovements`) for `GET secured/accounts/selection-trees`. `AccountTreeBuilder` drops inactive
+  `paymentMethods`, `expenseTypes`, `fundMovements`, `loans`) for `GET secured/accounts/selection-trees`. `AccountTreeBuilder` drops inactive
   accounts, then prunes any branch that is neither selectable nor an ancestor of a selectable node.
 
 A new picker is a new rule here plus a validator that calls `requireSelectable` — never a predicate written

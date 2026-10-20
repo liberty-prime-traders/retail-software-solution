@@ -13,13 +13,13 @@ import java.util.UUID
 class DbVersionEntity(
 
     @Column(name = "version_number", updatable = false, insertable = false)
-    val versionNumber: String,
+    var versionNumber: String,
 
     @Column(name = "sequence_number")
     var sequenceNumber: Long? = null,
 
     @Column(name = "prev_version_id", updatable = false, insertable = false)
-    val prevVersionId: UUID? = null,
+    var prevVersionId: UUID? = null,
 
     @Column(name = "activated_on")
     var activatedOn: OffsetDateTime? = null

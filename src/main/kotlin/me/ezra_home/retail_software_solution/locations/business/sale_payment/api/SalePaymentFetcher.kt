@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.sale_payment.ActiveSalePaymentRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
 import org.springframework.stereotype.Component
@@ -21,6 +22,7 @@ data class SalePaymentSnapshot(
 @TransactionalOnLocationSchema(readOnly = true)
 class SalePaymentFetcher(
     private val salePaymentRepository: SalePaymentRepository,
+    private val activeSalePaymentRepository: ActiveSalePaymentRepository,
     private val salePaymentVoidRepository: SalePaymentVoidRepository
 ) {
 
@@ -29,11 +31,7 @@ class SalePaymentFetcher(
     }
 
     fun calculatePaidAmounts(saleIds: List<UUID>): Map<UUID, BigDecimal> {
-        val payments = salePaymentRepository.findBySaleIdIn(saleIds)
-        if (payments.isEmpty()) return emptyMap()
-        val voidedIds = voidedPaymentIds(payments.map { it.id!! })
-        return payments
-            .filter { it.id !in voidedIds }
+        return activeSalePaymentRepository.findBySaleIdIn(saleIds)
             .groupBy { it.saleId }
             .mapValues { (_, activePayments) -> activePayments.sumOf { it.amount } }
     }
@@ -58,13 +56,6 @@ class SalePaymentFetcher(
     }
 
     fun hasActivePayments(saleId: UUID): Boolean {
-        val payments = salePaymentRepository.findBySaleId(saleId)
-        if (payments.isEmpty()) return false
-        val voidedIds = voidedPaymentIds(payments.map { it.id!! })
-        return payments.any { it.id !in voidedIds }
+        return activeSalePaymentRepository.existsBySaleId(saleId)
     }
-
-    private fun voidedPaymentIds(paymentIds: List<UUID>): Set<UUID> =
-        salePaymentVoidRepository.findBySalePaymentIdIn(paymentIds)
-            .mapTo(HashSet()) { it.salePaymentId }
 }

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-loan-repayment-loan
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_repayment_loan
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan_repayment
+            baseColumnNames: loan_id
+            referencedTableName: loan
+            referencedColumnNames: id
+            constraintName: fk_loan_repayment_loan
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan_repayment
+            constraintName: fk_loan_repayment_loan
+
+  - changeSet:
+      id: add-foreign-key-loan-repayment-asset-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_repayment_asset_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan_repayment
+            baseColumnNames: asset_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_loan_repayment_asset_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan_repayment
+            constraintName: fk_loan_repayment_asset_account_code

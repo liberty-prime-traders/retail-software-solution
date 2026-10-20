@@ -6,25 +6,14 @@ import java.util.UUID
 
 @Service
 class PaymentsCalculatorService(
-    private val supplierPaymentRepository: SupplierPaymentRepository,
-    private val supplierPaymentVoidRepository: SupplierPaymentVoidRepository
+    private val activeSupplierPaymentRepository: ActiveSupplierPaymentRepository
 ) {
 
     fun calculatePaidAmountForPurchase(purchaseId: UUID): BigDecimal {
-        val payments = supplierPaymentRepository.findByPurchaseId(purchaseId)
-        return calculatePaidAmountForPayments(payments)
+        return activeSupplierPaymentRepository.findByPurchaseId(purchaseId).sumOf { it.amount }
     }
 
     fun calculatePaidAmountForDelivery(deliveryId: UUID): BigDecimal {
-        val payments = supplierPaymentRepository.findByDeliveryId(deliveryId)
-        return calculatePaidAmountForPayments(payments)
-    }
-
-    private fun calculatePaidAmountForPayments(payments: List<SupplierPaymentEntity>): BigDecimal {
-        if (payments.isEmpty()) return BigDecimal.ZERO
-        val voidedPaymentIds = supplierPaymentVoidRepository
-            .findBySupplierPaymentIdIn(payments.map { it.id!! })
-            .mapTo(HashSet()) { it.supplierPaymentId }
-        return payments.filter { it.id !in voidedPaymentIds }.sumOf { it.amount }
+        return activeSupplierPaymentRepository.findByDeliveryId(deliveryId).sumOf { it.amount }
     }
 }

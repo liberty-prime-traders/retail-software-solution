@@ -9,7 +9,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface SupplierPaymentMapper {
 
-    fun toDomainDto(entity: SupplierPaymentEntity): SupplierPaymentDto
+    fun toDomainDto(supplierPaymentEntity: SupplierPaymentEntity): SupplierPaymentDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "referenceNumber", ignore = true)

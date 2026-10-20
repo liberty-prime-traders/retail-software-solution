@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.util.business
 
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -55,5 +57,30 @@ class DecimalsTest {
             val shownAvailable = Decimals.Scale4.roundDown(onHandExact - reservedExact)
             assertTrue(shownOnHand - shownReserved <= shownAvailable, "$onHand on hand, $reserved reserved")
         }
+    }
+
+    @Test
+    fun `zero, negative and values that round to zero are not positive transaction amounts`() {
+        listOf("0", "-5", "0.00004").forEach { amount ->
+            assertThrows(RtsGenericException::class.java) { Decimals.Scale4.requirePositiveAmount(BigDecimal(amount)) }
+        }
+    }
+
+    @Test
+    fun `a transaction amount is rounded to scale 4 and may equal the maximum but not exceed it`() {
+        assertEquals(BigDecimal("50.1235"), Decimals.Scale4.requirePositiveAmount(BigDecimal("50.12345")))
+        assertEquals(
+            Decimals.MAXIMUM_TRANSACTION_AMOUNT,
+            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT)
+        )
+        assertThrows(RtsGenericException::class.java) {
+            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")))
+        }
+    }
+
+    @Test
+    fun `the label names the field in the positivity error`() {
+        val exception = assertThrows(RtsGenericException::class.java) { Decimals.requirePositive(BigDecimal.ZERO, "Payment amount") }
+        assertEquals("Payment amount must be greater than zero", exception.message)
     }
 }

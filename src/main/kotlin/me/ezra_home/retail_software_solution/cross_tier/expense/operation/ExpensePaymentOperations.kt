@@ -16,7 +16,6 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -84,7 +83,7 @@ class ExpensePaymentOperations(
         expenseLookup.requireNotVoided(expenseAggregate, expenseDto)
         val expensePaymentDrafts = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
             val paymentAmount = Decimals.Scale4.round(paymentRequest.amount)
-            if (paymentAmount <= BigDecimal.ZERO) throw RtsGenericException("Payment amount must be greater than zero")
+            Decimals.requirePositive(paymentAmount, "Payment amount")
             ExpensePaymentDraft(expenseDto.id, paymentAmount, resolvedSettlement)
         }
         val remainingBalance = expenseDto.amount - expenseAggregate.activePaidAmount(expenseDto.id)

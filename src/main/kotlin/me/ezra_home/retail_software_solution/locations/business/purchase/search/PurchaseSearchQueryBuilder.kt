@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.ViewNames
 import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.DateRangeFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.ExpressionRangeFilterStrategy
@@ -27,11 +28,8 @@ object PurchaseSearchQueryBuilder {
   private const val PAID_TOTAL_JOIN = """
     LEFT JOIN LATERAL (
       SELECT COALESCE(SUM(sp.amount), 0) AS paid_total
-      FROM ${TableNames.SUPPLIER_PAYMENT} sp
+      FROM ${ViewNames.ACTIVE_SUPPLIER_PAYMENT} sp
       WHERE sp.purchase_id = ${PurchaseSearchAliases.PURCHASE}.id
-        AND NOT EXISTS (
-          SELECT 1 FROM ${TableNames.SUPPLIER_PAYMENT_VOID} spv WHERE spv.supplier_payment_id = sp.id
-        )
     ) ${PurchaseSearchAliases.PAID_TOTAL} ON true
   """
 

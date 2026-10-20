@@ -5,5 +5,4 @@ object ExpenseSearchAliases {
     const val PAYMENT_STATE = "eps"
     const val EXPENSE_VOID = "ev"
     const val EXPENSE_PAYMENT = "ep"
-    const val EXPENSE_PAYMENT_VOID = "epv"
 }

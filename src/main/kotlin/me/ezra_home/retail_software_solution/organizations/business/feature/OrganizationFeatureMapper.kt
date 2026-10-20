@@ -8,7 +8,7 @@ import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
 interface OrganizationFeatureMapper {
-    fun toDomainDto(entity: OrganizationFeatureEntity): OrganizationFeatureDto
+    fun toDomainDto(organizationFeatureEntity: OrganizationFeatureEntity): OrganizationFeatureDto
     fun toEntity(dto: OrganizationFeatureDto): OrganizationFeatureEntity
 
     @Mapping(target = "enabledBy", source = "enabledBy", qualifiedBy = [NullableFullName::class])

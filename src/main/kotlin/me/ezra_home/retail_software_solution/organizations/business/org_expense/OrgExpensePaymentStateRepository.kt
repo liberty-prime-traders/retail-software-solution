@@ -12,9 +12,8 @@ interface OrgExpensePaymentStateRepository : ExpensePaymentStateRepositoryBase<O
     @Query(
         """
         select p.expenseId as expenseId, sum(p.amount) as amountPaid
-        from OrgExpensePaymentEntity p
+        from ActiveOrgExpensePaymentEntity p
         where p.expenseId in :expenseIds
-          and not exists (select 1 from OrgExpensePaymentVoidEntity v where v.expensePaymentId = p.id)
         group by p.expenseId
         """
     )

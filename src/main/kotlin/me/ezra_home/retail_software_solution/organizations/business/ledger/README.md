@@ -71,6 +71,8 @@ posts to the opposite column rather than a negative amount. A debit on `TRADE_RE
 | delivery, supplier payment void, expense, expense payment void | credit payables / liability | payable |
 | contact opening balance: receivable raised, payable reduced | debit receivables / payables | receivable |
 | contact opening balance: payable raised, receivable reduced | credit payables / receivables | payable |
+| loan, loan repayment void | credit `LOANS_PAYABLE` | payable |
+| loan void, loan repayment | debit `LOANS_PAYABLE` | receivable |
 
 ## Reading the subledger: `SubledgerService`
 
@@ -151,7 +153,7 @@ references from colliding. `idempotencyConstraintName` follows the same session 
 
 ## Fund movement (synchronous caller)
 
-`fund_movement` is the one caller of `LedgerPostingService.post` outside the event processors. It builds the
+`fund_movement` is, with `loan` (below), a caller of `LedgerPostingService.post` outside the event processors. It builds the
 `LedgerPostingRequest` through `api/FundMovementPostingRequests`, which takes the reference, accounts, amount and date as
 plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. It posts inside the transaction
 that saves its row.
@@ -167,6 +169,24 @@ movement's reference and differs only by source type. A posting failure (closed 
 increased) propagates and rolls the movement row back; a void is the exception for inactive accounts: its request sets
 `reversal = true`, so `post` calls `AccountService.assertPostableReversal`, which lets an inactive account be built up but
 still rejects an unknown account or one with children; there is no event, DLT or reissue. See `fund_movement/README.md`.
+
+## Loans (synchronous caller)
+
+`loan` posts through `api/LoanPostingRequests`, which takes the reference, asset account, lender contact reference,
+amount and date as plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. Like
+`fund_movement`, it calls `LedgerPostingService.post` inside the transaction that saves its row; a posting failure rolls
+the row back. See `loan/README.md`.
+
+| Event | Source type | Entries | Posting date | Subledger (lender) |
+|---|---|---|---|---|
+| loan | `LOAN` | debit asset account, credit `LOANS_PAYABLE` | `loan_date` | payable raised |
+| loan void | `LOAN_VOID` | debit `LOANS_PAYABLE`, credit asset account | the void's `void_date` | receivable raised |
+| loan repayment | `LOAN_REPAYMENT` | debit `LOANS_PAYABLE`, credit asset account | `repayment_date` | receivable raised |
+| loan repayment void | `LOAN_REPAYMENT_VOID` | debit asset account, credit `LOANS_PAYABLE` | the void's `void_date` | payable raised |
+
+A void shares its original's reference and posts as a reversal (`reversal = true`), so a loan on a since-deactivated
+asset account can still be voided. Org-level requests carry no location, so `source_location_id` is null and the groups
+fall under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source type)` for any source type.
 
 ## Contra accounts
 

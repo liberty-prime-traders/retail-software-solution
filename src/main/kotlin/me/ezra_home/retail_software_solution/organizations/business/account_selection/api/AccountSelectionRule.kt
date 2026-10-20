@@ -28,6 +28,11 @@ enum class AccountSelectionRule(val accountDescription: String) {
             moneyHoldingAccountRejectionReason(candidate)
     },
 
+    LOAN("Loan account") {
+        override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? =
+            moneyHoldingAccountRejectionReason(candidate)
+    },
+
     TAX_PAYABLE("Payable tax account") {
         override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? = when {
             candidate.accountIsSystemMaintained -> systemParentRejectionReason(candidate, SystemAccount.TAX_PAYABLE)

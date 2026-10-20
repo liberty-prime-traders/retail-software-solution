@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import me.ezra_home.retail_software_solution.util.queries.QueryParameterNames
 import me.ezra_home.retail_software_solution.util.queries.SqlQuery
+import me.ezra_home.retail_software_solution.util.model.TableNames
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -23,6 +24,8 @@ import java.util.UUID
 abstract class ExpenseSearchQueryBuilderContract {
 
     protected abstract val tables: ExpenseSearchTables
+    protected abstract val expensePaymentTable: String
+    protected abstract val expensePaymentVoidTable: String
 
     private lateinit var connection: Connection
 
@@ -49,8 +52,12 @@ abstract class ExpenseSearchQueryBuilderContract {
                    payment_status VARCHAR(5), amount_paid NUMERIC(19,4))"""
             )
             statement.execute("CREATE TABLE ${tables.expenseVoid} (id UUID DEFAULT RANDOM_UUID() PRIMARY KEY, expense_id UUID UNIQUE)")
-            statement.execute("CREATE TABLE ${tables.expensePayment} (id UUID PRIMARY KEY, expense_id UUID, payment_method_id UUID, amount NUMERIC(19,4))")
-            statement.execute("CREATE TABLE ${tables.expensePaymentVoid} (id UUID DEFAULT RANDOM_UUID() PRIMARY KEY, expense_payment_id UUID UNIQUE)")
+            statement.execute("CREATE TABLE $expensePaymentTable (id UUID PRIMARY KEY, expense_id UUID, payment_method_id UUID, amount NUMERIC(19,4))")
+            statement.execute("CREATE TABLE $expensePaymentVoidTable (id UUID DEFAULT RANDOM_UUID() PRIMARY KEY, expense_payment_id UUID UNIQUE)")
+            statement.execute(
+                """CREATE VIEW ${tables.activeExpensePayment} AS SELECT p.id, p.expense_id, p.payment_method_id, p.amount FROM $expensePaymentTable p
+                   WHERE NOT EXISTS (SELECT 1 FROM $expensePaymentVoidTable v WHERE v.expense_payment_id = p.id)"""
+            )
         }
         insertExpense("EXPN01", typeA, payeeOne, "100", "2030-01-01", "ADH", null, 1, PaymentStatus.UNPAID, "0")
         insertExpense("EXPN02", typeA, payeeOne, "200", "2030-01-02", "PUR", "PRCH01", 2, PaymentStatus.PARTIALLY_SETTLED, "50")
@@ -241,7 +248,7 @@ abstract class ExpenseSearchQueryBuilderContract {
         assertTrue(sql.contains("(e.created_on, e.id) < (:${QueryParameterNames.CURSOR_CREATED_ON}, :${QueryParameterNames.CURSOR_ID})"))
         assertTrue(sql.contains("ORDER BY e.created_on DESC, e.id DESC"))
         assertTrue(sql.contains("EXISTS ("))
-        assertFalse(sql.contains("JOIN ${tables.expensePayment} "))
+        assertFalse(sql.contains("JOIN ${tables.activeExpensePayment} "))
         assertFalse(
             ExpenseSearchQueryBuilder.buildListQuery(ExpenseSearchQueryBuilder.buildPredicate(ExpenseSearchParameters(), tables), null, tables)
                 .sql.contains("cursor")
@@ -339,7 +346,7 @@ abstract class ExpenseSearchQueryBuilderContract {
 
     private fun insertPayment(expenseId: UUID, paymentMethodId: UUID, amount: String, voided: Boolean) {
         val paymentId = UUID.randomUUID()
-        connection.prepareStatement("INSERT INTO ${tables.expensePayment} VALUES (?, ?, ?, ?)").use {
+        connection.prepareStatement("INSERT INTO $expensePaymentTable VALUES (?, ?, ?, ?)").use {
             it.setObject(1, paymentId)
             it.setObject(2, expenseId)
             it.setObject(3, paymentMethodId)
@@ -347,7 +354,7 @@ abstract class ExpenseSearchQueryBuilderContract {
             it.executeUpdate()
         }
         if (voided) {
-            connection.prepareStatement("INSERT INTO ${tables.expensePaymentVoid} (expense_payment_id) VALUES (?)").use {
+            connection.prepareStatement("INSERT INTO $expensePaymentVoidTable (expense_payment_id) VALUES (?)").use {
                 it.setObject(1, paymentId)
                 it.executeUpdate()
             }
@@ -371,8 +378,12 @@ abstract class ExpenseSearchQueryBuilderContract {
 
 class LocationExpenseSearchQueryBuilderTest : ExpenseSearchQueryBuilderContract() {
     override val tables = ExpenseSearchTables.LOCATION
+    override val expensePaymentTable = TableNames.EXPENSE_PAYMENT
+    override val expensePaymentVoidTable = TableNames.EXPENSE_PAYMENT_VOID
 }
 
 class OrganizationExpenseSearchQueryBuilderTest : ExpenseSearchQueryBuilderContract() {
     override val tables = ExpenseSearchTables.ORGANIZATION
+    override val expensePaymentTable = TableNames.ORG_EXPENSE_PAYMENT
+    override val expensePaymentVoidTable = TableNames.ORG_EXPENSE_PAYMENT_VOID
 }

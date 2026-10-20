@@ -20,17 +20,17 @@ import java.util.UUID
 class DbMigrationEntity(
 
     @Column(name = "db_version_id", nullable = false, updatable = false)
-    val dbVersionId: UUID,
+    var dbVersionId: UUID,
 
     @Column(name = "schema_owner_id", nullable = false, updatable = false)
-    val schemaOwnerId: UUID,
+    var schemaOwnerId: UUID,
 
     @Column(name = "schema_owner_type", nullable = false, length = 5)
     @Convert(converter = SchemaOwnerTypeConverter::class)
-    val schemaOwnerType: SchemaOwnerType,
+    var schemaOwnerType: SchemaOwnerType,
 
     @Column(name = "start_on", nullable = false)
-    val startOn: OffsetDateTime = OffsetDateTime.now(),
+    var startOn: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "end_on")
     var endOn: OffsetDateTime? = null,

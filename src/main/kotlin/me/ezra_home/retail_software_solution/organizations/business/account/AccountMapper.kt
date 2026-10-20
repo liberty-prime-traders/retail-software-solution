@@ -9,7 +9,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface AccountMapper {
 
-    fun toDomainDto(entity: AccountEntity): AccountDto
+    fun toDomainDto(accountEntity: AccountEntity): AccountDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-active-loan-repayment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: active_loan_repayment
+      changes:
+        - createView:
+            viewName: active_loan_repayment
+            selectQuery: >-
+              SELECT r.id, r.reference_number, r.loan_id, r.amount, r.created_on
+              FROM loan_repayment r
+              WHERE NOT EXISTS (SELECT 1 FROM loan_repayment_void v WHERE v.loan_repayment_id = r.id)
+      rollback:
+        - dropView:
+            viewName: active_loan_repayment

@@ -17,7 +17,6 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -44,9 +43,7 @@ class ExpenseRowResolver(
         val openDates = HashSet<LocalDate>()
         return expenseSubmission.rowCommands.map { rowCommand ->
             val roundedAmount = Decimals.Scale4.round(rowCommand.amount)
-            if (roundedAmount <= BigDecimal.ZERO) {
-                throw RtsGenericException("Expense amount must be greater than zero")
-            }
+            Decimals.requirePositive(roundedAmount, "Expense amount")
             val expenseType = expenseTypesById.getOrPut(rowCommand.expenseTypeId) {
                 expenseTypeService.getById(rowCommand.expenseTypeId)
             }

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-loan-lender-contact
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_lender_contact
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan
+            baseColumnNames: lender_contact_id
+            referencedTableName: contact
+            referencedColumnNames: id
+            constraintName: fk_loan_lender_contact
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan
+            constraintName: fk_loan_lender_contact
+
+  - changeSet:
+      id: add-foreign-key-loan-asset-account-code
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_asset_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan
+            baseColumnNames: asset_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_loan_asset_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan
+            constraintName: fk_loan_asset_account_code

@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-loan-created-on-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_loan_created_on_id
+      changes:
+        - createIndex:
+            indexName: idx_loan_created_on_id
+            tableName: loan
+            columns:
+              - column:
+                  name: created_on
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+      rollback:
+        - dropIndex:
+            indexName: idx_loan_created_on_id
+            tableName: loan
+
+  - changeSet:
+      id: create-index-loan-lender-contact-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_loan_lender_contact_id
+      changes:
+        - createIndex:
+            indexName: idx_loan_lender_contact_id
+            tableName: loan
+            columns:
+              - column:
+                  name: lender_contact_id
+      rollback:
+        - dropIndex:
+            indexName: idx_loan_lender_contact_id
+            tableName: loan

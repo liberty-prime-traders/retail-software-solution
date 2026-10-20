@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-loan-status
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: loan_status
+      changes:
+        - createView:
+            viewName: loan_status
+            selectQuery: >-
+              SELECT l.id AS loan_id,
+              COALESCE(a.amount_repaid, 0) AS amount_repaid,
+              CASE WHEN lv.id IS NOT NULL THEN 0 ELSE l.amount - COALESCE(a.amount_repaid, 0) END AS outstanding,
+              CASE WHEN lv.id IS NOT NULL THEN 'VOI'
+              WHEN l.amount - COALESCE(a.amount_repaid, 0) = 0 THEN 'STL'
+              ELSE 'OPN' END AS status
+              FROM loan l
+              LEFT JOIN loan_void lv ON lv.loan_id = l.id
+              CROSS JOIN LATERAL (SELECT SUM(r.amount) AS amount_repaid FROM active_loan_repayment r WHERE r.loan_id = l.id) a
+      rollback:
+        - dropView:
+            viewName: loan_status

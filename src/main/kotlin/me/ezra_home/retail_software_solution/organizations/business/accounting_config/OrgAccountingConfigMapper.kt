@@ -10,7 +10,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface OrgAccountingConfigMapper {
 
-    fun toDomainDto(entity: OrgAccountingConfigEntity): OrgAccountingConfigDto
+    fun toDomainDto(orgAccountingConfigEntity: OrgAccountingConfigEntity): OrgAccountingConfigDto
 
     fun toEntity(dto: OrgAccountingConfigDto): OrgAccountingConfigEntity
 

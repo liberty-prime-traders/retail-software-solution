@@ -14,7 +14,7 @@ import org.mapstruct.Mapping
     uses = [DbVersionService::class, DbMigrationQualifier::class]
 )
 interface DbMigrationMapper {
-    fun toDomainDto(entity: DbMigrationEntity): DbMigrationDto
+    fun toDomainDto(dbMigrationEntity: DbMigrationEntity): DbMigrationDto
 
     fun toEntity(dto: DbMigrationDto): DbMigrationEntity
 

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-loan-void-loan
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_void_loan
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan_void
+            baseColumnNames: loan_id
+            referencedTableName: loan
+            referencedColumnNames: id
+            constraintName: fk_loan_void_loan
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan_void
+            constraintName: fk_loan_void_loan

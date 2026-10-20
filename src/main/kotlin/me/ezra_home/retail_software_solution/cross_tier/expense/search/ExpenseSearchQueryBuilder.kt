@@ -14,7 +14,6 @@ object ExpenseSearchQueryBuilder {
     private const val PAYMENT_STATE_ALIAS = ExpenseSearchAliases.PAYMENT_STATE
     private const val EXPENSE_VOID_ALIAS = ExpenseSearchAliases.EXPENSE_VOID
     private const val EXPENSE_PAYMENT_ALIAS = ExpenseSearchAliases.EXPENSE_PAYMENT
-    private const val EXPENSE_PAYMENT_VOID_ALIAS = ExpenseSearchAliases.EXPENSE_PAYMENT_VOID
 
     private fun fromAndJoins(tables: ExpenseSearchTables) = """
         FROM ${tables.expense} $EXPENSE_ALIAS
@@ -87,13 +86,9 @@ object ExpenseSearchQueryBuilder {
             context.whereClauses.add(
                 """
                 EXISTS (
-                  SELECT 1 FROM ${tables.expensePayment} $EXPENSE_PAYMENT_ALIAS
+                  SELECT 1 FROM ${tables.activeExpensePayment} $EXPENSE_PAYMENT_ALIAS
                   WHERE $EXPENSE_PAYMENT_ALIAS.expense_id = $EXPENSE_ALIAS.id
                     AND $EXPENSE_PAYMENT_ALIAS.payment_method_id = ANY(:${ExpenseSearchParameterNames.PAYMENT_METHOD_IDS})
-                    AND NOT EXISTS (
-                      SELECT 1 FROM ${tables.expensePaymentVoid} $EXPENSE_PAYMENT_VOID_ALIAS
-                      WHERE $EXPENSE_PAYMENT_VOID_ALIAS.expense_payment_id = $EXPENSE_PAYMENT_ALIAS.id
-                    )
                 )
                 """.trimIndent()
             )

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-active-org-expense-payment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: active_org_expense_payment
+      changes:
+        - createView:
+            viewName: active_org_expense_payment
+            selectQuery: >-
+              SELECT p.id, p.expense_id, p.payment_method_id, p.amount
+              FROM org_expense_payment p
+              WHERE NOT EXISTS (SELECT 1 FROM org_expense_payment_void v WHERE v.expense_payment_id = p.id)
+      rollback:
+        - dropView:
+            viewName: active_org_expense_payment

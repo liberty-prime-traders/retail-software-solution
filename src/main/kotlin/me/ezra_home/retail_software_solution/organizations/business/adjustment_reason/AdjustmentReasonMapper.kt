@@ -15,7 +15,7 @@ abstract class AdjustmentReasonMapper {
     @Mapping(target = "systemDefined", constant = "false")
     abstract fun toEntity(insertDto: AdjustmentReasonInsertDto): AdjustmentReasonEntity
 
-    abstract fun toDomainDto(entity: AdjustmentReasonEntity): AdjustmentReasonDto
+    abstract fun toDomainDto(adjustmentReasonEntity: AdjustmentReasonEntity): AdjustmentReasonDto
 
     abstract fun toEntity(dto: AdjustmentReasonDto): AdjustmentReasonEntity
 }

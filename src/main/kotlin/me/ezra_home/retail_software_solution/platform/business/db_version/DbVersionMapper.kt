@@ -9,7 +9,7 @@ import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
 interface DbVersionMapper {
-    fun toDomainDto(entity: DbVersionEntity): DbVersionDto
+    fun toDomainDto(dbVersionEntity: DbVersionEntity): DbVersionDto
 
     fun toEntity(dto: DbVersionDto): DbVersionEntity
 

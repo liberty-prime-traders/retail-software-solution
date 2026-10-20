@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-loan-repayment-void-loan-repayment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_loan_repayment_void_loan_repayment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: loan_repayment_void
+            baseColumnNames: loan_repayment_id
+            referencedTableName: loan_repayment
+            referencedColumnNames: id
+            constraintName: fk_loan_repayment_void_loan_repayment
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: loan_repayment_void
+            constraintName: fk_loan_repayment_void_loan_repayment

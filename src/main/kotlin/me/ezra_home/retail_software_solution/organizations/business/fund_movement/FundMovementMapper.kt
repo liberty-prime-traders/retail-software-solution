@@ -6,7 +6,7 @@ import org.mapstruct.Mapper
 @Mapper(config = RtsMapperConfig::class)
 interface FundMovementMapper {
 
-    fun toDto(entity: FundMovementEntity): FundMovementDto
+    fun toDto(fundMovementEntity: FundMovementEntity): FundMovementDto
 
-    fun toVoidDto(entity: FundMovementVoidEntity): FundMovementVoidDto
+    fun toVoidDto(fundMovementVoidEntity: FundMovementVoidEntity): FundMovementVoidDto
 }

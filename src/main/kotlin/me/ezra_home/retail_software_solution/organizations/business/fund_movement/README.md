@@ -27,14 +27,14 @@ type (`transfer`, `capital`, `draw`) so each can carry its own static authorizat
 ## Rules
 
 - Validation is in `FundMovementService`, not on the DTOs. Amount is rounded with `Decimals.Scale4.round` (half-up) and must then be
-  positive; `movementDate` must not be after today in the organization zone; a transfer needs two different accounts; note and reason are blank-to-null and at most 500 characters.
+  positive and at most `Decimals.MAXIMUM_TRANSACTION_AMOUNT`; `movementDate` must not be after today in the organization zone; a transfer needs two different accounts; the note and the void reason are blank-to-null and unbounded (`text`).
 - Every user-picked account goes through `FundMovementAccountValidator`, which calls
   `AccountSelectionService.requireSelectable(AccountSelectionRule.FUND_MOVEMENT, code)` in sorted code order, so two
   movements over the same pair take the account locks in the same order.
 - The open fiscal period and account postability are enforced by `LedgerPostingService.post`, not repeated here.
-- A void posts as a reversal, so a movement on a since-deactivated account can still be voided. Movements are not reported to
-  `AccountUsagesFinder`: nothing stops an account with movements from gaining children, and a void against such an account is
-  rejected because accounts with children never post directly.
+- A void posts as a reversal, so a movement on a since-deactivated account can still be voided. Movements are reported to
+  `AccountUsagesFinder` by `FundMovementAccountUsageProvider` (voided ones included, newest ten references), which stops
+  an account with movements from gaining children (a void against a non-leaf account is rejected) or being deactivated.
 - `debit_account_code` and `credit_account_code` are foreign keys to `account.code`.
 - A void takes `OrgEntityAdvisoryLock` on the movement id (`LockNamespaces.FUND_MOVEMENT`) before checking for an existing
   void row.
@@ -51,7 +51,8 @@ a void posts `FUND_MOVEMENT_VOID` with the legs swapped on `void_date`. See `led
 - Responses are ready to render: account `code` and `label`, the recorded-by name, and `void` (null, or `voidDate`,
   `reason`, `voidedBy`). `FundMovementResponseBuilder` resolves labels in one pass per request.
 - `POST search` follows `cross_tier/expense/README.md`: keyset on `(created_on, id)` descending (`idx_fund_movement_created_on_id`),
-  one extra row for `hasMore`, query returns only `(id, created_on)` and the page is shaped by the response builder.
+  one extra row for `hasMore`. The query selects the full movement and void columns, `FundMovementSearchRowMapper` builds the
+  DTOs, and the response builder resolves labels and names for the page.
   `createdFrom` / `createdBefore` are required, the upper bound is exclusive and the span is at most one year.
 - Filters: `types`, `accountCodes` (either side, a single-row predicate so a movement is never duplicated), `movementDateFrom` /
   `movementDateBefore`, `statuses` (both or neither means no filter) and `references` (blanks dropped).

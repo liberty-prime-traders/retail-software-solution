@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-active-sale-payment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: active_sale_payment
+      changes:
+        - createView:
+            viewName: active_sale_payment
+            selectQuery: >-
+              SELECT p.id, p.reference_number, p.sale_id, p.amount, p.created_on
+              FROM sale_payment p
+              WHERE NOT EXISTS (SELECT 1 FROM sale_payment_void v WHERE v.sale_payment_id = p.id)
+      rollback:
+        - dropView:
+            viewName: active_sale_payment

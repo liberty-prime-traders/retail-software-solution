@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
@@ -145,6 +146,29 @@ class FundMovementServiceTest {
             }
         }
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
+    }
+
+    @Test
+    fun `an amount above the transaction maximum is rejected and the maximum itself is accepted`() {
+        assertThrows(RtsGenericException::class.java) {
+            fundMovementService.createCapital(
+                FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")), movementDate)
+            )
+        }
+        verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
+
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT, movementDate))
+
+        assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, savedEntity().amount)
+    }
+
+    @Test
+    fun `a long note is kept in full`() {
+        val longNote = "n".repeat(2000)
+
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), movementDate, longNote))
+
+        assertEquals(longNote, savedEntity().note)
     }
 
     @Test

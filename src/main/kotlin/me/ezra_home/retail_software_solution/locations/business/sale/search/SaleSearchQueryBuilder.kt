@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale.search
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.model.ViewNames
 import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.DateRangeFilterStrategy
 import me.ezra_home.retail_software_solution.util.queries.ExpressionRangeFilterStrategy
@@ -18,10 +19,8 @@ object SaleSearchQueryBuilder {
   private const val SUMMARY_FROM_AND_JOINS = """
     FROM ${TableNames.SALE} $SALE_ALIAS
     LEFT JOIN LATERAL (
-      SELECT COALESCE(SUM(${SaleSearchAliases.SALE_PAYMENT}.amount) FILTER (WHERE ${SaleSearchAliases.SALE_PAYMENT_VOID}.id IS NULL), 0) AS paid
-      FROM ${TableNames.SALE_PAYMENT} ${SaleSearchAliases.SALE_PAYMENT}
-      LEFT JOIN ${TableNames.SALE_PAYMENT_VOID} ${SaleSearchAliases.SALE_PAYMENT_VOID}
-        ON ${SaleSearchAliases.SALE_PAYMENT_VOID}.sale_payment_id = ${SaleSearchAliases.SALE_PAYMENT}.id
+      SELECT COALESCE(SUM(${SaleSearchAliases.SALE_PAYMENT}.amount), 0) AS paid
+      FROM ${ViewNames.ACTIVE_SALE_PAYMENT} ${SaleSearchAliases.SALE_PAYMENT}
       WHERE ${SaleSearchAliases.SALE_PAYMENT}.sale_id = $SALE_ALIAS.id
     ) ${SaleSearchAliases.PAYMENTS} ON TRUE
   """

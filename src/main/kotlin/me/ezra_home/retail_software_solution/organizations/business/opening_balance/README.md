@@ -1,11 +1,12 @@
 # opening_balance
 
 Lets org admins declare a starting balance for any postable (leaf, active)
-account, except `TRADE_RECEIVABLES` and `TRADE_PAYABLES`: those are the
+account, except `TRADE_RECEIVABLES`, `TRADE_PAYABLES` and `LOANS_PAYABLE`: those are the
 subledger control accounts, rejected by
-`OpeningBalanceAccountValidator.requireNotSubledgerControl`, because their
-totals must equal the sum of the contacts' balances and so can only come
-from contact opening balances (`contact_opening_balance/README.md`). `opening_balance` rows are **append-only** — a correction inserts a
+`OpeningBalanceAccountValidator.assertManualOpeningBalanceAccepted`. The totals of the first two must equal the
+sum of the contacts' balances and so can only come from contact opening balances
+(`contact_opening_balance/README.md`); `LOANS_PAYABLE` must equal the sum of outstanding loans and so comes only from
+loans (`loan/README.md`), and its rejection message says so. `opening_balance` rows are **append-only** — a correction inserts a
 new row rather than mutating an old one, so every past declaration stays
 exactly as it was posted.
 
