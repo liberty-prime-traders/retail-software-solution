@@ -188,6 +188,15 @@ A void shares its original's reference and posts as a reversal (`reversal = true
 asset account can still be voided. Org-level requests carry no location, so `source_location_id` is null and the groups
 fall under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source type)` for any source type.
 
+## Reading movements: `LedgerMovementReader`
+
+`api/LedgerMovementReader` is the read path for `daily_business_summary`: summed entry amounts grouped by local date
+(`ledger_entry_group.posted_on` bucketed with `width_bucket` over day starts computed in Kotlin in the organization
+zone), account, entry type and, for `getMovements`, source. `getMovements` covers `[from, before)` for an account set and a
+`LedgerMovementSource` whitelist and an optional location; `getAccountMovementsFrom` is organization-wide, all source
+types, from the start of `from` onward, reporting anything dated at or after `before` under `before`.
+`LedgerMovementSource` mirrors the internal source types by name. `idx_ledger_entry_grp_posted_on` serves the range scan.
+
 ## Contra accounts
 
 Contras are posted like any other account, in their own normal direction

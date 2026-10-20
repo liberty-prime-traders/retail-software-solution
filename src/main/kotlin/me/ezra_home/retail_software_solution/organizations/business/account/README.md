@@ -161,6 +161,10 @@ exposes `AccountSelectionCandidate` (via `AccountDataFetcher.getSelectionCandida
 
 ## Balances
 
+- `AccountService.getAccountTree` exposes the chart as `AccountTreeNode`s (category, contra flag, normal balance, leaf
+  flag, label) so other domains never touch `AccountType`. `getFreshBalancesByCodes` reads `current_balance` from the
+  rows, not the cache, for readers that need it consistent with a transaction snapshot (`daily_business_summary`).
+
 - `AccountEntity.currentBalance` is a running total updated in place via
   `AccountRepository.incrementBalance` (`UPDATE ... SET current_balance =
   current_balance + :delta`) — never read-modify-write through the cached DTO.
