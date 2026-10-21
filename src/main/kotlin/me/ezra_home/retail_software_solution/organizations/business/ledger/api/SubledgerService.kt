@@ -142,9 +142,9 @@ class SubledgerService(
                 sourceType = groupDto.sourceType,
                 sourceReferenceNumber = groupDto.sourceReferenceNumber,
                 transactionAmount = transactionDelta.netBalance,
-                transactionBalanceSignal = transactionDelta.balanceSignal,
+                transactionBalanceEffect = transactionDelta.balanceEffect,
                 netBalance = runningBalance.netBalance,
-                netBalanceSignal = runningBalance.balanceSignal
+                netBalanceEffect = runningBalance.balanceEffect
             )
         }
     }

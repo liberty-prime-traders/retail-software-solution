@@ -17,6 +17,7 @@ import me.ezra_home.retail_software_solution.organizations.business.daily_busine
 import me.ezra_home.retail_software_solution.organizations.business.daily_business_summary.api.PeriodStatus
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerAccountMovement
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerMovementReader
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -171,6 +172,41 @@ class DailyBalancesServiceTest {
 
         assertEquals(organizationResponse, locationResponse)
         assertNull(locationResponse.days.single().balances.assets.lines.firstOrNull { line -> line.accountCode == SystemAccount.WAGES_PAYABLE.code })
+    }
+
+    @Test
+    fun `a closing balance on the wrong side is irregular for any tracked account, not only inventory`() {
+        currentBalances = mapOf(
+            SystemAccount.CASH.code to BigDecimal(-50),
+            SystemAccount.INVENTORY.code to BigDecimal(-10),
+            SystemAccount.TRADE_PAYABLES.code to BigDecimal(-30),
+            SystemAccount.TRADE_RECEIVABLES.code to BigDecimal(70)
+        )
+
+        val balances = build(DailyBusinessSummaryRequest(day9, day10)).days.single().balances
+
+        fun closingEffectOf(section: BalanceSection, account: SystemAccount) =
+            section.lines.single { line -> line.accountCode == account.code }.closingBalanceEffect
+        assertEquals(BalanceEffect.IRREGULAR, closingEffectOf(balances.assets, SystemAccount.CASH))
+        assertEquals(BalanceEffect.IRREGULAR, closingEffectOf(balances.assets, SystemAccount.INVENTORY))
+        assertEquals(BalanceEffect.IRREGULAR, closingEffectOf(balances.liabilities, SystemAccount.TRADE_PAYABLES))
+        assertEquals(BalanceEffect.ADDS, closingEffectOf(balances.assets, SystemAccount.TRADE_RECEIVABLES))
+    }
+
+    @Test
+    fun `a change is judged by its effect on net worth, so a liability falling adds and an asset falling subtracts`() {
+        currentBalances = mapOf(SystemAccount.CASH.code to BigDecimal(1000), SystemAccount.TRADE_PAYABLES.code to BigDecimal(100))
+
+        val balances = build(
+            DailyBusinessSummaryRequest(day9, day10),
+            movement(day9, SystemAccount.CASH, EntryType.CREDIT, 120),
+            movement(day9, SystemAccount.TRADE_PAYABLES, EntryType.DEBIT, 40)
+        ).days.single().balances
+
+        assertEquals(BalanceEffect.SUBTRACTS, balances.assets.lines.single { line -> line.accountCode == SystemAccount.CASH.code }.changeEffect)
+        assertEquals(BalanceEffect.ADDS, balances.liabilities.lines.single { line -> line.accountCode == SystemAccount.TRADE_PAYABLES.code }.changeEffect)
+        assertEquals(BalanceEffect.ZERO, balances.assets.lines.single { line -> line.accountCode == SystemAccount.INVENTORY.code }.changeEffect)
+        assertEquals(BalanceEffect.SUBTRACTS, balances.netWorthChangeEffect)
     }
 
     private fun build(

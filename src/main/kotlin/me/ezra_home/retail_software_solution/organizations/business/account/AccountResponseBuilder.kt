@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.api.OpeningBalanceService
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -59,11 +59,7 @@ class AccountResponseBuilder(
     ): AccountResponseDto {
         val currentBalance = rolledUpBalances[account.code] ?: BigDecimal.ZERO
         val canGainChildren = canGainChildren(account, accountsByCode[account.parentAccountCode])
-        val balanceSignal = when {
-            BigDecimal.ZERO.compareTo(currentBalance) == 0 -> BalanceSignal.ZERO_BALANCE
-            currentBalance < BigDecimal.ZERO -> BalanceSignal.IRREGULAR_BALANCE
-            else -> account.accountType.balanceSignal()
-        }
+        val balanceEffect = BalanceEffect.ofBalance(currentBalance, account.accountType.balanceEffect())
         return AccountResponseDto(
             id = account.id,
             code = account.code,
@@ -76,7 +72,7 @@ class AccountResponseBuilder(
             parentAccountCode = account.parentAccountCode,
             parentAccount = accountsByCode[account.parentAccountCode]?.label,
             accountIsExtensible = canGainChildren,
-            balanceSignal = balanceSignal,
+            balanceEffect = balanceEffect,
             openingBalance = rolledUpOpeningBalances[account.code] ?: BigDecimal.ZERO
         )
     }

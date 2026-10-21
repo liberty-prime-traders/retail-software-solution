@@ -17,17 +17,17 @@ every movement the adjustment produces (`StockMovementEntity.category` / `reason
 | Internal Use  | decrease             | FIFO cost consumed                | `INTERNAL_USE_EXPENSE`                 | `INVENTORY`              | note     |
 | Opening Stock | increase             | user-supplied (`unitCost`)        | `INVENTORY`                            | `OPENING_BALANCE_EQUITY` | note     |
 | Free Goods    | increase             | user-supplied (`unitCost`)        | `INVENTORY`                            | `FREE_GOODS_RECEIVED`    | note     |
-| Other         | user picks           | decrease: FIFO cost consumed; increase: most recent cost layer | decrease `SHRINKAGE_AND_LOSSES`, increase `INVENTORY` | decrease `INVENTORY`, increase `SHRINKAGE_AND_LOSSES` | reason |
+| Other         | user picks           | decrease: FIFO cost consumed; increase: user-supplied (`unitCost`) | decrease `SHRINKAGE_AND_LOSSES`, increase `INVENTORY` | decrease `INVENTORY`, increase `SHRINKAGE_AND_LOSSES` | reason |
 
 The account mapping is hard-coded in `StockAdjustmentCategoryRules.ledgerAccounts`; users cannot configure it. Opening
 Stock and Free Goods create their own cost layer, no supplier payable, and are not linked to a purchase order.
-`FREE_GOODS_RECEIVED` is an `EXPENSE_CONTRA` under `COST_OF_SALES`, so profit on free goods is recognised on
+`FREE_GOODS_RECEIVED` is an `EXPENSE_CONTRA` under `COST_OF_GOODS`, so profit on free goods is recognised on
 receipt, not on sale.
 
 ## UI contract (`GET secured/stock-adjustments/categories`)
 
 `StockAdjustmentCategoryDescriptor` per category: `allowedDirections` (one entry means the direction is fixed),
-`requiresUnitCost`, `requiresReason`, `requiresNote`, and `reasons` (only populated when the reason is required; each
+`unitCostDirections` (the directions that need a `unitCost`; for `OTHER` only the increase does, so the UI asks once the direction is chosen), `requiresReason`, `requiresNote`, and `reasons` (only populated when the reason is required; each
 carries the directions it allows). The UI renders its form from this and holds no category rules of its own.
 
 ## Request (`StockAdjustmentCreateDto`)
@@ -38,7 +38,7 @@ the unit conversion is always exact and nothing is rounded), `unitId`, `stockMov
 `unitCost` is per the request's `unitId`, the same unit as `quantity`, as on a purchase line.
 
 `StockAdjustmentValidator` enforces per category: note required except for `OTHER`; reason required for and only
-accepted by `OTHER`; `unitCost` required and positive for Opening Stock / Free Goods and rejected otherwise.
+accepted by `OTHER`; `unitCost` required and positive for any increase (Opening Stock, Free Goods, `OTHER` increase) and rejected on a decrease.
 The reason is a **stock movement reason** (`StockMovementReasonService.guardReason` with the direction's
 `MovementType`), not an `adjustment_reason`: those are discount/surcharge reasons for sales. Reasons are labels with no
 ledger account; every `OTHER` reason posts to `SHRINKAGE_AND_LOSSES`.
@@ -53,9 +53,8 @@ ledger account; every `OTHER` reason posts to `SHRINKAGE_AND_LOSSES`.
 4. The service generates the adjustment's own reference number up front (`ReferenceNumberGenerator`); it becomes the
    entity's `referenceNumber` and the stock layer / movements' `documentReference`. It is generated early because the
    row is immutable and its `totalCost` is only known after the stock change.
-5. Increase: `totalCost` is `unitCost × quantity` for Opening Stock / Free Goods, or the most recent layer's
-   per-storage-unit cost × storage quantity for `OTHER` (rejected when the product has no layer yet).
-   `increaseStock` creates one new FIFO layer (`StockItemSource.STOCK_ADJUSTMENT`,
+5. Increase: `totalCost` is the supplied `unitCost × quantity` for every category. No cost is inferred from existing
+   layers: layers differ in source and price, so any one of them would misprice the increase. `increaseStock` creates one new FIFO layer (`StockItemSource.STOCK_ADJUSTMENT`,
    `MovementType.STOCK_ADJUSTMENT_INCREASE`).
 6. Decrease: `decreaseStock` rejects when available (on hand minus reserved) is short (`StockAvailabilityValidator`),
    then consumes through `FifoStockConsumer` / `FifoTakePlanner`. The consumed cost (`StockAdjustmentConsumedCost`) is

@@ -14,7 +14,7 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -93,15 +93,14 @@ class ContactOpeningBalanceService(
                     contactReferenceNumber = revisionRow.contactReferenceNumber,
                     subledgerDirection = revisionRow.subledgerDirection,
                     amount = revisionRow.amount,
-                    balanceSignal = claimedBalanceSignal(revisionRow),
+                    balanceEffect = claimedBalanceEffect(revisionRow),
                     changedAt = revisionRow.requiredCreatedOn(),
                     changedBy = userQualifier.getUserFullName(revisionRow.createdById) ?: ""
                 )
             }
 
-    private fun claimedBalanceSignal(revisionRow: ContactOpeningBalanceEntity): BalanceSignal = when {
-        revisionRow.amount.compareTo(BigDecimal.ZERO) == 0 -> BalanceSignal.ZERO_BALANCE
-        revisionRow.subledgerDirection == ContactSubledgerDirection.RECEIVABLE -> BalanceSignal.MONEY_IN
-        else -> BalanceSignal.MONEY_OUT
-    }
+    private fun claimedBalanceEffect(revisionRow: ContactOpeningBalanceEntity): BalanceEffect = BalanceEffect.ofChange(
+        revisionRow.amount,
+        if (revisionRow.subledgerDirection == ContactSubledgerDirection.RECEIVABLE) BalanceEffect.ADDS else BalanceEffect.SUBTRACTS
+    )
 }

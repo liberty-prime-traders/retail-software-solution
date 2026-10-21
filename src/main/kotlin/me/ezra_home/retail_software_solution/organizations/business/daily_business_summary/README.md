@@ -71,9 +71,15 @@ asset-/liability-type leaf net of its contras, so each section total is the whol
 present; extension-point leaves and `Other` lines appear only when the closing or change is non-zero for that period.
 `netWorth = assets − liabilities` at recorded cost (no revaluation), derived from the sections.
 
+Every line carries `closingBalanceEffect` and `changeEffect`, and the sections carry `changeTotalEffect`, `netWorthEffect` and `netWorthChangeEffect`
+(`BalanceEffect`), so the UI never infers colour from the section. A closing balance is `IRREGULAR` when it is negative (the
+wrong side for its category), else `ADDS` for assets and `SUBTRACTS` for liabilities. A change is judged by what it does to
+net worth: an asset rising or a liability falling `ADDS`, an asset falling or a liability rising `SUBTRACTS`, zero is `ZERO`.
+Net worth itself is `ADDS` or `SUBTRACTS` by sign, never `IRREGULAR`.
+
 Year-end close touches only closing-type accounts and Retained Earnings, so it does not affect these balances.
 
 ## Testing
 
 `DailyPerformanceServiceTest` and `DailyBalancesServiceTest` fabricate movements through a mocked
-`LedgerMovementReader`. The `width_bucket` SQL itself runs only against Postgres.
+`LedgerMovementReader`. The `width_bucket` SQL runs only against Postgres: `LedgerMovementQueriesPostgresTest` (cucumberTest source set, Testcontainers) executes the `@Query` text of `LedgerEntryRepository` with the day-start literal `LedgerMovementReader` builds, at a fixed-offset organization zone.

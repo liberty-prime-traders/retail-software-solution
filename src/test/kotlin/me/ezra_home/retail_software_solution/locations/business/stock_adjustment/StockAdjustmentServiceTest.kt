@@ -50,7 +50,6 @@ class StockAdjustmentServiceTest {
             null
         }
     }
-    private var latestLayerUnitCost: BigDecimal? = null
     private val increaseRequests = mutableListOf<StockAdjustmentIncreaseStockRequest>()
     private val decreaseRequests = mutableListOf<StockAdjustmentDecreaseStockRequest>()
     private val stockAdjustmentStockUpdater = mock(StockAdjustmentStockUpdater::class.java) { invocation ->
@@ -63,7 +62,6 @@ class StockAdjustmentServiceTest {
                 decreaseRequests.add(invocation.arguments[0] as StockAdjustmentDecreaseStockRequest)
                 BigDecimal("12.0000")
             }
-            "latestLayerUnitCostPerStorageUnit" -> latestLayerUnitCost
             else -> null
         }
     }
@@ -199,12 +197,10 @@ class StockAdjustmentServiceTest {
     }
 
     @Test
-    fun `other increase is priced at the most recent cost layer`() {
-        latestLayerUnitCost = BigDecimal("0.5")
-
+    fun `other increase is priced at the supplied unit cost per typed unit`() {
         val response = stockAdjustmentService.adjust(
             createDto(
-                StockAdjustmentCategory.OTHER, "3",
+                StockAdjustmentCategory.OTHER, "3", unitCost = "6",
                 direction = StockAdjustmentDirection.INCREASE, stockMovementReasonId = stockMovementReasonId
             )
         )
@@ -214,7 +210,7 @@ class StockAdjustmentServiceTest {
     }
 
     @Test
-    fun `other increase without any cost layer is rejected before stock changes`() {
+    fun `other increase without a unit cost is rejected before stock changes`() {
         assertThrows(RtsGenericException::class.java) {
             stockAdjustmentService.adjust(
                 createDto(
@@ -224,6 +220,19 @@ class StockAdjustmentServiceTest {
             )
         }
         assertEquals(emptyList<StockAdjustmentIncreaseStockRequest>(), increaseRequests)
+    }
+
+    @Test
+    fun `other decrease rejects a unit cost because FIFO supplies it`() {
+        assertThrows(RtsGenericException::class.java) {
+            stockAdjustmentService.adjust(
+                createDto(
+                    StockAdjustmentCategory.OTHER, "3", unitCost = "6",
+                    direction = StockAdjustmentDirection.DECREASE, stockMovementReasonId = stockMovementReasonId
+                )
+            )
+        }
+        assertEquals(emptyList<StockAdjustmentDecreaseStockRequest>(), decreaseRequests)
     }
 
     @Test
