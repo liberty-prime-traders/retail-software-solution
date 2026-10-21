@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.organizations.business.account.Chil
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
@@ -34,6 +35,28 @@ class AccountService(
     @TransactionalOnOrganizationSchema(readOnly = true)
     fun getAccountNamesByCode(): Map<String, String> {
         return accountCache.getAll().associate { it.code to it.label }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getAccountTree(): List<AccountTreeNode> {
+        val accounts = accountCache.getAll()
+        val parentAccountCodes = accounts.mapNotNull { account -> account.parentAccountCode }.toSet()
+        return accounts.map { account ->
+            AccountTreeNode(
+                code = account.code,
+                name = account.label,
+                parentAccountCode = account.parentAccountCode,
+                category = account.accountType.category(),
+                isContra = account.accountType.isContra(),
+                normalBalance = account.accountType.normalBalance,
+                isLeaf = account.code !in parentAccountCodes
+            )
+        }
+    }
+
+    @TransactionalOnOrganizationSchema(readOnly = true)
+    fun getFreshBalancesByCodes(accountCodes: Set<String>): Map<String, BigDecimal> {
+        return accountRepository.findBalancesByCodes(accountCodes).associate { accountBalance -> accountBalance.code to accountBalance.currentBalance }
     }
 
     fun createRoot(dto: AccountRootCreateRequest): AccountResponseDto {

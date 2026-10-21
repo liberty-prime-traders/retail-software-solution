@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger
 
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

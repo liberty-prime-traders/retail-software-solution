@@ -5,4 +5,9 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface FundMovementRepository : JpaRepository<FundMovementEntity, UUID>
+interface FundMovementRepository : JpaRepository<FundMovementEntity, UUID> {
+    fun findTop10ByDebitAccountCodeOrCreditAccountCodeOrderByCreatedOnDesc(
+        debitAccountCode: String,
+        creditAccountCode: String
+    ): List<FundMovementEntity>
+}

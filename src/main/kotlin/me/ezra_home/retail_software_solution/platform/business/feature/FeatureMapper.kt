@@ -6,7 +6,7 @@ import org.mapstruct.Mapper
 
 @Mapper(config = RtsMapperConfig::class)
 interface FeatureMapper {
-    fun toDomainDto(entity: FeatureEntity): FeatureDto
+    fun toDomainDto(featureEntity: FeatureEntity): FeatureDto
 
     fun toEntity(dto: FeatureDto): FeatureEntity
 }

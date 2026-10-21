@@ -9,7 +9,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface LocationProductMapper {
 
-    fun toDomainDto(entity: LocationProductEntity): LocationProductDto
+    fun toDomainDto(locationProductEntity: LocationProductEntity): LocationProductDto
 
     fun toEntity(dto: LocationProductDto): LocationProductEntity
 

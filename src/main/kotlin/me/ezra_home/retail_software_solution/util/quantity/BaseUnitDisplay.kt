@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.util.quantity
 
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-// Display only: each figure divides once from exact values, never from an already-rounded factor
 object BaseUnitDisplay {
 
     fun conversionFactor(storageUnitsPerUnit: Long, baseUnitSizeInRoot: Long): BigDecimal =
-        BigDecimal.valueOf(storageUnitsPerUnit).divide(BigDecimal.valueOf(baseUnitSizeInRoot), ExactQuantity.DISPLAY_SCALE, RoundingMode.HALF_UP)
+        Decimals.Scale10.divide(BigDecimal.valueOf(storageUnitsPerUnit), BigDecimal.valueOf(baseUnitSizeInRoot))
 
     fun baseQuantity(
         userProvidedQuantity: BigDecimal,

@@ -18,7 +18,7 @@ abstract class StockMovementReasonMapper {
     @Mapping(target = "systemDefined", constant = "false")
     abstract fun toEntity(insertDto: StockMovementReasonInsertDto): StockMovementReasonEntity
 
-    abstract fun toDomainDto(entity: StockMovementReasonEntity): StockMovementReasonDto
+    abstract fun toDomainDto(stockMovementReasonEntity: StockMovementReasonEntity): StockMovementReasonDto
 
     abstract fun toEntity(dto: StockMovementReasonDto): StockMovementReasonEntity
 

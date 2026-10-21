@@ -6,5 +6,5 @@ import org.mapstruct.Mapper
 
 @Mapper(config = RtsMapperConfig::class)
 interface SyncLogMapper {
-  fun toDto(entity: SyncLogEntity): SyncLogResponseDto
+  fun toDto(syncLogEntity: SyncLogEntity): SyncLogResponseDto
 }

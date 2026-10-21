@@ -21,7 +21,8 @@ class AccountSelectionService(
             recoverable = accountTreeBuilder.build(candidates, AccountSelectionRule.TAX_RECOVERABLE),
             paymentMethods = accountTreeBuilder.build(candidates, AccountSelectionRule.PAYMENT_METHOD),
             expenseTypes = accountTreeBuilder.build(candidates, AccountSelectionRule.EXPENSE_TYPE),
-            fundMovements = accountTreeBuilder.build(candidates, AccountSelectionRule.FUND_MOVEMENT)
+            fundMovements = accountTreeBuilder.build(candidates, AccountSelectionRule.FUND_MOVEMENT),
+            loans = accountTreeBuilder.build(candidates, AccountSelectionRule.LOAN)
         )
     }
 

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-loan-repayment-loan-id
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_loan_repayment_loan_id
+      changes:
+        - createIndex:
+            indexName: idx_loan_repayment_loan_id
+            tableName: loan_repayment
+            columns:
+              - column:
+                  name: loan_id
+      rollback:
+        - dropIndex:
+            indexName: idx_loan_repayment_loan_id
+            tableName: loan_repayment

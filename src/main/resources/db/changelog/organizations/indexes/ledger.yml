@@ -114,3 +114,24 @@ databaseChangeLog:
         - dropIndex:
             tableName: subledger_entry
             indexName: idx_subledger_entry_contact_created
+
+  - changeSet:
+      id: create-index-ledger-entry-group-posted-on
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ledger_entry_grp_posted_on
+      changes:
+        - createIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_grp_posted_on
+            columns:
+              - column:
+                  name: posted_on
+      rollback:
+        - dropIndex:
+            tableName: ledger_entry_group
+            indexName: idx_ledger_entry_grp_posted_on

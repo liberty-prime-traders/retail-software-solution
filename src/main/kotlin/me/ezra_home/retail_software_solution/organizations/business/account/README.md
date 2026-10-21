@@ -81,6 +81,8 @@ call creates any `SystemAccount` missing from the cache, whether or not
 `CHART_OF_ACCOUNTS` is activated (the feature activator calls it too). Safe to
 re-run, since it only inserts codes not already present.
 
+- `LOANS_PAYABLE` (`002.004`) is a closed leaf under `LIABILITIES`, not an extension point. Only `loan/` posts to it, so its
+  balance equals the sum of outstanding loans; it takes no manual opening balance (`opening_balance/README.md`).
 - `accountIsSystemMaintained = true` accounts cannot be renamed, deactivated,
   or renumbered — `AccountService.rename`/`toggleActive` reject them outright.
 - `isSingleLevelExtensionPoint()` — only `DIGITAL_PAYMENTS`, `TAX_RECOVERABLE`,
@@ -136,6 +138,8 @@ this interface so `AccountUsagesFinder` can report/forbid conflicting edits:
 - `PaymentMethodAccountUsageProvider` (`payment_method/`)
 - `TaxAccountReferenceProviders` (`org_jurisdiction_tax_type/`)
 - `ExpenseTypeAccountUsageProvider` (`expense_type/`)
+- `FundMovementAccountUsageProvider` (`fund_movement/`)
+- `LoanAccountUsageProvider` (`loan/`)
 
 `AccountUsagesFinder.findUsagesForAccountCode` fans out to every provider and
 returns the non-empty ones; `failOnUsagesForCode(code, blockedAction)` throws if any exist.
@@ -156,6 +160,10 @@ exposes `AccountSelectionCandidate` (via `AccountDataFetcher.getSelectionCandida
 `getFreshSelectionCandidates`) as the view those rules read.
 
 ## Balances
+
+- `AccountService.getAccountTree` exposes the chart as `AccountTreeNode`s (category, contra flag, normal balance, leaf
+  flag, label) so other domains never touch `AccountType`. `getFreshBalancesByCodes` reads `current_balance` from the
+  rows, not the cache, for readers that need it consistent with a transaction snapshot (`daily_business_summary`).
 
 - `AccountEntity.currentBalance` is a running total updated in place via
   `AccountRepository.incrementBalance` (`UPDATE ... SET current_balance =

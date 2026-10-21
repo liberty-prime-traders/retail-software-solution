@@ -14,10 +14,8 @@ class ExactQuantity private constructor(private val storageValue: BigDecimal) : 
 
     fun isZero(): Boolean = storageValue.signum() == 0
 
-    // Throws when digits beyond the storage scale would be dropped
     fun toStorageQuantity(): BigDecimal = storageValue.setScale(STORAGE_SCALE, RoundingMode.UNNECESSARY)
 
-    // Display only
     fun inUnitOfSize(unitSizeInRoot: Long, roundingMode: RoundingMode): BigDecimal =
         storageValue.divide(BigDecimal.valueOf(unitSizeInRoot), DISPLAY_SCALE, roundingMode)
 

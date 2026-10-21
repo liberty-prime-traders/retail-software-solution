@@ -39,6 +39,7 @@ enum class SystemAccount(
     PURCHASE_DISCOUNTS("002.001.002", "Purchase Discounts", AccountType.LIABILITY_CONTRA, parent = ACCOUNTS_PAYABLE),
     TAX_PAYABLE("002.002", "Tax Payable", AccountType.LIABILITY, parent = LIABILITIES),
     WAGES_PAYABLE("002.003", "Wages Payable", AccountType.LIABILITY, parent = LIABILITIES),
+    LOANS_PAYABLE("002.004", "Loans Payable", AccountType.LIABILITY, parent = LIABILITIES),
 
     // Equity
     EQUITY("003", "Equity", AccountType.EQUITY),

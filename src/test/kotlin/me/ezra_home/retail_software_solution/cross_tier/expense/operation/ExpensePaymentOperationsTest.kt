@@ -324,7 +324,6 @@ class ExpensePaymentOperationsTest {
         null, OffsetDateTime.now(), OffsetDateTime.now()
     )
 
-    // any() answers null, which Kotlin's non-null parameter check rejects before the stub is recorded.
     private fun anyAggregate(): ExpenseAggregate {
         any(ExpenseAggregate::class.java)
         return ExpenseAggregate(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())

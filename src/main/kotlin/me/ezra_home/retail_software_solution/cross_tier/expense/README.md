@@ -139,7 +139,8 @@ immutable, already-audited row.
 
 - Each tier's `saveNewExpenses` saves every row of a submission in one `saveAll` and creates each row's state as `UNPAID` / 0 in a second `saveAll`.
 - `ExpensePaymentStateMaintainer.refresh` recomputes `amount_paid` from active (non-voided)
-  payments (`sumActivePaidByExpenseId`, JPQL per tier) and the status with `PaymentStatusResolver`.
+  payments (`sumActivePaidByExpenseId`, JPQL per tier over the `active_expense_payment` / `active_org_expense_payment`
+  views, which hold the one definition of "active": a payment with no void row) and the status with `PaymentStatusResolver`.
   It throws when an expense has no state row: search joins the state table, so a missing row would
   hide the expense from search and summary.
   Callers must hold the expense lock: the state rows load before the sum is read, so a caller that skipped the lock fails on the state row's `@Version` instead of persisting a stale sum.

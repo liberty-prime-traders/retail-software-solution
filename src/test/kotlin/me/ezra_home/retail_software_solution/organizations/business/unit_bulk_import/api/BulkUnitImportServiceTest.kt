@@ -29,12 +29,6 @@ class BulkUnitImportServiceTest {
         val unitValueService = mock(UnitValueService::class.java)
         val unitValueFetcher = mock(UnitValueFetcher::class.java)
 
-        // A custom countable group, not the system "Count" group - only a custom group gets an
-        // auto-inserted Piece, since the system "Count" group already has the real one. Codes must
-        // not collide with SystemUnitValue's seeded codes ("hdz", "dz", "pc", ...) - a real org
-        // already has those from UnitValueSeeder, so a colliding code would be treated as a reuse
-        // of the existing system-defined row instead of creating a new one (see this package's
-        // README, "A payload matching system-defined data is a reuse, not a conflict").
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
                 UnitGroupBulkInsertDto(

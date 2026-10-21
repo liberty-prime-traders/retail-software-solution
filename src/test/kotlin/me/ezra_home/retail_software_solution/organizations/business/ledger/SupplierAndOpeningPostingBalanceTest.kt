@@ -36,8 +36,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 
-/** Same approach as [LedgerPostingBalanceTest], for the purchase, supplier payment and opening processors. */
 class SupplierAndOpeningPostingBalanceTest {
 
     private val recordingAccountService = RecordingAccountService()

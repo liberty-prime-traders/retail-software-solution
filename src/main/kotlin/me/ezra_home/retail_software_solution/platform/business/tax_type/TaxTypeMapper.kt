@@ -16,7 +16,7 @@ interface TaxTypeMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(dto: TaxTypeInsertDto): TaxTypeEntity
 
-    fun toDomainDto(entity: TaxTypeEntity): TaxTypeDto
+    fun toDomainDto(taxTypeEntity: TaxTypeEntity): TaxTypeDto
 
     fun toEntity(dto: TaxTypeDto): TaxTypeEntity
 

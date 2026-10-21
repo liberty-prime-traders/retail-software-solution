@@ -31,7 +31,10 @@ Units convert **only within their group**. A unit's size in its group's root is 
 `unitsOfBasePerUnit` along its `baseUnit` chain, resolved by `UnitChainResolver` (`unitvalue/api`) with
 `Math.multiplyExact`. The ratio from unit A to unit B in one group is `size(A) / size(B)`, reduced.
 
-Requesting a ratio between units of different groups throws `RtsGenericException`
+A Miscellaneous unit stands alone (`UnitValueValidator` forbids a base unit), so it converts only to itself, never to
+the other units of the Miscellaneous group.
+
+Requesting a ratio between units of different groups, or between two Miscellaneous units, throws `RtsGenericException`
 (`UnitConversionGraph.getTarget` finds no entry).
 
 ## 3. The index and the graph
@@ -42,7 +45,8 @@ Requesting a ratio between units of different groups throws `RtsGenericException
 2. Resolves every unit's placement (`rootUnitId`, `sizeInRoot`) in one pass. A cycle, a missing base unit, an
    overflow or a size above 1,000,000,000 throws; `UnitValueValidator` rejects these on write, so a read never
    sees them.
-3. For every group, builds an entry for every ordered pair of its units, including a unit to itself.
+3. For every group, builds an entry for every ordered pair of its units, including a unit to itself. A Miscellaneous
+   unit (`UnitGroupDataFetcher.isMiscellaneous`) gets only its self entry.
 
 The result is cached per organization schema. Lookups read the index; nothing walks a chain at call time:
 

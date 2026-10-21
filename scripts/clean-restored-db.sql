@@ -8,6 +8,8 @@ DECLARE
     'opening_balance', 'contact_opening_balance',
     'org_expense', 'org_expense_batch', 'org_expense_payment',
     'org_expense_payment_state', 'org_expense_payment_void', 'org_expense_void',
+    'fund_movement', 'fund_movement_void',
+    'loan', 'loan_repayment', 'loan_repayment_void', 'loan_void',
     'stock_transfer_order', 'stock_transfer_order_aud',
     'event_processing_log'
   ];
@@ -19,7 +21,7 @@ DECLARE
     'purchase_delivery', 'purchase_delivery_aud', 'purchase_delivery_line', 'purchase_delivery_line_aud',
     'supplier_payment', 'supplier_payment_void', 'supplier_return', 'supplier_return_aud',
     'stock_entry', 'stock_entry_aud', 'stock_movement', 'stock_movement_aud',
-    'opening_stock',
+    'stock_adjustment', 'opening_stock',
     'stock_transfer_dispatch', 'stock_transfer_dispatch_aud',
     'stock_transfer_dispatch_line', 'stock_transfer_dispatch_line_aud',
     'stock_transfer_draft_line', 'stock_transfer_draft_line_aud',
@@ -92,8 +94,8 @@ $cleanup$;
 SELECT table_schema AS schema_name, table_name,
        (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I', table_schema, table_name), false, true, '')))[1]::text::bigint AS row_count
   FROM information_schema.tables
- WHERE (table_schema LIKE 'org\_%' AND table_name IN ('ledger_entry', 'subledger_entry', 'org_expense'))
-    OR (table_schema LIKE 'loc\_%' AND table_name IN ('sale', 'purchase', 'stock_movement', 'stock_entry'))
+ WHERE (table_schema LIKE 'org\_%' AND table_name IN ('ledger_entry', 'subledger_entry', 'org_expense', 'fund_movement', 'loan'))
+    OR (table_schema LIKE 'loc\_%' AND table_name IN ('sale', 'purchase', 'stock_movement', 'stock_entry', 'stock_adjustment'))
  ORDER BY table_schema, table_name;
 
 ROLLBACK;  -- dry run; change to COMMIT; once the output looks right

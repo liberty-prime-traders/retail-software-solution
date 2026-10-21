@@ -46,7 +46,7 @@ databaseChangeLog:
 
               - column:
                   name: reason
-                  type: varchar(500)
+                  type: text
 
               - column:
                   name: created_by_id

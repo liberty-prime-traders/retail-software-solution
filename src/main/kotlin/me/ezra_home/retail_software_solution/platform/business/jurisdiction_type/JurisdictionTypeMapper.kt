@@ -16,7 +16,7 @@ interface JurisdictionTypeMapper {
     @Mapping(target = "referenceNumber", ignore = true)
     fun toEntity(dto: JurisdictionTypeInsertDto): JurisdictionTypeEntity
 
-    fun toDomainDto(entity: JurisdictionTypeEntity): JurisdictionTypeDto
+    fun toDomainDto(jurisdictionTypeEntity: JurisdictionTypeEntity): JurisdictionTypeDto
 
     fun toEntity(dto: JurisdictionTypeDto): JurisdictionTypeEntity
 

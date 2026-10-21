@@ -18,7 +18,7 @@ import java.util.UUID
 class StockTransferDraftLineEntity(
 
     @Column(name = "stock_transfer_dispatch_id", nullable = false, updatable = false)
-    val stockTransferDispatchId: UUID,
+    var stockTransferDispatchId: UUID,
 
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,

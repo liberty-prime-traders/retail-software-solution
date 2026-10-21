@@ -10,7 +10,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface OrganizationAdminMapper {
 
-    fun toDomainDto(entity: OrganizationAdminEntity): OrganizationAdminDto
+    fun toDomainDto(organizationAdminEntity: OrganizationAdminEntity): OrganizationAdminDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

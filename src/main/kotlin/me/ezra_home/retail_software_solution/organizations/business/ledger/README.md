@@ -71,6 +71,8 @@ posts to the opposite column rather than a negative amount. A debit on `TRADE_RE
 | delivery, supplier payment void, expense, expense payment void | credit payables / liability | payable |
 | contact opening balance: receivable raised, payable reduced | debit receivables / payables | receivable |
 | contact opening balance: payable raised, receivable reduced | credit payables / receivables | payable |
+| loan, loan repayment void | credit `LOANS_PAYABLE` | payable |
+| loan void, loan repayment | debit `LOANS_PAYABLE` | receivable |
 
 ## Reading the subledger: `SubledgerService`
 
@@ -151,10 +153,10 @@ references from colliding. `idempotencyConstraintName` follows the same session 
 
 ## Fund movement (synchronous caller)
 
-`fund_movement` is the one caller of `LedgerPostingService.post` outside the event processors. It builds the
-`LedgerPostingRequest` through `api/FundMovementPostingRequests`, which takes the reference, accounts, amount and date as
-plain values and picks the source type, so `LedgerSourceType` stays internal to `ledger`. It posts inside the transaction
-that saves its row.
+`fund_movement` is, with `loan` (below), a caller of `LedgerPostingService.post` outside the event processors. It builds the
+`LedgerPostingRequest` through `FundMovementPostingRequests` (in `fund_movement`), which takes the reference, accounts,
+amount and date as plain values and picks the source type from the public `api/LedgerSourceType`. It posts inside the
+transaction that saves its row.
 
 | Event | Entries | Posting date |
 |---|---|---|
@@ -167,6 +169,33 @@ movement's reference and differs only by source type. A posting failure (closed 
 increased) propagates and rolls the movement row back; a void is the exception for inactive accounts: its request sets
 `reversal = true`, so `post` calls `AccountService.assertPostableReversal`, which lets an inactive account be built up but
 still rejects an unknown account or one with children; there is no event, DLT or reissue. See `fund_movement/README.md`.
+
+## Loans (synchronous caller)
+
+`loan` posts through `LoanPostingRequests` (in `loan`), which takes the reference, asset account, lender contact reference,
+amount and date as plain values and picks the source type from `api/LedgerSourceType`. Like
+`fund_movement`, it calls `LedgerPostingService.post` inside the transaction that saves its row; a posting failure rolls
+the row back. See `loan/README.md`.
+
+| Event | Source type | Entries | Posting date | Subledger (lender) |
+|---|---|---|---|---|
+| loan | `LOAN` | debit asset account, credit `LOANS_PAYABLE` | `loan_date` | payable raised |
+| loan void | `LOAN_VOID` | debit `LOANS_PAYABLE`, credit asset account | the void's `void_date` | receivable raised |
+| loan repayment | `LOAN_REPAYMENT` | debit `LOANS_PAYABLE`, credit asset account | `repayment_date` | receivable raised |
+| loan repayment void | `LOAN_REPAYMENT_VOID` | debit asset account, credit `LOANS_PAYABLE` | the void's `void_date` | payable raised |
+
+A void shares its original's reference and posts as a reversal (`reversal = true`), so a loan on a since-deactivated
+asset account can still be voided. Org-level requests carry no location, so `source_location_id` is null and the groups
+fall under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source type)` for any source type.
+
+## Reading movements: `LedgerMovementReader`
+
+`api/LedgerMovementReader` is the read path for `daily_business_summary`: summed entry amounts grouped by local date
+(`ledger_entry_group.posted_on` bucketed with `width_bucket` over day starts computed in Kotlin in the organization
+zone), account, entry type and, for `getMovements`, source. `getMovements` covers `[from, before)` for an account set and a
+`LedgerSourceType` whitelist and an optional location; `getAccountMovementsFrom` is organization-wide, all source
+types, from the start of `from` onward, reporting anything dated at or after `before` under `before`.
+`idx_ledger_entry_grp_posted_on` serves the range scan.
 
 ## Contra accounts
 
@@ -182,6 +211,11 @@ each processor's real output through the real `AccountService.patchBalances`
 there when adding or changing a processor — the balanced-entries check
 cannot catch a processor that flips both legs.
 Not yet covered: `SaleTaxLedgerEntriesBuilder`.
+
+The synchronous callers' builders are tested in their own domains (`FundMovementPostingRequestsBalanceTest`,
+`LoanPostingRequestsBalanceTest`), which run each request's entries through `AccountService` and check the subledger
+amounts on the request. The posting rules they rely on (closed fiscal period, reversal postability, null source
+location) are covered by `LedgerPostingServiceOrgLevelTest`.
 
 ## Sale cost of goods sold
 

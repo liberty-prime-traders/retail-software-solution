@@ -5,7 +5,7 @@ org-level expenses and documented in `cross_tier/expense/README.md`; this packag
 holds only what is location-specific.
 
 - Tables `expense_batch`, `expense`, `expense_payment`, `expense_payment_void`,
-  `expense_void` and `expense_payment_state` are in the location schema, so `expense_type_id` and `payee_contact_id`
+  `expense_void` and `expense_payment_state` and the `active_expense_payment` view are in the location schema, so `expense_type_id` and `payee_contact_id`
   are plain UUIDs (contact and expense type live in the organization schema).
 - `LocationExpenseTier` is this schema's `ExpenseTier`: it exposes `LocationExpenseStore` for storage, locks
   through `EntityAdvisoryLock` and supplies the `LocationLevel` source context events carry.

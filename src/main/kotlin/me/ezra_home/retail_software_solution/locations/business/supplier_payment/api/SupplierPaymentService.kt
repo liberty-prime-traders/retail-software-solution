@@ -16,11 +16,11 @@ import me.ezra_home.retail_software_solution.locations.business.supplier_payment
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.UUID
 
@@ -54,9 +54,7 @@ class SupplierPaymentService(
     }
 
     fun recordPayment(supplierPaymentCreateDto: SupplierPaymentCreateDto): SupplierPaymentResponseDto {
-        if (supplierPaymentCreateDto.amount <= BigDecimal.ZERO) {
-            throw RtsGenericException("Payment amount must be greater than zero")
-        }
+        Decimals.requirePositive(supplierPaymentCreateDto.amount, "Payment amount")
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(supplierPaymentCreateDto.paymentDate))
         purchaseDataFetcher.lockPurchase(supplierPaymentCreateDto.purchaseId)
         validateDeliveryLevelPayment(supplierPaymentCreateDto)

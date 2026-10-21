@@ -6,6 +6,8 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 object Decimals {
+    // numeric(19, 4) holds 15 integer digits; the 12-digit ceiling leaves headroom for balances to sum.
+    val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.9999")
 
     object Scale4 {
         const val SCALE = 4
@@ -23,6 +25,15 @@ object Decimals {
             value.divide(divisor, SCALE, RoundingMode.HALF_UP)
 
         fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, SCALE)
+
+        fun requirePositiveAmount(amount: BigDecimal, label: String = "Amount"): BigDecimal {
+            val roundedAmount = round(amount)
+            requirePositive(roundedAmount, label)
+            if (roundedAmount > MAXIMUM_TRANSACTION_AMOUNT) {
+                throw RtsGenericException("$label must not exceed ${MAXIMUM_TRANSACTION_AMOUNT.toPlainString()}")
+            }
+            return roundedAmount
+        }
     }
 
     object Scale10 {
@@ -52,6 +63,12 @@ object Decimals {
     fun requireMaxDecimalPlaces(value: BigDecimal, maxDecimalPlaces: Int, label: String) {
         if (value.stripTrailingZeros().scale() > maxDecimalPlaces) {
             throw RtsGenericException("$label can have at most $maxDecimalPlaces decimal places")
+        }
+    }
+
+    fun requirePositive(value: BigDecimal, label: String) {
+        if (value.signum() <= 0) {
+            throw RtsGenericException("$label must be greater than zero")
         }
     }
 

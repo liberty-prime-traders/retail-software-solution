@@ -15,7 +15,7 @@ The script is one transaction. It discovers every `org_*` and `loc_*` schema its
 
 | Action | Tables |
 |---|---|
-| **Truncated** | `ledger_entry`, `ledger_entry_group`, `subledger_entry`, `subledger_balance`, `opening_balance`, `contact_opening_balance`, `org_expense`, `org_expense_batch`, `org_expense_payment`, `org_expense_payment_state`, `org_expense_payment_void`, `org_expense_void`, `stock_transfer_order` (+ `_aud`), `event_processing_log` |
+| **Truncated** | `ledger_entry`, `ledger_entry_group`, `subledger_entry`, `subledger_balance`, `opening_balance`, `contact_opening_balance`, `org_expense`, `org_expense_batch`, `org_expense_payment`, `org_expense_payment_state`, `org_expense_payment_void`, `org_expense_void`, `fund_movement`, `fund_movement_void`, `loan`, `loan_repayment`, `loan_repayment_void`, `loan_void`, `stock_transfer_order` (+ `_aud`), `event_processing_log` |
 | **Denormalized values reset** | `account.current_balance = 0`, `account.balance_updated_at = NULL`; `fiscal_period.closed_at / closed_by = NULL` (periods were closed over ledger data that no longer exists) |
 | **Kept as is** | everything else: accounts, contacts, products, categories, groups, tags, units, tax rates, payment methods, locations, users/roles/permissions, expense types, adjustment reasons, accounting config, fiscal periods, `*_aud` of kept tables, `revinfo` |
 
@@ -23,7 +23,7 @@ The script is one transaction. It discovers every `org_*` and `loc_*` schema its
 
 | Action | Tables |
 |---|---|
-| **Truncated** | `sale`, `sale_line`, `sale_adjustment`, `sale_line_stock_reservation`, `sale_payment`, `sale_payment_void`, `sale_void`, `purchase`, `purchase_line`, `purchase_delivery`, `purchase_delivery_line`, `supplier_payment`, `supplier_payment_void`, `supplier_return`, `stock_entry`, `stock_movement`, `opening_stock`, `stock_transfer_*` (dispatch, dispatch_line, draft_line, receipt, receipt_line), `expense*`, `tax_entry`, plus the matching `*_aud` tables |
+| **Truncated** | `sale`, `sale_line`, `sale_adjustment`, `sale_line_stock_reservation`, `sale_payment`, `sale_payment_void`, `sale_void`, `purchase`, `purchase_line`, `purchase_delivery`, `purchase_delivery_line`, `supplier_payment`, `supplier_payment_void`, `supplier_return`, `stock_entry`, `stock_movement`, `stock_adjustment`, `opening_stock`, `stock_transfer_*` (dispatch, dispatch_line, draft_line, receipt, receipt_line), `expense*`, `tax_entry`, plus the matching `*_aud` tables |
 | **Denormalized values reset** | `location_product.last_purchase_price = NULL` |
 | **Kept as is** | `location_product` (the per-location catalog and prices), `location_user`, `location_role_assignment`, `location_permission_assignment`, `sync_log`, their `_aud` tables, `revinfo` |
 
@@ -60,6 +60,8 @@ DECLARE
     'opening_balance', 'contact_opening_balance',
     'org_expense', 'org_expense_batch', 'org_expense_payment',
     'org_expense_payment_state', 'org_expense_payment_void', 'org_expense_void',
+    'fund_movement', 'fund_movement_void',
+    'loan', 'loan_repayment', 'loan_repayment_void', 'loan_void',
     'stock_transfer_order', 'stock_transfer_order_aud',
     'event_processing_log'
   ];
@@ -71,7 +73,7 @@ DECLARE
     'purchase_delivery', 'purchase_delivery_aud', 'purchase_delivery_line', 'purchase_delivery_line_aud',
     'supplier_payment', 'supplier_payment_void', 'supplier_return', 'supplier_return_aud',
     'stock_entry', 'stock_entry_aud', 'stock_movement', 'stock_movement_aud',
-    'opening_stock',
+    'stock_adjustment', 'opening_stock',
     'stock_transfer_dispatch', 'stock_transfer_dispatch_aud',
     'stock_transfer_dispatch_line', 'stock_transfer_dispatch_line_aud',
     'stock_transfer_draft_line', 'stock_transfer_draft_line_aud',
@@ -144,8 +146,8 @@ $cleanup$;
 SELECT table_schema AS schema_name, table_name,
        (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I', table_schema, table_name), false, true, '')))[1]::text::bigint AS row_count
   FROM information_schema.tables
- WHERE (table_schema LIKE 'org\_%' AND table_name IN ('ledger_entry', 'subledger_entry', 'org_expense'))
-    OR (table_schema LIKE 'loc\_%' AND table_name IN ('sale', 'purchase', 'stock_movement', 'stock_entry'))
+ WHERE (table_schema LIKE 'org\_%' AND table_name IN ('ledger_entry', 'subledger_entry', 'org_expense', 'fund_movement', 'loan'))
+    OR (table_schema LIKE 'loc\_%' AND table_name IN ('sale', 'purchase', 'stock_movement', 'stock_entry', 'stock_adjustment'))
  ORDER BY table_schema, table_name;
 
 ROLLBACK;  -- dry run; change to COMMIT; once the output looks right

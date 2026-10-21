@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-active-supplier-payment
+      author: ezra
+      labels: 1.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: active_supplier_payment
+      changes:
+        - createView:
+            viewName: active_supplier_payment
+            selectQuery: >-
+              SELECT p.id, p.reference_number, p.purchase_id, p.delivery_id, p.amount, p.created_on
+              FROM supplier_payment p
+              WHERE NOT EXISTS (SELECT 1 FROM supplier_payment_void v WHERE v.supplier_payment_id = p.id)
+      rollback:
+        - dropView:
+            viewName: active_supplier_payment

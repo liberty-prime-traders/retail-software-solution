@@ -12,5 +12,5 @@ interface AuthorizationPassMapper {
 
     @Mapping(source = "assignedToId", target = "assignedTo", qualifiedBy = [NullableFullName::class])
     @Mapping(source = "createdById", target = "createdBy", qualifiedBy = [CreatorFullName::class])
-    fun toResponseDto(entity: AuthorizationPassEntity): AuthorizationPassResponseDto
+    fun toResponseDto(authorizationPassEntity: AuthorizationPassEntity): AuthorizationPassResponseDto
 }

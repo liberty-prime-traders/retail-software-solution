@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.springframework.stereotype.Component
 import java.util.UUID
 
-// Knows no products, so product code can depend on it without a cycle
 @Component
 class QuantityBreakdownFactory(
     private val unitConversionGraphFacade: UnitConversionGraphFacade,

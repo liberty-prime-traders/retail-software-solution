@@ -34,7 +34,7 @@ Apply these rules to every Liquibase, entity, or repository change.
 ## Changelog load order (within each layer)
 
 ```
-tables/ → sequences/ → foreign_keys/ → triggers/ → indexes/ → audit/
+tables/ → views/ → sequences/ → foreign_keys/ → triggers/ → indexes/ → audit/
 ```
 Platform layer adds after audit: `version-entries/ → registry-entries/`
 

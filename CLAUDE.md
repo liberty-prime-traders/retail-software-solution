@@ -75,7 +75,7 @@ Kafka events are published via `ApplicationEventPublisher` and bind to the enclo
 
 ### Database migrations
 
-Liquibase changelogs live under `src/main/resources/db/changelog/{platform,organizations,locations}/`. Within each layer the load order is: `tables/ → sequences/ → foreign_keys/ → triggers/ → indexes/ → audit/ → version-entries/ → registry-entries/` (the last two are platform-only). All new tables must be registered in `registry-entries/` and in the `TableNames` constants class.
+Liquibase changelogs live under `src/main/resources/db/changelog/{platform,organizations,locations}/`. Within each layer the load order is: `tables/ → views/ → sequences/ → foreign_keys/ → triggers/ → indexes/ → audit/ → version-entries/ → registry-entries/` (the last two are platform-only). All new tables must be registered in `registry-entries/` and in the `TableNames` constants class.
 
 ## Agent discipline
 

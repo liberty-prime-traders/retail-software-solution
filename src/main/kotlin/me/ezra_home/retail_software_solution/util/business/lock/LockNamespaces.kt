@@ -14,4 +14,5 @@ object LockNamespaces {
     const val SUBLEDGER_CONTACT = "subledger_contact"
     const val CONTACT_OPENING_BALANCE = "contact_opening_balance"
     const val FUND_MOVEMENT = "fund_movement"
+    const val LOAN = "loan"
 }

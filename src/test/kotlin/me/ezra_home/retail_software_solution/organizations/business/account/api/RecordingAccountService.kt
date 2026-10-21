@@ -12,7 +12,6 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/** A real AccountService over every SystemAccount, recording each balance delta it would persist. */
 class RecordingAccountService(accountDtos: List<AccountDto> = systemAccountDtos()) {
 
     private val deltasByAccountCode = mutableMapOf<String, BigDecimal>()
@@ -61,5 +60,18 @@ class RecordingAccountService(accountDtos: List<AccountDto> = systemAccountDtos(
             accountIsSystemMaintained = true,
             parentAccountCode = systemAccount.parent?.code
         )
+
+        fun accountTree(extraChildCode: String? = null, parent: SystemAccount = SystemAccount.DIGITAL_PAYMENTS): List<AccountTreeNode> {
+            val childDto = extraChildCode?.let { childCode ->
+                accountDto(parent, accountIsActive = true).copy(
+                    id = UUID.randomUUID(),
+                    code = childCode,
+                    name = "Mobile Wallet",
+                    accountIsSystemMaintained = false,
+                    parentAccountCode = parent.code
+                )
+            }
+            return RecordingAccountService(systemAccountDtos() + listOfNotNull(childDto)).accountService.getAccountTree()
+        }
     }
 }

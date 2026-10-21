@@ -9,7 +9,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface JurisdictionTaxTypeMapper {
 
-    fun toDomainDto(entity: JurisdictionTaxTypeEntity): JurisdictionTaxTypeDto
+    fun toDomainDto(jurisdictionTaxTypeEntity: JurisdictionTaxTypeEntity): JurisdictionTaxTypeDto
 
     fun toEntity(dto: JurisdictionTaxTypeDto): JurisdictionTaxTypeEntity
 

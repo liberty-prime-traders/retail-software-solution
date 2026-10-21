@@ -34,7 +34,9 @@ class PurchaseDeliveryService(
 ) {
 
   fun recordDelivery(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto): PurchaseResponseDto {
-    fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(purchaseDeliveryCreateDto.deliveredAt))
+    val deliveredDate = DateTimes.Local.atOrganizationZone(purchaseDeliveryCreateDto.deliveredAt)
+    DateTimes.Local.requireNotInFuture(deliveredDate, "Delivery date")
+    fiscalPeriodService.requireOpenForDate(deliveredDate)
     val context = deliveryHandlerForPurchase.prepareForDelivery(purchaseDeliveryCreateDto.purchaseId)
     purchaseDeliveryValidator.validate(purchaseDeliveryCreateDto, context.purchaseLineById)
     val storageUnitsPerUnitByPurchaseLineId = captureStorageUnitsPerUnit(purchaseDeliveryCreateDto, context.purchaseLineById)

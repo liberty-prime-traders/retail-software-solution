@@ -111,9 +111,6 @@ class BulkUnitImportValidator(
                 errors.add("Unit value '${unitValue.code}': duplicates another unit value code in the same payload")
             }
 
-            // Every org is bootstrapped with the SystemUnitValue rows (see UnitValueSeeder), so a payload
-            // naming one of their codes (e.g. "kg") always matches something already in the database.
-            // Treat that as a reuse rather than a conflict, and skip further checks for this value entirely.
             if (unitValue.code != null && unitValue.code in existingSystemDefinedCodes) {
                 return@forEachIndexed
             }

@@ -31,6 +31,12 @@ object DateTimes {
         fun atOrganizationZone(offsetDateTime: OffsetDateTime): LocalDate {
             return offsetDateTime.atZoneSameInstant(organizationZoneId()).toLocalDate()
         }
+
+        fun requireNotInFuture(date: LocalDate, label: String) {
+            if (date.isAfter(Now.organization())) {
+                throw RtsGenericException("$label cannot be in the future")
+            }
+        }
     }
 
     object Offset {

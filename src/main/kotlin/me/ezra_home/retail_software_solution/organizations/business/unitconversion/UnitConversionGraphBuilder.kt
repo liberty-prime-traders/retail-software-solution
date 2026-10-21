@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.unitconvers
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.ConversionTargetDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
+import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitChainNode
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitChainResolver
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
@@ -15,7 +16,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class UnitConversionGraphBuilder(private val unitValueFetcher: UnitValueFetcher) {
+class UnitConversionGraphBuilder(
+    private val unitValueFetcher: UnitValueFetcher,
+    private val unitGroupDataFetcher: UnitGroupDataFetcher
+) {
 
     private val cache = ConcurrentHashMap<String, UnitConversionGraph>()
 
@@ -24,7 +28,9 @@ class UnitConversionGraphBuilder(private val unitValueFetcher: UnitValueFetcher)
         return cache.getOrPut(orgSchema) { buildGraph() }
     }
 
-    // Evicts immediately so reads in the writing transaction see their own changes, and again after completion: a concurrent request can rebuild from the old committed rows in between, and a rolled-back transaction would cache rows that never existed
+    // Evicts immediately so reads in the writing transaction see their own changes,
+    // and again after completion: a concurrent request can rebuild from the old committed rows in between,
+    // and a rolled-back transaction would cache rows that never existed
     fun invalidate() {
         val orgSchema = SessionContextProvider.getOrganizationSchema()
         cache.remove(orgSchema)
@@ -45,7 +51,9 @@ class UnitConversionGraphBuilder(private val unitValueFetcher: UnitValueFetcher)
         val targetsByUnitId = allUnits.groupBy { it.unitGroupId }.values.flatMap { unitsOfGroup ->
             unitsOfGroup.map { fromUnit ->
                 val fromSizeInRoot = placementByUnitId.getValue(fromUnit.id).sizeInRoot
-                fromUnit.id to unitsOfGroup.associate { toUnit ->
+                // Miscellaneous units stand alone: sharing a group does not make them convertible to each other
+                val reachableUnits = if (unitGroupDataFetcher.isMiscellaneous(fromUnit.unitGroupId)) listOf(fromUnit) else unitsOfGroup
+                fromUnit.id to reachableUnits.associate { toUnit ->
                     toUnit.id to conversionTarget(toUnit, fromSizeInRoot, placementByUnitId.getValue(toUnit.id).sizeInRoot)
                 }
             }

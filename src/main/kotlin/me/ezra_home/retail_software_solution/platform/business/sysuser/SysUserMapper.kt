@@ -7,7 +7,7 @@ import org.mapstruct.Mapping
 
 @Mapper(config = RtsMapperConfig::class)
 interface SysUserMapper {
-    fun toDomainDto(entity: SysUserEntity): SysUserDto
+    fun toDomainDto(sysUserEntity: SysUserEntity): SysUserDto
 
     fun toEntity(dto: SysUserDto): SysUserEntity
 

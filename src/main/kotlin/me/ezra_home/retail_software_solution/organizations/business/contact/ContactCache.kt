@@ -23,6 +23,11 @@ class ContactCache(
         return contactRepository.findAll().map { contactMapper.toDomainDto(it) }
     }
 
+    @Cacheable
+    fun getContactsByReferenceNumber(): Map<String, ContactDto> {
+        return contactRepository.findAll().map { contactMapper.toDomainDto(it) }.associateBy { it.referenceNumber }
+    }
+
     @CacheEvict(allEntries = true)
     fun create(insertDto: ContactInsertDto): ContactDto {
         val saved = contactRepository.save(contactMapper.toEntity(insertDto))

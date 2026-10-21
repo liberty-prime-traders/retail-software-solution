@@ -10,7 +10,7 @@ import org.mapstruct.Mapping
 @Mapper(config = RtsMapperConfig::class)
 interface LocationUserMapper {
 
-    fun toDomainDto(entity: LocationUserEntity): LocationUserDto
+    fun toDomainDto(locationUserEntity: LocationUserEntity): LocationUserDto
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdById", ignore = true)

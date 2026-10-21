@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
@@ -148,6 +149,29 @@ class FundMovementServiceTest {
     }
 
     @Test
+    fun `an amount above the transaction maximum is rejected and the maximum itself is accepted`() {
+        assertThrows(RtsGenericException::class.java) {
+            fundMovementService.createCapital(
+                FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")), movementDate)
+            )
+        }
+        verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
+
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT, movementDate))
+
+        assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, savedEntity().amount)
+    }
+
+    @Test
+    fun `a long note is kept in full`() {
+        val longNote = "n".repeat(2000)
+
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), movementDate, longNote))
+
+        assertEquals(longNote, savedEntity().note)
+    }
+
+    @Test
     fun `a movement dated after today in the organization zone is rejected before anything is saved or posted`() {
         val tomorrow = DateTimes.Local.Now.organization().plusDays(1)
 
@@ -170,7 +194,6 @@ class FundMovementServiceTest {
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
     }
 
-    // Rolling the row back relies on the exception leaving the transactional service; the rollback itself needs a real database.
     @Test
     fun `a ledger posting failure reaches the caller and the service rolls back on any exception`() {
         doThrow(RtsGenericException("No open fiscal period")).`when`(ledgerPostingService).post(anyNonNull(LedgerPostingRequest::class.java))
@@ -219,7 +242,6 @@ class FundMovementServiceTest {
         assertTrue(postedRequests.isEmpty())
     }
 
-    // Mockito's any() returns null, which Kotlin rejects for the mapper's non-null parameters.
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(type: Class<T>): T {
         any(type)

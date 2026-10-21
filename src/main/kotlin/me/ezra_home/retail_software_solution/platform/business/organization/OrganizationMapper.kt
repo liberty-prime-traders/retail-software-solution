@@ -25,7 +25,7 @@ interface OrganizationMapper {
     @Mapping(target = "creationPassId", ignore = true)
     fun toEntity(dto: OrganizationInsertDto): OrganizationEntity
 
-    fun toDomainDto(entity: OrganizationEntity): OrganizationDto
+    fun toDomainDto(organizationEntity: OrganizationEntity): OrganizationDto
 
     fun toEntity(dto: OrganizationDto): OrganizationEntity
 

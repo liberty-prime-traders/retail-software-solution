@@ -17,7 +17,7 @@ import org.mapstruct.NullValueMappingStrategy
 )
 interface OrganizationJoinRequestMapper {
 
-    fun toDomainDto(entity: OrganizationJoinRequestEntity): OrganizationJoinRequestDto
+    fun toDomainDto(organizationJoinRequestEntity: OrganizationJoinRequestEntity): OrganizationJoinRequestDto
 
     fun toEntity(dto: OrganizationJoinRequestDto): OrganizationJoinRequestEntity
 

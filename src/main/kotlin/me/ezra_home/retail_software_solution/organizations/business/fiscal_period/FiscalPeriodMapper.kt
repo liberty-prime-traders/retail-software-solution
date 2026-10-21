@@ -6,7 +6,7 @@ import org.mapstruct.Mapper
 @Mapper(config = RtsMapperConfig::class)
 interface FiscalPeriodMapper {
 
-    fun toDomainDto(entity: FiscalPeriodEntity): FiscalPeriodDto
+    fun toDomainDto(fiscalPeriodEntity: FiscalPeriodEntity): FiscalPeriodDto
 
     fun toEntity(dto: FiscalPeriodDto): FiscalPeriodEntity
 }

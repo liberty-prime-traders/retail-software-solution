@@ -6,9 +6,9 @@ import org.mapstruct.Mapper
 @Mapper(config = RtsMapperConfig::class)
 interface LedgerMapper {
 
-    fun toGroupDto(entity: LedgerEntryGroupEntity): LedgerEntryGroupDto
+    fun toGroupDto(ledgerEntryGroupEntity: LedgerEntryGroupEntity): LedgerEntryGroupDto
 
-    fun toEntryDto(entity: LedgerEntryEntity): LedgerEntryDto
+    fun toEntryDto(ledgerEntryEntity: LedgerEntryEntity): LedgerEntryDto
 
-    fun toSubledgerDto(entity: SubledgerEntryEntity): SubledgerEntryDto
+    fun toSubledgerDto(subledgerEntryEntity: SubledgerEntryEntity): SubledgerEntryDto
 }
