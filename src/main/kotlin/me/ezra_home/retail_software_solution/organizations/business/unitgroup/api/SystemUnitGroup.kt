@@ -13,9 +13,9 @@ enum class SystemUnitGroup(override val code: String, val groupName: String, val
         // Weight, Volume and Count are seeded with a real root (Gram, Millilitre, Piece) and Miscellaneous with
         // a standalone Piece (see SystemUnitValue / UnitValueSeeder). Auto-insert exists only to give a custom
         // org group its root Piece, so every system group is excluded.
-        private val EXCLUDED_FROM_PIECE_AUTO_INSERT = setOf(MISC, WEIGHT, VOLUME, COUNTABLE)
+        private val EXCLUDED_FROM_ROOT_AUTO_INSERT = setOf(MISC, WEIGHT, VOLUME, COUNTABLE)
 
-        fun isExcludedFromPieceAutoInsert(groupName: String?): Boolean =
-            EXCLUDED_FROM_PIECE_AUTO_INSERT.any { StringUtils.isEquivalent(it.groupName, groupName) }
+        fun isExcludedFromRootAutoInsert(groupName: String?): Boolean =
+            EXCLUDED_FROM_ROOT_AUTO_INSERT.any { StringUtils.isEquivalent(it.groupName, groupName) }
     }
 }

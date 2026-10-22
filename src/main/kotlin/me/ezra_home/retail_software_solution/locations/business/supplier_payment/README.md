@@ -25,6 +25,6 @@ Money paid to a supplier against a purchase, optionally against one delivery of 
   `PurchasePaymentStatusService.resolvePaymentStatus` and publishes the Kafka event through
   `SupplierPaymentHandlerForKafka`.
 - `voidPayment` requires an open fiscal period for today, takes the purchase lock, rejects an already-voided payment,
-  saves the void row, recomputes the purchase status with `PurchasePaymentStatusService.patchThenReturnPaymentStatus`
-  and publishes the void event through `SupplierPaymentVoidHandlerForKafka`.
+  saves the void row, stores the status resolved from the paid total read before the void minus the voided amount
+  (`PurchasePaymentStatusService.patchThenReturnPaymentStatusAfterVoid`) and publishes the void event through `SupplierPaymentVoidHandlerForKafka`.
 - Ledger postings are produced by the Kafka consumers of the recorded and voided events, not here.

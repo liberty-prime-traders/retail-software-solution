@@ -66,18 +66,17 @@ class SalePaymentService(
     fun voidPayment(salePaymentVoidCreateDto: SalePaymentVoidCreateDto): SalePaymentResponseDto {
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
         val payment = salePaymentRepository.getReferenceById(salePaymentVoidCreateDto.salePaymentId)
+        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
         SalePaymentValidator.guardNotAlreadyVoided(
             salePaymentVoidRepository.existsBySalePaymentId(salePaymentVoidCreateDto.salePaymentId),
             payment.requiredReference()
         )
-
-        val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(payment.saleId)
         SalePaymentValidator.guardSaleNotVoided(saleStatus)
 
+        val totalPaidAfterVoid = PaymentStatusResolver.paidTotalAfterVoid(salePaymentFetcher.calculatePaidAmount(payment.saleId), payment.amount)
         val voidEntity = SalePaymentVoidEntity(salePaymentId = salePaymentVoidCreateDto.salePaymentId, reason = salePaymentVoidCreateDto.reason)
         salePaymentVoidRepository.save(voidEntity)
 
-        val totalPaidAfterVoid = salePaymentFetcher.calculatePaidAmount(payment.saleId)
         val newStatus = PaymentStatusResolver.resolve(totalPaidAfterVoid, receivableTotal)
         val updatedSaleVersion = saleUpdater.updatePaymentStatus(payment.saleId, newStatus)
         salePaymentVoidHandlerForKafka.publish(payment, voidEntity, contactId)

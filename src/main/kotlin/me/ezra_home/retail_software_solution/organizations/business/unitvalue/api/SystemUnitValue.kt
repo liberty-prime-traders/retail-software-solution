@@ -23,22 +23,21 @@ enum class SystemUnitValue(
     DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 12L),
     HALF_DOZEN("hdz", "Half Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 6L),
     CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 24L),
-    TRAY("tray", "Tray", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 30L),
 
     MISC_PIECE("misc-pc", "Piece", SystemUnitGroup.MISC);
 
     companion object {
-        private const val PIECE_CODE_SUFFIX = "-pc"
-        private const val MAX_CODE_LENGTH = 25
+        private const val BASE_CODE_SUFFIX = "-base"
+        const val MAX_CODE_LENGTH = 25
 
-        fun pieceCodeForGroup(groupName: String?): String {
+        fun baseUnitCodeForGroup(groupName: String?): String {
             val slug = (groupName ?: "")
                 .lowercase()
                 .replace(Regex("[^a-z0-9]+"), "-")
                 .trim('-')
-                .take(MAX_CODE_LENGTH - PIECE_CODE_SUFFIX.length)
+                .take(MAX_CODE_LENGTH - BASE_CODE_SUFFIX.length)
                 .trim('-')
-            return "$slug$PIECE_CODE_SUFFIX"
+            return "$slug$BASE_CODE_SUFFIX"
         }
     }
 }

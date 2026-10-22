@@ -104,10 +104,11 @@ class SupplierPaymentService(
             throw RtsGenericException("Payment ${paymentEntity.referenceNumber} has already been voided")
         }
 
+        val paidTotalBeforeVoid = paymentsCalculatorService.calculatePaidAmountForPurchase(paymentEntity.purchaseId)
         val voidEntity = supplierPaymentVoidMapper.toEntity(supplierPaymentVoidCreateDto)
         supplierPaymentVoidRepository.save(voidEntity)
 
-        val newStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(paymentEntity.purchaseId)
+        val newStatus = purchasePaymentStatusService.patchThenReturnPaymentStatusAfterVoid(paymentEntity.purchaseId, paidTotalBeforeVoid, paymentEntity.amount)
 
         supplierPaymentVoidHandlerForKafka.publish(voidEntity, paymentEntity, purchaseDataFetcher.getSupplierId(paymentEntity.purchaseId))
         return assembler.buildResponse(paymentEntity, voidEntity, newStatus)

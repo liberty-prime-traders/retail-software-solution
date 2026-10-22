@@ -8,12 +8,19 @@ its own. There are no manual conversions to import (see `unitconversion`).
 
 ## Two phases: validate everything, then save everything
 
+`BulkUnitImportValidator` orchestrates and owns the unit-value checks; two stateless helpers hold the rest:
+`BulkUnitGroupValidator` (group names, `baseUnitName`, `baseUnitCode`, generated base unit codes) and `BulkUnitChainValidator`
+(cycles, chain sizes).
+
 `BulkUnitImportService.bulkImport` runs `BulkUnitImportValidator.validate`
 first, which returns a `List<String>` of every problem in the payload —
 duplicate/invalid names (compared on alphanumerics), duplicate/oversized codes,
 missing or cross-group base-unit references, a unit outside Miscellaneous
 without a base unit, a Miscellaneous unit with one, a payload unit named
-"Piece" in a custom group, two groups whose generated Piece codes collide,
+named like the group's effective base unit name in a custom group, a
+`baseUnitName` or `baseUnitCode` on a system group (or a payload group reusing one), a
+`baseUnitName` without a letter or digit, a `baseUnitCode` that is reserved, too long or already taken, two groups
+whose root unit codes collide,
 cyclic base-unit chains, and chains whose size in the root exceeds 1,000,000,000
 (`UnitChainResolver`) — instead of throwing on the
 first one like the single-item validators do. If that list is non-empty,
@@ -74,7 +81,7 @@ payload that names a standard unit would always fail with an "already
 exists" error, since the validator otherwise treats any name/code collision
 against the database as invalid.
 
-Instead, `BulkUnitImportValidator.validateGroupNames`/`validateUnitValues`
+Instead, `BulkUnitGroupValidator.validateGroupNames` and `BulkUnitImportValidator.validateUnitValues`
 check whether the colliding database row is `systemDefined`. If it is, the
 payload entry is treated as a reuse: no error is added, and validation of
 that entry stops there (its own name/base-unit/etc. fields are never
@@ -98,39 +105,65 @@ collide. A payload group name that matches a system group under
 `StringUtils.isEquivalent` is a reuse, but one that only matches on
 alphanumerics ("Co-unt") is rejected as a duplicate. Group names remain unique
 org-wide either way, and must contain at least one letter or digit (`UnitGroupService.createUnitGroup`'s
-`validateNameOnSave`, and `BulkUnitImportValidator.validateGroupNames`) — a
+`validateNameOnSave`, and `BulkUnitGroupValidator.validateGroupNames`) — a
 group name that's only symbols/whitespace would otherwise produce an empty
 slug for the Piece-code generation below.
 
-## Default "Piece" unit is auto-provisioned, and its code is group-scoped
+## The base unit is auto-provisioned, named by the caller, and its code is group-scoped
 
 Every group outside the system groups (`SystemUnitGroup`) has exactly one
-root: the Piece provisioned when the group is created. Every other unit in the
-group chains off it, directly or through another unit, so a payload unit in a
-custom group references it with the reserved marker
-`BulkUnitImportValidator.PIECE_BASE_UNIT_CODE` ("__piece__") and a
-payload unit named "Piece" is rejected. Two flows provision it, both with
-`systemDefined = true`:
+root: the base unit provisioned when the group is created. Every other unit in
+the group chains off it, directly or through another unit, so a payload unit in
+a custom group references it with the reserved marker
+`RootUnitDefinition.PIECE_BASE_UNIT_CODE` ("__piece__") or, when the group supplies one, with the group's explicit
+`baseUnitCode`; both resolve to the same root. The root's name
+is the group's optional `baseUnitName` (`UnitGroupBulkInsertDto` /
+`UnitGroupInsertDto`; blank is absent) and defaults to "Piece". A payload unit
+in a custom group whose name is equivalent on alphanumerics to that effective
+base unit name is rejected, and the error names it. `baseUnitName` is an error
+on a system group or a payload group that reuses a system-defined group (their
+roots are seeded), and must contain a letter or digit.
+
+Both flows build the root through `RootUnitDefinition.forGroup` (name, code via `effectiveBaseUnitCode`,
+description, `systemDefined = true`) so they cannot drift:
 
 - **Bulk**: for every new custom group, whether or not a unit references the
   marker (`generatePendingUnitValuesForGroup`).
-- **Single-item group creation**: via `UnitValueService.ensurePieceUnitExists`,
+- **Single-item group creation**: via `UnitValueService.ensureBaseUnitExists`,
   called from `UnitGroupService.createUnitGroup` right after the group saves.
 
 A Miscellaneous payload unit cannot carry a `baseUnitCode`, and a unit in any
 other group must.
 
-Since codes are globally unique, every group's Piece can't literally be
-`SystemUnitValue.PIECE.code` ("pc") — two groups would collide. Both flows
-instead call `SystemUnitValue.pieceCodeForGroup(groupName)`, which slugifies
-the group name and appends `-pc` (e.g. `"count-pc"`). The function assumes
-the name has already been validated to contain a letter or digit (see
-above) — without that guarantee the slug could be empty and every
-symbol-only-named group's Piece would collide on `"-pc"`.
+### The root unit's code
+
+A group may supply the code with the optional `baseUnitCode` (`UnitGroupBulkInsertDto` / `UnitGroupInsertDto`; blank
+is absent), so callers that load products can reference the root without reproducing the generation rule. Without
+one, the code is generated.
+
+Since codes are globally unique, every group's root can't literally be `SystemUnitValue.PIECE.code` ("pc") — two
+groups would collide. The generated code comes from `SystemUnitValue.baseUnitCodeForGroup(groupName)`, which
+slugifies the group name and appends `-base` (e.g. `"eggs-base"`), whatever the base unit is named. The function
+assumes the name has already been validated to contain a letter or digit (see above) — without that guarantee the
+slug could be empty and every symbol-only-named group's root would collide on `"-base"`. Only
+`RootUnitDefinition.effectiveBaseUnitCode` chooses between the two, so no other class computes a root code.
+
+A supplied `baseUnitCode` follows the unit value code rules (at most `SystemUnitValue.MAX_CODE_LENGTH` characters),
+cannot be `"__piece__"`, and must differ from every payload unit code, every other payload group's root code
+(supplied or generated) and every existing unit code. `BulkUnitGroupValidator.validateBaseUnitCodes` runs the
+uniqueness check on the effective root code of every custom group, so the generated-code collision error only fires
+for groups that did not supply one. In the single-item flow `UnitGroupService.createUnitGroup` applies the
+same length, reserved-marker and uniqueness rules before saving the group
+(`UnitValueService.validateRootUnitCodeBeforeGroupCreate`), and `UnitValueValidator.validateRootUnitInsert`
+re-checks them under the group lock.
+
+Chain, cycle and size validation and the topological ordering treat the supplied code as the group's root node:
+`BulkUnitChainValidator` and `BulkUnitImportService` resolve the root code through
+`RootUnitDefinition.effectiveBaseUnitCode`, and `"__piece__"` maps to it.
 
 ## Why `UnitGroupService` depends on `UnitValueService`
 
-`UnitGroupService.createUnitGroup` calling `UnitValueService.ensurePieceUnitExists`
+`UnitGroupService.createUnitGroup` calling `UnitValueService.ensureBaseUnitExists`
 made `unitgroup` depend on `unitvalue`, while `UnitValueValidator` already
 depended on `unitgroup` (to check a unit value's `unitGroupId` exists) — a
 Spring circular-bean dependency. Rather than papering over it with `@Lazy`,

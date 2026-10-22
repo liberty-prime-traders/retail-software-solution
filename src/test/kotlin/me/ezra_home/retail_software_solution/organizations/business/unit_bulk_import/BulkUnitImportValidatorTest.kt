@@ -44,6 +44,17 @@ class BulkUnitImportValidatorTest {
         unitValues: List<UnitValueBulkInsertDto> = listOf(unitValue())
     ) = UnitGroupBulkInsertDto(name = name, description = null, unitValues = unitValues)
 
+    private fun unitGroupDto(name: String, systemDefined: Boolean) = UnitGroupDto(
+        id = UUID.randomUUID(),
+        createdById = UUID.randomUUID(),
+        createdOn = OffsetDateTime.now(),
+        referenceNumber = "REF-1",
+        code = null,
+        name = name,
+        description = null,
+        systemDefined = systemDefined
+    )
+
     @Test
     fun `valid payload produces no errors`() {
         val request = BulkUnitImportRequestDto(
@@ -342,7 +353,7 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
-    fun `a payload unit named Piece in a custom group is rejected because the root Piece is automatic`() {
+    fun `a payload unit named Piece in a custom group is rejected because the default root unit is automatic`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
                 group(name = "Eggs", unitValues = listOf(unitValue(name = "Piece", code = "egg-piece", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1L)))
@@ -351,7 +362,240 @@ class BulkUnitImportValidatorTest {
 
         val errors = validator.validate(request)
 
-        assertTrue(errors.any { it.contains("root Piece is created automatically") })
+        assertTrue(errors.any { it.contains("root unit 'Piece' is created automatically") && it.contains("__piece__") })
+    }
+
+    @Test
+    fun `a payload unit named like a custom baseUnitName is rejected and the error names that base unit`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                UnitGroupBulkInsertDto(
+                    name = "Eggs",
+                    description = null,
+                    baseUnitName = "Sachet",
+                    unitValues = listOf(unitValue(name = "sa-chet", code = "egg-sachet", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1L))
+                )
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("root unit 'Sachet' is created automatically") && it.contains("__piece__") })
+    }
+
+    @Test
+    fun `a payload unit named Piece is accepted when the group renames its base unit`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                UnitGroupBulkInsertDto(
+                    name = "Eggs",
+                    description = null,
+                    baseUnitName = "Sachet",
+                    unitValues = listOf(unitValue(name = "Piece", code = "egg-piece", baseUnitCode = "__piece__", unitsOfBasePerUnit = 1L))
+                )
+            )
+        )
+
+        assertEquals(emptyList<String>(), validator.validate(request))
+    }
+
+    @Test
+    fun `baseUnitName on a system group is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(UnitGroupBulkInsertDto(name = "Weight", description = null, baseUnitName = "Sachet", unitValues = emptyList()))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("Group 'Weight'") && it.contains("baseUnitName is not allowed") })
+    }
+
+    @Test
+    fun `baseUnitName on a payload group that reuses a system-defined group is rejected`() {
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(listOf(unitGroupDto("Warehouse Items", systemDefined = true)))
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(UnitGroupBulkInsertDto(name = "Warehouse Items", description = null, baseUnitName = "Sachet", unitValues = emptyList()))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("Group 'Warehouse Items'") && it.contains("baseUnitName is not allowed") })
+    }
+
+    @Test
+    fun `baseUnitName without a letter or digit is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(UnitGroupBulkInsertDto(name = "Eggs", description = null, baseUnitName = "--", unitValues = emptyList()))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("baseUnitName must contain at least one letter or digit") })
+    }
+
+    @Test
+    fun `a blank baseUnitName on a system group is ignored`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(UnitGroupBulkInsertDto(name = "Weight", description = null, baseUnitName = " ", unitValues = emptyList()))
+        )
+
+        assertEquals(emptyList<String>(), validator.validate(request))
+    }
+
+    private fun groupWithBaseUnitCode(
+        name: String,
+        baseUnitCode: String?,
+        unitValues: List<UnitValueBulkInsertDto> = emptyList()
+    ) = UnitGroupBulkInsertDto(name = name, description = null, baseUnitCode = baseUnitCode, unitValues = unitValues)
+
+    @Test
+    fun `units referencing the root by the explicit baseUnitCode and by the piece marker are both accepted`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                groupWithBaseUnitCode(
+                    name = "Eggs",
+                    baseUnitCode = "egg-root",
+                    unitValues = listOf(
+                        unitValue(name = "Half Dozen", code = "egg-hdz", baseUnitCode = "egg-root", unitsOfBasePerUnit = 6L),
+                        unitValue(name = "Dozen", code = "egg-dz", baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L),
+                        unitValue(name = "Crate", code = "egg-crate", baseUnitCode = "egg-dz", unitsOfBasePerUnit = 2L)
+                    )
+                )
+            )
+        )
+
+        assertEquals(emptyList<String>(), validator.validate(request))
+    }
+
+    @Test
+    fun `a chain size overflowing through the explicit root is still rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                groupWithBaseUnitCode(
+                    name = "Eggs",
+                    baseUnitCode = "egg-root",
+                    unitValues = listOf(
+                        unitValue(name = "Big", code = "egg-big", baseUnitCode = "egg-root", unitsOfBasePerUnit = 1_000_000L),
+                        unitValue(name = "Bigger", code = "egg-bigger", baseUnitCode = "egg-big", unitsOfBasePerUnit = 1_000_000L)
+                    )
+                )
+            )
+        )
+
+        assertTrue(validator.validate(request).any { it.contains("Unit chain rejected") })
+    }
+
+    @Test
+    fun `a unit referencing another group's explicit root code is rejected as belonging to a different group`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                groupWithBaseUnitCode(name = "Eggs", baseUnitCode = "egg-root"),
+                groupWithBaseUnitCode(
+                    name = "Milk",
+                    baseUnitCode = "milk-root",
+                    unitValues = listOf(unitValue(name = "Carton", code = "milk-carton", baseUnitCode = "egg-root", unitsOfBasePerUnit = 4L))
+                )
+            )
+        )
+
+        assertTrue(validator.validate(request).any { it.contains("baseUnitCode 'egg-root' belongs to a different unit group") })
+    }
+
+    @Test
+    fun `baseUnitCode of the piece marker is rejected`() {
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Eggs", "__piece__")))
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Eggs'") && it.contains("is reserved") })
+    }
+
+    @Test
+    fun `baseUnitCode longer than a unit value code is rejected`() {
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Eggs", "a".repeat(26))))
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Eggs'") && it.contains("baseUnitCode must be at most 25 characters") })
+    }
+
+    @Test
+    fun `baseUnitCode duplicating a payload unit value code is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                groupWithBaseUnitCode(
+                    name = "Eggs",
+                    baseUnitCode = "milk-carton",
+                    unitValues = emptyList()
+                ),
+                groupWithBaseUnitCode(
+                    name = "Milk",
+                    baseUnitCode = null,
+                    unitValues = listOf(unitValue(name = "Carton", code = "milk-carton", baseUnitCode = "__piece__", unitsOfBasePerUnit = 4L))
+                )
+            )
+        )
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Eggs'") && it.contains("duplicates a unit value code in the same payload") })
+    }
+
+    @Test
+    fun `baseUnitCode duplicating another group's baseUnitCode is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(groupWithBaseUnitCode("Eggs", "shared-root"), groupWithBaseUnitCode("Milk", "shared-root"))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("Group 'Milk'") && it.contains("duplicates another group's base unit code") })
+        assertTrue(errors.none { it.contains("Group 'Eggs'") })
+    }
+
+    @Test
+    fun `baseUnitCode equal to another group's generated base unit code is rejected`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(groupWithBaseUnitCode("Eggs", null), groupWithBaseUnitCode("Milk", "eggs-base"))
+        )
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Milk'") && it.contains("duplicates another group's base unit code") })
+    }
+
+    @Test
+    fun `baseUnitCode matching an existing database unit code is rejected`() {
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(listOf(unitValueResponseDto(UUID.randomUUID(), "taken", UUID.randomUUID())))
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Eggs", "taken")))
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Eggs'") && it.contains("baseUnitCode 'taken' already exists in the database") })
+    }
+
+    @Test
+    fun `baseUnitCode on a system group is rejected`() {
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Weight", "weight-root")))
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Weight'") && it.contains("baseUnitCode is not allowed") })
+    }
+
+    @Test
+    fun `baseUnitCode on a payload group that reuses a system-defined group is rejected`() {
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(listOf(unitGroupDto("Warehouse Items", systemDefined = true)))
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Warehouse Items", "wh-root")))
+
+        assertTrue(validator.validate(request).any { it.contains("Group 'Warehouse Items'") && it.contains("baseUnitCode is not allowed") })
+    }
+
+    @Test
+    fun `a blank baseUnitCode on a system group is ignored`() {
+        val request = BulkUnitImportRequestDto(unitGroups = listOf(groupWithBaseUnitCode("Weight", " ")))
+
+        assertEquals(emptyList<String>(), validator.validate(request))
+    }
+
+    @Test
+    fun `the generated code collision check is skipped for groups that supply a baseUnitCode`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                groupWithBaseUnitCode("A very long group name one", "long-one-root"),
+                groupWithBaseUnitCode("A very long group name two", "long-two-root")
+            )
+        )
+
+        assertEquals(emptyList<String>(), validator.validate(request))
     }
 
     @Test
@@ -369,7 +613,7 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
-    fun `two long group names sharing a Piece code slug are rejected with a clear error`() {
+    fun `two long group names sharing a base unit code slug are rejected with a clear error`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
                 group(name = "A very long group name one", unitValues = emptyList()),
@@ -379,7 +623,7 @@ class BulkUnitImportValidatorTest {
 
         val errors = validator.validate(request)
 
-        assertTrue(errors.any { it.contains("generated Piece code") })
+        assertTrue(errors.any { it.contains("generated base unit code") })
     }
 
     @Test

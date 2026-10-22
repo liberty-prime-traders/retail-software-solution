@@ -33,9 +33,15 @@ class UnitGroupService(
 
     fun createUnitGroup(unitGroupInsertDto: UnitGroupInsertDto): UnitGroupResponseDto {
         validateNameOnSave(Optional.ofNullable(unitGroupInsertDto.name))
+        unitValueService.validateRootUnitCodeBeforeGroupCreate(unitGroupInsertDto.name, unitGroupInsertDto.baseUnitCode)
         val dto = unitGroupCache.create(unitGroupInsertDto)
         val response = unitGroupMapper.toResponseDto(dto)
-        unitValueService.ensurePieceUnitExists(response.id, response.name)
+        unitValueService.ensureBaseUnitExists(
+            unitGroupId = response.id,
+            unitGroupName = response.name,
+            baseUnitName = unitGroupInsertDto.baseUnitName,
+            baseUnitCode = unitGroupInsertDto.baseUnitCode
+        )
         return response
     }
 
