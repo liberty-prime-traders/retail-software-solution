@@ -84,11 +84,11 @@ class PurchaseLineCancelTest {
     @Test
     fun `the line total scales to the expected storage quantity and is exact when nothing is canceled`() {
         val line = oneBaleLineWith5PiecesDelivered()
-        assertEquals(BigDecimal("100.0000"), line.getTotalCost())
+        assertEquals(BigDecimal("100.00"), line.getTotalCost())
 
         cancel(line, "9", storageUnitsPerUnit = 1L)
 
-        assertEquals(BigDecimal("50.0000"), line.getTotalCost())
+        assertEquals(BigDecimal("50.00"), line.getTotalCost())
     }
 
     @Test

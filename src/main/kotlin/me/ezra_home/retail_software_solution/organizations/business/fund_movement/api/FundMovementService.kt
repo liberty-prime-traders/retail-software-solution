@@ -107,7 +107,7 @@ class FundMovementService(
         movementDate: LocalDate,
         note: String?
     ): FundMovementResponse {
-        val roundedAmount = Decimals.Scale4.requirePositiveAmount(amount)
+        val roundedAmount = Decimals.Scale2.requirePositiveAmount(amount)
         DateTimes.Local.requireNotInFuture(movementDate, "Movement date")
         val trimmedNote = StringUtils.getValueOrNull(note)
         fundMovementAccountValidator.requireSelectable(userPickedAccountCodes)

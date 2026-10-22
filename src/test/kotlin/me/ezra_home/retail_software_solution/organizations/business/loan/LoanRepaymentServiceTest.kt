@@ -109,7 +109,7 @@ class LoanRepaymentServiceTest {
 
     @Test
     fun `an amount above the transaction maximum is rejected`() {
-        val tooLarge = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001"))
+        val tooLarge = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01"))
 
         assertThrows(RtsGenericException::class.java) {
             loanRepaymentService.recordRepayment(LoanRepaymentCreateRequest(loanId, cashCode, tooLarge, loanDate))
@@ -142,7 +142,7 @@ class LoanRepaymentServiceTest {
 
         val savedRepayment = savedRepayment()
         assertEquals(loanId, savedRepayment.loanId)
-        assertEquals(BigDecimal("40.0000"), savedRepayment.amount)
+        assertEquals(BigDecimal("40.00"), savedRepayment.amount)
         assertEquals("paid", savedRepayment.note)
 
         val posted = postedRequests.single()
@@ -152,24 +152,24 @@ class LoanRepaymentServiceTest {
 
     @Test
     fun `a repayment above the outstanding balance names the amount requested and the outstanding amount`() {
-        outstandingIs("30.0000")
+        outstandingIs("30.00")
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            loanRepaymentService.recordRepayment(LoanRepaymentCreateRequest(loanId, cashCode, BigDecimal("30.00005"), loanDate))
+            loanRepaymentService.recordRepayment(LoanRepaymentCreateRequest(loanId, cashCode, BigDecimal("30.005"), loanDate))
         }
 
-        assertTrue(exception.message.contains("30.0001"), exception.message)
-        assertTrue(exception.message.contains("30.0000"), exception.message)
+        assertTrue(exception.message.contains("30.01"), exception.message)
+        assertTrue(exception.message.contains("30.00"), exception.message)
         verify(loanRepaymentRepository, never()).save(any(LoanRepaymentEntity::class.java))
     }
 
     @Test
     fun `a repayment of exactly the outstanding balance is accepted`() {
-        outstandingIs("30.0000")
+        outstandingIs("30.00")
 
         loanRepaymentService.recordRepayment(LoanRepaymentCreateRequest(loanId, cashCode, BigDecimal("30"), loanDate))
 
-        assertEquals(BigDecimal("30.0000"), savedRepayment().amount)
+        assertEquals(BigDecimal("30.00"), savedRepayment().amount)
     }
 
     @Test

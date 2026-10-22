@@ -146,7 +146,7 @@ class StockAdjustmentService(
         referenceNumber: String,
         adjustmentDetails: StockAdjustmentMovementDetails
     ): BigDecimal {
-        val totalCost = Decimals.Scale4.multiply(stockAdjustmentCreateDto.unitCost!!, stockAdjustmentCreateDto.userProvidedQuantity)
+        val totalCost = Decimals.Scale2.multiply(stockAdjustmentCreateDto.unitCost!!, stockAdjustmentCreateDto.userProvidedQuantity)
         stockAdjustmentStockUpdater.increaseStock(
             StockAdjustmentIncreaseStockRequest(
                 locationProductId = stockAdjustmentCreateDto.locationProductId,

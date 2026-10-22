@@ -39,7 +39,7 @@ class FifoStockConsumerTest {
             productLabel = "Widget",
         )
 
-        assertEquals(BigDecimal("16.0000"), fifoConsumptionResult.cost)
+        assertEquals(BigDecimal("16.00"), fifoConsumptionResult.cost)
         assertEquals(BigDecimal("8.0000"), fifoConsumptionResult.endingBalance)
         assertEquals(listOf(BigDecimal("10.0000"), BigDecimal("8.0000")), fifoConsumptionResult.movements.map { it.storageRemainingQuantity })
         assertEquals(0, BigDecimal("0").compareTo(olderLayer.storageQuantityRemaining))

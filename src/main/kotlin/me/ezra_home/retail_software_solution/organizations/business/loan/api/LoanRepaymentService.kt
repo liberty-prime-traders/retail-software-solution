@@ -32,7 +32,7 @@ class LoanRepaymentService(
 ) {
 
     fun recordRepayment(loanRepaymentCreateRequest: LoanRepaymentCreateRequest): LoanResponse {
-        val roundedAmount = Decimals.Scale4.requirePositiveAmount(loanRepaymentCreateRequest.amount)
+        val roundedAmount = Decimals.Scale2.requirePositiveAmount(loanRepaymentCreateRequest.amount)
         val assetAccountCode = StringUtils.getValueOrException(loanRepaymentCreateRequest.assetAccountCode, "Asset account is required")
         DateTimes.Local.requireNotInFuture(loanRepaymentCreateRequest.repaymentDate, "Repayment date")
         val trimmedNote = StringUtils.getValueOrNull(loanRepaymentCreateRequest.note)

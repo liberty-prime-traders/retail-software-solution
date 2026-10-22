@@ -48,7 +48,7 @@ class StockAdjustmentStockUpdaterTest {
 
         val consumedCost = stockAdjustmentStockUpdater.decreaseStock(decreaseRequest("4")).totalCost
 
-        assertEquals(BigDecimal("12.0000"), consumedCost)
+        assertEquals(BigDecimal("12.00"), consumedCost)
         assertEquals(0, BigDecimal("6").compareTo(layer.storageQuantityRemaining))
         assertEquals(0, BigDecimal("18").compareTo(layer.costRemaining))
     }
@@ -61,7 +61,7 @@ class StockAdjustmentStockUpdaterTest {
 
         val consumedCost = stockAdjustmentStockUpdater.decreaseStock(decreaseRequest("5")).totalCost
 
-        assertEquals(BigDecimal("16.0000"), consumedCost)
+        assertEquals(BigDecimal("16.00"), consumedCost)
         assertEquals(0, BigDecimal.ZERO.compareTo(olderLayer.costRemaining))
         assertEquals(0, BigDecimal("15").compareTo(newerLayer.costRemaining))
     }

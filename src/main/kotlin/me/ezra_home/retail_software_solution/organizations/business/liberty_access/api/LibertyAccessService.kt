@@ -15,7 +15,6 @@ class LibertyAccessService(private val orgPermissionAssignmentService: OrgPermis
     companion object {
         private val LIBERTY_PERMISSIONS = setOf(
             RtsPermission.LIBERTY_ADMIN,
-            RtsPermission.LIBERTY_CASHIER,
             RtsPermission.MANAGE_ORGANIZATION_ACCESS
         )
     }

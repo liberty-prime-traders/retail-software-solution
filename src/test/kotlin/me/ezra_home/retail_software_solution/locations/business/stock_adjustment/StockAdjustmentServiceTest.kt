@@ -118,14 +118,14 @@ class StockAdjustmentServiceTest {
         )
 
         val increaseRequest = increaseRequests.single()
-        assertEquals(BigDecimal("31.5000"), increaseRequest.totalCost)
+        assertEquals(BigDecimal("31.50"), increaseRequest.totalCost)
         assertEquals(0, BigDecimal("36").compareTo(increaseRequest.storageQuantity.toStorageQuantity()))
         assertEquals("STADJ000001", increaseRequest.documentReference)
         assertEquals(StockAdjustmentCategory.FREE_GOODS, increaseRequest.adjustmentDetails.category)
         assertEquals("Bonus cartons on PO-12", increaseRequest.adjustmentDetails.note)
         assertEquals(null, increaseRequest.adjustmentDetails.reasonId)
         assertEquals(StockAdjustmentDirection.INCREASE, response.direction)
-        assertEquals(BigDecimal("31.5000"), response.totalCost)
+        assertEquals(BigDecimal("31.50"), response.totalCost)
         assertEquals(BigDecimal("3"), response.userProvidedQuantity)
         assertEquals("STADJ000001", publishedStockAdjustments.single().referenceNumber)
         assertEquals(emptyList<Pair<MovementType, UUID?>>(), guardedReasons)
@@ -205,8 +205,8 @@ class StockAdjustmentServiceTest {
             )
         )
 
-        assertEquals(BigDecimal("18.0000"), increaseRequests.single().totalCost)
-        assertEquals(BigDecimal("18.0000"), response.totalCost)
+        assertEquals(BigDecimal("18.00"), increaseRequests.single().totalCost)
+        assertEquals(BigDecimal("18.00"), response.totalCost)
     }
 
     @Test

@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.organizations.business.expense_type
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -111,12 +112,29 @@ class ExpenseRowResolverTest {
     }
 
     @Test
-    fun `amounts are rounded to scale 4`() {
+    fun `an amount above the transaction maximum is rejected before anything is looked up and the maximum itself is accepted`() {
+        assertThrows(RtsGenericException::class.java) {
+            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
+                rowCommand(freightExpenseType, supplierContact, amount = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01")))
+            )))
+        }
+        verifyNoInteractions(expenseTypeService)
+
+        stub(freightExpenseType, supplierContact)
+        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
+            rowCommand(freightExpenseType, supplierContact, amount = Decimals.MAXIMUM_TRANSACTION_AMOUNT)
+        )))
+
+        assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, resolvedExpenseRows.single().amount)
+    }
+
+    @Test
+    fun `amounts are rounded to scale 2`() {
         stub(freightExpenseType, supplierContact)
 
         val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal("12.34567")))))
 
-        assertEquals(BigDecimal("12.3457"), resolvedExpenseRows.single().amount)
+        assertEquals(BigDecimal("12.35"), resolvedExpenseRows.single().amount)
     }
 
     @Test

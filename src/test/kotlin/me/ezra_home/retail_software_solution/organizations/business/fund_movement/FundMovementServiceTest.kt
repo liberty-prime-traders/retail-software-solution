@@ -130,7 +130,7 @@ class FundMovementServiceTest {
         val saved = savedEntity()
         assertEquals(SystemAccount.OWNERS_DRAWS.code, saved.debitAccountCode)
         assertEquals(cashCode, saved.creditAccountCode)
-        assertEquals(BigDecimal("10.1235"), saved.amount)
+        assertEquals(BigDecimal("10.12"), saved.amount)
         assertNull(saved.note)
 
         val posted = postedRequests.single()
@@ -152,7 +152,7 @@ class FundMovementServiceTest {
     fun `an amount above the transaction maximum is rejected and the maximum itself is accepted`() {
         assertThrows(RtsGenericException::class.java) {
             fundMovementService.createCapital(
-                FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")), movementDate)
+                FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01")), movementDate)
             )
         }
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))

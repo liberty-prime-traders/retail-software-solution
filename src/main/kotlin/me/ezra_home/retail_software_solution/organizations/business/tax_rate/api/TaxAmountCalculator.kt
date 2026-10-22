@@ -36,7 +36,13 @@ object TaxAmountCalculator {
         taxableAmount: BigDecimal,
         activeTaxTypes: List<ActiveTaxTypeForCalculation>
     ): TaxCalculationResult {
-        val resolvedTaxableBase = resolveTaxableBase(taxableAmount, activeTaxTypes)
+        val includedFlatAmounts = activeTaxTypes
+            .filter { it.activeTaxRateDto.taxIsIncludedInTaxableAmount && it.calculationMethod == TaxCalculationMethod.FIXED_VALUE }
+            .fold(BigDecimal.ZERO) { acc, taxType -> acc + flatAmountOf(taxType) }
+        val resolvedTaxableBase = resolveTaxableBase(taxableAmount, includedFlatAmounts, activeTaxTypes)
+        val includedPercentageTaxAmounts = allocateIncludedPercentageTax(
+            taxableAmount - includedFlatAmounts - resolvedTaxableBase, activeTaxTypes
+        )
 
         val entries = activeTaxTypes.map { activeTaxType ->
             TaxCalculationEntry(
@@ -48,7 +54,7 @@ object TaxAmountCalculator {
                 taxIsIncludedInTaxableAmount = activeTaxType.activeTaxRateDto.taxIsIncludedInTaxableAmount,
                 taxableAmount = taxableAmount,
                 resolvedTaxableBase = resolvedTaxableBase,
-                taxAmount = taxAmountFor(activeTaxType, resolvedTaxableBase)
+                taxAmount = taxAmountFor(activeTaxType, resolvedTaxableBase, includedPercentageTaxAmounts)
             )
         }
 
@@ -58,24 +64,50 @@ object TaxAmountCalculator {
         )
     }
 
-    private fun resolveTaxableBase(taxableAmount: BigDecimal, activeTaxTypes: List<ActiveTaxTypeForCalculation>): BigDecimal {
-        val included = activeTaxTypes.filter { it.activeTaxRateDto.taxIsIncludedInTaxableAmount }
-        val includedFlatAmounts = included
-            .filter { it.calculationMethod == TaxCalculationMethod.FIXED_VALUE }
-            .fold(BigDecimal.ZERO) { acc, taxType -> acc + requireFlatAmount(taxType) }
-        val includedPercentageSum = included
+    private fun resolveTaxableBase(
+        taxableAmount: BigDecimal,
+        includedFlatAmounts: BigDecimal,
+        activeTaxTypes: List<ActiveTaxTypeForCalculation>
+    ): BigDecimal {
+        val includedPercentageSum = activeTaxTypes
+            .filter { it.activeTaxRateDto.taxIsIncludedInTaxableAmount }
             .filter { it.calculationMethod == TaxCalculationMethod.PERCENTAGE }
             .fold(BigDecimal.ZERO) { acc, taxType -> acc + requirePercentage(taxType) }
-        return Decimals.Scale4.divide((taxableAmount - includedFlatAmounts) * BigDecimal(100), BigDecimal(100) + includedPercentageSum)
+        return Decimals.Scale2.divide((taxableAmount - includedFlatAmounts) * BigDecimal(100), BigDecimal(100) + includedPercentageSum)
     }
 
-    private fun taxAmountFor(activeTaxType: ActiveTaxTypeForCalculation, netBase: BigDecimal): BigDecimal =
-        when (activeTaxType.calculationMethod) {
-            TaxCalculationMethod.PERCENTAGE ->
-                Decimals.Scale4.divide(netBase * requirePercentage(activeTaxType), BigDecimal(100))
-            TaxCalculationMethod.FIXED_VALUE ->
-                Decimals.Scale4.round(requireFlatAmount(activeTaxType))
+    private fun allocateIncludedPercentageTax(
+        includedPercentageTotal: BigDecimal,
+        activeTaxTypes: List<ActiveTaxTypeForCalculation>
+    ): Map<UUID, BigDecimal> {
+        val includedPercentageTaxTypes = activeTaxTypes.filter {
+            it.activeTaxRateDto.taxIsIncludedInTaxableAmount && it.calculationMethod == TaxCalculationMethod.PERCENTAGE
         }
+        if (includedPercentageTaxTypes.isEmpty()) return emptyMap()
+        val ratePercentageSum = includedPercentageTaxTypes.fold(BigDecimal.ZERO) { acc, taxType -> acc + requirePercentage(taxType) }
+        val leadingTaxTypes = includedPercentageTaxTypes.dropLast(1)
+        val leadingAmounts = leadingTaxTypes.map { taxType ->
+            Decimals.Scale2.divide(includedPercentageTotal * requirePercentage(taxType), ratePercentageSum)
+        }
+        val remainderAmount = includedPercentageTotal - leadingAmounts.fold(BigDecimal.ZERO, BigDecimal::add)
+        return (leadingTaxTypes + includedPercentageTaxTypes.last()).map { it.orgJurisdictionTaxTypeId }
+            .zip(leadingAmounts + remainderAmount)
+            .toMap()
+    }
+
+    private fun taxAmountFor(
+        activeTaxType: ActiveTaxTypeForCalculation,
+        resolvedTaxableBase: BigDecimal,
+        includedPercentageTaxAmounts: Map<UUID, BigDecimal>
+    ): BigDecimal = when {
+        activeTaxType.calculationMethod == TaxCalculationMethod.FIXED_VALUE -> flatAmountOf(activeTaxType)
+        activeTaxType.activeTaxRateDto.taxIsIncludedInTaxableAmount ->
+            includedPercentageTaxAmounts.getValue(activeTaxType.orgJurisdictionTaxTypeId)
+        else -> Decimals.Scale2.divide(resolvedTaxableBase * requirePercentage(activeTaxType), BigDecimal(100))
+    }
+
+    private fun flatAmountOf(activeTaxType: ActiveTaxTypeForCalculation): BigDecimal =
+        Decimals.Scale2.round(requireFlatAmount(activeTaxType))
 
     private fun requirePercentage(activeTaxType: ActiveTaxTypeForCalculation): BigDecimal =
         activeTaxType.activeTaxRateDto.ratePercentage ?: throw RtsGenericException("Tax rate missing ratePercentage")

@@ -25,8 +25,8 @@ are revised independently.
    takes later in its own transaction.
 3. `ContactOpeningBalanceSetDto` is partial: `payable` / `receivable` are `Optional<BigDecimal>?`, where null
    leaves that side at its latest row, `Optional.empty()` clears it to zero and `Optional.of(x)` sets it
-   (`applyTo(existing)` yields the target balance). Each side is revised against its own latest row. The amount is rounded to scale 4 (`Decimals.Scale4.round`) before it is compared or stored, so the
-   delta is measured between two stored-scale values. `signedDelta = roundedAmount - latest.amount`.
+   (`applyTo(existing)` yields the target balance). Each side is revised against its own latest row. The amount is rounded to cents (`Decimals.Scale2.round`) before it is compared or stored, so the
+   delta is measured between two whole-cent values. `signedDelta = roundedAmount - latest.amount`.
    A side whose delta is zero writes no row and publishes no event, so a call may write one row, two, or none.
 4. Inserts the revision and publishes `ContactOpeningBalanceUpsertedEvent`
    through `ContactOpeningBalanceHandlerForKafka.publish`, bound to the commit.

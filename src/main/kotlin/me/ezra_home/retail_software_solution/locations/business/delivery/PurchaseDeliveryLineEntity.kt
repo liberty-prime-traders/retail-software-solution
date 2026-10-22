@@ -38,6 +38,6 @@ class PurchaseDeliveryLineEntity(
 
 ) : HasReferenceEntity() {
 
-  fun lineTotal(): BigDecimal = Decimals.Scale4.multiply(userProvidedQuantityDelivered, unitCost)
+  fun lineTotal(): BigDecimal = Decimals.Scale2.multiply(userProvidedQuantityDelivered, unitCost)
 
 }

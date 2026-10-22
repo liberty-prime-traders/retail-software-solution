@@ -112,8 +112,8 @@ class ExpensePaymentOperationsTest {
     fun `payments to one expense are saved in a single batch`() {
         val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
         val drafts = listOf(
-            ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()),
-            ExpensePaymentDraft(expenseDto.id, BigDecimal("70.0000"), resolvedSettlement())
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("30.00"), resolvedSettlement()),
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("70.00"), resolvedSettlement())
         )
         `when`(expenseStore.savePayments(drafts))
             .thenReturn(listOf(paymentDto(expenseDto.id, "30"), paymentDto(expenseDto.id, "70")))
@@ -143,7 +143,7 @@ class ExpensePaymentOperationsTest {
         `when`(expenseStore.findExpensesByReferences(listOf(higherIdExpense.referenceNumber, lowerIdExpense.referenceNumber)))
             .thenReturn(listOf(firstExpense, secondExpense))
         `when`(expenseStore.savePayments(listOf(higherIdExpense, lowerIdExpense).map {
-            ExpensePaymentDraft(it.id, BigDecimal("10.0000"), resolvedSettlement())
+            ExpensePaymentDraft(it.id, BigDecimal("10.00"), resolvedSettlement())
         })).thenReturn(listOf(higherIdExpense, lowerIdExpense).map { paymentDto(it.id, "10") })
         `when`(expenseStore.loadForExpenses(anyCollection())).thenReturn(
             ExpenseAggregate(emptyList(), listOf(lowerIdExpense, higherIdExpense), emptyList(), emptyList(), emptyList())
@@ -238,7 +238,7 @@ class ExpensePaymentOperationsTest {
     @Test
     fun `recording payments refreshes the payment state of each paid expense after the payments are saved`() {
         val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
-        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()))))
+        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("30.00"), resolvedSettlement()))))
             .thenReturn(listOf(paymentDto(expenseDto.id, "30")))
 
         expensePaymentOperations.recordPayments(

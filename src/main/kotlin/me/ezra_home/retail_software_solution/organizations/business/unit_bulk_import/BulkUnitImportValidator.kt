@@ -95,7 +95,9 @@ class BulkUnitImportValidator(
                 errors.add("Unit value $label: code is required")
             } else {
                 val code = unitValue.code!!
-                if (code.length > SystemUnitValue.MAX_CODE_LENGTH) {
+                if (code == RootUnitDefinition.PIECE_BASE_UNIT_CODE) {
+                    errors.add("Unit value '$code': code is reserved")
+                } else if (code.length > SystemUnitValue.MAX_CODE_LENGTH) {
                     errors.add("Unit value '$code': code must be at most ${SystemUnitValue.MAX_CODE_LENGTH} characters")
                 } else if (existingCodes.contains(code)) {
                     errors.add("Unit value '$code': code already exists in the database")

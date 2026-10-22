@@ -4,7 +4,12 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import java.math.BigDecimal
 
-data class FifoLayerState(val storageQuantityRemaining: BigDecimal, val costRemaining: BigDecimal)
+data class FifoLayerState(
+    val storageQuantityRemaining: BigDecimal,
+    val costRemaining: BigDecimal,
+    val storageBatchSize: BigDecimal,
+    val batchCost: BigDecimal
+)
 
 data class PlannedTake(val layerIndex: Int, val storageQuantity: ExactQuantity, val movedCost: BigDecimal)
 
@@ -19,20 +24,17 @@ object FifoTakePlanner {
             val layerRemaining = ExactQuantity.ofStorage(layer.storageQuantityRemaining)
             if (!layerRemaining.isPositive()) continue
             val takenQuantity = minOf(unsatisfiedQuantity, layerRemaining)
-            plannedTakes.add(PlannedTake(layerIndex, takenQuantity, costOfTake(layer.costRemaining, takenQuantity, layerRemaining)))
+            plannedTakes.add(PlannedTake(layerIndex, takenQuantity, costOfTake(layer, takenQuantity, layerRemaining)))
             unsatisfiedQuantity -= takenQuantity
         }
         return plannedTakes
     }
 
-    // The take that empties a layer returns all its remaining cost, so a layer's takes sum exactly to its batch cost
-    private fun costOfTake(costRemaining: BigDecimal, takenQuantity: ExactQuantity, layerRemaining: ExactQuantity): BigDecimal =
-        if (takenQuantity == layerRemaining) {
-            costRemaining
-        } else {
-            Decimals.Scale4.divide(
-                costRemaining.multiply(takenQuantity.toStorageQuantity()),
-                layerRemaining.toStorageQuantity()
-            )
-        }
+    // Prices the take against the batch's exact proportion, not against what is left, so rounding never compounds across takes.
+    // A void restores the exact cost it took, which can leave a layer a cent off its target and make the next take negative; clamped.
+    private fun costOfTake(layer: FifoLayerState, takenQuantity: ExactQuantity, layerRemaining: ExactQuantity): BigDecimal {
+        val remainingAfterTake = (layerRemaining - takenQuantity).toStorageQuantity()
+        val costAfterTake = Decimals.Scale2.divide(layer.batchCost.multiply(remainingAfterTake), layer.storageBatchSize)
+        return Decimals.Scale2.round((layer.costRemaining - costAfterTake).max(BigDecimal.ZERO))
+    }
 }

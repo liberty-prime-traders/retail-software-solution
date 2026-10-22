@@ -80,7 +80,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `InventoryEventProcessor`'s async hop. The `OpeningStockEntity`'s
    reference number is what ties the two together
    (`StockEntryEntity.documentReference`). The layer's `batch_cost` is the declaration's line total
-   (`unitCost × userProvidedQuantity`, rounded once to scale 4) and its storage quantity is exact.
+   (`unitCost × userProvidedQuantity`, rounded once to cents) and its storage quantity is exact.
 9. Publish one `OpeningStockDeclaredEvent` per line via
    `OpeningStockHandlerForKafka.publish`. Ledger posting still has to be
    async — it crosses into the organization datasource — handled by

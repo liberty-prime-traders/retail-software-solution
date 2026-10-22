@@ -41,17 +41,17 @@ class SaleStockUpdaterTest {
 
         val costsBySaleLineId = consume(saleLineId, "6.0000")
 
-        assertEquals(BigDecimal("16.0000"), costsBySaleLineId.getValue(saleLineId).cost)
+        assertEquals(BigDecimal("16.00"), costsBySaleLineId.getValue(saleLineId).cost)
     }
 
     @Test
-    fun `a partial take costs a proportion of the layer cost rounded once to scale 4`() {
+    fun `a partial take costs a proportion of the layer cost rounded once to cents`() {
         val saleLineId = UUID.randomUUID()
         givenLayers(listOf("3.0000" to "10.0000"))
 
         val costsBySaleLineId = consume(saleLineId, "1.0000")
 
-        assertEquals(BigDecimal("3.3333"), costsBySaleLineId.getValue(saleLineId).cost)
+        assertEquals(BigDecimal("3.33"), costsBySaleLineId.getValue(saleLineId).cost)
     }
 
     @Test
@@ -65,8 +65,8 @@ class SaleStockUpdaterTest {
             "SALE-1",
         ).associateBy { it.saleLineId }
 
-        assertEquals(BigDecimal("20.0000"), costsBySaleLineId.getValue(firstLineId).cost)
-        assertEquals(BigDecimal("10.0000"), costsBySaleLineId.getValue(secondLineId).cost)
+        assertEquals(BigDecimal("20.00"), costsBySaleLineId.getValue(firstLineId).cost)
+        assertEquals(BigDecimal("10.00"), costsBySaleLineId.getValue(secondLineId).cost)
     }
 
     @Test

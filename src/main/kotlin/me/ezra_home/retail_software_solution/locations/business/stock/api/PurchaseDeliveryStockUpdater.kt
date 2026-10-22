@@ -35,7 +35,7 @@ class PurchaseDeliveryStockUpdater(
                 documentReference = event.deliveryReferenceNumber,
                 detailReference = line.lineReferenceNumber,
                 storageQuantity = ExactQuantity.ofUserProvided(line.userProvidedQuantityDelivered, line.storageUnitsPerUnit),
-                batchCost = Decimals.Scale4.multiply(line.unitCost, line.userProvidedQuantityDelivered),
+                batchCost = Decimals.Scale2.multiply(line.unitCost, line.userProvidedQuantityDelivered),
                 userProvidedQuantity = line.userProvidedQuantityDelivered,
                 unitId = line.unitId,
                 storageUnitsPerUnit = line.storageUnitsPerUnit,

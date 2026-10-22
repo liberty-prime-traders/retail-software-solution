@@ -34,7 +34,7 @@ class LoanService(
 ) {
 
     fun createLoan(loanCreateRequest: LoanCreateRequest): LoanResponse {
-        val roundedAmount = Decimals.Scale4.requirePositiveAmount(loanCreateRequest.amount)
+        val roundedAmount = Decimals.Scale2.requirePositiveAmount(loanCreateRequest.amount)
         val assetAccountCode = StringUtils.getValueOrException(loanCreateRequest.assetAccountCode, "Asset account is required")
         DateTimes.Local.requireNotInFuture(loanCreateRequest.loanDate, "Loan date")
         val trimmedNote = StringUtils.getValueOrNull(loanCreateRequest.note)

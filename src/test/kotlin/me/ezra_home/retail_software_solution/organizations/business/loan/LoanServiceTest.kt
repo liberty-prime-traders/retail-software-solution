@@ -103,7 +103,7 @@ class LoanServiceTest {
         val savedLoan = savedLoan()
         assertEquals(lenderContactDto.id, savedLoan.lenderContactId)
         assertEquals(cashCode, savedLoan.assetAccountCode)
-        assertEquals(BigDecimal("50.1235"), savedLoan.amount)
+        assertEquals(BigDecimal("50.12"), savedLoan.amount)
         assertNull(savedLoan.note)
         verify(loanAccountValidator).requireSelectable(cashCode)
 
@@ -113,7 +113,7 @@ class LoanServiceTest {
         assertEquals(listOf(cashCode, SystemAccount.LOANS_PAYABLE.code), posted.entries.map { it.accountCode })
         val subledgerEntry = posted.subledgerEntries.single()
         assertEquals(lenderContactDto.referenceNumber, subledgerEntry.contactReferenceNumber)
-        assertEquals(BigDecimal("50.1235"), subledgerEntry.payableAmount)
+        assertEquals(BigDecimal("50.12"), subledgerEntry.payableAmount)
         assertEquals(0, BigDecimal.ZERO.compareTo(subledgerEntry.receivableAmount))
     }
 
@@ -131,7 +131,7 @@ class LoanServiceTest {
 
     @Test
     fun `an amount above the transaction maximum is rejected, and the maximum itself is accepted`() {
-        val tooLarge = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001"))
+        val tooLarge = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01"))
 
         assertThrows(RtsGenericException::class.java) {
             loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, tooLarge, loanDate))

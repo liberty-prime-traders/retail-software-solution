@@ -26,7 +26,7 @@ object StockTransferFifoAllocator {
             val storageQuantityNeeded = ExactQuantity.ofUserProvided(draftLine.userProvidedQuantity, draftLine.storageUnitsPerUnit)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
             val plannedTakes = FifoTakePlanner.planTakes(
-                fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining) },
+                fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining, it.storageBatchSize, it.batchCost) },
                 storageQuantityNeeded
             )
             guardFulfilled(

@@ -37,6 +37,8 @@ class StockTransferDispatchLineEntityTest {
         unitCost = BigDecimal(batchCost).divide(BigDecimal(storageQuantity), 10, RoundingMode.HALF_UP),
         storageQuantityRemaining = BigDecimal(storageQuantity),
         costRemaining = BigDecimal(batchCost),
+        storageBatchSize = BigDecimal(storageQuantity),
+        batchCost = BigDecimal(batchCost),
     )
 
     private fun allocate(draft: StockTransferDraftLineEntity, layers: List<StockEntryFifoDto>) =
@@ -68,11 +70,11 @@ class StockTransferDispatchLineEntityTest {
     fun `consecutive layers at the same rate form one cost group and the same rate after a different one starts a new group`() {
         val dispatchLines = allocate(
             draftLine("1", 18L),
-            listOf(layer("5", "10.0000"), layer("5", "10.0000"), layer("5", "20.0000"), layer("20", "40.0000"))
+            listOf(layer("5", "10.00"), layer("5", "10.00"), layer("5", "20.00"), layer("20", "40.00"))
         )
 
         assertEquals(listOf(BigDecimal("10.0000"), BigDecimal("5.0000"), BigDecimal("3.0000")), dispatchLines.map { it.storageQuantityDispatched })
-        assertEquals(listOf(BigDecimal("20.0000"), BigDecimal("20.0000"), BigDecimal("6.0000")), dispatchLines.map { it.costDispatched })
+        assertEquals(listOf(BigDecimal("20.00"), BigDecimal("20.00"), BigDecimal("6.00")), dispatchLines.map { it.costDispatched })
     }
 
     @Test

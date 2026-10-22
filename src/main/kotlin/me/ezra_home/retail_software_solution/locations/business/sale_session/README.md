@@ -422,13 +422,14 @@ A cashier sets a custom price on a line by supplying `unitPriceOverride` in a
 the response always carries `unitPriceOverride == unitPrice`. The server owns the adjustment
 model — the client never knows about `PRICE_OVERRIDE` adjustments, it only sees and echoes
 `unitPriceOverride`. The quantity has at most 2 decimals (`QuantityLimits`), checked in the update DTO's `init`. A
-typed price override has at most 2 decimals too, so `price × quantity` is exact at 4 decimals, but that limit is checked in
+typed price override has at most 2 decimals too, but that limit is checked in
 `PriceOverrideReconciler`, and only for a price that differs from the one the cashier was shown: the derived
 `unitPrice` the response echoes (for example 55.5556 per Piece) can have 4 decimals and must pass back unchanged.
+The override total is rounded to cents, so a sub-cent product (0.15 × 0.25) yields a derived unit price that differs from the typed one.
 
 - `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
   works in **totals**. The override total is `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`,
-  rounded once to scale 4). The `PRICE_OVERRIDE` adjustment's `value` is `|computed line total − override total|`,
+  rounded once to cents). The `PRICE_OVERRIDE` adjustment's `value` is `|computed line total − override total|`,
   method `FIXED_LINE_TOTAL`, direction `DISCOUNT` when the override total is lower and `SURCHARGE` when higher. It is never
   a per-unit delta times a quantity, so no per-unit rounding enters. Equal totals mean no adjustment.
   The typed price is not stored. Because the amount is a total, it is recomputed against the updated line on every

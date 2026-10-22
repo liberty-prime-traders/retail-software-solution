@@ -70,7 +70,7 @@ class ContactOpeningBalanceService(
         targetAmount: BigDecimal,
         postingDate: LocalDate
     ) {
-        val roundedAmount = Decimals.Scale4.round(targetAmount)
+        val roundedAmount = Decimals.Scale2.round(targetAmount)
         val signedDelta = roundedAmount - existingAmount
         if (signedDelta.compareTo(BigDecimal.ZERO) == 0) return
 

@@ -225,6 +225,17 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
+    fun `the reserved piece marker is rejected as a unit value code`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "__piece__", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L))))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("'__piece__': code is reserved") })
+    }
+
+    @Test
     fun `piece base unit is rejected inside a Miscellaneous group`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(

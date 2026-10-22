@@ -7,5 +7,7 @@ data class StockEntryFifoDto(
     val locationProductId: UUID,
     val unitCost: BigDecimal,
     val storageQuantityRemaining: BigDecimal,
-    val costRemaining: BigDecimal
+    val costRemaining: BigDecimal,
+    val storageBatchSize: BigDecimal,
+    val batchCost: BigDecimal
 )

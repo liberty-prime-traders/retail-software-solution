@@ -31,20 +31,29 @@ class AdjustmentAmountCalculatorTest {
             adjustment(PriceAdjustmentMethod.PERCENTAGE, "7.125", onLine = true), listOf(line("1", "1000"))
         )
 
-        assertEquals(BigDecimal("71.2500"), calculatedAmount)
+        assertEquals(BigDecimal("71.25"), calculatedAmount)
     }
 
     @Test
     fun `a percentage adjustment takes its base from the stored line total and order level takes the sum of all lines`() {
         val lines = listOf(line("18", "1000.0000"))
 
-        assertEquals(BigDecimal("100.0000"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.PERCENTAGE, "10", onLine = true), lines))
-        assertEquals(BigDecimal("100.0000"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.PERCENTAGE, "10", onLine = false), lines))
+        assertEquals(BigDecimal("100.00"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.PERCENTAGE, "10", onLine = true), lines))
+        assertEquals(BigDecimal("100.00"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.PERCENTAGE, "10", onLine = false), lines))
+    }
+
+    @Test
+    fun `a percentage adjustment landing on a half cent rounds up to the cent`() {
+        val calculatedAmount = AdjustmentAmountCalculator.calculateAmount(
+            adjustment(PriceAdjustmentMethod.PERCENTAGE, "2.5", onLine = true), listOf(line("1", "0.50"))
+        )
+
+        assertEquals(BigDecimal("0.01"), calculatedAmount)
     }
 
     @Test
     fun `a fixed line total is the whole amount and ignores the quantity`() {
         val lines = listOf(line("2.50", "2500.0000"))
-        assertEquals(BigDecimal("2469.1500"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.FIXED_LINE_TOTAL, "2469.1500", onLine = true), lines))
+        assertEquals(BigDecimal("2469.15"), AdjustmentAmountCalculator.calculateAmount(adjustment(PriceAdjustmentMethod.FIXED_LINE_TOTAL, "2469.1500", onLine = true), lines))
     }
 }

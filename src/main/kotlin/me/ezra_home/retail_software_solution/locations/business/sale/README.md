@@ -151,10 +151,10 @@ Rules:
   sale line itself. The storage unit is the root of the product's unit group (see `util/quantity/README.md`).
 - **`lineTotal` is gross of any price override** and is computed by `LinePricing.lineTotal` when the line is added or
   edited in an open session: `defaultSalePrice x userProvidedQuantity x storageUnitsPerUnit ÷ baseUnitSizeInRoot`,
-  divided once and rounded once to scale 4 half-up. One Bale and 18 Pieces of a product priced 1000.00 per Bale both
-  total 1000.0000. A saved line's total is loaded as stored and never recomputed on load, so confirm reprices nothing.
+  divided once and rounded once to cents (`Decimals.Scale2`, half-up). One Bale and 18 Pieces of a product priced 1000.00 per Bale both
+  total 1000.00. Amounts (line totals, adjustments, tax) are whole cents so a total can always be settled by a payment; unit prices stay at scale 4. A saved line's total is loaded as stored and never recomputed on load, so confirm reprices nothing.
 - The **unit price is derived**, never stored: `ProductLineWithPrice.unitPrice = lineTotal ÷ userProvidedQuantity`, half-up
-  to scale 4. The Pieces line above shows 55.5556 per Piece against a total of 1000.0000, so a client must never rebuild
+  to scale 4. The Pieces line above shows 55.5556 per Piece against a total of 1000.00, so a client must never rebuild
   a total from a derived unit price.
 
 ### Per-line invariants
@@ -206,8 +206,8 @@ persistence model, lifecycle, and reconciliation logic.
 - `calculationMethod`: `PERCENTAGE` or `FIXED_LINE_TOTAL` (the last only from a price override).
   - `PERCENTAGE` line-level applies to the line's `lineTotal`
     (the stored gross `lineTotal`, before any price override); order-level applies to the sum of all line totals.
-    The amount is rounded once to scale 4.
-  - `PriceAdjustmentMethod.FIXED_LINE_TOTAL` is the whole amount, never multiplied by a quantity. Only a price override creates one
+    The amount is rounded once to cents (`Decimals.Scale2`, half-up).
+  - `PriceAdjustmentMethod.FIXED_LINE_TOTAL` is the whole amount (rounded to cents), never multiplied by a quantity. Only a price override creates one
     (`SaleSessionAdjustmentHandler` rejects it from a client).
 - Every adjustment references an `adjustment_reason_id` (org-schema lookup).
   The session validator validates the reason exists and that
@@ -372,8 +372,11 @@ Two distinct mechanisms protect inventory:
   rounded down and reserved rounded up, so the figure shown never exceeds what can be sold. Exact `storageQuantity*`
   fields and breakdown texts ride along.
 - `consumeStock` returns a `SaleLineConsumedCost` per sale line: the sum of its movements' `moved_cost`.
-  A take of quantity `q` from a layer holding `Q` costs `cost_remaining x q ÷ Q`, rounded once to scale 4, and the take
-  that empties the layer costs all of its `cost_remaining`, so a layer's takes sum exactly to its `batch_cost`.
+  A take leaves the layer holding `Q'` and costs `cost_remaining − round(batch_cost x Q' ÷ batch_size)` in cents, floored at
+  zero, so rounding is anchored to the batch's exact proportion and never compounds across takes. The take that empties
+  the layer has `Q' = 0` and costs all of its `cost_remaining`, so a layer's takes sum exactly to its `batch_cost`. A void
+  restores the exact cost it took, which can leave a layer a cent or so off its target; that gap is bounded by the number of
+  out-of-order voids and does not change the layer's total.
   `ConfirmedSalePersister.consumeStockAndRecordCogs` stores the sum in `SaleLineEntity.cogsTotal`. Drafts keep
   `cogsTotal = null`; a void leaves it untouched.
 - A layer stores its totals (`batch_cost`, `cost_remaining`); `StockEntryEntity.unitCost` is a rate per storage unit at
@@ -437,8 +440,11 @@ committed.
    and posted to the fiscal period that were actually in effect on the day
    it happened, not the day someone got around to confirming it.
    `TaxAmountCalculator.calculate` (organizations/business/tax_rate/api)
-   resolves one `resolvedTaxableBase` for the whole sale, then every tax —
-   included or not — is a plain multiply against it. This is what makes
+   resolves one `resolvedTaxableBase` for the whole sale, rounded to cents,
+   then every excluded tax is a plain multiply against it. The included
+   percentage taxes split exactly what is left of `taxableAmount` after the
+   base and the included flat amounts (the last one absorbs the cent
+   remainder), so base plus included tax always equals `taxableAmount`. This is what makes
    stacking correct: resolving a single shared base instead of backing each
    included tax out of `taxableAmount` independently. It persists one
    `TaxEntryEntity` per type (`sourceType = SALE`) and sets `sale.taxTotal`

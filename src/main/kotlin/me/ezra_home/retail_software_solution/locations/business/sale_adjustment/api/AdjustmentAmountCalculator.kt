@@ -8,14 +8,14 @@ object AdjustmentAmountCalculator {
 
     fun calculateAmount(dto: SaleAdjustmentCreateDto, lines: List<ProductLineWithPrice>): BigDecimal =
         when (dto.calculationMethod) {
-            PriceAdjustmentMethod.FIXED_LINE_TOTAL -> dto.value
+            PriceAdjustmentMethod.FIXED_LINE_TOTAL -> Decimals.Scale2.round(dto.value)
             PriceAdjustmentMethod.PERCENTAGE -> {
                 val basePrice = if (dto.locationProductId != null) {
                     lines.first { it.locationProductId == dto.locationProductId }.lineTotal
                 } else {
                     lines.sumOf { it.lineTotal }
                 }
-                Decimals.Scale4.divide(dto.value.multiply(basePrice), BigDecimal(100))
+                Decimals.Scale2.divide(dto.value.multiply(basePrice), BigDecimal(100))
             }
         }
 }

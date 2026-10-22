@@ -20,7 +20,7 @@ Depends on `ledger/api` (`LedgerMovementReader`) and `account/api` (`AccountServ
   `GROSS_SALES` reduces it. Direction is never inferred from the source type.
 - Every response has one entry per local date, ascending, zero-filled. `PeriodStatus.IN_PROGRESS` marks the local day
   containing `asOf` and a range whose last day is that day.
-- Amounts are scale 4 and signed. Account names are `AccountTreeNode.name` (the `AccountService` label).
+- Amounts are scale 2 (cents) and signed. Account names are `AccountTreeNode.name` (the `AccountService` label).
 
 ## Performance (`DailyPerformanceService`)
 

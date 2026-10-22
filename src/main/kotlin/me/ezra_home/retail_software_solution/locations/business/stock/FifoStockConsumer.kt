@@ -25,7 +25,7 @@ object FifoStockConsumer {
         productLabel: String
     ): FifoConsumptionResult {
         val plannedTakes = FifoTakePlanner.planTakes(
-            fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining) },
+            fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining, it.storageBatchSize, it.batchCost) },
             fifoConsumptionRequest.storageQuantity
         )
         throwIfNotFulfilled(fifoConsumptionRequest, plannedTakes, quantityBreakdown, productLabel)

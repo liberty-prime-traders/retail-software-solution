@@ -84,7 +84,7 @@ class ContactOpeningBalanceServiceTest {
 
         val saved = savedRevisions.single()
         assertEquals(ContactSubledgerDirection.RECEIVABLE, saved.subledgerDirection)
-        assertEquals(listOf("100.0000"), publishedSignedDeltas())
+        assertEquals(listOf("100.00"), publishedSignedDeltas())
         assertTrue(lockInvocations().single().arguments.toList() == listOf(LockNamespaces.CONTACT_OPENING_BALANCE, contactReferenceNumber))
     }
 
@@ -96,7 +96,7 @@ class ContactOpeningBalanceServiceTest {
             listOf(ContactSubledgerDirection.RECEIVABLE, ContactSubledgerDirection.PAYABLE),
             savedRevisions.map { it.subledgerDirection }
         )
-        assertEquals(listOf("100.0000", "40.0000"), publishedSignedDeltas())
+        assertEquals(listOf("100.00", "40.00"), publishedSignedDeltas())
         assertEquals(1, lockInvocations().size)
     }
 
@@ -107,7 +107,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(receivable = "20.00"))
 
         assertEquals(ContactSubledgerDirection.RECEIVABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("20.0000"), publishedSignedDeltas())
+        assertEquals(listOf("20.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -116,8 +116,8 @@ class ContactOpeningBalanceServiceTest {
 
         contactOpeningBalanceService.set(contactId, ContactOpeningBalanceSetDto(payable = Optional.empty()))
 
-        assertEquals("0.0000", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("-100.0000"), publishedSignedDeltas())
+        assertEquals("0.00", savedRevisions.single().amount.toPlainString())
+        assertEquals(listOf("-100.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -136,7 +136,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(payable = "90.00", receivable = "0"))
 
         assertEquals(2, savedRevisions.size)
-        assertEquals(listOf("30.0000", "-40.0000"), publishedSignedDeltas())
+        assertEquals(listOf("30.00", "-40.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -150,18 +150,18 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `an amount beyond scale 4 is compared and stored at scale 4`() {
-        givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.0001"))
+    fun `an amount beyond scale 2 is compared and stored at scale 2`() {
+        givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.01"))
 
-        contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.00005"))
+        contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.005"))
 
         assertTrue(savedRevisions.isEmpty())
         assertTrue(publishedSignedDeltas().isEmpty())
 
-        contactOpeningBalanceService.set(contactId, setDto(payable = "10.00005", receivable = "100.00005"))
+        contactOpeningBalanceService.set(contactId, setDto(payable = "10.005", receivable = "100.005"))
 
-        assertEquals("10.0001", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("10.0001"), publishedSignedDeltas())
+        assertEquals("10.01", savedRevisions.single().amount.toPlainString())
+        assertEquals(listOf("10.01"), publishedSignedDeltas())
     }
 
     @Test
@@ -171,7 +171,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(payable = "40.00", receivable = "100.00"))
 
         assertEquals(ContactSubledgerDirection.PAYABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("40.0000"), publishedSignedDeltas())
+        assertEquals(listOf("40.00"), publishedSignedDeltas())
     }
 
     @Test

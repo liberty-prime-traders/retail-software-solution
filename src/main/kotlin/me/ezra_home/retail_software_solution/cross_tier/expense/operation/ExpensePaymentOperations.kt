@@ -82,7 +82,7 @@ class ExpensePaymentOperations(
     ): List<ExpensePaymentDraft> {
         expenseLookup.requireNotVoided(expenseAggregate, expenseDto)
         val expensePaymentDrafts = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
-            val paymentAmount = Decimals.Scale4.round(paymentRequest.amount)
+            val paymentAmount = Decimals.Scale2.round(paymentRequest.amount)
             Decimals.requirePositive(paymentAmount, "Payment amount")
             ExpensePaymentDraft(expenseDto.id, paymentAmount, resolvedSettlement)
         }

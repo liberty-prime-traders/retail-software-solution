@@ -62,19 +62,19 @@ class DecimalsTest {
     @Test
     fun `zero, negative and values that round to zero are not positive transaction amounts`() {
         listOf("0", "-5", "0.00004").forEach { amount ->
-            assertThrows(RtsGenericException::class.java) { Decimals.Scale4.requirePositiveAmount(BigDecimal(amount)) }
+            assertThrows(RtsGenericException::class.java) { Decimals.Scale2.requirePositiveAmount(BigDecimal(amount)) }
         }
     }
 
     @Test
-    fun `a transaction amount is rounded to scale 4 and may equal the maximum but not exceed it`() {
-        assertEquals(BigDecimal("50.1235"), Decimals.Scale4.requirePositiveAmount(BigDecimal("50.12345")))
+    fun `a transaction amount is rounded to cents and may equal the maximum but not exceed it`() {
+        assertEquals(BigDecimal("50.12"), Decimals.Scale2.requirePositiveAmount(BigDecimal("50.12345")))
         assertEquals(
             Decimals.MAXIMUM_TRANSACTION_AMOUNT,
-            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT)
+            Decimals.Scale2.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT)
         )
         assertThrows(RtsGenericException::class.java) {
-            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")))
+            Decimals.Scale2.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01")))
         }
     }
 

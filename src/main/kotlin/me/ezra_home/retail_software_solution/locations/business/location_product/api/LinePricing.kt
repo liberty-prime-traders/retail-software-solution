@@ -14,9 +14,8 @@ object LinePricing {
         baseUnitSizeInRoot: Long
     ): BigDecimal =
         defaultSalePrice.multiply(userProvidedQuantity).multiply(BigDecimal.valueOf(storageUnitsPerUnit))
-            .divide(BigDecimal.valueOf(baseUnitSizeInRoot), Decimals.Scale4.SCALE, RoundingMode.HALF_UP)
+            .divide(BigDecimal.valueOf(baseUnitSizeInRoot), Decimals.Scale2.scale, RoundingMode.HALF_UP)
 
-    // With both at two decimals the product is exact
     fun overrideTotal(typedUnitPrice: BigDecimal, userProvidedQuantity: BigDecimal): BigDecimal =
-        Decimals.Scale4.multiply(typedUnitPrice, userProvidedQuantity)
+        Decimals.Scale2.multiply(typedUnitPrice, userProvidedQuantity)
 }

@@ -110,8 +110,8 @@ class DailyBalancesService(
                 closing = closing,
                 change = change
             )
-            val netWorth = Decimals.Scale4.round(assets.closingTotal - liabilities.closingTotal)
-            val netWorthChange = Decimals.Scale4.round(assets.changeTotal - liabilities.changeTotal)
+            val netWorth = Decimals.Scale2.round(assets.closingTotal - liabilities.closingTotal)
+            val netWorthChange = Decimals.Scale2.round(assets.changeTotal - liabilities.changeTotal)
             return BalanceSections(
                 assets = assets,
                 liabilities = liabilities,
@@ -139,8 +139,8 @@ class DailyBalancesService(
             }
             val effectWhenIncreasing = category.balanceEffectWhenIncreasing()
             fun lineOf(accountCode: String?, accountName: String, closingBalance: BigDecimal, change: BigDecimal): AccountBalanceLine {
-                val roundedClosingBalance = Decimals.Scale4.round(closingBalance)
-                val roundedChange = Decimals.Scale4.round(change)
+                val roundedClosingBalance = Decimals.Scale2.round(closingBalance)
+                val roundedChange = Decimals.Scale2.round(change)
                 return AccountBalanceLine(
                     accountCode = accountCode,
                     accountName = accountName,
@@ -172,10 +172,10 @@ class DailyBalancesService(
                 variableCodes.map(::lineFor).filter(::isActive) +
                 trailingFixedCodes.map(::lineFor) +
                 listOf(otherLine).filter(::isActive)
-            val changeTotal = Decimals.Scale4.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.change })
+            val changeTotal = Decimals.Scale2.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.change })
             return BalanceSection(
                 lines = lines,
-                closingTotal = Decimals.Scale4.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.closingBalance }),
+                closingTotal = Decimals.Scale2.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.closingBalance }),
                 changeTotal = changeTotal,
                 changeTotalEffect = BalanceEffect.ofChange(changeTotal, effectWhenIncreasing)
             )

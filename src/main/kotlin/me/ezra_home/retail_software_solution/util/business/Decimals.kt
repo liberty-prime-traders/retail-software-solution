@@ -6,25 +6,23 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 object Decimals {
-    // numeric(19, 4) holds 15 integer digits; the 12-digit ceiling leaves headroom for balances to sum.
-    val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.9999")
+    // numeric(19, 4) holds 15 integer digits; the 12 integer-digit ceiling leaves headroom for balances to sum, whatever the money scale.
+    val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.99")
 
-    object Scale4 {
-        const val SCALE = 4
+    abstract class FixedScale(val scale: Int) {
+        fun round(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.HALF_UP)
 
-        fun round(value: BigDecimal): BigDecimal = value.setScale(SCALE, RoundingMode.HALF_UP)
+        fun roundDown(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.DOWN)
 
-        fun roundDown(value: BigDecimal): BigDecimal = value.setScale(SCALE, RoundingMode.DOWN)
-
-        fun roundUp(value: BigDecimal): BigDecimal = value.setScale(SCALE, RoundingMode.UP)
+        fun roundUp(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.UP)
 
         fun multiply(value: BigDecimal, factor: BigDecimal): BigDecimal =
-            value.multiply(factor).setScale(SCALE, RoundingMode.HALF_UP)
+            value.multiply(factor).setScale(scale, RoundingMode.HALF_UP)
 
         fun divide(value: BigDecimal, divisor: BigDecimal): BigDecimal =
-            value.divide(divisor, SCALE, RoundingMode.HALF_UP)
+            value.divide(divisor, scale, RoundingMode.HALF_UP)
 
-        fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, SCALE)
+        fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, scale)
 
         fun requirePositiveAmount(amount: BigDecimal, label: String = "Amount"): BigDecimal {
             val roundedAmount = round(amount)
@@ -35,6 +33,10 @@ object Decimals {
             return roundedAmount
         }
     }
+
+    object Scale4 : FixedScale(4)
+
+    object Scale2 : FixedScale(2)
 
     object Scale10 {
         private const val SCALE = 10

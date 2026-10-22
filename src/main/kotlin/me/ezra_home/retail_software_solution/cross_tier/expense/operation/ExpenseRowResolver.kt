@@ -42,8 +42,7 @@ class ExpenseRowResolver(
         val payeesById = HashMap<UUID, ContactDto>()
         val openDates = HashSet<LocalDate>()
         return expenseSubmission.rowCommands.map { rowCommand ->
-            val roundedAmount = Decimals.Scale4.round(rowCommand.amount)
-            Decimals.requirePositive(roundedAmount, "Expense amount")
+            val roundedAmount = Decimals.Scale2.requirePositiveAmount(rowCommand.amount, "Expense amount")
             val expenseType = expenseTypesById.getOrPut(rowCommand.expenseTypeId) {
                 expenseTypeService.getById(rowCommand.expenseTypeId)
             }

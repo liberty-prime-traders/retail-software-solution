@@ -183,7 +183,7 @@ Derived values (`PurchaseLineEntity`, all `ExactQuantity` in storage units):
 - `storageQuantityOrdered() = userProvidedQuantityOrdered × storageUnitsPerUnit`
 - `storageQuantityExpected() = storageQuantityOrdered() − storageQuantityCanceled`
 - `storageQuantityRemaining() = storageQuantityExpected() − storageQuantityDelivered`
-- `getTotalCost()` is `unitCost × storageQuantityExpected ÷ storageUnitsPerUnit`, rounded once to scale 4;
+- `getTotalCost()` is `unitCost × storageQuantityExpected ÷ storageUnitsPerUnit`, rounded once to cents (`Decimals.Scale2`, half-up);
   nothing canceled gives `unitCost × userProvidedQuantityOrdered`.
 
 `locationProductId` is `updatable = false` on the entity — once a line is

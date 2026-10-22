@@ -51,7 +51,7 @@ class PurchaseLineEntity(
 
   fun storageQuantityRemaining(): ExactQuantity = storageQuantityExpected() - ExactQuantity.ofStorage(storageQuantityDelivered)
 
-  fun getTotalCost(): BigDecimal = Decimals.Scale4.divide(
+  fun getTotalCost(): BigDecimal = Decimals.Scale2.divide(
     unitCost.multiply(storageQuantityExpected().toStorageQuantity()),
     BigDecimal.valueOf(storageUnitsPerUnit)
   )

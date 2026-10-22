@@ -14,7 +14,7 @@ its own. There are no manual conversions to import (see `unitconversion`).
 
 `BulkUnitImportService.bulkImport` runs `BulkUnitImportValidator.validate`
 first, which returns a `List<String>` of every problem in the payload —
-duplicate/invalid names (compared on alphanumerics), duplicate/oversized codes,
+duplicate/invalid names (compared on alphanumerics), duplicate/oversized/reserved (`"__piece__"`) unit value codes,
 missing or cross-group base-unit references, a unit outside Miscellaneous
 without a base unit, a Miscellaneous unit with one, a payload unit named
 named like the group's effective base unit name in a custom group, a

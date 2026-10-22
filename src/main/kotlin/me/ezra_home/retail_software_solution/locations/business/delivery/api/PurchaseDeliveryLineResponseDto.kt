@@ -19,5 +19,5 @@ data class PurchaseDeliveryLineResponseDto(
   @field:JsonSerialize(using = StripZeroesAndRound::class)
   val unitCost: BigDecimal,
 ) {
-  val lineTotal: BigDecimal get() = Decimals.Scale4.multiply(userProvidedQuantityDelivered, unitCost)
+  val lineTotal: BigDecimal get() = Decimals.Scale2.multiply(userProvidedQuantityDelivered, unitCost)
 }
