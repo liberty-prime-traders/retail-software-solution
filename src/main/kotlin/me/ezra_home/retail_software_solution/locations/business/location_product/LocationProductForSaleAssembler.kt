@@ -17,12 +17,11 @@ class LocationProductForSaleAssembler(
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
-    fun assemble(activeProducts: List<LocationProductDto>): List<LocationProductWithAvailability> {
-        val sellable = activeProducts.filter { it.defaultSalePrice != null }
-        val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(sellable.map { it.id })
-        val breakdownByBaseUnitId = quantityBreakdownFactory.forBaseUnits(sellable.map { it.baseUnitId })
+    fun assemble(sellableProducts: List<LocationProductDto>): List<LocationProductWithAvailability> {
+        val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(sellableProducts.map { it.id })
+        val breakdownByBaseUnitId = quantityBreakdownFactory.forBaseUnits(sellableProducts.map { it.baseUnitId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
-        return sellable.map { locationProductDto ->
+        return sellableProducts.map { locationProductDto ->
             val availability = availabilityByLocationProductId[locationProductDto.id] ?: StockAvailability.ZERO
             val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(locationProductDto.baseUnitId)
             val quantityBreakdown = breakdownByBaseUnitId.getValue(locationProductDto.baseUnitId)
@@ -34,7 +33,9 @@ class LocationProductForSaleAssembler(
                 quantityOnHand = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityOnHand, baseUnitSizeInRoot, RoundingMode.DOWN),
                 quantityReserved = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityReserved, baseUnitSizeInRoot, RoundingMode.UP),
                 quantityAvailable = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityAvailable, baseUnitSizeInRoot, RoundingMode.DOWN),
-                defaultSalePrice = locationProductDto.defaultSalePrice!!,
+                defaultSalePrice = checkNotNull(locationProductDto.defaultSalePrice) {
+                    "Location product ${locationProductDto.id} reached the sale assembler without a default sale price"
+                },
                 storageQuantityOnHand = availability.quantityOnHand,
                 storageQuantityReserved = availability.quantityReserved,
                 storageQuantityAvailable = availability.quantityAvailable,

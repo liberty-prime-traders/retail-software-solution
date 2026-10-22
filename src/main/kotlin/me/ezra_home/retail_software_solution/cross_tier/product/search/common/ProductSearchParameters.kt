@@ -12,6 +12,7 @@ data class ProductSearchParameters(
     val tagIds: Set<UUID> = emptySet(),
     val excludeIds: Set<UUID> = emptySet(),
     val statusList: Set<ProductStatus> = setOf(ProductStatus.ACTIVE),
+    val requireDefaultSalePrice: Boolean = false,
     override val searchStrategy: SearchStrategy = SearchStrategy.NONE
 ): HasSearchStrategy<ProductSearchParameters> {
 

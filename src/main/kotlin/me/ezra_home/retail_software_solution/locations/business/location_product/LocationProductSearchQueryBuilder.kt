@@ -34,6 +34,7 @@ object LocationProductSearchQueryBuilder {
   private fun applyFilters(context: QueryBuilderContext, searchParams: ProductSearchParameters, previousName: String) {
     NameFilterStrategy(previousName).apply(context)
     StatusFilterStrategy(searchParams.extractStatusCodes()).apply(context)
+    SalePriceFilterStrategy(searchParams.requireDefaultSalePrice).apply(context)
     ReferenceNumberFilterStrategy(searchParams.referenceNumber).apply(context)
     TextSearchFilterStrategy(searchParams.searchText, searchParams.searchStrategy).apply(context)
     CategoryFilterStrategy(searchParams.categoryIds, P.TABLE_ALIAS).apply(context)
