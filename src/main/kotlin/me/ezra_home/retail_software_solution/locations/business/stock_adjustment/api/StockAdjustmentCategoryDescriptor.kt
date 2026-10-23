@@ -7,7 +7,7 @@ data class StockAdjustmentCategoryDescriptor(
     val category: StockAdjustmentCategory,
     val displayName: String,
     val allowedDirections: List<StockAdjustmentDirection>,
-    val requiresUnitCost: Boolean,
+    val unitCostDirections: List<StockAdjustmentDirection>,
     val requiresReason: Boolean,
     val requiresNote: Boolean,
     val reasons: List<StockAdjustmentReasonOption>

@@ -59,9 +59,9 @@ enum class SystemAccount(
 
     // Expenses
     EXPENSES("005", "Expenses", AccountType.EXPENSE),
-    COST_OF_SALES("005.001", "Cost of Sales", AccountType.EXPENSE, parent = EXPENSES),
-    COST_OF_GOODS_SOLD("005.001.001", "Cost of Goods Sold", AccountType.EXPENSE, parent = COST_OF_SALES),
-    FREE_GOODS_RECEIVED("005.001.002", "Free Goods Received", AccountType.EXPENSE_CONTRA, parent = COST_OF_SALES),
+    COST_OF_GOODS("005.001", "Cost of Goods", AccountType.EXPENSE, parent = EXPENSES),
+    COST_OF_GOODS_SOLD("005.001.001", "Cost of Goods Sold", AccountType.EXPENSE, parent = COST_OF_GOODS),
+    FREE_GOODS_RECEIVED("005.001.002", "Free Goods Received", AccountType.EXPENSE_CONTRA, parent = COST_OF_GOODS),
     WAGES_EXPENSE("005.002", "Wages Expense", AccountType.EXPENSE, parent = EXPENSES),
     RENT_EXPENSE("005.003", "Rent Expense", AccountType.EXPENSE, parent = EXPENSES),
     UTILITIES_EXPENSE("005.004", "Utilities Expense", AccountType.EXPENSE, parent = EXPENSES),

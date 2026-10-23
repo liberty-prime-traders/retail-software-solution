@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import java.io.Serializable
 import java.math.BigDecimal
 import java.util.UUID
@@ -18,6 +18,6 @@ data class AccountResponseDto(
     val parentAccountCode: String?,
     val parentAccount: String?,
     val accountIsExtensible: Boolean,
-    val balanceSignal: BalanceSignal,
+    val balanceEffect: BalanceEffect,
     val openingBalance: BigDecimal
 ) : Serializable

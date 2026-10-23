@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentDecreaseStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentIncreaseStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentStockUpdater
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentCategoryRules
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentHandlerForKafka
@@ -17,11 +17,10 @@ import me.ezra_home.retail_software_solution.locations.business.stock_adjustment
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentValidator
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.StockMovementReasonService
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.business.reference_number.ReferenceNumberGenerator
 import me.ezra_home.retail_software_solution.util.model.TableName
@@ -132,7 +131,7 @@ class StockAdjustmentService(
                 category = category,
                 displayName = StockAdjustmentCategoryRules.displayName(category),
                 allowedDirections = StockAdjustmentCategoryRules.allowedDirections(category),
-                requiresUnitCost = StockAdjustmentCategoryRules.requiresUserSuppliedUnitCost(category),
+                unitCostDirections = StockAdjustmentCategoryRules.unitCostDirections(category),
                 requiresReason = StockAdjustmentCategoryRules.requiresReason(category),
                 requiresNote = StockAdjustmentCategoryRules.requiresNote(category),
                 reasons = if (StockAdjustmentCategoryRules.requiresReason(category)) reasonOptions else emptyList()
@@ -147,7 +146,7 @@ class StockAdjustmentService(
         referenceNumber: String,
         adjustmentDetails: StockAdjustmentMovementDetails
     ): BigDecimal {
-        val totalCost = increaseTotalCost(stockAdjustmentCreateDto, storageQuantity)
+        val totalCost = Decimals.Scale4.multiply(stockAdjustmentCreateDto.unitCost!!, stockAdjustmentCreateDto.userProvidedQuantity)
         stockAdjustmentStockUpdater.increaseStock(
             StockAdjustmentIncreaseStockRequest(
                 locationProductId = stockAdjustmentCreateDto.locationProductId,
@@ -161,16 +160,6 @@ class StockAdjustmentService(
             )
         )
         return totalCost
-    }
-
-    private fun increaseTotalCost(stockAdjustmentCreateDto: StockAdjustmentCreateDto, storageQuantity: ExactQuantity): BigDecimal {
-        if (StockAdjustmentCategoryRules.requiresUserSuppliedUnitCost(stockAdjustmentCreateDto.category)) {
-            return Decimals.Scale4.multiply(stockAdjustmentCreateDto.unitCost!!, stockAdjustmentCreateDto.userProvidedQuantity)
-        }
-        val latestLayerUnitCost = stockAdjustmentStockUpdater
-            .latestLayerUnitCostPerStorageUnit(stockAdjustmentCreateDto.locationProductId)
-            ?: throw RtsGenericException("No cost layer exists to price this stock increase; use the Opening Stock or Free Goods category")
-        return Decimals.Scale4.multiply(latestLayerUnitCost, storageQuantity.toStorageQuantity())
     }
 
     private fun toResponseDto(stockAdjustmentEntity: StockAdjustmentEntity, productLabel: String) = StockAdjustmentResponseDto(

@@ -12,7 +12,7 @@ Feature: Contact opening balance
     When I set the contact's opening balances to payable "40.00" and receivable "100.00"
     And I set the contact's opening balances to payable "40.00" and receivable "90.00"
     Then the response status should be 200
-    And the contact's listed net opening balance should be "50.00" with signal "MONEY_IN"
+    And the contact's listed net opening balance should be "50.00" with effect "ADDS"
 
   Scenario: A negative opening balance is rejected
     When I set the contact's opening balances to payable "0.00" and receivable "-1.00"

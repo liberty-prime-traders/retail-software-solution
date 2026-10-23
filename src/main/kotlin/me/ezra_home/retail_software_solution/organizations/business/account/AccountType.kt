@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountCategory
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.util.enums.HasCode
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 
 enum class AccountType(override val code: String, val normalBalance: EntryType) : HasCode {
     ASSET("A", EntryType.DEBIT),
@@ -42,9 +42,9 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
     fun canBeRoot() = this in ROOT_ACCOUNTS
     fun isClosingType() = this in CLOSING_ACCOUNTS
 
-    fun balanceSignal() = when (this) {
-        ASSET, REVENUE, EQUITY, LIABILITY_CONTRA, EXPENSE_CONTRA -> BalanceSignal.MONEY_IN
-        LIABILITY, EXPENSE, ASSET_CONTRA, EQUITY_CONTRA, REVENUE_CONTRA -> BalanceSignal.MONEY_OUT
+    fun balanceEffect() = when (this) {
+        ASSET, REVENUE, EQUITY, LIABILITY_CONTRA, EXPENSE_CONTRA -> BalanceEffect.ADDS
+        LIABILITY, EXPENSE, ASSET_CONTRA, EQUITY_CONTRA, REVENUE_CONTRA -> BalanceEffect.SUBTRACTS
     }
 
     companion object {

@@ -82,11 +82,13 @@ posts to the opposite column rather than a negative amount. A debit on `TRADE_RE
   `running_receivable`; `ContactService` uses it for the glance balances on
   `ContactResponseDto` (a contact with no rows reads as `SubledgerBalanceDto.ZERO`).
   `SubledgerBalanceDto` also derives `netBalance` (absolute `receivable - payable`) and a
-  `BalanceSignal` read from the org's side: `MONEY_IN` when they owe us (net up), `MONEY_OUT` when we
-  owe them, `ZERO_BALANCE` when equal — the same mapping as `AccountType.balanceSignal()`, where an
-  asset is `MONEY_IN` and a liability `MONEY_OUT`. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
-  `transactionBalanceSignal` from the entry's own payable/receivable delta; the raw payable and
+  `BalanceEffect` read from the org's side: `ADDS` when they owe us (net up), `SUBTRACTS` when we
+  owe them, `ZERO` when equal — the same mapping as `AccountType.balanceEffect()`, where an
+  asset is `ADDS` and a liability `SUBTRACTS`. Ledger rows carry the same two fields from their running figures, plus `transactionAmount` and
+  `transactionBalanceEffect` from the entry's own payable/receivable delta; the raw payable and
   receivable figures are not exposed.
+  A contact has no normal side, so a subledger effect is never `IRREGULAR`; the net of a contact can legitimately sit on
+  either side (advances, credit notes, deposits).
 - `subledger_balance` holds one row per contact with its current `running_payable` /
   `running_receivable`, and `getCurrentBalances` reads it. The row is created with the contact
   (`ContactService.createContact`, and `ContactSeeder` for the system Walk-In contact, both through

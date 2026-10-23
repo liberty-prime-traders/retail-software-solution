@@ -39,4 +39,11 @@ class StockAdjustmentCategoryRulesTest {
             StockAdjustmentCategory.entries.filter { StockAdjustmentCategoryRules.fixedDirection(it) == null }.toSet()
         )
     }
+
+    @Test
+    fun `a unit cost is asked for exactly on increases, including the increase side of other`() {
+        assertEquals(listOf(StockAdjustmentDirection.INCREASE), StockAdjustmentCategoryRules.unitCostDirections(StockAdjustmentCategory.OTHER))
+        assertEquals(listOf(StockAdjustmentDirection.INCREASE), StockAdjustmentCategoryRules.unitCostDirections(StockAdjustmentCategory.FREE_GOODS))
+        assertEquals(emptyList<StockAdjustmentDirection>(), StockAdjustmentCategoryRules.unitCostDirections(StockAdjustmentCategory.INTERNAL_USE))
+    }
 }

@@ -17,7 +17,7 @@ a balance).
   segment (`001.001` → `1.1`).
 - `api/AccountResponseDto` — outbound projection enriched with rolled-up
   `currentBalance`, `parentAccount` (label), `accountIsExtensible`,
-  `netBalanceSignal`, and rolled-up `openingBalance`.
+  `balanceEffect`, and rolled-up `openingBalance`.
 
 `AccountCache` (`@CacheSchemaLevel(ORGANIZATION)`) is the only path to
 `AccountRepository` for anything but balance increments — `getAll()` is
@@ -67,10 +67,10 @@ Five base types plus five "contra" counterparts, each declaring its
   contras) may be created as root accounts (`AccountService.createRoot`).
 - `isClosingType()` — REVENUE, REVENUE_CONTRA, EXPENSE, EXPENSE_CONTRA; the set zeroed out at
   year-end.
-- `balanceSignal()` — maps to `BalanceSignal.MONEY_IN`/`MONEY_OUT` for
-  display; overridden to `ZERO_BALANCE`/`IRREGULAR_BALANCE` in
-  `AccountResponseBuilder` when the rolled-up balance is zero or negative
-  where it shouldn't be.
+- `balanceEffect()` — the `BalanceEffect` (`ADDS`/`SUBTRACTS`) a positive balance of this type has on
+  the bottom line. `BalanceEffect.ofBalance` turns it into `ZERO` for a zero balance and `IRREGULAR` for a
+  negative one: balances are held in the account's normal direction, so negative means the wrong side
+  for every type.
 
 ## System accounts (`api/SystemAccount`)
 

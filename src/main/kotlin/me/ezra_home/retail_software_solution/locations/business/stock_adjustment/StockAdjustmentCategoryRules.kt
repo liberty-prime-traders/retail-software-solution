@@ -24,8 +24,10 @@ object StockAdjustmentCategoryRules {
     fun allowedDirections(category: StockAdjustmentCategory): List<StockAdjustmentDirection> =
         fixedDirection(category)?.let { listOf(it) } ?: StockAdjustmentDirection.entries
 
-    fun requiresUserSuppliedUnitCost(category: StockAdjustmentCategory): Boolean =
-        category == StockAdjustmentCategory.OPENING_STOCK || category == StockAdjustmentCategory.FREE_GOODS
+    fun requiresUserSuppliedUnitCost(direction: StockAdjustmentDirection): Boolean = direction == StockAdjustmentDirection.INCREASE
+
+    fun unitCostDirections(category: StockAdjustmentCategory): List<StockAdjustmentDirection> =
+        allowedDirections(category).filter(::requiresUserSuppliedUnitCost)
 
     fun requiresReason(category: StockAdjustmentCategory): Boolean = category == StockAdjustmentCategory.OTHER
 

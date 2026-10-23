@@ -13,7 +13,7 @@ import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -83,9 +83,9 @@ class SubledgerServiceTest {
         val pageEntry = pageResponse.contents.single()
         assertEquals(LedgerSourceType.SALE, pageEntry.sourceType)
         assertEquals(0, BigDecimal("5").compareTo(pageEntry.transactionAmount))
-        assertEquals(BalanceSignal.MONEY_IN, pageEntry.transactionBalanceSignal)
+        assertEquals(BalanceEffect.ADDS, pageEntry.transactionBalanceEffect)
         assertEquals(0, BigDecimal("10").compareTo(pageEntry.netBalance))
-        assertEquals(BalanceSignal.MONEY_IN, pageEntry.netBalanceSignal)
+        assertEquals(BalanceEffect.ADDS, pageEntry.netBalanceEffect)
         verify(subledgerEntryRepository, never()).findFirstPage(contactReferenceNumber, 3)
     }
 
@@ -202,16 +202,16 @@ class SubledgerServiceTest {
     }
 
     @Test
-    fun `net balance is absolute and the signal says who owes whom`() {
+    fun `net balance is absolute and the effect says who owes whom`() {
         val theyOweUs = SubledgerBalanceDto(payable = BigDecimal("20"), receivable = BigDecimal("50"))
         val weOweThem = SubledgerBalanceDto(payable = BigDecimal("50"), receivable = BigDecimal("20"))
         val settled = SubledgerBalanceDto(payable = BigDecimal("20.0"), receivable = BigDecimal("20.0000"))
 
-        assertEquals(BalanceSignal.MONEY_IN, theyOweUs.balanceSignal)
+        assertEquals(BalanceEffect.ADDS, theyOweUs.balanceEffect)
         assertEquals(0, BigDecimal("30").compareTo(theyOweUs.netBalance))
-        assertEquals(BalanceSignal.MONEY_OUT, weOweThem.balanceSignal)
+        assertEquals(BalanceEffect.SUBTRACTS, weOweThem.balanceEffect)
         assertEquals(0, BigDecimal("30").compareTo(weOweThem.netBalance))
-        assertEquals(BalanceSignal.ZERO_BALANCE, settled.balanceSignal)
+        assertEquals(BalanceEffect.ZERO, settled.balanceEffect)
         assertEquals(0, BigDecimal.ZERO.compareTo(settled.netBalance))
     }
 

@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.S
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -71,7 +71,7 @@ class ContactServiceTest {
     }
 
     @Test
-    fun `the contact response carries the net opening balance and its signal`() {
+    fun `the contact response carries the net opening balance and its effect`() {
         `when`(contactCache.getAllContacts()).thenReturn(listOf(contactDto("CT000001"), contactDto("CT000002")))
         `when`(userQualifier.getCreatorFullName(createdById)).thenReturn("Test User")
         `when`(contactOpeningBalanceReader.getOpeningBalances(setOf("CT000001", "CT000002"))).thenReturn(
@@ -82,10 +82,10 @@ class ContactServiceTest {
 
         val withOpeningBalance = contactResponsesByReference.getValue("CT000001")
         assertEquals(0, BigDecimal("60.00").compareTo(withOpeningBalance.netOpeningBalance))
-        assertEquals(BalanceSignal.MONEY_IN, withOpeningBalance.netOpeningBalanceSignal)
+        assertEquals(BalanceEffect.ADDS, withOpeningBalance.netOpeningBalanceEffect)
         val withoutOpeningBalance = contactResponsesByReference.getValue("CT000002")
         assertEquals(0, BigDecimal.ZERO.compareTo(withoutOpeningBalance.netOpeningBalance))
-        assertEquals(BalanceSignal.ZERO_BALANCE, withoutOpeningBalance.netOpeningBalanceSignal)
+        assertEquals(BalanceEffect.ZERO, withoutOpeningBalance.netOpeningBalanceEffect)
     }
 
     private fun contactDto(referenceNumber: String) = ContactDto(

@@ -14,7 +14,7 @@ object StockAdjustmentValidator {
         }
         val category = stockAdjustmentCreateDto.category
         val direction = resolveDirection(stockAdjustmentCreateDto)
-        guardUnitCost(stockAdjustmentCreateDto)
+        guardUnitCost(stockAdjustmentCreateDto, direction)
         if (StockAdjustmentCategoryRules.requiresReason(category)) {
             if (stockAdjustmentCreateDto.stockMovementReasonId == null) {
                 throw RtsGenericException("A reason is required for the Other category")
@@ -40,13 +40,13 @@ object StockAdjustmentValidator {
         return requestedDirection ?: throw RtsGenericException("Direction is required for the Other category")
     }
 
-    private fun guardUnitCost(stockAdjustmentCreateDto: StockAdjustmentCreateDto) {
+    private fun guardUnitCost(stockAdjustmentCreateDto: StockAdjustmentCreateDto, direction: StockAdjustmentDirection) {
         val unitCost = stockAdjustmentCreateDto.unitCost
-        if (StockAdjustmentCategoryRules.requiresUserSuppliedUnitCost(stockAdjustmentCreateDto.category)) {
-            if (unitCost == null) throw RtsGenericException("Unit cost is required for this category")
+        if (StockAdjustmentCategoryRules.requiresUserSuppliedUnitCost(direction)) {
+            if (unitCost == null) throw RtsGenericException("Unit cost is required for a stock increase")
             if (unitCost <= BigDecimal.ZERO) throw RtsGenericException("Unit cost must be positive")
         } else if (unitCost != null) {
-            throw RtsGenericException("Unit cost is taken from stock for this category")
+            throw RtsGenericException("Unit cost is taken from stock for a stock decrease")
         }
     }
 }

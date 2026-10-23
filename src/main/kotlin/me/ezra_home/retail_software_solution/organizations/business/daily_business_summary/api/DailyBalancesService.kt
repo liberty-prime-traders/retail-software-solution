@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerMovementReader
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
@@ -109,11 +110,15 @@ class DailyBalancesService(
                 closing = closing,
                 change = change
             )
+            val netWorth = Decimals.Scale4.round(assets.closingTotal - liabilities.closingTotal)
+            val netWorthChange = Decimals.Scale4.round(assets.changeTotal - liabilities.changeTotal)
             return BalanceSections(
                 assets = assets,
                 liabilities = liabilities,
-                netWorth = Decimals.Scale4.round(assets.closingTotal - liabilities.closingTotal),
-                netWorthChange = Decimals.Scale4.round(assets.changeTotal - liabilities.changeTotal)
+                netWorth = netWorth,
+                netWorthEffect = BalanceEffect.ofSignedAmount(netWorth),
+                netWorthChange = netWorthChange,
+                netWorthChangeEffect = BalanceEffect.ofSignedAmount(netWorthChange)
             )
         }
 
@@ -132,32 +137,47 @@ class DailyBalancesService(
                 val amount = amounts[node.code] ?: BigDecimal.ZERO
                 return if (node.isContra) amount.negate() else amount
             }
-            fun lineFor(accountCode: String): AccountBalanceLine {
-                val node = nodesByCode[accountCode]
+            val effectWhenIncreasing = if (category == AccountCategory.ASSET) BalanceEffect.ADDS else BalanceEffect.SUBTRACTS
+            fun lineOf(accountCode: String?, accountName: String, closingBalance: BigDecimal, change: BigDecimal): AccountBalanceLine {
+                val roundedClosingBalance = Decimals.Scale4.round(closingBalance)
+                val roundedChange = Decimals.Scale4.round(change)
                 return AccountBalanceLine(
                     accountCode = accountCode,
+                    accountName = accountName,
+                    closingBalance = roundedClosingBalance,
+                    closingBalanceEffect = BalanceEffect.ofBalance(roundedClosingBalance, effectWhenIncreasing),
+                    change = roundedChange,
+                    changeEffect = BalanceEffect.ofChange(roundedChange, effectWhenIncreasing)
+                )
+            }
+            fun lineFor(accountCode: String): AccountBalanceLine {
+                val node = nodesByCode[accountCode]
+                return lineOf(
+                    accountCode = accountCode,
                     accountName = node?.name ?: SystemAccount.fromCode(accountCode)?.accountName ?: accountCode,
-                    closingBalance = Decimals.Scale4.round(node?.let { accountNode -> signedAmount(closing, accountNode) } ?: BigDecimal.ZERO),
-                    change = Decimals.Scale4.round(node?.let { accountNode -> signedAmount(change, accountNode) } ?: BigDecimal.ZERO)
+                    closingBalance = node?.let { accountNode -> signedAmount(closing, accountNode) } ?: BigDecimal.ZERO,
+                    change = node?.let { accountNode -> signedAmount(change, accountNode) } ?: BigDecimal.ZERO
                 )
             }
             fun isActive(line: AccountBalanceLine) = line.closingBalance.signum() != 0 || line.change.signum() != 0
 
             val otherLeaves = sectionLeaves.filter { sectionLeaf -> sectionLeaf.code !in listedCodes }
-            val otherLine = AccountBalanceLine(
+            val otherLine = lineOf(
                 accountCode = null,
                 accountName = otherName,
-                closingBalance = Decimals.Scale4.round(otherLeaves.fold(BigDecimal.ZERO) { total, node -> total + signedAmount(closing, node) }),
-                change = Decimals.Scale4.round(otherLeaves.fold(BigDecimal.ZERO) { total, node -> total + signedAmount(change, node) })
+                closingBalance = otherLeaves.fold(BigDecimal.ZERO) { total, node -> total + signedAmount(closing, node) },
+                change = otherLeaves.fold(BigDecimal.ZERO) { total, node -> total + signedAmount(change, node) }
             )
             val lines = leadingFixedCodes.map(::lineFor) +
                 variableCodes.map(::lineFor).filter(::isActive) +
                 trailingFixedCodes.map(::lineFor) +
                 listOf(otherLine).filter(::isActive)
+            val changeTotal = Decimals.Scale4.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.change })
             return BalanceSection(
                 lines = lines,
                 closingTotal = Decimals.Scale4.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.closingBalance }),
-                changeTotal = Decimals.Scale4.round(lines.fold(BigDecimal.ZERO) { total, line -> total + line.change })
+                changeTotal = changeTotal,
+                changeTotalEffect = BalanceEffect.ofChange(changeTotal, effectWhenIncreasing)
             )
         }
 

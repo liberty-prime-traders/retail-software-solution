@@ -17,9 +17,9 @@ interface ContactResponseMapper {
     @Mapping(source = "subledgerBalanceDto.receivable", target = "receivableBalance")
     @Mapping(source = "subledgerBalanceDto.payable", target = "payableBalance")
     @Mapping(source = "subledgerBalanceDto.netBalance", target = "netBalance")
-    @Mapping(source = "subledgerBalanceDto.balanceSignal", target = "balanceSignal")
+    @Mapping(source = "subledgerBalanceDto.balanceEffect", target = "balanceEffect")
     @Mapping(source = "openingBalanceDto.netBalance", target = "netOpeningBalance")
-    @Mapping(source = "openingBalanceDto.balanceSignal", target = "netOpeningBalanceSignal")
+    @Mapping(source = "openingBalanceDto.balanceEffect", target = "netOpeningBalanceEffect")
     fun toResponseDto(
         contactDto: ContactDto,
         subledgerBalanceDto: SubledgerBalanceDto,

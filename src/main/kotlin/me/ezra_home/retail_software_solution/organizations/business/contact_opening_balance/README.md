@@ -71,19 +71,19 @@ so a late DLT retry reproduces the original delta.
 - `POST {contactId}` (body: `ContactOpeningBalanceSetDto` — `payable`, `receivable`, each optional) → `set`.
 - `GET history?contactReferenceNumber=` → `getHistory`: every revision of that contact, both
   sides, oldest first, as `ContactOpeningBalanceRevisionDto`: the `subledgerDirection`, the claimed
-  `amount` and its `balanceSignal`, with `changedAt` and `changedBy` (the creator's full name, empty when the user is
-  gone). The signal is the claim read from the organization's side: a receivable is `MONEY_IN`, a
-  payable is `MONEY_OUT`, and a claim of zero is `ZERO_BALANCE`. The history records what was claimed, not
+  `amount` and its `balanceEffect`, with `changedAt` and `changedBy` (the creator's full name, empty when the user is
+  gone). The effect is the claim read from the organization's side: a receivable is `ADDS`, a
+  payable is `SUBTRACTS`, and a claim of zero is `ZERO`. The history records what was claimed, not
   its ledger effect; deltas and postings belong to the contact's subledger history
   (`POST secured/contacts/{id}/ledger`).
 
 ## Reading: `ContactOpeningBalanceReader`
 
-`ContactService` adds `netOpeningBalance` and `netOpeningBalanceSignal` to
+`ContactService` adds `netOpeningBalance` and `netOpeningBalanceEffect` to
 `ContactResponseDto`, the way accounts carry their own opening balance. The
 reader returns the latest revision per subledger as a `SubledgerBalanceDto`
 (receivable and payable opening amounts), so the net is `abs(receivable - payable)`
-and the signal follows the same `BalanceSignal` rules as the contact's running
+and the effect follows the same `BalanceEffect` rules as the contact's running
 balance; a contact with no revisions reads as `SubledgerBalanceDto.ZERO`. It is a
 bean separate from `ContactOpeningBalanceService`, which depends on
 `ContactService`, to avoid a bean cycle.

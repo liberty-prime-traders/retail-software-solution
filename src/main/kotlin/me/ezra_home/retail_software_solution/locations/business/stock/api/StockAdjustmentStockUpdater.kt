@@ -14,7 +14,6 @@ import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -52,9 +51,6 @@ class StockAdjustmentStockUpdater(
             StockInboundLayers.inboundMovement(inboundLayerSpec, stockEntry, balanceAfterMovement, quantityBreakdown)
         )
     }
-
-    fun latestLayerUnitCostPerStorageUnit(locationProductId: UUID): BigDecimal? =
-        stockEntryRepository.findFirstByLocationProductIdOrderByCreatedOnDesc(locationProductId)?.unitCost
 
     fun decreaseStock(stockAdjustmentDecreaseStockRequest: StockAdjustmentDecreaseStockRequest): StockAdjustmentConsumedCost {
         val locationProductId = stockAdjustmentDecreaseStockRequest.locationProductId

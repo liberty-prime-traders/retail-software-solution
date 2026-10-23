@@ -26,7 +26,7 @@ class LedgerMovementReader(
         val sourceTypeCodes = sources.map { source -> source.code }.toSet()
         val rangeStart = dayStarts.first()
         val rangeEnd = dayStarts.last()
-        val dayStartsLiteral = toArrayLiteral(dayStarts)
+        val dayStartsLiteral = toDayStartsLiteral(dayStarts)
         val buckets = if (locationId == null) {
             ledgerEntryRepository.sumMovementsInRange(dayStartsLiteral, rangeStart, rangeEnd, accountCodes, sourceTypeCodes)
         } else {
@@ -47,7 +47,7 @@ class LedgerMovementReader(
 
     fun getAccountMovementsFrom(from: LocalDate, before: LocalDate, accountCodes: Set<String>): List<LedgerAccountMovement> {
         val dayStarts = dayStartsFor(from, before)
-        return ledgerEntryRepository.sumAccountMovementsFrom(toArrayLiteral(dayStarts), dayStarts.first(), accountCodes)
+        return ledgerEntryRepository.sumAccountMovementsFrom(toDayStartsLiteral(dayStarts), dayStarts.first(), accountCodes)
             .map { bucketMovement ->
                 LedgerAccountMovement(
                     localDate = from.plusDays(bucketMovement.bucket - 1L),
@@ -65,5 +65,5 @@ class LedgerMovementReader(
             .map { date -> DateTimes.Offset.atStartOfDayInOrganizationZone(date).toInstant() }
             .toList()
 
-    private fun toArrayLiteral(instants: List<Instant>): String = instants.joinToString(",", "{", "}")
+    fun toDayStartsLiteral(dayStarts: List<Instant>): String = dayStarts.joinToString(",", "{", "}")
 }

@@ -15,7 +15,7 @@ import me.ezra_home.retail_software_solution.organizations.business.lock.api.Org
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.ui_models.BalanceSignal
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -193,7 +193,7 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `history lists each claimed amount with its direction, balance signal and author`() {
+    fun `history lists each claimed amount with its direction, balance effect and author`() {
         val historyCreator = UUID.randomUUID()
         `when`(userQualifier.getUserFullName(historyCreator)).thenReturn("Ada Admin")
         historyRows += listOf(
@@ -211,8 +211,8 @@ class ContactOpeningBalanceServiceTest {
         )
         assertEquals(listOf("100.0000", "40.0000", "0.0000"), history.map { it.amount.toPlainString() })
         assertEquals(
-            listOf(BalanceSignal.MONEY_IN, BalanceSignal.MONEY_OUT, BalanceSignal.ZERO_BALANCE),
-            history.map { it.balanceSignal }
+            listOf(BalanceEffect.ADDS, BalanceEffect.SUBTRACTS, BalanceEffect.ZERO),
+            history.map { it.balanceEffect }
         )
         assertEquals("Ada Admin", history.first().changedBy)
         assertEquals(contactReferenceNumber, history.first().contactReferenceNumber)
