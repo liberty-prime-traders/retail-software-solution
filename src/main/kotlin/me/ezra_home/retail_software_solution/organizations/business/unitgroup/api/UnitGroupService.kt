@@ -71,6 +71,7 @@ class UnitGroupService(
         unitGroupCache.getAllUnitGroups().find { it.id == id }
             ?.apply {
                 if (this.systemDefined) throw RtsGenericException("System-defined unit groups cannot be deleted")
+                unitValueService.deleteAllInUnitGroup(id)
                 unitGroupCache.deleteUnitGroup(id)
             }
     }

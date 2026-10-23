@@ -101,11 +101,22 @@ class UnitValueService(
             }
     }
 
+    fun deleteAllInUnitGroup(unitGroupId: UUID) {
+        lockUnitGroup(unitGroupId)
+        val unitValuesInGroup = unitValueCache.getByUnitGroupId(unitGroupId)
+        if (unitValuesInGroup.any { !it.systemDefined }) throw RtsGenericException(UNIT_GROUP_HAS_USER_DEFINED_UNITS)
+        if (unitValuesInGroup.isEmpty()) return
+        unitValueCache.deleteAllByIds(unitValuesInGroup.map { it.id })
+        unitConversionGraphFacade.invalidate()
+    }
+
     private fun lockUnitGroup(unitGroupId: UUID?) {
         unitGroupId?.let { orgEntityAdvisoryLock.acquire(LockNamespaces.UNIT_GROUP, it.toString()) }
     }
 
     companion object {
         const val UNIT_IS_BASE_OF_ANOTHER_UNIT = "A unit that is the base unit of another unit cannot be deleted"
+        const val UNIT_GROUP_HAS_USER_DEFINED_UNITS =
+            "A unit group with user-defined units cannot be deleted; delete those units first"
     }
 }

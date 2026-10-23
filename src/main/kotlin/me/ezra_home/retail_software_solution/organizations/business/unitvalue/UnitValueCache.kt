@@ -62,6 +62,11 @@ class UnitValueCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun deleteAllByIds(ids: Collection<UUID>) {
+        unitValueRepository.deleteAllById(ids)
+    }
+
+    @CacheEvict(allEntries = true)
     fun deleteUnitValue(id: UUID?) {
         if (id != null) {
             unitValueRepository.deleteById(id)
