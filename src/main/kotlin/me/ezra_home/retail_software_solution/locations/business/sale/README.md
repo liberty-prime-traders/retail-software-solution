@@ -564,8 +564,11 @@ calls `saleUpdater.updatePaymentStatus` itself with the returned status.
   ledger as of that date. `recordPayment` checks the period of `paymentDate`.
 - Cannot void a payment whose sale is already `VOIDED`.
 - A payment can only be voided once (`guardNotAlreadyVoided`).
-- After voiding, the sale's `paymentStatus` is recomputed from
-  `salePaymentFetcher.calculatePaidAmount`.
+- After voiding, the sale's `paymentStatus` is resolved from `salePaymentFetcher.calculatePaidAmount` read before the
+  void row is saved, minus the voided payment's amount. `calculatePaidAmount` reads the `active_sale_payment` view, which
+  does not see the current transaction's pending inserts, so `SalePaymentWriter.write` likewise resolves from the
+  pre-write paid total plus the new amounts and never re-reads it after writing. A re-read would store `UNPAID`, which
+  sale search (it reads the stored column) would then show.
 
 ---
 

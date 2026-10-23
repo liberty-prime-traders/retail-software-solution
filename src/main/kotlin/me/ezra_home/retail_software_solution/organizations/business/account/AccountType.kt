@@ -48,6 +48,8 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
     }
 
     companion object {
+        fun rootOf(category: AccountCategory): AccountType = ROOT_ACCOUNTS.single { it.category() == category }
+
         val CONTRA_ACCOUNTS = setOf(ASSET_CONTRA, LIABILITY_CONTRA, EQUITY_CONTRA, REVENUE_CONTRA, EXPENSE_CONTRA)
         val ROOT_ACCOUNTS = setOf(ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE)
         val CLOSING_ACCOUNTS = setOf(REVENUE, REVENUE_CONTRA, EXPENSE, EXPENSE_CONTRA)

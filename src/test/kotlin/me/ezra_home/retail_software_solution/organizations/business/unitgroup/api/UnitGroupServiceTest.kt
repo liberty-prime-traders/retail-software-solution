@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -38,11 +39,63 @@ class UnitGroupServiceTest {
         val result = service.createUnitGroup(insertDto)
 
         assertEquals(responseDto, result)
-        verify(unitValueService, times(1)).ensurePieceUnitExists(groupId, "Boxes")
+        verify(unitValueService, times(1)).ensureBaseUnitExists(groupId, unitGroupName = "Boxes", baseUnitName = null, baseUnitCode = null)
     }
 
     @Test
-    fun `bulkCreateValidatedList does not provision a Piece unit itself`() {
+    fun `createUnitGroup passes baseUnitName through to the base unit provisioning`() {
+        val unitGroupMapper = mock(UnitGroupMapper::class.java)
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+
+        val insertDto = UnitGroupInsertDto(name = "Boxes", description = null, baseUnitName = "Sachet")
+        val groupId = UUID.randomUUID()
+        val groupDto = unitGroupDto(groupId, "Boxes")
+
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(emptyList())
+        `when`(unitGroupCache.create(insertDto)).thenReturn(groupDto)
+        `when`(unitGroupMapper.toResponseDto(groupDto)).thenReturn(unitGroupResponseDto(groupId, "Boxes"))
+
+        UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService, mock(OrgEntityAdvisoryLock::class.java)).createUnitGroup(insertDto)
+
+        verify(unitValueService, times(1)).ensureBaseUnitExists(groupId, unitGroupName = "Boxes", baseUnitName = "Sachet", baseUnitCode = null)
+    }
+
+    @Test
+    fun `createUnitGroup passes baseUnitCode through to the base unit provisioning`() {
+        val unitGroupMapper = mock(UnitGroupMapper::class.java)
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+
+        val insertDto = UnitGroupInsertDto(name = "Boxes", description = null, baseUnitName = "Sachet", baseUnitCode = "box-root")
+        val groupId = UUID.randomUUID()
+        val groupDto = unitGroupDto(groupId, "Boxes")
+
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(emptyList())
+        `when`(unitGroupCache.create(insertDto)).thenReturn(groupDto)
+        `when`(unitGroupMapper.toResponseDto(groupDto)).thenReturn(unitGroupResponseDto(groupId, "Boxes"))
+
+        UnitGroupService(unitGroupMapper, unitGroupCache, unitValueService, mock(OrgEntityAdvisoryLock::class.java)).createUnitGroup(insertDto)
+
+        verify(unitValueService, times(1)).ensureBaseUnitExists(groupId, unitGroupName = "Boxes", baseUnitName = "Sachet", baseUnitCode = "box-root")
+    }
+
+    @Test
+    fun `createUnitGroup validates the root unit code before saving the group`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+        val insertDto = UnitGroupInsertDto(name = "Boxes", baseUnitCode = "taken-root")
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(emptyList())
+        `when`(unitValueService.validateRootUnitCodeBeforeGroupCreate("Boxes", "taken-root")).thenThrow(RtsGenericException("taken"))
+        val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, unitValueService, mock(OrgEntityAdvisoryLock::class.java))
+
+        assertThrows(RtsGenericException::class.java) { service.createUnitGroup(insertDto) }
+
+        verify(unitGroupCache, never()).create(insertDto)
+    }
+
+    @Test
+    fun `bulkCreateValidatedList does not provision a base unit itself`() {
         val unitGroupMapper = mock(UnitGroupMapper::class.java)
         val unitGroupCache = mock(UnitGroupCache::class.java)
         val unitValueService = mock(UnitValueService::class.java)

@@ -137,7 +137,7 @@ class DailyBalancesService(
                 val amount = amounts[node.code] ?: BigDecimal.ZERO
                 return if (node.isContra) amount.negate() else amount
             }
-            val effectWhenIncreasing = if (category == AccountCategory.ASSET) BalanceEffect.ADDS else BalanceEffect.SUBTRACTS
+            val effectWhenIncreasing = category.balanceEffectWhenIncreasing()
             fun lineOf(accountCode: String?, accountName: String, closingBalance: BigDecimal, change: BigDecimal): AccountBalanceLine {
                 val roundedClosingBalance = Decimals.Scale4.round(closingBalance)
                 val roundedChange = Decimals.Scale4.round(change)

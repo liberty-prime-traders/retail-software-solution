@@ -29,6 +29,7 @@ Cross-domain callers **MUST** go through `api/` (enforced by `ArchitectureTest`)
 | `UnitChainResolver`  | Resolves every unit's root and size in that root; the one place that checks cycles and size |
 | `UnitValueFetcher`   | Read-only public surface (names, response DTOs)                                            |
 | `UnitValueService`   | Public write surface (create/update/delete)                                                |
+| `RootUnitDefinition` | Builds the auto-provisioned root unit (name, code, description, `systemDefined`) for both flows; owns the `"__piece__"` reference marker |
 
 ## 2. One root per group
 
@@ -38,12 +39,18 @@ never searched for at runtime. Following `baseUnit` from any unit ends at the ro
 | Group                    | Root                                                                                       |
 |--------------------------|--------------------------------------------------------------------------------------------|
 | Weight, Volume, Count    | Seeded: Gram, Millilitre, Piece (`SystemUnitValue`)                                        |
-| A custom group           | The Piece inserted by `UnitValueService.ensurePieceUnitExists`, with `systemDefined = true` |
+| A custom group           | The base unit inserted by `UnitValueService.ensureBaseUnitExists` (named by the group's optional `baseUnitName`, default Piece; coded by its optional `baseUnitCode`), with `systemDefined = true` |
 | Miscellaneous            | None shared: every MISC unit is its own root                                               |
 
-Because the roots are `systemDefined`, `UnitValueService` rejects editing or deleting them. The auto Piece's code
-comes from `SystemUnitValue.pieceCodeForGroup`, which truncates the group name slug, so two long group names can
-produce the same code; `validateRootUnitInsert` rejects that collision with a clear error.
+Because the roots are `systemDefined`, `UnitValueService` rejects editing or deleting them. The bulk and single-item
+flows both build the root through `RootUnitDefinition.forGroup`. The code is the group's optional `baseUnitCode` when
+supplied (blank is absent), else `<group-slug>-base` from `SystemUnitValue.baseUnitCodeForGroup`. The generated slug
+truncates the group name, so two long group names can produce the same code. `validateRootUnitInsert` rejects a
+collision with a clear error. `UnitGroupService.createUnitGroup` runs the same code check
+(`UnitValueService.validateRootUnitCodeBeforeGroupCreate`) before the group is saved.
+
+Every unit value code, on insert, update and root creation, must be at most `SystemUnitValue.MAX_CODE_LENGTH`
+characters and cannot be the reserved reference marker `"__piece__"` (`UnitValueValidator.requireCodeIsWellFormed`).
 
 ## 3. The chain and a unit's size in the root
 

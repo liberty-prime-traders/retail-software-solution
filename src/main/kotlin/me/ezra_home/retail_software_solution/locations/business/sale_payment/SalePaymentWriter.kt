@@ -24,9 +24,9 @@ class SalePaymentWriter(
         receivableTotal: BigDecimal,
         newSalePayments: List<NewSalePayment>,
     ): SalePaymentWriteResult {
+        val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
         if (newSalePayments.isEmpty()) {
-            val totalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-            return SalePaymentWriteResult(emptyList(), PaymentStatusResolver.resolve(totalPaid, receivableTotal))
+            return SalePaymentWriteResult(emptyList(), PaymentStatusResolver.resolve(alreadyPaid, receivableTotal))
         }
         val entitiesToSave = newSalePayments.map { newSalePayment ->
             SalePaymentEntity(
@@ -40,8 +40,8 @@ class SalePaymentWriter(
         }
         val savedSalePayments = salePaymentRepository.saveAll(entitiesToSave).toList()
         salePaymentHandlerForKafka.publish(saleId, contactId, savedSalePayments)
-        val freshTotalPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-        return SalePaymentWriteResult(savedSalePayments, PaymentStatusResolver.resolve(freshTotalPaid, receivableTotal))
+        val totalPaid = PaymentStatusResolver.paidTotalAfterRecording(alreadyPaid, savedSalePayments.map { it.amount })
+        return SalePaymentWriteResult(savedSalePayments, PaymentStatusResolver.resolve(totalPaid, receivableTotal))
     }
 
     data class NewSalePayment(

@@ -55,22 +55,33 @@ class UnitValueService(
         }
     }
 
+    fun validateRootUnitCodeBeforeGroupCreate(unitGroupName: String?, baseUnitCode: String?) {
+        if (SystemUnitGroup.isExcludedFromRootAutoInsert(unitGroupName)) return
+        unitValueValidator.validateRootUnitCode(RootUnitDefinition.effectiveBaseUnitCode(unitGroupName, baseUnitCode))
+    }
+
     // System groups are seeded with their own roots
-    fun ensurePieceUnitExists(unitGroupId: UUID, unitGroupName: String?): UnitValueResponseDto? {
-        val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(unitGroupName)
-        if (excludedFromPiece) return null
+    fun ensureBaseUnitExists(unitGroupId: UUID, unitGroupName: String?, baseUnitName: String?, baseUnitCode: String?): UnitValueResponseDto? {
+        val excludedFromBaseUnit = SystemUnitGroup.isExcludedFromRootAutoInsert(unitGroupName)
+        if (excludedFromBaseUnit) return null
 
         lockUnitGroup(unitGroupId)
-        val pieceCode = SystemUnitValue.pieceCodeForGroup(unitGroupName)
-        if (unitValueCache.getByUnitGroupId(unitGroupId).any { it.code == pieceCode }) return null
-        unitValueValidator.validateRootUnitInsert(unitGroupId, SystemUnitValue.PIECE.unitName, pieceCode)
+        val rootUnitDefinition = RootUnitDefinition.forGroup(
+            unitGroupId = unitGroupId,
+            unitGroupName = unitGroupName,
+            baseUnitName = baseUnitName,
+            baseUnitCode = baseUnitCode
+        )
+        if (unitValueCache.getByUnitGroupId(unitGroupId).any { it.code == rootUnitDefinition.code }) return null
+        unitValueValidator.validateRootUnitInsert(unitGroupId, rootUnitDefinition.name, rootUnitDefinition.code)
 
         val saved = unitValueCache.save(
             UnitValueEntity(
-                name = SystemUnitValue.PIECE.unitName,
-                code = pieceCode,
+                name = rootUnitDefinition.name,
+                description = rootUnitDefinition.description,
+                code = rootUnitDefinition.code,
                 unitGroupId = unitGroupId,
-                systemDefined = true
+                systemDefined = rootUnitDefinition.systemDefined
             )
         )
         unitConversionGraphFacade.invalidate()

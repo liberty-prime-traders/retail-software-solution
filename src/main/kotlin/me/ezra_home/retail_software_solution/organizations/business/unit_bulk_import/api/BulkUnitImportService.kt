@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.organizations.business.unitgroup.ap
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupService
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.SystemUnitValue
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.RootUnitDefinition
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueBulkSaveEntry
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
@@ -56,8 +56,8 @@ class BulkUnitImportService(
     }
 
     /** One save-order node: a unit value pending creation for a specific group. Codes are unique
-     * org-wide (including auto-provisioned Piece codes, which fold the group name in - see
-     * SystemUnitValue.pieceCodeForGroup), so the code alone identifies a node for ordering. */
+     * org-wide (including root unit codes, see RootUnitDefinition.effectiveBaseUnitCode), so the
+     * code alone identifies a node for ordering. */
     private data class PendingUnitValue(
         val name: String,
         val code: String,
@@ -77,7 +77,7 @@ class BulkUnitImportService(
 
         val pending : List<PendingUnitValue> = bulkUnitImportRequestDto.unitGroups.flatMap { group ->
             val groupId = groupIdByName.getValue(group.name!!)
-            generatePendingUnitValuesForGroup(groupId, group.name, group.unitValues, existingSystemDefinedCodes)
+            generatePendingUnitValuesForGroup(groupId, group, existingSystemDefinedCodes)
         }
 
         val resolvedIds = mutableMapOf<String, UUID>()
@@ -103,40 +103,44 @@ class BulkUnitImportService(
 
     private fun generatePendingUnitValuesForGroup(
         groupId: UUID,
-        groupName: String?,
-        unitValues: List<UnitValueBulkInsertDto>,
+        unitGroupBulkInsertDto: UnitGroupBulkInsertDto,
         existingSystemDefinedCodes: Set<String>
     ): List<PendingUnitValue> {
-        val excludedFromPiece = SystemUnitGroup.isExcludedFromPieceAutoInsert(groupName)
-        val pieceCode = SystemUnitValue.pieceCodeForGroup(groupName)
-        val pieceAlreadyExists = unitValueFetcher.getUnitValuesForUnitGroup(groupId).any { it.code == pieceCode }
+        val excludedFromBaseUnit = SystemUnitGroup.isExcludedFromRootAutoInsert(unitGroupBulkInsertDto.name)
+        val rootUnitDefinition = RootUnitDefinition.forGroup(
+            unitGroupId = groupId,
+            unitGroupName = unitGroupBulkInsertDto.name,
+            baseUnitName = unitGroupBulkInsertDto.baseUnitName,
+            baseUnitCode = unitGroupBulkInsertDto.baseUnitCode
+        )
+        val rootUnitAlreadyExists = unitValueFetcher.getUnitValuesForUnitGroup(groupId).any { it.code == rootUnitDefinition.code }
 
         return buildList {
-            if (!excludedFromPiece && !pieceAlreadyExists) {
-                add(createDefaultPiece(groupId, pieceCode))
+            if (!excludedFromBaseUnit && !rootUnitAlreadyExists) {
+                add(createPendingRootUnit(rootUnitDefinition))
             }
             // A unit value whose code already matches a system-defined row (see SystemUnitValue /
             // UnitValueSeeder) was accepted by the validator as a reuse, not a duplicate - its id is
             // already resolvable via the existing-unit-value lookup, so it must not be inserted again.
-            unitValues.filter { it.code !in existingSystemDefinedCodes }.forEach {
-                add(createPendingUnitValue(groupId, pieceCode, it))
+            unitGroupBulkInsertDto.unitValues.filter { it.code !in existingSystemDefinedCodes }.forEach {
+                add(createPendingUnitValue(groupId, rootUnitDefinition.code, it))
             }
         }
     }
 
-    private fun createDefaultPiece(groupId: UUID, pieceCode: String) = PendingUnitValue(
-        name = SystemUnitValue.PIECE.unitName,
-        code = pieceCode,
-        description = "Base unit representing a single item",
-        unitGroupId = groupId,
+    private fun createPendingRootUnit(rootUnitDefinition: RootUnitDefinition) = PendingUnitValue(
+        name = rootUnitDefinition.name,
+        code = rootUnitDefinition.code,
+        description = rootUnitDefinition.description,
+        unitGroupId = rootUnitDefinition.unitGroupId,
         baseUnitCode = null,
         unitsOfBasePerUnit = null,
-        systemDefined = true
+        systemDefined = rootUnitDefinition.systemDefined
     )
 
-    private fun createPendingUnitValue(groupId: UUID, pieceCode: String, unitValueDto: UnitValueBulkInsertDto): PendingUnitValue {
+    private fun createPendingUnitValue(groupId: UUID, rootUnitCode: String, unitValueDto: UnitValueBulkInsertDto): PendingUnitValue {
         val baseUnitCode = when (unitValueDto.baseUnitCode) {
-            BulkUnitImportValidator.PIECE_BASE_UNIT_CODE -> pieceCode
+            RootUnitDefinition.PIECE_BASE_UNIT_CODE -> rootUnitCode
             else -> unitValueDto.baseUnitCode
         }
         return PendingUnitValue(

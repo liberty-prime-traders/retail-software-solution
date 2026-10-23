@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.organizations.business.unitvalue
 
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDataFetcher
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.RootUnitDefinition
+import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.SystemUnitValue
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitChainNode
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitChainResolver
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueInsertDto
@@ -31,7 +33,8 @@ class UnitValueValidator(
             throw RtsGenericException(PROVIDED_MISSING_UNIT_GROUP)
         }
         requireNameIsFreeInGroup(unitValueInsertDto.name!!, unitValueInsertDto.unitGroupId, excludedUnitId = null)
-        requireCodeIsFree(unitValueInsertDto.code!!, excludedUnitId = null)
+        requireCodeIsWellFormed(unitValueInsertDto.code!!)
+        requireCodeIsFree(unitValueInsertDto.code, excludedUnitId = null)
 
         if (unitGroupDataFetcher.isMiscellaneous(unitValueInsertDto.unitGroupId)) {
             if (unitValueInsertDto.baseUnit != null || unitValueInsertDto.unitsOfBasePerUnit != null) {
@@ -58,6 +61,11 @@ class UnitValueValidator(
     // The auto-inserted root has no base unit, so only the name and code can collide
     fun validateRootUnitInsert(unitGroupId: UUID, name: String, code: String) {
         requireNameIsFreeInGroup(name, unitGroupId, excludedUnitId = null)
+        validateRootUnitCode(code)
+    }
+
+    fun validateRootUnitCode(code: String) {
+        requireCodeIsWellFormed(code)
         requireCodeIsFree(code, excludedUnitId = null)
     }
 
@@ -74,7 +82,8 @@ class UnitValueValidator(
             ?: throw UpdatingNonExistingRecordException()
 
         requireNameIsFreeInGroup(name!!, existing.unitGroupId, excludedUnitId = existing.id)
-        requireCodeIsFree(code!!, excludedUnitId = existing.id)
+        requireCodeIsWellFormed(code!!)
+        requireCodeIsFree(code, excludedUnitId = existing.id)
 
         val baseUnitIsProvided = unitValueUpdateDto.baseUnit?.isPresent == true
         val unitsOfBasePerUnitIsProvided = unitValueUpdateDto.unitsOfBasePerUnit?.isPresent == true
@@ -113,6 +122,15 @@ class UnitValueValidator(
             ?.let { throw RtsGenericException(String.format(NAME_ALREADY_EXISTS, name)) }
     }
 
+    private fun requireCodeIsWellFormed(code: String) {
+        if (code.length > SystemUnitValue.MAX_CODE_LENGTH) {
+            throw RtsGenericException(String.format(CODE_TOO_LONG, SystemUnitValue.MAX_CODE_LENGTH))
+        }
+        if (code == RootUnitDefinition.PIECE_BASE_UNIT_CODE) {
+            throw RtsGenericException(String.format(CODE_IS_RESERVED, code))
+        }
+    }
+
     private fun requireCodeIsFree(code: String, excludedUnitId: UUID?) {
         unitValueCache.getAllUnitValues().find { it.code == code && it.id != excludedUnitId }
             ?.let { throw RtsGenericException(String.format(CODE_ALREADY_EXISTS, code)) }
@@ -138,6 +156,8 @@ class UnitValueValidator(
         const val PROVIDED_MISSING_UNIT_GROUP = "UnitGroup with the provided id does not exist"
         const val NAME_ALREADY_EXISTS = "A unit value with the name %s already exists"
         const val CODE_ALREADY_EXISTS = "A unit value with the code %s already exists"
+        const val CODE_TOO_LONG = "A unit value code must be at most %d characters"
+        const val CODE_IS_RESERVED = "The unit value code %s is reserved"
         const val BASE_UNIT_MUST_BE_IN_GROUP = "The base unit must be selected from the assigned group"
         const val MISCELLANEOUS_UNIT_CANNOT_HAVE_BASE_UNIT = "A Miscellaneous unit stands alone and cannot have a base unit"
         const val ROOT_UNIT_CANNOT_HAVE_BASE_UNIT = "A group's root unit cannot be given a base unit"

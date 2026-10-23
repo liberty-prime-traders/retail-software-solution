@@ -113,6 +113,32 @@ class UnitValueValidatorTest {
         )
     }
 
+    @Test
+    fun `an insert whose code exceeds the column length is rejected`() {
+        assertRejected { validator.validateUnitValueInsert(insert("Pound", "a".repeat(26), weightGroupId, baseUnit = gram.id, unitsOfBasePerUnit = 454L)) }
+        validator.validateUnitValueInsert(insert("Pound", "a".repeat(25), weightGroupId, baseUnit = gram.id, unitsOfBasePerUnit = 454L))
+    }
+
+    @Test
+    fun `an insert using the piece reference marker as its code is rejected`() {
+        assertRejected { validator.validateUnitValueInsert(insert("Pound", "__piece__", weightGroupId, baseUnit = gram.id, unitsOfBasePerUnit = 454L)) }
+    }
+
+    @Test
+    fun `an update whose code exceeds the column length is rejected`() {
+        assertRejected {
+            validator.validateUnitValueUpdate(UnitValueUpdateDto(id = kilogram.id, name = Optional.of("Kilo"), code = Optional.of("a".repeat(26))))
+        }
+    }
+
+    @Test
+    fun `a root unit code that is too long, reserved or already taken is rejected`() {
+        assertRejected { validator.validateRootUnitCode("a".repeat(26)) }
+        assertRejected { validator.validateRootUnitCode("__piece__") }
+        assertRejected { validator.validateRootUnitCode("kg") }
+        validator.validateRootUnitCode("egg-root")
+    }
+
     private fun assertRejected(action: () -> Unit) {
         assertThrows(RtsGenericException::class.java, action)
     }
