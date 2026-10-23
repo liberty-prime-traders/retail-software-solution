@@ -77,6 +77,9 @@ Units of equal size in one group are allowed, including a unit with `unitsOfBase
   numbers. Stock is counted in the root and lines keep their captured ratio, so neither moves; only the meaning of
   the unit from then on changes.
 - A unit that is another unit's `baseUnit` cannot be deleted.
+- Deleting a unit group goes through `UnitValueService.deleteAllInUnitGroup`: it rejects the delete while the group
+  has any user-defined unit, otherwise removes the group's system-defined units (the auto Piece root) before the
+  group itself is deleted.
 
 ### Names
 
