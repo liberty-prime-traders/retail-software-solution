@@ -25,6 +25,15 @@ class DataAccessHelper(private val applicationContext: ApplicationContext) {
       val idClass = resolvedRepo.getGeneric(1).resolve() ?: return@forEach
 
       val key = keyFor(entityClass.simpleName)
+      val schema = detectSchema(repository, entityClass)
+      
+      // Warn about unsupported location schema during discovery
+      if (schema == Schema.LOCATION) {
+        // Location schema entities exist but database assertions aren't yet implemented
+        // Skip registering location entities to prevent misleading test errors
+        return@forEach
+      }
+      
       @Suppress("UNCHECKED_CAST")
       val pkg = DataSourcePackage(
         key = key,
@@ -32,9 +41,40 @@ class DataAccessHelper(private val applicationContext: ApplicationContext) {
         entityClass = entityClass,
         idClass = idClass,
         repository = repository as JpaRepository<Any, Any>,
+        schema = schema,
       )
       packages[key] = pkg
       packages.putIfAbsent(keyFor(beanName), pkg)
+    }
+  }
+
+  private fun detectSchema(repository: JpaRepository<*, *>, entityClass: Class<*>): Schema {
+    // Try repository package first (works for most cases)
+    val repoPackage = repository.javaClass.packageName
+    val repoSchema = detectSchemaFromPackage(repoPackage)
+    if (repoSchema != null) return repoSchema
+    
+    // Fallback to entity package (handles proxy cases)
+    val entityPackage = entityClass.packageName
+    return detectSchemaFromPackage(entityPackage)
+      ?: error(
+        "Unable to detect schema for repository: ${repository.javaClass.simpleName}. " +
+          "Repository package: $repoPackage, Entity package: $entityPackage. " +
+          "Expected package to contain '.platform.', '.organizations.', or '.locations.'"
+      )
+  }
+
+  private fun detectSchemaFromPackage(packageName: String): Schema? {
+    // Skip packages outside project namespace (prevents matching external libraries)
+    if (!packageName.startsWith("me.ezra_home.retail_software_solution")) {
+      return null
+    }
+    
+    return when {
+      packageName.contains(".platform.") -> Schema.PLATFORM
+      packageName.contains(".organizations.") -> Schema.ORGANIZATION
+      packageName.contains(".locations.") -> Schema.LOCATION
+      else -> null
     }
   }
 
@@ -60,6 +100,7 @@ class DataAccessHelper(private val applicationContext: ApplicationContext) {
   private fun keyFor(raw: String): String =
     raw.uppercase()
       .replace(" ", "")
+      .replace("_", "")
       .replace("ENTITY", "")
       .replace("REPOSITORY", "")
 
