@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.opening_stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockEntity
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockRepository
@@ -39,7 +39,6 @@ class OpeningStockService(
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)
 
         val labelsByProductId = locationProductDataFetcher.findSummaryByIds(productIds).mapValues { it.value.label }
-        OpeningStockValidator.guardPositiveQuantitiesAndCosts(lines, labelsByProductId)
         locationProductService.guardAllActive(productIds)
 
         val alreadyDeclared = openingStockRepository.findByLocationProductIdIn(productIds)
@@ -53,10 +52,10 @@ class OpeningStockService(
             lines.map { line ->
                 OpeningStockEntity(
                     locationProductId = line.locationProductId,
-                    userProvidedQuantity = line.userProvidedQuantity,
+                    userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                     unitId = line.unitId,
                     storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId),
-                    unitCost = line.unitCost
+                    unitCost = line.unitCost.toBigDecimal()
                 )
             }
         )

@@ -19,5 +19,5 @@ data class OpeningBalanceUpsertedEvent(
     val amount: BigDecimal,
     val postingDate: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = openingBalanceId
+    override val sourceDocumentId: UUID = openingBalanceId
 }

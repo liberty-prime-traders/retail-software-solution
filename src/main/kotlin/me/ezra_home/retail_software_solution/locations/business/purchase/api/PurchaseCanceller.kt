@@ -1,15 +1,15 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
-import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -53,7 +53,7 @@ class PurchaseCanceller(
             } else {
                 storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId)
             }
-            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled, storageUnitsPerUnit)
+            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled.toBigDecimal(), storageUnitsPerUnit)
             PurchaseValidator.guardCancelQuantity(line, storageQuantityToCancel, breakdownByLocationProductId.getValue(line.locationProductId))
             line.storageQuantityCanceled = storageQuantityToCancel.toStorageQuantity()
             line

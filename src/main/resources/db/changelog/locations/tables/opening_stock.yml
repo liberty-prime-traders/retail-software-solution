@@ -60,7 +60,7 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: numeric(15,2)
+                  type: numeric(19,4)
                   constraints:
                     nullable: false
                     notNullConstraintName: opening_stock_unit_cost_notnull

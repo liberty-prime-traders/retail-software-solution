@@ -31,6 +31,5 @@ join. A change to what counts as voided therefore touches the view and these joi
 - `SalePaymentService.voidPayment` requires an open fiscal period for today, rejects an already-voided payment and a voided
   sale, takes the same sale lock, saves the void row, recomputes the paid amount and status, stores the status and
   publishes the void event through `SalePaymentVoidHandlerForKafka`.
-- Amount and balance rules live in `SalePaymentValidator`; the session flow reuses them. The positive-amount guard delegates
-  to `Decimals.requirePositive`.
+- Balance rules live in `SalePaymentValidator`; the session flow reuses them. The amount is a `PositiveMoney`, so positivity is checked when the request binds.
 - Ledger postings are produced by the Kafka consumers of the recorded and voided events, not here.

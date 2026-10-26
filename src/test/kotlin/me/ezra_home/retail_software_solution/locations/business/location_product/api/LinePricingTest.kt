@@ -1,10 +1,12 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class LinePricingTest {
 
     private val pricePerBale = BigDecimal("1000.00")

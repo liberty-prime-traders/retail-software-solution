@@ -127,19 +127,39 @@ class DailyBalancesServiceTest {
     }
 
     @Test
-    fun `net worth is assets minus liabilities including liabilities under other liabilities`() {
+    fun `net worth is assets minus liabilities, with a contra liability netted under other liabilities`() {
         currentBalances = mapOf(
             SystemAccount.CASH.code to BigDecimal(1000),
             SystemAccount.TRADE_PAYABLES.code to BigDecimal(100),
-            SystemAccount.LOANS_PAYABLE.code to BigDecimal(300)
+            SystemAccount.PURCHASE_DISCOUNTS.code to BigDecimal(30)
         )
 
         val balances = build(DailyBusinessSummaryRequest(day9, day10)).days.single().balances
 
         assertEquals(0, BigDecimal(1000).compareTo(balances.assets.closingTotal))
-        assertEquals(0, BigDecimal(400).compareTo(balances.liabilities.closingTotal))
-        assertEquals(0, BigDecimal(600).compareTo(balances.netWorth))
+        assertEquals(0, BigDecimal(70).compareTo(balances.liabilities.closingTotal))
+        assertEquals(0, BigDecimal(930).compareTo(balances.netWorth))
         assertEquals("Other liabilities", balances.liabilities.lines.last().accountName)
+    }
+
+    @Test
+    fun `loans payable is always its own liability line and no longer lands under other liabilities`() {
+        currentBalances = mapOf(SystemAccount.CASH.code to BigDecimal(1000))
+
+        val withoutLoans = build(DailyBusinessSummaryRequest(day9, day10)).days.single().balances.liabilities
+
+        assertEquals(
+            listOf(SystemAccount.TRADE_PAYABLES.code, SystemAccount.WAGES_PAYABLE.code, SystemAccount.LOANS_PAYABLE.code),
+            withoutLoans.lines.map { line -> line.accountCode }
+        )
+
+        currentBalances = mapOf(SystemAccount.CASH.code to BigDecimal(1000), SystemAccount.LOANS_PAYABLE.code to BigDecimal(300))
+
+        val withLoans = build(DailyBusinessSummaryRequest(day9, day10)).days.single().balances
+
+        assertEquals(0, BigDecimal(300).compareTo(withLoans.liabilities.lines.single { line -> line.accountCode == SystemAccount.LOANS_PAYABLE.code }.closingBalance))
+        assertEquals(0, BigDecimal(700).compareTo(withLoans.netWorth))
+        assertEquals(null, withLoans.liabilities.lines.singleOrNull { line -> line.accountName == "Other liabilities" })
     }
 
     @Test

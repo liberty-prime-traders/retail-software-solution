@@ -19,5 +19,5 @@ data class ExpensePaymentRecordedEvent(
     val amount: BigDecimal,
     val paymentDate: OffsetDateTime
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = paymentId
+    override val sourceDocumentId: UUID = paymentId
 }

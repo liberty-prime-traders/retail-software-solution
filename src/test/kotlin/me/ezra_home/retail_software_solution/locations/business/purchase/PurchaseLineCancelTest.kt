@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -13,6 +14,7 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class PurchaseLineCancelTest {
 
     private val pieceId = UUID.randomUUID()

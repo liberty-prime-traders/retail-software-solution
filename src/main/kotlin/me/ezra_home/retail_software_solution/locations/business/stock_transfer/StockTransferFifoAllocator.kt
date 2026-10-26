@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayerState
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
 import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
@@ -25,10 +24,7 @@ object StockTransferFifoAllocator {
         return draftLines.flatMap { draftLine ->
             val storageQuantityNeeded = ExactQuantity.ofUserProvided(draftLine.userProvidedQuantity, draftLine.storageUnitsPerUnit)
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
-            val plannedTakes = FifoTakePlanner.planTakes(
-                fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining, it.storageBatchSize, it.batchCost) },
-                storageQuantityNeeded
-            )
+            val plannedTakes = FifoTakePlanner.planTakes(fifoEntries, storageQuantityNeeded)
             guardFulfilled(
                 plannedTakes, storageQuantityNeeded,
                 quantityBreakdownByLocationProductId.getValue(draftLine.locationProductId),

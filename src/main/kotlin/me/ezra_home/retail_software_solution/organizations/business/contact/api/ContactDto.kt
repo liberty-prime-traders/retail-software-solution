@@ -21,10 +21,9 @@ data class ContactDto(
     val status: ContactStatus = ContactStatus.ACTIVE,
     val systemDefined: Boolean = false
 ) {
-    val identity: ContactIdentity
-        get() = if (!companyName.isNullOrBlank()) {
-            ContactIdentity.Organization(companyName)
-        } else {
-            ContactIdentity.Individual(firstName.orEmpty(), lastName)
-        }
+    val identity: ContactIdentity = if (!companyName.isNullOrBlank()) {
+        ContactIdentity.Organization(companyName)
+    } else {
+        ContactIdentity.Individual(firstName.orEmpty(), lastName)
+    }
 }

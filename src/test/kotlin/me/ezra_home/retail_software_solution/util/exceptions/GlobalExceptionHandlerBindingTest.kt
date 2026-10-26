@@ -1,8 +1,7 @@
 package me.ezra_home.retail_software_solution.util.exceptions
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
+import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -19,16 +18,12 @@ import java.math.BigDecimal
 
 class GlobalExceptionHandlerBindingTest {
 
-    data class QuantityRequest(val quantity: BigDecimal) {
-        init {
-            Decimals.requireMaxDecimalPlaces(quantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
-        }
-    }
+    data class QuantityRequest(val quantity: UserProvidedQuantity)
 
     @RestController
     class QuantityController {
         @PostMapping("/quantities")
-        fun accept(@RequestBody quantityRequest: QuantityRequest): BigDecimal = quantityRequest.quantity
+        fun accept(@RequestBody quantityRequest: QuantityRequest): BigDecimal = quantityRequest.quantity.toBigDecimal()
     }
 
     private lateinit var mockMvc: MockMvc

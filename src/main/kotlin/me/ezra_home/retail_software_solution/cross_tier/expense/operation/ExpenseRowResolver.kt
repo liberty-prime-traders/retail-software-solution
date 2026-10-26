@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedExpenseRow
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeDto
@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.organizations.business.expense_type
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -42,7 +41,6 @@ class ExpenseRowResolver(
         val payeesById = HashMap<UUID, ContactDto>()
         val openDates = HashSet<LocalDate>()
         return expenseSubmission.rowCommands.map { rowCommand ->
-            val roundedAmount = Decimals.Scale2.requirePositiveAmount(rowCommand.amount, "Expense amount")
             val expenseType = expenseTypesById.getOrPut(rowCommand.expenseTypeId) {
                 expenseTypeService.getById(rowCommand.expenseTypeId)
             }
@@ -62,7 +60,7 @@ class ExpenseRowResolver(
             ResolvedExpenseRow(
                 expenseType = expenseType,
                 payee = payee,
-                amount = roundedAmount,
+                amount = rowCommand.amount,
                 description = StringUtils.getValueOrNull(rowCommand.description),
                 expenseDate = expenseDate,
                 settlement = rowCommand.settlement?.let { resolveSettlement(it, expenseDate, openDates) }

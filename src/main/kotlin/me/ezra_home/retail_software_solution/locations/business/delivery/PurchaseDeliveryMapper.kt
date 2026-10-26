@@ -21,8 +21,8 @@ object PurchaseDeliveryMapper {
       PurchaseDeliveryLineEntity(
         purchaseDeliveryId = deliveryId,
         purchaseLineId = lineDto.purchaseLineId,
-        userProvidedQuantityDelivered = lineDto.userProvidedQuantityDelivered,
-        unitCost = lineDto.unitCost,
+        userProvidedQuantityDelivered = lineDto.userProvidedQuantityDelivered.toBigDecimal(),
+        unitCost = lineDto.unitCost.toBigDecimal(),
         unitId = lineDto.unitId,
         storageUnitsPerUnit = storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
@@ -55,6 +55,7 @@ object PurchaseDeliveryMapper {
         storageUnitsPerUnit = dl.storageUnitsPerUnit,
         unitCost = dl.unitCost
       )
-    }
+    },
+    deliveryTotal = deliveryRecord.lines.sumOf { it.lineTotal() }
   )
 }

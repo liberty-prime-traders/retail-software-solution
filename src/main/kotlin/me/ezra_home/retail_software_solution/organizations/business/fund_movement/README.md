@@ -26,8 +26,8 @@ type (`transfer`, `capital`, `draw`) so each can carry its own static authorizat
 
 ## Rules
 
-- Validation is in `FundMovementService`, not on the DTOs. Amount is rounded to cents with `Decimals.Scale2.round` (half-up) and must then be
-  positive and at most `Decimals.MAXIMUM_TRANSACTION_AMOUNT`; `movementDate` must not be after today in the organization zone; a transfer needs two different accounts; the note and the void reason are blank-to-null and unbounded (`text`).
+- Validation is in `FundMovementService`, not on the DTOs. Amount is a `PositiveMoney` (zero, a negative, more decimals than the session money scale, or a magnitude above
+  `Decimals.MAXIMUM_TRANSACTION_AMOUNT` are rejected when the request binds, never rounded); `movementDate` must not be after today in the organization zone; a transfer needs two different accounts; the note and the void reason are blank-to-null and unbounded (`text`).
 - Every user-picked account goes through `FundMovementAccountValidator`, which calls
   `AccountSelectionService.requireSelectable(AccountSelectionRule.FUND_MOVEMENT, code)` in sorted code order, so two
   movements over the same pair take the account locks in the same order.

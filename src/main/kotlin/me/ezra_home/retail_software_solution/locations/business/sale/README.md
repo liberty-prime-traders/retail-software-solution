@@ -151,7 +151,7 @@ Rules:
   sale line itself. The storage unit is the root of the product's unit group (see `util/quantity/README.md`).
 - **`lineTotal` is gross of any price override** and is computed by `LinePricing.lineTotal` when the line is added or
   edited in an open session: `defaultSalePrice x userProvidedQuantity x storageUnitsPerUnit ÷ baseUnitSizeInRoot`,
-  divided once and rounded once to cents (`Decimals.Scale2`, half-up). One Bale and 18 Pieces of a product priced 1000.00 per Bale both
+  divided once and rounded once to cents (`Decimals.MoneyScale`, half-up). One Bale and 18 Pieces of a product priced 1000.00 per Bale both
   total 1000.00. Amounts (line totals, adjustments, tax) are whole cents so a total can always be settled by a payment; unit prices stay at scale 4. A saved line's total is loaded as stored and never recomputed on load, so confirm reprices nothing.
 - The **unit price is derived**, never stored: `ProductLineWithPrice.unitPrice = lineTotal ÷ userProvidedQuantity`, half-up
   to scale 4. The Pieces line above shows 55.5556 per Piece against a total of 1000.00, so a client must never rebuild
@@ -159,8 +159,8 @@ Rules:
 
 ### Per-line invariants
 
-1. `quantity` must be **strictly positive** (guarded by `SaleSessionValidator`
-   on every mutation).
+1. `quantity` must be **strictly positive**: the line request classes hold it as a `PositiveUserProvidedQuantity`, so a zero or negative
+   quantity fails when the request binds.
 2. **No duplicate products** in the same sale — guarded on every session
    mutation.
 3. `locationProductId` must be **active** (`LocationProductService.guardAllActive`)
@@ -172,8 +172,8 @@ Rules:
    product can therefore only use its base unit.
 5. `defaultSalePrice` must be set on the product at add time; the session
    line handler rejects with `"Product X has no default sale price"` otherwise.
-6. `userProvidedQuantity` has at most `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` (2) decimals, checked in the
-   `init` block of the session line request classes.
+6. `userProvidedQuantity` is a `PositiveUserProvidedQuantity` on the session line request classes, so it has at most
+   `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` (2) decimals.
 
 ### Sync semantics at commit
 
@@ -202,13 +202,18 @@ persistence model, lifecycle, and reconciliation logic.
 - Either **line-level** (references a `SessionIdentity` of a session line —
   carries through to a `sale_line_id` after commit) or **order-level**
   (no `lineId`).
-- `direction`: `DISC` (reduces the receivable) or `SRCH` (adds to the receivable).
-- `calculationMethod`: `PERCENTAGE` or `FIXED_LINE_TOTAL` (the last only from a price override).
+- `direction`: `DISC` (reduces the receivable) or `SRCH` (adds to the receivable). A client never sends `BOTH`: that value belongs to
+  an adjustment *reason* that works either way, and the request rejects it. The system `PRICE_OVERRIDE` reason is not accepted on the add
+  request either; it is applied only by changing a line's price.
+- `calculationMethod`: `PERCENTAGE` or `UNIT_PRICE_OVERRIDE` (the last only from a price override).
   - `PERCENTAGE` line-level applies to the line's `lineTotal`
     (the stored gross `lineTotal`, before any price override); order-level applies to the sum of all line totals.
-    The amount is rounded once to cents (`Decimals.Scale2`, half-up).
-  - `PriceAdjustmentMethod.FIXED_LINE_TOTAL` is the whole amount (rounded to cents), never multiplied by a quantity. Only a price override creates one
-    (`SaleSessionAdjustmentHandler` rejects it from a client).
+    The amount is rounded once to cents (`Decimals.MoneyScale`, half-up). A client sends the adjustment's `percentage`, a
+    `Percentage` (0 to 100, at most 2 decimals whatever the currency scale); anything else is rejected when the request
+    binds, never rounded. `SaleSessionAdjustmentHandler` stores that percentage as the adjustment's `value`.
+  - `UNIT_PRICE_OVERRIDE`: `value` is the unit price the cashier typed, and the amount is `|lineTotal − value × quantity|`
+    (`AdjustmentAmountCalculator`, rounded once to cents), recomputed on every save. Only a price override creates one;
+    a client cannot add it.
 - Every adjustment references an `adjustment_reason_id` (org-schema lookup).
   The session validator validates the reason exists and that
   `AdjustmentReasonService.requireCanApply(reasonId, direction)` succeeds.
@@ -518,11 +523,9 @@ sale commit:
   null) back into the response, and apply the new `paymentStatus` as part of
   its single `saleRepository.save` call.
 - Empty payments list → no-op, sale `paymentStatus` left as-is.
-- Amount positivity, balance ceiling, and session mutability are all enforced
-  upstream by `SaleSessionValidator` (via `SaleSessionPersister`) before
-  control reaches the appender — see `SaleSessionValidator.guardPositivePayments`
-  (delegates to `SalePaymentValidator.guardPositiveAmount`) and
-  `SaleSessionValidator.guardPaymentsWithinTotal` (delegates to
+- Amount positivity is enforced when the request binds (`PositiveMoney`); the balance ceiling and session
+  mutability are enforced upstream by `SaleSessionValidator` (via `SaleSessionPersister`) before
+  control reaches the appender — see `SaleSessionValidator.guardPaymentsWithinTotal` (delegates to
   `SalePaymentValidator.guardNotExceedingSaleTotal`).
 - Status is computed by `PaymentStatusResolver.resolve` (single source of truth
   used by `SalePaymentWriter`, `SalePaymentService.voidPayment`, and the session

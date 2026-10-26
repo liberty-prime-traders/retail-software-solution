@@ -7,16 +7,16 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryMapper
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
-import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -45,7 +45,7 @@ class PurchaseDeliveryService(
     val deliveryLines = purchaseDeliveryCreateDto.lines.map { line ->
       DeliveryLineQuantity(
         line.purchaseLineId,
-        ExactQuantity.ofUserProvided(line.userProvidedQuantityDelivered, storageUnitsPerUnitByPurchaseLineId.getValue(line.purchaseLineId))
+        ExactQuantity.ofUserProvided(line.userProvidedQuantityDelivered.toBigDecimal(), storageUnitsPerUnitByPurchaseLineId.getValue(line.purchaseLineId))
       )
     }
 

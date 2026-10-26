@@ -5,8 +5,8 @@ import me.ezra_home.retail_software_solution.organizations.business.org_jurisdic
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.tax_rate.api.TaxRateUpdateDto
 import me.ezra_home.retail_software_solution.platform.business.jurisdiction_tax_type.api.JurisdictionTaxTypeFetcher
-import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxApplicationLevel
+import me.ezra_home.retail_software_solution.platform.business.tax_type.api.TaxCalculationMethod
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -31,7 +31,7 @@ class TaxRateValidator(
             ?: throw RtsGenericException("Org jurisdiction tax type not found")
         if (parent.status != OrgJurisdictionTaxTypeStatus.ACTIVE)
             throw RtsGenericException("Cannot create a rate for an inactive Tax Type")
-        validateRateValue(parent.jurisdictionTaxTypeId, dto.ratePercentage, dto.rateFlatAmount)
+        validateRateValue(parent.jurisdictionTaxTypeId, dto.ratePercentage, dto.rateFlatAmount?.toBigDecimal())
         val taxApplicationLevel = jurisdictionTaxTypeFetcher.getTaxApplicationLevel(parent.jurisdictionTaxTypeId)
         val overlappingRates = overlappingRates(dto.orgJurisdictionTaxTypeId, dto.startDate, dto.endDate)
         val conflictingRate = when (taxApplicationLevel) {

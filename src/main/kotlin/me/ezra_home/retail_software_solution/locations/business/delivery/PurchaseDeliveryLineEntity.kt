@@ -27,7 +27,7 @@ class PurchaseDeliveryLineEntity(
   @Column(name = "user_provided_quantity_delivered", nullable = false, precision = 19, scale = 4)
   var userProvidedQuantityDelivered: BigDecimal,
 
-  @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
+  @Column(name = "unit_cost", nullable = false, precision = 19, scale = 4)
   var unitCost: BigDecimal,
 
   @Column(name = "unit_id", nullable = false)
@@ -38,6 +38,6 @@ class PurchaseDeliveryLineEntity(
 
 ) : HasReferenceEntity() {
 
-  fun lineTotal(): BigDecimal = Decimals.Scale2.multiply(userProvidedQuantityDelivered, unitCost)
+  fun lineTotal(): BigDecimal = Decimals.MoneyScale.multiply(userProvidedQuantityDelivered, unitCost)
 
 }

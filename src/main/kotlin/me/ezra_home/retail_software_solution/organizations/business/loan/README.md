@@ -28,16 +28,20 @@ reports `0` (its void posts the whole amount back out of `LOANS_PAYABLE`). `LOAN
 `outstanding` is zero, else `OPN`. A repayment is active when it has no `loan_repayment_void` row; that rule lives only in the
 `active_loan_repayment` view (`ActiveLoanRepaymentEntity`), which `loan_status` sums from.
 
-Everything reads the views: the repayment outstanding check (under the loan lock), `LoanResponseBuilder` for `amountRepaid`,
-`outstanding` and `status`, and `LoanSearchQueryBuilder`, which joins `loan_status` for the `statuses` filter. The void-loan
-guard lists active repayments through `ActiveLoanRepaymentRepository`. The response builder still loads every repayment and its
-void row because it renders each repayment's own `void`.
+The repayment outstanding check (under the loan lock), `LoanResponseBuilder.buildResponses` (search and `getLoan`) and
+`LoanSearchQueryBuilder`, which joins `loan_status` for the `statuses` filter, read the view. A write never re-reads it: the
+view does not see the transaction's pending writes. `LoanFinder.findLoanStatusFigures` reads the status once under the loan
+lock, before the write, and the service moves it with `LoanStatusResolver` (`forNewLoan`, `afterRepayment`,
+`afterRepaymentVoid`, `afterLoanVoid`) and passes the resulting `LoanStatusFigures` to `LoanResponseBuilder.buildResponse`.
+`LoanStatusResolver` mirrors the view's rules, so a change to `loan_status.yml` changes it too. The void-loan guard lists active repayments through
+`ActiveLoanRepaymentRepository`. The response builder still loads every repayment and its void row because it renders each
+repayment's own `void`.
 
 ## Rules
 
 - Validation is in the services and their validators, not on the DTOs. `LoanService` handles loans and loan voids;
-  `LoanRepaymentService` handles repayments and repayment voids. Amounts go through `Decimals.Scale2.requirePositiveAmount` (rounded to cents with `Scale2`, positive, at most
-  `Decimals.MAXIMUM_TRANSACTION_AMOUNT`) and dates through `DateTimes.Local.requireNotInFuture`; repayment rules in `LoanRepaymentValidator`,
+  `LoanRepaymentService` handles repayments and repayment voids. Amounts are `PositiveMoney` (zero, a negative, more decimals than the session money scale, or a magnitude above
+  `Decimals.MAXIMUM_TRANSACTION_AMOUNT` are rejected when the request binds, never rounded), and dates through `DateTimes.Local.requireNotInFuture`; repayment rules in `LoanRepaymentValidator`,
   loan-void rules in `LoanVoidValidator`, and the lock, lookup and lender reference in `LoanFinder`. Notes and void
   reasons are blank-to-null and unbounded (`text`).
 - `loanDate` and `repaymentDate` cannot be after today in the organization zone, and a repayment cannot be dated before

@@ -35,7 +35,7 @@ class OpeningStockStockUpdater(
                 documentReference = line.documentReference,
                 detailReference = null,
                 storageQuantity = ExactQuantity.ofUserProvided(line.userProvidedQuantity, line.storageUnitsPerUnit),
-                batchCost = Decimals.Scale2.multiply(line.unitCost, line.userProvidedQuantity),
+                batchCost = Decimals.MoneyScale.multiply(line.unitCost, line.userProvidedQuantity),
                 userProvidedQuantity = line.userProvidedQuantity,
                 unitId = line.unitId,
                 storageUnitsPerUnit = line.storageUnitsPerUnit,

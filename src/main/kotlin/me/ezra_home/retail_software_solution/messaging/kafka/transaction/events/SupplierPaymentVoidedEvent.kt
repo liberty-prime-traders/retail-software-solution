@@ -19,5 +19,5 @@ data class SupplierPaymentVoidedEvent(
     val voidedOn: LocalDate,
     val paymentReferenceNumber: String
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = voidId
+    override val sourceDocumentId: UUID = voidId
 }

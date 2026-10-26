@@ -8,7 +8,7 @@ data class StockAvailability(
     val quantityOnHand: BigDecimal,
     val quantityReserved: BigDecimal,
 ) {
-    val quantityAvailable: BigDecimal get() = quantityOnHand - quantityReserved
+    val quantityAvailable: BigDecimal = quantityOnHand - quantityReserved
 
     companion object {
         val ZERO = StockAvailability(BigDecimal.ZERO, BigDecimal.ZERO)

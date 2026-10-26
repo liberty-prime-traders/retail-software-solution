@@ -1,18 +1,17 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
 import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
-import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -82,9 +81,7 @@ class ExpensePaymentOperations(
     ): List<ExpensePaymentDraft> {
         expenseLookup.requireNotVoided(expenseAggregate, expenseDto)
         val expensePaymentDrafts = resolvedPaymentRequests.map { (paymentRequest, resolvedSettlement) ->
-            val paymentAmount = Decimals.Scale2.round(paymentRequest.amount)
-            Decimals.requirePositive(paymentAmount, "Payment amount")
-            ExpensePaymentDraft(expenseDto.id, paymentAmount, resolvedSettlement)
+            ExpensePaymentDraft(expenseDto.id, paymentRequest.amount.toBigDecimal(), resolvedSettlement)
         }
         val remainingBalance = expenseDto.amount - expenseAggregate.activePaidAmount(expenseDto.id)
         val totalRequested = expensePaymentDrafts.sumOf { it.amount }

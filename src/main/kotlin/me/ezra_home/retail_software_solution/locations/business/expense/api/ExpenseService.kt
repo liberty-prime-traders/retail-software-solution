@@ -2,7 +2,11 @@ package me.ezra_home.retail_software_solution.locations.business.expense.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SourceDocument
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperationsFactory
+import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseReissuer
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpenseVoidRequest
@@ -10,11 +14,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.request.Purchase
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.SaleExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.StandaloneExpenseBatchRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.WageExpenseBatchRequest
-import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseOperationsFactory
-import me.ezra_home.retail_software_solution.cross_tier.expense.operation.ExpenseReissuer
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.SourceDocument
+import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
@@ -55,7 +55,7 @@ class ExpenseService(
             ExpenseSubmission(
                 wageExpenseBatchRequest.expenseDate,
                 wageExpenseBatchRequest.rows.map {
-                    ExpenseRowCommand(wageExpenseTypeId, it.employeeContactId, it.amount, null, it.expenseDateOverride, it.settlement)
+                    ExpenseRowCommand(wageExpenseTypeId, it.employeeContactId, it.amount.toBigDecimal(), null, it.expenseDateOverride, it.settlement)
                 }
             )
         )
@@ -74,7 +74,7 @@ class ExpenseService(
                 purchaseExpenseBatchRequest.expenseDate,
                 purchaseExpenseBatchRequest.rows.map {
                     ExpenseRowCommand(
-                        it.expenseTypeId, it.payeeContactId ?: purchaseInfo.supplierId, it.amount,
+                        it.expenseTypeId, it.payeeContactId ?: purchaseInfo.supplierId, it.amount.toBigDecimal(),
                         it.description, it.expenseDateOverride, it.settlement
                     )
                 }

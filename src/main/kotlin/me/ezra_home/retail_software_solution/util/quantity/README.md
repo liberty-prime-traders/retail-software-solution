@@ -21,10 +21,20 @@ nothing rounds on the way in and there is no rounding policy to manage.
    `displayFactor()`. Price conversion (`convertPriceRoundingHalfUp`) stays allowed.
 5. **Precision.** User-provided quantity columns are `numeric(19,4)`, storage quantity columns `numeric(28,4)`, and
    rates and prices `numeric(28,10)`. A user types at most `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` (2)
-   decimals, and a price override at most `MAX_PRICE_OVERRIDE_DECIMAL_PLACES` (2). The columns hold 4, so raising a
-   limit never causes stock rounding. `Decimals.requireMaxDecimalPlaces` enforces a limit in the `init` block of a
-   request class, and `GlobalExceptionHandler.handleUnreadableBody` returns the resulting `RtsGenericException` as the
-   business error instead of a 500. Quantities the system derives (storage quantities, cost-group shares, remainders)
+   decimals. The columns hold 4, so raising a limit never causes stock rounding. `UserProvidedQuantity` carries a typed quantity: `UserProvidedQuantity.of` rejects a negative, excess
+   decimals (trailing zeros do not count) and a magnitude above `QuantityLimits.MAX_USER_QUANTITY` instead of rounding, and it allows zero
+   (a purchase line update, where zero deletes the line). `PositiveUserProvidedQuantity` also rejects zero and is what every other request class holds
+   (opening stock, stock adjustment, delivery, purchase create and cancel, stock transfer and sale session lines). Both bind from and serialize to a bare JSON number. Unwrap with `toBigDecimal()` at the boundary
+   into entities, `ExactQuantity` and pricing. `GlobalExceptionHandler.handleUnreadableBody` returns the
+   `RtsGenericException` thrown during binding as the business error instead of a 500. A typed amount is a
+   `util.business.Money`, which works the same way against `Decimals.MoneyScale`, also rejects a negative and a magnitude above `Decimals.MAXIMUM_TRANSACTION_AMOUNT`, and allows zero
+   (a purchase line's unit cost, which a draft may leave at zero, a location product's `defaultSalePrice`, a contact's `creditLimit`, a tax rate's
+   `rateFlatAmount`, an opening balance, and the sale-session price override, which is nullable: null means unchanged).
+   `util.business.PositiveMoney` is a `Money` that also rejects zero (loan, fund movement, payment and expense amounts, and the unit cost of a
+   delivery line, an opening stock line and a stock increase). `Money`, `PositiveMoney`, `Percentage`, `UserProvidedQuantity` and `PositiveUserProvidedQuantity` share the `TypedDecimal` base (equal only to the same type with the same number, `Serializable` because cached request DTOs hold them); `MoneyQualifier` converts the money types to
+   `BigDecimal` in every MapStruct mapper, and they normalize to the money scale (`1.5` becomes `1.50`), so none rounds. An adjustment is the typed `Percentage` (0 to 100, 2 decimals whatever the currency scale) or `PositiveMoney` prop of `SaleSessionAdjustmentAddDto`; the internal
+   `SaleAdjustmentCreateDto.value` is a plain `BigDecimal`, built from session state.
+   `Decimals.requireMaxDecimalPlaces` stays for limits with no dedicated type. Quantities the system derives (storage quantities, cost-group shares, remainders)
    are exempt and keep 4 decimals. `ExactQuantity.toStorageQuantity()` throws instead of rounding if a digit beyond
    scale 4 would be lost.
 6. **Display is a breakdown.** `QuantityBreakdown` renders a storage quantity from the product's base unit down to the

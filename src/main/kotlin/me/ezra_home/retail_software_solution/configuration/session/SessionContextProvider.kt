@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID
 
-
 object SessionContextProvider {
     private val sessionContextThreadLocal = ThreadLocal<SessionContext?>()
 
@@ -55,6 +54,10 @@ object SessionContextProvider {
         return getSession().organization?.timezone ?: throw RtsGenericException("Organization timezone not found in session.")
     }
 
+    fun getMoneyScale(): Int {
+        return getSession().organization?.moneyScale ?: throw RtsGenericException("Organization money scale not found in session.")
+    }
+
     fun clear() {
         sessionContextThreadLocal.remove()
     }
@@ -63,7 +66,8 @@ object SessionContextProvider {
         getSession().organization = OrgSession(
             id = organization.id,
             schemaName = organization.schemaName!!,
-            timezone = organization.timezone
+            timezone = organization.timezone,
+            moneyScale = OrgSession.DEFAULT_MONEY_SCALE
         )
     }
 

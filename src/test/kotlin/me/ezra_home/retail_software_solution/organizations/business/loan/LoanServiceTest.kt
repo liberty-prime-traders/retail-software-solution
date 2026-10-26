@@ -14,30 +14,22 @@ import me.ezra_home.retail_software_solution.organizations.business.loan.LoanTes
 import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanCreateRequest
 import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanResponse
 import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanService
+import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanStatus
 import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanVoidRequest
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.doAnswer
-import org.mockito.Mockito.doThrow
-import org.mockito.Mockito.inOrder
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -48,6 +40,7 @@ class LoanServiceTest {
 
     private val loanRepository = mock(LoanRepository::class.java)
     private val activeLoanRepaymentRepository = mock(ActiveLoanRepaymentRepository::class.java)
+    private val loanStatusRepository = mock(LoanStatusRepository::class.java)
     private val loanVoidRepository = mock(LoanVoidRepository::class.java)
     private val loanLenderValidator = mock(LoanLenderValidator::class.java)
     private val loanAccountValidator = mock(LoanAccountValidator::class.java)
@@ -60,13 +53,14 @@ class LoanServiceTest {
 
     private val loanService = LoanService(
         loanRepository, loanVoidRepository, loanMapper,
-        LoanFinder(loanRepository, loanMapper, contactService, orgEntityAdvisoryLock),
+        LoanFinder(loanRepository, loanStatusRepository, loanMapper, contactService, orgEntityAdvisoryLock),
         loanLenderValidator, loanAccountValidator,
         LoanVoidValidator(loanVoidRepository, activeLoanRepaymentRepository),
         loanResponseBuilder, ledgerPostingService
     )
 
     private val postedRequests = mutableListOf<LedgerPostingRequest>()
+    private val loanStatusFiguresPassedToBuilder = mutableListOf<LoanStatusFigures>()
     private val loanDate = LocalDate.of(2026, 3, 1)
     private val cashCode = SystemAccount.CASH.code
     private val lenderContactDto = LoanTestSupport.lenderContactDto()
@@ -88,7 +82,17 @@ class LoanServiceTest {
         }
         `when`(loanRepository.findById(loanId)).thenReturn(Optional.of(loanEntity))
         `when`(activeLoanRepaymentRepository.findByLoanIdOrderByCreatedOnAscIdAsc(loanId)).thenReturn(emptyList())
-        `when`(loanResponseBuilder.buildResponse(anyNonNull(LoanDto::class.java), anyNonNull(ContactDto::class.java))).thenReturn(mock(LoanResponse::class.java))
+        `when`(
+            loanResponseBuilder.buildResponse(
+                anyNonNull(LoanDto::class.java), anyNonNull(ContactDto::class.java), anyNonNull(LoanStatusFigures::class.java)
+            )
+        ).thenAnswer { invocation ->
+            loanStatusFiguresPassedToBuilder.add(invocation.arguments[2] as LoanStatusFigures)
+            mock(LoanResponse::class.java)
+        }
+        `when`(loanStatusRepository.findById(loanId)).thenReturn(
+            Optional.of(LoanStatusEntity(loanId, BigDecimal.ZERO, BigDecimal("100"), LoanStatus.OPEN))
+        )
     }
 
     @AfterEach
@@ -97,8 +101,8 @@ class LoanServiceTest {
     }
 
     @Test
-    fun `a loan is saved rounded with a blank note dropped, then posted from the lender's side`() {
-        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("50.12345"), loanDate, "   "))
+    fun `a loan is saved with a blank note dropped, then posted from the lender's side`() {
+        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("50.12")), loanDate, "   "))
 
         val savedLoan = savedLoan()
         assertEquals(lenderContactDto.id, savedLoan.lenderContactId)
@@ -118,10 +122,21 @@ class LoanServiceTest {
     }
 
     @Test
+    fun `a new loan is returned open with its whole amount outstanding without reading the view`() {
+        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("50.12")), loanDate))
+
+        val loanStatusFigures = loanStatusFiguresPassedToBuilder.single()
+        assertEquals(0, BigDecimal.ZERO.compareTo(loanStatusFigures.amountRepaid))
+        assertEquals(0, BigDecimal("50.12").compareTo(loanStatusFigures.outstanding))
+        assertEquals(LoanStatus.OPEN, loanStatusFigures.status)
+        verifyNoInteractions(loanStatusRepository)
+    }
+
+    @Test
     fun `zero, negative and amounts that round to zero are rejected`() {
         listOf("0", "-5", "0.00004").forEach { amount ->
             assertThrows(RtsGenericException::class.java) {
-                loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal(amount), loanDate))
+                loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal(amount)), loanDate))
             }
         }
 
@@ -130,23 +145,15 @@ class LoanServiceTest {
     }
 
     @Test
-    fun `an amount above the transaction maximum is rejected, and the maximum itself is accepted`() {
-        val tooLarge = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01"))
-
-        assertThrows(RtsGenericException::class.java) {
-            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, tooLarge, loanDate))
-        }
-        verify(loanRepository, never()).save(any(LoanEntity::class.java))
-        assertTrue(postedRequests.isEmpty())
-
-        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT, loanDate))
+    fun `the transaction maximum itself is accepted`() {
+        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(Decimals.MAXIMUM_TRANSACTION_AMOUNT), loanDate))
         assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, savedLoan().amount)
     }
 
     @Test
     fun `a long note and a long void reason are kept in full`() {
         val longText = "n".repeat(2000)
-        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("10"), loanDate, longText))
+        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("10")), loanDate, longText))
         assertEquals(longText, savedLoan().note)
 
         loanService.voidLoan(LoanVoidRequest(loanId, longText))
@@ -161,7 +168,7 @@ class LoanServiceTest {
         doThrow(RtsGenericException("Contact Acme is not a lender")).`when`(loanLenderValidator).requireActiveLender("CT000009")
 
         assertThrows(RtsGenericException::class.java) {
-            loanService.createLoan(LoanCreateRequest("CT000009", cashCode, BigDecimal("10"), loanDate))
+            loanService.createLoan(LoanCreateRequest("CT000009", cashCode, PositiveMoney.of(BigDecimal("10")), loanDate))
         }
 
         verify(loanRepository, never()).save(any(LoanEntity::class.java))
@@ -173,7 +180,7 @@ class LoanServiceTest {
         doThrow(RtsGenericException("Loan account is inactive")).`when`(loanAccountValidator).requireSelectable(cashCode)
 
         assertThrows(RtsGenericException::class.java) {
-            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("10"), loanDate))
+            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("10")), loanDate))
         }
 
         verify(loanRepository, never()).save(any(LoanEntity::class.java))
@@ -184,12 +191,12 @@ class LoanServiceTest {
         val tomorrow = DateTimes.Local.Now.organization().plusDays(1)
 
         assertThrows(RtsGenericException::class.java) {
-            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("10"), tomorrow))
+            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("10")), tomorrow))
         }
         verify(loanRepository, never()).save(any(LoanEntity::class.java))
         assertTrue(postedRequests.isEmpty())
 
-        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("10"), DateTimes.Local.Now.organization()))
+        loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("10")), DateTimes.Local.Now.organization()))
         assertEquals(1, postedRequests.size)
     }
 
@@ -213,6 +220,15 @@ class LoanServiceTest {
         assertEquals(voidCaptor.value.voidDate, posted.postingDate)
         assertEquals(listOf(SystemAccount.LOANS_PAYABLE.code, cashCode), posted.entries.map { it.accountCode })
         assertEquals(0, BigDecimal("100").compareTo(posted.subledgerEntries.single().receivableAmount))
+    }
+
+    @Test
+    fun `a voided loan is returned voided with nothing outstanding`() {
+        loanService.voidLoan(LoanVoidRequest(loanId, null))
+
+        val loanStatusFigures = loanStatusFiguresPassedToBuilder.single()
+        assertEquals(LoanStatus.VOIDED, loanStatusFigures.status)
+        assertEquals(0, loanStatusFigures.outstanding.signum())
     }
 
     @Test
@@ -243,7 +259,7 @@ class LoanServiceTest {
         doThrow(RtsGenericException("No open fiscal period")).`when`(ledgerPostingService).post(anyNonNull(LedgerPostingRequest::class.java))
 
         assertThrows(RtsGenericException::class.java) {
-            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, BigDecimal("10"), loanDate))
+            loanService.createLoan(LoanCreateRequest(lenderContactDto.referenceNumber, cashCode, PositiveMoney.of(BigDecimal("10")), loanDate))
         }
 
         val transactional = LoanService::class.java.getAnnotation(TransactionalOnOrganizationSchema::class.java)

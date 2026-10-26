@@ -81,7 +81,6 @@ class LedgerMovementQueriesPostgresTest {
                 "dayStartsLiteral" to ledgerMovementReader.toDayStartsLiteral(dayStarts),
                 "rangeStart" to dayStarts.first(),
                 "rangeEnd" to dayStarts.last(),
-                "accountCodes" to arrayOf(accountCode),
                 "sourceTypeCodes" to arrayOf(sourceTypeCode)
             )
         )
@@ -99,7 +98,6 @@ class LedgerMovementQueriesPostgresTest {
                 "dayStartsLiteral" to ledgerMovementReader.toDayStartsLiteral(dayStarts),
                 "rangeStart" to dayStarts.first(),
                 "rangeEnd" to dayStarts.last(),
-                "accountCodes" to arrayOf(accountCode),
                 "sourceTypeCodes" to arrayOf(sourceTypeCode),
                 "locationId" to locationId
             )

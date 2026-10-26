@@ -12,19 +12,16 @@ import me.ezra_home.retail_software_solution.organizations.business.contact_open
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.mockingDetails
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.lang.reflect.Proxy
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -150,18 +147,9 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `an amount beyond scale 2 is compared and stored at scale 2`() {
-        givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.01"))
-
-        contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.005"))
-
+    fun `an amount beyond scale 2 is rejected before any revision is written`() {
+        assertThrows(RtsGenericException::class.java) { setDto(payable = "10.005") }
         assertTrue(savedRevisions.isEmpty())
-        assertTrue(publishedSignedDeltas().isEmpty())
-
-        contactOpeningBalanceService.set(contactId, setDto(payable = "10.005", receivable = "100.005"))
-
-        assertEquals("10.01", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("10.01"), publishedSignedDeltas())
     }
 
     @Test
@@ -237,6 +225,7 @@ class ContactOpeningBalanceServiceTest {
                 createdOn = OffsetDateTime.now(),
                 referenceNumber = contactReferenceNumber,
                 contactTypes = setOf(ContactType.CUSTOMER),
+                firstName = "Test",
                 status = contactStatus
             )
         )
@@ -253,8 +242,8 @@ class ContactOpeningBalanceServiceTest {
     )
 
     private fun setDto(payable: String? = null, receivable: String? = null) = ContactOpeningBalanceSetDto(
-        payable = payable?.let { Optional.of(BigDecimal(it)) },
-        receivable = receivable?.let { Optional.of(BigDecimal(it)) }
+        payable = payable?.let { Optional.of(Money.of(BigDecimal(it))) },
+        receivable = receivable?.let { Optional.of(Money.of(BigDecimal(it))) }
     )
 
     private fun publishedSignedDeltas(): List<String> =

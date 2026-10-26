@@ -17,6 +17,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -142,6 +143,18 @@ class LoanResponseBuilderTest {
         verify(loanVoidRepository, times(1)).findByLoanIdIn(anyNonNullCollection())
         verify(loanRepaymentVoidRepository, times(1)).findByLoanRepaymentIdIn(anyNonNullCollection())
         verify(accountDataFetcher, times(1)).getLabelsByCodes(setOf(cashCode))
+    }
+
+    @Test
+    fun `a response built from supplied status figures never reads the view`() {
+        val loanDto = loan("100.0000")
+
+        val response = loanResponseBuilder.buildResponse(loanDto, lender, LoanStatusFigures(BigDecimal("40"), BigDecimal("60"), LoanStatus.OPEN))
+
+        assertEquals(0, BigDecimal("40").compareTo(response.amountRepaid))
+        assertEquals(0, BigDecimal("60").compareTo(response.outstanding))
+        assertEquals(LoanStatus.OPEN, response.status)
+        verifyNoInteractions(loanStatusRepository)
     }
 
     private fun build(vararg loanDtos: LoanDto) = loanResponseBuilder.buildResponses(loanDtos.toList(), mapOf(lender.id to lender))

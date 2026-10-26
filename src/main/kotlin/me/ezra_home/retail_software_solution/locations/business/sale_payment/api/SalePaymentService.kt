@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 
-import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleUpdater
@@ -13,6 +12,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
@@ -32,13 +32,12 @@ class SalePaymentService(
 
     fun recordPayment(salePaymentCreateDto: SalePaymentCreateDto): SalePaymentResponseDto {
         val saleId = salePaymentCreateDto.saleId ?: throw RtsGenericException("saleId is required")
-        SalePaymentValidator.guardPositiveAmount(salePaymentCreateDto.amount)
         val effectivePaymentDate = salePaymentCreateDto.paymentDate ?: DateTimes.Offset.Now.organization()
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(effectivePaymentDate))
         val (contactId, receivableTotal, saleStatus) = saleDataFetcher.lockAndGetSaleContext(saleId)
         SalePaymentValidator.guardOpenForPayment(saleStatus)
         val alreadyPaid = salePaymentFetcher.calculatePaidAmount(saleId)
-        SalePaymentValidator.guardNotExceedingBalance(salePaymentCreateDto.amount, receivableTotal.subtract(alreadyPaid))
+        SalePaymentValidator.guardNotExceedingBalance(salePaymentCreateDto.amount.toBigDecimal(), receivableTotal.subtract(alreadyPaid))
         val writeResult = salePaymentWriter.write(
             saleId = saleId,
             contactId = contactId,
@@ -46,7 +45,7 @@ class SalePaymentService(
             newSalePayments = listOf(
                 SalePaymentWriter.NewSalePayment(
                     paymentMethodId = salePaymentCreateDto.paymentMethodId,
-                    amount = salePaymentCreateDto.amount,
+                    amount = salePaymentCreateDto.amount.toBigDecimal(),
                     reference = salePaymentCreateDto.reference,
                     paymentDate = effectivePaymentDate,
                 )

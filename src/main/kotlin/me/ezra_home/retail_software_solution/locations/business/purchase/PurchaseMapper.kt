@@ -44,8 +44,8 @@ object PurchaseMapper {
   fun toNewLineEntity(purchaseId: UUID, purchaseLineCreateDto: PurchaseLineCreateDto, storageUnitsPerUnit: Long) = PurchaseLineEntity(
     purchaseId = purchaseId,
     locationProductId = purchaseLineCreateDto.locationProductId,
-    userProvidedQuantityOrdered = purchaseLineCreateDto.userProvidedQuantityOrdered,
-    unitCost = purchaseLineCreateDto.unitCost,
+    userProvidedQuantityOrdered = purchaseLineCreateDto.userProvidedQuantityOrdered.toBigDecimal(),
+    unitCost = purchaseLineCreateDto.unitCost.toBigDecimal(),
     unitId = purchaseLineCreateDto.unitId,
     storageUnitsPerUnit = storageUnitsPerUnit
   )

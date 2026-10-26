@@ -46,7 +46,7 @@ class LocationProductEntity(
   @Column(name = "min_stock_level")
   var minStockLevel: Int? = null,
 
-  @Column(name = "last_purchase_price", precision = 15, scale = 2)
+  @Column(name = "last_purchase_price", precision = 19, scale = 4)
   var lastPurchasePrice: BigDecimal? = null,
 
   @Convert(converter = ProductStatusConverter::class)

@@ -30,7 +30,7 @@ class OpeningStockAccountingProcessor(
         ).not()
 
     override fun prepareLedgerRequest(event: OpeningStockDeclaredEvent): LedgerPostingRequest {
-        val amount = Decimals.Scale2.multiply(event.userProvidedQuantity, event.unitCost)
+        val amount = Decimals.MoneyScale.multiply(event.userProvidedQuantity, event.unitCost)
         return LedgerPostingRequest(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.OPENING_STOCK,

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.util.business
 
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 import java.math.MathContext
@@ -9,7 +10,9 @@ object Decimals {
     // numeric(19, 4) holds 15 integer digits; the 12 integer-digit ceiling leaves headroom for balances to sum, whatever the money scale.
     val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.99")
 
-    abstract class FixedScale(val scale: Int) {
+    sealed class DecimalScale {
+        abstract val scale: Int
+
         fun round(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.HALF_UP)
 
         fun roundDown(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.DOWN)
@@ -22,31 +25,20 @@ object Decimals {
         fun divide(value: BigDecimal, divisor: BigDecimal): BigDecimal =
             value.divide(divisor, scale, RoundingMode.HALF_UP)
 
-        fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, scale)
-
-        fun requirePositiveAmount(amount: BigDecimal, label: String = "Amount"): BigDecimal {
-            val roundedAmount = round(amount)
-            requirePositive(roundedAmount, label)
-            if (roundedAmount > MAXIMUM_TRANSACTION_AMOUNT) {
-                throw RtsGenericException("$label must not exceed ${MAXIMUM_TRANSACTION_AMOUNT.toPlainString()}")
-            }
-            return roundedAmount
-        }
+        fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, this)
     }
 
+    sealed class FixedScale(final override val scale: Int) : DecimalScale()
     object Scale4 : FixedScale(4)
+    object Scale10 : FixedScale(10)
 
-    object Scale2 : FixedScale(2)
-
-    object Scale10 {
-        private const val SCALE = 10
-
-        fun divide(value: BigDecimal, divisor: BigDecimal, roundingMode: RoundingMode = RoundingMode.HALF_UP): BigDecimal =
-            value.divide(divisor, SCALE, roundingMode)
+    sealed class VariableScale : DecimalScale()
+    object MoneyScale : VariableScale() {
+        override val scale: Int get() = SessionContextProvider.getMoneyScale()
     }
 
-    fun compareAtScale(first: BigDecimal, second: BigDecimal, scale: Int): Int =
-        first.setScale(scale, RoundingMode.HALF_UP).compareTo(second.setScale(scale, RoundingMode.HALF_UP))
+    fun compareAtScale(first: BigDecimal, second: BigDecimal, decimalScale: DecimalScale): Int =
+        first.setScale(decimalScale.scale, RoundingMode.HALF_UP).compareTo(second.setScale(decimalScale.scale, RoundingMode.HALF_UP))
 
     fun stripZeroesAndRound(quantity: BigDecimal): String = stripZeroes(quantity, RoundingMode.HALF_UP)
 
@@ -65,6 +57,18 @@ object Decimals {
     fun requireMaxDecimalPlaces(value: BigDecimal, maxDecimalPlaces: Int, label: String) {
         if (value.stripTrailingZeros().scale() > maxDecimalPlaces) {
             throw RtsGenericException("$label can have at most $maxDecimalPlaces decimal places")
+        }
+    }
+
+    fun requireWithinMaximum(value: BigDecimal, maximum: BigDecimal, label: String) {
+        if (value.abs() > maximum) {
+            throw RtsGenericException("$label must not exceed ${maximum.toPlainString()}")
+        }
+    }
+
+    fun requireNonNegative(value: BigDecimal, label: String) {
+        if (value.signum() < 0) {
+            throw RtsGenericException("$label must not be negative")
         }
     }
 

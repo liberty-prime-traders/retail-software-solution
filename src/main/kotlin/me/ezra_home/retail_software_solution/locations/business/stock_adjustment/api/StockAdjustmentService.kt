@@ -46,8 +46,8 @@ class StockAdjustmentService(
     fun adjust(stockAdjustmentCreateDto: StockAdjustmentCreateDto): StockAdjustmentResponseDto {
         val direction = StockAdjustmentValidator.guardCategoryRequest(stockAdjustmentCreateDto)
         val locationProductId = stockAdjustmentCreateDto.locationProductId
-        fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, setOf(locationProductId))
+        fiscalPeriodService.requireOpenForDate(DateTimes.Local.Now.organization())
         locationProductService.guardAllActive(listOf(locationProductId))
         if (StockAdjustmentCategoryRules.requiresReason(stockAdjustmentCreateDto.category)) {
             stockMovementReasonService.guardReason(direction.movementType, stockAdjustmentCreateDto.stockMovementReasonId)
@@ -56,7 +56,7 @@ class StockAdjustmentService(
         val storageUnitsPerUnit = locationProductDataFetcher.getStorageUnitsPerUnit(
             listOf(LocationProductUnitRequestDto(locationProductId, stockAdjustmentCreateDto.unitId))
         ).getValue(locationProductId)
-        val storageQuantity = ExactQuantity.ofUserProvided(stockAdjustmentCreateDto.userProvidedQuantity, storageUnitsPerUnit)
+        val storageQuantity = ExactQuantity.ofUserProvided(stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(), storageUnitsPerUnit)
         val referenceNumber = referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)
         val adjustmentDetails = StockAdjustmentMovementDetails(
             category = stockAdjustmentCreateDto.category,
@@ -64,8 +64,7 @@ class StockAdjustmentService(
             note = StringUtils.getValueOrNull(stockAdjustmentCreateDto.note)
         )
 
-        val productLabel = locationProductDataFetcher.findSummaryByIds(setOf(locationProductId))[locationProductId]?.label
-            ?: locationProductId.toString()
+        val productLabel = locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label
 
         val totalCost = when (direction) {
             StockAdjustmentDirection.INCREASE -> applyIncrease(
@@ -76,7 +75,7 @@ class StockAdjustmentService(
                     locationProductId = locationProductId,
                     productLabel = productLabel,
                     storageQuantity = storageQuantity,
-                    userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity,
+                    userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                     unitId = stockAdjustmentCreateDto.unitId,
                     storageUnitsPerUnit = storageUnitsPerUnit,
                     documentReference = referenceNumber,
@@ -90,7 +89,7 @@ class StockAdjustmentService(
                 locationProductId = locationProductId,
                 category = stockAdjustmentCreateDto.category,
                 direction = direction,
-                userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity,
+                userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = stockAdjustmentCreateDto.unitId,
                 storageUnitsPerUnit = storageUnitsPerUnit,
                 storageQuantity = storageQuantity.toStorageQuantity(),
@@ -146,12 +145,12 @@ class StockAdjustmentService(
         referenceNumber: String,
         adjustmentDetails: StockAdjustmentMovementDetails
     ): BigDecimal {
-        val totalCost = Decimals.Scale2.multiply(stockAdjustmentCreateDto.unitCost!!, stockAdjustmentCreateDto.userProvidedQuantity)
+        val totalCost = Decimals.MoneyScale.multiply(stockAdjustmentCreateDto.requiredUnitCost().toBigDecimal(), stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal())
         stockAdjustmentStockUpdater.increaseStock(
             StockAdjustmentIncreaseStockRequest(
                 locationProductId = stockAdjustmentCreateDto.locationProductId,
                 storageQuantity = storageQuantity,
-                userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity,
+                userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = stockAdjustmentCreateDto.unitId,
                 storageUnitsPerUnit = storageUnitsPerUnit,
                 totalCost = totalCost,

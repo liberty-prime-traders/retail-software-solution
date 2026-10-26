@@ -23,17 +23,28 @@ class LoanResponseBuilder(
     private val userQualifier: UserQualifier
 ) {
 
-    fun buildResponse(loanDto: LoanDto, lenderContactDto: ContactDto): LoanResponse =
-        buildResponses(listOf(loanDto), mapOf(lenderContactDto.id to lenderContactDto)).single()
+    fun buildResponse(loanDto: LoanDto, lenderContactDto: ContactDto, loanStatusFigures: LoanStatusFigures): LoanResponse =
+        assembleResponses(
+            listOf(loanDto), mapOf(lenderContactDto.id to lenderContactDto), mapOf(loanDto.id to loanStatusFigures)
+        ).single()
 
     fun buildResponses(loanDtos: List<LoanDto>, contactsById: Map<UUID, ContactDto>): List<LoanResponse> {
         if (loanDtos.isEmpty()) return emptyList()
+        val loanStatusFiguresByLoanId = loanStatusRepository.findAllById(loanDtos.map { it.id })
+            .associate { it.loanId to loanMapper.toStatusFigures(it) }
+        return assembleResponses(loanDtos, contactsById, loanStatusFiguresByLoanId)
+    }
+
+    private fun assembleResponses(
+        loanDtos: List<LoanDto>,
+        contactsById: Map<UUID, ContactDto>,
+        loanStatusFiguresByLoanId: Map<UUID, LoanStatusFigures>
+    ): List<LoanResponse> {
         val loanIds = loanDtos.map { it.id }
         val repaymentDtosByLoanId = loanRepaymentRepository.findByLoanIdIn(loanIds)
             .map { loanMapper.toRepaymentDto(it) }
             .sortedWith(compareBy({ it.createdOn }, { it.id }))
             .groupBy { it.loanId }
-        val loanStatusEntitiesByLoanId = loanStatusRepository.findAllById(loanIds).associateBy { it.loanId }
         val loanVoidDtosByLoanId = loanVoidRepository.findByLoanIdIn(loanIds)
             .map { loanMapper.toVoidDto(it) }
             .associateBy { it.loanId }
@@ -48,7 +59,7 @@ class LoanResponseBuilder(
         return loanDtos.map { loanDto ->
             val repaymentDtos = repaymentDtosByLoanId[loanDto.id].orEmpty()
             val loanVoidDto = loanVoidDtosByLoanId[loanDto.id]
-            val loanStatusEntity = loanStatusEntitiesByLoanId.getValue(loanDto.id)
+            val loanStatusFigures = loanStatusFiguresByLoanId.getValue(loanDto.id)
             val lenderContactDto = contactsById.getValue(loanDto.lenderContactId)
             LoanResponse(
                 id = loanDto.id,
@@ -58,9 +69,9 @@ class LoanResponseBuilder(
                 amount = loanDto.amount,
                 loanDate = loanDto.loanDate,
                 note = loanDto.note,
-                amountRepaid = loanStatusEntity.amountRepaid,
-                outstanding = loanStatusEntity.outstanding,
-                status = loanStatusEntity.status,
+                amountRepaid = loanStatusFigures.amountRepaid,
+                outstanding = loanStatusFigures.outstanding,
+                status = loanStatusFigures.status,
                 createdOn = loanDto.createdOn,
                 createdBy = userQualifier.getCreatorFullName(loanDto.createdById),
                 void = loanVoidDto?.let { toVoidResponse(it.voidDate, it.reason, it.createdById) },

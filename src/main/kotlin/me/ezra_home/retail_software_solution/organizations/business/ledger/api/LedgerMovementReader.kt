@@ -18,7 +18,6 @@ class LedgerMovementReader(
     fun getMovements(
         from: LocalDate,
         before: LocalDate,
-        accountCodes: Set<String>,
         sources: Set<LedgerSourceType>,
         locationId: UUID?
     ): List<LedgerMovement> {
@@ -28,10 +27,10 @@ class LedgerMovementReader(
         val rangeEnd = dayStarts.last()
         val dayStartsLiteral = toDayStartsLiteral(dayStarts)
         val buckets = if (locationId == null) {
-            ledgerEntryRepository.sumMovementsInRange(dayStartsLiteral, rangeStart, rangeEnd, accountCodes, sourceTypeCodes)
+            ledgerEntryRepository.sumMovementsInRange(dayStartsLiteral, rangeStart, rangeEnd, sourceTypeCodes)
         } else {
             ledgerEntryRepository.sumMovementsInRangeForLocation(
-                dayStartsLiteral, rangeStart, rangeEnd, accountCodes, sourceTypeCodes, locationId
+                dayStartsLiteral, rangeStart, rangeEnd, sourceTypeCodes, locationId
             )
         }
         return buckets.map { bucketMovement ->

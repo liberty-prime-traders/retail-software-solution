@@ -21,9 +21,7 @@ class SaleSessionAdjustmentHandler(
     fun add(sessionId: UUID, adjustmentAddDto: SaleSessionAdjustmentAddDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.guardMutable(saleSession)
-        if (adjustmentAddDto.calculationMethod == PriceAdjustmentMethod.FIXED_LINE_TOTAL) {
-            throw RtsGenericException("FIXED_LINE_TOTAL adjustments are created by price overrides only")
-        }
+        saleSessionValidator.guardReasonIsNotPriceOverride(adjustmentAddDto.adjustmentReasonId)
         if (adjustmentAddDto.relatedSaleLineIdentity != null) {
             val targetLineKey = adjustmentAddDto.relatedSaleLineIdentity.key()
             if (saleSession.saleLines.none { it.identity.key() == targetLineKey }) {
@@ -35,8 +33,8 @@ class SaleSessionAdjustmentHandler(
             relatedSaleLineIdentity = adjustmentAddDto.relatedSaleLineIdentity,
             adjustmentReasonId = adjustmentAddDto.adjustmentReasonId,
             direction = adjustmentAddDto.direction,
-            calculationMethod = adjustmentAddDto.calculationMethod,
-            value = adjustmentAddDto.value,
+            calculationMethod = PriceAdjustmentMethod.PERCENTAGE,
+            value = adjustmentAddDto.percentage.toBigDecimal(),
             note = adjustmentAddDto.note,
             approvedById = adjustmentAddDto.approvedById,
         )

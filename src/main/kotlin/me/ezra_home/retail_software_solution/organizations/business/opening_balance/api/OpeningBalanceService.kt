@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.organizations.business.opening_bala
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceRepository
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -26,9 +25,6 @@ class OpeningBalanceService(
 ) {
 
     fun upsert(upsertDto: OpeningBalanceUpsertDto) {
-        if (upsertDto.newAmount < BigDecimal.ZERO) {
-            throw RtsGenericException("Opening balance amount must not be negative")
-        }
         OpeningBalanceAccountValidator.assertManualOpeningBalanceAccepted(upsertDto.accountCode)
         val postingDate = DateTimes.Local.Now.organization()
         fiscalPeriodService.requireOpenForDate(postingDate)
@@ -36,10 +32,10 @@ class OpeningBalanceService(
         val account = accountDataFetcher.getByCode(upsertDto.accountCode)
         OpeningBalanceAccountValidator.requireLeafActive(account)
         val latest = openingBalanceRepository.findLatestForAccountCode(upsertDto.accountCode)
-        val delta = upsertDto.newAmount - (latest?.amount ?: BigDecimal.ZERO)
+        val delta = upsertDto.newAmount.toBigDecimal() - (latest?.amount ?: BigDecimal.ZERO)
         if (delta.compareTo(BigDecimal.ZERO) == 0) return
 
-        val saved = openingBalanceRepository.save(OpeningBalanceEntity(accountCode = upsertDto.accountCode, amount = upsertDto.newAmount))
+        val saved = openingBalanceRepository.save(OpeningBalanceEntity(accountCode = upsertDto.accountCode, amount = upsertDto.newAmount.toBigDecimal()))
         val accountEntryType = openingBalanceHandlerForKafka.directionFor(account.normalBalanceEntryType, delta)
         openingBalanceHandlerForKafka.publish(saved, accountEntryType, delta.abs(), postingDate)
     }

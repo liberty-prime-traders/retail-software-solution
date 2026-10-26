@@ -27,7 +27,7 @@ class OpeningStockEntity(
     @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
     var storageUnitsPerUnit: Long,
 
-    @Column(name = "unit_cost", nullable = false, updatable = false, precision = 15, scale = 2)
+    @Column(name = "unit_cost", nullable = false, updatable = false, precision = 19, scale = 4)
     var unitCost: BigDecimal
 
 ) : ImmutableEntity()

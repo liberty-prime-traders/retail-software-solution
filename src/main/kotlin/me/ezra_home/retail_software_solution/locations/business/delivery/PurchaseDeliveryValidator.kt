@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockB
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.UUID
 
 @Component
@@ -24,21 +23,9 @@ class PurchaseDeliveryValidator(
     if (lineIds.size != lineIds.toSet().size)
       throw RtsGenericException("Duplicate purchase line IDs in delivery request.")
 
-    val locationProducts = locationProductDataFetcher.findSummaryByIds(
-      purchaseLineById.values.map { it.locationProductId }.toSet()
-    )
-
     purchaseDeliveryCreateDto.lines.forEach { lineDto ->
-      val purchaseLine = purchaseLineById[lineDto.purchaseLineId]
-        ?: throw RtsGenericException("Purchase line ${lineDto.purchaseLineId} does not belong to this purchase.")
-
-      val orderedProduct = locationProducts[purchaseLine.locationProductId]!!
-
-      if (lineDto.userProvidedQuantityDelivered <= BigDecimal.ZERO)
-        throw RtsGenericException("Quantity delivered must be greater than zero for '${orderedProduct.label}'.")
-
-      if (lineDto.unitCost <= BigDecimal.ZERO)
-        throw RtsGenericException("Unit cost must be greater than zero for '${orderedProduct.label}'.")
+      if (lineDto.purchaseLineId !in purchaseLineById)
+        throw RtsGenericException("Purchase line ${lineDto.purchaseLineId} does not belong to this purchase.")
     }
   }
 
@@ -52,7 +39,7 @@ class PurchaseDeliveryValidator(
     purchaseDeliveryCreateDto.lines.forEach { lineDto ->
       val purchaseLine = purchaseLineById.getValue(lineDto.purchaseLineId)
       val delivered = ExactQuantity.ofUserProvided(
-        lineDto.userProvidedQuantityDelivered, storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
+        lineDto.userProvidedQuantityDelivered.toBigDecimal(), storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
       if (delivered > purchaseLine.storageQuantityRemaining) {
         val quantityBreakdown = breakdownByLocationProductId.getValue(purchaseLine.locationProductId)

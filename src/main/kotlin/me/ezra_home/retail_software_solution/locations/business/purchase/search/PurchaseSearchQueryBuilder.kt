@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.model.ViewNames
 import me.ezra_home.retail_software_solution.util.queries.AnyListFilterStrategy
@@ -15,10 +16,12 @@ object PurchaseSearchQueryBuilder {
 
   // LATERAL and correlated on purchase_id (indexed via idx_purchase_line_purchase_id) so the planner
   // filters `purchase` first and only sums each surviving row's own lines — not the whole table.
-  private const val ORDERED_TOTAL_JOIN = """
+  // The per-line rounding must match PurchaseLineEntity.getTotalCost(), or the amount filter drifts from the detail total.
+  private fun orderedTotalJoin(): String = """
     LEFT JOIN LATERAL (
       SELECT COALESCE(SUM(ROUND(
-        unit_cost * (user_provided_quantity_ordered * storage_units_per_unit - storage_quantity_canceled) / storage_units_per_unit, 4
+        unit_cost * (user_provided_quantity_ordered * storage_units_per_unit - storage_quantity_canceled) / storage_units_per_unit,
+        ${Decimals.MoneyScale.scale}
       )), 0) AS ordered_total
       FROM ${TableNames.PURCHASE_LINE}
       WHERE purchase_id = ${PurchaseSearchAliases.PURCHASE}.id
@@ -37,10 +40,10 @@ object PurchaseSearchQueryBuilder {
 
   private const val LIST_FROM_ONLY = "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE}"
 
-  private const val LIST_FROM_WITH_ORDERED_TOTAL = "$LIST_FROM_ONLY $ORDERED_TOTAL_JOIN"
+  private fun listFromWithOrderedTotal(): String = "$LIST_FROM_ONLY ${orderedTotalJoin()}"
 
-  private const val SUMMARY_FROM_AND_JOINS =
-    "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE} $ORDERED_TOTAL_JOIN $PAID_TOTAL_JOIN"
+  private fun summaryFromAndJoins(): String =
+    "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE} ${orderedTotalJoin()} $PAID_TOTAL_JOIN"
 
   fun buildPredicate(purchaseSearchParameters: PurchaseSearchParameters): QueryBuilderContext {
     val context = QueryBuilderContext()
@@ -67,16 +70,19 @@ object PurchaseSearchQueryBuilder {
       PurchaseSearchParameterNames.SUPPLIER_IDS,
       purchaseSearchParameters.supplierIds.toTypedArray()
     ).apply(context)
+
     AnyListFilterStrategy(
       "${PurchaseSearchAliases.PURCHASE}.purchase_status",
       PurchaseSearchParameterNames.PURCHASE_STATUSES,
       purchaseSearchParameters.purchaseStatuses.map { it.code }.toTypedArray()
     ).apply(context)
+
     AnyListFilterStrategy(
       "${PurchaseSearchAliases.PURCHASE}.payment_status",
       PurchaseSearchParameterNames.PAYMENT_STATUSES,
       purchaseSearchParameters.paymentStatuses.map { it.code }.toTypedArray()
     ).apply(context)
+
     // COALESCE to 0 — a purchase with no lines has no row at all in the ordered-total join,
     // not a matched row with a zero total, so the raw column is NULL and would fail both bounds.
     ExpressionRangeFilterStrategy(
@@ -86,11 +92,13 @@ object PurchaseSearchQueryBuilder {
       PurchaseSearchParameterNames.MAX_AMOUNT,
       purchaseSearchParameters.maxAmount
     ).apply(context)
+
     AnyListFilterStrategy(
       "${PurchaseSearchAliases.PURCHASE}.reference_number",
       PurchaseSearchParameterNames.PURCHASE_REFERENCE_NUMBERS,
       purchaseSearchParameters.purchaseReferenceNumbers.toTypedArray()
     ).apply(context)
+
     return context
   }
 
@@ -108,7 +116,7 @@ object PurchaseSearchQueryBuilder {
     }
 
     val needsOrderedTotal = PurchaseSearchParameterNames.MIN_AMOUNT in params || PurchaseSearchParameterNames.MAX_AMOUNT in params
-    val fromAndJoins = if (needsOrderedTotal) LIST_FROM_WITH_ORDERED_TOTAL else LIST_FROM_ONLY
+    val fromAndJoins = if (needsOrderedTotal) listFromWithOrderedTotal() else LIST_FROM_ONLY
 
     val sql = """
       SELECT ${PurchaseSearchAliases.PURCHASE}.*
@@ -128,7 +136,7 @@ object PurchaseSearchQueryBuilder {
         COUNT(*) AS purchase_count,
         COALESCE(SUM(${PurchaseSearchAliases.ORDERED_TOTAL}.ordered_total), 0) AS total_ordered,
         COALESCE(SUM(${PurchaseSearchAliases.PAID_TOTAL}.paid_total), 0) AS total_paid
-      $SUMMARY_FROM_AND_JOINS
+      ${summaryFromAndJoins()}
       WHERE ${predicate.whereClauses.joinToString(" AND ")}
       GROUP BY ${PurchaseSearchAliases.PURCHASE}.payment_status
     """.trimIndent()
@@ -143,7 +151,7 @@ object PurchaseSearchQueryBuilder {
         COUNT(*) AS purchase_count,
         COALESCE(SUM(${PurchaseSearchAliases.ORDERED_TOTAL}.ordered_total), 0) AS total_ordered,
         COALESCE(SUM(${PurchaseSearchAliases.PAID_TOTAL}.paid_total), 0) AS total_paid
-      $SUMMARY_FROM_AND_JOINS
+      ${summaryFromAndJoins()}
       WHERE ${predicate.whereClauses.joinToString(" AND ")}
       GROUP BY ${PurchaseSearchAliases.PURCHASE}.supplier_id
     """.trimIndent()

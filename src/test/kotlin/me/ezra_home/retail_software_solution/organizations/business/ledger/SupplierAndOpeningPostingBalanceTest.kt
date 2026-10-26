@@ -167,7 +167,8 @@ class SupplierAndOpeningPostingBalanceTest {
                 storageUnitsPerUnit = 1L,
                 unitCost = BigDecimal("5.00")
             )
-        )
+        ),
+        deliveryTotal = BigDecimal("10.00")
     )
 
     private fun supplierPaymentRecordedEvent(amount: String) = SupplierPaymentRecordedEvent(

@@ -20,7 +20,7 @@ databaseChangeLog:
               ELSE 'OPN' END AS status
               FROM loan l
               LEFT JOIN loan_void lv ON lv.loan_id = l.id
-              CROSS JOIN LATERAL (SELECT SUM(r.amount) AS amount_repaid FROM active_loan_repayment r WHERE r.loan_id = l.id) a
+              LEFT JOIN (SELECT r.loan_id, SUM(r.amount) AS amount_repaid FROM active_loan_repayment r GROUP BY r.loan_id) a ON a.loan_id = l.id
       rollback:
         - dropView:
             viewName: loan_status

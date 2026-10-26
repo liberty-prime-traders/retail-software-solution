@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.util.business
 
 import java.math.BigDecimal
 
-// Code outside util never reads the parts: quantities convert through ExactQuantity, which ArchitectureTest enforces
 data class ConversionRatio(val numerator: Long, val denominator: Long) {
 
     init {

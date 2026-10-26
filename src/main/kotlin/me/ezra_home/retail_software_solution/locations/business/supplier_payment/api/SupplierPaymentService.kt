@@ -16,7 +16,6 @@ import me.ezra_home.retail_software_solution.locations.business.supplier_payment
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
@@ -54,7 +53,6 @@ class SupplierPaymentService(
     }
 
     fun recordPayment(supplierPaymentCreateDto: SupplierPaymentCreateDto): SupplierPaymentResponseDto {
-        Decimals.requirePositive(supplierPaymentCreateDto.amount, "Payment amount")
         fiscalPeriodService.requireOpenForDate(DateTimes.Local.atOrganizationZone(supplierPaymentCreateDto.paymentDate))
         purchaseDataFetcher.lockPurchase(supplierPaymentCreateDto.purchaseId)
         validateDeliveryLevelPayment(supplierPaymentCreateDto)
@@ -62,10 +60,10 @@ class SupplierPaymentService(
         val alreadyPaid = paymentsCalculatorService.calculatePaidAmountForPurchase(supplierPaymentCreateDto.purchaseId)
 
         if (ceiling.isFullyDelivered) {
-            val projected = alreadyPaid + supplierPaymentCreateDto.amount
+            val projected = alreadyPaid + supplierPaymentCreateDto.amount.toBigDecimal()
             if (projected > ceiling.deliveredTotal) {
                 val formattedBalance = NumberFormat.getCurrencyInstance().format(ceiling.deliveredTotal - alreadyPaid)
-                throw RtsGenericException("Payment of ${supplierPaymentCreateDto.amount} would exceed the remaining balance of $formattedBalance")
+                throw RtsGenericException("Payment of ${supplierPaymentCreateDto.amount.toBigDecimal()} would exceed the remaining balance of $formattedBalance")
             }
         }
 
@@ -74,7 +72,7 @@ class SupplierPaymentService(
         )
         supplierPaymentRepository.save(entity)
 
-        val newStatus = purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid + supplierPaymentCreateDto.amount, ceiling)
+        val newStatus = purchasePaymentStatusService.resolvePaymentStatus(alreadyPaid + supplierPaymentCreateDto.amount.toBigDecimal(), ceiling)
         purchaseUpdater.updatePaymentStatus(supplierPaymentCreateDto.purchaseId, newStatus)
         supplierPaymentHandlerForKafka.publish(entity, purchaseDataFetcher.getSupplierId(supplierPaymentCreateDto.purchaseId))
         return assembler.buildResponse(entity, null, newStatus)
@@ -84,10 +82,10 @@ class SupplierPaymentService(
         if (supplierPaymentCreateDto.deliveryId != null) {
             val deliveryCeiling = purchaseDeliveryDataFetcher.calculateSingleDeliveryTotal(supplierPaymentCreateDto.deliveryId)
             val alreadyPaidForDelivery = paymentsCalculatorService.calculatePaidAmountForDelivery(supplierPaymentCreateDto.deliveryId)
-            val projected = alreadyPaidForDelivery + supplierPaymentCreateDto.amount
+            val projected = alreadyPaidForDelivery + supplierPaymentCreateDto.amount.toBigDecimal()
             if (projected > deliveryCeiling) {
                 val formattedBalance = DisplayFormatters.formatCurrency(deliveryCeiling - alreadyPaidForDelivery)
-                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(supplierPaymentCreateDto.amount)} would " +
+                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(supplierPaymentCreateDto.amount.toBigDecimal())} would " +
                         "exceed the remaining delivery balance of $formattedBalance"
                 )
             }

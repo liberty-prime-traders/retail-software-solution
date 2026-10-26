@@ -18,7 +18,7 @@ Money paid to a supplier against a purchase, optionally against one delivery of 
 
 ## Recording and voiding
 
-- `recordPayment` requires a positive amount (`Decimals.requirePositive`) and an open fiscal period for the payment date,
+- `recordPayment` takes a `PositiveMoney` amount and requires an open fiscal period for the payment date,
   then takes the purchase lock. A delivery-level payment cannot push that delivery's paid total above its delivery total.
   Once the purchase is fully delivered, the purchase's paid total cannot exceed the delivered total; before that, the
   ceiling from `PurchasePaymentCeilingService` decides the resulting status. The service saves the row, stores the status from

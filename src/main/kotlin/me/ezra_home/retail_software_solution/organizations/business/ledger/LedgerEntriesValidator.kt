@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger
 
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 
@@ -11,6 +12,9 @@ object LedgerEntriesValidator {
         // Zero is allowed: a fully discounted sale legitimately produces zero-amount legs.
         entries.firstOrNull { it.amount.signum() < 0 }?.let {
             throw RtsGenericException("Ledger entry amounts cannot be negative — account ${it.accountCode}: ${it.amount}")
+        }
+        entries.forEach {
+            Decimals.requireMaxDecimalPlaces(it.amount, Decimals.MoneyScale.scale, "Ledger entry amount for account ${it.accountCode}")
         }
         val totalDebits = entries
             .filter { it.entryType == EntryType.DEBIT }

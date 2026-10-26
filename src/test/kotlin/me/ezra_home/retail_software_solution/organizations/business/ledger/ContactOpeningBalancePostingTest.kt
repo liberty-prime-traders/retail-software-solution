@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ContactOpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -19,6 +20,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 /** Control-account sides and subledgerDirection columns must stay mirrored for every revision direction, or the control accounts drift from the contact totals. */
+@WithDefaultOrganizationSession
 class ContactOpeningBalancePostingTest {
 
     private val recordingAccountService = RecordingAccountService()

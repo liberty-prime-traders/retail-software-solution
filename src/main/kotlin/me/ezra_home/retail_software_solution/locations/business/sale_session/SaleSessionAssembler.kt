@@ -71,23 +71,15 @@ class SaleSessionAssembler(
 
         val unitPriceOverrideAdjustmentsByLineKey = saleSession.saleAdjustments
             .filter { it.isPriceOverride(priceOverrideReasonId) }
-            .associateBy { it.relatedSaleLineIdentity!!.key() }
+            .associateBy { it.requiredRelatedSaleLineKey() }
 
         val unitPriceOverrideByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
-            val overrideAdjustment = unitPriceOverrideAdjustmentsByLineKey[lineKey]
-            overrideAdjustment?.let {
-                val overrideTotal = when (it.direction) {
-                    AdjustmentDirection.DISCOUNT -> saleSessionLine.lineTotal - it.value
-                    AdjustmentDirection.SURCHARGE -> saleSessionLine.lineTotal + it.value
-                    AdjustmentDirection.BOTH -> null
-                }
-                overrideTotal?.let { total -> Decimals.Scale4.divide(total, saleSessionLine.userProvidedQuantity) }
-            } ?: saleSessionLine.unitPrice
+            unitPriceOverrideAdjustmentsByLineKey[lineKey]?.value ?: saleSessionLine.unitPrice
         }
 
         val lineAdjustmentsByLineKey = saleSession.saleAdjustments
             .filter { it.relatedSaleLineIdentity != null }
-            .groupBy { it.relatedSaleLineIdentity!!.key() }
+            .groupBy { it.requiredRelatedSaleLineKey() }
 
         val netLineTotalByLineKey = saleSessionLinesByKey.mapValues { (lineKey, saleSessionLine) ->
             val lineAdjustments = lineAdjustmentsByLineKey[lineKey] ?: emptyList()
@@ -96,7 +88,7 @@ class SaleSessionAssembler(
                 when (saleSessionAdjustment.direction) {
                     AdjustmentDirection.DISCOUNT -> calculatedAmount.negate()
                     AdjustmentDirection.SURCHARGE -> calculatedAmount
-                    AdjustmentDirection.BOTH -> calculatedAmount.negate()
+                    AdjustmentDirection.BOTH -> throw IllegalStateException("A session adjustment is never BOTH")
                 }
             }
             saleSessionLine.lineTotal + netAdjustmentAmount

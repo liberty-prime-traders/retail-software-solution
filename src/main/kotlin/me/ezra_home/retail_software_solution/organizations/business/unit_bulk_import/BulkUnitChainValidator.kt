@@ -15,6 +15,7 @@ object BulkUnitChainValidator {
     fun validateChainSizes(
         payloadGroups: List<UnitGroupBulkInsertDto>,
         existingUnitValues: Collection<UnitValueResponseDto>,
+        existingUnitCodes: ExistingUnitCodes,
         errors: MutableList<String>
     ) {
         val nodeIdByCode = buildMap {
@@ -24,10 +25,8 @@ object BulkUnitChainValidator {
                 putIfAbsent(RootUnitDefinition.effectiveBaseUnitCode(group.name, group.baseUnitCode), UUID.randomUUID())
             }
         }
-        val existingCodes = existingUnitValues.map { it.code }.toSet()
-        val existingCodeById = existingUnitValues.associate { it.id to it.code }
         val existingNodes = existingUnitValues.map { unitValue ->
-            val baseUnitCode = existingCodeById[unitValue.baseUnit]
+            val baseUnitCode = existingUnitCodes.codeById[unitValue.baseUnit]
             UnitChainNode(nodeIdByCode.getValue(unitValue.code), baseUnitCode?.let { nodeIdByCode[it] }, unitValue.unitsOfBasePerUnit)
         }
         val existingNodeIds = existingNodes.map { it.id }.toSet()
@@ -35,7 +34,7 @@ object BulkUnitChainValidator {
             val rootUnitCode = RootUnitDefinition.effectiveBaseUnitCode(group.name, group.baseUnitCode)
             val rootNode = UnitChainNode(nodeIdByCode.getValue(rootUnitCode), null, null)
             val unitNodes = group.unitValues
-                .filter { it.code !in existingCodes }
+                .filter { it.code !in existingUnitCodes.codes }
                 .map { unitValue ->
                     val baseUnitCode = if (unitValue.baseUnitCode == RootUnitDefinition.PIECE_BASE_UNIT_CODE)
                         rootUnitCode else unitValue.baseUnitCode
@@ -53,20 +52,20 @@ object BulkUnitChainValidator {
     fun validateNoCycles(
         payloadGroups: List<UnitGroupBulkInsertDto>,
         existingUnitValues: Collection<UnitValueResponseDto>,
+        existingUnitCodes: ExistingUnitCodes,
         groupNameByCode: Map<String, String>,
         errors: MutableList<String>
     ) {
         val graph = UnitValueDependencyGraph()
-        val existingCodeById = existingUnitValues.associate { it.id to it.code }
 
-        existingUnitValues.filter { !BulkUnitImportValidator.isMiscellaneous(groupNameByCode[it.code]) }.forEach { unitValue ->
+        existingUnitValues.filter { !SystemUnitGroup.isMiscellaneous(groupNameByCode[it.code]) }.forEach { unitValue ->
             graph.addNode(unitValue.code)
-            val baseUnitCode = existingCodeById[unitValue.baseUnit]
+            val baseUnitCode = existingUnitCodes.codeById[unitValue.baseUnit]
             if (baseUnitCode != null) graph.addEdge(baseUnitCode, unitValue.code)
         }
 
-        payloadGroups.filter { !BulkUnitImportValidator.isMiscellaneous(it.name) }.forEach { group ->
-            group.unitValues.forEach { unitValue ->
+        payloadGroups.filter { !SystemUnitGroup.isMiscellaneous(it.name) }.forEach { group ->
+            group.unitValues.filter { it.code !in existingUnitCodes.systemDefinedCodes }.forEach { unitValue ->
                 val code = StringUtils.getValueOrNull(unitValue.code) ?: return@forEach
                 graph.addNode(code)
                 val baseUnitCode = unitValue.baseUnitCode

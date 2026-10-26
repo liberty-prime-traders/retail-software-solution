@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitgroup.ap
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.api.UnitGroupDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.RootUnitDefinition
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.SystemUnitValue
-import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 
 object BulkUnitGroupValidator {
@@ -15,6 +14,9 @@ object BulkUnitGroupValidator {
         existingGroups: Collection<UnitGroupDto>,
         errors: MutableList<String>
     ) {
+        val seenPayloadNameKeys = HashSet<String>()
+        val systemGroupKeys = existingGroups.filter { it.systemDefined }.map { BulkUnitNameKeys.groupKey(it.name) }.toSet()
+        val existingNameKeys = existingGroups.mapNotNull { BulkUnitNameKeys.alphanumericNameKey(it.name) }.toSet()
         payloadGroups.forEachIndexed { index, group ->
             if (!StringUtils.hasValue(group.name)) {
                 errors.add("Group at position ${index + 1}: name is required")
@@ -25,24 +27,23 @@ object BulkUnitGroupValidator {
                 errors.add("Group '$name': name must contain at least one letter or digit")
                 return@forEachIndexed
             }
-            val duplicateInPayload = payloadGroups.take(index).any { StringUtils.isEquivalentOnAlphanumerics(it.name, name) }
-            if (duplicateInPayload) {
+            val nameKey = BulkUnitNameKeys.alphanumericNameKey(name)
+            if (nameKey != null && !seenPayloadNameKeys.add(nameKey)) {
                 errors.add("Group '$name': duplicates another group name in the same payload")
             }
 
             // Every org is bootstrapped with the SystemUnitGroup rows (see UnitGroupSeeder), so a payload
             // naming one of them (e.g. "Weight") always matches something already in the database. Treat
             // that as a reuse rather than a conflict, and skip further checks for this group entirely.
-            if (existingGroups.any { it.systemDefined && StringUtils.isEquivalent(it.name, name) }) {
+            if (BulkUnitNameKeys.groupKey(name) in systemGroupKeys) {
                 return@forEachIndexed
             }
 
-            if (existingGroups.any { StringUtils.isEquivalentOnAlphanumerics(it.name, name) }) {
+            if (nameKey != null && nameKey in existingNameKeys) {
                 errors.add("Group '$name': name already exists in the database")
             }
         }
     }
-
 
     fun validateBaseUnitNames(
         payloadGroups: List<UnitGroupBulkInsertDto>,
@@ -60,11 +61,10 @@ object BulkUnitGroupValidator {
 
     fun validateBaseUnitCodes(
         payloadGroups: List<UnitGroupBulkInsertDto>,
-        existingUnitValues: Collection<UnitValueResponseDto>,
+        existingCodes: Set<String>,
         existingGroups: Collection<UnitGroupDto>,
         errors: MutableList<String>
     ) {
-        val existingCodes = existingUnitValues.map { it.code }.toSet()
         val payloadUnitCodes = payloadGroups.flatMap { it.unitValues }.mapNotNull { StringUtils.getValueOrNull(it.code) }.toSet()
         val namedGroups = payloadGroups.filter { StringUtils.hasValue(it.name) }
 
@@ -73,12 +73,12 @@ object BulkUnitGroupValidator {
         }
 
         val customGroups = namedGroups.filter { !reusesSystemGroup(it, existingGroups) }
-        customGroups.forEachIndexed { index, group ->
+        val seenRootCodes = HashSet<String>()
+        customGroups.forEach { group ->
             val suppliedCode = StringUtils.getValueOrNull(group.baseUnitCode)
             val rootCode = RootUnitDefinition.effectiveBaseUnitCode(group.name, suppliedCode)
-            val collidesWithPayloadGroup = customGroups.take(index).any {
-                RootUnitDefinition.effectiveBaseUnitCode(it.name, it.baseUnitCode) == rootCode
-            }
+            val collidesWithPayloadGroup = rootCode in seenRootCodes
+            seenRootCodes.add(RootUnitDefinition.effectiveBaseUnitCode(group.name, group.baseUnitCode))
             if (suppliedCode == null) {
                 if (collidesWithPayloadGroup || rootCode in existingCodes || rootCode in payloadUnitCodes) {
                     errors.add(
@@ -86,7 +86,7 @@ object BulkUnitGroupValidator {
                             "collides with another unit code; choose a name that differs earlier in the text, or supply a baseUnitCode"
                     )
                 }
-                return@forEachIndexed
+                return@forEach
             }
             when {
                 suppliedCode.length > SystemUnitValue.MAX_CODE_LENGTH ->

@@ -13,4 +13,6 @@ interface LoanMapper {
     fun toVoidDto(loanVoidEntity: LoanVoidEntity): LoanVoidDto
 
     fun toRepaymentVoidDto(loanRepaymentVoidEntity: LoanRepaymentVoidEntity): LoanRepaymentVoidDto
+
+    fun toStatusFigures(loanStatusEntity: LoanStatusEntity): LoanStatusFigures
 }

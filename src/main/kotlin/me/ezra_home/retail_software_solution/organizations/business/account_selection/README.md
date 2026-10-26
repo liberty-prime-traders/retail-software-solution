@@ -22,8 +22,9 @@ Every rule offers leaf accounts only, because ledger postings are rejected on a 
 - `TAX_PAYABLE` / `TAX_RECOVERABLE` — a system-maintained account must sit directly under `TAX_PAYABLE` /
   `TAX_RECOVERABLE`; an org-defined one must be `LIABILITY` / `ASSET`.
 - `EXPENSE_TYPE` — `EXPENSE` and not in the reserved set (`COST_OF_GOODS_SOLD`, `WAGES_EXPENSE`, `INBOUND_FREIGHT`,
-  `OUTBOUND_FREIGHT`, `SHRINKAGE_AND_LOSSES`, `BAD_DEBT_EXPENSE`, `TAX_EXPENSE`), which flows post to directly. The
-  set is private to the rule; `expense_type/` depends on this domain, never the reverse.
+  `OUTBOUND_FREIGHT`, `SHRINKAGE_AND_LOSSES`, `INTERNAL_USE_EXPENSE`, `BAD_DEBT_EXPENSE`, `TAX_EXPENSE`), which flows
+  post to directly. Contra accounts never reach that check: the rule requires the exact `EXPENSE` type. The set is private to the rule; `expense_type/` depends on this domain,
+  never the reverse.
 
 ## Callers
 

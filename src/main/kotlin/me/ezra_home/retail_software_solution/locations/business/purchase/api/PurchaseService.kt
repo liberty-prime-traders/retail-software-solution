@@ -28,7 +28,6 @@ class PurchaseService(
 
   fun createDraft(purchaseCreateDto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardNoDuplicateProducts(purchaseCreateDto.linesToAdd)
-    PurchaseValidator.guardPositiveLineQuantities(purchaseCreateDto.linesToAdd)
     locationProductService.guardAllActive(purchaseCreateDto.linesToAdd.map { it.locationProductId })
     val purchase = PurchaseMapper.toDraftEntity(purchaseCreateDto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(
@@ -59,8 +58,7 @@ class PurchaseService(
   fun createOrder(purchaseCreateDto: PurchaseCreateDto): PurchaseResponseDto {
     PurchaseValidator.guardHasLines(purchaseCreateDto.linesToAdd)
     PurchaseValidator.guardNoDuplicateProducts(purchaseCreateDto.linesToAdd)
-    PurchaseValidator.guardPositiveLineQuantities(purchaseCreateDto.linesToAdd)
-    PurchaseValidator.guardPositiveUnitCosts(purchaseCreateDto.linesToAdd)
+    PurchaseValidator.guardPositiveUnitCosts(purchaseCreateDto.linesToAdd.map { it.unitCost.toBigDecimal() })
     locationProductService.guardAllActive(purchaseCreateDto.linesToAdd.map { it.locationProductId })
     val purchase = PurchaseMapper.toOrderEntity(purchaseCreateDto).also { purchaseRepository.save(it) }
     val lines = PurchaseMapper.toLineEntities(
@@ -79,7 +77,7 @@ class PurchaseService(
     val lineUpdates = purchaseLinesResolver.detanglePurchaseLines(purchase.id!!, purchaseUpdateDto)
     PurchaseValidator.guardHasLines(lineUpdates.resultingLines)
     PurchaseValidator.guardNoDuplicateProducts(lineUpdates.resultingLines)
-    PurchaseValidator.guardPositiveUnitCosts(lineUpdates.resultingLines)
+    PurchaseValidator.guardPositiveUnitCosts(lineUpdates.resultingLines.map { it.unitCost })
     purchaseRepository.save(purchase)
     persistLineUpdates(lineUpdates)
     return purchaseAssembler.buildResponse(purchase, lineUpdates.resultingLines)

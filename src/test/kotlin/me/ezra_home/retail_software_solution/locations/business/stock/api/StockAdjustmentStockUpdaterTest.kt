@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
@@ -18,6 +19,7 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class StockAdjustmentStockUpdaterTest {
 
     private val locationProductId = UUID.randomUUID()

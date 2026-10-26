@@ -4,12 +4,12 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLineFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftDispatchFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLineFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -46,7 +46,7 @@ class StockTransferDraftService(
             StockTransferDraftLineEntity(
                 stockTransferDispatchId = dispatch.id!!,
                 locationProductId = addition.locationProductId,
-                userProvidedQuantity = addition.quantityDispatched,
+                userProvidedQuantity = addition.quantityDispatched.toBigDecimal(),
                 unitId = locationProductBaseUnitIds.getValue(addition.locationProductId),
                 storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(addition.locationProductId)
             )
@@ -58,7 +58,7 @@ class StockTransferDraftService(
             if (newUnitId != existingLine.unitId) {
                 existingLine.storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(existingLine.locationProductId)
             }
-            existingLine.userProvidedQuantity = update.quantityDispatched ?: existingLine.userProvidedQuantity
+            existingLine.userProvidedQuantity = update.quantityDispatched?.toBigDecimal() ?: existingLine.userProvidedQuantity
             existingLine.unitId = newUnitId
             existingLine
         }

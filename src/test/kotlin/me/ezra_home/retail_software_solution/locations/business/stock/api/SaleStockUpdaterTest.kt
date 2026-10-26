@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
@@ -17,6 +18,7 @@ import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class SaleStockUpdaterTest {
 
     private val locationProductId = UUID.randomUUID()

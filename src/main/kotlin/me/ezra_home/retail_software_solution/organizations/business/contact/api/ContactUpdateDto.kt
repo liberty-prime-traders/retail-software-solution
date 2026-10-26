@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.io.Serializable
-import java.math.BigDecimal
 import java.util.Optional
 import java.util.UUID
 
@@ -15,7 +15,7 @@ data class ContactUpdateDto(
     val email: Optional<String>? = null,
     val phone: Optional<String>? = null,
     val address: Optional<String>? = null,
-    val creditLimit: Optional<BigDecimal>? = null,
+    val creditLimit: Optional<Money>? = null,
     val notes: Optional<String>? = null,
     val status: Optional<ContactStatus>? = null
 ): Serializable {
@@ -28,7 +28,7 @@ data class ContactUpdateDto(
         email = email?.orElse(existing.email) ?: existing.email,
         phone = phone?.orElse(existing.phone) ?: existing.phone,
         address = address?.orElse(existing.address) ?: existing.address,
-        creditLimit = creditLimit?.orElse(existing.creditLimit) ?: existing.creditLimit,
+        creditLimit = creditLimit?.map { it.toBigDecimal() }?.orElse(existing.creditLimit) ?: existing.creditLimit,
         notes = notes?.orElse(existing.notes) ?: existing.notes,
         status = status?.orElse(existing.status) ?: existing.status
     )

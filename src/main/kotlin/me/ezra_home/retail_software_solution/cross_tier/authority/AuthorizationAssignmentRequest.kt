@@ -19,6 +19,5 @@ data class AuthorizationAssignmentRequest(
         }
     }
 
-    val allTiers: List<SchemaLevel>
-        get() = roles.map { it.tier } + permissions.map { it.tier }
+    val allTiers: List<SchemaLevel> = roles.map { it.tier } + permissions.map { it.tier }
 }

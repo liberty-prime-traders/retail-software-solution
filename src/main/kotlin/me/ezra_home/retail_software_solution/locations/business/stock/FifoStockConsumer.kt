@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayerState
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
 import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
@@ -24,10 +23,7 @@ object FifoStockConsumer {
         quantityBreakdown: QuantityBreakdown,
         productLabel: String
     ): FifoConsumptionResult {
-        val plannedTakes = FifoTakePlanner.planTakes(
-            fifoEntries.map { FifoLayerState(it.storageQuantityRemaining, it.costRemaining, it.storageBatchSize, it.batchCost) },
-            fifoConsumptionRequest.storageQuantity
-        )
+        val plannedTakes = FifoTakePlanner.planTakes(fifoEntries, fifoConsumptionRequest.storageQuantity)
         throwIfNotFulfilled(fifoConsumptionRequest, plannedTakes, quantityBreakdown, productLabel)
         var runningBalance = ExactQuantity.ofStorage(startingBalance)
         var consumedCost = BigDecimal.ZERO

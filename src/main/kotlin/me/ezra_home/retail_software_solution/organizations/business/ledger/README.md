@@ -21,8 +21,10 @@ posting. The processors with a runtime direction (`OpeningBalanceAccountingProce
 
 ## What `post` enforces, in order
 
-1. `LedgerEntriesValidator.validate` — total debits equal total credits, and
-   no negative amount. Zero is allowed: a 100%-discounted sale posts
+1. `LedgerEntriesValidator.validate` — total debits equal total credits, no
+   negative amount, and no amount with more decimals than the money scale, so
+   every sum over the ledger (daily balances and performance, their totals) is
+   exact at that scale. Zero is allowed: a 100%-discounted sale posts
    zero-amount legs.
 2. An open fiscal period exists for `postingDate`.
 3. `AccountService.assertPostable` — every account is known, has no
@@ -194,7 +196,7 @@ fall under `uq_ledger_entry_grp_ref_type_org`, which keys `(reference, source ty
 
 `api/LedgerMovementReader` is the read path for `daily_business_summary`: summed entry amounts grouped by local date
 (`ledger_entry_group.posted_on` bucketed with `width_bucket` over day starts computed in Kotlin in the organization
-zone), account, entry type and, for `getMovements`, source. `getMovements` covers `[from, before)` for an account set and a
+zone), account, entry type and, for `getMovements`, source. `getMovements` covers `[from, before)` for every account, a
 `LedgerSourceType` whitelist and an optional location; `getAccountMovementsFrom` is organization-wide, all source
 types, from the start of `from` onward, reporting anything dated at or after `before` under `before`.
 `idx_ledger_entry_grp_posted_on` serves the range scan.

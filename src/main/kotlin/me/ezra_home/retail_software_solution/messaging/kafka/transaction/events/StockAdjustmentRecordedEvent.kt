@@ -18,5 +18,5 @@ data class StockAdjustmentRecordedEvent(
     val totalCost: BigDecimal,
     val postingDate: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = stockAdjustmentId
+    override val sourceDocumentId: UUID = stockAdjustmentId
 }

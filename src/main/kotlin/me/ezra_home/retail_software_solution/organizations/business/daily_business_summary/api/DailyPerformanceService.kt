@@ -36,7 +36,6 @@ class DailyPerformanceService(
         val movements = ledgerMovementReader.getMovements(
             from = range.from,
             before = range.before,
-            accountCodes = accountNodesByCode.keys,
             sources = PROFIT_AND_LOSS_SOURCES + COLLECTION_SOURCES,
             locationId = SessionContextProvider.getLocationIdOrNull()
         )
@@ -122,32 +121,32 @@ class DailyPerformanceService(
             val netProfit = grossProfit + otherIncome - expensesTotal
             val collectedLines = toLines(collectedAmounts, accountNodesByCode)
             return DailyPerformanceFigures(
-                grossSales = Decimals.Scale2.round(grossSales),
-                discounts = Decimals.Scale2.round(discounts),
-                returnsAndAllowances = Decimals.Scale2.round(returnsAndAllowances),
-                netSales = Decimals.Scale2.round(netSales),
-                costOfGoodsSold = Decimals.Scale2.round(costOfGoodsSold),
-                grossProfit = Decimals.Scale2.round(grossProfit),
+                grossSales = Decimals.MoneyScale.round(grossSales),
+                discounts = Decimals.MoneyScale.round(discounts),
+                returnsAndAllowances = Decimals.MoneyScale.round(returnsAndAllowances),
+                netSales = Decimals.MoneyScale.round(netSales),
+                costOfGoodsSold = Decimals.MoneyScale.round(costOfGoodsSold),
+                grossProfit = Decimals.MoneyScale.round(grossProfit),
                 grossMarginPercent = percentOf(grossProfit, netSales),
-                otherIncome = Decimals.Scale2.round(otherIncome),
+                otherIncome = Decimals.MoneyScale.round(otherIncome),
                 expenseLines = expenseLines,
-                expensesTotal = Decimals.Scale2.round(expensesTotal),
-                netProfit = Decimals.Scale2.round(netProfit),
+                expensesTotal = Decimals.MoneyScale.round(expensesTotal),
+                netProfit = Decimals.MoneyScale.round(netProfit),
                 netMarginPercent = percentOf(netProfit, netSales),
                 collectedByAccount = collectedLines,
-                collectedTotal = Decimals.Scale2.round(collectedLines.fold(BigDecimal.ZERO) { runningTotal, line -> runningTotal + line.amount }),
-                billedToCustomers = Decimals.Scale2.round(billedToCustomers)
+                collectedTotal = Decimals.MoneyScale.round(collectedLines.fold(BigDecimal.ZERO) { runningTotal, line -> runningTotal + line.amount }),
+                billedToCustomers = Decimals.MoneyScale.round(billedToCustomers)
             )
         }
 
         private fun toLines(amounts: Map<String, BigDecimal>, accountNodesByCode: Map<String, AccountTreeNode>) =
             amounts.entries
-                .map { (accountCode, amount) -> SummaryAccountAmount(accountCode, accountNodesByCode.getValue(accountCode).name, Decimals.Scale2.round(amount)) }
+                .map { (accountCode, amount) -> SummaryAccountAmount(accountCode, accountNodesByCode.getValue(accountCode).name, Decimals.MoneyScale.round(amount)) }
                 .filter { accountAmount -> accountAmount.amount.signum() != 0 }
                 .sortedBy { accountAmount -> accountAmount.accountCode }
 
         private fun percentOf(amount: BigDecimal, netSales: BigDecimal): BigDecimal? =
-            if (Decimals.Scale2.round(netSales).signum() == 0) null
+            if (Decimals.MoneyScale.round(netSales).signum() == 0) null
             else amount.multiply(BigDecimal(100)).divide(netSales, 1, RoundingMode.HALF_UP)
 
         private fun mergeAmounts(first: Map<String, BigDecimal>, second: Map<String, BigDecimal>): Map<String, BigDecimal> =

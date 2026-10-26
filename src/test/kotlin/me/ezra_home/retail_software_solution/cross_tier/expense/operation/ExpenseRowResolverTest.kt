@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.operation
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseSubmission
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
@@ -16,11 +16,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoInteractions
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -104,37 +100,13 @@ class ExpenseRowResolverTest {
     }
 
     @Test
-    fun `non-positive amounts are rejected before anything is looked up`() {
-        assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal.ZERO))))
-        }
-        verifyNoInteractions(expenseTypeService)
-    }
-
-    @Test
-    fun `an amount above the transaction maximum is rejected before anything is looked up and the maximum itself is accepted`() {
-        assertThrows(RtsGenericException::class.java) {
-            expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
-                rowCommand(freightExpenseType, supplierContact, amount = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01")))
-            )))
-        }
-        verifyNoInteractions(expenseTypeService)
-
+    fun `the transaction maximum itself is accepted`() {
         stub(freightExpenseType, supplierContact)
         val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(
             rowCommand(freightExpenseType, supplierContact, amount = Decimals.MAXIMUM_TRANSACTION_AMOUNT)
         )))
 
         assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, resolvedExpenseRows.single().amount)
-    }
-
-    @Test
-    fun `amounts are rounded to scale 2`() {
-        stub(freightExpenseType, supplierContact)
-
-        val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(rowCommand(freightExpenseType, supplierContact, amount = BigDecimal("12.34567")))))
-
-        assertEquals(BigDecimal("12.35"), resolvedExpenseRows.single().amount)
     }
 
     @Test

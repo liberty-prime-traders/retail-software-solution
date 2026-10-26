@@ -15,7 +15,6 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
-
 @Service
 @TransactionalOnOrganizationSchema
 class AccountService(
@@ -130,10 +129,11 @@ class AccountService(
 
     fun patchBalances(accountPostings: List<AccountPosting>) {
         val accountsByCode = accountCache.getAll().associateBy { it.code }
+        val balanceUpdatedAt = Instant.now()
         accountPostings.forEach { accountPosting ->
             val account = accountsByCode.getValue(accountPosting.accountCode)
             val delta = if (account.accountType.normalBalance == accountPosting.entryType) accountPosting.amount else accountPosting.amount.negate()
-            accountRepository.incrementBalance(account.code, delta, Instant.now())
+            accountRepository.incrementBalance(account.code, delta, balanceUpdatedAt)
         }
     }
 }

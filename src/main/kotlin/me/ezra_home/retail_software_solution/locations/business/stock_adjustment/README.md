@@ -33,12 +33,12 @@ carries the directions it allows). The UI renders its form from this and holds n
 ## Request (`StockAdjustmentCreateDto`)
 
 `locationProductId`, `category`, `direction` (only for `OTHER`; a fixed-direction category rejects a mismatch),
-`quantity` (positive, at most `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` decimals, checked in the DTO `init`, so
+`quantity` (a `PositiveUserProvidedQuantity`, so positive and at most `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` decimals, and
 the unit conversion is always exact and nothing is rounded), `unitId`, `stockMovementReasonId`, `note`, `unitCost`.
 `unitCost` is per the request's `unitId`, the same unit as `quantity`, as on a purchase line.
 
 `StockAdjustmentValidator` enforces per category: note required except for `OTHER`; reason required for and only
-accepted by `OTHER`; `unitCost` required and positive for any increase (Opening Stock, Free Goods, `OTHER` increase) and rejected on a decrease.
+accepted by `OTHER`; `unitCost` (a `PositiveMoney`) required for any increase (Opening Stock, Free Goods, `OTHER` increase) and rejected on a decrease.
 The reason is a **stock movement reason** (`StockMovementReasonService.guardReason` with the direction's
 `MovementType`), not an `adjustment_reason`: those are discount/surcharge reasons for sales. Reasons are labels with no
 ledger account; every `OTHER` reason posts to `SHRINKAGE_AND_LOSSES`.

@@ -18,5 +18,5 @@ data class SupplierPaymentRecordedEvent(
     val paymentDate: OffsetDateTime,
     val paymentReferenceNumber: String
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = paymentId
+    override val sourceDocumentId: UUID = paymentId
 }

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -12,6 +13,7 @@ import java.math.RoundingMode
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class StockTransferDispatchLineEntityTest {
 
     private val locationProductId = UUID.randomUUID()

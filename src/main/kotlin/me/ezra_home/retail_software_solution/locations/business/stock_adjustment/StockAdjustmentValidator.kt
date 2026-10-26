@@ -4,14 +4,10 @@ import me.ezra_home.retail_software_solution.locations.business.stock_adjustment
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentDirection
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import java.math.BigDecimal
 
 object StockAdjustmentValidator {
 
     fun guardCategoryRequest(stockAdjustmentCreateDto: StockAdjustmentCreateDto): StockAdjustmentDirection {
-        if (stockAdjustmentCreateDto.userProvidedQuantity <= BigDecimal.ZERO) {
-            throw RtsGenericException("Stock adjustment quantity must be positive")
-        }
         val category = stockAdjustmentCreateDto.category
         val direction = resolveDirection(stockAdjustmentCreateDto)
         guardUnitCost(stockAdjustmentCreateDto, direction)
@@ -41,11 +37,9 @@ object StockAdjustmentValidator {
     }
 
     private fun guardUnitCost(stockAdjustmentCreateDto: StockAdjustmentCreateDto, direction: StockAdjustmentDirection) {
-        val unitCost = stockAdjustmentCreateDto.unitCost
         if (StockAdjustmentCategoryRules.requiresUserSuppliedUnitCost(direction)) {
-            if (unitCost == null) throw RtsGenericException("Unit cost is required for a stock increase")
-            if (unitCost <= BigDecimal.ZERO) throw RtsGenericException("Unit cost must be positive")
-        } else if (unitCost != null) {
+            stockAdjustmentCreateDto.requiredUnitCost()
+        } else if (stockAdjustmentCreateDto.unitCost != null) {
             throw RtsGenericException("Unit cost is taken from stock for a stock decrease")
         }
     }

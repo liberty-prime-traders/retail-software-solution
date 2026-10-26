@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -23,6 +24,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class LedgerPostingServiceSubledgerTest {
 
     private val subledgerEntryRepository = mock(SubledgerEntryRepository::class.java)

@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.locations.business.stock_adjustmen
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
-import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import java.util.UUID
 
 data class StockAdjustmentCreateDto(
@@ -12,16 +12,12 @@ data class StockAdjustmentCreateDto(
     val category: StockAdjustmentCategory,
     val direction: StockAdjustmentDirection? = null,
     @param:JsonProperty("quantity")
-    val userProvidedQuantity: BigDecimal,
+    val userProvidedQuantity: PositiveUserProvidedQuantity,
     val unitId: UUID,
     val stockMovementReasonId: UUID? = null,
     val note: String? = null,
-    val unitCost: BigDecimal? = null
+    val unitCost: PositiveMoney? = null
 ) {
-    init {
-        Decimals.requireMaxDecimalPlaces(userProvidedQuantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
-        if (unitCost != null) {
-            Decimals.requireMaxDecimalPlaces(unitCost, QuantityLimits.MAX_PRICE_OVERRIDE_DECIMAL_PLACES, "Unit cost")
-        }
-    }
+
+    fun requiredUnitCost(): PositiveMoney = unitCost ?: throw RtsGenericException("Unit cost is required for a stock increase")
 }

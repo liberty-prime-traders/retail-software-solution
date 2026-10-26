@@ -1,11 +1,14 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.util.UUID
 
+@WithDefaultOrganizationSession
 class FifoTakePlannerTest {
 
     private val thousandPieceBatchSize = BigDecimal("1000")
@@ -57,7 +60,9 @@ class FifoTakePlannerTest {
         assertEquals(BigDecimal("0.02"), plannedTake.movedCost)
     }
 
-    private fun thousandPieceLayer() = FifoLayerState(
+    private fun thousandPieceLayer() = StockEntryFifoDto(
+        locationProductId = UUID.randomUUID(),
+        unitCost = threeUnitBatchCost,
         storageQuantityRemaining = thousandPieceBatchSize,
         costRemaining = threeUnitBatchCost,
         storageBatchSize = thousandPieceBatchSize,

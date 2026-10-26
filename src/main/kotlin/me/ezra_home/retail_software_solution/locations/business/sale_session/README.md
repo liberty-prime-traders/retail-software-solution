@@ -242,7 +242,7 @@ the timestamp. This is what drives `SaleSessionSummaryDto.activeUser`.
 
 | When           | Who                      | What                                                                                                                                                                                                                                                                                                                |
 |----------------|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Every mutation | `SaleSessionValidator`   | Positive quantities, no duplicate products, valid adjustment line refs, adjustment reason + direction valid, positive payments, line + order discount ceilings                                                                                                                                                      |
+| Every mutation | `SaleSessionValidator`   | Positive quantities, no duplicate products, valid adjustment line refs, adjustment reason + direction valid, positive payments, every line total, adjustment amount, the subtotal and the sale total within `Decimals.MAXIMUM_TRANSACTION_AMOUNT`, line + order discount ceilings                                                                                                                                                      |
 | Save Draft     | `DraftSalePersister`     | If any payments in the input, future-date guard + fiscal period open; stock availability for requested quantities (`SaleValidator.guardSufficientStockForSale`); optimistic `@Version` check on `SaleEntity` (existing sales only). Note: drafts do NOT enforce a payments-within-payable-total ceiling.              |
 | Confirm        | `ConfirmedSalePersister` | At least one line (enforced upstream by `SaleSessionValidator.guardNonEmptyLines`); future-date guard; fiscal period open; walk-in full coverage (enforced upstream); payments within payable total (enforced upstream); stock availability for requested quantities (`SaleValidator.guardSufficientStockForSale`); FIFO stock consumption; optimistic `@Version` check on `SaleEntity` (existing sales only). |
 
@@ -418,33 +418,28 @@ session before finalize.
 ## 9. Price Override
 
 A cashier sets a custom price on a line by supplying `unitPriceOverride` in a
-`SaleSessionLineUpdateDto`. The client always sends this field (non-nullable); on line add
-the response always carries `unitPriceOverride == unitPrice`. The server owns the adjustment
-model — the client never knows about `PRICE_OVERRIDE` adjustments, it only sees and echoes
-`unitPriceOverride`. The quantity has at most 2 decimals (`QuantityLimits`), checked in the update DTO's `init`. A
-typed price override has at most 2 decimals too, but that limit is checked in
-`PriceOverrideReconciler`, and only for a price that differs from the one the cashier was shown: the derived
-`unitPrice` the response echoes (for example 55.5556 per Piece) can have 4 decimals and must pass back unchanged.
-The override total is rounded to cents, so a sub-cent product (0.15 × 0.25) yields a derived unit price that differs from the typed one.
+`SaleSessionLineUpdateDto`. The request field is a nullable `Money`: null means "price unchanged", and the client sends it
+only when the cashier typed a price. The response always carries `unitPriceOverride`: the typed price when the line has an override, otherwise the
+derived list `unitPrice` (for example 55.5556 per Piece, 4 decimals), which is display-only and never sent back. The server owns the adjustment
+model — the client never knows about `PRICE_OVERRIDE` adjustments. The quantity is a `PositiveUserProvidedQuantity`, so it is positive with at most 2
+decimals (`QuantityLimits`), and a typed price is rejected beyond the session money scale when the request is read.
 
 - `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
-  works in **totals**. The override total is `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`,
-  rounded once to cents). The `PRICE_OVERRIDE` adjustment's `value` is `|computed line total − override total|`,
-  method `FIXED_LINE_TOTAL`, direction `DISCOUNT` when the override total is lower and `SURCHARGE` when higher. It is never
-  a per-unit delta times a quantity, so no per-unit rounding enters. Equal totals mean no adjustment.
-  The typed price is not stored. Because the amount is a total, it is recomputed against the updated line on every
-  edit, including a quantity-only edit.
-  **Unit change clears the override unless a new price is supplied:** when a line's unit changes and the client echoes
-  back the existing effective price, the reconciler drops the `PRICE_OVERRIDE`; when the client supplies a different
+  stores the typed unit price. The `PRICE_OVERRIDE` adjustment has method `UNIT_PRICE_OVERRIDE` and `value` equal to the
+  typed price. Its amount is `|computed line total − override total|`, where the override total is
+  `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`, rounded once to cents), and is recomputed on every
+  save, so a quantity edit never touches the stored price. The direction is `DISCOUNT` when the override total is lower and
+  `SURCHARGE` when higher; equal totals mean no adjustment. `value` and `direction` are immutable once the adjustment is
+  saved, so a new typed price, or a flipped direction, replaces the adjustment under a fresh identity.
+  **Unit change clears the override unless a new price is supplied:** when a line's unit changes and the client sends no
+  price (or one equal to the existing effective price), the reconciler drops the `PRICE_OVERRIDE`; when the client supplies a different
   `unitPriceOverride`, it is a new explicit override against the updated line. Non-price-override line adjustments are
   always cleared on a unit change: `SaleSessionLineAdjustmentReconciler` drops any remaining line-level adjustment
-  whose `relatedSaleLineIdentity` targets a unit-changed line. **Echo detection:** the reconciler derives the previous
-  effective price — `(gross line total ∓ stored value) ÷ quantity` when an override exists, otherwise the derived list
-  `unitPrice` — and treats a submitted value that matches as unchanged. With both limits at 2 decimals the rebuilt price
-  equals the typed price exactly. A client must echo a derived `unitPrice` (for example 55.5556 per Piece) back
-  unchanged; sending it as a new override would store a 0.0008 surcharge, which echo detection prevents.
-- `unitPriceOverride == 0` is allowed (cashier giveaway). Negative is
-  rejected by `SaleSessionValidator.guardNonNegativeEffectivePrices`.
+  whose `relatedSaleLineIdentity` targets a unit-changed line. **No typed price:** a null `unitPriceOverride` keeps the
+  existing override. A typed price that equals the current effective price at scale 4 (the override's `value`, otherwise
+  the derived list `unitPrice`) is also unchanged.
+- A typed `unitPriceOverride == 0` is allowed (cashier giveaway). Negative is
+  rejected when the request is deserialized (`Money` is never negative).
 - The `PRICE_OVERRIDE` adjustment is stored in Redis just like any other
   adjustment and persisted to the DB at `saveDraft` / `confirm` via
   `SaleAdjustmentSyncer`.

@@ -60,7 +60,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `LocationProductSummaryDto.label`) up front — every guard from here on
    reports the human-readable label, not a bare `locationProductId`, in
    its failure message.
-5. Guard positive quantity (at most 2 decimals, checked in `OpeningStockLineDto`'s `init`) / non-negative unit cost per line, then
+5. Quantity (`OpeningStockLineDto` holds it as a `PositiveUserProvidedQuantity`, so positive with at most 2 decimals) / unit cost per line (a `PositiveMoney`, so positive and at most the session money scale in decimals, checked when the request binds), then
    `locationProductService.guardAllActive` — same guard used at
    purchase-creation time.
 6. Guard none of the requested products already have an `opening_stock`

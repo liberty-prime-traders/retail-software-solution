@@ -20,5 +20,5 @@ data class ExpensePaymentVoidedEvent(
     val amount: BigDecimal,
     val voidedOn: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = voidId
+    override val sourceDocumentId: UUID = voidId
 }

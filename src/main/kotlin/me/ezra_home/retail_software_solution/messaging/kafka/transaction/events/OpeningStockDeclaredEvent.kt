@@ -18,5 +18,5 @@ data class OpeningStockDeclaredEvent(
     val unitCost: BigDecimal,
     val postingDate: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = openingStockId
+    override val sourceDocumentId: UUID = openingStockId
 }
