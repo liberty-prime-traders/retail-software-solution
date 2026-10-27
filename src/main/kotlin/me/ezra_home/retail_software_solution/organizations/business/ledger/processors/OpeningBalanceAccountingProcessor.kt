@@ -32,8 +32,10 @@ class OpeningBalanceAccountingProcessor(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.OPENING_BALANCE,
             postingDate = event.postingDate,
-            entries = LedgerEntryRequest.unlessZero(event.accountCode, event.accountEntryType, event.amount) +
-                LedgerEntryRequest.unlessZero(SystemAccount.OPENING_BALANCE_EQUITY.code, offsettingEntryType, event.amount),
+            entries = listOf(
+                LedgerEntryRequest(event.accountCode, event.accountEntryType, event.amount),
+                LedgerEntryRequest(SystemAccount.OPENING_BALANCE_EQUITY.code, offsettingEntryType, event.amount)
+            ),
             subledgerEntries = emptyList()
         )
     }

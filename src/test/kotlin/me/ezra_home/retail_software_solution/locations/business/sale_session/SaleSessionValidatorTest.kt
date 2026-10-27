@@ -71,6 +71,36 @@ class SaleSessionValidatorTest {
         }
     }
 
+    @Test
+    fun `a discount whose amount is above the maximum is rejected even though the subtotal and receivable total are within it`() {
+        val line = saleSessionLine(maximum)
+        val discount = percentageAdjustment(AdjustmentDirection.DISCOUNT, BigDecimal("200"), line)
+
+        assertThrows(RtsGenericException::class.java) {
+            saleSessionValidator.validate(saleSession(listOf(line), listOf(discount)))
+        }
+    }
+
+    @Test
+    fun `a surcharge that pushes the receivable total above the maximum is rejected while the subtotal and the adjustment are within it`() {
+        val surcharge = percentageAdjustment(AdjustmentDirection.SURCHARGE, BigDecimal("10"), null)
+
+        assertThrows(RtsGenericException::class.java) {
+            saleSessionValidator.validate(saleSession(listOf(saleSessionLine(maximum)), listOf(surcharge)))
+        }
+    }
+
+    private fun percentageAdjustment(direction: AdjustmentDirection, percentage: BigDecimal, line: SaleSessionLine?) = SaleSessionAdjustment(
+        identity = SessionIdentity.mintFreshIdentity(),
+        relatedSaleLineIdentity = line?.identity,
+        adjustmentReasonId = UUID.randomUUID(),
+        direction = direction,
+        calculationMethod = PriceAdjustmentMethod.PERCENTAGE,
+        value = percentage,
+        note = null,
+        approvedById = null
+    )
+
     private fun saleSessionLine(lineTotal: BigDecimal, quantity: BigDecimal = BigDecimal.ONE) = SaleSessionLine(
         identity = SessionIdentity.mintFreshIdentity(),
         locationProductId = UUID.randomUUID(),

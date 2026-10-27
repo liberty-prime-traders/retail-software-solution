@@ -37,17 +37,11 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
-  /**
-   * This movement's exact slice in storage units: the figure to sum or compare. `wholeLineQuantityText` is for display.
-   */
+  // The figure to sum or compare; wholeLineQuantityText is display only
   @Column(name = "storage_moved_quantity", nullable = false, precision = 28, scale = 4)
   var storageMovedQuantity: BigDecimal,
 
-  /**
-   * The quantity exactly as the user typed it for the whole document line (the stock-in or stock-out), in the unit
-   * they chose, pluralized ("2.5 Bales"). Frozen at write time like the breakdown texts, and copied unchanged onto
-   * every movement that line produces, so a stock-out spanning several FIFO layers repeats it on each.
-   */
+  // The whole line's quantity as typed ("2.5 Bales"), copied onto every movement the line produces, so a stock-out spanning layers repeats it
   @Column(name = "whole_line_quantity_text", nullable = false, length = 200, updatable = false)
   var wholeLineQuantityText: String,
 
@@ -57,10 +51,7 @@ class StockMovementEntity(
   @Column(name = "moved_cost", nullable = false, precision = 28, scale = 4)
   var movedCost: BigDecimal,
 
-  /**
-   * This and `storageRemainingBreakdownText` are snapshots rendered at write time: history must keep showing the units
-   * as they were, not re-render against unit sizes that have changed since.
-   */
+  // This and the two texts above are snapshots rendered at write time, so history keeps the units as they were
   @Column(name = "storage_moved_breakdown_text", nullable = false, length = 200, updatable = false)
   var storageMovedBreakdownText: String,
 

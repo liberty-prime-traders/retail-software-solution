@@ -15,7 +15,6 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Money
-import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
@@ -56,14 +55,14 @@ class SalePaymentRecordedEventProcessor(
             sourceType = LedgerSourceType.SALE_PAYMENT,
             postingDate = DateTimes.Local.atOrganizationZone(payment.paymentDate),
             entries = listOf(
-                LedgerEntryRequest.debit(payment.paymentMethodAccountCode, PositiveMoney.of(payment.amount)),
-                LedgerEntryRequest.credit(SystemAccount.TRADE_RECEIVABLES.code, PositiveMoney.of(payment.amount))
+                LedgerEntryRequest.debit(payment.paymentMethodAccountCode, payment.amount),
+                LedgerEntryRequest.credit(SystemAccount.TRADE_RECEIVABLES.code, payment.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contactReferenceNumber,
                     receivableAmount = Money.ZERO,
-                    payableAmount = Money.of(payment.amount)
+                    payableAmount = Money.of(payment.amount.toBigDecimal())
                 )
             )
         )

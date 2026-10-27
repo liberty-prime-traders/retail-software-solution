@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.util.business
 
-import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -8,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
-@WithDefaultOrganizationSession
 class TypedDecimalTest {
 
     private val one = BigDecimal.ONE

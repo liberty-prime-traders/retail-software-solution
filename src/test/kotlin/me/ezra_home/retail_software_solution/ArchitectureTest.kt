@@ -31,14 +31,14 @@ class ArchitectureTest {
         .should(notRoundBigDecimalDirectly())
 
     private fun notRoundBigDecimalDirectly() = object : ArchCondition<JavaClass>(
-        "not call BigDecimal.setScale or BigDecimal.divide with a RoundingMode"
+        "not call BigDecimal.setScale, BigDecimal.divide or BigDecimal.round with a RoundingMode or MathContext"
     ) {
         override fun check(javaClass: JavaClass, events: ConditionEvents) {
             javaClass.methodCallsFromSelf
                 .filter { call ->
                     call.targetOwner.name == BIG_DECIMAL_CLASS &&
                         call.target.name in ROUNDING_METHODS &&
-                        call.target.rawParameterTypes.any { parameterType -> parameterType.name == ROUNDING_MODE_CLASS }
+                        call.target.rawParameterTypes.any { parameterType -> parameterType.name in ROUNDING_POLICY_CLASSES }
                 }
                 .forEach { call ->
                     events.add(SimpleConditionEvent.violated(call, "${call.description} rounds directly; use a Decimals scale"))
@@ -53,7 +53,7 @@ class ArchitectureTest {
     }
 
     private fun notReadConversionRatioParts() = object : ArchCondition<JavaClass>(
-        "not call ConversionRatio's numerator, denominator, factor or displayFactor"
+        "not call ConversionRatio's numerator, denominator or factor"
     ) {
         override fun check(javaClass: JavaClass, events: ConditionEvents) {
             javaClass.methodCallsFromSelf
@@ -94,10 +94,10 @@ class ArchitectureTest {
         const val ROOT_PACKAGE = "me.ezra_home.retail_software_solution"
         const val CONVERSION_RATIO_CLASS = "$ROOT_PACKAGE.util.business.ConversionRatio"
         const val BIG_DECIMAL_CLASS = "java.math.BigDecimal"
-        const val ROUNDING_MODE_CLASS = "java.math.RoundingMode"
-        val ROUNDING_METHODS = setOf("setScale", "divide")
+        val ROUNDING_POLICY_CLASSES = setOf("java.math.RoundingMode", "java.math.MathContext")
+        val ROUNDING_METHODS = setOf("setScale", "divide", "round")
         val FORBIDDEN_RATIO_MEMBERS = setOf(
-            "getNumerator", "getDenominator", "component1", "component2", "factor", "displayFactor"
+            "getNumerator", "getDenominator", "component1", "component2", "factor"
         )
     }
 

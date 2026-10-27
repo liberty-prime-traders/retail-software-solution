@@ -98,8 +98,9 @@ class PriceOverrideReconciler(
         postUpdateSaleSessionLine: SaleSessionLine,
         priceOverrideReasonId: UUID,
     ): LineOverrideUpdate {
-        val overrideTotal = LinePricing.overrideTotal(userProvidedUnitPrice, postUpdateSaleSessionLine.userProvidedQuantity)
-        val totalDifference = postUpdateSaleSessionLine.lineTotal.subtract(overrideTotal)
+        val totalDifference = LinePricing.overrideDifference(
+            postUpdateSaleSessionLine.lineTotal, userProvidedUnitPrice, postUpdateSaleSessionLine.userProvidedQuantity
+        )
         if (totalDifference.signum() == 0) {
             return if (preUpdateOverride == null) LineOverrideUpdate.NoChange else LineOverrideUpdate.Remove
         }

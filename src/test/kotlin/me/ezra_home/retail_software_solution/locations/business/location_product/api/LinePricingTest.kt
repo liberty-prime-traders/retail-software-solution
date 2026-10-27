@@ -17,4 +17,12 @@ class LinePricingTest {
     fun `an override total multiplies the typed price by the quantity once`() {
         assertEquals(BigDecimal("30.85"), LinePricing.overrideTotal(BigDecimal("12.34"), BigDecimal("2.50")))
     }
+
+    @Test
+    fun `the override difference is positive for a lower override and negative for a higher one`() {
+        val lineTotal = BigDecimal("40.00")
+
+        assertEquals(BigDecimal("9.15"), LinePricing.overrideDifference(lineTotal, BigDecimal("12.34"), BigDecimal("2.50")))
+        assertEquals(BigDecimal("-10.00"), LinePricing.overrideDifference(lineTotal, BigDecimal("20.00"), BigDecimal("2.50")))
+    }
 }

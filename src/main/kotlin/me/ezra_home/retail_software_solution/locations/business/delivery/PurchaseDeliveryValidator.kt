@@ -40,7 +40,7 @@ class PurchaseDeliveryValidator(
     )
     purchaseDeliveryCreateDto.lines.forEach { lineDto ->
       val purchaseLine = purchaseLineById.getValue(lineDto.purchaseLineId)
-      val delivered = ExactQuantity.ofUserProvided(
+      val delivered = ExactQuantity.ofStorageFromUserProvided(
         lineDto.userProvidedQuantityDelivered,
         storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )

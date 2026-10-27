@@ -12,7 +12,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.springframework.stereotype.Service
 
 @Service
@@ -45,8 +44,9 @@ class SaleStockUpdater(
             val fifoConsumptionResult = FifoStockConsumer.consume(
                 fifoConsumptionRequest = FifoConsumptionRequest(
                     locationProductId = locationProductId,
-                    storageQuantity = ExactQuantity.ofUserProvided(
-                        UserProvidedQuantity.of(saleLineStockRequest.userProvidedQuantity), saleLineStockRequest.storageUnitsPerUserProvidedUnit
+                    storageQuantity = ExactQuantity.ofStorageFromUserProvided(
+                        saleLineStockRequest.userProvidedQuantity,
+                        saleLineStockRequest.storageUnitsPerUserProvidedUnit
                     ),
                     userProvidedQuantity = saleLineStockRequest.userProvidedQuantity,
                     unitId = saleLineStockRequest.unitId,

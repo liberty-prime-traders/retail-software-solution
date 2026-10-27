@@ -38,8 +38,10 @@ class ContactOpeningBalanceAccountingProcessor(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.CONTACT_OPENING_BALANCE,
             postingDate = event.postingDate,
-            entries = LedgerEntryRequest.debitUnlessZero(sides.debitAccountCode, event.amount) +
-                LedgerEntryRequest.creditUnlessZero(sides.creditAccountCode, event.amount),
+            entries = listOf(
+                LedgerEntryRequest.debit(sides.debitAccountCode, event.amount),
+                LedgerEntryRequest.credit(sides.creditAccountCode, event.amount)
+            ),
             subledgerEntries = listOf(subledgerEntry(event))
         )
     }
@@ -61,12 +63,12 @@ class ContactOpeningBalanceAccountingProcessor(
             SubledgerEntryRequest(
                 contactReferenceNumber = event.contactReferenceNumber,
                 payableAmount = Money.ZERO,
-                receivableAmount = Money.of(event.amount)
+                receivableAmount = Money.of(event.amount.toBigDecimal())
             )
         } else {
             SubledgerEntryRequest(
                 contactReferenceNumber = event.contactReferenceNumber,
-                payableAmount = Money.of(event.amount),
+                payableAmount = Money.of(event.amount.toBigDecimal()),
                 receivableAmount = Money.ZERO
             )
         }

@@ -18,9 +18,12 @@ object DisplayFormatters {
         return formatter
     }
 
-    fun formatCurrency(decimal: BigDecimal): String {
-        return buildCurrencyFormatter().format(decimal)
-    }
+    fun formatCurrency(decimal: BigDecimal): String = formatCurrency(MoneyDisplay.of(decimal))
+
+    fun formatCurrency(money: Money): String = formatCurrency(MoneyDisplay.of(money))
+
+    // Formats the value MoneyDisplay already rounded half-up; DecimalFormat alone would round half-even.
+    fun formatCurrency(moneyDisplay: MoneyDisplay): String = buildCurrencyFormatter().format(moneyDisplay.toBigDecimal())
 
     fun pluralize(text: String, quantity: BigDecimal): String {
         return if (Decimals.Scale4.compare(quantity, BigDecimal.ONE) == 0) {

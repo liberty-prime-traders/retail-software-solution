@@ -6,17 +6,13 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 object Decimals {
-    // Why 12 integer digits against a numeric(19,4) column: util/business/README.md rule 7.
+    // Why 12 integer digits against a numeric(19,4) column: util/business/README.md rule 8.
     val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.99")
 
     sealed class DecimalScale {
         abstract val scale: Int
 
         fun round(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.HALF_UP)
-
-        fun roundDown(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.DOWN)
-
-        fun roundUp(value: BigDecimal): BigDecimal = value.setScale(scale, RoundingMode.UP)
 
         fun multiply(value: BigDecimal, factor: BigDecimal): BigDecimal =
             value.multiply(factor).setScale(scale, RoundingMode.HALF_UP)
@@ -27,7 +23,7 @@ object Decimals {
         fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, this)
     }
 
-    // Money columns are numeric(19,4) but round to 2: util/business/README.md rule 7.
+    // Money columns are numeric(19,4) but round to 2: util/business/README.md rule 8.
     const val MONEY_SCALE = 2
 
     sealed class FixedScale(final override val scale: Int) : DecimalScale()
@@ -36,7 +32,7 @@ object Decimals {
     object MoneyScale : FixedScale(MONEY_SCALE)
     object PercentDisplayScale : FixedScale(1)
 
-    fun compareAtScale(first: BigDecimal, second: BigDecimal, decimalScale: DecimalScale): Int =
+    private fun compareAtScale(first: BigDecimal, second: BigDecimal, decimalScale: DecimalScale): Int =
         first.setScale(decimalScale.scale, RoundingMode.HALF_UP).compareTo(second.setScale(decimalScale.scale, RoundingMode.HALF_UP))
 
     fun stripZeroesAndRound(quantity: BigDecimal): String = stripZeroes(quantity, RoundingMode.HALF_UP)
@@ -75,9 +71,9 @@ object Decimals {
         }
     }
 
-    fun gcd(a: Long, b: Long): Long {
-        val absA = if (a < 0) -a else a
-        val absB = if (b < 0) -b else b
-        return if (absB == 0L) absA else gcd(absB, absA % absB)
+    fun greatestCommonDivisor(firstValue: Long, secondValue: Long): Long {
+        val firstMagnitude = if (firstValue < 0) -firstValue else firstValue
+        val secondMagnitude = if (secondValue < 0) -secondValue else secondValue
+        return if (secondMagnitude == 0L) firstMagnitude else greatestCommonDivisor(secondMagnitude, firstMagnitude % secondMagnitude)
     }
 }

@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session.ap
 
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -20,7 +19,7 @@ class SaleSessionAdjustmentTest {
 
     @Test
     fun `an order-level adjustment has no related line key`() {
-        assertThrows(RtsGenericException::class.java) { adjustment(null).requiredRelatedSaleLineKey() }
+        assertThrows(IllegalStateException::class.java) { adjustment(null).requiredRelatedSaleLineKey() }
     }
 
     private fun adjustment(relatedSaleLineIdentity: SessionIdentity?) = SaleSessionAdjustment(

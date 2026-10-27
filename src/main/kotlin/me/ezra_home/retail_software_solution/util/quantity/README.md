@@ -10,17 +10,17 @@ nothing rounds on the way in and there is no rounding policy to manage.
    unit's size in the root, captured when the line is created or its unit changes, and used from then on. It is one
    `BIGINT` column, at least 1.
 2. **`ExactQuantity` is the only type for quantity arithmetic and comparison across units.** Build it with
-   `ofUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit)` or `ofStorage(storageQuantity)`, never from a number
-   that was already converted or rounded. `ofUserProvided` takes a `UserProvidedQuantity` or a `PositiveUserProvidedQuantity`,
-   never a bare `BigDecimal`; a stored `user_provided_*` column is wrapped with `UserProvidedQuantity.of` at the entity accessor
-   (`SaleLineEntity.storageQuantity()`) or at the consumer. Sufficiency checks compare exactly and strictly (available >= requested),
+   `ofStorageFromUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit)` or `ofStorage(storageQuantity)`, never
+   from a number that was already converted or rounded. `ofStorageFromUserProvided` has two overloads. One takes a
+   `PositiveUserProvidedQuantity`, the validated request value. The other takes the bare `BigDecimal` of a stored
+   `user_provided_*` column (the entity accessors such as `SaleLineEntity.storageQuantity()`, `OpeningStockAmountsDto`, the
+   stock updaters) and skips the input rules, because a stored row is never re-validated. Sufficiency checks compare exactly and strictly (available >= requested),
    with no tolerance.
 3. **No quantity is ever divided on its way to stock.** The only divisions are display figures
    (`ExactQuantity.toDisplayQuantity`), computed once from the exact value, at scale 4, with the rounding mode named by the
    caller. Never multiply a quantity by an already-rounded factor.
 4. **No code outside `util/quantity` and `util/business` multiplies or divides a quantity by a conversion ratio.**
-   `ArchitectureTest` checks that no other class reads `ConversionRatio`'s `numerator`, `denominator`, `factor()` or
-   `displayFactor()`.
+   `ArchitectureTest` checks that no other class reads `ConversionRatio`'s `numerator`, `denominator`, or `factor()`.
 5. **Precision.** User-provided quantity columns are `numeric(19,4)`, storage quantity columns `numeric(28,4)`, and
    rates and prices `numeric(28,10)` (`Decimals.Scale4`, `Decimals.Scale10`). A user types at most
    `QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES` (2) decimals. The columns hold 4, so raising a limit never causes

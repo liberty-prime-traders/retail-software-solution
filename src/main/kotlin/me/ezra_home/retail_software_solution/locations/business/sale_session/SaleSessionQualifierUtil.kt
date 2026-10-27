@@ -9,7 +9,6 @@ import me.ezra_home.retail_software_solution.locations.business.sale_session.api
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SessionIdentity
 import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.mapstruct.Context
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -81,7 +80,7 @@ object SaleSessionQualifierUtil {
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.baseQuantity(
-        UserProvidedQuantity.of(saleSessionLine.userProvidedQuantity),
+        saleSessionLine.userProvidedQuantity,
         saleSessionLine.storageUnitsPerUserProvidedUnit,
         lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine),
         RoundingMode.DOWN,

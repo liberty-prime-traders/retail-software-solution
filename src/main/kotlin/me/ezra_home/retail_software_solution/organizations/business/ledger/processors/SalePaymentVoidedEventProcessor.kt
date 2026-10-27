@@ -11,7 +11,6 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import me.ezra_home.retail_software_solution.util.business.Money
-import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
@@ -37,13 +36,13 @@ class SalePaymentVoidedEventProcessor(
             sourceType = LedgerSourceType.SALE_PAYMENT_VOID,
             postingDate = event.voidedOn,
             entries = listOf(
-                LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, PositiveMoney.of(event.amount)),
-                LedgerEntryRequest.credit(event.paymentMethodAccountCode, PositiveMoney.of(event.amount))
+                LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, event.amount),
+                LedgerEntryRequest.credit(event.paymentMethodAccountCode, event.amount)
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = Money.of(event.amount),
+                    receivableAmount = Money.of(event.amount.toBigDecimal()),
                     payableAmount = Money.ZERO
                 )
             )

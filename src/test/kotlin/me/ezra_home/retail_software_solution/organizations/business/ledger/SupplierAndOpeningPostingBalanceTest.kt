@@ -38,6 +38,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 
 class SupplierAndOpeningPostingBalanceTest {
 
@@ -180,7 +181,7 @@ class SupplierAndOpeningPostingBalanceTest {
         paymentId = UUID.randomUUID(),
         supplierId = supplierId,
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         paymentDate = OffsetDateTime.now(),
         paymentReferenceNumber = "SPAY-1"
     )
@@ -194,7 +195,7 @@ class SupplierAndOpeningPostingBalanceTest {
         paymentId = UUID.randomUUID(),
         supplierId = supplierId,
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         voidedOn = LocalDate.of(2026, 1, 20),
         paymentReferenceNumber = "SPAY-1"
     )
@@ -221,7 +222,7 @@ class SupplierAndOpeningPostingBalanceTest {
             ledgerSourceReferenceNumber = "OB-1",
             accountCode = systemAccount.code,
             accountEntryType = entryType,
-            amount = BigDecimal(amount),
+            amount = PositiveMoney.of(BigDecimal(amount)),
             postingDate = LocalDate.of(2026, 1, 1)
         )
 }

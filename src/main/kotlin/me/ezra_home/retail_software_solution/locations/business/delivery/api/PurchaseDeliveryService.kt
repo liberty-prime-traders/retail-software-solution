@@ -51,7 +51,7 @@ class PurchaseDeliveryService(
     val deliveryLines = purchaseDeliveryCreateDto.lines.map { line ->
       DeliveryLineQuantity(
         line.purchaseLineId,
-        ExactQuantity.ofUserProvided(
+        ExactQuantity.ofStorageFromUserProvided(
           line.userProvidedQuantityDelivered,
           storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(line.purchaseLineId)
         )

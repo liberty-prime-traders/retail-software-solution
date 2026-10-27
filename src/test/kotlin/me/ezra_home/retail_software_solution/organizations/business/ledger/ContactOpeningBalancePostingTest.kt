@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ContactOpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -111,7 +112,7 @@ class ContactOpeningBalancePostingTest {
         ledgerSourceReferenceNumber = "COB000001",
         contactReferenceNumber = "CON000001",
         subledgerDirection = subledgerDirection,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         balanceReduced = balanceReduced,
         postingDate = LocalDate.of(2026, 1, 1)
     )

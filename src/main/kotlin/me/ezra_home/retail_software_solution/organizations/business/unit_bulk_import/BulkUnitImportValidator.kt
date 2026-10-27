@@ -14,7 +14,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.ap
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Component
 
-
 @Component
 class BulkUnitImportValidator(
     private val unitGroupService: UnitGroupService,

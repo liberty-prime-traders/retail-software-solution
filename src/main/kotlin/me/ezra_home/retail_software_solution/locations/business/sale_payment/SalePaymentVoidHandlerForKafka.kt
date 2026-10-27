@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SalePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -49,7 +50,7 @@ class SalePaymentVoidHandlerForKafka(
                 contactId = contactId,
                 paymentReferenceNumber = payment.requiredReference(),
                 paymentMethodAccountCode = payment.paymentMethodAccountCode,
-                amount = payment.amount,
+                amount = PositiveMoney.of(payment.amount),
                 voidedOn = voidEntity.createdOn?.let { DateTimes.Local.atOrganizationZone(it) }
                     ?: DateTimes.Local.Now.organization()
             )

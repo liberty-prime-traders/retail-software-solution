@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.hibernate.envers.Audited
 import java.math.BigDecimal
 import java.util.UUID
@@ -36,5 +35,5 @@ class StockTransferDraftLineEntity(
 
 ) : HasReferenceEntity() {
 
-    fun storageQuantity(): ExactQuantity = ExactQuantity.ofUserProvided(UserProvidedQuantity.of(userProvidedQuantity), storageUnitsPerUserProvidedUnit)
+    fun storageQuantity(): ExactQuantity = ExactQuantity.ofStorageFromUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit)
 }

@@ -23,7 +23,7 @@ class OpeningStockStockUpdater(
                 movementType = MovementType.OPENING_STOCK,
                 documentReference = line.documentReference,
                 detailReference = null,
-                storageQuantity = ExactQuantity.ofUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedUnit),
+                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedUnit),
                 batchCost = Decimals.MoneyScale.multiply(line.unitCost, line.userProvidedQuantity.toBigDecimal()),
                 userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                 unitId = line.unitId,

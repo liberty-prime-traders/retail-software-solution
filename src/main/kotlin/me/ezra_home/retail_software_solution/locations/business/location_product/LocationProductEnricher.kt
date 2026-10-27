@@ -33,7 +33,7 @@ class LocationProductEnricher(
             val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(it.baseUnitId)
             val quantityBreakdown = breakdownByBaseUnitId.getValue(it.baseUnitId)
             val openingStockStorageQuantity = openingStock?.let { amounts ->
-                ExactQuantity.ofUserProvided(amounts.userProvidedQuantity, amounts.storageUnitsPerUserProvidedUnit)
+                ExactQuantity.ofStorageFromUserProvided(amounts.userProvidedQuantity, amounts.storageUnitsPerUserProvidedUnit)
             }
             locationProductMapper.toResponseDto(
                 it,

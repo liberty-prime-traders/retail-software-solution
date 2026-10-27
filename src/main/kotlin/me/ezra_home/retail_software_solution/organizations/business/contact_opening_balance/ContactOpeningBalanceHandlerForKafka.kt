@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ContactOpeningBalanceUpsertedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -33,6 +34,7 @@ class ContactOpeningBalanceHandlerForKafka(
                 revisionRow.requiredCreatedOn()
             )
         val signedDelta = revisionRow.amount - (previousRevisionRow?.amount ?: BigDecimal.ZERO)
+        if (signedDelta.signum() == 0) return
         publish(revisionRow, signedDelta, DateTimes.Local.atOrganizationZone(revisionRow.requiredCreatedOn()))
     }
 
@@ -49,7 +51,7 @@ class ContactOpeningBalanceHandlerForKafka(
                 ledgerSourceReferenceNumber = contactOpeningBalance.requiredReference(),
                 contactReferenceNumber = contactOpeningBalance.contactReferenceNumber,
                 subledgerDirection = contactOpeningBalance.subledgerDirection,
-                amount = signedDelta.abs(),
+                amount = PositiveMoney.of(signedDelta.abs()),
                 balanceReduced = signedDelta < BigDecimal.ZERO,
                 postingDate = postingDate
             )

@@ -427,7 +427,8 @@ decimals (`QuantityLimits`), and a typed price is rejected beyond the money scal
 - `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
   stores the typed unit price. The `PRICE_OVERRIDE` adjustment has method `UNIT_PRICE_OVERRIDE` and `value` equal to the
   typed price. Its amount is `|computed line total − override total|`, where the override total is
-  `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`, rounded once to cents), and is recomputed on every
+  `unitPriceOverride × userProvidedQuantity` (`LinePricing.overrideTotal`, rounded once to cents). The signed difference comes
+  from `LinePricing.overrideDifference`, shared by the reconciler (direction) and `AdjustmentAmountCalculator` (amount). The amount is recomputed on every
   save, so a quantity edit never touches the stored price. The direction is `DISCOUNT` when the override total is lower and
   `SURCHARGE` when higher; equal totals mean no adjustment. `value` and `direction` are immutable once the adjustment is
   saved, so a new typed price, or a flipped direction, replaces the adjustment under a fresh identity.

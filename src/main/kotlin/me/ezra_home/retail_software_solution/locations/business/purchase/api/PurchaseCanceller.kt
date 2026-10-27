@@ -53,7 +53,7 @@ class PurchaseCanceller(
             } else {
                 storageUnitsPerUserProvidedUnitByLocationProductId.getValue(line.locationProductId)
             }
-            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled, storageUnitsPerUserProvidedUnit)
+            val storageQuantityToCancel = ExactQuantity.ofStorageFromUserProvided(cancel.userProvidedQuantityCanceled, storageUnitsPerUserProvidedUnit)
             PurchaseValidator.guardCancelQuantity(line, storageQuantityToCancel, breakdownByLocationProductId.getValue(line.locationProductId))
             line.storageQuantityCanceled = storageQuantityToCancel.toStorageQuantity()
             line

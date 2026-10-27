@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSess
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -40,7 +40,7 @@ class PurchaseLineCancelTest {
     }
 
     private fun cancel(line: PurchaseLineEntity, typed: String, storageUnitsPerUserProvidedUnit: Long) {
-        val storageQuantity = ExactQuantity.ofUserProvided(UserProvidedQuantity.of(BigDecimal(typed)), storageUnitsPerUserProvidedUnit)
+        val storageQuantity = ExactQuantity.ofStorageFromUserProvided(PositiveUserProvidedQuantity.of(BigDecimal(typed)), storageUnitsPerUserProvidedUnit)
         PurchaseValidator.guardCancelQuantity(line, storageQuantity, quantityBreakdown)
         line.storageQuantityCanceled = storageQuantity.toStorageQuantity()
     }

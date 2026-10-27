@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
+import me.ezra_home.retail_software_solution.util.business.MoneyDisplay
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
@@ -125,25 +126,24 @@ class SubledgerService(
             .associateBy { it.referenceNumber }
 
         return entryEntities.map { entryEntity ->
-            val subledgerEntryDto = ledgerMapper.toSubledgerDto(entryEntity)
-            val groupDto = groupsByReferenceNumber.getValue(subledgerEntryDto.groupReferenceNumber)
+            val groupDto = groupsByReferenceNumber.getValue(entryEntity.groupReferenceNumber)
             val transactionDelta = SubledgerBalanceDto(
-                payable = subledgerEntryDto.payableAmount.toBigDecimal(),
-                receivable = subledgerEntryDto.receivableAmount.toBigDecimal()
+                payable = entryEntity.payableAmount,
+                receivable = entryEntity.receivableAmount
             )
             val runningBalance = SubledgerBalanceDto(
-                payable = subledgerEntryDto.runningPayable,
-                receivable = subledgerEntryDto.runningReceivable
+                payable = entryEntity.runningPayable,
+                receivable = entryEntity.runningReceivable
             )
             SubledgerEntryResponse(
-                id = subledgerEntryDto.id,
-                createdOn = subledgerEntryDto.createdOn,
-                groupReferenceNumber = subledgerEntryDto.groupReferenceNumber,
+                id = requireNotNull(entryEntity.id),
+                createdOn = requireNotNull(entryEntity.createdOn),
+                groupReferenceNumber = entryEntity.groupReferenceNumber,
                 sourceType = groupDto.sourceType,
                 sourceReferenceNumber = groupDto.sourceReferenceNumber,
-                transactionAmount = transactionDelta.netBalance,
+                transactionAmount = MoneyDisplay.of(transactionDelta.netBalance),
                 transactionBalanceEffect = transactionDelta.balanceEffect,
-                netBalance = runningBalance.netBalance,
+                netBalance = MoneyDisplay.of(runningBalance.netBalance),
                 netBalanceEffect = runningBalance.balanceEffect
             )
         }

@@ -52,6 +52,24 @@ class FifoTakePlannerTest {
     }
 
     @Test
+    fun `a clamped take followed by the draining take still sums to exactly what the layer held`() {
+        val layerAfterVoid = thousandPieceLayer().copy(
+            storageQuantityRemaining = BigDecimal("999"),
+            costRemaining = BigDecimal("2.99")
+        )
+        val clampedTake = FifoTakePlanner.planTakes(listOf(layerAfterVoid), ExactQuantity.ofStorage(BigDecimal.ONE)).single()
+        val layerAfterClampedTake = layerAfterVoid.copy(
+            storageQuantityRemaining = BigDecimal("998"),
+            costRemaining = layerAfterVoid.costRemaining - clampedTake.movedCost
+        )
+
+        val drainingTake = FifoTakePlanner.planTakes(listOf(layerAfterClampedTake), ExactQuantity.ofStorage(BigDecimal("998"))).single()
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(clampedTake.movedCost))
+        assertEquals(0, layerAfterVoid.costRemaining.compareTo(clampedTake.movedCost + drainingTake.movedCost))
+    }
+
+    @Test
     fun `after takes and out of order voids in any mix, draining the layer still books exactly the batch cost and no take is negative`() {
         val random = java.util.Random(42)
         repeat(200) {

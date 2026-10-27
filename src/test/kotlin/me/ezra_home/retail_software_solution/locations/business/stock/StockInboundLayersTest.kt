@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_item_s
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -28,7 +28,7 @@ class StockInboundLayersTest {
         movementType = MovementType.PURCHASE_RECEIVED,
         documentReference = "DEL000001",
         detailReference = "DELN000001",
-        storageQuantity = ExactQuantity.ofUserProvided(UserProvidedQuantity.of(BigDecimal(userProvidedQuantity)), storageUnitsPerUserProvidedUnit),
+        storageQuantity = ExactQuantity.ofStorageFromUserProvided(PositiveUserProvidedQuantity.of(BigDecimal(userProvidedQuantity)), storageUnitsPerUserProvidedUnit),
         batchCost = BigDecimal(batchCost),
         userProvidedQuantity = BigDecimal(userProvidedQuantity),
         unitId = baleId,

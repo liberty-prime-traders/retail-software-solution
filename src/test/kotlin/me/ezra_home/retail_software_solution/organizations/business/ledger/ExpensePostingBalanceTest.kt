@@ -21,6 +21,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseRecordedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseVoidedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -226,20 +227,20 @@ class ExpensePostingBalanceTest {
     private fun expenseRecordedEvent(expenseAccount: SystemAccount, sourceContext: EventSourceContext = locationLevelContext) = ExpenseRecordedEvent(
         eventId = UUID.randomUUID(), sourceContext = sourceContext, timestamp = Instant.now(), correlationId = null,
         expenseId = UUID.randomUUID(), expenseReferenceNumber = "EXPN01", expenseAccountCode = expenseAccount.code,
-        payeeContactId = payeeContactId, amount = BigDecimal("100"), expenseDate = LocalDate.of(2026, 1, 15)
+        payeeContactId = payeeContactId, amount = PositiveMoney.of(BigDecimal("100")), expenseDate = LocalDate.of(2026, 1, 15)
     )
 
     private fun expenseVoidedEvent(expenseAccount: SystemAccount, sourceContext: EventSourceContext = locationLevelContext) = ExpenseVoidedEvent(
         eventId = UUID.randomUUID(), sourceContext = sourceContext, timestamp = Instant.now(), correlationId = null,
         voidId = UUID.randomUUID(), expenseId = UUID.randomUUID(), expenseReferenceNumber = "EXPN01",
-        expenseAccountCode = expenseAccount.code, payeeContactId = payeeContactId, amount = BigDecimal("100"),
+        expenseAccountCode = expenseAccount.code, payeeContactId = payeeContactId, amount = PositiveMoney.of(BigDecimal("100")),
         voidedOn = LocalDate.of(2026, 1, 16)
     )
 
     private fun expensePaymentRecordedEvent(expenseAccount: SystemAccount) = ExpensePaymentRecordedEvent(
         eventId = UUID.randomUUID(), sourceContext = locationLevelContext, timestamp = Instant.now(), correlationId = null,
         paymentId = UUID.randomUUID(), paymentReferenceNumber = "EXPY01", expenseAccountCode = expenseAccount.code,
-        payeeContactId = payeeContactId, paymentMethodAccountCode = SystemAccount.CASH.code, amount = BigDecimal("100"),
+        payeeContactId = payeeContactId, paymentMethodAccountCode = SystemAccount.CASH.code, amount = PositiveMoney.of(BigDecimal("100")),
         paymentDate = OffsetDateTime.parse("2026-01-15T00:00:00Z")
     )
 
@@ -247,6 +248,6 @@ class ExpensePostingBalanceTest {
         eventId = UUID.randomUUID(), sourceContext = locationLevelContext, timestamp = Instant.now(), correlationId = null,
         voidId = UUID.randomUUID(), paymentId = UUID.randomUUID(), paymentReferenceNumber = "EXPY01",
         expenseAccountCode = expenseAccount.code, payeeContactId = payeeContactId,
-        paymentMethodAccountCode = SystemAccount.CASH.code, amount = BigDecimal("100"), voidedOn = LocalDate.of(2026, 1, 16)
+        paymentMethodAccountCode = SystemAccount.CASH.code, amount = PositiveMoney.of(BigDecimal("100")), voidedOn = LocalDate.of(2026, 1, 16)
     )
 }

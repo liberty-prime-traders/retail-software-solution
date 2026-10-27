@@ -18,7 +18,9 @@ import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
@@ -160,14 +162,6 @@ class ContactOpeningBalanceServiceTest {
 
         assertEquals(ContactSubledgerDirection.PAYABLE, savedRevisions.single().subledgerDirection)
         assertEquals(listOf("40.00"), publishedSignedDeltas())
-    }
-
-    @Test
-    fun `a negative amount is rejected`() {
-        assertThrows(RtsGenericException::class.java) {
-            contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "-1.00"))
-        }
-        assertTrue(savedRevisions.isEmpty())
     }
 
     @Test

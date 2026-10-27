@@ -1,12 +1,13 @@
 package me.ezra_home.retail_software_solution.util.business
 
-import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.math.RoundingMode
 
-@WithDefaultOrganizationSession
 class DecimalsTest {
 
     @Test
@@ -22,22 +23,14 @@ class DecimalsTest {
     }
 
     @Test
-    fun `the scale overload compares at the scale it is given`() {
-        assertEquals(0, Decimals.compareAtScale(BigDecimal("25.9992"), BigDecimal("26"), Decimals.MoneyScale))
-        assertTrue(Decimals.compareAtScale(BigDecimal("25.9992"), BigDecimal("26"), Decimals.Scale4) < 0)
+    fun `each scale compares at its own precision`() {
+        assertEquals(0, Decimals.MoneyScale.compare(BigDecimal("25.9992"), BigDecimal("26")))
+        assertTrue(Decimals.Scale4.compare(BigDecimal("25.9992"), BigDecimal("26")) < 0)
     }
 
     @Test
-    fun `rounding down never reports more than is there`() {
-        assertEquals(BigDecimal("0.9999"), Decimals.Scale4.roundDown(BigDecimal("0.99995")))
+    fun `stripping zeroes rounds half up`() {
         assertEquals("1", Decimals.stripZeroesAndRound(BigDecimal("0.99995")))
-    }
-
-    @Test
-    fun `rounding up never reports less than is held`() {
-        assertEquals(BigDecimal("0.0001"), Decimals.Scale4.roundUp(BigDecimal("0.00006")))
-        assertEquals(BigDecimal("0.0001"), Decimals.Scale4.roundUp(BigDecimal("0.00001")))
-        assertEquals(BigDecimal("0.0000"), Decimals.Scale4.roundUp(BigDecimal.ZERO))
     }
 
     @Test
@@ -51,9 +44,9 @@ class DecimalsTest {
         ).forEach { (onHand, reserved) ->
             val onHandExact = BigDecimal(onHand)
             val reservedExact = BigDecimal(reserved)
-            val shownOnHand = Decimals.Scale4.roundDown(onHandExact)
-            val shownReserved = Decimals.Scale4.roundUp(reservedExact)
-            val shownAvailable = Decimals.Scale4.roundDown(onHandExact - reservedExact)
+            val shownOnHand = onHandExact.setScale(Decimals.Scale4.scale, RoundingMode.DOWN)
+            val shownReserved = reservedExact.setScale(Decimals.Scale4.scale, RoundingMode.UP)
+            val shownAvailable = (onHandExact - reservedExact).setScale(Decimals.Scale4.scale, RoundingMode.DOWN)
             assertTrue(shownOnHand - shownReserved <= shownAvailable, "$onHand on hand, $reserved reserved")
         }
     }
@@ -69,9 +62,10 @@ class DecimalsTest {
     fun `a magnitude may equal the transaction maximum in either sign but not exceed it`() {
         Decimals.requireWithinMaximum(Decimals.MAXIMUM_TRANSACTION_AMOUNT, Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
         Decimals.requireWithinMaximum(Decimals.MAXIMUM_TRANSACTION_AMOUNT.negate(), Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
-        listOf(Decimals.MAXIMUM_TRANSACTION_AMOUNT, Decimals.MAXIMUM_TRANSACTION_AMOUNT.negate()).forEach { atMaximum ->
+        val justOverMaximum = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01"))
+        listOf(justOverMaximum, justOverMaximum.negate()).forEach { overMaximum ->
             assertThrows(RtsGenericException::class.java) {
-                Decimals.requireWithinMaximum(atMaximum.add(atMaximum.signum().toBigDecimal().multiply(BigDecimal("0.01"))), Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
+                Decimals.requireWithinMaximum(overMaximum, Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
             }
         }
     }

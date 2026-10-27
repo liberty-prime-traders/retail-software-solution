@@ -12,8 +12,8 @@ data class ConversionRatio(val numerator: Long, val denominator: Long) {
     fun factor(): BigDecimal = Decimals.Scale10.divide(BigDecimal.valueOf(numerator), BigDecimal.valueOf(denominator))
 
     fun reduced(): ConversionRatio {
-        val g = Decimals.gcd(numerator, denominator)
-        return ConversionRatio(numerator / g, denominator / g)
+        val greatestCommonDivisor = Decimals.greatestCommonDivisor(numerator, denominator)
+        return ConversionRatio(numerator / greatestCommonDivisor, denominator / greatestCommonDivisor)
     }
 
     fun <T> buildFromParts(builder: (numerator: Long, denominator: Long) -> T): T = builder(numerator, denominator)

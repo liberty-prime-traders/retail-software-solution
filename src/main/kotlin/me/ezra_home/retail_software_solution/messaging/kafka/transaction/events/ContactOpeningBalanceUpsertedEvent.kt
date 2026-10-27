@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -16,7 +16,7 @@ data class ContactOpeningBalanceUpsertedEvent(
     val ledgerSourceReferenceNumber: String,
     val contactReferenceNumber: String,
     val subledgerDirection: ContactSubledgerDirection,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val balanceReduced: Boolean,
     val postingDate: LocalDate
 ) : TransactionEvent() {

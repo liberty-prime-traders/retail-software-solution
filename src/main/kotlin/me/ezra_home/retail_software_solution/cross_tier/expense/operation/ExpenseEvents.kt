@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpenseRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpenseVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.springframework.context.ApplicationEventPublisher
 import java.time.Instant
 import java.util.UUID
@@ -30,7 +31,7 @@ class ExpenseEvents(
                 expenseReferenceNumber = expenseDto.referenceNumber,
                 expenseAccountCode = expenseDto.expenseAccountCode,
                 payeeContactId = expenseDto.payeeContactId,
-                amount = expenseDto.amount,
+                amount = PositiveMoney.of(expenseDto.amount),
                 expenseDate = expenseDto.expenseDate
             )
         )
@@ -48,7 +49,7 @@ class ExpenseEvents(
                 expenseReferenceNumber = expenseDto.referenceNumber,
                 expenseAccountCode = expenseDto.expenseAccountCode,
                 payeeContactId = expenseDto.payeeContactId,
-                amount = expenseDto.amount,
+                amount = PositiveMoney.of(expenseDto.amount),
                 voidedOn = DateTimes.Local.atOrganizationZone(expenseVoidDto.voidedOn)
             )
         )
@@ -66,7 +67,7 @@ class ExpenseEvents(
                 expenseAccountCode = expenseDto.expenseAccountCode,
                 payeeContactId = expenseDto.payeeContactId,
                 paymentMethodAccountCode = expensePaymentDto.paymentMethodAccountCode,
-                amount = expensePaymentDto.amount,
+                amount = PositiveMoney.of(expensePaymentDto.amount),
                 paymentDate = expensePaymentDto.paymentDate
             )
         )
@@ -89,7 +90,7 @@ class ExpenseEvents(
                 expenseAccountCode = expenseDto.expenseAccountCode,
                 payeeContactId = expenseDto.payeeContactId,
                 paymentMethodAccountCode = expensePaymentDto.paymentMethodAccountCode,
-                amount = expensePaymentDto.amount,
+                amount = PositiveMoney.of(expensePaymentDto.amount),
                 voidedOn = DateTimes.Local.atOrganizationZone(expensePaymentVoidDto.voidedOn)
             )
         )

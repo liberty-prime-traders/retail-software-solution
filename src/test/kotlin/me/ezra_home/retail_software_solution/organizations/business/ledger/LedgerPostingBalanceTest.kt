@@ -24,6 +24,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleTaxLedgerEntriesBuilder
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleVoidedEventProcessor
 import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -209,7 +210,7 @@ class LedgerPostingBalanceTest {
             SalePaymentLineDto(
                 paymentReferenceNumber = "PAY-1",
                 paymentMethodAccountCode = SystemAccount.CASH.code,
-                amount = amount,
+                amount = PositiveMoney.of(amount),
                 paymentDate = OffsetDateTime.now()
             )
         )
@@ -224,7 +225,7 @@ class LedgerPostingBalanceTest {
         contactId = contactId,
         paymentReferenceNumber = "PAY-1",
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = amount,
+        amount = PositiveMoney.of(amount),
         voidedOn = LocalDate.of(2026, 1, 17)
     )
 }

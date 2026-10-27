@@ -49,7 +49,7 @@ ledger account; every `OTHER` reason posts to `SHRINKAGE_AND_LOSSES`.
 2. `fiscalPeriodService.requireOpenForDate(today)`, product advisory lock, `guardAllActive`, and `guardReason` for
    `OTHER` only.
 3. Convert once: `getStorageUnitsPerUserProvidedUnit` (rejects a unit outside the product's group), then
-   `ExactQuantity.ofUserProvided`. That exact value is persisted and passed to the stock updater.
+   `ExactQuantity.ofStorageFromUserProvided`. That exact value is persisted and passed to the stock updater.
 4. The service generates the adjustment's own reference number up front (`ReferenceNumberGenerator`); it becomes the
    entity's `referenceNumber` and the stock layer / movements' `documentReference`. It is generated early because the
    row is immutable and its `totalCost` is only known after the stock change.

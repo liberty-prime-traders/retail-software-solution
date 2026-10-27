@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -19,6 +19,6 @@ data class SalePaymentRecordedEvent(
 data class SalePaymentLineDto(
     val paymentReferenceNumber: String,
     val paymentMethodAccountCode: String,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val paymentDate: OffsetDateTime
 )

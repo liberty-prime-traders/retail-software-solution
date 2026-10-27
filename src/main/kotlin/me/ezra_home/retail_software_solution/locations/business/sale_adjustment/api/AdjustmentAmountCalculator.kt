@@ -12,7 +12,7 @@ object AdjustmentAmountCalculator {
             PriceAdjustmentMethod.UNIT_PRICE_OVERRIDE -> {
                 val overriddenLine = productLinesWithPrice.first { it.locationProductId == saleAdjustmentCreateDto.locationProductId }
                 Decimals.MoneyScale.round(
-                    overriddenLine.lineTotal.subtract(LinePricing.overrideTotal(saleAdjustmentCreateDto.value, overriddenLine.userProvidedQuantity)).abs()
+                    LinePricing.overrideDifference(overriddenLine.lineTotal, saleAdjustmentCreateDto.value, overriddenLine.userProvidedQuantity).abs()
                 )
             }
             PriceAdjustmentMethod.PERCENTAGE -> {

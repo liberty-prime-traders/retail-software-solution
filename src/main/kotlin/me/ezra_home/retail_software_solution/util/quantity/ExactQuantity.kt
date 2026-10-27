@@ -14,8 +14,10 @@ class ExactQuantity private constructor(private val storageValue: BigDecimal) : 
     fun isZero(): Boolean = storageValue.signum() == 0
     fun toStorageQuantity(): BigDecimal = storageValue.setScale(STORAGE_SCALE, RoundingMode.UNNECESSARY)
 
-    fun toDisplayQuantity(storageUnitsPerDisplayUnit: Long, roundingMode: RoundingMode): BigDecimal =
-        storageValue.divide(BigDecimal.valueOf(storageUnitsPerDisplayUnit), DISPLAY_SCALE, roundingMode)
+    fun toDisplayQuantity(storageUnitsPerDisplayUnit: Long, roundingMode: RoundingMode): BigDecimal {
+        require(storageUnitsPerDisplayUnit >= 1) { "storageUnitsPerDisplayUnit must be at least 1" }
+        return storageValue.divide(BigDecimal.valueOf(storageUnitsPerDisplayUnit), DISPLAY_SCALE, roundingMode)
+    }
 
     override fun compareTo(other: ExactQuantity): Int = storageValue.compareTo(other.storageValue)
     override fun equals(other: Any?): Boolean = other is ExactQuantity && storageValue.compareTo(other.storageValue) == 0
@@ -28,15 +30,12 @@ class ExactQuantity private constructor(private val storageValue: BigDecimal) : 
 
         val ZERO = ExactQuantity(BigDecimal.ZERO)
 
-        fun ofUserProvided(userProvidedQuantity: UserProvidedQuantity, storageUnitsPerUserProvidedUnit: Long): ExactQuantity =
-            ofTypedUserProvided(userProvidedQuantity.toBigDecimal(), storageUnitsPerUserProvidedUnit)
+        fun ofStorageFromUserProvided(positiveUserProvidedQuantity: PositiveUserProvidedQuantity, storageUnitsPerUserProvidedUnit: Long): ExactQuantity =
+            ofStorageFromUserProvided(positiveUserProvidedQuantity.toBigDecimal(), storageUnitsPerUserProvidedUnit)
 
-        fun ofUserProvided(positiveUserProvidedQuantity: PositiveUserProvidedQuantity, storageUnitsPerUserProvidedUnit: Long): ExactQuantity =
-            ofTypedUserProvided(positiveUserProvidedQuantity.toBigDecimal(), storageUnitsPerUserProvidedUnit)
-
-        private fun ofTypedUserProvided(typedValue: BigDecimal, storageUnitsPerUserProvidedUnit: Long): ExactQuantity {
+        fun ofStorageFromUserProvided(userProvidedQuantity: BigDecimal, storageUnitsPerUserProvidedUnit: Long): ExactQuantity {
             require(storageUnitsPerUserProvidedUnit >= 1) { "storageUnitsPerUserProvidedUnit must be at least 1" }
-            return ExactQuantity(typedValue.multiply(BigDecimal.valueOf(storageUnitsPerUserProvidedUnit)))
+            return ExactQuantity(userProvidedQuantity.multiply(BigDecimal.valueOf(storageUnitsPerUserProvidedUnit)))
         }
 
         fun ofStorage(storageQuantity: BigDecimal): ExactQuantity = ExactQuantity(storageQuantity)

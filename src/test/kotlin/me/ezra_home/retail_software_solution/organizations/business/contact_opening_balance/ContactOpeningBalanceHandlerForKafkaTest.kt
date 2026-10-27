@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ContactOpeningBalanceUpsertedEvent
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -71,7 +72,7 @@ class ContactOpeningBalanceHandlerForKafkaTest {
 
         val event = publishedEvent()
         assertEquals("COB000001", event.ledgerSourceReferenceNumber)
-        assertEquals(0, BigDecimal("100.0000").compareTo(event.amount))
+        assertEquals(PositiveMoney.of(BigDecimal("100")), event.amount)
         assertFalse(event.balanceReduced)
         assertEquals(LocalDate.of(2026, 3, 5), event.postingDate)
         assertEquals(revisionRow.createdOn, previousRevisionLookupCreatedOn)
@@ -86,7 +87,7 @@ class ContactOpeningBalanceHandlerForKafkaTest {
 
         val event = publishedEvent()
         assertEquals("COB000002", event.ledgerSourceReferenceNumber)
-        assertEquals(0, BigDecimal("40.0000").compareTo(event.amount))
+        assertEquals(PositiveMoney.of(BigDecimal("40")), event.amount)
         assertTrue(event.balanceReduced)
         assertEquals(LocalDate.of(2026, 3, 6), event.postingDate)
     }

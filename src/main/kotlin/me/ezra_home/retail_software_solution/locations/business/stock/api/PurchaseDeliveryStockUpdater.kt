@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_item_s
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.springframework.stereotype.Service
 
 @Service
@@ -25,7 +24,7 @@ class PurchaseDeliveryStockUpdater(
                 movementType = MovementType.PURCHASE_RECEIVED,
                 documentReference = event.deliveryReferenceNumber,
                 detailReference = line.lineReferenceNumber,
-                storageQuantity = ExactQuantity.ofUserProvided(UserProvidedQuantity.of(line.userProvidedQuantityDelivered), line.storageUnitsPerUserProvidedUnit),
+                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantityDelivered, line.storageUnitsPerUserProvidedUnit),
                 batchCost = Decimals.MoneyScale.multiply(line.unitCost, line.userProvidedQuantityDelivered),
                 userProvidedQuantity = line.userProvidedQuantityDelivered,
                 unitId = line.unitId,

@@ -8,16 +8,16 @@ import java.math.RoundingMode
 class Percentage private constructor(typedValue: BigDecimal) : TypedDecimal<Percentage>(typedValue) {
 
     companion object {
-        private const val MAX_DECIMAL_PLACES = 2
-        private val MAXIMUM = BigDecimal(100)
+        private const val MAXIMUM_DECIMAL_PLACES = 2
+        private val MAXIMUM_PERCENTAGE = BigDecimal(100)
 
         @JvmStatic
         @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         fun of(typedValue: BigDecimal): Percentage {
-            Decimals.requireMaxDecimalPlaces(typedValue, MAX_DECIMAL_PLACES, "Percentage")
+            Decimals.requireMaxDecimalPlaces(typedValue, MAXIMUM_DECIMAL_PLACES, "Percentage")
             Decimals.requireNonNegative(typedValue, "Percentage")
-            Decimals.requireWithinMaximum(typedValue, MAXIMUM, "Percentage")
-            return Percentage(typedValue.setScale(MAX_DECIMAL_PLACES, RoundingMode.UNNECESSARY))
+            Decimals.requireWithinMaximum(typedValue, MAXIMUM_PERCENTAGE, "Percentage")
+            return Percentage(typedValue.setScale(MAXIMUM_DECIMAL_PLACES, RoundingMode.UNNECESSARY))
         }
     }
 }

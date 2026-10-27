@@ -43,9 +43,6 @@ class ContactOpeningBalanceService(
             receivable = latestAmount(contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE)
         )
         val targetBalance = contactOpeningBalanceSetDto.applyTo(existingBalance)
-        if (targetBalance.payable < BigDecimal.ZERO || targetBalance.receivable < BigDecimal.ZERO) {
-            throw RtsGenericException("Opening balance amounts must not be negative")
-        }
         reviseSubledgerDirection(
             contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE,
             existingBalance.receivable, targetBalance.receivable, postingDate

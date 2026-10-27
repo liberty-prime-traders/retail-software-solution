@@ -56,7 +56,7 @@ class StockAdjustmentService(
         val storageUnitsPerUserProvidedUnit = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             listOf(LocationProductUnitRequestDto(locationProductId, stockAdjustmentCreateDto.unitId))
         ).getValue(locationProductId)
-        val storageQuantity = ExactQuantity.ofUserProvided(stockAdjustmentCreateDto.userProvidedQuantity, storageUnitsPerUserProvidedUnit)
+        val storageQuantity = ExactQuantity.ofStorageFromUserProvided(stockAdjustmentCreateDto.userProvidedQuantity, storageUnitsPerUserProvidedUnit)
         val referenceNumber = referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)
         val adjustmentDetails = StockAdjustmentMovementDetails(
             category = stockAdjustmentCreateDto.category,

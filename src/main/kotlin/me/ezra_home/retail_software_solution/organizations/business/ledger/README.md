@@ -17,17 +17,17 @@ so the account alone can't say which one an event is. Keeping direction
 independent of account type is also what makes the balanced-entries check
 meaningful — a flipped leg fails it instead of producing a balanced, wrong
 posting. The processors with a runtime direction (`OpeningBalanceAccountingProcessor`,
-`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor
-or `LedgerEntryRequest.unlessZero`.
+`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor,
+or `LedgerEntryRequest.unlessZero` where the amount can be zero (`SaleTaxLedgerEntriesBuilder`).
 
 ## Zero-amount legs are omitted
 
-A leg whose amount can legitimately be zero (a 100%-discounted sale's receivable, a zero-cost COGS pair, a zero tax,
-an opening balance of zero) is built with `debitUnlessZero` / `creditUnlessZero` / `unlessZero`, which return no leg
+A leg whose amount can legitimately be zero (a 100%-discounted sale's receivable, a zero-cost COGS pair, a zero
+tax) is built with `debitUnlessZero` / `creditUnlessZero` / `unlessZero`, which return no leg
 for an exact zero; callers concatenate the lists. Omitting a leg cannot unbalance a posting, because a zero leg adds
 nothing to either side. A posting that ends up with no legs at all still saves its `ledger_entry_group`, which is what
 `shouldProcess` checks to stay idempotent. Amounts that are positive by their source (loans, fund movements,
-expenses, payments) use `PositiveMoney.of` directly, so a zero there fails instead of being skipped. A negative
+expenses, payments, opening-balance changes) use `PositiveMoney.of` directly, so a zero there fails instead of being skipped. A negative
 amount is never skipped: it reaches `PositiveMoney.of` and fails.
 
 ## What `post` enforces, in order
@@ -78,9 +78,10 @@ posts to the opposite column rather than a negative amount. A debit on `TRADE_RE
 
 `SubledgerEntryRequest.payableAmount` and `receivableAmount` are `Money` (zero allowed, never negative): one column
 carries the amount and the other is `Money.ZERO`, so a `PositiveMoney` would reject the unused column. A negative
-amount fails in `Money.of` when the request is built. `SubledgerEntryDto` carries the same two `Money` fields, while the
-entities, the running figures and the `SUM` projections stay `BigDecimal` because a running total can exceed the
-single-transaction maximum `Money` enforces.
+amount fails in `Money.of` when the request is built. The entities, the running figures and the `SUM` projections stay
+`BigDecimal` because a running total can exceed the single-transaction maximum `Money` enforces. `SubledgerService` reads
+entities directly (there is no entry DTO) and `SubledgerBalanceDto` holds the exact `BigDecimal` figures. A response shows
+them as `MoneyDisplay`, so an oversized running balance rounds instead of throwing.
 
 | Posting | Control-account leg | Column |
 |---|---|---|
@@ -111,8 +112,8 @@ single-transaction maximum `Money` enforces.
 - `subledger_balance` holds one row per contact with its current `running_payable` /
   `running_receivable`, and `getCurrentBalances` reads it. The row is created with the contact
   (`ContactService.createContact`, and `ContactSeeder` for the system Walk-In contact, both through
-  `SubledgerService.openBalance`). Balances are stored at scale 4, and `SubledgerBalanceDto.ZERO`
-  matches it. `LedgerPostingService` updates it in the same transaction as each
+  `SubledgerService.openBalance`). Balances are stored in `numeric(19,4)` columns, and `openBalance` seeds
+  them from `SubledgerBalanceDto.ZERO`, which matches that scale. `LedgerPostingService` updates it in the same transaction as each
   `subledger_entry` insert, under the `SUBLEDGER_CONTACT` advisory lock, and fails the posting if
   the contact has no row. Besides posting, only `SubledgerService.reconcileBalances` writes it:
   `SubledgerBalanceReconciliationJob` runs it for every provisioned organization nightly at 02:30,
@@ -241,7 +242,7 @@ location) are covered by `LedgerPostingServiceOrgLevelTest`.
 ## Event amounts
 
 The sale, delivery, adjustment and opening-stock processors read typed `Money` amounts off the event and never form a
-sum themselves, so a ceiling breach cannot surface in the consumer (see `util/business/README.md` rule 8).
+sum themselves, so a ceiling breach cannot surface in the consumer (see `util/business/README.md` rule 9).
 
 ## Sale cost of goods sold
 

@@ -20,7 +20,6 @@ import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import java.text.NumberFormat
 import java.util.UUID
 
 @Service
@@ -62,8 +61,8 @@ class SupplierPaymentService(
         if (ceiling.isFullyDelivered) {
             val projected = alreadyPaid + supplierPaymentCreateDto.amount.toBigDecimal()
             if (projected > ceiling.deliveredTotal) {
-                val formattedBalance = NumberFormat.getCurrencyInstance().format(ceiling.deliveredTotal - alreadyPaid)
-                throw RtsGenericException("Payment of ${supplierPaymentCreateDto.amount.toBigDecimal()} would exceed the remaining balance of $formattedBalance")
+                val formattedBalance = DisplayFormatters.formatCurrency(ceiling.deliveredTotal - alreadyPaid)
+                throw RtsGenericException("Payment of ${DisplayFormatters.formatCurrency(supplierPaymentCreateDto.amount.toBigDecimal())} would exceed the remaining balance of $formattedBalance")
             }
         }
 

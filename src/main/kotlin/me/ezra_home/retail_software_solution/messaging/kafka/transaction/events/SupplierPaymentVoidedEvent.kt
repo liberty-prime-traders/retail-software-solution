@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -15,7 +15,7 @@ data class SupplierPaymentVoidedEvent(
     val paymentId: UUID,
     val supplierId: UUID,
     val paymentMethodAccountCode: String,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val voidedOn: LocalDate,
     val paymentReferenceNumber: String
 ) : TransactionEvent() {

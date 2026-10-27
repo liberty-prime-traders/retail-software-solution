@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Del
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -42,7 +43,7 @@ class SupplierPaymentHandlerForKafka(
                 paymentId = payment.id!!,
                 supplierId = supplierId,
                 paymentMethodAccountCode = payment.paymentMethodAccountCode,
-                amount = payment.amount,
+                amount = PositiveMoney.of(payment.amount),
                 paymentDate = payment.paymentDate,
                 paymentReferenceNumber = payment.requiredReference()
             )

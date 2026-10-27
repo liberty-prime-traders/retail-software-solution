@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -60,7 +61,7 @@ class OpeningBalanceHandlerForKafka(
                 ledgerSourceReferenceNumber = openingBalance.requiredReference(),
                 accountCode = openingBalance.accountCode,
                 accountEntryType = accountEntryType,
-                amount = amount,
+                amount = PositiveMoney.of(amount),
                 postingDate = postingDate
             )
         )

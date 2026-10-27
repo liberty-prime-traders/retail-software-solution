@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.util.UUID
 
-object BulkUnitChainValidator {
+internal object BulkUnitChainValidator {
 
     fun validateChainSizes(
         payloadGroups: List<UnitGroupBulkInsertDto>,
