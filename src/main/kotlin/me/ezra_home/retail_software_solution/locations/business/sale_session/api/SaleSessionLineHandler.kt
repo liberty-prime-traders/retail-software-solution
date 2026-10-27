@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LinePricing
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineAdjustmentReconciler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContext
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContextBuilder
@@ -86,7 +85,7 @@ class SaleSessionLineHandler(
             val productSummary = saleSessionLineChangeContext.locationProductSummariesById.getValue(lineAddDto.locationProductId)
             val defaultSalePrice = saleSessionLineChangeContext.defaultSalePricesByLocationProductId[lineAddDto.locationProductId]
                 ?: throw RtsGenericException("Product ${productSummary.label} has no default sale price")
-            val baseUnitSizeInRoot = saleSessionLineChangeContext.baseUnitSizeInRootByBaseUnitId.getValue(productSummary.baseUnitId)
+            val storageUnitsPerBaseUnit = saleSessionLineChangeContext.storageUnitsPerBaseUnitByBaseUnitId.getValue(productSummary.baseUnitId)
             SaleSessionLine(
                 identity = SessionIdentity.mintFreshIdentity(),
                 locationProductId = lineAddDto.locationProductId,
@@ -95,8 +94,15 @@ class SaleSessionLineHandler(
                 userProvidedQuantity = lineAddDto.userProvidedQuantity.toBigDecimal(),
                 unitId = productSummary.baseUnitId,
                 baseUnitId = productSummary.baseUnitId,
-                storageUnitsPerUnit = baseUnitSizeInRoot,
-                lineTotal = LinePricing.lineTotal(defaultSalePrice, lineAddDto.userProvidedQuantity.toBigDecimal(), baseUnitSizeInRoot, baseUnitSizeInRoot),
+                storageUnitsPerUserProvidedUnit = storageUnitsPerBaseUnit,
+                lineTotal = SaleSessionLine.lineTotal(
+                    defaultSalePrice,
+                    LineQuantities(
+                        userProvidedQuantity = lineAddDto.userProvidedQuantity.toBigDecimal(),
+                        storageUnitsPerUserProvidedUnit = storageUnitsPerBaseUnit,
+                        storageUnitsPerBaseUnit = storageUnitsPerBaseUnit,
+                    ),
+                ),
                 defaultSalePrice = defaultSalePrice,
             )
         }
@@ -110,17 +116,19 @@ class SaleSessionLineHandler(
         val updatesByLineKey = updates.associateBy { it.identity.key() }
         return existingSaleLines.map { saleSessionLine ->
             val lineUpdateDto = updatesByLineKey[saleSessionLine.identity.key()] ?: return@map saleSessionLine
-            val storageUnitsPerUnit = saleSessionLineChangeContext.newStorageUnitsPerUnitByLineKey[saleSessionLine.identity.key()]
-                ?: saleSessionLine.storageUnitsPerUnit
+            val storageUnitsPerUserProvidedUnit = saleSessionLineChangeContext.newStorageUnitsPerUserProvidedUnitByLineKey[saleSessionLine.identity.key()]
+                ?: saleSessionLine.storageUnitsPerUserProvidedUnit
             saleSessionLine.copy(
                 userProvidedQuantity = lineUpdateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = lineUpdateDto.unitId,
-                storageUnitsPerUnit = storageUnitsPerUnit,
-                lineTotal = LinePricing.lineTotal(
+                storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                lineTotal = SaleSessionLine.lineTotal(
                     saleSessionLine.defaultSalePrice,
-                    lineUpdateDto.userProvidedQuantity.toBigDecimal(),
-                    storageUnitsPerUnit,
-                    saleSessionLineChangeContext.baseUnitSizeInRootByBaseUnitId.getValue(saleSessionLine.baseUnitId),
+                    LineQuantities(
+                        userProvidedQuantity = lineUpdateDto.userProvidedQuantity.toBigDecimal(),
+                        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                        storageUnitsPerBaseUnit = saleSessionLineChangeContext.storageUnitsPerBaseUnitByBaseUnitId.getValue(saleSessionLine.baseUnitId),
+                    ),
                 ),
             )
         }

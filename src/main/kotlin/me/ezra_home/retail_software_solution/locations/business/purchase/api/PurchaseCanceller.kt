@@ -41,19 +41,19 @@ class PurchaseCanceller(
     private fun cancelLines(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseCancelLinesDto>) {
         val linesById = existingLines.associateBy { it.id!! }
         val cancelledLines = cancels.mapNotNull { cancel -> linesById[cancel.purchaseLineId]?.let { it to cancel } }
-        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             cancelledLines
                 .filter { (line, cancel) -> cancel.unitId != null && cancel.unitId != line.unitId }
                 .map { (line, cancel) -> LocationProductUnitRequestDto(line.locationProductId, cancel.unitId!!) }
         )
         val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(cancelledLines.map { (line, _) -> line.locationProductId }.toSet())
         val toSave = cancelledLines.map { (line, cancel) ->
-            val storageUnitsPerUnit = if (cancel.unitId == null || cancel.unitId == line.unitId) {
-                line.storageUnitsPerUnit
+            val storageUnitsPerUserProvidedUnit = if (cancel.unitId == null || cancel.unitId == line.unitId) {
+                line.storageUnitsPerUserProvidedUnit
             } else {
-                storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId)
+                storageUnitsPerUserProvidedUnitByLocationProductId.getValue(line.locationProductId)
             }
-            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled.toBigDecimal(), storageUnitsPerUnit)
+            val storageQuantityToCancel = ExactQuantity.ofUserProvided(cancel.userProvidedQuantityCanceled, storageUnitsPerUserProvidedUnit)
             PurchaseValidator.guardCancelQuantity(line, storageQuantityToCancel, breakdownByLocationProductId.getValue(line.locationProductId))
             line.storageQuantityCanceled = storageQuantityToCancel.toStorageQuantity()
             line

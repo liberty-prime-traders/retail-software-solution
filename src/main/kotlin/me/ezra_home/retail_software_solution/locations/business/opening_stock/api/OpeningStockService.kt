@@ -45,7 +45,7 @@ class OpeningStockService(
             .map { it.locationProductId }.toSet()
         OpeningStockValidator.guardNotAlreadyDeclared(alreadyDeclared, productIds, labelsByProductId)
 
-        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         val savedOpeningStocks = openingStockRepository.saveAll(
@@ -54,7 +54,7 @@ class OpeningStockService(
                     locationProductId = line.locationProductId,
                     userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                     unitId = line.unitId,
-                    storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId),
+                    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(line.locationProductId),
                     unitCost = line.unitCost.toBigDecimal()
                 )
             }
@@ -66,9 +66,9 @@ class OpeningStockService(
                 val openingStock = savedByProductId.getValue(line.locationProductId)
                 OpeningStockLineStockRequest(
                     locationProductId = line.locationProductId,
-                    userProvidedQuantity = openingStock.userProvidedQuantity,
+                    userProvidedQuantity = line.userProvidedQuantity,
                     unitId = openingStock.unitId,
-                    storageUnitsPerUnit = openingStock.storageUnitsPerUnit,
+                    storageUnitsPerUserProvidedUnit = openingStock.storageUnitsPerUserProvidedUnit,
                     unitCost = openingStock.unitCost,
                     documentReference = openingStock.requiredReference()
                 )

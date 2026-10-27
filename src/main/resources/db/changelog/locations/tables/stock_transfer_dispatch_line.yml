@@ -61,7 +61,7 @@ databaseChangeLog:
                   type: numeric(28,4)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_dispatch_line_storage_quantity_dispatched_notnull
+                    notNullConstraintName: stdpl_storage_quantity_dispatched_notnull
 
               - column:
                   name: unit_id
@@ -86,11 +86,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_dispatch_line_cost_dispatched_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_dispatch_line_storage_units_per_unit_notnull
+                    notNullConstraintName: stdpl_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: created_by_id

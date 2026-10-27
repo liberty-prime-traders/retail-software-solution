@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.ProductReservationRow
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
@@ -12,7 +11,7 @@ interface StockReservationRepository : JpaRepository<StockReservationEntity, UUI
     fun deleteBySaleLineIdIn(saleLineIds: List<UUID>)
 
     @Query(
-        "SELECT new me.ezra_home.retail_software_solution.locations.business.stock.api.ProductReservationRow(" +
+        "SELECT new me.ezra_home.retail_software_solution.locations.business.stock.ProductReservationRow(" +
                 "r.locationProductId, r.saleId, SUM(r.storageQuantityReserved)) " +
                 "FROM StockReservationEntity r " +
                 "WHERE r.locationProductId IN :locationProductIds " +

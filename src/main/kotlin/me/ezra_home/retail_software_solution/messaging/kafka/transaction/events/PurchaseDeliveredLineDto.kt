@@ -9,6 +9,6 @@ data class PurchaseDeliveredLineDto(
   val locationProductId: UUID,
   val userProvidedQuantityDelivered: BigDecimal,
   val unitId: UUID,
-  val storageUnitsPerUnit: Long,
+  val storageUnitsPerUserProvidedUnit: Long,
   val unitCost: BigDecimal
 )

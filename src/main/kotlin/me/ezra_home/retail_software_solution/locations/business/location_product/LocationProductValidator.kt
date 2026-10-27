@@ -5,8 +5,8 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 
 object LocationProductValidator {
 
-  fun validateProductUpdate(dto: LocationProductUpdateDto) {
-    dto.minStockLevel?.ifPresent { level ->
+  fun validateProductUpdate(locationProductUpdateDto: LocationProductUpdateDto) {
+    locationProductUpdateDto.minStockLevel?.ifPresent { level ->
       if (level < 0) {
         throw RtsGenericException("Stock level cannot be negative")
       }

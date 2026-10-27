@@ -59,12 +59,12 @@ class LocationProductStorageUnitTest {
     fun `a unit of the product's group captures its size in the storage unit`() {
         val locationProductId = productWithBaseUnit(baleId)
 
-        val captured = fetcher.getStorageUnitsPerUnit(listOf(LocationProductUnitRequestDto(locationProductId, pieceId)))
+        val captured = fetcher.getStorageUnitsPerUserProvidedUnit(listOf(LocationProductUnitRequestDto(locationProductId, pieceId)))
 
         assertEquals(1L, captured.getValue(locationProductId))
         assertEquals(
             18L,
-            fetcher.getStorageUnitsPerUnit(listOf(LocationProductUnitRequestDto(locationProductId, baleId))).getValue(locationProductId)
+            fetcher.getStorageUnitsPerUserProvidedUnit(listOf(LocationProductUnitRequestDto(locationProductId, baleId))).getValue(locationProductId)
         )
     }
 
@@ -73,7 +73,7 @@ class LocationProductStorageUnitTest {
         val locationProductId = productWithBaseUnit(baleId)
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            fetcher.getStorageUnitsPerUnit(listOf(LocationProductUnitRequestDto(locationProductId, gramId)))
+            fetcher.getStorageUnitsPerUserProvidedUnit(listOf(LocationProductUnitRequestDto(locationProductId, gramId)))
         }
 
         assertEquals(LocationProductDataFetcher.UNIT_OUTSIDE_PRODUCT_GROUP, exception.message)
@@ -85,10 +85,10 @@ class LocationProductStorageUnitTest {
 
         assertEquals(
             1L,
-            fetcher.getStorageUnitsPerUnit(listOf(LocationProductUnitRequestDto(locationProductId, miscPieceId))).getValue(locationProductId)
+            fetcher.getStorageUnitsPerUserProvidedUnit(listOf(LocationProductUnitRequestDto(locationProductId, miscPieceId))).getValue(locationProductId)
         )
         assertThrows(RtsGenericException::class.java) {
-            fetcher.getStorageUnitsPerUnit(listOf(LocationProductUnitRequestDto(locationProductId, miscCartonId)))
+            fetcher.getStorageUnitsPerUserProvidedUnit(listOf(LocationProductUnitRequestDto(locationProductId, miscCartonId)))
         }
     }
 }

@@ -12,7 +12,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.StockMovem
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
@@ -49,7 +48,7 @@ class StockTransferStockUpdater(
         dispatchLineRequests.groupBy { it.locationProductId }.forEach { (locationProductId, requestsForProduct) ->
             val productLabel = productSummariesByLocationProductId[locationProductId]?.label
                 ?: locationProductId.toString()
-            var runningBalance = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO
+            var runningBalance = balancesByLocationProductId.getValue(locationProductId)
             requestsForProduct.forEach { dispatchLineRequest ->
                 val fifoConsumptionResult = FifoStockConsumer.consume(
                     fifoConsumptionRequest = FifoConsumptionRequest(
@@ -57,7 +56,7 @@ class StockTransferStockUpdater(
                         storageQuantity = dispatchLineRequest.storageQuantity,
                         userProvidedQuantity = dispatchLineRequest.userProvidedQuantity,
                         unitId = dispatchLineRequest.unitId,
-                        storageUnitsPerUnit = dispatchLineRequest.storageUnitsPerUnit,
+                        storageUnitsPerUserProvidedUnit = dispatchLineRequest.storageUnitsPerUserProvidedUnit,
                         movementType = MovementType.TRANSFER_OUT,
                         documentReference = dispatchLineRequest.dispatchReference,
                         detailReference = dispatchLineRequest.dispatchLineReference,
@@ -99,7 +98,7 @@ class StockTransferStockUpdater(
             val fifoRestorationResult = FifoStockConsumer.restore(
                 movementsToReverse = stockMovementsForProduct,
                 stockEntriesById = stockEntriesById,
-                startingBalance = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                startingBalance = balancesByLocationProductId.getValue(locationProductId),
                 quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 reversalType = MovementType.TRANSFER_CANCELLED,
             )

@@ -20,8 +20,13 @@ data class BreakdownUnit(
 class QuantityBreakdown private constructor(
     private val baseUnitName: String,
     private val wholeUnitLevels: List<BreakdownUnit>,
-    private val rootUnit: BreakdownUnit
+    private val rootUnit: BreakdownUnit,
+    private val unitNamesById: Map<UUID, String>
 ) {
+
+    // As typed, in the line's own unit and never broken down: "2.5 Bales"
+    fun renderUserProvided(userProvidedQuantity: BigDecimal, unitId: UUID): String =
+        describe(Decimals.stripZeroesAndRound(userProvidedQuantity), userProvidedQuantity, unitNamesById.getValue(unitId))
 
     fun render(storageQuantity: ExactQuantity): String {
         val signedQuantity = storageQuantity.toStorageQuantity()
@@ -43,7 +48,8 @@ class QuantityBreakdown private constructor(
         if (remaining.signum() > 0) {
             parts.add(describe(Decimals.stripZeroesAndRound(remaining), remaining, rootUnit.name))
         }
-        return if (parts.isEmpty()) "$ZERO_TEXT ${DisplayFormatters.pluralize(baseUnitName, BigDecimal.ZERO)}" else parts.joinToString(" ")
+        return if (parts.isEmpty()) "$ZERO_TEXT ${DisplayFormatters.pluralize(baseUnitName, BigDecimal.ZERO)}"
+        else parts.joinToString(" ")
     }
 
     private fun describe(countText: String, count: BigDecimal, unitName: String): String =
@@ -61,7 +67,10 @@ class QuantityBreakdown private constructor(
                 .filter { !it.isRoot && it.sizeInRoot > rootUnit.sizeInRoot }
                 .filter { it.sizeInRoot < baseUnit.sizeInRoot || it.id == baseUnit.id }
                 .sortedWith(compareByDescending<BreakdownUnit> { it.sizeInRoot }.thenBy { it.createdOn }.thenBy { it.id })
-            return QuantityBreakdown(baseUnit.name, wholeUnitLevels, rootUnit)
+            return QuantityBreakdown(
+                baseUnit.name, wholeUnitLevels, rootUnit,
+                unitsOfRoot.associate { it.id to it.name }
+            )
         }
     }
 }

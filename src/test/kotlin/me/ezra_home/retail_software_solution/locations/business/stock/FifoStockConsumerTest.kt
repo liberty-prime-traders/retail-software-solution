@@ -53,7 +53,7 @@ class FifoStockConsumerTest {
         val layer = stockEntry(priority = 0, storageQuantity = "100", batchCost = "200.0000")
 
         val consumption = FifoStockConsumer.consume(
-            request("26", userProvidedQuantity = "26", storageUnitsPerUnit = 1L), listOf(layer), BigDecimal("100"), baleBreakdown, "Bella"
+            request("26", userProvidedQuantity = "26", storageUnitsPerUserProvidedUnit = 1L), listOf(layer), BigDecimal("100"), baleBreakdown, "Bella"
         )
 
         assertEquals(0, BigDecimal("74").compareTo(layer.storageQuantityRemaining))
@@ -70,7 +70,7 @@ class FifoStockConsumerTest {
         val layer = stockEntry(priority = 0, storageQuantity = "100", batchCost = "200.0000")
 
         FifoStockConsumer.consume(
-            request("18", userProvidedQuantity = "1", storageUnitsPerUnit = 18L), listOf(layer), BigDecimal("100"), baleBreakdown, "Bella"
+            request("18", userProvidedQuantity = "1", storageUnitsPerUserProvidedUnit = 18L), listOf(layer), BigDecimal("100"), baleBreakdown, "Bella"
         )
 
         assertEquals(0, BigDecimal("82").compareTo(layer.storageQuantityRemaining))
@@ -84,7 +84,7 @@ class FifoStockConsumerTest {
 
         repeat(18_000) {
             val consumption = FifoStockConsumer.consume(
-                request("1", userProvidedQuantity = "1", storageUnitsPerUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
+                request("1", userProvidedQuantity = "1", storageUnitsPerUserProvidedUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
             )
             balance = consumption.endingBalance
             totalCost = totalCost.add(consumption.cost)
@@ -101,7 +101,7 @@ class FifoStockConsumerTest {
         val layer = stockEntry(priority = 0, storageQuantity = "18000", batchCost = "1000.0000")
 
         val consumption = FifoStockConsumer.consume(
-            request("5", userProvidedQuantity = "5", storageUnitsPerUnit = 1L), listOf(layer), BigDecimal("18000"), baleBreakdown, "Bella"
+            request("5", userProvidedQuantity = "5", storageUnitsPerUserProvidedUnit = 1L), listOf(layer), BigDecimal("18000"), baleBreakdown, "Bella"
         )
 
         assertEquals("999 Bales 13 Pieces", consumption.movements.single().storageRemainingBreakdownText)
@@ -113,13 +113,13 @@ class FifoStockConsumerTest {
         val secondLayer = stockEntry(priority = 1, storageQuantity = "26", batchCost = "52.0000")
 
         val consumption = FifoStockConsumer.consume(
-            request("36", userProvidedQuantity = "2", storageUnitsPerUnit = 18L, detailReference = "SALN01"),
+            request("36", userProvidedQuantity = "2", storageUnitsPerUserProvidedUnit = 18L, detailReference = "SALN01"),
             listOf(firstLayer, secondLayer), BigDecimal("36"), baleBreakdown, "Bella"
         )
 
         assertEquals(listOf("10 Pieces", "1 Bale 8 Pieces"), consumption.movements.map { it.storageMovedBreakdownText })
-        assertEquals(listOf(BigDecimal("2"), BigDecimal("2")), consumption.movements.map { it.userProvidedMovedQuantity })
-        assertEquals(setOf(18L), consumption.movements.map { it.storageUnitsPerUnit }.toSet())
+        assertEquals(listOf("2 Bales", "2 Bales"), consumption.movements.map { it.wholeLineQuantityText })
+        assertEquals(setOf(18L), consumption.movements.map { it.storageUnitsPerUserProvidedUnit }.toSet())
         assertEquals(0, BigDecimal("36").compareTo(consumption.movements.sumOf { it.storageMovedQuantity }))
         assertEquals(setOf("SALN01"), consumption.movements.map { it.detailReference }.toSet())
         assertEquals(listOf("1 Bale 8 Pieces", "0 Bales"), consumption.movements.map { it.storageRemainingBreakdownText })
@@ -130,7 +130,7 @@ class FifoStockConsumerTest {
         val firstLayer = stockEntry(priority = 0, storageQuantity = "10", batchCost = "10.0000")
         val secondLayer = stockEntry(priority = 1, storageQuantity = "26", batchCost = "52.0000")
         val consumption = FifoStockConsumer.consume(
-            request("36", userProvidedQuantity = "2", storageUnitsPerUnit = 18L, detailReference = "SALN01"),
+            request("36", userProvidedQuantity = "2", storageUnitsPerUserProvidedUnit = 18L, detailReference = "SALN01"),
             listOf(firstLayer, secondLayer), BigDecimal("36"), baleBreakdown, "Bella"
         )
 
@@ -141,7 +141,7 @@ class FifoStockConsumerTest {
 
         assertEquals(setOf("SALE-1"), restoration.movements.map { it.documentReference }.toSet())
         assertEquals(setOf("SALN01"), restoration.movements.map { it.detailReference }.toSet())
-        assertEquals(setOf(BigDecimal("2")), restoration.movements.map { it.userProvidedMovedQuantity }.toSet())
+        assertEquals(setOf("2 Bales"), restoration.movements.map { it.wholeLineQuantityText }.toSet())
         assertEquals(listOf("10 Pieces", "1 Bale 8 Pieces"), restoration.movements.map { it.storageMovedBreakdownText })
         assertEquals(listOf("10 Pieces", "2 Bales"), restoration.movements.map { it.storageRemainingBreakdownText })
     }
@@ -153,7 +153,7 @@ class FifoStockConsumerTest {
         val movements = mutableListOf<StockMovementEntity>()
         listOf("1", "999999", "7", "1000000", "999993").forEach { grams ->
             val consumption = FifoStockConsumer.consume(
-                request(grams, userProvidedQuantity = grams, storageUnitsPerUnit = 1L), listOf(layer), balance, baleBreakdown, "Salt"
+                request(grams, userProvidedQuantity = grams, storageUnitsPerUserProvidedUnit = 1L), listOf(layer), balance, baleBreakdown, "Salt"
             )
             balance = consumption.endingBalance
             movements.addAll(consumption.movements)
@@ -175,13 +175,13 @@ class FifoStockConsumerTest {
         val movedCosts = mutableListOf<BigDecimal>()
         repeat(7) {
             val consumption = FifoStockConsumer.consume(
-                request("142857", userProvidedQuantity = "142857", storageUnitsPerUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
+                request("142857", userProvidedQuantity = "142857", storageUnitsPerUserProvidedUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
             )
             balance = consumption.endingBalance
             movedCosts.add(consumption.cost)
         }
         val lastConsumption = FifoStockConsumer.consume(
-            request("1", userProvidedQuantity = "1", storageUnitsPerUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
+            request("1", userProvidedQuantity = "1", storageUnitsPerUserProvidedUnit = 1L), listOf(layer), balance, baleBreakdown, "Bella"
         )
         movedCosts.add(lastConsumption.cost)
 
@@ -197,7 +197,7 @@ class FifoStockConsumerTest {
         )
 
         val consumption = FifoStockConsumer.consume(
-            request("15", userProvidedQuantity = "15", storageUnitsPerUnit = 1L), layers, BigDecimal("21"), baleBreakdown, "Widget"
+            request("15", userProvidedQuantity = "15", storageUnitsPerUserProvidedUnit = 1L), layers, BigDecimal("21"), baleBreakdown, "Widget"
         )
 
         assertEquals(3, consumption.movements.size)
@@ -210,7 +210,7 @@ class FifoStockConsumerTest {
 
         val exception = assertThrows(RtsGenericException::class.java) {
             FifoStockConsumer.consume(
-                request("36", userProvidedQuantity = "2", storageUnitsPerUnit = 18L), listOf(onlyLayer), BigDecimal("35"), baleBreakdown, "Bella"
+                request("36", userProvidedQuantity = "2", storageUnitsPerUserProvidedUnit = 18L), listOf(onlyLayer), BigDecimal("35"), baleBreakdown, "Bella"
             )
         }
 
@@ -222,7 +222,7 @@ class FifoStockConsumerTest {
         val layer = stockEntry(priority = 0, storageQuantity = "20", batchCost = "40.0000")
 
         val consumption = FifoStockConsumer.consume(
-            request("4.5", userProvidedQuantity = "0.25", storageUnitsPerUnit = 18L), listOf(layer), BigDecimal("20"), baleBreakdown, "Bella"
+            request("4.5", userProvidedQuantity = "0.25", storageUnitsPerUserProvidedUnit = 18L), listOf(layer), BigDecimal("20"), baleBreakdown, "Bella"
         )
 
         assertEquals(0, BigDecimal("4.5").compareTo(consumption.movements.single().storageMovedQuantity))
@@ -232,7 +232,7 @@ class FifoStockConsumerTest {
 
     @Test
     fun `a stock quantity round-trips at four decimals`() {
-        val quantity = ExactQuantity.ofUserProvided(BigDecimal("0.0001"), 1L)
+        val quantity = ExactQuantity.ofStorage(BigDecimal("0.0001"))
 
         assertEquals(BigDecimal("0.0001"), quantity.toStorageQuantity())
     }
@@ -240,14 +240,14 @@ class FifoStockConsumerTest {
     private fun request(
         storageQuantity: String,
         userProvidedQuantity: String = storageQuantity,
-        storageUnitsPerUnit: Long = 1L,
+        storageUnitsPerUserProvidedUnit: Long = 1L,
         detailReference: String? = "SALN01",
     ) = FifoConsumptionRequest(
         locationProductId = locationProductId,
         storageQuantity = ExactQuantity.ofStorage(BigDecimal(storageQuantity)),
         userProvidedQuantity = BigDecimal(userProvidedQuantity),
-        unitId = UUID.randomUUID(),
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        unitId = if (storageUnitsPerUserProvidedUnit == 1L) pieceId else baleId,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
         movementType = MovementType.SALE,
         documentReference = "SALE-1",
         detailReference = detailReference,

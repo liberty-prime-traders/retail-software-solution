@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.UUID
 
 class UnitChainResolverTest {
@@ -75,7 +74,7 @@ class UnitChainResolverTest {
         val largestQuantity = BigDecimal("999999999999999.9999")
         val largestStorageQuantity = largestQuantity.multiply(BigDecimal(UnitChainResolver.MAX_SIZE_IN_ROOT))
 
-        assertEquals(24, largestStorageQuantity.setScale(0, RoundingMode.DOWN).toPlainString().length)
+        assertEquals(24, largestStorageQuantity.toBigInteger().toString().length)
         assertEquals(true, largestStorageQuantity.precision() <= 28)
     }
 }

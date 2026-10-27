@@ -80,15 +80,15 @@ class ContactOpeningBalancePostingTest {
         val subledgerEntry = contactOpeningBalanceProcessor
             .prepareLedgerRequest(event(subledgerDirection, "30.00", balanceReduced))
             .subledgerEntries.single()
-        assertEquals(0, BigDecimal(payable).compareTo(subledgerEntry.payableAmount), "$subledgerDirection reduced=$balanceReduced payable")
-        assertEquals(0, BigDecimal(receivable).compareTo(subledgerEntry.receivableAmount), "$subledgerDirection reduced=$balanceReduced receivable")
+        assertEquals(0, BigDecimal(payable).compareTo(subledgerEntry.payableAmount.toBigDecimal()), "$subledgerDirection reduced=$balanceReduced payable")
+        assertEquals(0, BigDecimal(receivable).compareTo(subledgerEntry.receivableAmount.toBigDecimal()), "$subledgerDirection reduced=$balanceReduced receivable")
     }
 
     private fun post(event: ContactOpeningBalanceUpsertedEvent) {
         val ledgerPostingRequest: LedgerPostingRequest = contactOpeningBalanceProcessor.prepareLedgerRequest(event)
         LedgerEntriesValidator.validate(ledgerPostingRequest.entries)
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         recordingAccountService.accountService.assertPostable(accountPostings)
         recordingAccountService.accountService.patchBalances(accountPostings)

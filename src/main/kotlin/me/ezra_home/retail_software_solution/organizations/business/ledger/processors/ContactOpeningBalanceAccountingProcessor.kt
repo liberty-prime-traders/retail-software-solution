@@ -10,8 +10,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
@@ -38,10 +38,8 @@ class ContactOpeningBalanceAccountingProcessor(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.CONTACT_OPENING_BALANCE,
             postingDate = event.postingDate,
-            entries = listOf(
-                LedgerEntryRequest.debit(sides.debitAccountCode, event.amount),
-                LedgerEntryRequest.credit(sides.creditAccountCode, event.amount)
-            ),
+            entries = LedgerEntryRequest.debitUnlessZero(sides.debitAccountCode, event.amount) +
+                LedgerEntryRequest.creditUnlessZero(sides.creditAccountCode, event.amount),
             subledgerEntries = listOf(subledgerEntry(event))
         )
     }
@@ -62,14 +60,14 @@ class ContactOpeningBalanceAccountingProcessor(
         if (contactOwesUsMore(event)) {
             SubledgerEntryRequest(
                 contactReferenceNumber = event.contactReferenceNumber,
-                payableAmount = BigDecimal.ZERO,
-                receivableAmount = event.amount
+                payableAmount = Money.ZERO,
+                receivableAmount = Money.of(event.amount)
             )
         } else {
             SubledgerEntryRequest(
                 contactReferenceNumber = event.contactReferenceNumber,
-                payableAmount = event.amount,
-                receivableAmount = BigDecimal.ZERO
+                payableAmount = Money.of(event.amount),
+                receivableAmount = Money.ZERO
             )
         }
 

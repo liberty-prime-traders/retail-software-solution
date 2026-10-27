@@ -39,11 +39,11 @@ class PurchaseLinesResolver(
 
     private fun computeAdditions(purchaseId: UUID, linesToAdd: List<PurchaseLineCreateDto>): List<PurchaseLineEntity> {
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
-        val storageUnitsPerUnitByProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             linesToAdd.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         return linesToAdd.map {
-            PurchaseMapper.toNewLineEntity(purchaseId, it, storageUnitsPerUnitByProductId.getValue(it.locationProductId))
+            PurchaseMapper.toNewLineEntity(purchaseId, it, storageUnitsPerUserProvidedUnitByProductId.getValue(it.locationProductId))
         }
     }
 
@@ -62,7 +62,7 @@ class PurchaseLinesResolver(
         val changedUnitLineDtos = linesToUpdate.filter { lineDto ->
             existingLinesById[lineDto.id]?.unitId != lineDto.unitId
         }
-        val storageUnitsPerUnitForChangedProducts = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitForChangedProducts = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             changedUnitLineDtos.map {
                 LocationProductUnitRequestDto(existingLinesById[it.id]!!.locationProductId, it.unitId)
             }
@@ -77,7 +77,7 @@ class PurchaseLinesResolver(
                 existing.unitCost = unitCost.toBigDecimal()
                 if (existing.unitId != unitId) {
                     existing.unitId = unitId
-                    existing.storageUnitsPerUnit = storageUnitsPerUnitForChangedProducts.getValue(existing.locationProductId)
+                    existing.storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitForChangedProducts.getValue(existing.locationProductId)
                 }
                 toSave.add(existing)
             }

@@ -33,15 +33,15 @@ class PurchaseService(
     val lines = PurchaseMapper.toLineEntities(
       purchase.id!!,
       purchaseCreateDto.linesToAdd,
-      resolveStorageUnitsPerUnit(purchaseCreateDto.linesToAdd)
+      resolveStorageUnitsPerUserProvidedUnit(purchaseCreateDto.linesToAdd)
     )
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)
   }
 
-  private fun resolveStorageUnitsPerUnit(lines: List<PurchaseLineCreateDto>): Map<UUID, Long> {
+  private fun resolveStorageUnitsPerUserProvidedUnit(lines: List<PurchaseLineCreateDto>): Map<UUID, Long> {
     val productUnitRequests = lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
-    return locationProductDataFetcher.getStorageUnitsPerUnit(productUnitRequests)
+    return locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(productUnitRequests)
   }
 
   fun updateDraft(purchaseUpdateDto: PurchaseUpdateDto): PurchaseResponseDto {
@@ -64,7 +64,7 @@ class PurchaseService(
     val lines = PurchaseMapper.toLineEntities(
       purchase.id!!,
       purchaseCreateDto.linesToAdd,
-      resolveStorageUnitsPerUnit(purchaseCreateDto.linesToAdd)
+      resolveStorageUnitsPerUserProvidedUnit(purchaseCreateDto.linesToAdd)
     )
     purchaseLineRepository.saveAll(lines)
     return purchaseAssembler.buildResponse(purchase, lines)

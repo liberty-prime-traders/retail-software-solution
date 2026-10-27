@@ -142,15 +142,15 @@ Rules:
 
 - A `SaleLineEntity` belongs to exactly one `SaleEntity` (`sale_id`, FK).
 - A sale line carries: `locationProductId`, `userProvidedQuantity` (what the cashier typed, in `unitId`), `unitId`,
-  `storageUnitsPerUnit` (the line unit's size in the storage unit, captured when the line is created or its unit
+  `storageUnitsPerUserProvidedUnit` (the line unit's size in the storage unit, captured when the line is created or its unit
   changes), the gross `lineTotal`, and the `defaultSalePrice` it came from (per product base unit, `numeric(28,10)`).
   There is no stored unit price and no base-quantity column.
 - **`sale_line.user_provided_quantity` is stored in the line's `unitId`.** The storage quantity is
-  `userProvidedQuantity x storageUnitsPerUnit`, exact (`SaleLineEntity.storageQuantity()`, an `ExactQuantity`). That
+  `userProvidedQuantity x storageUnitsPerUserProvidedUnit`, exact (`SaleLineEntity.storageQuantity()`, an `ExactQuantity`). That
   figure is what `sale_line_stock_reservation.storage_quantity_reserved` and the FIFO stock requests carry, never the
   sale line itself. The storage unit is the root of the product's unit group (see `util/quantity/README.md`).
-- **`lineTotal` is gross of any price override** and is computed by `LinePricing.lineTotal` when the line is added or
-  edited in an open session: `defaultSalePrice x userProvidedQuantity x storageUnitsPerUnit ÷ baseUnitSizeInRoot`,
+- **`lineTotal` is gross of any price override** and is computed by `SaleSessionLine.lineTotal` when the line is added or
+  edited in an open session: `defaultSalePrice x userProvidedQuantity x storageUnitsPerUserProvidedUnit ÷ storageUnitsPerBaseUnit`,
   divided once and rounded once to cents (`Decimals.MoneyScale`, half-up). One Bale and 18 Pieces of a product priced 1000.00 per Bale both
   total 1000.00. Amounts (line totals, adjustments, tax) are whole cents so a total can always be settled by a payment; unit prices stay at scale 4. A saved line's total is loaded as stored and never recomputed on load, so confirm reprices nothing.
 - The **unit price is derived**, never stored: `ProductLineWithPrice.unitPrice = lineTotal ÷ userProvidedQuantity`, half-up
@@ -168,7 +168,7 @@ Rules:
    put on the cart does **not** block subsequent draft saves or confirm —
    the line stays valid once it has been accepted.
 4. `unitId` must belong to the product's unit group: its root (`UnitConversionGraph.getStorageUnitId`) must equal the
-   root of the product's base unit, or `LocationProductDataFetcher.getStorageUnitsPerUnit` rejects it. A Miscellaneous
+   root of the product's base unit, or `LocationProductDataFetcher.getStorageUnitsPerUserProvidedUnit` rejects it. A Miscellaneous
    product can therefore only use its base unit.
 5. `defaultSalePrice` must be set on the product at add time; the session
    line handler rejects with `"Product X has no default sale price"` otherwise.
@@ -280,18 +280,22 @@ subtotal = Σ(line totals)
 
 ```
 taxableAmount()   = displaySubtotal() − discountTotal()
-receivableTotal() = taxableAmount() + (taxBilled ?: 0)
+receivableTotal() = taxableAmount() + taxBilled
 ```
 
 `receivableTotal()` is the one total that means "amount owed" — always,
 with no separate method a caller could pick the wrong one of. `taxBilled`
-is the only stored tax figure on the sale row; it is null until confirm
-(see §7) and holds the sum of taxes billed separately to the customer (an
-inclusive tax or a turnover-tax-style absorbed tax never adds to it,
-because the customer never owes it as an extra amount). Before confirm,
-`taxBilled` is null, so `receivableTotal()` is exactly `taxableAmount()` —
-the formula does not need two branches, it falls out of `taxBilled` being
-unset.
+is the only stored tax figure on the sale row used for it; it is zero until
+confirm (see §7) and holds the sum of taxes billed separately to the
+customer (an inclusive tax or a turnover-tax-style absorbed tax never adds
+to it, because the customer never owes it as an extra amount). Before
+confirm, `taxBilled` is zero, so `receivableTotal()` is exactly
+`taxableAmount()` — the formula does not need two branches.
+
+`subtotal`, the four discount and surcharge buckets and `taxBilled` are
+non-null, default zero. `taxTotal` is the exception: it stays null until tax
+finalization has run, and `SaleValidator.guardCanVoid` treats null as
+"finalization still pending".
 
 `taxableAmount()` is the pre-tax base — it is what tax is computed from
 (§7) and nothing else; a caller that means "amount owed" must never use it.
@@ -363,11 +367,11 @@ Two distinct mechanisms protect inventory:
   for that reference.
 - The layer walk and its reversal live in `FifoStockConsumer`, shared with `StockTransferStockUpdater`; the updaters
   own locking, balance loading and saving.
-- `SaleLineStockRequest` carries the line's `userProvidedQuantity`, `unitId` and captured `storageUnitsPerUnit`, and its
+- `SaleLineStockRequest` carries the line's `userProvidedQuantity`, `unitId` and captured `storageUnitsPerUserProvidedUnit`, and its
   reference number as the movement's `detail_reference` (the sale's reference is the `document_reference`). Each layer a
   sale line consumes gets one `StockMovementEntity` with `storageMovedQuantity` (that layer's exact share, so the rows
-  sum to the line's storage quantity) and the **same** `userProvidedMovedQuantity` (the whole line's figure, never a
-  share, so it must not be summed). `restoreStock` adds back exactly each movement's `storageMovedQuantity` and
+  sum to the line's storage quantity) and the **same** `wholeLineQuantityText` (the whole line's typed quantity and unit, frozen as text
+  such as "2.5 Bales", never a share). `restoreStock` adds back exactly each movement's `storageMovedQuantity` and
   `movedCost`, and its reversal movements copy the references and the entered quantity.
 - Nothing rounds on the way into stock. Stock sufficiency is exact and strict: available must be at least the
   requested storage quantity, with no tolerance, so one storage unit too many is rejected. Insufficient-stock messages
@@ -387,7 +391,10 @@ Two distinct mechanisms protect inventory:
 - A layer stores its totals (`batch_cost`, `cost_remaining`); `StockEntryEntity.unitCost` is a rate per storage unit at
   scale 10 for display and grouping only, and a total is never recovered by multiplying it by a quantity.
 - `SaleConfirmedEvent` and `SaleVoidedEvent` carry `cogsTotal`, summed from the persisted lines by
-  `SaleDataFetcher.getSaleCogsTotal` (null cost counts as zero) so `reissue` reproduces it.
+  `SaleDataFetcher.getSaleCogsTotal` (null cost counts as zero) so `reissue` reproduces it. Both events hold every
+  amount as `Money` and derive `amountOwed` (taxable + tax) and `grossRevenue` (taxable + discount) at construction, so
+  a sale whose receivable plus tax exceeds `Decimals.MAXIMUM_TRANSACTION_AMOUNT` fails when the event is published, not
+  in the ledger consumer.
   `restoreStock` returns nothing: the void reverses the stored line costs.
 
 ### Locking discipline

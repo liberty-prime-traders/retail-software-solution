@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import org.springframework.stereotype.Service
@@ -21,7 +20,7 @@ class SaleSessionStockOverlay(
         val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(locationProductIds)
         val reservationsByLocationProductId = stockReserver.loadReservationBreakdown(locationProductIds)
         val populatedSaleLines = saleSession.saleLines.map { saleSessionLine ->
-            val availability = availabilityByLocationProductId[saleSessionLine.locationProductId] ?: StockAvailability.ZERO
+            val availability = availabilityByLocationProductId.getValue(saleSessionLine.locationProductId)
             val ownReservation = saleSession.saleId?.let { saleId ->
                 reservationsByLocationProductId[saleSessionLine.locationProductId]?.forSale(saleId)
             } ?: BigDecimal.ZERO

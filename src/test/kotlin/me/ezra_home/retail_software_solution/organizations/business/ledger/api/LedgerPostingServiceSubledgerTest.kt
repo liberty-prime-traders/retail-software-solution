@@ -9,6 +9,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerBalanceRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -107,7 +109,7 @@ class LedgerPostingServiceSubledgerTest {
     }
 
     private fun subledgerEntry(payable: String, receivable: String) =
-        SubledgerEntryRequest(contactReferenceNumber, payableAmount = BigDecimal(payable), receivableAmount = BigDecimal(receivable))
+        SubledgerEntryRequest(contactReferenceNumber, payableAmount = Money.of(BigDecimal(payable)), receivableAmount = Money.of(BigDecimal(receivable)))
 
     private fun post(vararg subledgerEntries: SubledgerEntryRequest) {
         ledgerPostingService.post(
@@ -116,8 +118,8 @@ class LedgerPostingServiceSubledgerTest {
                 sourceType = LedgerSourceType.SALE,
                 postingDate = postingDate,
                 entries = listOf(
-                    LedgerEntryRequest.debit("1000", BigDecimal("10")),
-                    LedgerEntryRequest.credit("4000", BigDecimal("10"))
+                    LedgerEntryRequest.debit("1000", PositiveMoney.of(BigDecimal("10"))),
+                    LedgerEntryRequest.credit("4000", PositiveMoney.of(BigDecimal("10")))
                 ),
                 subledgerEntries = subledgerEntries.toList()
             )

@@ -36,6 +36,7 @@ class SaleAdjustmentEntity(
     @Column(name = "calculation_method", nullable = false, length = 5, updatable = false)
     var calculationMethod: PriceAdjustmentMethod,
 
+    // The input, a percentage or a unit price by calculationMethod; only calculatedAmount is ever summed.
     @Column(name = "value", nullable = false, precision = 19, scale = 4, updatable = false)
     var value: BigDecimal,
 

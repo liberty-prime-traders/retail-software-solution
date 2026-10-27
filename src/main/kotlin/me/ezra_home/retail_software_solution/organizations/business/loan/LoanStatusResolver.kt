@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.loan.api.Loa
 import java.math.BigDecimal
 
 // Mirrors views/loan_status.yml. The view does not see the transaction's pending writes: read it once before writing
-// and move it with these, never re-read it afterwards.
+// and move it with these, never re-read it afterward.
 object LoanStatusResolver {
 
     fun forNewLoan(loanAmount: BigDecimal): LoanStatusFigures = resolve(BigDecimal.ZERO, loanAmount)

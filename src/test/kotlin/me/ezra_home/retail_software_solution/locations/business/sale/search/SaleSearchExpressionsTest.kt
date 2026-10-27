@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.sql.DriverManager
-import java.sql.Types
 import java.util.UUID
 
 // SaleSearchExpressions deliberately duplicates SaleEntity's total formulas in raw SQL (its own
@@ -22,11 +21,11 @@ class SaleSearchExpressionsTest {
     fun `baseline sale with no discount, surcharge, or tax billed`() {
         assertSqlMatchesEntity(
             subtotal = BigDecimal("100.00"),
-            lineLevelDiscountTotal = null,
-            orderLevelDiscountTotal = null,
-            lineLevelSurchargeTotal = null,
-            orderLevelSurchargeTotal = null,
-            taxBilled = null
+            lineLevelDiscountTotal = BigDecimal.ZERO,
+            orderLevelDiscountTotal = BigDecimal.ZERO,
+            lineLevelSurchargeTotal = BigDecimal.ZERO,
+            orderLevelSurchargeTotal = BigDecimal.ZERO,
+            taxBilled = BigDecimal.ZERO
         )
     }
 
@@ -38,7 +37,7 @@ class SaleSearchExpressionsTest {
             orderLevelDiscountTotal = BigDecimal("5.00"),
             lineLevelSurchargeTotal = BigDecimal("3.00"),
             orderLevelSurchargeTotal = BigDecimal("2.00"),
-            taxBilled = null
+            taxBilled = BigDecimal.ZERO
         )
     }
 
@@ -58,21 +57,21 @@ class SaleSearchExpressionsTest {
     fun `zero subtotal with explicit zero tax billed`() {
         assertSqlMatchesEntity(
             subtotal = BigDecimal("0.00"),
-            lineLevelDiscountTotal = null,
-            orderLevelDiscountTotal = null,
-            lineLevelSurchargeTotal = null,
-            orderLevelSurchargeTotal = null,
+            lineLevelDiscountTotal = BigDecimal.ZERO,
+            orderLevelDiscountTotal = BigDecimal.ZERO,
+            lineLevelSurchargeTotal = BigDecimal.ZERO,
+            orderLevelSurchargeTotal = BigDecimal.ZERO,
             taxBilled = BigDecimal("0.00")
         )
     }
 
     private fun assertSqlMatchesEntity(
         subtotal: BigDecimal,
-        lineLevelDiscountTotal: BigDecimal?,
-        orderLevelDiscountTotal: BigDecimal?,
-        lineLevelSurchargeTotal: BigDecimal?,
-        orderLevelSurchargeTotal: BigDecimal?,
-        taxBilled: BigDecimal?
+        lineLevelDiscountTotal: BigDecimal,
+        orderLevelDiscountTotal: BigDecimal,
+        lineLevelSurchargeTotal: BigDecimal,
+        orderLevelSurchargeTotal: BigDecimal,
+        taxBilled: BigDecimal
     ) {
         val saleEntity = SaleEntity(
             contactId = UUID.randomUUID(),
@@ -99,11 +98,11 @@ class SaleSearchExpressionsTest {
 
     private fun evaluateSql(
         subtotal: BigDecimal,
-        lineLevelDiscountTotal: BigDecimal?,
-        orderLevelDiscountTotal: BigDecimal?,
-        lineLevelSurchargeTotal: BigDecimal?,
-        orderLevelSurchargeTotal: BigDecimal?,
-        taxBilled: BigDecimal?
+        lineLevelDiscountTotal: BigDecimal,
+        orderLevelDiscountTotal: BigDecimal,
+        lineLevelSurchargeTotal: BigDecimal,
+        orderLevelSurchargeTotal: BigDecimal,
+        taxBilled: BigDecimal
     ): Pair<BigDecimal, BigDecimal> {
         val sql = """
             SELECT
@@ -122,21 +121,17 @@ class SaleSearchExpressionsTest {
 
         DriverManager.getConnection("jdbc:h2:mem:sale_search_expressions_test;DB_CLOSE_DELAY=-1").use { connection ->
             connection.prepareStatement(sql).use { statement ->
-                setNullableBigDecimal(statement, 1, subtotal)
-                setNullableBigDecimal(statement, 2, lineLevelDiscountTotal)
-                setNullableBigDecimal(statement, 3, orderLevelDiscountTotal)
-                setNullableBigDecimal(statement, 4, lineLevelSurchargeTotal)
-                setNullableBigDecimal(statement, 5, orderLevelSurchargeTotal)
-                setNullableBigDecimal(statement, 6, taxBilled)
+                statement.setBigDecimal(1, subtotal)
+                statement.setBigDecimal(2, lineLevelDiscountTotal)
+                statement.setBigDecimal(3, orderLevelDiscountTotal)
+                statement.setBigDecimal(4, lineLevelSurchargeTotal)
+                statement.setBigDecimal(5, orderLevelSurchargeTotal)
+                statement.setBigDecimal(6, taxBilled)
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
                     return resultSet.getBigDecimal("taxable_amount") to resultSet.getBigDecimal("receivable_total")
                 }
             }
         }
-    }
-
-    private fun setNullableBigDecimal(statement: java.sql.PreparedStatement, index: Int, value: BigDecimal?) {
-        if (value == null) statement.setNull(index, Types.DECIMAL) else statement.setBigDecimal(index, value)
     }
 }

@@ -18,7 +18,6 @@ import me.ezra_home.retail_software_solution.organizations.business.loan.api.Loa
 import me.ezra_home.retail_software_solution.organizations.business.loan.api.LoanStatus
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
@@ -135,7 +134,7 @@ class LoanRepaymentServiceTest {
 
         val posted = postedRequests.single()
         assertEquals(listOf(SystemAccount.LOANS_PAYABLE.code, cashCode), posted.entries.map { it.accountCode })
-        assertEquals(0, BigDecimal("40").compareTo(posted.subledgerEntries.single().receivableAmount))
+        assertEquals(0, BigDecimal("40").compareTo(posted.subledgerEntries.single().receivableAmount.toBigDecimal()))
     }
 
     @Test
@@ -218,7 +217,7 @@ class LoanRepaymentServiceTest {
         val posted = postedRequests.single()
         assertEquals("LNRP000001", posted.sourceReferenceNumber)
         assertEquals(listOf(SystemAccount.DIGITAL_PAYMENTS.code, SystemAccount.LOANS_PAYABLE.code), posted.entries.map { it.accountCode })
-        assertEquals(0, BigDecimal("30").compareTo(posted.subledgerEntries.single().payableAmount))
+        assertEquals(0, BigDecimal("30").compareTo(posted.subledgerEntries.single().payableAmount.toBigDecimal()))
     }
 
     @Test

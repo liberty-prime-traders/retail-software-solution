@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.loan
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -26,5 +27,6 @@ class LoanStatusEntity(
     var outstanding: BigDecimal,
 
     @Column(name = "status", length = 5)
+    @Convert(converter = LoanStatusConverter::class)
     var status: LoanStatus
 )

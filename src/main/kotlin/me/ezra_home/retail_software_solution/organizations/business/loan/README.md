@@ -40,7 +40,7 @@ repayment's own `void`.
 ## Rules
 
 - Validation is in the services and their validators, not on the DTOs. `LoanService` handles loans and loan voids;
-  `LoanRepaymentService` handles repayments and repayment voids. Amounts are `PositiveMoney` (zero, a negative, more decimals than the session money scale, or a magnitude above
+  `LoanRepaymentService` handles repayments and repayment voids. Amounts are `PositiveMoney` (zero, a negative, more decimals than the money scale, or a magnitude above
   `Decimals.MAXIMUM_TRANSACTION_AMOUNT` are rejected when the request binds, never rounded), and dates through `DateTimes.Local.requireNotInFuture`; repayment rules in `LoanRepaymentValidator`,
   loan-void rules in `LoanVoidValidator`, and the lock, lookup and lender reference in `LoanFinder`. Notes and void
   reasons are blank-to-null and unbounded (`text`).

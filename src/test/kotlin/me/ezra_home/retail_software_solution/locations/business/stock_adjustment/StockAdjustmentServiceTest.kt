@@ -106,7 +106,7 @@ class StockAdjustmentServiceTest {
         )
         `when`(referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)).thenReturn("STADJ000001")
         `when`(userQualifier.getCreatorFullName(creatorId)).thenReturn("Test User")
-        `when`(locationProductDataFetcher.getStorageUnitsPerUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
+        `when`(locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
         `when`(locationProductDataFetcher.findSummaryByIds(setOf(locationProductId))).thenReturn(
             mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP000001", "Rice", "Grains", UUID.randomUUID()))
         )

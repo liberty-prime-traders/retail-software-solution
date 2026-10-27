@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.hibernate.envers.Audited
 import java.math.BigDecimal
 import java.util.UUID
@@ -38,13 +39,13 @@ class SaleLineEntity(
     @Column(name = "default_sale_price", nullable = false, precision = 28, scale = 10)
     var defaultSalePrice: BigDecimal,
 
-    @Column(name = "storage_units_per_unit", nullable = false)
-    var storageUnitsPerUnit: Long,
+    @Column(name = "storage_units_per_user_provided_unit", nullable = false)
+    var storageUnitsPerUserProvidedUnit: Long,
 
     @Column(name = "cogs_total", precision = 19, scale = 4)
     var cogsTotal: BigDecimal? = null
 
 ) : HasReferenceEntity(), ProductLineWithPrice {
 
-    fun storageQuantity(): ExactQuantity = ExactQuantity.ofUserProvided(userProvidedQuantity, storageUnitsPerUnit)
+    fun storageQuantity(): ExactQuantity = ExactQuantity.ofUserProvided(UserProvidedQuantity.of(userProvidedQuantity), storageUnitsPerUserProvidedUnit)
 }

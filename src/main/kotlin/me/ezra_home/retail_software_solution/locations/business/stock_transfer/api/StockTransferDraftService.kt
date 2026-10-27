@@ -38,7 +38,7 @@ class StockTransferDraftService(
         val locationProductBaseUnitIds = locationProductSummariesById.mapValues { it.value.baseUnitId }
         guardNoDuplicateAdditionProducts(lineRequestDto.additions, existingLines, locationProductSummariesById)
 
-        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             storageUnitRequests(lineRequestDto, existingLinesByRef, locationProductBaseUnitIds)
         )
 
@@ -48,7 +48,7 @@ class StockTransferDraftService(
                 locationProductId = addition.locationProductId,
                 userProvidedQuantity = addition.quantityDispatched.toBigDecimal(),
                 unitId = locationProductBaseUnitIds.getValue(addition.locationProductId),
-                storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(addition.locationProductId)
+                storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(addition.locationProductId)
             )
         }
 
@@ -56,7 +56,7 @@ class StockTransferDraftService(
             val existingLine = existingLinesByRef.getValue(update.lineRef)
             val newUnitId = update.unitId ?: existingLine.unitId
             if (newUnitId != existingLine.unitId) {
-                existingLine.storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(existingLine.locationProductId)
+                existingLine.storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(existingLine.locationProductId)
             }
             existingLine.userProvidedQuantity = update.quantityDispatched?.toBigDecimal() ?: existingLine.userProvidedQuantity
             existingLine.unitId = newUnitId

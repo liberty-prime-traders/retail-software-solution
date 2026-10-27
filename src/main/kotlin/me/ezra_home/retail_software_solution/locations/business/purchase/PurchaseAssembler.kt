@@ -104,7 +104,7 @@ class PurchaseAssembler(
     return lines.map { line ->
       val product = productSummaries[line.locationProductId]!!
       val quantityBreakdown = breakdownByLocationProductId.getValue(line.locationProductId)
-      val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(product.baseUnitId)
+      val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(product.baseUnitId)
       val delivered = ExactQuantity.ofStorage(line.storageQuantityDelivered)
       val canceled = ExactQuantity.ofStorage(line.storageQuantityCanceled)
       val expected = line.storageQuantityExpected()
@@ -114,13 +114,13 @@ class PurchaseAssembler(
         referenceNumber = line.requiredReference(),
         userProvidedQuantityOrdered = line.userProvidedQuantityOrdered,
         unitId = line.unitId,
-        conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUnit, baseUnitSizeInRoot),
+        conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUserProvidedUnit, storageUnitsPerBaseUnit),
         unitCost = line.unitCost,
         lineTotal = line.getTotalCost(),
-        quantityDelivered = delivered.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
-        quantityYetToBeDelivered = remaining.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
-        quantityCanceled = canceled.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
-        quantityExpected = expected.inUnitOfSize(line.storageUnitsPerUnit, RoundingMode.HALF_UP),
+        quantityDelivered = delivered.toDisplayQuantity(line.storageUnitsPerUserProvidedUnit, RoundingMode.HALF_UP),
+        quantityYetToBeDelivered = remaining.toDisplayQuantity(line.storageUnitsPerUserProvidedUnit, RoundingMode.HALF_UP),
+        quantityCanceled = canceled.toDisplayQuantity(line.storageUnitsPerUserProvidedUnit, RoundingMode.HALF_UP),
+        quantityExpected = expected.toDisplayQuantity(line.storageUnitsPerUserProvidedUnit, RoundingMode.HALF_UP),
         storageQuantityDelivered = delivered.toStorageQuantity(),
         storageQuantityYetToBeDelivered = remaining.toStorageQuantity(),
         storageQuantityCanceled = canceled.toStorageQuantity(),

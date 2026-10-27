@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -17,7 +17,7 @@ data class PurchaseDeliveredEvent(
   val deliveredAt: OffsetDateTime,
   val supplierId: UUID,
   val lines: List<PurchaseDeliveredLineDto>,
-  val deliveryTotal: BigDecimal
+  val deliveryTotal: Money
 ) : TransactionEvent() {
   override val sourceDocumentId: UUID = deliveryId
 }

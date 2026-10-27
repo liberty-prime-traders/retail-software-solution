@@ -39,34 +39,56 @@ class PurchaseDeliveryService(
     fiscalPeriodService.requireOpenForDate(deliveredDate)
     val context = deliveryHandlerForPurchase.prepareForDelivery(purchaseDeliveryCreateDto.purchaseId)
     purchaseDeliveryValidator.validate(purchaseDeliveryCreateDto, context.purchaseLineById)
-    val storageUnitsPerUnitByPurchaseLineId = captureStorageUnitsPerUnit(purchaseDeliveryCreateDto, context.purchaseLineById)
-    purchaseDeliveryValidator.guardWithinRemaining(purchaseDeliveryCreateDto, context.purchaseLineById, storageUnitsPerUnitByPurchaseLineId)
+    val storageUnitsPerUserProvidedUnitByPurchaseLineId = captureStorageUnitsPerUserProvidedUnit(
+      purchaseDeliveryCreateDto, context.purchaseLineById
+    )
+    purchaseDeliveryValidator.guardWithinRemaining(
+      purchaseDeliveryCreateDto,
+      context.purchaseLineById,
+      storageUnitsPerUserProvidedUnitByPurchaseLineId
+    )
 
     val deliveryLines = purchaseDeliveryCreateDto.lines.map { line ->
       DeliveryLineQuantity(
         line.purchaseLineId,
-        ExactQuantity.ofUserProvided(line.userProvidedQuantityDelivered.toBigDecimal(), storageUnitsPerUnitByPurchaseLineId.getValue(line.purchaseLineId))
+        ExactQuantity.ofUserProvided(
+          line.userProvidedQuantityDelivered,
+          storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(line.purchaseLineId)
+        )
       )
     }
 
-    val deliveryRecord = persistDelivery(purchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId)
+    val deliveryRecord = persistDelivery(purchaseDeliveryCreateDto, storageUnitsPerUserProvidedUnitByPurchaseLineId)
     val response = deliveryHandlerForPurchase.commitDelivery(purchaseDeliveryCreateDto.purchaseId, deliveryLines)
     deliveryHandlerForKafka.publish(context, deliveryRecord)
     return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseDeliveryCreateDto.purchaseId))
   }
 
-  private fun captureStorageUnitsPerUnit(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineDto>): Map<UUID, Long> {
-    val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
-      purchaseDeliveryCreateDto.lines.map { LocationProductUnitRequestDto(purchaseLineById.getValue(it.purchaseLineId).locationProductId, it.unitId) }
+  private fun captureStorageUnitsPerUserProvidedUnit(
+    purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto,
+    purchaseLineById: Map<UUID, PurchaseLineDto>
+  ): Map<UUID, Long> {
+    val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
+      purchaseDeliveryCreateDto.lines.map {
+        LocationProductUnitRequestDto(purchaseLineById.getValue(it.purchaseLineId).locationProductId, it.unitId)
+      }
     )
     return purchaseDeliveryCreateDto.lines.associate {
-      it.purchaseLineId to storageUnitsPerUnitByLocationProductId.getValue(purchaseLineById.getValue(it.purchaseLineId).locationProductId)
+      val locationProductId = purchaseLineById.getValue(it.purchaseLineId).locationProductId
+      it.purchaseLineId to storageUnitsPerUserProvidedUnitByLocationProductId.getValue(locationProductId)
     }
   }
 
-  private fun persistDelivery(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId: Map<UUID, Long>): DeliveryRecord {
+  private fun persistDelivery(
+    purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto,
+    storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>
+  ): DeliveryRecord {
     val delivery = deliveryRepository.save(PurchaseDeliveryMapper.toEntity(purchaseDeliveryCreateDto))
-    val lines = PurchaseDeliveryMapper.toLineEntities(delivery.id!!, purchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId)
+    val lines = PurchaseDeliveryMapper.toLineEntities(
+      delivery.id!!,
+      purchaseDeliveryCreateDto,
+      storageUnitsPerUserProvidedUnitByPurchaseLineId
+    )
     deliveryLineRepository.saveAll(lines)
     return DeliveryRecord(delivery, lines)
   }

@@ -54,10 +54,6 @@ object SessionContextProvider {
         return getSession().organization?.timezone ?: throw RtsGenericException("Organization timezone not found in session.")
     }
 
-    fun getMoneyScale(): Int {
-        return getSession().organization?.moneyScale ?: throw RtsGenericException("Organization money scale not found in session.")
-    }
-
     fun clear() {
         sessionContextThreadLocal.remove()
     }
@@ -66,8 +62,7 @@ object SessionContextProvider {
         getSession().organization = OrgSession(
             id = organization.id,
             schemaName = organization.schemaName!!,
-            timezone = organization.timezone,
-            moneyScale = OrgSession.DEFAULT_MONEY_SCALE
+            timezone = organization.timezone
         )
     }
 

@@ -58,6 +58,7 @@ class TaxEntryEntity(
     @Column(name = "tax_is_included_in_taxable_amount", nullable = false, updatable = false)
     var taxIsIncludedInTaxableAmount: Boolean,
 
+    // The sale's pre-tax base; resolvedTaxableBase is that base with included taxes backed out, and what tax_amount is computed from.
     @Column(name = "taxable_amount", nullable = false, precision = 19, scale = 4, updatable = false)
     var taxableAmount: BigDecimal,
 

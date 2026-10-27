@@ -129,10 +129,10 @@ class ExpensePostingBalanceTest {
         val settleRequest = expensePaymentRecordedProcessor.prepareLedgerRequest(expensePaymentRecordedEvent(SystemAccount.RENT_EXPENSE))
 
         assertEquals("PAYEE-1", incurRequest.subledgerEntries.single().contactReferenceNumber)
-        assertEquals(0, BigDecimal("100").compareTo(incurRequest.subledgerEntries.single().payableAmount))
-        assertEquals(0, BigDecimal.ZERO.compareTo(incurRequest.subledgerEntries.single().receivableAmount))
-        assertEquals(0, BigDecimal("100").compareTo(settleRequest.subledgerEntries.single().receivableAmount))
-        assertEquals(0, BigDecimal.ZERO.compareTo(settleRequest.subledgerEntries.single().payableAmount))
+        assertEquals(0, BigDecimal("100").compareTo(incurRequest.subledgerEntries.single().payableAmount.toBigDecimal()))
+        assertEquals(0, BigDecimal.ZERO.compareTo(incurRequest.subledgerEntries.single().receivableAmount.toBigDecimal()))
+        assertEquals(0, BigDecimal("100").compareTo(settleRequest.subledgerEntries.single().receivableAmount.toBigDecimal()))
+        assertEquals(0, BigDecimal.ZERO.compareTo(settleRequest.subledgerEntries.single().payableAmount.toBigDecimal()))
     }
 
     @Test
@@ -209,7 +209,7 @@ class ExpensePostingBalanceTest {
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
         LedgerEntriesValidator.validate(ledgerPostingRequest.entries)
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         recordingAccountService.accountService.assertPostable(accountPostings)
         recordingAccountService.accountService.patchBalances(accountPostings)

@@ -14,6 +14,10 @@ Apply these rules to every Liquibase, entity, or repository change.
 - Foreign keys: `fk_<tblname>_<colname>`
 - Not-null on table create: `<tblname>_<colname>_notnull`
 - Full pattern: `tblname_colname_constrainttype`
+- Postgres silently truncates identifiers past 63 bytes. When a generated name would exceed that, replace `<tblname>`
+  with the table's registry code (`default_prefix` in `platform/seeded_tables/registry_entries/`), lowercased:
+  `stdpl_storage_units_per_user_provided_unit_notnull`, `idx_cob_contact_subledger_direction_created_on`.
+  Use the full table name whenever it fits.
 
 ## Quantity and reference column naming
 
@@ -23,9 +27,9 @@ Apply these rules to every Liquibase, entity, or repository change.
   - Document lines: `user_provided_quantity`, `user_provided_quantity_ordered`.
   - Storage counters on a document line: `storage_quantity_delivered`, `storage_quantity_canceled`.
   - `stock_entry`: `storage_quantity_remaining`.
-  - `stock_movement`: `storage_moved_quantity`, `user_provided_moved_quantity`, `storage_remaining_quantity`.
+  - `stock_movement`: `storage_moved_quantity`, `storage_remaining_quantity`; `whole_line_quantity_text` is the rendered line quantity as text (`varchar`), not a quantity column.
   - Reservations: `storage_quantity_reserved`.
-- A line's captured ratio to the storage unit is one `BIGINT` column, `storage_units_per_unit`
+- A line's captured ratio to the storage unit is one `BIGINT` column, `storage_units_per_user_provided_unit`
   (a whole number, at least 1) — not a numerator/denominator pair.
 - "Base" names only the product's base unit; never use it for a storage quantity.
 - Reference columns spell out "reference", never `ref`: `document_reference` (the document that

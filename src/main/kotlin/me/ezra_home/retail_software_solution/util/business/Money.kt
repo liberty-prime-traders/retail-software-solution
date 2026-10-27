@@ -8,7 +8,11 @@ import java.math.RoundingMode
 // not for a derived price, which can carry more decimals.
 class Money private constructor(typedValue: BigDecimal) : TypedDecimal<Money>(typedValue) {
 
+    operator fun plus(other: Money): Money = of(toBigDecimal().add(other.toBigDecimal()))
+
     companion object {
+        val ZERO: Money = of(BigDecimal.ZERO)
+
         @JvmStatic
         @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
         fun of(typedValue: BigDecimal): Money {

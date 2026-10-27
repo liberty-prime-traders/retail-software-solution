@@ -186,7 +186,7 @@ SessionIdentity
   - `id != null`:
     - **lines** are updated in place — `SaleLineSync` writes the
       current session values for `locationProductId`, `userProvidedQuantity`, `unitId`,
-      `lineTotal`, `storageUnitsPerUnit` onto the existing entity.
+      `lineTotal`, `storageUnitsPerUserProvidedUnit` onto the existing entity.
       `locationProductId` never changes (no session handler mutates it);
       `lineTotal` is recalculated by `SaleSessionLineHandler.applyLineChanges`
       whenever an add or update entry touches the line, and only then (see Pitfalls §8).
@@ -397,16 +397,16 @@ session before finalize.
   access is fully encapsulated behind the `SaleSessionStore` interface.
 - **A session line holds its gross `lineTotal`.** `SaleSessionLine` stores `defaultSalePrice` (per product base unit,
   captured on addition from `location_product.default_sale_price`), `baseUnitId` (snapshotted from
-  `location_product.base_unit_id`), `storageUnitsPerUnit` (the line unit's size in the storage unit, captured when the
+  `location_product.base_unit_id`), `storageUnitsPerUserProvidedUnit` (the line unit's size in the storage unit, captured when the
   line is added or its unit changes) and `lineTotal`, loaded from the persisted line and **never recomputed on load**.
-  `SaleSessionLineHandler.applyLineChanges` recomputes it with `LinePricing.lineTotal` from the current base unit size
+  `SaleSessionLineHandler.applyLineChanges` recomputes it with `SaleSessionLine.lineTotal` from the current base unit size
   only when an add or update entry touches the line; confirm trusts the loaded total and the captured ratio and
   reprices nothing. `unitPrice` is derived (`lineTotal ÷ userProvidedQuantity`, half-up, scale 4) and never stored.
   Addition entries do not accept a `unitId`: new lines start at the product's base unit
-  (`storageUnitsPerUnit` = the base unit's size). Switching to another unit of the product's group is an update entry;
-  a unit outside the group is rejected by `LocationProductDataFetcher.getStorageUnitsPerUnit`. Update entries do **not**
+  (`storageUnitsPerUserProvidedUnit` = the base unit's size). Switching to another unit of the product's group is an update entry;
+  a unit outside the group is rejected by `LocationProductDataFetcher.getStorageUnitsPerUserProvidedUnit`. Update entries do **not**
   re-fetch `defaultSalePrice`. `DomainToSessionMapper` copies the persisted `default_sale_price`, `line_total` and
-  `storage_units_per_unit` straight back onto the line.
+  `storage_units_per_user_provided_unit` straight back onto the line.
   The outbound `SaleSessionLineResponse` keeps its wire fields: `conversionFactor` and `baseQuantity` are display-only
   (`BaseUnitDisplay`: one division from the exact storage figures, `conversionFactor` half-up at 10 decimals, like the unit
   graph's factor, and `baseQuantity` rounded down at 4 decimals, computed with the base unit's current size, so a base-unit line is exactly 1). `lineTotal` is
@@ -422,7 +422,7 @@ A cashier sets a custom price on a line by supplying `unitPriceOverride` in a
 only when the cashier typed a price. The response always carries `unitPriceOverride`: the typed price when the line has an override, otherwise the
 derived list `unitPrice` (for example 55.5556 per Piece, 4 decimals), which is display-only and never sent back. The server owns the adjustment
 model — the client never knows about `PRICE_OVERRIDE` adjustments. The quantity is a `PositiveUserProvidedQuantity`, so it is positive with at most 2
-decimals (`QuantityLimits`), and a typed price is rejected beyond the session money scale when the request is read.
+decimals (`QuantityLimits`), and a typed price is rejected beyond the money scale when the request is read.
 
 - `PriceOverrideReconciler` (called by `SaleSessionLineHandler.applyLineChanges`)
   stores the typed unit price. The `PRICE_OVERRIDE` adjustment has method `UNIT_PRICE_OVERRIDE` and `value` equal to the
@@ -437,7 +437,11 @@ decimals (`QuantityLimits`), and a typed price is rejected beyond the session mo
   always cleared on a unit change: `SaleSessionLineAdjustmentReconciler` drops any remaining line-level adjustment
   whose `relatedSaleLineIdentity` targets a unit-changed line. **No typed price:** a null `unitPriceOverride` keeps the
   existing override. A typed price that equals the current effective price at scale 4 (the override's `value`, otherwise
-  the derived list `unitPrice`) is also unchanged.
+  the derived list `unitPrice`) is also unchanged. **Typing the list price resets the override:** a typed price is limited to
+  the money scale, so a fractional list price (55.5556 per Piece) can only be re-entered rounded (55.56). A typed price that
+  equals the updated line's list `unitPrice` at the money scale removes the existing override, or leaves the line without
+  one, instead of recording the rounding difference as a surcharge or discount. A deliberate price that differs from the
+  rounded list price by a cent or more is still an override.
 - A typed `unitPriceOverride == 0` is allowed (cashier giveaway). Negative is
   rejected when the request is deserialized (`Money` is never negative).
 - The `PRICE_OVERRIDE` adjustment is stored in Redis just like any other

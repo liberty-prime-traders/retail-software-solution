@@ -25,7 +25,7 @@ class DeliveryHandlerForPurchaseTest {
         userProvidedQuantityOrdered = BigDecimal("1.0000"),
         unitCost = BigDecimal("10.00"),
         unitId = UUID.randomUUID(),
-        storageUnitsPerUnit = 18L,
+        storageUnitsPerUserProvidedUnit = 18L,
     )
     private val deliveryHandlerForPurchase = DeliveryHandlerForPurchase(
         purchaseRepository = mock(PurchaseRepository::class.java).also {

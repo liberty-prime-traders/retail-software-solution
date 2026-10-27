@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
+import me.ezra_home.retail_software_solution.util.business.mappers.MoneyQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
@@ -41,7 +42,7 @@ class SubledgerServiceTest {
         subledgerEntryRepository,
         subledgerBalanceRepository,
         ledgerEntryGroupRepository,
-        LedgerMapperImpl(StringQualifier),
+        LedgerMapperImpl(StringQualifier, MoneyQualifier),
         orgEntityAdvisoryLock
     )
 

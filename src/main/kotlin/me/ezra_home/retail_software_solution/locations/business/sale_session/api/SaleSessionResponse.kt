@@ -55,13 +55,13 @@ data class SaleSessionLineResponse(
     val netUnitPrice: BigDecimal,
     val lineTotal: BigDecimal,
     @get:JsonProperty("baseQuantity")
-    val quantityInProductBaseUnit: BigDecimal,
+    val quantityInBaseUnit: BigDecimal,
     @get:JsonProperty("quantityOnHand")
-    val onHandInProductBaseUnit: BigDecimal,
+    val quantityOnHandInBaseUnit: BigDecimal,
     @get:JsonProperty("quantityReserved")
-    val reservedInProductBaseUnit: BigDecimal,
+    val quantityReservedInBaseUnit: BigDecimal,
     @get:JsonProperty("quantityAvailable")
-    val availableInProductBaseUnit: BigDecimal,
+    val quantityAvailableInBaseUnit: BigDecimal,
     val storageQuantityOnHand: BigDecimal,
     val storageQuantityReserved: BigDecimal,
     val storageQuantityAvailable: BigDecimal,

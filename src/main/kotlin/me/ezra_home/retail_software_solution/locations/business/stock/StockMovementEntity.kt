@@ -5,6 +5,7 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategoryConverter
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementTypeConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
@@ -36,12 +37,19 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
+  /**
+   * This movement's exact slice in storage units: the figure to sum or compare. `wholeLineQuantityText` is for display.
+   */
   @Column(name = "storage_moved_quantity", nullable = false, precision = 28, scale = 4)
   var storageMovedQuantity: BigDecimal,
 
-  // The source line's whole figure, identical on every movement the line produced: never sum it.
-  @Column(name = "user_provided_moved_quantity", nullable = false, precision = 19, scale = 4)
-  var userProvidedMovedQuantity: BigDecimal,
+  /**
+   * The quantity exactly as the user typed it for the whole document line (the stock-in or stock-out), in the unit
+   * they chose, pluralized ("2.5 Bales"). Frozen at write time like the breakdown texts, and copied unchanged onto
+   * every movement that line produces, so a stock-out spanning several FIFO layers repeats it on each.
+   */
+  @Column(name = "whole_line_quantity_text", nullable = false, length = 200, updatable = false)
+  var wholeLineQuantityText: String,
 
   @Column(name = "storage_remaining_quantity", nullable = false, precision = 28, scale = 4)
   var storageRemainingQuantity: BigDecimal,
@@ -49,6 +57,10 @@ class StockMovementEntity(
   @Column(name = "moved_cost", nullable = false, precision = 28, scale = 4)
   var movedCost: BigDecimal,
 
+  /**
+   * This and `storageRemainingBreakdownText` are snapshots rendered at write time: history must keep showing the units
+   * as they were, not re-render against unit sizes that have changed since.
+   */
   @Column(name = "storage_moved_breakdown_text", nullable = false, length = 200, updatable = false)
   var storageMovedBreakdownText: String,
 
@@ -64,10 +76,11 @@ class StockMovementEntity(
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
-  var storageUnitsPerUnit: Long,
+  @Column(name = "storage_units_per_user_provided_unit", nullable = false, updatable = false)
+  var storageUnitsPerUserProvidedUnit: Long,
 
   @Column(name = "category", length = 5)
+  @Convert(converter = StockAdjustmentCategoryConverter::class)
   var category: StockAdjustmentCategory? = null,
 
   @Column(name = "note", length = 500)

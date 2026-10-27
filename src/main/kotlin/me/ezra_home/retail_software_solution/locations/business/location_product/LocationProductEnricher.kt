@@ -30,17 +30,17 @@ class LocationProductEnricher(
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return dtos.map {
             val openingStock = openingStockAmounts[it.id]
-            val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(it.baseUnitId)
+            val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(it.baseUnitId)
             val quantityBreakdown = breakdownByBaseUnitId.getValue(it.baseUnitId)
             val openingStockStorageQuantity = openingStock?.let { amounts ->
-                ExactQuantity.ofUserProvided(amounts.userProvidedQuantity, amounts.storageUnitsPerUnit)
+                ExactQuantity.ofUserProvided(amounts.userProvidedQuantity, amounts.storageUnitsPerUserProvidedUnit)
             }
             locationProductMapper.toResponseDto(
                 it,
                 LocationProductContext(
                     unitName = unitNamesById.getValue(it.baseUnitId),
-                    balance = BaseUnitDisplay.storageQuantityInBaseUnit(balances.getValue(it.id), baseUnitSizeInRoot, RoundingMode.DOWN),
-                    openingStockQuantity = openingStockStorageQuantity?.inUnitOfSize(baseUnitSizeInRoot, RoundingMode.DOWN),
+                    balance = BaseUnitDisplay.storageQuantityInBaseUnit(balances.getValue(it.id), storageUnitsPerBaseUnit, RoundingMode.DOWN),
+                    openingStockQuantity = openingStockStorageQuantity?.toDisplayQuantity(storageUnitsPerBaseUnit, RoundingMode.DOWN),
                     openingStockUnitCost = openingStock?.unitCost,
                     balanceBreakdown = quantityBreakdown.render(ExactQuantity.ofStorage(balances.getValue(it.id))),
                     openingStockBreakdown = openingStockStorageQuantity?.let { quantity -> quantityBreakdown.render(quantity) }

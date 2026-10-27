@@ -1,15 +1,10 @@
 package me.ezra_home.retail_software_solution.util.business
 
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
-import me.ezra_home.retail_software_solution.configuration.session.OrgSession
-import me.ezra_home.retail_software_solution.configuration.session.SessionContext
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.util.UUID
 
 @WithDefaultOrganizationSession
 class DecimalsTest {
@@ -35,7 +30,6 @@ class DecimalsTest {
     @Test
     fun `rounding down never reports more than is there`() {
         assertEquals(BigDecimal("0.9999"), Decimals.Scale4.roundDown(BigDecimal("0.99995")))
-        assertEquals("0.9999", Decimals.stripZeroesAndRoundDown(BigDecimal("0.99995")))
         assertEquals("1", Decimals.stripZeroesAndRound(BigDecimal("0.99995")))
     }
 
@@ -82,27 +76,10 @@ class DecimalsTest {
         }
     }
 
-    @AfterEach
-    fun clearSession() {
-        SessionContextProvider.clear()
-    }
-
     @Test
-    fun `money rounds to two decimals when the session carries no organization`() {
+    fun `money rounds half up to two decimals`() {
         assertEquals(2, Decimals.MoneyScale.scale)
         assertEquals(BigDecimal("6115.63"), Decimals.MoneyScale.round(BigDecimal("6115.625")))
-    }
-
-    @Test
-    fun `money follows the organization scale in the session, resolved on every call`() {
-        val zeroDecimalOrganization = OrgSession(id = UUID.randomUUID(), schemaName = "org-a", moneyScale = 0)
-        val threeDecimalOrganization = OrgSession(id = UUID.randomUUID(), schemaName = "org-b", moneyScale = 3)
-
-        SessionContextProvider.setSession(SessionContext(organization = zeroDecimalOrganization))
-        assertEquals(BigDecimal("6116"), Decimals.MoneyScale.round(BigDecimal("6115.625")))
-
-        SessionContextProvider.setSession(SessionContext(organization = threeDecimalOrganization))
-        assertEquals(BigDecimal("6115.625"), Decimals.MoneyScale.round(BigDecimal("6115.625")))
     }
 
     @Test

@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.time.Instant
 import java.util.UUID
 
@@ -16,7 +17,7 @@ object PurchaseDeliveryMapper {
     notes = purchaseDeliveryCreateDto.notes
   )
 
-  fun toLineEntities(deliveryId: UUID, purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, storageUnitsPerUnitByPurchaseLineId: Map<UUID, Long>) =
+  fun toLineEntities(deliveryId: UUID, purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>) =
     purchaseDeliveryCreateDto.lines.map { lineDto ->
       PurchaseDeliveryLineEntity(
         purchaseDeliveryId = deliveryId,
@@ -24,7 +25,7 @@ object PurchaseDeliveryMapper {
         userProvidedQuantityDelivered = lineDto.userProvidedQuantityDelivered.toBigDecimal(),
         unitCost = lineDto.unitCost.toBigDecimal(),
         unitId = lineDto.unitId,
-        storageUnitsPerUnit = storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
     }
 
@@ -52,10 +53,10 @@ object PurchaseDeliveryMapper {
         locationProductId = pl.locationProductId,
         userProvidedQuantityDelivered = dl.userProvidedQuantityDelivered,
         unitId = dl.unitId,
-        storageUnitsPerUnit = dl.storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = dl.storageUnitsPerUserProvidedUnit,
         unitCost = dl.unitCost
       )
     },
-    deliveryTotal = deliveryRecord.lines.sumOf { it.lineTotal() }
+    deliveryTotal = Money.of(deliveryRecord.lines.sumOf { it.lineTotal() })
   )
 }

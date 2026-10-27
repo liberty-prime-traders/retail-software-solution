@@ -2,25 +2,15 @@ package me.ezra_home.retail_software_solution.util.business
 
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import me.ezra_home.retail_software_solution.configuration.session.OrgSession
-import me.ezra_home.retail_software_solution.configuration.session.SessionContext
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.util.UUID
 
 @WithDefaultOrganizationSession
 class MoneyTest {
 
     private val objectMapper = jacksonObjectMapper()
-
-    @AfterEach
-    fun clearSession() {
-        SessionContextProvider.clear()
-    }
 
     @Test
     fun `more decimals than the money scale is rejected, never rounded`() {
@@ -31,19 +21,6 @@ class MoneyTest {
     @Test
     fun `trailing zeros beyond the money scale are accepted and are dropped`() {
         assertEquals(BigDecimal("1.25"), Money.of(BigDecimal("1.2500")).toBigDecimal())
-    }
-
-    @Test
-    fun `the accepted precision follows the organization scale in the session`() {
-        SessionContextProvider.setSession(
-            SessionContext(organization = OrgSession(id = UUID.randomUUID(), schemaName = "org-a", moneyScale = 0))
-        )
-        assertThrows(RtsGenericException::class.java) { Money.of(BigDecimal("1.5")) }
-
-        SessionContextProvider.setSession(
-            SessionContext(organization = OrgSession(id = UUID.randomUUID(), schemaName = "org-b", moneyScale = 3))
-        )
-        assertEquals(BigDecimal("1.255"), Money.of(BigDecimal("1.255")).toBigDecimal())
     }
 
     @Test
@@ -66,11 +43,26 @@ class MoneyTest {
     }
 
     @Test
+    fun `a sum is validated against the transaction maximum like any other amount`() {
+        assertEquals(Money.of(BigDecimal("3.50")), Money.of(BigDecimal("1.25")) + Money.of(BigDecimal("2.25")))
+        assertThrows(RtsGenericException::class.java) {
+            Money.of(Decimals.MAXIMUM_TRANSACTION_AMOUNT) + Money.of(BigDecimal("0.01"))
+        }
+    }
+
+    @Test
     fun `a magnitude above the transaction maximum is rejected and the maximum itself is accepted`() {
         assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, Money.of(Decimals.MAXIMUM_TRANSACTION_AMOUNT).toBigDecimal())
         val exception = assertThrows(RtsGenericException::class.java) {
             Money.of(Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01")))
         }
         assertEquals("Amount must not exceed 999999999999.99", exception.message)
+    }
+
+    @Test
+    fun `ZERO is exactly zero at the money scale`() {
+        assertEquals(0, Money.ZERO.toBigDecimal().signum())
+        assertEquals(2, Money.ZERO.toBigDecimal().scale())
+        assertEquals(Money.of(BigDecimal.ZERO), Money.ZERO)
     }
 }

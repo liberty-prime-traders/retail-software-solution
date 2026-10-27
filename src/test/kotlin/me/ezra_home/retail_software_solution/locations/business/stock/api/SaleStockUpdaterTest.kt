@@ -22,6 +22,7 @@ import java.util.UUID
 class SaleStockUpdaterTest {
 
     private val locationProductId = UUID.randomUUID()
+    private val pieceId = UUID.randomUUID()
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
     private val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
     private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
@@ -97,7 +98,6 @@ class SaleStockUpdaterTest {
             .thenReturn(mapOf(locationProductId to stockEntries.sumOf { it.storageQuantityRemaining }))
         `when`(locationProductDataFetcher.findSummaryByIds(anySet()))
             .thenReturn(emptyMap())
-        val pieceId = UUID.randomUUID()
         `when`(stockBreakdownProvider.forLocationProducts(anySet())).thenReturn(
             mapOf(
                 locationProductId to QuantityBreakdown.forBaseUnit(
@@ -112,7 +112,7 @@ class SaleStockUpdaterTest {
         saleLineReferenceNumber = "SALN-$saleLineId".take(30),
         locationProductId = locationProductId,
         userProvidedQuantity = BigDecimal(storageQuantity),
-        unitId = UUID.randomUUID(),
-        storageUnitsPerUnit = 1L,
+        unitId = pieceId,
+        storageUnitsPerUserProvidedUnit = 1L,
     )
 }

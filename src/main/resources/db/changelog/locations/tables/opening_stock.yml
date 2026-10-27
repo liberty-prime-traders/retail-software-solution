@@ -52,11 +52,11 @@ databaseChangeLog:
                     notNullConstraintName: opening_stock_unit_id_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: opening_stock_storage_units_per_unit_notnull
+                    notNullConstraintName: opening_stock_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: unit_cost

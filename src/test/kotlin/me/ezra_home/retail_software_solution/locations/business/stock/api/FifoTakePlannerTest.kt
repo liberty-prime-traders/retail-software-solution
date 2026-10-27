@@ -52,6 +52,39 @@ class FifoTakePlannerTest {
     }
 
     @Test
+    fun `after takes and out of order voids in any mix, draining the layer still books exactly the batch cost and no take is negative`() {
+        val random = java.util.Random(42)
+        repeat(200) {
+            var layer = thousandPieceLayer()
+            val takes = mutableListOf<PlannedTake>()
+            repeat(300) {
+                val shouldVoid = takes.isNotEmpty() && random.nextInt(3) == 0
+                if (shouldVoid) {
+                    val voided = takes.removeAt(random.nextInt(takes.size))
+                    layer = layer.copy(
+                        storageQuantityRemaining = layer.storageQuantityRemaining + voided.storageQuantity.toStorageQuantity(),
+                        costRemaining = layer.costRemaining + voided.movedCost
+                    )
+                } else if (layer.storageQuantityRemaining.signum() > 0) {
+                    val pieces = BigDecimal(1 + random.nextInt(minOf(5, layer.storageQuantityRemaining.toInt())))
+                    val remainingAfterTake = layer.storageQuantityRemaining - pieces
+                    val plannedTake = FifoTakePlanner.planTakes(listOf(layer), ExactQuantity.ofStorage(pieces)).single()
+                    assertTrue(plannedTake.movedCost.signum() >= 0)
+                    takes.add(plannedTake)
+                    layer = layer.copy(
+                        storageQuantityRemaining = remainingAfterTake,
+                        costRemaining = layer.costRemaining - plannedTake.movedCost
+                    )
+                }
+            }
+            val drainingTake = FifoTakePlanner.planTakes(listOf(layer), ExactQuantity.ofStorage(layer.storageQuantityRemaining)).single()
+            assertEquals(0, layer.costRemaining.compareTo(drainingTake.movedCost))
+            val netBooked = takes.fold(drainingTake.movedCost) { sum, take -> sum + take.movedCost }
+            assertEquals(0, threeUnitBatchCost.compareTo(netBooked))
+        }
+    }
+
+    @Test
     fun `the take that empties a layer costs everything left in it`() {
         val layer = thousandPieceLayer().copy(storageQuantityRemaining = BigDecimal("3"), costRemaining = BigDecimal("0.02"))
 

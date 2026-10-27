@@ -65,11 +65,11 @@ databaseChangeLog:
 
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_delivery_line_storage_units_per_unit_notnull
+                    notNullConstraintName: pcdll_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: created_by_id

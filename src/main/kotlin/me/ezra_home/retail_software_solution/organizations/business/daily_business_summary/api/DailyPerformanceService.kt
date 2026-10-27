@@ -14,7 +14,6 @@ import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.OffsetDateTime
 
 @Service
@@ -147,7 +146,7 @@ class DailyPerformanceService(
 
         private fun percentOf(amount: BigDecimal, netSales: BigDecimal): BigDecimal? =
             if (Decimals.MoneyScale.round(netSales).signum() == 0) null
-            else amount.multiply(BigDecimal(100)).divide(netSales, 1, RoundingMode.HALF_UP)
+            else Decimals.PercentDisplayScale.divide(amount.multiply(BigDecimal(100)), netSales)
 
         private fun mergeAmounts(first: Map<String, BigDecimal>, second: Map<String, BigDecimal>): Map<String, BigDecimal> =
             (first.keys + second.keys).associateWith { accountCode -> (first[accountCode] ?: BigDecimal.ZERO) + (second[accountCode] ?: BigDecimal.ZERO) }

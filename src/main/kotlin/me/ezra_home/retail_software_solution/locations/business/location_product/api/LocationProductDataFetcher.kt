@@ -122,7 +122,7 @@ class LocationProductDataFetcher(
                 )
             }
 
-    fun getStorageUnitsPerUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
+    fun getStorageUnitsPerUserProvidedUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
         if (productUnitRequests.isEmpty()) return emptyMap()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()

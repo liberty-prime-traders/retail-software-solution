@@ -130,7 +130,7 @@ class LoanPostingRequestsBalanceTest {
     // LedgerPostingService checks a reversal with the reversal postability rule and any other posting with the strict one.
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
         val accountPostings = ledgerPostingRequest.entries.map { entry ->
-            AccountPosting(accountCode = entry.accountCode, amount = entry.amount, entryType = entry.entryType)
+            AccountPosting(accountCode = entry.accountCode, amount = entry.amount.toBigDecimal(), entryType = entry.entryType)
         }
         val accountService = recordingAccountService.accountService
         if (ledgerPostingRequest.reversal) accountService.assertPostableReversal(accountPostings) else accountService.assertPostable(accountPostings)
@@ -144,8 +144,8 @@ class LoanPostingRequestsBalanceTest {
     }
 
     private fun assertSubledger(payable: String, receivable: String) {
-        assertEquals(0, BigDecimal(payable).compareTo(subledgerTotal { entry -> entry.payableAmount }), "running payable")
-        assertEquals(0, BigDecimal(receivable).compareTo(subledgerTotal { entry -> entry.receivableAmount }), "running receivable")
+        assertEquals(0, BigDecimal(payable).compareTo(subledgerTotal { entry -> entry.payableAmount.toBigDecimal() }), "running payable")
+        assertEquals(0, BigDecimal(receivable).compareTo(subledgerTotal { entry -> entry.receivableAmount.toBigDecimal() }), "running receivable")
     }
 
     private fun subledgerTotal(amountOf: (SubledgerEntryRequest) -> BigDecimal): BigDecimal =

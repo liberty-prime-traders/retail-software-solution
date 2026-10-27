@@ -25,7 +25,7 @@ are revised independently.
    takes later in its own transaction.
 3. `ContactOpeningBalanceSetDto` is partial: `payable` / `receivable` are `Optional<Money>?`, where null
    leaves that side at its latest row, `Optional.empty()` clears it to zero and `Optional.of(x)` sets it
-   (`applyTo(existing)` yields the target balance). Each side is revised against its own latest row. An amount with more decimals than the session money scale is rejected when the request is read, so the
+   (`applyTo(existing)` yields the target balance). Each side is revised against its own latest row. An amount with more decimals than the money scale is rejected when the request is read, so the
    delta is measured between two whole-cent values. `signedDelta = targetAmount - latest.amount`.
    A side whose delta is zero writes no row and publishes no event, so a call may write one row, two, or none.
 4. Inserts the revision and publishes `ContactOpeningBalanceUpsertedEvent`

@@ -1,7 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductWithAvailability
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailability
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
@@ -22,17 +21,17 @@ class LocationProductForSaleAssembler(
         val breakdownByBaseUnitId = quantityBreakdownFactory.forBaseUnits(sellableProducts.map { it.baseUnitId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return sellableProducts.map { locationProductDto ->
-            val availability = availabilityByLocationProductId[locationProductDto.id] ?: StockAvailability.ZERO
-            val baseUnitSizeInRoot = unitConversionGraph.getSizeInRoot(locationProductDto.baseUnitId)
+            val availability = availabilityByLocationProductId.getValue(locationProductDto.id)
+            val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(locationProductDto.baseUnitId)
             val quantityBreakdown = breakdownByBaseUnitId.getValue(locationProductDto.baseUnitId)
             LocationProductWithAvailability(
                 id = locationProductDto.id,
                 referenceNumber = locationProductDto.referenceNumber,
                 productName = locationProductDto.productName,
                 productGroupName = locationProductDto.productGroupName,
-                quantityOnHand = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityOnHand, baseUnitSizeInRoot, RoundingMode.DOWN),
-                quantityReserved = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityReserved, baseUnitSizeInRoot, RoundingMode.UP),
-                quantityAvailable = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityAvailable, baseUnitSizeInRoot, RoundingMode.DOWN),
+                quantityOnHand = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityOnHand, storageUnitsPerBaseUnit, RoundingMode.DOWN),
+                quantityReserved = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityReserved, storageUnitsPerBaseUnit, RoundingMode.UP),
+                quantityAvailable = BaseUnitDisplay.storageQuantityInBaseUnit(availability.quantityAvailable, storageUnitsPerBaseUnit, RoundingMode.DOWN),
                 defaultSalePrice = checkNotNull(locationProductDto.defaultSalePrice) {
                     "Location product ${locationProductDto.id} reached the sale assembler without a default sale price"
                 },

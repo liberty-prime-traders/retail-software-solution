@@ -117,8 +117,8 @@ class LoanServiceTest {
         assertEquals(listOf(cashCode, SystemAccount.LOANS_PAYABLE.code), posted.entries.map { it.accountCode })
         val subledgerEntry = posted.subledgerEntries.single()
         assertEquals(lenderContactDto.referenceNumber, subledgerEntry.contactReferenceNumber)
-        assertEquals(BigDecimal("50.12"), subledgerEntry.payableAmount)
-        assertEquals(0, BigDecimal.ZERO.compareTo(subledgerEntry.receivableAmount))
+        assertEquals(BigDecimal("50.12"), subledgerEntry.payableAmount.toBigDecimal())
+        assertEquals(0, BigDecimal.ZERO.compareTo(subledgerEntry.receivableAmount.toBigDecimal()))
     }
 
     @Test
@@ -219,7 +219,7 @@ class LoanServiceTest {
         assertEquals("LOAN000001", posted.sourceReferenceNumber)
         assertEquals(voidCaptor.value.voidDate, posted.postingDate)
         assertEquals(listOf(SystemAccount.LOANS_PAYABLE.code, cashCode), posted.entries.map { it.accountCode })
-        assertEquals(0, BigDecimal("100").compareTo(posted.subledgerEntries.single().receivableAmount))
+        assertEquals(0, BigDecimal("100").compareTo(posted.subledgerEntries.single().receivableAmount.toBigDecimal()))
     }
 
     @Test

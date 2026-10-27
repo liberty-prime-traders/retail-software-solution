@@ -48,7 +48,7 @@ ledger account; every `OTHER` reason posts to `SHRINKAGE_AND_LOSSES`.
 1. `StockAdjustmentValidator.guardCategoryRequest` resolves the direction.
 2. `fiscalPeriodService.requireOpenForDate(today)`, product advisory lock, `guardAllActive`, and `guardReason` for
    `OTHER` only.
-3. Convert once: `getStorageUnitsPerUnit` (rejects a unit outside the product's group), then
+3. Convert once: `getStorageUnitsPerUserProvidedUnit` (rejects a unit outside the product's group), then
    `ExactQuantity.ofUserProvided`. That exact value is persisted and passed to the stock updater.
 4. The service generates the adjustment's own reference number up front (`ReferenceNumberGenerator`); it becomes the
    entity's `referenceNumber` and the stock layer / movements' `documentReference`. It is generated early because the
@@ -68,7 +68,8 @@ creation time.
 
 `StockAdjustmentRecordedEvent` is published on commit and carries the debit and credit account codes resolved from the
 category and direction. `StockAdjustmentAccountingProcessor` posts them under `LedgerSourceType.STOCK_ADJUSTMENT`,
-idempotent on the adjustment's reference number. A zero-cost adjustment publishes nothing.
+idempotent on the adjustment's reference number. A zero-cost adjustment publishes nothing. `totalCost` travels as
+`Money`, so a total above the ceiling fails at publish, inside the adjustment's transaction.
 
 ## REST surface
 

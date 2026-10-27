@@ -41,17 +41,17 @@ object PurchaseMapper {
     purchase.purchaseStatus = PurchaseStatus.ORDERED
   }
 
-  fun toNewLineEntity(purchaseId: UUID, purchaseLineCreateDto: PurchaseLineCreateDto, storageUnitsPerUnit: Long) = PurchaseLineEntity(
+  fun toNewLineEntity(purchaseId: UUID, purchaseLineCreateDto: PurchaseLineCreateDto, storageUnitsPerUserProvidedUnit: Long) = PurchaseLineEntity(
     purchaseId = purchaseId,
     locationProductId = purchaseLineCreateDto.locationProductId,
     userProvidedQuantityOrdered = purchaseLineCreateDto.userProvidedQuantityOrdered.toBigDecimal(),
     unitCost = purchaseLineCreateDto.unitCost.toBigDecimal(),
     unitId = purchaseLineCreateDto.unitId,
-    storageUnitsPerUnit = storageUnitsPerUnit
+    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit
   )
 
-  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, storageUnitsPerUnitByProductId: Map<UUID, Long>) =
-    lines.map { toNewLineEntity(purchaseId, it, storageUnitsPerUnitByProductId.getValue(it.locationProductId)) }
+  fun toLineEntities(purchaseId: UUID, lines: List<PurchaseLineCreateDto>, storageUnitsPerUserProvidedUnitByProductId: Map<UUID, Long>) =
+    lines.map { toNewLineEntity(purchaseId, it, storageUnitsPerUserProvidedUnitByProductId.getValue(it.locationProductId)) }
 
   fun purchaseLineEntityToDto(purchaseLineEntity: PurchaseLineEntity) = PurchaseLineDto(
     id = purchaseLineEntity.id!!,
@@ -59,7 +59,7 @@ object PurchaseMapper {
     locationProductId = purchaseLineEntity.locationProductId,
     unitCost = purchaseLineEntity.unitCost,
     unitId = purchaseLineEntity.unitId,
-    storageUnitsPerUnit = purchaseLineEntity.storageUnitsPerUnit,
+    storageUnitsPerUserProvidedUnit = purchaseLineEntity.storageUnitsPerUserProvidedUnit,
     storageQuantityExpected = purchaseLineEntity.storageQuantityExpected(),
     storageQuantityRemaining = purchaseLineEntity.storageQuantityRemaining()
   )

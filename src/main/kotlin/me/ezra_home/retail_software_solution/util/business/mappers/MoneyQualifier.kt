@@ -10,4 +10,8 @@ object MoneyQualifier {
     fun toBigDecimal(money: Money?): BigDecimal? = money?.toBigDecimal()
 
     fun toBigDecimal(positiveMoney: PositiveMoney?): BigDecimal? = positiveMoney?.toBigDecimal()
+
+    fun toPositiveMoney(storedAmount: BigDecimal?): PositiveMoney? = storedAmount?.let { PositiveMoney.of(it) }
+
+    fun toMoney(storedAmount: BigDecimal?): Money? = storedAmount?.let { Money.of(it) }
 }

@@ -98,14 +98,14 @@ class SaleSessionAssembler(
             Decimals.Scale4.divide(netLineTotal, saleSessionLinesByKey.getValue(lineKey).userProvidedQuantity)
         }
 
-        val baseUnitSizeInRootByBaseUnitId = unitConversionGraphFacade.getOrLoad().let { unitConversionGraph ->
+        val storageUnitsPerBaseUnitByBaseUnitId = unitConversionGraphFacade.getOrLoad().let { unitConversionGraph ->
             saleSession.saleLines.map { it.baseUnitId }.distinct().associateWith { unitConversionGraph.getSizeInRoot(it) }
         }
         return LineMappingContext(
             unitPriceOverrideByLineKey = unitPriceOverrideByLineKey,
             netUnitPriceByLineKey = netUnitPriceByLineKey,
             netLineTotalByLineKey = netLineTotalByLineKey,
-            baseUnitSizeInRootByBaseUnitId = baseUnitSizeInRootByBaseUnitId,
+            storageUnitsPerBaseUnitByBaseUnitId = storageUnitsPerBaseUnitByBaseUnitId,
             breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(saleSession.saleLines.map { it.locationProductId }.distinct()),
         )
     }

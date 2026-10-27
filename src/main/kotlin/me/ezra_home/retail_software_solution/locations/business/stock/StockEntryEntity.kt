@@ -43,6 +43,7 @@ class StockEntryEntity(
   @Column(name = "priority")
   var priority: Int,
 
+  // Derived from batchCost / storageBatchSize, for display and grouping layers of equal rate: costing prorates batchCost, never multiplies this.
   @Column(name = "unit_cost", nullable = false, precision = 28, scale = 10)
   var unitCost: BigDecimal,
 

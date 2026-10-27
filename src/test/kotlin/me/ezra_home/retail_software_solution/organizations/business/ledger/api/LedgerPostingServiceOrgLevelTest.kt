@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -69,8 +70,8 @@ class LedgerPostingServiceOrgLevelTest {
     @Test
     fun `only a reversal posting is checked with the reversal postability rule`() {
         val entries = listOf(
-            LedgerEntryRequest.debit("001.001.001", BigDecimal("10.0000")),
-            LedgerEntryRequest.credit("003.001", BigDecimal("10.0000"))
+            LedgerEntryRequest.debit("001.001.001", PositiveMoney.of(BigDecimal("10.0000"))),
+            LedgerEntryRequest.credit("003.001", PositiveMoney.of(BigDecimal("10.0000")))
         )
 
         ledgerPostingService.post(
@@ -97,8 +98,8 @@ class LedgerPostingServiceOrgLevelTest {
                     sourceType = LedgerSourceType.FUND_MOVEMENT,
                     postingDate = closedDate,
                     entries = listOf(
-                        LedgerEntryRequest.debit("001.001.001", BigDecimal("10.0000")),
-                        LedgerEntryRequest.credit("003.001", BigDecimal("10.0000"))
+                        LedgerEntryRequest.debit("001.001.001", PositiveMoney.of(BigDecimal("10.0000"))),
+                        LedgerEntryRequest.credit("003.001", PositiveMoney.of(BigDecimal("10.0000")))
                     ),
                     subledgerEntries = emptyList()
                 )
@@ -115,8 +116,8 @@ class LedgerPostingServiceOrgLevelTest {
                 sourceType = LedgerSourceType.FUND_MOVEMENT,
                 postingDate = postingDate,
                 entries = listOf(
-                    LedgerEntryRequest.debit("001.001.001", BigDecimal("10.0000")),
-                    LedgerEntryRequest.credit("003.001", BigDecimal("10.0000"))
+                    LedgerEntryRequest.debit("001.001.001", PositiveMoney.of(BigDecimal("10.0000"))),
+                    LedgerEntryRequest.credit("003.001", PositiveMoney.of(BigDecimal("10.0000")))
                 ),
                 subledgerEntries = emptyList()
             )

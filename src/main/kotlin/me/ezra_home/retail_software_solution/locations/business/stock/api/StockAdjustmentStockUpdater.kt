@@ -6,18 +6,17 @@ import me.ezra_home.retail_software_solution.locations.business.stock.FifoConsum
 import me.ezra_home.retail_software_solution.locations.business.stock.FifoStockConsumer
 import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.StockInboundLayers
+import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
-import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
 class StockAdjustmentStockUpdater(
+    private val stockIncreaseRecorder: StockIncreaseRecorder,
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val stockBalanceFetcher: StockBalanceFetcher,
@@ -27,10 +26,8 @@ class StockAdjustmentStockUpdater(
 ) {
 
     fun increaseStock(stockAdjustmentIncreaseStockRequest: StockAdjustmentIncreaseStockRequest) {
-        val locationProductId = stockAdjustmentIncreaseStockRequest.locationProductId
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, setOf(locationProductId))
         val inboundLayerSpec = InboundLayerSpec(
-            locationProductId = locationProductId,
+            locationProductId = stockAdjustmentIncreaseStockRequest.locationProductId,
             sourceType = StockItemSource.STOCK_ADJUSTMENT,
             movementType = MovementType.STOCK_ADJUSTMENT_INCREASE,
             documentReference = stockAdjustmentIncreaseStockRequest.documentReference,
@@ -39,17 +36,10 @@ class StockAdjustmentStockUpdater(
             batchCost = stockAdjustmentIncreaseStockRequest.totalCost,
             userProvidedQuantity = stockAdjustmentIncreaseStockRequest.userProvidedQuantity,
             unitId = stockAdjustmentIncreaseStockRequest.unitId,
-            storageUnitsPerUnit = stockAdjustmentIncreaseStockRequest.storageUnitsPerUnit,
+            storageUnitsPerUserProvidedUnit = stockAdjustmentIncreaseStockRequest.storageUnitsPerUserProvidedUnit,
             adjustmentDetails = stockAdjustmentIncreaseStockRequest.adjustmentDetails,
         )
-        val balanceAfterMovement = ExactQuantity.ofStorage(
-            stockBalanceFetcher.getLatestBalances(listOf(locationProductId))[locationProductId] ?: BigDecimal.ZERO
-        ) + inboundLayerSpec.storageQuantity
-        val stockEntry = stockEntryRepository.save(StockInboundLayers.newLayer(inboundLayerSpec))
-        val quantityBreakdown = stockBreakdownProvider.forLocationProducts(listOf(locationProductId)).getValue(locationProductId)
-        stockMovementRepository.save(
-            StockInboundLayers.inboundMovement(inboundLayerSpec, stockEntry, balanceAfterMovement, quantityBreakdown)
-        )
+        stockIncreaseRecorder.record(listOf(inboundLayerSpec))
     }
 
     fun decreaseStock(stockAdjustmentDecreaseStockRequest: StockAdjustmentDecreaseStockRequest): StockAdjustmentConsumedCost {
@@ -66,7 +56,7 @@ class StockAdjustmentStockUpdater(
                 storageQuantity = stockAdjustmentDecreaseStockRequest.storageQuantity,
                 userProvidedQuantity = stockAdjustmentDecreaseStockRequest.userProvidedQuantity,
                 unitId = stockAdjustmentDecreaseStockRequest.unitId,
-                storageUnitsPerUnit = stockAdjustmentDecreaseStockRequest.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = stockAdjustmentDecreaseStockRequest.storageUnitsPerUserProvidedUnit,
                 movementType = MovementType.STOCK_ADJUSTMENT_DECREASE,
                 documentReference = stockAdjustmentDecreaseStockRequest.documentReference,
                 detailReference = null,
@@ -75,7 +65,7 @@ class StockAdjustmentStockUpdater(
             fifoEntries = FifoStockConsumer.groupInFifoOrder(
                 stockEntryRepository.findFifoEntriesForProducts(listOf(locationProductId))
             )[locationProductId].orEmpty(),
-            startingBalance = stockBalanceFetcher.getLatestBalances(listOf(locationProductId))[locationProductId] ?: BigDecimal.ZERO,
+            startingBalance = stockBalanceFetcher.getLatestBalances(listOf(locationProductId)).getValue(locationProductId),
             quantityBreakdown = stockBreakdownProvider.forLocationProducts(listOf(locationProductId)).getValue(locationProductId),
             productLabel = productLabel,
         )

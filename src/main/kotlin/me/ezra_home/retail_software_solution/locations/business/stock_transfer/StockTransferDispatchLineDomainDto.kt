@@ -14,7 +14,7 @@ data class StockTransferDispatchLineDomainDto(
     val unitId: UUID,
     val unitCost: BigDecimal,
     val costDispatched: BigDecimal,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val createdById: UUID,
     val createdOn: OffsetDateTime
 )

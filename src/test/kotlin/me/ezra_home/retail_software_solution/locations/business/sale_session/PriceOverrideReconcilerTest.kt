@@ -38,7 +38,7 @@ class PriceOverrideReconcilerTest {
         userProvidedQuantity = BigDecimal(quantity),
         unitId = unit,
         baseUnitId = unitId,
-        storageUnitsPerUnit = 1L,
+        storageUnitsPerUserProvidedUnit = 1L,
         lineTotal = BigDecimal(lineTotal),
         defaultSalePrice = BigDecimal("1000.00"),
     )
@@ -148,5 +148,30 @@ class PriceOverrideReconcilerTest {
         val adjustments = reconcile(pre, post, update("2.50", null, unit = otherUnit), listOf(existingOverride))
 
         assertNull(adjustments.firstOrNull { it.isPriceOverride(priceOverrideReasonId) })
+    }
+
+    @Test
+    fun `typing the money-scale rounding of a fractional list price stores no override`() {
+        val piecesLine = line("9", "500.0000")
+
+        assertEquals(emptyList<SaleSessionAdjustment>(), reconcile(piecesLine, piecesLine, update("9", "55.56")))
+    }
+
+    @Test
+    fun `typing the money-scale rounding of a fractional list price removes an existing override`() {
+        val piecesLine = line("9", "500.0000")
+        val existingOverride = reconcile(piecesLine, piecesLine, update("9", "55.57")).single()
+
+        assertEquals(emptyList<SaleSessionAdjustment>(), reconcile(piecesLine, piecesLine, update("9", "55.56"), listOf(existingOverride)))
+    }
+
+    @Test
+    fun `a price one cent away from the rounded fractional list price is still an override`() {
+        val piecesLine = line("9", "500.0000")
+
+        val override = reconcile(piecesLine, piecesLine, update("9", "55.57")).single()
+
+        assertEquals(AdjustmentDirection.SURCHARGE, override.direction)
+        assertEquals(0, BigDecimal("55.57").compareTo(override.value))
     }
 }

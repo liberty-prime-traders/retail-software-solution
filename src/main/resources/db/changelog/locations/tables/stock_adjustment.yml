@@ -64,11 +64,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_adjustment_unit_id_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_adjustment_storage_units_per_unit_notnull
+                    notNullConstraintName: stock_adjustment_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: storage_quantity

@@ -9,8 +9,7 @@ data class ConversionRatio(val numerator: Long, val denominator: Long) {
         require(denominator > 0) { "denominator must be positive" }
     }
 
-    fun convertPriceRoundingHalfUp(price: BigDecimal): BigDecimal =
-        Decimals.Scale4.divide(price.multiply(numerator.toBigDecimal()), denominator.toBigDecimal())
+    fun factor(): BigDecimal = Decimals.Scale10.divide(BigDecimal.valueOf(numerator), BigDecimal.valueOf(denominator))
 
     fun reduced(): ConversionRatio {
         val g = Decimals.gcd(numerator, denominator)

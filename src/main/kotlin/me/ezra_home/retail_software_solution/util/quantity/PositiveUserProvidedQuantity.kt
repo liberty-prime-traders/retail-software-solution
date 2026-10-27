@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.TypedDecimal
 import java.math.BigDecimal
 
-// A UserProvidedQuantity that must also be above zero
 class PositiveUserProvidedQuantity private constructor(typedValue: BigDecimal) : TypedDecimal<PositiveUserProvidedQuantity>(typedValue) {
 
     companion object {

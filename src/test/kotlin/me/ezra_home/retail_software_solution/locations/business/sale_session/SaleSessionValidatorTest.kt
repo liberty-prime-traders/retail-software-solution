@@ -79,7 +79,7 @@ class SaleSessionValidatorTest {
         userProvidedQuantity = quantity,
         unitId = UUID.randomUUID(),
         baseUnitId = UUID.randomUUID(),
-        storageUnitsPerUnit = 1L,
+        storageUnitsPerUserProvidedUnit = 1L,
         lineTotal = lineTotal,
         defaultSalePrice = lineTotal
     )

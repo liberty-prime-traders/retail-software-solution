@@ -76,22 +76,42 @@ databaseChangeLog:
               - column:
                   name: subtotal
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_subtotal_notnull
 
               - column:
                   name: line_level_discount_total
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_level_discount_total_notnull
 
               - column:
                   name: order_level_discount_total
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_order_level_discount_total_notnull
 
               - column:
                   name: line_level_surcharge_total
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_level_surcharge_total_notnull
 
               - column:
                   name: order_level_surcharge_total
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_order_level_surcharge_total_notnull
 
               - column:
                   name: tax_total
@@ -100,6 +120,10 @@ databaseChangeLog:
               - column:
                   name: tax_billed
                   type: numeric(19, 4)
+                  defaultValueNumeric: "0"
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_tax_billed_notnull
 
               - column:
                   name: version

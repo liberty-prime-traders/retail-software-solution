@@ -37,12 +37,12 @@ class StockMovementHistoryBuilderTest {
         mapOf(pieceId to UnitPlacement(pieceId, 1L), baleId to UnitPlacement(pieceId, baleSize))
     )
 
-    private fun movement(storageUnitsPerUnit: Long, unitId: UUID = baleId, detailReference: String? = "SALN01") = StockMovementEntity(
+    private fun movement(storageUnitsPerUserProvidedUnit: Long, unitId: UUID = baleId, detailReference: String? = "SALN01") = StockMovementEntity(
         stockEntryId = UUID.randomUUID(),
         locationProductId = locationProductId,
         movementType = MovementType.SALE,
         storageMovedQuantity = BigDecimal("10"),
-        userProvidedMovedQuantity = BigDecimal("2"),
+        wholeLineQuantityText = "2 Bales",
         storageRemainingQuantity = BigDecimal("26"),
         movedCost = BigDecimal("1.0000"),
         storageMovedBreakdownText = "10 Pieces",
@@ -50,7 +50,7 @@ class StockMovementHistoryBuilderTest {
         documentReference = "SAL041",
         detailReference = detailReference,
         unitId = unitId,
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     ).also {
         it.id = UUID.randomUUID()
         it.createdOn = OffsetDateTime.now()
@@ -65,25 +65,24 @@ class StockMovementHistoryBuilderTest {
     }
 
     @Test
-    fun `a row shows the stored texts and what the user entered with the joined reference`() {
+    fun `a row shows the stored texts and the entered text`() {
         givenMovements(movement(18L))
 
         val row = builder.build(locationProductId).single()
 
         assertEquals("10 Pieces", row.quantityMoved)
         assertEquals("1 Bale 8 Pieces", row.newQuantity)
-        assertEquals("entered 2 Bales on SAL041:SALN01", row.quantityEntered)
+        assertEquals("entered 2 Bales", row.quantityEntered)
         assertEquals("SAL041", row.documentReference)
         assertEquals("SALN01", row.detailReference)
     }
 
     @Test
-    fun `a source with no detail reference shows the document reference alone`() {
+    fun `a source with no detail reference leaves it null`() {
         givenMovements(movement(18L, detailReference = null))
 
         val row = builder.build(locationProductId).single()
 
-        assertEquals("entered 2 Bales on SAL041", row.quantityEntered)
         assertEquals("SAL041", row.documentReference)
         assertEquals(null, row.detailReference)
     }
@@ -105,7 +104,7 @@ class StockMovementHistoryBuilderTest {
         val row = builder.build(locationProductId).single()
 
         assertNull(row.conversionDriftNote)
-        assertEquals("entered 2 on SAL041:SALN01", row.quantityEntered)
+        assertEquals("entered 2 Bales", row.quantityEntered)
     }
 
     @Test

@@ -43,26 +43,27 @@ class SaleEntity(
     @Column(name = "payment_status", nullable = false, length = 5)
     var paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
 
-    @Column(name = "subtotal", precision = 19, scale = 4)
-    var subtotal: BigDecimal? = null,
+    @Column(name = "subtotal", nullable = false, precision = 19, scale = 4)
+    var subtotal: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "line_level_discount_total", precision = 19, scale = 4)
-    var lineLevelDiscountTotal: BigDecimal? = null,
+    @Column(name = "line_level_discount_total", nullable = false, precision = 19, scale = 4)
+    var lineLevelDiscountTotal: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "order_level_discount_total", precision = 19, scale = 4)
-    var orderLevelDiscountTotal: BigDecimal? = null,
+    @Column(name = "order_level_discount_total", nullable = false, precision = 19, scale = 4)
+    var orderLevelDiscountTotal: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "line_level_surcharge_total", precision = 19, scale = 4)
-    var lineLevelSurchargeTotal: BigDecimal? = null,
+    @Column(name = "line_level_surcharge_total", nullable = false, precision = 19, scale = 4)
+    var lineLevelSurchargeTotal: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "order_level_surcharge_total", precision = 19, scale = 4)
-    var orderLevelSurchargeTotal: BigDecimal? = null,
+    @Column(name = "order_level_surcharge_total", nullable = false, precision = 19, scale = 4)
+    var orderLevelSurchargeTotal: BigDecimal = BigDecimal.ZERO,
 
+    // Null until tax finalization has run; SaleValidator.guardCanVoid relies on that to detect a pending finalization.
     @Column(name = "tax_total", precision = 19, scale = 4)
     var taxTotal: BigDecimal? = null,
 
-    @Column(name = "tax_billed", precision = 19, scale = 4)
-    var taxBilled: BigDecimal? = null,
+    @Column(name = "tax_billed", nullable = false, precision = 19, scale = 4)
+    var taxBilled: BigDecimal = BigDecimal.ZERO,
 
     @Version
     @Column(name = "version", nullable = false)
@@ -71,17 +72,17 @@ class SaleEntity(
 ) : HasReferenceEntity() {
 
     fun discountTotal(): BigDecimal =
-        (lineLevelDiscountTotal ?: BigDecimal.ZERO) + (orderLevelDiscountTotal ?: BigDecimal.ZERO)
+        lineLevelDiscountTotal + orderLevelDiscountTotal
 
     fun surchargeTotal(): BigDecimal =
-        (lineLevelSurchargeTotal ?: BigDecimal.ZERO) + (orderLevelSurchargeTotal ?: BigDecimal.ZERO)
+        lineLevelSurchargeTotal + orderLevelSurchargeTotal
 
     fun displaySubtotal(): BigDecimal =
-        (subtotal ?: BigDecimal.ZERO) + surchargeTotal()
+        subtotal + surchargeTotal()
 
     fun taxableAmount(): BigDecimal =
         displaySubtotal() - discountTotal()
 
     fun receivableTotal(): BigDecimal =
-        taxableAmount() + (taxBilled ?: BigDecimal.ZERO)
+        taxableAmount() + taxBilled
 }

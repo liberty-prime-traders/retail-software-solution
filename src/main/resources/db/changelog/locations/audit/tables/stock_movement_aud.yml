@@ -55,8 +55,8 @@ databaseChangeLog:
                   type: numeric(28,4)
 
               - column:
-                  name: user_provided_moved_quantity
-                  type: numeric(19,4)
+                  name: whole_line_quantity_text
+                  type: varchar(200)
 
               - column:
                   name: storage_remaining_quantity
@@ -87,7 +87,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
 
               - column:

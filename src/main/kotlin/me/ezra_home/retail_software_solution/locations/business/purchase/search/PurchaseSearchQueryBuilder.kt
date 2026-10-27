@@ -20,7 +20,7 @@ object PurchaseSearchQueryBuilder {
   private fun orderedTotalJoin(): String = """
     LEFT JOIN LATERAL (
       SELECT COALESCE(SUM(ROUND(
-        unit_cost * (user_provided_quantity_ordered * storage_units_per_unit - storage_quantity_canceled) / storage_units_per_unit,
+        unit_cost * (user_provided_quantity_ordered * storage_units_per_user_provided_unit - storage_quantity_canceled) / storage_units_per_user_provided_unit,
         ${Decimals.MoneyScale.scale}
       )), 0) AS ordered_total
       FROM ${TableNames.PURCHASE_LINE}

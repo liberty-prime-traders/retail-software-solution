@@ -32,20 +32,25 @@ class PurchaseDeliveryValidator(
   fun guardWithinRemaining(
     purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
-    storageUnitsPerUnitByPurchaseLineId: Map<UUID, Long>
+    storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>
   ) {
     val locationProducts = locationProductDataFetcher.findSummaryByIds(purchaseLineById.values.map { it.locationProductId }.toSet())
-    val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(purchaseLineById.values.map { it.locationProductId }.toSet())
+    val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(
+      purchaseLineById.values.map { it.locationProductId }.toSet()
+    )
     purchaseDeliveryCreateDto.lines.forEach { lineDto ->
       val purchaseLine = purchaseLineById.getValue(lineDto.purchaseLineId)
       val delivered = ExactQuantity.ofUserProvided(
-        lineDto.userProvidedQuantityDelivered.toBigDecimal(), storageUnitsPerUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
+        lineDto.userProvidedQuantityDelivered,
+        storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
       if (delivered > purchaseLine.storageQuantityRemaining) {
         val quantityBreakdown = breakdownByLocationProductId.getValue(purchaseLine.locationProductId)
         throw RtsGenericException(
-          "Maximum quantity that can be delivered for '${locationProducts.getValue(purchaseLine.locationProductId).label}' is " +
-            "${quantityBreakdown.render(purchaseLine.storageQuantityRemaining)}. However, ${quantityBreakdown.render(delivered)} was provided."
+          "Maximum quantity that can be delivered for " +
+                  "'${locationProducts.getValue(purchaseLine.locationProductId).label}' is " +
+                  "${quantityBreakdown.render(purchaseLine.storageQuantityRemaining)}." +
+                  " However, ${quantityBreakdown.render(delivered)} was provided."
         )
       }
     }

@@ -35,7 +35,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
   (`OpeningStockRepository.findByLocationProductIdIn`, backed by the
   unique constraint) — the one thing `stock/` has no natural row for.
 - Carry the declaration's **unit**: `opening_stock` stores `user_provided_quantity`, `unit_id` and
-  `storage_units_per_unit` (the unit's size in the product's storage unit, captured at declaration, which also rejects a
+  `storage_units_per_user_provided_unit` (the unit's size in the product's storage unit, captured at declaration, which also rejects a
   unit outside the product's unit group) beside `unit_cost` (per `unit_id`). `OpeningStockAmountsFetcher` returns the
   unit with the quantity.
 - Carry its own `HasReferenceEntity` reference number, which becomes both
@@ -60,7 +60,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `LocationProductSummaryDto.label`) up front — every guard from here on
    reports the human-readable label, not a bare `locationProductId`, in
    its failure message.
-5. Quantity (`OpeningStockLineDto` holds it as a `PositiveUserProvidedQuantity`, so positive with at most 2 decimals) / unit cost per line (a `PositiveMoney`, so positive and at most the session money scale in decimals, checked when the request binds), then
+5. Quantity (`OpeningStockLineDto` holds it as a `PositiveUserProvidedQuantity`, so positive with at most 2 decimals) / unit cost per line (a `PositiveMoney`, so positive and at most the money scale in decimals, checked when the request binds), then
    `locationProductService.guardAllActive` — same guard used at
    purchase-creation time.
 6. Guard none of the requested products already have an `opening_stock`
@@ -68,7 +68,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `uq_opening_stock_location_product_id`.
 7. Persist the `OpeningStockEntity` rows in one `saveAll` (not a
    per-line `save` in a loop), storing the typed quantity, its unit, the captured
-   `storage_units_per_unit` and the unit cost exactly as declared.
+   `storage_units_per_user_provided_unit` and the unit cost exactly as declared.
 8. Call `stock/api/OpeningStockStockUpdater.recordOpeningStock` — the
    only cross-domain call this service makes into `stock/`, since
    `ArchitectureTest` forbids reaching past its `api/` package.
@@ -82,7 +82,8 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    (`StockEntryEntity.documentReference`). The layer's `batch_cost` is the declaration's line total
    (`unitCost × userProvidedQuantity`, rounded once to cents) and its storage quantity is exact.
 9. Publish one `OpeningStockDeclaredEvent` per line via
-   `OpeningStockHandlerForKafka.publish`. Ledger posting still has to be
+   `OpeningStockHandlerForKafka.publish`; it carries the line total as `Money`, computed once there, so an oversized
+   total fails inside the declaring transaction. Ledger posting still has to be
    async — it crosses into the organization datasource — handled by
    `ledger/processors/OpeningStockAccountingProcessor`
    (`SystemAccount.INVENTORY` debit / `SystemAccount.OPENING_BALANCE_EQUITY`

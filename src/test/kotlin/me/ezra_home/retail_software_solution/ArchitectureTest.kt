@@ -24,6 +24,28 @@ class ArchitectureTest {
         .that(areOutsideTheQuantityAndBusinessUtilPackages())
         .should(notReadConversionRatioParts())
 
+    /** Rounding policy lives in Decimals: its scales name the policy, a raw RoundingMode call site invents one. */
+    @ArchTest
+    val noRawBigDecimalRoundingOutsideUtil: ArchRule = classes()
+        .that(areOutsideTheQuantityAndBusinessUtilPackages())
+        .should(notRoundBigDecimalDirectly())
+
+    private fun notRoundBigDecimalDirectly() = object : ArchCondition<JavaClass>(
+        "not call BigDecimal.setScale or BigDecimal.divide with a RoundingMode"
+    ) {
+        override fun check(javaClass: JavaClass, events: ConditionEvents) {
+            javaClass.methodCallsFromSelf
+                .filter { call ->
+                    call.targetOwner.name == BIG_DECIMAL_CLASS &&
+                        call.target.name in ROUNDING_METHODS &&
+                        call.target.rawParameterTypes.any { parameterType -> parameterType.name == ROUNDING_MODE_CLASS }
+                }
+                .forEach { call ->
+                    events.add(SimpleConditionEvent.violated(call, "${call.description} rounds directly; use a Decimals scale"))
+                }
+        }
+    }
+
     private fun areOutsideTheQuantityAndBusinessUtilPackages() = object : DescribedPredicate<JavaClass>("are outside util.quantity and util.business") {
         override fun test(javaClass: JavaClass) =
             !javaClass.packageName.startsWith("$ROOT_PACKAGE.util.quantity") &&
@@ -71,6 +93,9 @@ class ArchitectureTest {
     private companion object {
         const val ROOT_PACKAGE = "me.ezra_home.retail_software_solution"
         const val CONVERSION_RATIO_CLASS = "$ROOT_PACKAGE.util.business.ConversionRatio"
+        const val BIG_DECIMAL_CLASS = "java.math.BigDecimal"
+        const val ROUNDING_MODE_CLASS = "java.math.RoundingMode"
+        val ROUNDING_METHODS = setOf("setScale", "divide")
         val FORBIDDEN_RATIO_MEMBERS = setOf(
             "getNumerator", "getDenominator", "component1", "component2", "factor", "displayFactor"
         )

@@ -31,7 +31,7 @@ object FifoTakePlanner {
     }
 
     // Prices the take against the batch's exact proportion, not against what is left, so rounding never compounds across takes.
-    // A void restores the exact cost it took, which can leave a layer a cent off its target and make the next take negative; clamped.
+    // A void restores the exact cost it took, which can leave a layer cents off its target and make the next take negative; clamped, and the draining take recovers the difference.
     private fun costOfTake(layer: FifoLayer, takenQuantity: ExactQuantity, layerRemaining: ExactQuantity): BigDecimal {
         val remainingAfterTake = (layerRemaining - takenQuantity).toStorageQuantity()
         val costAfterTake = Decimals.MoneyScale.divide(layer.batchCost.multiply(remainingAfterTake), layer.storageBatchSize)

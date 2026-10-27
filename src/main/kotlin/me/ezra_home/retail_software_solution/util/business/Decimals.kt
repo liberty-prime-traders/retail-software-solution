@@ -1,13 +1,12 @@
 package me.ezra_home.retail_software_solution.util.business
 
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 
 object Decimals {
-    // numeric(19, 4) holds 15 integer digits; the 12 integer-digit ceiling leaves headroom for balances to sum, whatever the money scale.
+    // Why 12 integer digits against a numeric(19,4) column: util/business/README.md rule 7.
     val MAXIMUM_TRANSACTION_AMOUNT: BigDecimal = BigDecimal("999999999999.99")
 
     sealed class DecimalScale {
@@ -28,21 +27,19 @@ object Decimals {
         fun compare(first: BigDecimal, second: BigDecimal): Int = compareAtScale(first, second, this)
     }
 
+    // Money columns are numeric(19,4) but round to 2: util/business/README.md rule 7.
+    const val MONEY_SCALE = 2
+
     sealed class FixedScale(final override val scale: Int) : DecimalScale()
     object Scale4 : FixedScale(4)
     object Scale10 : FixedScale(10)
-
-    sealed class VariableScale : DecimalScale()
-    object MoneyScale : VariableScale() {
-        override val scale: Int get() = SessionContextProvider.getMoneyScale()
-    }
+    object MoneyScale : FixedScale(MONEY_SCALE)
+    object PercentDisplayScale : FixedScale(1)
 
     fun compareAtScale(first: BigDecimal, second: BigDecimal, decimalScale: DecimalScale): Int =
         first.setScale(decimalScale.scale, RoundingMode.HALF_UP).compareTo(second.setScale(decimalScale.scale, RoundingMode.HALF_UP))
 
     fun stripZeroesAndRound(quantity: BigDecimal): String = stripZeroes(quantity, RoundingMode.HALF_UP)
-
-    fun stripZeroesAndRoundDown(quantity: BigDecimal): String = stripZeroes(quantity, RoundingMode.DOWN)
 
     fun stripZeroesAndRoundNeverToZero(value: BigDecimal): String =
         if (value.signum() != 0 && Scale4.round(value).signum() == 0) {
@@ -52,7 +49,7 @@ object Decimals {
         }
 
     private fun stripZeroes(quantity: BigDecimal, roundingMode: RoundingMode): String =
-        quantity.setScale(4, roundingMode).stripTrailingZeros().toPlainString()
+        quantity.setScale(Scale4.scale, roundingMode).stripTrailingZeros().toPlainString()
 
     fun requireMaxDecimalPlaces(value: BigDecimal, maxDecimalPlaces: Int, label: String) {
         if (value.stripTrailingZeros().scale() > maxDecimalPlaces) {

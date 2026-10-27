@@ -14,7 +14,7 @@ import java.util.UUID
 
 class PurchaseSearchQueryBuilderTest {
 
-  private val orderedTotalRoundingPattern = Regex("""storage_units_per_unit,\s*(\d+)\s*\)\)""")
+  private val orderedTotalRoundingPattern = Regex("""storage_units_per_user_provided_unit,\s*(\d+)\s*\)\)""")
 
   @BeforeEach
   fun setUp() {
@@ -27,7 +27,7 @@ class PurchaseSearchQueryBuilderTest {
   }
 
   @Test
-  fun `the amount filter rounds each line at the session money scale`() {
+  fun `the amount filter rounds each line at the money scale`() {
     val predicate = QueryBuilderContext(params = mutableMapOf(PurchaseSearchParameterNames.MIN_AMOUNT to BigDecimal.ONE))
 
     val sql = PurchaseSearchQueryBuilder.buildListQuery(predicate, null).sql
@@ -36,7 +36,7 @@ class PurchaseSearchQueryBuilderTest {
   }
 
   @Test
-  fun `both summaries round each line at the session money scale`() {
+  fun `both summaries round each line at the money scale`() {
     val predicate = QueryBuilderContext()
 
     assertRoundsAtMoneyScale(PurchaseSearchQueryBuilder.buildPaymentStatusSummaryQuery(predicate).sql)

@@ -10,8 +10,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
@@ -31,21 +31,14 @@ class SaleVoidedEventProcessor(
     override fun prepareLedgerRequest(event: SaleVoidedEvent): LedgerPostingRequest {
         ledgerPostingGate.requirePosted(event.sourceContext, event.saleReferenceNumber, LedgerSourceType.SALE)
         val contact = contactService.getContactById(event.contactId)
-        val taxableAmount = event.taxableAmount
-        val amountOwed = taxableAmount.add(event.taxBilled)
-        val grossRevenue = taxableAmount.add(event.discountTotal)
 
         val taxEntries = saleTaxLedgerEntriesBuilder.buildTransactionLevelReversalEntries(event.saleReferenceNumber)
         val saleEntries = buildList {
-            add(LedgerEntryRequest.credit(SystemAccount.TRADE_RECEIVABLES.code, amountOwed))
-            add(LedgerEntryRequest.debit(SystemAccount.GROSS_SALES.code, grossRevenue))
-            if (event.discountTotal.signum() > 0) {
-                add(LedgerEntryRequest.credit(SystemAccount.SALES_DISCOUNTS.code, event.discountTotal))
-            }
-            if (event.cogsTotal.signum() != 0) {
-                add(LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, event.cogsTotal))
-                add(LedgerEntryRequest.credit(SystemAccount.COST_OF_GOODS_SOLD.code, event.cogsTotal))
-            }
+            addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.TRADE_RECEIVABLES.code, event.amountOwed.toBigDecimal()))
+            addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.GROSS_SALES.code, event.grossRevenue.toBigDecimal()))
+            addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.SALES_DISCOUNTS.code, event.discountTotal.toBigDecimal()))
+            addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.INVENTORY.code, event.cogsTotal.toBigDecimal()))
+            addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.COST_OF_GOODS_SOLD.code, event.cogsTotal.toBigDecimal()))
         }
 
         return LedgerPostingRequest(
@@ -56,8 +49,8 @@ class SaleVoidedEventProcessor(
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = BigDecimal.ZERO,
-                    payableAmount = amountOwed
+                    receivableAmount = Money.ZERO,
+                    payableAmount = event.amountOwed
                 )
             )
         )

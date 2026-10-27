@@ -17,15 +17,26 @@ so the account alone can't say which one an event is. Keeping direction
 independent of account type is also what makes the balanced-entries check
 meaningful — a flipped leg fails it instead of producing a balanced, wrong
 posting. The processors with a runtime direction (`OpeningBalanceAccountingProcessor`,
-`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor.
+`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor
+or `LedgerEntryRequest.unlessZero`.
+
+## Zero-amount legs are omitted
+
+A leg whose amount can legitimately be zero (a 100%-discounted sale's receivable, a zero-cost COGS pair, a zero tax,
+an opening balance of zero) is built with `debitUnlessZero` / `creditUnlessZero` / `unlessZero`, which return no leg
+for an exact zero; callers concatenate the lists. Omitting a leg cannot unbalance a posting, because a zero leg adds
+nothing to either side. A posting that ends up with no legs at all still saves its `ledger_entry_group`, which is what
+`shouldProcess` checks to stay idempotent. Amounts that are positive by their source (loans, fund movements,
+expenses, payments) use `PositiveMoney.of` directly, so a zero there fails instead of being skipped. A negative
+amount is never skipped: it reaches `PositiveMoney.of` and fails.
 
 ## What `post` enforces, in order
 
-1. `LedgerEntriesValidator.validate` — total debits equal total credits, no
-   negative amount, and no amount with more decimals than the money scale, so
-   every sum over the ledger (daily balances and performance, their totals) is
-   exact at that scale. Zero is allowed: a 100%-discounted sale posts
-   zero-amount legs.
+1. `LedgerEntriesValidator.validate` — total debits equal total credits. Each
+   leg's amount is a `PositiveMoney` (greater than zero, at most the money scale
+   in decimals), so every sum over the ledger (daily balances and performance,
+   their totals) is exact at that scale. A zero or negative amount cannot be
+   built.
 2. An open fiscal period exists for `postingDate`.
 3. `AccountService.assertPostable` — every account is known, has no
    children, and is not an inactive account being *increased* (drawing an
@@ -64,6 +75,12 @@ as `AccountPosting`s.
 them owing us; `payable` is the column that moves it **down**. Both only ever grow — a reversal
 posts to the opposite column rather than a negative amount. A debit on `TRADE_RECEIVABLES`,
 `TRADE_PAYABLES` or an expense liability moves net up; a credit moves it down.
+
+`SubledgerEntryRequest.payableAmount` and `receivableAmount` are `Money` (zero allowed, never negative): one column
+carries the amount and the other is `Money.ZERO`, so a `PositiveMoney` would reject the unused column. A negative
+amount fails in `Money.of` when the request is built. `SubledgerEntryDto` carries the same two `Money` fields, while the
+entities, the running figures and the `SUM` projections stay `BigDecimal` because a running total can exceed the
+single-transaction maximum `Money` enforces.
 
 | Posting | Control-account leg | Column |
 |---|---|---|
@@ -221,8 +238,14 @@ The synchronous callers' builders are tested in their own domains (`FundMovement
 amounts on the request. The posting rules they rely on (closed fiscal period, reversal postability, null source
 location) are covered by `LedgerPostingServiceOrgLevelTest`.
 
+## Event amounts
+
+The sale, delivery, adjustment and opening-stock processors read typed `Money` amounts off the event and never form a
+sum themselves, so a ceiling breach cannot surface in the consumer (see `util/business/README.md` rule 8).
+
 ## Sale cost of goods sold
 
 `SaleConfirmedEventProcessor` adds `COST_OF_GOODS_SOLD` debit / `INVENTORY` credit for `event.cogsTotal` to the sale's
-group (dated `dateSold`); `SaleVoidedEventProcessor` posts the reverse (dated `dateVoided`). Both skip only when the
-total is exactly zero. A negative total is posted on purpose so `LedgerEntriesValidator` fails loudly.
+group (dated `dateSold`); `SaleVoidedEventProcessor` posts the reverse (dated `dateVoided`). Both skip the pair only
+when the total is exactly zero. A negative total is not skipped: `PositiveMoney.of` rejects it, so the posting fails
+loudly.

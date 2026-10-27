@@ -4,6 +4,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -16,16 +18,19 @@ object ExpensePostingRequests {
         expenseAccountCode: String,
         amount: BigDecimal,
         payeeContactReferenceNumber: String
-    ): LedgerPostingRequest = LedgerPostingRequest(
-        sourceReferenceNumber = reference,
-        sourceType = sourceType,
-        postingDate = postingDate,
-        entries = listOf(
-            LedgerEntryRequest.debit(expenseAccountCode, amount),
-            LedgerEntryRequest.credit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), amount)
-        ),
-        subledgerEntries = listOf(payable(payeeContactReferenceNumber, amount))
-    )
+    ): LedgerPostingRequest {
+        val positiveAmount = PositiveMoney.of(amount)
+        return LedgerPostingRequest(
+            sourceReferenceNumber = reference,
+            sourceType = sourceType,
+            postingDate = postingDate,
+            entries = listOf(
+                LedgerEntryRequest.debit(expenseAccountCode, positiveAmount),
+                LedgerEntryRequest.credit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), positiveAmount)
+            ),
+            subledgerEntries = listOf(payable(payeeContactReferenceNumber, amount))
+        )
+    }
 
     fun reverseIncur(
         sourceType: LedgerSourceType,
@@ -34,16 +39,19 @@ object ExpensePostingRequests {
         expenseAccountCode: String,
         amount: BigDecimal,
         payeeContactReferenceNumber: String
-    ): LedgerPostingRequest = LedgerPostingRequest(
-        sourceReferenceNumber = reference,
-        sourceType = sourceType,
-        postingDate = postingDate,
-        entries = listOf(
-            LedgerEntryRequest.credit(expenseAccountCode, amount),
-            LedgerEntryRequest.debit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), amount)
-        ),
-        subledgerEntries = listOf(settled(payeeContactReferenceNumber, amount))
-    )
+    ): LedgerPostingRequest {
+        val positiveAmount = PositiveMoney.of(amount)
+        return LedgerPostingRequest(
+            sourceReferenceNumber = reference,
+            sourceType = sourceType,
+            postingDate = postingDate,
+            entries = listOf(
+                LedgerEntryRequest.credit(expenseAccountCode, positiveAmount),
+                LedgerEntryRequest.debit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), positiveAmount)
+            ),
+            subledgerEntries = listOf(settled(payeeContactReferenceNumber, amount))
+        )
+    }
 
     fun settle(
         sourceType: LedgerSourceType,
@@ -53,16 +61,19 @@ object ExpensePostingRequests {
         paymentMethodAccountCode: String,
         amount: BigDecimal,
         payeeContactReferenceNumber: String
-    ): LedgerPostingRequest = LedgerPostingRequest(
-        sourceReferenceNumber = paymentReference,
-        sourceType = sourceType,
-        postingDate = postingDate,
-        entries = listOf(
-            LedgerEntryRequest.debit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), amount),
-            LedgerEntryRequest.credit(paymentMethodAccountCode, amount)
-        ),
-        subledgerEntries = listOf(settled(payeeContactReferenceNumber, amount))
-    )
+    ): LedgerPostingRequest {
+        val positiveAmount = PositiveMoney.of(amount)
+        return LedgerPostingRequest(
+            sourceReferenceNumber = paymentReference,
+            sourceType = sourceType,
+            postingDate = postingDate,
+            entries = listOf(
+                LedgerEntryRequest.debit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), positiveAmount),
+                LedgerEntryRequest.credit(paymentMethodAccountCode, positiveAmount)
+            ),
+            subledgerEntries = listOf(settled(payeeContactReferenceNumber, amount))
+        )
+    }
 
     fun reverseSettle(
         sourceType: LedgerSourceType,
@@ -72,20 +83,23 @@ object ExpensePostingRequests {
         paymentMethodAccountCode: String,
         amount: BigDecimal,
         payeeContactReferenceNumber: String
-    ): LedgerPostingRequest = LedgerPostingRequest(
-        sourceReferenceNumber = paymentReference,
-        sourceType = sourceType,
-        postingDate = postingDate,
-        entries = listOf(
-            LedgerEntryRequest.credit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), amount),
-            LedgerEntryRequest.debit(paymentMethodAccountCode, amount)
-        ),
-        subledgerEntries = listOf(payable(payeeContactReferenceNumber, amount))
-    )
+    ): LedgerPostingRequest {
+        val positiveAmount = PositiveMoney.of(amount)
+        return LedgerPostingRequest(
+            sourceReferenceNumber = paymentReference,
+            sourceType = sourceType,
+            postingDate = postingDate,
+            entries = listOf(
+                LedgerEntryRequest.credit(ExpenseLiabilityAccount.forExpenseAccount(expenseAccountCode), positiveAmount),
+                LedgerEntryRequest.debit(paymentMethodAccountCode, positiveAmount)
+            ),
+            subledgerEntries = listOf(payable(payeeContactReferenceNumber, amount))
+        )
+    }
 
     private fun payable(contactReferenceNumber: String, amount: BigDecimal) =
-        SubledgerEntryRequest(contactReferenceNumber, payableAmount = amount, receivableAmount = BigDecimal.ZERO)
+        SubledgerEntryRequest(contactReferenceNumber, payableAmount = Money.of(amount), receivableAmount = Money.ZERO)
 
     private fun settled(contactReferenceNumber: String, amount: BigDecimal) =
-        SubledgerEntryRequest(contactReferenceNumber, payableAmount = BigDecimal.ZERO, receivableAmount = amount)
+        SubledgerEntryRequest(contactReferenceNumber, payableAmount = Money.ZERO, receivableAmount = Money.of(amount))
 }

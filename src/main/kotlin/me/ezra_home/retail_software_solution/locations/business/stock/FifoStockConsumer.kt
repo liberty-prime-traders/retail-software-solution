@@ -37,23 +37,20 @@ object FifoStockConsumer {
             touchedEntries.add(stockEntry)
             runningBalance -= plannedTake.storageQuantity
             movements.add(
-                StockMovementEntity(
+                StockMovementCreator.create(
                     stockEntryId = stockEntry.id!!,
                     locationProductId = fifoConsumptionRequest.locationProductId,
                     movementType = fifoConsumptionRequest.movementType,
-                    reasonId = fifoConsumptionRequest.adjustmentDetails?.reasonId,
-                    storageMovedQuantity = plannedTake.storageQuantity.toStorageQuantity(),
-                    userProvidedMovedQuantity = fifoConsumptionRequest.userProvidedQuantity,
-                    storageRemainingQuantity = runningBalance.toStorageQuantity(),
+                    storageMoved = plannedTake.storageQuantity,
+                    balanceAfterMovement = runningBalance,
                     movedCost = plannedTake.movedCost,
-                    storageMovedBreakdownText = quantityBreakdown.render(plannedTake.storageQuantity),
-                    storageRemainingBreakdownText = quantityBreakdown.render(runningBalance),
+                    wholeLineQuantityText = quantityBreakdown.renderUserProvided(fifoConsumptionRequest.userProvidedQuantity, fifoConsumptionRequest.unitId),
                     documentReference = fifoConsumptionRequest.documentReference,
                     detailReference = fifoConsumptionRequest.detailReference,
                     unitId = fifoConsumptionRequest.unitId,
-                    storageUnitsPerUnit = fifoConsumptionRequest.storageUnitsPerUnit,
-                    category = fifoConsumptionRequest.adjustmentDetails?.category,
-                    note = fifoConsumptionRequest.adjustmentDetails?.note,
+                    storageUnitsPerUserProvidedUnit = fifoConsumptionRequest.storageUnitsPerUserProvidedUnit,
+                    quantityBreakdown = quantityBreakdown,
+                    adjustmentDetails = fifoConsumptionRequest.adjustmentDetails,
                 )
             )
             consumedCost = consumedCost.add(plannedTake.movedCost)
@@ -79,20 +76,19 @@ object FifoStockConsumer {
             touchedEntries.add(stockEntry)
             runningBalance += restoredQuantity
             reversalMovements.add(
-                StockMovementEntity(
+                StockMovementCreator.create(
                     stockEntryId = movementToReverse.stockEntryId,
                     locationProductId = movementToReverse.locationProductId,
                     movementType = reversalType,
-                    storageMovedQuantity = restoredQuantity.toStorageQuantity(),
-                    userProvidedMovedQuantity = movementToReverse.userProvidedMovedQuantity,
-                    storageRemainingQuantity = runningBalance.toStorageQuantity(),
+                    storageMoved = restoredQuantity,
+                    balanceAfterMovement = runningBalance,
                     movedCost = movementToReverse.movedCost,
-                    storageMovedBreakdownText = quantityBreakdown.render(restoredQuantity),
-                    storageRemainingBreakdownText = quantityBreakdown.render(runningBalance),
+                    wholeLineQuantityText = movementToReverse.wholeLineQuantityText,
                     documentReference = movementToReverse.documentReference,
                     detailReference = movementToReverse.detailReference,
                     unitId = movementToReverse.unitId,
-                    storageUnitsPerUnit = movementToReverse.storageUnitsPerUnit,
+                    storageUnitsPerUserProvidedUnit = movementToReverse.storageUnitsPerUserProvidedUnit,
+                    quantityBreakdown = quantityBreakdown,
                 )
             )
         }

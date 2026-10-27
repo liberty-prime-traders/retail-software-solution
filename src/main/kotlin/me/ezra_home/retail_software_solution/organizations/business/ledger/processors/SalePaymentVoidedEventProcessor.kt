@@ -10,8 +10,9 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
@@ -36,14 +37,14 @@ class SalePaymentVoidedEventProcessor(
             sourceType = LedgerSourceType.SALE_PAYMENT_VOID,
             postingDate = event.voidedOn,
             entries = listOf(
-                LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, event.amount),
-                LedgerEntryRequest.credit(event.paymentMethodAccountCode, event.amount)
+                LedgerEntryRequest.debit(SystemAccount.TRADE_RECEIVABLES.code, PositiveMoney.of(event.amount)),
+                LedgerEntryRequest.credit(event.paymentMethodAccountCode, PositiveMoney.of(event.amount))
             ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contact.referenceNumber,
-                    receivableAmount = event.amount,
-                    payableAmount = BigDecimal.ZERO
+                    receivableAmount = Money.of(event.amount),
+                    payableAmount = Money.ZERO
                 )
             )
         )

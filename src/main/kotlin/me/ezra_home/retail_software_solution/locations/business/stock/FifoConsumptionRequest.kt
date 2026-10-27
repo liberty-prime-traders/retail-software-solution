@@ -11,7 +11,7 @@ data class FifoConsumptionRequest(
     val storageQuantity: ExactQuantity,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val movementType: MovementType,
     val documentReference: String,
     val detailReference: String?,

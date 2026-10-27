@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDat
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -64,8 +65,8 @@ class SaleCogsEventHandlersTest {
         `when`(saleRepository.getReferenceById(saleId)).thenReturn(saleEntity)
         `when`(saleLineRepository.findBySaleId(saleId)).thenReturn(
             listOf(
-                saleLine(firstProductId, quantity = "1.0000", storageUnitsPerUnit = 12L, cogsTotal = BigDecimal("30.0000")),
-                saleLine(secondProductId, quantity = "1.0000", storageUnitsPerUnit = 1L, cogsTotal = null),
+                saleLine(firstProductId, quantity = "1.0000", storageUnitsPerUserProvidedUnit = 12L, cogsTotal = BigDecimal("30.0000")),
+                saleLine(secondProductId, quantity = "1.0000", storageUnitsPerUserProvidedUnit = 1L, cogsTotal = null),
             )
         )
         val saleVoidEntity = mock(SaleVoidEntity::class.java)
@@ -83,7 +84,7 @@ class SaleCogsEventHandlersTest {
         saleConfirmedHandler.reissue(saleId)
 
         val event = capturePublished(SaleConfirmedEvent::class.java)
-        assertEquals(BigDecimal("30.0000"), event.cogsTotal)
+        assertEquals(Money.of(BigDecimal("30.00")), event.cogsTotal)
     }
 
     @Test
@@ -91,7 +92,7 @@ class SaleCogsEventHandlersTest {
         saleVoidHandler.reissue(saleId)
 
         val event = capturePublished(SaleVoidedEvent::class.java)
-        assertEquals(BigDecimal("30.0000"), event.cogsTotal)
+        assertEquals(Money.of(BigDecimal("30.00")), event.cogsTotal)
     }
 
     @Test
@@ -112,7 +113,7 @@ class SaleCogsEventHandlersTest {
         return eventClass.cast(captor.value)
     }
 
-    private fun saleLine(locationProductId: UUID, quantity: String, storageUnitsPerUnit: Long, cogsTotal: BigDecimal?) =
+    private fun saleLine(locationProductId: UUID, quantity: String, storageUnitsPerUserProvidedUnit: Long, cogsTotal: BigDecimal?) =
         SaleLineEntity(
             saleId = saleId,
             locationProductId = locationProductId,
@@ -120,7 +121,7 @@ class SaleCogsEventHandlersTest {
             unitId = UUID.randomUUID(),
             lineTotal = BigDecimal("10.0000").multiply(BigDecimal(quantity)),
             defaultSalePrice = BigDecimal("10.0000"),
-            storageUnitsPerUnit = storageUnitsPerUnit,
+            storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
             cogsTotal = cogsTotal,
         )
 }

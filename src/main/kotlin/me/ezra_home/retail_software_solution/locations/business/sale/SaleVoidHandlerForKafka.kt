@@ -7,10 +7,10 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
@@ -45,12 +45,12 @@ class SaleVoidHandlerForKafka(
                 sourceDocumentId = sale.id!!,
                 contactId = sale.contactId,
                 saleReferenceNumber = sale.requiredReference(),
-                taxableAmount = sale.taxableAmount(),
-                taxBilled = sale.taxBilled ?: BigDecimal.ZERO,
-                discountTotal = sale.discountTotal(),
+                taxableAmount = Money.of(sale.taxableAmount()),
+                taxBilled = Money.of(sale.taxBilled),
+                discountTotal = Money.of(sale.discountTotal()),
                 dateSold = DateTimes.Local.atOrganizationZone(sale.dateSold!!),
                 dateVoided = DateTimes.Local.atOrganizationZone(voidEntity.requiredCreatedOn()),
-                cogsTotal = saleDataFetcher.getSaleCogsTotal(sale.id!!)
+                cogsTotal = Money.of(saleDataFetcher.getSaleCogsTotal(sale.id!!))
             )
         )
     }

@@ -128,8 +128,8 @@ class SubledgerService(
             val subledgerEntryDto = ledgerMapper.toSubledgerDto(entryEntity)
             val groupDto = groupsByReferenceNumber.getValue(subledgerEntryDto.groupReferenceNumber)
             val transactionDelta = SubledgerBalanceDto(
-                payable = subledgerEntryDto.payableAmount,
-                receivable = subledgerEntryDto.receivableAmount
+                payable = subledgerEntryDto.payableAmount.toBigDecimal(),
+                receivable = subledgerEntryDto.receivableAmount.toBigDecimal()
             )
             val runningBalance = SubledgerBalanceDto(
                 payable = subledgerEntryDto.runningPayable,

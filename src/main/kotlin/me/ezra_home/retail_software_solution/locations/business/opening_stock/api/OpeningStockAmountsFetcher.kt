@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.opening_stock.a
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockRepository
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -16,9 +17,9 @@ class OpeningStockAmountsFetcher(
         if (locationProductIds.isEmpty()) return emptyMap()
         return openingStockRepository.findByLocationProductIdIn(locationProductIds)
             .associate { it.locationProductId to OpeningStockAmountsDto(
-                userProvidedQuantity = it.userProvidedQuantity,
+                userProvidedQuantity = PositiveUserProvidedQuantity.of(it.userProvidedQuantity),
                 unitId = it.unitId,
-                storageUnitsPerUnit = it.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = it.storageUnitsPerUserProvidedUnit,
                 unitCost = it.unitCost
             ) }
     }

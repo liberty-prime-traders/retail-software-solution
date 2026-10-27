@@ -7,21 +7,21 @@ import java.math.BigDecimal
 
 object AdjustmentAmountCalculator {
 
-    fun calculateAmount(dto: SaleAdjustmentCreateDto, lines: List<ProductLineWithPrice>): BigDecimal =
-        when (dto.calculationMethod) {
+    fun calculateAmount(saleAdjustmentCreateDto: SaleAdjustmentCreateDto, productLinesWithPrice: List<ProductLineWithPrice>): BigDecimal =
+        when (saleAdjustmentCreateDto.calculationMethod) {
             PriceAdjustmentMethod.UNIT_PRICE_OVERRIDE -> {
-                val overriddenLine = lines.first { it.locationProductId == dto.locationProductId }
+                val overriddenLine = productLinesWithPrice.first { it.locationProductId == saleAdjustmentCreateDto.locationProductId }
                 Decimals.MoneyScale.round(
-                    overriddenLine.lineTotal.subtract(LinePricing.overrideTotal(dto.value, overriddenLine.userProvidedQuantity)).abs()
+                    overriddenLine.lineTotal.subtract(LinePricing.overrideTotal(saleAdjustmentCreateDto.value, overriddenLine.userProvidedQuantity)).abs()
                 )
             }
             PriceAdjustmentMethod.PERCENTAGE -> {
-                val basePrice = if (dto.locationProductId != null) {
-                    lines.first { it.locationProductId == dto.locationProductId }.lineTotal
+                val basePrice = if (saleAdjustmentCreateDto.locationProductId != null) {
+                    productLinesWithPrice.first { it.locationProductId == saleAdjustmentCreateDto.locationProductId }.lineTotal
                 } else {
-                    lines.sumOf { it.lineTotal }
+                    productLinesWithPrice.sumOf { it.lineTotal }
                 }
-                Decimals.MoneyScale.divide(dto.value.multiply(basePrice), BigDecimal(100))
+                Decimals.MoneyScale.divide(saleAdjustmentCreateDto.value.multiply(basePrice), BigDecimal(100))
             }
         }
 }

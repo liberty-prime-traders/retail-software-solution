@@ -33,8 +33,8 @@ class PurchaseDeliveryLineEntity(
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
-  var storageUnitsPerUnit: Long
+  @Column(name = "storage_units_per_user_provided_unit", nullable = false, updatable = false)
+  var storageUnitsPerUserProvidedUnit: Long
 
 ) : HasReferenceEntity() {
 

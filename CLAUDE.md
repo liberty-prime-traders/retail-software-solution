@@ -70,7 +70,7 @@ Kafka events are published via `ApplicationEventPublisher` and bind to the enclo
 ### Utilities to always use
 
 - `DateTimes` — all `LocalDate` / `OffsetDateTime` logic; never `LocalDate.now()` or `ZoneOffset.UTC`
-- `Decimals` — monetary arithmetic; money uses `Decimals.MoneyScale` (organization scale from the session, default 2, half-up), never a hardcoded scale
+- `Decimals` — monetary arithmetic; money uses `Decimals.MoneyScale` (the `Decimals.MONEY_SCALE` constant, 2, half-up), never a hardcoded scale
 - `StringUtils` — blank-to-null and other string helpers
 
 ### Database migrations

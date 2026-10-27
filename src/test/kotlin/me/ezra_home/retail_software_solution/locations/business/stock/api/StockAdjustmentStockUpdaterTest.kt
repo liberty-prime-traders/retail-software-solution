@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSess
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -34,7 +35,9 @@ class StockAdjustmentStockUpdaterTest {
     private val stockReserver = mock(StockReserver::class.java)
     private val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
     private val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
+    private val stockIncreaseRecorder = mock(StockIncreaseRecorder::class.java)
     private val stockAdjustmentStockUpdater = StockAdjustmentStockUpdater(
+        stockIncreaseRecorder,
         stockEntryRepository,
         stockMovementRepository,
         stockBalanceFetcher,
@@ -89,7 +92,7 @@ class StockAdjustmentStockUpdaterTest {
         storageQuantity = ExactQuantity.ofStorage(BigDecimal(storageQuantity)),
         userProvidedQuantity = BigDecimal(storageQuantity),
         unitId = pieceId,
-        storageUnitsPerUnit = 1L,
+        storageUnitsPerUserProvidedUnit = 1L,
         documentReference = "STADJ000001",
         adjustmentDetails = StockAdjustmentMovementDetails(StockAdjustmentCategory.INTERNAL_USE, null, "Shop supplies"),
     )

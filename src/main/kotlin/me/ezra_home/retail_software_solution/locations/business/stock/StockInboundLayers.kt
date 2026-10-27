@@ -19,7 +19,7 @@ data class InboundLayerSpec(
     val batchCost: BigDecimal,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
 )
 
@@ -52,22 +52,19 @@ object StockInboundLayers {
         stockEntry: StockEntryEntity,
         balanceAfterMovement: ExactQuantity,
         quantityBreakdown: QuantityBreakdown
-    ): StockMovementEntity = StockMovementEntity(
+    ): StockMovementEntity = StockMovementCreator.create(
         stockEntryId = stockEntry.id!!,
         locationProductId = inboundLayerSpec.locationProductId,
         movementType = inboundLayerSpec.movementType,
-        reasonId = inboundLayerSpec.adjustmentDetails?.reasonId,
-        storageMovedQuantity = inboundLayerSpec.storageQuantity.toStorageQuantity(),
-        userProvidedMovedQuantity = inboundLayerSpec.userProvidedQuantity,
-        storageRemainingQuantity = balanceAfterMovement.toStorageQuantity(),
+        storageMoved = inboundLayerSpec.storageQuantity,
+        balanceAfterMovement = balanceAfterMovement,
         movedCost = inboundLayerSpec.batchCost,
-        storageMovedBreakdownText = quantityBreakdown.render(inboundLayerSpec.storageQuantity),
-        storageRemainingBreakdownText = quantityBreakdown.render(balanceAfterMovement),
+        wholeLineQuantityText = quantityBreakdown.renderUserProvided(inboundLayerSpec.userProvidedQuantity, inboundLayerSpec.unitId),
         documentReference = inboundLayerSpec.documentReference,
         detailReference = inboundLayerSpec.detailReference,
         unitId = inboundLayerSpec.unitId,
-        storageUnitsPerUnit = inboundLayerSpec.storageUnitsPerUnit,
-        category = inboundLayerSpec.adjustmentDetails?.category,
-        note = inboundLayerSpec.adjustmentDetails?.note,
+        storageUnitsPerUserProvidedUnit = inboundLayerSpec.storageUnitsPerUserProvidedUnit,
+        quantityBreakdown = quantityBreakdown,
+        adjustmentDetails = inboundLayerSpec.adjustmentDetails,
     )
 }

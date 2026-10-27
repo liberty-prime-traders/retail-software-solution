@@ -12,7 +12,6 @@ import java.util.UUID
 
 object StockTransferFifoAllocator {
 
-    // Cost groups are runs, not a group-by, so consuming them in order walks the layers in the order they were planned
     fun allocateDispatchLines(
         dispatchId: UUID,
         draftLines: List<StockTransferDraftLineEntity>,
@@ -22,7 +21,7 @@ object StockTransferFifoAllocator {
         productLabelByLocationProductId: Map<UUID, String>
     ): List<StockTransferDispatchLineEntity> {
         return draftLines.flatMap { draftLine ->
-            val storageQuantityNeeded = ExactQuantity.ofUserProvided(draftLine.userProvidedQuantity, draftLine.storageUnitsPerUnit)
+            val storageQuantityNeeded = draftLine.storageQuantity()
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
             val plannedTakes = FifoTakePlanner.planTakes(fifoEntries, storageQuantityNeeded)
             guardFulfilled(
@@ -40,12 +39,13 @@ object StockTransferFifoAllocator {
                     unitId = draftLine.unitId,
                     unitCost = Decimals.Scale10.divide(costRun.cost, costRun.storageQuantity.toStorageQuantity()),
                     costDispatched = costRun.cost,
-                    storageUnitsPerUnit = draftLine.storageUnitsPerUnit
+                    storageUnitsPerUserProvidedUnit = draftLine.storageUnitsPerUserProvidedUnit
                 )
             }
         }
     }
 
+    // Cost groups are runs, not a group-by, so consuming them in order walks the layers in the order they were planned
     private fun groupIntoCostRuns(plannedTakes: List<PlannedTake>, fifoEntries: List<StockEntryFifoDto>): List<CostRun> {
         val costRuns = mutableListOf<CostRun>()
         var currentRate: BigDecimal? = null

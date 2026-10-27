@@ -41,7 +41,7 @@ object SaleLineSync {
                     existingSaleLineEntity.unitId = saleLineSaveRequest.unitId
                     existingSaleLineEntity.lineTotal = saleLineSaveRequest.lineTotal
                     existingSaleLineEntity.defaultSalePrice = saleLineSaveRequest.defaultSalePrice
-                    existingSaleLineEntity.storageUnitsPerUnit = saleLineSaveRequest.storageUnitsPerUnit
+                    existingSaleLineEntity.storageUnitsPerUserProvidedUnit = saleLineSaveRequest.storageUnitsPerUserProvidedUnit
                 } ?: throw RtsGenericException("Sale line ${saleLineSaveRequest.existingId} no longer exists")
             } else {
                 saleLineSaveRequest.toEntity(saleId)
@@ -62,6 +62,6 @@ object SaleLineSync {
         unitId = unitId,
         lineTotal = lineTotal,
         defaultSalePrice = defaultSalePrice,
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     )
 }

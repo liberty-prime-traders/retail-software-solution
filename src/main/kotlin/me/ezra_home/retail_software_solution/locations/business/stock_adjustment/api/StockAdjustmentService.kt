@@ -53,10 +53,10 @@ class StockAdjustmentService(
             stockMovementReasonService.guardReason(direction.movementType, stockAdjustmentCreateDto.stockMovementReasonId)
         }
 
-        val storageUnitsPerUnit = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnit = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             listOf(LocationProductUnitRequestDto(locationProductId, stockAdjustmentCreateDto.unitId))
         ).getValue(locationProductId)
-        val storageQuantity = ExactQuantity.ofUserProvided(stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(), storageUnitsPerUnit)
+        val storageQuantity = ExactQuantity.ofUserProvided(stockAdjustmentCreateDto.userProvidedQuantity, storageUnitsPerUserProvidedUnit)
         val referenceNumber = referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)
         val adjustmentDetails = StockAdjustmentMovementDetails(
             category = stockAdjustmentCreateDto.category,
@@ -68,7 +68,7 @@ class StockAdjustmentService(
 
         val totalCost = when (direction) {
             StockAdjustmentDirection.INCREASE -> applyIncrease(
-                stockAdjustmentCreateDto, storageQuantity, storageUnitsPerUnit, referenceNumber, adjustmentDetails
+                stockAdjustmentCreateDto, storageQuantity, storageUnitsPerUserProvidedUnit, referenceNumber, adjustmentDetails
             )
             StockAdjustmentDirection.DECREASE -> stockAdjustmentStockUpdater.decreaseStock(
                 StockAdjustmentDecreaseStockRequest(
@@ -77,7 +77,7 @@ class StockAdjustmentService(
                     storageQuantity = storageQuantity,
                     userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                     unitId = stockAdjustmentCreateDto.unitId,
-                    storageUnitsPerUnit = storageUnitsPerUnit,
+                    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
                     documentReference = referenceNumber,
                     adjustmentDetails = adjustmentDetails
                 )
@@ -91,7 +91,7 @@ class StockAdjustmentService(
                 direction = direction,
                 userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = stockAdjustmentCreateDto.unitId,
-                storageUnitsPerUnit = storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
                 storageQuantity = storageQuantity.toStorageQuantity(),
                 totalCost = totalCost,
                 stockMovementReasonId = stockAdjustmentCreateDto.stockMovementReasonId,
@@ -141,7 +141,7 @@ class StockAdjustmentService(
     private fun applyIncrease(
         stockAdjustmentCreateDto: StockAdjustmentCreateDto,
         storageQuantity: ExactQuantity,
-        storageUnitsPerUnit: Long,
+        storageUnitsPerUserProvidedUnit: Long,
         referenceNumber: String,
         adjustmentDetails: StockAdjustmentMovementDetails
     ): BigDecimal {
@@ -152,7 +152,7 @@ class StockAdjustmentService(
                 storageQuantity = storageQuantity,
                 userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = stockAdjustmentCreateDto.unitId,
-                storageUnitsPerUnit = storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
                 totalCost = totalCost,
                 documentReference = referenceNumber,
                 adjustmentDetails = adjustmentDetails

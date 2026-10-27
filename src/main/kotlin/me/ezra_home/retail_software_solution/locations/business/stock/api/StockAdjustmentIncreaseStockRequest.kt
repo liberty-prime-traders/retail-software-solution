@@ -9,7 +9,7 @@ data class StockAdjustmentIncreaseStockRequest(
     val storageQuantity: ExactQuantity,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val totalCost: BigDecimal,
     val documentReference: String,
     val adjustmentDetails: StockAdjustmentMovementDetails,
