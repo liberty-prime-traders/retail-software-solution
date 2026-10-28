@@ -15,6 +15,7 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - KAFKA_HOST=${KAFKA_HOST}
       - KAFKA_PORT=${KAFKA_INTERNAL_PORT}
+      - KAFKA_ENABLED=${KAFKA_ENABLED:-true}
       - REDIS_HOST=${REDIS_HOST}
       - PORT=${PORT}
       - CORS_PATTERNS=${CORS_PATTERNS}
@@ -41,7 +42,7 @@ services:
       - default
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:${PORT}/"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/${PORT}"]
       interval: 5s
       timeout: 3s
       retries: 6
