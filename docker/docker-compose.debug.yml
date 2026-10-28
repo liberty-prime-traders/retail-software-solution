@@ -1,0 +1,4 @@
+services:
+  rtss-server:
+    ports:
+      - "${PORT}:${PORT}"

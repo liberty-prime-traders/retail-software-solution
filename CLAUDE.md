@@ -16,24 +16,13 @@ Quick rules:
 ## Commands
 
 ```bash
-# Start infrastructure (Postgres, Kafka, Redis)
+# Start infrastructure (Postgres, Redis), on the dev infra host
 cd docker && ./dev.sh          # up
 cd docker && ./dev.sh down     # down
 
-# Build
-./gradlew build
-
-# Unit tests (H2, no Docker needed)
-./gradlew test
-
-# Run a single test class
-./gradlew test --tests "me.ezra_home.retail_software_solution.SomeTest"
-
-# Cucumber integration tests (Testcontainers — needs Docker)
-./cucumber.sh                  # regression (default)
-./cucumber.sh smoke
-./cucumber.sh kafka-producer
-./cucumber.sh kafka-consumer
+# Start only the app container, against the infra that dev.sh started (hosts come from dev.env)
+cd docker && ./debug.sh        # up
+cd docker && ./debug.sh down   # down
 ```
 
 ## Architecture
