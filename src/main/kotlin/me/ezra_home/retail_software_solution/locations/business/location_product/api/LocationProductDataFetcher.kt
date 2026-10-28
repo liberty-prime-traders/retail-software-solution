@@ -92,6 +92,10 @@ class LocationProductDataFetcher(
             )
         }
 
+    fun findIdsByReferenceNumbers(referenceNumbers: Collection<String>): Map<String, UUID> =
+        locationProductRepository.findByReferenceNumberIn(referenceNumbers)
+            .associate { it.requiredReference() to it.id!! }
+
     fun getDefaultSalePrices(locationProductIds: Collection<UUID>): Map<UUID, BigDecimal?> =
         locationProductRepository.findAllById(locationProductIds)
             .associate { it.id!! to it.defaultSalePrice }

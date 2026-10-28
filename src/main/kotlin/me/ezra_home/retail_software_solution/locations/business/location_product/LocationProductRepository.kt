@@ -13,4 +13,6 @@ interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID>
   fun findByOrgProductId(orgProductId: UUID): LocationProductEntity?
 
   fun findByOrgProductIdIn(orgProductIds: Collection<UUID>): List<LocationProductEntity>
+
+  fun findByReferenceNumberIn(referenceNumbers: Collection<String>): List<LocationProductEntity>
 }
