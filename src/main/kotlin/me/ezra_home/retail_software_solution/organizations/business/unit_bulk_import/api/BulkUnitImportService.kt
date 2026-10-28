@@ -42,11 +42,11 @@ class BulkUnitImportService(
         val createdGroups = unitGroupService.bulkCreateValidatedList(
             groupsToCreate.map { UnitGroupInsertDto(name = it.name!!, description = it.description) }
         )
-        val createdGroupIdByName = createdGroups.associate { (StringUtils.getValueOrNull(it.name) ?: "") to it.id }
+        val createdGroupIdByNameKey = createdGroups.associate { StringUtils.alphanumericKey(it.name) to it.id }
 
         val groupIdByName = bulkUnitImportRequestDto.unitGroups.associate { group ->
             val name = group.name!!
-            name to (findExistingSystemDefinedGroup(name)?.id ?: createdGroupIdByName.getValue(name))
+            name to (findExistingSystemDefinedGroup(name)?.id ?: createdGroupIdByNameKey.getValue(StringUtils.alphanumericKey(name)))
         }
 
         saveValidatedUnitValues(bulkUnitImportRequestDto, groupIdByName)
@@ -113,10 +113,9 @@ class BulkUnitImportService(
             baseUnitName = unitGroupBulkInsertDto.baseUnitName,
             baseUnitCode = unitGroupBulkInsertDto.baseUnitCode
         )
-        val rootUnitAlreadyExists = unitValueFetcher.getUnitValuesForUnitGroup(groupId).any { it.code == rootUnitDefinition.code }
 
         return buildList {
-            if (!excludedFromBaseUnit && !rootUnitAlreadyExists) {
+            if (!excludedFromBaseUnit) {
                 add(createPendingRootUnit(rootUnitDefinition))
             }
             // A unit value whose code already matches a system-defined row (see SystemUnitValue /

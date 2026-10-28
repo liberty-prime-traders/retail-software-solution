@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
@@ -17,9 +18,11 @@ import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class SaleStockUpdaterTest {
 
     private val locationProductId = UUID.randomUUID()
+    private val pieceId = UUID.randomUUID()
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
     private val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
     private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
@@ -41,17 +44,17 @@ class SaleStockUpdaterTest {
 
         val costsBySaleLineId = consume(saleLineId, "6.0000")
 
-        assertEquals(BigDecimal("16.0000"), costsBySaleLineId.getValue(saleLineId).cost)
+        assertEquals(BigDecimal("16.00"), costsBySaleLineId.getValue(saleLineId).cost)
     }
 
     @Test
-    fun `a partial take costs a proportion of the layer cost rounded once to scale 4`() {
+    fun `a partial take costs a proportion of the layer cost rounded once to cents`() {
         val saleLineId = UUID.randomUUID()
         givenLayers(listOf("3.0000" to "10.0000"))
 
         val costsBySaleLineId = consume(saleLineId, "1.0000")
 
-        assertEquals(BigDecimal("3.3333"), costsBySaleLineId.getValue(saleLineId).cost)
+        assertEquals(BigDecimal("3.33"), costsBySaleLineId.getValue(saleLineId).cost)
     }
 
     @Test
@@ -65,8 +68,8 @@ class SaleStockUpdaterTest {
             "SALE-1",
         ).associateBy { it.saleLineId }
 
-        assertEquals(BigDecimal("20.0000"), costsBySaleLineId.getValue(firstLineId).cost)
-        assertEquals(BigDecimal("10.0000"), costsBySaleLineId.getValue(secondLineId).cost)
+        assertEquals(BigDecimal("20.00"), costsBySaleLineId.getValue(firstLineId).cost)
+        assertEquals(BigDecimal("10.00"), costsBySaleLineId.getValue(secondLineId).cost)
     }
 
     @Test
@@ -95,7 +98,6 @@ class SaleStockUpdaterTest {
             .thenReturn(mapOf(locationProductId to stockEntries.sumOf { it.storageQuantityRemaining }))
         `when`(locationProductDataFetcher.findSummaryByIds(anySet()))
             .thenReturn(emptyMap())
-        val pieceId = UUID.randomUUID()
         `when`(stockBreakdownProvider.forLocationProducts(anySet())).thenReturn(
             mapOf(
                 locationProductId to QuantityBreakdown.forBaseUnit(
@@ -110,7 +112,7 @@ class SaleStockUpdaterTest {
         saleLineReferenceNumber = "SALN-$saleLineId".take(30),
         locationProductId = locationProductId,
         userProvidedQuantity = BigDecimal(storageQuantity),
-        unitId = UUID.randomUUID(),
-        storageUnitsPerUnit = 1L,
+        unitId = pieceId,
+        storageUnitsPerUserProvidedUnit = 1L,
     )
 }

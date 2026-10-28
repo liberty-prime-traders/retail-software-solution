@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact_open
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -22,9 +23,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.mockingDetails
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.lang.reflect.Proxy
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -84,7 +83,7 @@ class ContactOpeningBalanceServiceTest {
 
         val saved = savedRevisions.single()
         assertEquals(ContactSubledgerDirection.RECEIVABLE, saved.subledgerDirection)
-        assertEquals(listOf("100.0000"), publishedSignedDeltas())
+        assertEquals(listOf("100.00"), publishedSignedDeltas())
         assertTrue(lockInvocations().single().arguments.toList() == listOf(LockNamespaces.CONTACT_OPENING_BALANCE, contactReferenceNumber))
     }
 
@@ -96,7 +95,7 @@ class ContactOpeningBalanceServiceTest {
             listOf(ContactSubledgerDirection.RECEIVABLE, ContactSubledgerDirection.PAYABLE),
             savedRevisions.map { it.subledgerDirection }
         )
-        assertEquals(listOf("100.0000", "40.0000"), publishedSignedDeltas())
+        assertEquals(listOf("100.00", "40.00"), publishedSignedDeltas())
         assertEquals(1, lockInvocations().size)
     }
 
@@ -107,7 +106,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(receivable = "20.00"))
 
         assertEquals(ContactSubledgerDirection.RECEIVABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("20.0000"), publishedSignedDeltas())
+        assertEquals(listOf("20.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -116,8 +115,8 @@ class ContactOpeningBalanceServiceTest {
 
         contactOpeningBalanceService.set(contactId, ContactOpeningBalanceSetDto(payable = Optional.empty()))
 
-        assertEquals("0.0000", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("-100.0000"), publishedSignedDeltas())
+        assertEquals("0.00", savedRevisions.single().amount.toPlainString())
+        assertEquals(listOf("-100.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -136,7 +135,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(payable = "90.00", receivable = "0"))
 
         assertEquals(2, savedRevisions.size)
-        assertEquals(listOf("30.0000", "-40.0000"), publishedSignedDeltas())
+        assertEquals(listOf("30.00", "-40.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -150,18 +149,9 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `an amount beyond scale 4 is compared and stored at scale 4`() {
-        givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.0001"))
-
-        contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.00005"))
-
+    fun `an amount beyond scale 2 is rejected before any revision is written`() {
+        assertThrows(RtsGenericException::class.java) { setDto(payable = "10.005") }
         assertTrue(savedRevisions.isEmpty())
-        assertTrue(publishedSignedDeltas().isEmpty())
-
-        contactOpeningBalanceService.set(contactId, setDto(payable = "10.00005", receivable = "100.00005"))
-
-        assertEquals("10.0001", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("10.0001"), publishedSignedDeltas())
     }
 
     @Test
@@ -171,15 +161,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(payable = "40.00", receivable = "100.00"))
 
         assertEquals(ContactSubledgerDirection.PAYABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("40.0000"), publishedSignedDeltas())
-    }
-
-    @Test
-    fun `a negative amount is rejected`() {
-        assertThrows(RtsGenericException::class.java) {
-            contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "-1.00"))
-        }
-        assertTrue(savedRevisions.isEmpty())
+        assertEquals(listOf("40.00"), publishedSignedDeltas())
     }
 
     @Test
@@ -237,6 +219,7 @@ class ContactOpeningBalanceServiceTest {
                 createdOn = OffsetDateTime.now(),
                 referenceNumber = contactReferenceNumber,
                 contactTypes = setOf(ContactType.CUSTOMER),
+                firstName = "Test",
                 status = contactStatus
             )
         )
@@ -253,8 +236,8 @@ class ContactOpeningBalanceServiceTest {
     )
 
     private fun setDto(payable: String? = null, receivable: String? = null) = ContactOpeningBalanceSetDto(
-        payable = payable?.let { Optional.of(BigDecimal(it)) },
-        receivable = receivable?.let { Optional.of(BigDecimal(it)) }
+        payable = payable?.let { Optional.of(Money.of(BigDecimal(it))) },
+        receivable = receivable?.let { Optional.of(Money.of(BigDecimal(it))) }
     )
 
     private fun publishedSignedDeltas(): List<String> =

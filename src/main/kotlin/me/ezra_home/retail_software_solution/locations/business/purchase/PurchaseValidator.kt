@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -20,19 +19,9 @@ object PurchaseValidator {
       throw RtsGenericException("An order must have at least one item.")
   }
 
-  fun guardPositiveLineQuantities(lines: List<PurchaseLineCreateDto>) {
-    if (lines.any { it.userProvidedQuantityOrdered.signum() <= 0 })
-      throw RtsGenericException("Line quantity must be positive.")
-  }
-
-  fun guardPositiveUnitCosts(lines: List<HasUnitCost>) {
-    if (lines.any { it.unitCost.signum() <= 0 })
+  fun guardPositiveUnitCosts(unitCosts: List<BigDecimal>) {
+    if (unitCosts.any { it.signum() <= 0 })
       throw RtsGenericException("Line unit cost must be positive.")
-  }
-
-  fun guardNonNegativeUpdateQuantity(quantityOrdered: BigDecimal) {
-    if (quantityOrdered.signum() < 0)
-      throw RtsGenericException("Line quantity cannot be negative; send 0 to delete a line.")
   }
 
   fun guardIsDraft(purchase: PurchaseEntity) {

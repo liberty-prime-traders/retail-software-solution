@@ -11,7 +11,7 @@ data class StockTransferDraftLineDomainDto(
     val locationProductId: UUID,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val createdById: UUID,
     val createdOn: OffsetDateTime
 )

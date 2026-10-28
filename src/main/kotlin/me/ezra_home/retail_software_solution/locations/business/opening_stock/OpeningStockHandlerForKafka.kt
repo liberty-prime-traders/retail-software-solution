@@ -6,6 +6,8 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.OpeningStockDeclaredEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -40,8 +42,7 @@ class OpeningStockHandlerForKafka(
                 openingStockId = requireNotNull(openingStock.id),
                 ledgerSourceReferenceNumber = openingStock.requiredReference(),
                 locationProductId = openingStock.locationProductId,
-                userProvidedQuantity = openingStock.userProvidedQuantity,
-                unitCost = openingStock.unitCost,
+                totalCost = Money.of(Decimals.MoneyScale.multiply(openingStock.userProvidedQuantity, openingStock.unitCost)),
                 postingDate = DateTimes.Local.atOrganizationZone(openingStock.requiredCreatedOn())
             )
         )

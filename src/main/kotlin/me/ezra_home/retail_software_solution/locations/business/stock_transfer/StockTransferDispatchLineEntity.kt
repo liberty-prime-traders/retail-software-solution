@@ -27,7 +27,8 @@ class StockTransferDispatchLineEntity(
     @Column(name = "location_product_id", nullable = false)
     var locationProductId: UUID,
 
-    // Named whole-line because it is copied onto every cost-group row, not split between them: summing it across rows overcounts. The row's own share is storageQuantityDispatched
+    // Named whole-line because it is copied onto every cost-group row,
+    // not split between them: summing it across rows overcounts. The row's own share is storageQuantityDispatched
     @Column(name = "whole_line_user_provided_quantity", nullable = false, precision = 19, scale = 4)
     var wholeLineUserProvidedQuantity: BigDecimal,
 
@@ -43,7 +44,7 @@ class StockTransferDispatchLineEntity(
     @Column(name = "cost_dispatched", nullable = false, precision = 28, scale = 4)
     var costDispatched: BigDecimal,
 
-    @Column(name = "storage_units_per_unit", nullable = false)
-    var storageUnitsPerUnit: Long
+    @Column(name = "storage_units_per_user_provided_unit", nullable = false)
+    var storageUnitsPerUserProvidedUnit: Long
 
 ) : HasReferenceEntity()

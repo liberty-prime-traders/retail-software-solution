@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_item_s
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -21,17 +22,17 @@ class StockInboundLayersTest {
         baleId
     )
 
-    private fun spec(userProvidedQuantity: String, storageUnitsPerUnit: Long, batchCost: String) = InboundLayerSpec(
+    private fun spec(userProvidedQuantity: String, storageUnitsPerUserProvidedUnit: Long, batchCost: String) = InboundLayerSpec(
         locationProductId = UUID.randomUUID(),
         sourceType = StockItemSource.PURCHASE,
         movementType = MovementType.PURCHASE_RECEIVED,
         documentReference = "DEL000001",
         detailReference = "DELN000001",
-        storageQuantity = ExactQuantity.ofUserProvided(BigDecimal(userProvidedQuantity), storageUnitsPerUnit),
+        storageQuantity = ExactQuantity.ofStorageFromUserProvided(PositiveUserProvidedQuantity.of(BigDecimal(userProvidedQuantity)), storageUnitsPerUserProvidedUnit),
         batchCost = BigDecimal(batchCost),
         userProvidedQuantity = BigDecimal(userProvidedQuantity),
         unitId = baleId,
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     )
 
     @Test
@@ -52,7 +53,7 @@ class StockInboundLayersTest {
     }
 
     @Test
-    fun `the inbound movement stores the typed quantity, the captured ratio and both breakdown texts`() {
+    fun `the inbound movement stores the typed text, the captured ratio and both breakdown texts`() {
         val spec = spec("2", 18L, "200.0000")
         val layer = StockInboundLayers.newLayer(spec).also { it.id = UUID.randomUUID() }
 
@@ -60,8 +61,8 @@ class StockInboundLayersTest {
 
         assertEquals("2 Bales", movement.storageMovedBreakdownText)
         assertEquals("2 Bales 8 Pieces", movement.storageRemainingBreakdownText)
-        assertEquals(BigDecimal("2"), movement.userProvidedMovedQuantity)
-        assertEquals(18L, movement.storageUnitsPerUnit)
+        assertEquals("2 Bales", movement.wholeLineQuantityText)
+        assertEquals(18L, movement.storageUnitsPerUserProvidedUnit)
         assertEquals("DELN000001", movement.detailReference)
         assertEquals(BigDecimal("200.0000"), movement.movedCost)
     }

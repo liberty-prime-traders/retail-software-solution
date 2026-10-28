@@ -8,11 +8,7 @@ data class StockAvailability(
     val quantityOnHand: BigDecimal,
     val quantityReserved: BigDecimal,
 ) {
-    val quantityAvailable: BigDecimal get() = quantityOnHand - quantityReserved
-
-    companion object {
-        val ZERO = StockAvailability(BigDecimal.ZERO, BigDecimal.ZERO)
-    }
+    val quantityAvailable: BigDecimal = quantityOnHand - quantityReserved
 }
 
 @Component
@@ -26,7 +22,7 @@ class StockAvailabilityFetcher(
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(locationProductIds)
         val reservationsByLocationProductId = stockReserver.loadReservationBreakdown(locationProductIds)
         return locationProductIds.associateWith { locationProductId ->
-            val quantityOnHand = balancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO
+            val quantityOnHand = balancesByLocationProductId.getValue(locationProductId)
             val quantityReserved = reservationsByLocationProductId[locationProductId]?.total ?: BigDecimal.ZERO
             StockAvailability(
                 quantityOnHand = quantityOnHand,

@@ -9,5 +9,5 @@ data class SaleLineStockRequest(
     val locationProductId: UUID,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
 )

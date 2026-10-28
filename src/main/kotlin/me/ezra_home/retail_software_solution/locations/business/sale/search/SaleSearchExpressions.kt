@@ -7,17 +7,17 @@ object SaleSearchExpressions {
   private const val SALE_ALIAS = SaleSearchAliases.SALE
 
   const val DISCOUNT_TOTAL =
-    "(COALESCE($SALE_ALIAS.line_level_discount_total, 0) + COALESCE($SALE_ALIAS.order_level_discount_total, 0))"
+    "($SALE_ALIAS.line_level_discount_total + $SALE_ALIAS.order_level_discount_total)"
 
   const val SURCHARGE_TOTAL =
-    "(COALESCE($SALE_ALIAS.line_level_surcharge_total, 0) + COALESCE($SALE_ALIAS.order_level_surcharge_total, 0))"
+    "($SALE_ALIAS.line_level_surcharge_total + $SALE_ALIAS.order_level_surcharge_total)"
 
   const val DISPLAY_SUBTOTAL =
-    "(COALESCE($SALE_ALIAS.subtotal, 0) + $SURCHARGE_TOTAL)"
+    "($SALE_ALIAS.subtotal + $SURCHARGE_TOTAL)"
 
   const val TAXABLE_AMOUNT =
     "($DISPLAY_SUBTOTAL - $DISCOUNT_TOTAL)"
 
   const val RECEIVABLE_TOTAL =
-    "($TAXABLE_AMOUNT + COALESCE($SALE_ALIAS.tax_billed, 0))"
+    "($TAXABLE_AMOUNT + $SALE_ALIAS.tax_billed)"
 }

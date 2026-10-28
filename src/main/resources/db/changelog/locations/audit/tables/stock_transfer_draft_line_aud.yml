@@ -47,7 +47,7 @@ databaseChangeLog:
                   type: uuid
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
 
               - column:

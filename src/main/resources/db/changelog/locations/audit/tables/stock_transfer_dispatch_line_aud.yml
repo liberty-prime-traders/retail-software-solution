@@ -64,7 +64,7 @@ databaseChangeLog:
                   type: numeric(28,4)
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
 
               - column:

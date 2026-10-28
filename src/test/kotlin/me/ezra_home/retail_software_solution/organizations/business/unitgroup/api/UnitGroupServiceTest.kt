@@ -4,10 +4,13 @@ import me.ezra_home.retail_software_solution.organizations.business.lock.api.Org
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupCache
 import me.ezra_home.retail_software_solution.organizations.business.unitgroup.UnitGroupMapper
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueService
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyList
+import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
@@ -123,6 +126,49 @@ class UnitGroupServiceTest {
         val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, mock(UnitValueService::class.java), mock(OrgEntityAdvisoryLock::class.java))
 
         assertThrows(RtsGenericException::class.java) { service.createUnitGroup(UnitGroupInsertDto(name = "Co-unt", description = null)) }
+    }
+
+    @Test
+    fun `bulkCreateValidatedList rejects a name equal to an existing group before saving anything`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(listOf(unitGroupDto(UUID.randomUUID(), "Miscellaneous")))
+        val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, mock(UnitValueService::class.java), mock(OrgEntityAdvisoryLock::class.java))
+
+        assertThrows(RtsGenericException::class.java) {
+            service.bulkCreateValidatedList(listOf(UnitGroupInsertDto(name = "Boxes"), UnitGroupInsertDto(name = "miscellaneous")))
+        }
+
+        verify(unitGroupCache, never()).saveAll(anyList())
+    }
+
+    @Test
+    fun `bulkCreateValidatedList rejects two names that match on alphanumerics`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(emptyList())
+        val service = UnitGroupService(mock(UnitGroupMapper::class.java), unitGroupCache, mock(UnitValueService::class.java), mock(OrgEntityAdvisoryLock::class.java))
+
+        assertThrows(RtsGenericException::class.java) {
+            service.bulkCreateValidatedList(listOf(UnitGroupInsertDto(name = "Pack Size"), UnitGroupInsertDto(name = "Pack-Size")))
+        }
+
+        verify(unitGroupCache, never()).saveAll(anyList())
+    }
+
+    @Test
+    fun `bulkCreateValidatedList takes the group name lock before reading the existing groups`() {
+        val unitGroupCache = mock(UnitGroupCache::class.java)
+        val unitGroupMapper = mock(UnitGroupMapper::class.java)
+        val orgEntityAdvisoryLock = mock(OrgEntityAdvisoryLock::class.java)
+        `when`(unitGroupCache.getAllUnitGroups()).thenReturn(emptyList())
+        `when`(unitGroupCache.saveAll(anyList())).thenReturn(emptyList())
+        val service = UnitGroupService(unitGroupMapper, unitGroupCache, mock(UnitValueService::class.java), orgEntityAdvisoryLock)
+
+        service.bulkCreateValidatedList(listOf(UnitGroupInsertDto(name = "Boxes")))
+
+        val order = inOrder(orgEntityAdvisoryLock, unitGroupCache)
+        order.verify(orgEntityAdvisoryLock).acquire(LockNamespaces.UNIT_GROUP_NAME, "names")
+        order.verify(unitGroupCache).getAllUnitGroups()
+        order.verify(unitGroupCache).saveAll(anyList())
     }
 
     private fun unitGroupDto(id: UUID, name: String) = UnitGroupDto(

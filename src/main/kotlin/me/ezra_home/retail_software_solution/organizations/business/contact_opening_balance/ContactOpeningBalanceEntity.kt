@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
@@ -19,6 +20,7 @@ class ContactOpeningBalanceEntity(
     var contactReferenceNumber: String,
 
     @Column(name = "subledger_direction", nullable = false, updatable = false)
+    @Convert(converter = ContactSubledgerDirectionConverter::class)
     var subledgerDirection: ContactSubledgerDirection,
 
     @Column(name = "amount", nullable = false, updatable = false, precision = 19, scale = 4)

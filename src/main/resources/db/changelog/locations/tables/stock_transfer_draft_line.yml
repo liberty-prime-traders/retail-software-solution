@@ -57,11 +57,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_transfer_draft_line_unit_id_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_draft_line_storage_units_per_unit_notnull
+                    notNullConstraintName: stdrl_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: created_by_id

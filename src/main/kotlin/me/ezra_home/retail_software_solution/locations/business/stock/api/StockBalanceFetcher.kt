@@ -20,7 +20,9 @@ class StockBalanceFetcher(private val stockEntryRepository: StockEntryRepository
                         locationProductId = entry.locationProductId,
                         unitCost = entry.unitCost,
                         storageQuantityRemaining = entry.storageQuantityRemaining,
-                        costRemaining = entry.costRemaining
+                        costRemaining = entry.costRemaining,
+                        storageBatchSize = entry.storageBatchSize,
+                        batchCost = entry.batchCost
                     )
                 }
             }

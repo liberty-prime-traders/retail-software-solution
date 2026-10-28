@@ -185,7 +185,8 @@ to be a separate table rather than just more rows in
 `org_role_assignment` typed loosely — a bundle's permissions need to
 vanish as a unit when the role goes, while an add-on grant must not.
 
-`MANAGE_ORGANIZATION_USERS`/`VIEW_ORGANIZATION_USERS` (`ORGANIZATION` tier) and
+`MANAGE_ORGANIZATION_USERS`/`VIEW_ORGANIZATION_USERS`/`LIBERTY_ADMIN` (`ORGANIZATION` tier,
+`LIBERTY_ADMIN` bundling only the `LIBERTY_ADMIN` permission) and
 `PLATFORM_ADMIN` (`PLATFORM` tier, bundling only `CREATE_ORGANIZATION`
 — see §1) are the only `RtsRole` entries with a non-empty `permissions`
 set today. There is currently no `RtsRole` at `LOCATION` tier at all, so

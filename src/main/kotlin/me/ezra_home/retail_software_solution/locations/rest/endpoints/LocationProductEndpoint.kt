@@ -40,7 +40,7 @@ class LocationProductEndpoint(
   fun searchAvailable(
     @RequestBody pageRequest: PageRequest<LocationProductSearchParameters, String>
   ): PageResponse<LocationProductWithAvailability, String> =
-    locationProductDataFetcher.searchForSale(pageRequest)
+    locationProductDataFetcher.searchAvailable(pageRequest)
 
   @PostMapping("search-for-purchase")
   fun searchForPurchase(

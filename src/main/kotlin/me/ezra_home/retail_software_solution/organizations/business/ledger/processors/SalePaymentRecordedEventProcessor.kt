@@ -14,8 +14,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
@@ -61,8 +61,8 @@ class SalePaymentRecordedEventProcessor(
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = contactReferenceNumber,
-                    receivableAmount = BigDecimal.ZERO,
-                    payableAmount = payment.amount
+                    receivableAmount = Money.ZERO,
+                    payableAmount = Money.of(payment.amount.toBigDecimal())
                 )
             )
         )

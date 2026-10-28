@@ -28,11 +28,11 @@ data class LineMappingContext(
     private val unitPriceOverrideByLineKey: Map<UUID, BigDecimal>,
     private val netUnitPriceByLineKey: Map<UUID, BigDecimal>,
     private val netLineTotalByLineKey: Map<UUID, BigDecimal>,
-    private val baseUnitSizeInRootByBaseUnitId: Map<UUID, Long>,
+    private val storageUnitsPerBaseUnitByBaseUnitId: Map<UUID, Long>,
     private val breakdownByLocationProductId: Map<UUID, QuantityBreakdown>,
 ) {
-    fun baseUnitSizeInRootFor(saleSessionLine: SaleSessionLine): Long =
-        baseUnitSizeInRootByBaseUnitId.getValue(saleSessionLine.baseUnitId)
+    fun storageUnitsPerBaseUnitFor(saleSessionLine: SaleSessionLine): Long =
+        storageUnitsPerBaseUnitByBaseUnitId.getValue(saleSessionLine.baseUnitId)
 
     fun breakdownFor(saleSessionLine: SaleSessionLine): QuantityBreakdown =
         breakdownByLocationProductId.getValue(saleSessionLine.locationProductId)

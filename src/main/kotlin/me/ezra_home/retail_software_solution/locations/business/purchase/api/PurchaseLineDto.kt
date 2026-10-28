@@ -9,7 +9,7 @@ data class PurchaseLineDto(
     val purchaseId: UUID,
     val locationProductId: UUID,
     var unitCost: BigDecimal,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val unitId: UUID,
     val storageQuantityExpected: ExactQuantity,
     val storageQuantityRemaining: ExactQuantity

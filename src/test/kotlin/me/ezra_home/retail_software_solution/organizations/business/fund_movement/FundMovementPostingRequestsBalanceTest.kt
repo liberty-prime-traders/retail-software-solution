@@ -79,7 +79,7 @@ class FundMovementPostingRequestsBalanceTest {
 
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         accountService.assertPostable(accountPostings)
         accountService.patchBalances(accountPostings)

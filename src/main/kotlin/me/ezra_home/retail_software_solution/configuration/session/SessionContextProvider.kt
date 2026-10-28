@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.RtsMissingHeaderException
 import java.util.UUID
 
-
 object SessionContextProvider {
     private val sessionContextThreadLocal = ThreadLocal<SessionContext?>()
 

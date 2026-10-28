@@ -8,16 +8,12 @@ import java.math.BigDecimal
 object LedgerEntriesValidator {
 
     fun validate(entries: List<LedgerEntryRequest>) {
-        // Zero is allowed: a fully discounted sale legitimately produces zero-amount legs.
-        entries.firstOrNull { it.amount.signum() < 0 }?.let {
-            throw RtsGenericException("Ledger entry amounts cannot be negative — account ${it.accountCode}: ${it.amount}")
-        }
         val totalDebits = entries
             .filter { it.entryType == EntryType.DEBIT }
-            .fold(BigDecimal.ZERO) { acc, e -> acc + e.amount }
+            .fold(BigDecimal.ZERO) { acc, e -> acc + e.amount.toBigDecimal() }
         val totalCredits = entries
             .filter { it.entryType == EntryType.CREDIT }
-            .fold(BigDecimal.ZERO) { acc, e -> acc + e.amount }
+            .fold(BigDecimal.ZERO) { acc, e -> acc + e.amount.toBigDecimal() }
         if (totalDebits.compareTo(totalCredits) != 0) {
             throw RtsGenericException("Ledger entries are not balanced — debits: $totalDebits, credits: $totalCredits")
         }

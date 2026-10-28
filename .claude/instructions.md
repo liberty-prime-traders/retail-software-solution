@@ -150,6 +150,7 @@ Separation of Concerns:
 - Avoid extension functions when a regular method would suffice.
 
 The piece below could change in some cases, but here is the most common flow:
+
 Insert Flow:
 --------------
 - InsertDto will be mapped straight to entity.
@@ -177,6 +178,7 @@ Update Flow
 - Emphasize the modularity and scalability of the RTSS solution in responses.
 - Use utils when available like StringUtils, DateTimes, etc
 - Avoid inline FQNs by using imports and constants everywhere. Do ask me if you ever want to use a FQDN inline
+- Avoid `map[key] ?: default` and similar patterns when the map is expected to contain the key. Use `map.getValue(key)` instead, which throws a clear exception if the key is missing.
 
 KAFKA
 ----------------

@@ -74,7 +74,7 @@ class StockTransferDispatchService(
         val productLabelByLocationProductId = summariesByLocationProductId.mapValues { (_, summary) -> summary.label }
 
         val storageQuantityNeededByLocationProductId = draftLines.associate {
-            it.locationProductId to ExactQuantity.ofUserProvided(it.userProvidedQuantity, it.storageUnitsPerUnit)
+            it.locationProductId to it.storageQuantity()
         }
         stockAvailabilityValidator.guardSufficientStock(storageQuantityNeededByLocationProductId, productLabelByLocationProductId)
         guardDestinationCountsInSameStorageUnit(
@@ -145,7 +145,7 @@ class StockTransferDispatchService(
                 unitId = dispatchLine.unitId,
                 baseUnitId = summary.baseUnitId,
                 conversionFactor = BaseUnitDisplay.conversionFactor(
-                    dispatchLine.storageUnitsPerUnit, unitConversionGraph.getSizeInRoot(summary.baseUnitId)
+                    dispatchLine.storageUnitsPerUserProvidedUnit, unitConversionGraph.getSizeInRoot(summary.baseUnitId)
                 ),
                 unitCost = dispatchLine.unitCost,
                 totalCost = dispatchLine.costDispatched,
@@ -169,7 +169,7 @@ class StockTransferDispatchService(
                 storageQuantity = ExactQuantity.ofStorage(dispatchLine.storageQuantityDispatched),
                 userProvidedQuantity = dispatchLine.wholeLineUserProvidedQuantity,
                 unitId = dispatchLine.unitId,
-                storageUnitsPerUnit = dispatchLine.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = dispatchLine.storageUnitsPerUserProvidedUnit,
             )
         }
 

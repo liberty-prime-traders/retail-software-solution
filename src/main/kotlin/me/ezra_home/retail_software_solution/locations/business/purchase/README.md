@@ -38,7 +38,7 @@ domain needs it — internally all three write services and
 |---------------------------------|------------------------------------------------------------------|
 | `PurchaseService`               | Create / update draft, create order, convert draft → order       |
 | `PurchaseUpdater`               | Update notes (REST-exposed); patch payment status (intra-domain) |
-| `PurchaseCanceller`             | Cancel quantities on existing lines                              |
+| `PurchaseCanceller`             | Cancel quantities on existing lines (a `PositiveUserProvidedQuantity`, so never zero or negative) |
 | `PurchaseDataFetcher`           | Read purchases (recent list, lookups, info-by-ids)               |
 | `PurchaseAssembler`             | Build `PurchaseResponseDto` from entities                        |
 | `PurchaseSearchService`         | Filtered/paginated purchase search + aggregate summary           |
@@ -174,16 +174,16 @@ twin, so all three compare exactly:
 | Field                           | Meaning                                                                                           |
 |---------------------------------|---------------------------------------------------------------------------------------------------|
 | `userProvidedQuantityOrdered`   | What the supplier was asked to send, in the line's `unitId`. `numeric(19,4)`.                      |
-| `storageUnitsPerUnit`           | The line unit's size in the storage unit, captured when the line is created or its unit changes.   |
+| `storageUnitsPerUserProvidedUnit`           | The line unit's size in the storage unit, captured when the line is created or its unit changes.   |
 | `storageQuantityDelivered`      | Cumulative storage quantity received across all deliveries. `numeric(28,4)`.                      |
 | `storageQuantityCanceled`       | Storage quantity the buyer has canceled (will not be received). `numeric(28,4)`.                  |
 
 Derived values (`PurchaseLineEntity`, all `ExactQuantity` in storage units):
 
-- `storageQuantityOrdered() = userProvidedQuantityOrdered × storageUnitsPerUnit`
+- `storageQuantityOrdered() = userProvidedQuantityOrdered × storageUnitsPerUserProvidedUnit`
 - `storageQuantityExpected() = storageQuantityOrdered() − storageQuantityCanceled`
 - `storageQuantityRemaining() = storageQuantityExpected() − storageQuantityDelivered`
-- `getTotalCost()` is `unitCost × storageQuantityExpected ÷ storageUnitsPerUnit`, rounded once to scale 4;
+- `getTotalCost()` is `unitCost × storageQuantityExpected ÷ storageUnitsPerUserProvidedUnit`, rounded once to cents (`Decimals.MoneyScale`, half-up);
   nothing canceled gives `unitCost × userProvidedQuantityOrdered`.
 
 `locationProductId` is `updatable = false` on the entity — once a line is
@@ -194,17 +194,14 @@ change after `ORDERED`.
 ### Per-line invariants
 
 1. `userProvidedQuantityOrdered` carries the unit chosen by the user (`unitId`; wire name `quantityOrdered`). The unit must
-   belong to the product's unit group, and `storageUnitsPerUnit` is resolved by
-   `LocationProductDataFetcher.getStorageUnitsPerUnit`, which rejects a unit whose root differs from the product's storage
+   belong to the product's unit group, and `storageUnitsPerUserProvidedUnit` is resolved by
+   `LocationProductDataFetcher.getStorageUnitsPerUserProvidedUnit`, which rejects a unit whose root differs from the product's storage
    unit. The REST response (`PurchaseLineResponseDto`) keeps its `quantity*` fields (the counters in the ordered unit,
    for display, so they can lose digits) and adds exact `storageQuantity*` fields and breakdown texts.
-2. **`userProvidedQuantityOrdered` must be positive** on create, with at most 2 decimals (checked in the create and update DTOs' `init`)
-   (`PurchaseValidator.guardPositiveLineQuantities`, enforced by
-   `PurchaseService.createDraft` / `createOrder` and inside
-   `PurchaseLinesResolver.computeAdditions` for additions during an
-   update). On `linesToUpdate`, the same guard is relaxed to
-   "non-negative" (`PurchaseValidator.guardNonNegativeUpdateQuantity`)
-   because zero is the delete signal — see Update DTO contract below.
+2. **`userProvidedQuantityOrdered` must be positive** on create and on additions during an update, with at most 2 decimals
+   (`PurchaseLineCreateDto` holds it as a `PositiveUserProvidedQuantity`, so it fails when the request binds). On `linesToUpdate`
+   `PurchaseLineUpdateDto` holds a `UserProvidedQuantity`, which allows zero
+   because zero is the delete signal and rejects a negative — see Update DTO contract below.
 3. **No duplicate products** in the same purchase
    (`PurchaseValidator.guardNoDuplicateProducts`). Checked at create and
    after the merged update set in both `updateDraft` and
@@ -212,11 +209,12 @@ change after `ORDERED`.
 4. `locationProductId` must be **active**
    (`LocationProductService.guardAllActive`) at create and on every newly
    added line during update.
-5. `unitCost` is per the line's `unitId`. Precision `(15, 2)` — purchase
-   costs are 2 decimal places, not 4. **Must be positive whenever a
-   purchase lands at `ORDERED`** (`PurchaseValidator.guardPositiveUnitCosts`,
-   which takes `HasUnitCost` so it runs unmodified against either
-   `List<PurchaseLineCreateDto>` or `List<PurchaseLineEntity>`) — a
+5. `unitCost` is per the line's `unitId`. The create and update DTOs hold it
+   as a `Money`, so a typed cost has at most the money scale
+   (2 by default) in decimals and is rejected, never rounded. **Must be
+   positive whenever a purchase lands at `ORDERED`**
+   (`PurchaseValidator.guardPositiveUnitCosts`, which takes the plain cost
+   amounts so it runs against either the DTOs or `PurchaseLineEntity`) — a
    zero-cost line cannot be ordered. Enforced on `createOrder` (against
    `dto.linesToAdd`) and on `convertDraftToOrder` (against the merged
    `resultingLines`, so a zero-cost line left over from the draft blocks
@@ -238,8 +236,7 @@ change after `ORDERED`.
   `unitId` / `unitCost`. There is **no separate `linesToRemove`** field
   — `PurchaseLinesResolver.computeUpdates` treats a `quantityOrdered` of
   exactly zero as a delete signal and routes the line into `toDelete`.
-  Negative quantities are rejected
-  (`PurchaseValidator.guardNonNegativeUpdateQuantity`).
+  Negative quantities are rejected when the request binds (`UserProvidedQuantity`).
 - A line id that is not in the purchase is silently skipped by
   `existingLinesById[lineDto.id] ?: continue`. The UI passes server-issued
   GUIDs through, so a "typo" isn't a real failure mode — but be aware
@@ -286,7 +283,7 @@ live in the `delivery/` package and are coordinated through
    - Each delivery line points to a real purchase line.
    - Quantity > 0; unit cost > 0.
    - `PurchaseDeliveryValidator.guardWithinRemaining` compares in storage units: the delivery's exact storage quantity
-     (typed quantity × the delivery line's own captured `storageUnitsPerUnit`) must not exceed the line's
+     (typed quantity × the delivery line's own captured `storageUnitsPerUserProvidedUnit`) must not exceed the line's
      `storageQuantityRemaining` (ordered − canceled − delivered). One storage unit over is rejected and one under
      leaves the line open.
    - There is **no product-active check** here. Active status is enforced
@@ -314,7 +311,7 @@ live in the `delivery/` package and are coordinated through
 
 Suppliers may deliver in a unit different from the purchase line's `unitId`, as long as it belongs to the product's
 unit group. The delivery line stores its typed `userProvidedQuantityDelivered`, its own `unitId` and the
-`storageUnitsPerUnit` it captured when recorded (`PurchaseDeliveryService.captureStorageUnitsPerUnit`). The purchase
+`storageUnitsPerUserProvidedUnit` it captured when recorded (`PurchaseDeliveryService.captureStorageUnitsPerUserProvidedUnit`). The purchase
 line keeps only the storage-unit counter, so a later change to a unit's size moves neither a recorded delivery nor the
 line's captured ratio.
 
@@ -692,8 +689,7 @@ Add new guards as early as the data they need is in scope.
 - Requires all products to be active.
 - Does **not** enforce "at least one line" — drafts may start with an
   empty `linesToAdd`. When `linesToAdd` is non-empty, every line must
-  have a strictly positive `quantityOrdered` (`guardPositiveLineQuantities`
-  iterates with `any{}`, so an empty list passes vacuously).
+  have a strictly positive `quantityOrdered` (`PositiveUserProvidedQuantity`, checked when the request binds).
 - Creates `PurchaseEntity` at `DRAFT`, lines with resolved conversion
   factors.
 
@@ -803,7 +799,8 @@ Add new guards as early as the data they need is in scope.
 - **Amount filter** (`minAmount`/`maxAmount`) is the one predicate that isn't a plain column
   compare: it's a `LEFT JOIN LATERAL` to a `purchase_line` subquery, correlated on
   `purchase_id = p.id`, summing `PurchaseLineEntity.getTotalCost()`'s expression in SQL (`unit_cost * (ordered storage quantity −
-  storage_quantity_canceled) / storage_units_per_unit`, rounded once) for that one
+  storage_quantity_canceled) / storage_units_per_user_provided_unit`, rounded once per line at the money scale, so the SQL total and
+  the in-code total agree to the cent) for that one
   purchase — the same figure `PurchaseAssembler` sums into `orderedTotal`. Being `LATERAL` (and
   backed by `idx_purchase_line_purchase_id`) means the planner filters `purchase` first and only sums
   each surviving row's own lines, rather than aggregating the whole `purchase_line` table up front. For

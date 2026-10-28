@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.organizations.business.unitvalue.ap
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueResponseDto
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import org.springframework.stereotype.Component
-import java.util.UUID
 
 @Component
 class BulkUnitImportValidator(
@@ -29,14 +28,15 @@ class BulkUnitImportValidator(
 
         BulkUnitGroupValidator.validateGroupNames(payloadGroups, existingGroups, errors)
         BulkUnitGroupValidator.validateBaseUnitNames(payloadGroups, existingGroups, errors)
-        BulkUnitGroupValidator.validateBaseUnitCodes(payloadGroups, existingUnitValues, existingGroups, errors)
+        val existingUnitCodes = ExistingUnitCodes(existingUnitValues)
+        BulkUnitGroupValidator.validateBaseUnitCodes(payloadGroups, existingUnitCodes.codes, existingGroups, errors)
 
         val groupNameByCode = buildGroupNameByCode(payloadGroups, existingUnitValues, existingGroups)
         val explicitRootCodeToGroupName = BulkUnitGroupValidator.explicitRootCodeToGroupName(payloadGroups, existingGroups)
-        validateUnitValues(payloadGroups, existingUnitValues, existingGroups, groupNameByCode, explicitRootCodeToGroupName, errors)
-        BulkUnitChainValidator.validateNoCycles(payloadGroups, existingUnitValues, groupNameByCode, errors)
+        validateUnitValues(payloadGroups, existingUnitValues, existingUnitCodes, existingGroups, groupNameByCode, explicitRootCodeToGroupName, errors)
+        BulkUnitChainValidator.validateNoCycles(payloadGroups, existingUnitValues, existingUnitCodes, groupNameByCode, errors)
         if (errors.isEmpty()) {
-            BulkUnitChainValidator.validateChainSizes(payloadGroups, existingUnitValues, errors)
+            BulkUnitChainValidator.validateChainSizes(payloadGroups, existingUnitValues, existingUnitCodes, errors)
         }
 
         return errors
@@ -56,30 +56,46 @@ class BulkUnitImportValidator(
                 StringUtils.getValueOrNull(unitValue.code)?.let { it to (StringUtils.getValueOrNull(group.name) ?: "") }
             }
         }
-        return (fromExisting + fromPayload).toMap()
+        return (fromPayload + fromExisting).toMap()
     }
 
     private fun validateUnitValues(
         payloadGroups: List<UnitGroupBulkInsertDto>,
         existingUnitValues: Collection<UnitValueResponseDto>,
+        existingUnitCodes: ExistingUnitCodes,
         existingGroups: Collection<UnitGroupDto>,
         groupNameByCode: Map<String, String>,
         explicitRootCodeToGroupName: Map<String, String>,
         errors: MutableList<String>
     ) {
         val allPayloadValues = payloadGroups.flatMap { group -> group.unitValues.map { group to it } }
-        val existingCodes = existingUnitValues.map { it.code }.toSet()
-        val existingSystemDefinedCodes = existingUnitValues.filter { it.systemDefined }.map { it.code }.toSet()
+        val payloadCodes = allPayloadValues.mapNotNull { it.second.code }.toSet()
+        val existingCodes = existingUnitCodes.codes
+        val existingSystemDefinedCodes = existingUnitCodes.systemDefinedCodes
         val existingGroupNameById = existingGroups.associate { it.id to it.name }
+        val existingNameKeysByGroupKey = existingUnitValues
+            .mapNotNull { unitValue ->
+                BulkUnitNameKeys.alphanumericNameKey(unitValue.name)?.let { nameKey ->
+                    BulkUnitNameKeys.groupKey(existingGroupNameById[unitValue.unitGroupId]) to nameKey
+                }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { it.value.toSet() }
+        val precedingPayloadValues = PrecedingPayloadValues()
 
         allPayloadValues.forEachIndexed { index, (group, unitValue) ->
             val label = StringUtils.getValueOrNull(unitValue.code) ?: StringUtils.getValueOrNull(unitValue.name) ?: "at position ${index + 1}"
 
-            if (StringUtils.hasValue(unitValue.code) && allPayloadValues.take(index).any { it.second.code == unitValue.code }) {
+            if (StringUtils.hasValue(unitValue.code) && precedingPayloadValues.hasCode(unitValue.code!!)) {
                 errors.add("Unit value '${unitValue.code}': duplicates another unit value code in the same payload")
             }
 
             if (unitValue.code != null && unitValue.code in existingSystemDefinedCodes) {
+                precedingPayloadValues.register(group, unitValue)
+                val owningGroupName = groupNameByCode[unitValue.code]
+                if (owningGroupName != null && !StringUtils.isEquivalent(owningGroupName, group.name)) {
+                    errors.add("Unit value '${unitValue.code}': a system unit belongs to the '$owningGroupName' group, not '${group.name}'")
+                }
                 return@forEachIndexed
             }
 
@@ -87,7 +103,7 @@ class BulkUnitImportValidator(
                 errors.add("Unit value $label: name is required")
             } else if (isReservedRootUnitName(group, unitValue.name!!)) {
                 errors.add("Unit value '${unitValue.name}': the '${group.name}' group's root unit '${RootUnitDefinition.effectiveBaseUnitName(group.baseUnitName)}' is created automatically; reference it with baseUnitCode '${RootUnitDefinition.PIECE_BASE_UNIT_CODE}'")
-            } else if (isDuplicateUnitValueName(group, unitValue.name, existingUnitValues, existingGroupNameById, allPayloadValues.take(index))) {
+            } else if (isDuplicateUnitValueName(group, unitValue.name, existingNameKeysByGroupKey, precedingPayloadValues)) {
                 errors.add("Unit value '${unitValue.name}': name already exists in the '${group.name}' group")
             }
 
@@ -95,14 +111,17 @@ class BulkUnitImportValidator(
                 errors.add("Unit value $label: code is required")
             } else {
                 val code = unitValue.code!!
-                if (code.length > SystemUnitValue.MAX_CODE_LENGTH) {
+                if (code == RootUnitDefinition.PIECE_BASE_UNIT_CODE) {
+                    errors.add("Unit value '$code': code is reserved")
+                } else if (code.length > SystemUnitValue.MAX_CODE_LENGTH) {
                     errors.add("Unit value '$code': code must be at most ${SystemUnitValue.MAX_CODE_LENGTH} characters")
                 } else if (existingCodes.contains(code)) {
                     errors.add("Unit value '$code': code already exists in the database")
                 }
             }
 
-            validateBaseUnitReference(group, unitValue, groupNameByCode, explicitRootCodeToGroupName, existingCodes, allPayloadValues, label, errors)
+            validateBaseUnitReference(group, unitValue, groupNameByCode, explicitRootCodeToGroupName, existingCodes, payloadCodes, label, errors)
+            precedingPayloadValues.register(group, unitValue)
         }
     }
 
@@ -113,17 +132,28 @@ class BulkUnitImportValidator(
     private fun isDuplicateUnitValueName(
         group: UnitGroupBulkInsertDto,
         name: String?,
-        existingUnitValues: Collection<UnitValueResponseDto>,
-        existingGroupNameById: Map<UUID, String>,
-        precedingPayloadValues: List<Pair<UnitGroupBulkInsertDto, UnitValueBulkInsertDto>>
+        existingNameKeysByGroupKey: Map<String, Set<String>>,
+        precedingPayloadValues: PrecedingPayloadValues
     ): Boolean {
-        val existingInSameGroup = existingUnitValues.any {
-            StringUtils.isEquivalent(existingGroupNameById[it.unitGroupId], group.name) && StringUtils.isEquivalentOnAlphanumerics(it.name, name)
+        val nameKey = BulkUnitNameKeys.alphanumericNameKey(name) ?: return false
+        val groupKey = BulkUnitNameKeys.groupKey(group.name)
+        return nameKey in existingNameKeysByGroupKey[groupKey].orEmpty() || precedingPayloadValues.hasName(groupKey, nameKey)
+    }
+
+    private class PrecedingPayloadValues {
+        private val codes = HashSet<String>()
+        private val nameKeysByGroupKey = HashMap<String, MutableSet<String>>()
+
+        fun hasCode(code: String): Boolean = code in codes
+
+        fun hasName(groupKey: String, nameKey: String): Boolean = nameKey in nameKeysByGroupKey[groupKey].orEmpty()
+
+        fun register(group: UnitGroupBulkInsertDto, unitValue: UnitValueBulkInsertDto) {
+            unitValue.code?.let { codes.add(it) }
+            BulkUnitNameKeys.alphanumericNameKey(unitValue.name)?.let { nameKey ->
+                nameKeysByGroupKey.getOrPut(BulkUnitNameKeys.groupKey(group.name)) { HashSet() }.add(nameKey)
+            }
         }
-        val payloadInSameGroup = precedingPayloadValues.any {
-            StringUtils.isEquivalent(it.first.name, group.name) && StringUtils.isEquivalentOnAlphanumerics(it.second.name, name)
-        }
-        return existingInSameGroup || payloadInSameGroup
     }
 
     private fun validateBaseUnitReference(
@@ -132,7 +162,7 @@ class BulkUnitImportValidator(
         groupNameByCode: Map<String, String>,
         explicitRootCodeToGroupName: Map<String, String>,
         existingCodes: Set<String>,
-        allPayloadValues: List<Pair<UnitGroupBulkInsertDto, UnitValueBulkInsertDto>>,
+        payloadCodes: Set<String>,
         label: String,
         errors: MutableList<String>
     ) {
@@ -151,7 +181,7 @@ class BulkUnitImportValidator(
         if (unitsOfBasePerUnit != null && unitsOfBasePerUnit > UnitChainResolver.MAX_SIZE_IN_ROOT) {
             errors.add("Unit value $label: ${UnitChainResolver.CHAIN_SIZE_TOO_LARGE}")
         }
-        if (isMiscellaneous(group.name)) {
+        if (SystemUnitGroup.isMiscellaneous(group.name)) {
             if (baseUnitCode != null || unitsOfBasePerUnit != null) {
                 errors.add("Unit value $label: a Miscellaneous unit stands alone and cannot have a base unit")
             }
@@ -176,8 +206,7 @@ class BulkUnitImportValidator(
             return
         }
 
-        val resolvesInPayload = allPayloadValues.any { it.second.code == baseUnitCode }
-        if (!resolvesInPayload && baseUnitCode !in existingCodes) {
+        if (baseUnitCode !in payloadCodes && baseUnitCode !in existingCodes) {
             errors.add("Unit value $label: baseUnitCode '$baseUnitCode' does not match any unit code in the payload or the database")
             return
         }
@@ -185,10 +214,5 @@ class BulkUnitImportValidator(
         if (baseGroupName != null && !StringUtils.isEquivalent(baseGroupName, group.name)) {
             errors.add("Unit value $label: baseUnitCode '$baseUnitCode' belongs to a different unit group")
         }
-    }
-
-    companion object {
-        fun isMiscellaneous(groupName: String?): Boolean =
-            StringUtils.isEquivalent(groupName, SystemUnitGroup.MISC.groupName)
     }
 }

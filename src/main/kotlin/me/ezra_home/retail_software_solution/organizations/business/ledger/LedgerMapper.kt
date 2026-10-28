@@ -7,8 +7,4 @@ import org.mapstruct.Mapper
 interface LedgerMapper {
 
     fun toGroupDto(ledgerEntryGroupEntity: LedgerEntryGroupEntity): LedgerEntryGroupDto
-
-    fun toEntryDto(ledgerEntryEntity: LedgerEntryEntity): LedgerEntryDto
-
-    fun toSubledgerDto(subledgerEntryEntity: SubledgerEntryEntity): SubledgerEntryDto
 }

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.io.Serializable
-import java.math.BigDecimal
 
 data class ContactInsertDto(
     val contactTypes: Set<ContactType>,
@@ -12,14 +12,13 @@ data class ContactInsertDto(
     val email: String? = null,
     val phone: String? = null,
     val address: String? = null,
-    val creditLimit: BigDecimal? = null,
+    val creditLimit: Money? = null,
     val notes: String? = null,
     val status: ContactStatus = ContactStatus.ACTIVE
 ): Serializable {
-    val identity: ContactIdentity
-        get() = if (!companyName.isNullOrBlank()) {
-            ContactIdentity.Organization(companyName)
-        } else {
-            ContactIdentity.Individual(firstName.orEmpty(), lastName)
-        }
+    val identity: ContactIdentity = if (!companyName.isNullOrBlank()) {
+        ContactIdentity.Organization(companyName)
+    } else {
+        ContactIdentity.Individual(firstName.orEmpty(), lastName)
+    }
 }

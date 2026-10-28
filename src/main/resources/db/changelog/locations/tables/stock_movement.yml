@@ -69,11 +69,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_movement_storage_moved_quantity_notnull
 
               - column:
-                  name: user_provided_moved_quantity
-                  type: numeric(19,4)
+                  name: whole_line_quantity_text
+                  type: varchar(200)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_user_provided_moved_quantity_notnull
+                    notNullConstraintName: stock_movement_whole_line_quantity_text_notnull
 
               - column:
                   name: storage_remaining_quantity
@@ -119,11 +119,11 @@ databaseChangeLog:
                     notNullConstraintName: stock_movement_unit_id_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_movement_storage_units_per_unit_notnull
+                    notNullConstraintName: stock_movement_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: created_by_id

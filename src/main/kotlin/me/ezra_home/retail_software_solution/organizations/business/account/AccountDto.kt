@@ -15,7 +15,7 @@ data class AccountDto(
     val accountIsSystemMaintained: Boolean,
     val parentAccountCode: String?
 ) {
-    val label: String get() = "$name (${toDisplayCode()})"
+    val label: String = "$name (${toDisplayCode()})"
     fun toDisplayCode(): String {
         return code.split(".").joinToString(".") { it.trimStart('0').ifEmpty { "0" } }
     }

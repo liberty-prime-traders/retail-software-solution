@@ -225,6 +225,17 @@ class BulkUnitImportValidatorTest {
     }
 
     @Test
+    fun `the reserved piece marker is rejected as a unit value code`() {
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(group(name = "Nescafe", unitValues = listOf(unitValue(name = "Carton", code = "__piece__", baseUnitCode = "__piece__", unitsOfBasePerUnit = 6L))))
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("'__piece__': code is reserved") })
+    }
+
+    @Test
     fun `piece base unit is rejected inside a Miscellaneous group`() {
         val request = BulkUnitImportRequestDto(
             unitGroups = listOf(
@@ -302,6 +313,74 @@ class BulkUnitImportValidatorTest {
 
         assertTrue(errors.any { it.contains("duplicates another unit value code in the same payload") })
         assertTrue(errors.none { it.contains("code already exists in the database") })
+    }
+
+    @Test
+    fun `a system-defined unit value code listed under another group is rejected`() {
+        val weightGroup = unitGroupDto("Weight", systemDefined = true)
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(listOf(weightGroup))
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(unitValueResponseDto(id = UUID.randomUUID(), code = "kg", unitGroupId = weightGroup.id, systemDefined = true))
+        )
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(
+                    name = "Foo",
+                    unitValues = listOf(
+                        unitValue(name = "Kilogram", code = "kg", baseUnitCode = null, unitsOfBasePerUnit = null),
+                        unitValue(name = "Bag", code = "foo-bag", baseUnitCode = "kg", unitsOfBasePerUnit = 2L)
+                    )
+                )
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertTrue(errors.any { it.contains("'kg': a system unit belongs to the 'Weight' group, not 'Foo'") }, errors.toString())
+        assertTrue(errors.any { it.contains("Unit value foo-bag:") && it.contains("belongs to a different unit group") }, errors.toString())
+    }
+
+    @Test
+    fun `a system-defined unit value code listed under its own group is still a reuse`() {
+        val weightGroup = unitGroupDto("Weight", systemDefined = true)
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(listOf(weightGroup))
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(unitValueResponseDto(id = UUID.randomUUID(), code = "kg", unitGroupId = weightGroup.id, systemDefined = true))
+        )
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "weight", unitValues = listOf(unitValue(name = "Kilogram", code = "kg", baseUnitCode = null, unitsOfBasePerUnit = null)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertEquals(emptyList<String>(), errors)
+    }
+
+    @Test
+    fun `a restated system unit with a contradictory base does not create a cycle, because the import ignores it`() {
+        val weightGroup = unitGroupDto("Weight", systemDefined = true)
+        val gramId = UUID.randomUUID()
+        `when`(unitGroupService.getAllUnitGroupDtos()).thenReturn(listOf(weightGroup))
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(
+            listOf(
+                unitValueResponseDto(id = gramId, code = "g", unitGroupId = weightGroup.id, systemDefined = true),
+                unitValueResponseDto(
+                    id = UUID.randomUUID(), code = "kg", unitGroupId = weightGroup.id, systemDefined = true,
+                    baseUnit = gramId, unitsOfBasePerUnit = 1000L
+                )
+            )
+        )
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                group(name = "Weight", unitValues = listOf(unitValue(name = "Gram", code = "g", baseUnitCode = "kg", unitsOfBasePerUnit = 1000L)))
+            )
+        )
+
+        val errors = validator.validate(request)
+
+        assertEquals(emptyList<String>(), errors)
     }
 
     @Test
@@ -658,14 +737,21 @@ class BulkUnitImportValidatorTest {
         assertTrue(errors.any { it.startsWith("Unit chain rejected:") })
     }
 
-    private fun unitValueResponseDto(id: UUID, code: String, unitGroupId: UUID, systemDefined: Boolean = false) = UnitValueResponseDto(
+    private fun unitValueResponseDto(
+        id: UUID,
+        code: String,
+        unitGroupId: UUID,
+        systemDefined: Boolean = false,
+        baseUnit: UUID? = null,
+        unitsOfBasePerUnit: Long? = null
+    ) = UnitValueResponseDto(
         id = id,
         name = code,
         code = code,
         description = null,
-        baseUnit = null,
+        baseUnit = baseUnit,
         baseUnitName = null,
-        unitsOfBasePerUnit = null,
+        unitsOfBasePerUnit = unitsOfBasePerUnit,
         createdBy = "Someone",
         createdOn = OffsetDateTime.now(),
         unitGroupId = unitGroupId,

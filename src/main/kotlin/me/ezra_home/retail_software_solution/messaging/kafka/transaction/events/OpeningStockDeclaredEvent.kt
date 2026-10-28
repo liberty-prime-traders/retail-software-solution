@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -14,9 +14,8 @@ data class OpeningStockDeclaredEvent(
     val openingStockId: UUID,
     val ledgerSourceReferenceNumber: String,
     val locationProductId: UUID,
-    val userProvidedQuantity: BigDecimal,
-    val unitCost: BigDecimal,
+    val totalCost: Money,
     val postingDate: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = openingStockId
+    override val sourceDocumentId: UUID = openingStockId
 }

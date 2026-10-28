@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.cross_tier.expense.request
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseRowCommand
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.time.LocalDate
 import java.util.UUID
 
@@ -15,12 +15,12 @@ data class StandaloneExpenseBatchRequest(
 data class StandaloneExpenseRowRequest(
     val payeeContactId: UUID,
     val expenseTypeId: UUID,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val description: String? = null,
     val expenseDateOverride: LocalDate? = null,
     val settlement: PaymentInstruction? = null
 ) {
-    fun toRowCommand() = ExpenseRowCommand(expenseTypeId, payeeContactId, amount, description, expenseDateOverride, settlement)
+    fun toRowCommand() = ExpenseRowCommand(expenseTypeId, payeeContactId, amount.toBigDecimal(), description, expenseDateOverride, settlement)
 }
 
 data class WageExpenseBatchRequest(
@@ -30,7 +30,7 @@ data class WageExpenseBatchRequest(
 
 data class WageExpenseRowRequest(
     val employeeContactId: UUID,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val expenseDateOverride: LocalDate? = null,
     val settlement: PaymentInstruction? = null
 )
@@ -44,7 +44,7 @@ data class PurchaseExpenseBatchRequest(
 data class PurchaseExpenseRowRequest(
     val payeeContactId: UUID? = null,
     val expenseTypeId: UUID,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val description: String? = null,
     val expenseDateOverride: LocalDate? = null,
     val settlement: PaymentInstruction? = null
@@ -65,10 +65,10 @@ data class StockTransferExpenseBatchRequest(
 data class RequiredPayeeExpenseRowRequest(
     val payeeContactId: UUID,
     val expenseTypeId: UUID,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val description: String? = null,
     val expenseDateOverride: LocalDate? = null,
     val settlement: PaymentInstruction? = null
 ) {
-    fun toRowCommand() = ExpenseRowCommand(expenseTypeId, payeeContactId, amount, description, expenseDateOverride, settlement)
+    fun toRowCommand() = ExpenseRowCommand(expenseTypeId, payeeContactId, amount.toBigDecimal(), description, expenseDateOverride, settlement)
 }

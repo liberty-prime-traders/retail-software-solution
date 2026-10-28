@@ -27,7 +27,7 @@ class TaxRateEntity(
     @Column(name = "rate_percentage", precision = 5, scale = 2)
     var ratePercentage: BigDecimal? = null,
 
-    @Column(name = "rate_flat_amount", precision = 15, scale = 4)
+    @Column(name = "rate_flat_amount", precision = 19, scale = 4)
     var rateFlatAmount: BigDecimal? = null,
 
     @Column(name = "tax_is_billed_to_customer_separately", nullable = false)

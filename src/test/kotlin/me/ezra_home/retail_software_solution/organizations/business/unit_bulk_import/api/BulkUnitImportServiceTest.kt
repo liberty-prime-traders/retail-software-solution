@@ -81,6 +81,41 @@ class BulkUnitImportServiceTest {
     }
 
     @Test
+    fun `a created group is found by its name key even when the payload name has extra whitespace`() {
+        val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
+        val unitGroupService = mock(UnitGroupService::class.java)
+        val unitValueService = mock(UnitValueService::class.java)
+        val unitValueFetcher = mock(UnitValueFetcher::class.java)
+        val paddedName = "  Egg   Boxes "
+        val request = BulkUnitImportRequestDto(
+            unitGroups = listOf(
+                UnitGroupBulkInsertDto(
+                    name = paddedName,
+                    description = null,
+                    unitValues = listOf(
+                        UnitValueBulkInsertDto(name = "Dozen", code = "egg-dz", description = null, baseUnitCode = "__piece__", unitsOfBasePerUnit = 12L)
+                    )
+                )
+            )
+        )
+        val eggBoxesGroupId = UUID.randomUUID()
+        `when`(bulkUnitImportValidator.validate(request)).thenReturn(emptyList())
+        `when`(unitGroupService.getAllUnitGroups()).thenReturn(emptyList())
+        `when`(unitGroupService.bulkCreateValidatedList(listOf(UnitGroupInsertDto(name = paddedName, description = null))))
+            .thenReturn(listOf(unitGroupResponseDto(eggBoxesGroupId, paddedName)))
+        `when`(unitValueFetcher.getAllUnitValues()).thenReturn(emptyList())
+        var savedEntries: List<UnitValueBulkSaveEntry> = emptyList()
+        `when`(unitValueService.bulkCreateValidatedList(anyList())).thenAnswer { invocation ->
+            savedEntries = invocation.getArgument(0)
+            emptyList<UnitValueResponseDto>()
+        }
+
+        BulkUnitImportService(bulkUnitImportValidator, unitGroupService, unitValueService, unitValueFetcher).bulkImport(request)
+
+        assertEquals(setOf(eggBoxesGroupId), savedEntries.map { it.unitGroupId }.toSet())
+    }
+
+    @Test
     fun `bulkImport reuses a system-defined group and unit value instead of recreating them`() {
         val bulkUnitImportValidator = mock(BulkUnitImportValidator::class.java)
         val unitGroupService = mock(UnitGroupService::class.java)

@@ -14,7 +14,8 @@ import org.mapstruct.ReportingPolicy
         UserQualifier::class,
         OptionalQualifier::class,
         StringQualifier::class,
-        DateQualifier::class
+        DateQualifier::class,
+        MoneyQualifier::class
     ]
 )
 interface RtsMapperConfig

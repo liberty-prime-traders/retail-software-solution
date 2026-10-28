@@ -11,6 +11,7 @@ import java.util.UUID
 @Component
 class LoanFinder(
     private val loanRepository: LoanRepository,
+    private val loanStatusRepository: LoanStatusRepository,
     private val loanMapper: LoanMapper,
     private val contactService: ContactService,
     private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock
@@ -22,6 +23,10 @@ class LoanFinder(
 
     fun findLoan(loanId: UUID): LoanDto = loanMapper.toDto(
         loanRepository.findById(loanId).orElseThrow { RtsGenericException("Loan not found") }
+    )
+
+    fun findLoanStatusFigures(loanId: UUID): LoanStatusFigures = loanMapper.toStatusFigures(
+        loanStatusRepository.findById(loanId).orElseThrow { RtsGenericException("Loan status not found") }
     )
 
     fun findLender(loanDto: LoanDto): ContactDto = contactService.getContactById(loanDto.lenderContactId)

@@ -80,17 +80,17 @@ annotation class LineNetTotal
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
-annotation class LineOnHandInProductBaseUnit
+annotation class LineQuantityOnHandInBaseUnit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
-annotation class LineReservedInProductBaseUnit
+annotation class LineQuantityReservedInBaseUnit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
-annotation class LineAvailableInProductBaseUnit
+annotation class LineQuantityAvailableInBaseUnit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)

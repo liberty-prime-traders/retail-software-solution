@@ -1,10 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.opening_stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockEntity
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockRepository
@@ -39,24 +39,23 @@ class OpeningStockService(
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, productIds)
 
         val labelsByProductId = locationProductDataFetcher.findSummaryByIds(productIds).mapValues { it.value.label }
-        OpeningStockValidator.guardPositiveQuantitiesAndCosts(lines, labelsByProductId)
         locationProductService.guardAllActive(productIds)
 
         val alreadyDeclared = openingStockRepository.findByLocationProductIdIn(productIds)
             .map { it.locationProductId }.toSet()
         OpeningStockValidator.guardNotAlreadyDeclared(alreadyDeclared, productIds, labelsByProductId)
 
-        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         val savedOpeningStocks = openingStockRepository.saveAll(
             lines.map { line ->
                 OpeningStockEntity(
                     locationProductId = line.locationProductId,
-                    userProvidedQuantity = line.userProvidedQuantity,
+                    userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                     unitId = line.unitId,
-                    storageUnitsPerUnit = storageUnitsPerUnitByLocationProductId.getValue(line.locationProductId),
-                    unitCost = line.unitCost
+                    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(line.locationProductId),
+                    unitCost = line.unitCost.toBigDecimal()
                 )
             }
         )
@@ -67,9 +66,9 @@ class OpeningStockService(
                 val openingStock = savedByProductId.getValue(line.locationProductId)
                 OpeningStockLineStockRequest(
                     locationProductId = line.locationProductId,
-                    userProvidedQuantity = openingStock.userProvidedQuantity,
+                    userProvidedQuantity = line.userProvidedQuantity,
                     unitId = openingStock.unitId,
-                    storageUnitsPerUnit = openingStock.storageUnitsPerUnit,
+                    storageUnitsPerUserProvidedUnit = openingStock.storageUnitsPerUserProvidedUnit,
                     unitCost = openingStock.unitCost,
                     documentReference = openingStock.requiredReference()
                 )

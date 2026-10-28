@@ -10,6 +10,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ContactOpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -19,6 +21,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 /** Control-account sides and subledgerDirection columns must stay mirrored for every revision direction, or the control accounts drift from the contact totals. */
+@WithDefaultOrganizationSession
 class ContactOpeningBalancePostingTest {
 
     private val recordingAccountService = RecordingAccountService()
@@ -78,15 +81,15 @@ class ContactOpeningBalancePostingTest {
         val subledgerEntry = contactOpeningBalanceProcessor
             .prepareLedgerRequest(event(subledgerDirection, "30.00", balanceReduced))
             .subledgerEntries.single()
-        assertEquals(0, BigDecimal(payable).compareTo(subledgerEntry.payableAmount), "$subledgerDirection reduced=$balanceReduced payable")
-        assertEquals(0, BigDecimal(receivable).compareTo(subledgerEntry.receivableAmount), "$subledgerDirection reduced=$balanceReduced receivable")
+        assertEquals(0, BigDecimal(payable).compareTo(subledgerEntry.payableAmount.toBigDecimal()), "$subledgerDirection reduced=$balanceReduced payable")
+        assertEquals(0, BigDecimal(receivable).compareTo(subledgerEntry.receivableAmount.toBigDecimal()), "$subledgerDirection reduced=$balanceReduced receivable")
     }
 
     private fun post(event: ContactOpeningBalanceUpsertedEvent) {
         val ledgerPostingRequest: LedgerPostingRequest = contactOpeningBalanceProcessor.prepareLedgerRequest(event)
         LedgerEntriesValidator.validate(ledgerPostingRequest.entries)
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         recordingAccountService.accountService.assertPostable(accountPostings)
         recordingAccountService.accountService.patchBalances(accountPostings)
@@ -109,7 +112,7 @@ class ContactOpeningBalancePostingTest {
         ledgerSourceReferenceNumber = "COB000001",
         contactReferenceNumber = "CON000001",
         subledgerDirection = subledgerDirection,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         balanceReduced = balanceReduced,
         postingDate = LocalDate.of(2026, 1, 1)
     )

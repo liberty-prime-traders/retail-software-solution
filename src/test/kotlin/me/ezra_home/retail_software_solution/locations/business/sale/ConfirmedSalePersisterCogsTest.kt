@@ -60,7 +60,7 @@ class ConfirmedSalePersisterCogsTest {
         unitId = UUID.randomUUID(),
         lineTotal = BigDecimal("20.0000"),
         defaultSalePrice = BigDecimal("10.0000"),
-        storageUnitsPerUnit = 1L,
+        storageUnitsPerUserProvidedUnit = 1L,
     ).also {
         it.id = saleLineId
         it.referenceNumber = "SALN000001"
@@ -123,7 +123,7 @@ class ConfirmedSalePersisterCogsTest {
                 locationProductId = saleLineEntity.locationProductId,
                 userProvidedQuantity = saleLineEntity.userProvidedQuantity,
                 unitId = saleLineEntity.unitId,
-                storageUnitsPerUnit = saleLineEntity.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = saleLineEntity.storageUnitsPerUserProvidedUnit,
                 lineTotal = saleLineEntity.lineTotal,
                 defaultSalePrice = saleLineEntity.defaultSalePrice,
             )

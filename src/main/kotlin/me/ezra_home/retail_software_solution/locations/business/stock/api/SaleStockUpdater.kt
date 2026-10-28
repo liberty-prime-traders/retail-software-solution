@@ -13,7 +13,6 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_moveme
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
@@ -45,18 +44,19 @@ class SaleStockUpdater(
             val fifoConsumptionResult = FifoStockConsumer.consume(
                 fifoConsumptionRequest = FifoConsumptionRequest(
                     locationProductId = locationProductId,
-                    storageQuantity = ExactQuantity.ofUserProvided(
-                        saleLineStockRequest.userProvidedQuantity, saleLineStockRequest.storageUnitsPerUnit
+                    storageQuantity = ExactQuantity.ofStorageFromUserProvided(
+                        saleLineStockRequest.userProvidedQuantity,
+                        saleLineStockRequest.storageUnitsPerUserProvidedUnit
                     ),
                     userProvidedQuantity = saleLineStockRequest.userProvidedQuantity,
                     unitId = saleLineStockRequest.unitId,
-                    storageUnitsPerUnit = saleLineStockRequest.storageUnitsPerUnit,
+                    storageUnitsPerUserProvidedUnit = saleLineStockRequest.storageUnitsPerUserProvidedUnit,
                     movementType = MovementType.SALE,
                     documentReference = saleRefNumber,
                     detailReference = saleLineStockRequest.saleLineReferenceNumber,
                 ),
                 fifoEntries = fifoEntriesByLocationProductId[locationProductId].orEmpty(),
-                startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                startingBalance = runningBalancesByLocationProductId.getValue(locationProductId),
                 quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 productLabel = productSummariesByLocationProductId[locationProductId]?.label ?: locationProductId.toString(),
             )
@@ -89,7 +89,7 @@ class SaleStockUpdater(
             val fifoRestorationResult = FifoStockConsumer.restore(
                 movementsToReverse = saleMovementsForProduct,
                 stockEntriesById = stockEntriesById,
-                startingBalance = runningBalancesByLocationProductId[locationProductId] ?: BigDecimal.ZERO,
+                startingBalance = runningBalancesByLocationProductId.getValue(locationProductId),
                 quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),
                 reversalType = MovementType.SALE_VOID,
             )

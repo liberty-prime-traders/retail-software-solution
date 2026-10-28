@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceC
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockAdjustmentRecordedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
@@ -44,7 +45,7 @@ class StockAdjustmentHandlerForKafka(
                 ledgerSourceReferenceNumber = stockAdjustment.requiredReference(),
                 debitAccountCode = ledgerAccounts.debit.code,
                 creditAccountCode = ledgerAccounts.credit.code,
-                totalCost = stockAdjustment.totalCost,
+                totalCost = Money.of(stockAdjustment.totalCost),
                 postingDate = DateTimes.Local.atOrganizationZone(stockAdjustment.requiredCreatedOn())
             )
         )

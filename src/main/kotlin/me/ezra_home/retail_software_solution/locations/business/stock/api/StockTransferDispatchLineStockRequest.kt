@@ -11,5 +11,5 @@ data class StockTransferDispatchLineStockRequest(
     val storageQuantity: ExactQuantity,
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
 )

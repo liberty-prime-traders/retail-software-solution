@@ -161,8 +161,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   SUPPLIER_RETURN_AUDIT(TableNames.SUPPLIER_RETURN_AUDIT, SchemaLevel.LOCATION),
   TAX_ENTRY_AUDIT(TableNames.TAX_ENTRY_AUDIT, SchemaLevel.LOCATION);
 
-  val tableName: String
-    get() = code
+  val tableName: String = code
 
   companion object {
     private val tableNameSet: Set<String> = entries.map { it.code }.toSet()

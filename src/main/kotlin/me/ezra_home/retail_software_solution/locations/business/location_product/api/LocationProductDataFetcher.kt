@@ -38,10 +38,10 @@ class LocationProductDataFetcher(
         )
     }
 
-    fun searchForSale(
+    fun searchAvailable(
         pageRequest: PageRequest<LocationProductSearchParameters, String>
     ): PageResponse<LocationProductWithAvailability, String> {
-        val page = locationProductPagedSearch.searchWithParameters(toActiveProductSearch(pageRequest))
+        val page = locationProductPagedSearch.searchWithParameters(toActiveProductSearch(pageRequest, requireDefaultSalePrice = true))
         return PageResponse(
             currentCursor = page.currentCursor,
             hasMore = page.hasMore,
@@ -67,7 +67,8 @@ class LocationProductDataFetcher(
     }
 
     private fun toActiveProductSearch(
-        pageRequest: PageRequest<LocationProductSearchParameters, String>
+        pageRequest: PageRequest<LocationProductSearchParameters, String>,
+        requireDefaultSalePrice: Boolean = false,
     ): PageRequest<ProductSearchParameters, String> = PageRequest(
         previousCursor = pageRequest.previousCursor,
         requestedSize = pageRequest.requestedSize,
@@ -75,6 +76,7 @@ class LocationProductDataFetcher(
             searchText = pageRequest.parameters.searchText,
             excludeIds = pageRequest.parameters.excludeIds,
             statusList = setOf(ProductStatus.ACTIVE),
+            requireDefaultSalePrice = requireDefaultSalePrice,
             searchStrategy = pageRequest.parameters.searchStrategy
         )
     )
@@ -120,7 +122,7 @@ class LocationProductDataFetcher(
                 )
             }
 
-    fun getStorageUnitsPerUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
+    fun getStorageUnitsPerUserProvidedUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
         if (productUnitRequests.isEmpty()) return emptyMap()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()

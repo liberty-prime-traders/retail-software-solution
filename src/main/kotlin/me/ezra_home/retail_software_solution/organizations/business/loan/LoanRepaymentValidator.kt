@@ -8,21 +8,24 @@ import java.time.LocalDate
 @Component
 class LoanRepaymentValidator(
     private val loanVoidRepository: LoanVoidRepository,
-    private val loanStatusRepository: LoanStatusRepository,
     private val loanRepaymentVoidRepository: LoanRepaymentVoidRepository
 ) {
 
-    fun requireRepayable(loanDto: LoanDto, repaymentDate: LocalDate, repaymentAmount: BigDecimal) {
+    fun requireRepayable(
+        loanDto: LoanDto,
+        loanStatusFiguresBeforeRepayment: LoanStatusFigures,
+        repaymentDate: LocalDate,
+        repaymentAmount: BigDecimal
+    ) {
         if (loanVoidRepository.existsByLoanId(loanDto.id)) {
             throw RtsGenericException("Loan ${loanDto.referenceNumber} is voided")
         }
         if (repaymentDate.isBefore(loanDto.loanDate)) {
             throw RtsGenericException("Repayment date cannot be before the loan date ${loanDto.loanDate}")
         }
-        val outstanding = loanStatusRepository.findById(loanDto.id).orElseThrow { RtsGenericException("Loan status not found") }.outstanding
-        if (repaymentAmount > outstanding) {
+        if (repaymentAmount > loanStatusFiguresBeforeRepayment.outstanding) {
             throw RtsGenericException(
-                "Repayment of $repaymentAmount exceeds the outstanding $outstanding on loan ${loanDto.referenceNumber}"
+                "Repayment of $repaymentAmount exceeds the outstanding ${loanStatusFiguresBeforeRepayment.outstanding} on loan ${loanDto.referenceNumber}"
             )
         }
     }

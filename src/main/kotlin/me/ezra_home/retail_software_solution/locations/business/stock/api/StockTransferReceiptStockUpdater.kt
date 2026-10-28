@@ -3,8 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.StockInboundLayers
+import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
@@ -13,16 +12,13 @@ import me.ezra_home.retail_software_solution.organizations.business.unitconversi
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
 class StockTransferReceiptStockUpdater(
-    private val stockEntryRepository: StockEntryRepository,
+    private val stockIncreaseRecorder: StockIncreaseRecorder,
     private val stockMovementRepository: StockMovementRepository,
-    private val stockBalanceFetcher: StockBalanceFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
@@ -42,10 +38,7 @@ class StockTransferReceiptStockUpdater(
                 ?: throw RtsGenericException("No location product found for product $orgProductId at destination")
         }
 
-        val locationProductIds = locationProductIdByOrgProductId.values.toList()
         guardSameStorageUnit(event, locationProductIdByOrgProductId)
-        val runningBalances = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds)
 
         val layerSpecs = event.lines.map { line ->
             InboundLayerSpec(
@@ -58,17 +51,10 @@ class StockTransferReceiptStockUpdater(
                 batchCost = line.costDispatched,
                 userProvidedQuantity = line.wholeLineUserProvidedQuantity,
                 unitId = line.unitId,
-                storageUnitsPerUnit = line.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedUnit,
             )
         }
-        val entries = stockEntryRepository.saveAll(layerSpecs.map { StockInboundLayers.newLayer(it) })
-
-        val movements = layerSpecs.zip(entries).map { (layerSpec, entry) ->
-            val newBalance = ExactQuantity.ofStorage(runningBalances[layerSpec.locationProductId] ?: BigDecimal.ZERO) + layerSpec.storageQuantity
-            runningBalances[layerSpec.locationProductId] = newBalance.toStorageQuantity()
-            StockInboundLayers.inboundMovement(layerSpec, entry, newBalance, breakdownByLocationProductId.getValue(layerSpec.locationProductId))
-        }
-        stockMovementRepository.saveAll(movements)
+        stockIncreaseRecorder.record(layerSpecs)
     }
 
     // The dispatch quantity is in the source's storage unit, so the destination must count stock in the same root

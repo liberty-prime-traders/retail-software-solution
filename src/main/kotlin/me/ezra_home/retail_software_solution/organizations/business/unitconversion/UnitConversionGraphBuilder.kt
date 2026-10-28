@@ -62,7 +62,12 @@ class UnitConversionGraphBuilder(
             val placement = placementByUnitId.getValue(unit.id)
             BreakdownUnit(unit.id, unit.name, placement.sizeInRoot, placement.rootUnitId, unit.createdOn)
         }
-        return UnitConversionGraph(targetsByUnitId, allUnits.associate { it.id to it.name }, placementByUnitId, breakdownUnits)
+        return UnitConversionGraph(
+            targetsByUnitId,
+            allUnits.associate { it.id to it.name },
+            placementByUnitId,
+            breakdownUnits
+        )
     }
 
     private fun conversionTarget(

@@ -20,7 +20,7 @@ Depends on `ledger/api` (`LedgerMovementReader`) and `account/api` (`AccountServ
   `GROSS_SALES` reduces it. Direction is never inferred from the source type.
 - Every response has one entry per local date, ascending, zero-filled. `PeriodStatus.IN_PROGRESS` marks the local day
   containing `asOf` and a range whose last day is that day.
-- Amounts are scale 4 and signed. Account names are `AccountTreeNode.name` (the `AccountService` label).
+- Amounts are scale 2 (cents) and signed. Account names are `AccountTreeNode.name` (the `AccountService` label).
 
 ## Performance (`DailyPerformanceService`)
 
@@ -50,8 +50,9 @@ recomputes margins from the sums, never averaging.
 
 Organization-wide and all source types: accounts, opening balances and fund movements belong to the organization.
 A location session reads the same organization-wide figures: `current_balance` is one running total per account for
-the whole organization, so no location-scoped closing balance can be derived from it. Per-location balances and
-access control for this view are not yet supported.
+the whole organization, so no location-scoped closing balance can be derived from it. Per-location balances would need a
+location dimension on the running balance, and the route is gated only by the `CHART_OF_ACCOUNTS` feature, not by a
+permission of its own. Both are known limits, to revisit if location-level reporting or a finer permission is needed.
 
 `closingBalance(D) = current running balance − net movement posted after the end of D`, in the account's normal
 direction. The movements query spans the start of `from` onward, so its cost grows with how far back `from` is, not
@@ -64,8 +65,8 @@ override the isolation) so the balance read and the movement read share one snap
 `LedgerPostingService` updates the balance and inserts the entries in one transaction, and two snapshots could see half
 of a posting. The balances are read from the rows, not the cached tree.
 
-Lines are leaf accounts only. Assets: `CASH`, each leaf under `DIGITAL_PAYMENTS` (itself when childless),
-`TRADE_RECEIVABLES`, `INVENTORY`, `Other assets`. Liabilities: `TRADE_PAYABLES`, `WAGES_PAYABLE`, each leaf under
+`BalanceSectionBuilder` turns the per-account closing and change maps into the sections. Lines are leaf accounts only. Assets: `CASH`, each leaf under `DIGITAL_PAYMENTS` (itself when childless),
+`TRADE_RECEIVABLES`, `INVENTORY`, `Other assets`. Liabilities: `TRADE_PAYABLES`, `WAGES_PAYABLE`, `LOANS_PAYABLE`, each leaf under
 `TAX_PAYABLE` (itself when childless), `Other liabilities`. The `Other` lines (null `accountCode`) hold every remaining
 asset-/liability-type leaf net of its contras, so each section total is the whole chart's. Fixed accounts are always
 present; extension-point leaves and `Other` lines appear only when the closing or change is non-zero for that period.

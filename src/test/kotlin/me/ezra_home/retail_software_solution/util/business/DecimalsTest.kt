@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class DecimalsTest {
 
@@ -22,23 +23,14 @@ class DecimalsTest {
     }
 
     @Test
-    fun `the scale overload compares at the scale it is given`() {
-        assertEquals(0, Decimals.compareAtScale(BigDecimal("25.9992"), BigDecimal("26"), 2))
-        assertTrue(Decimals.compareAtScale(BigDecimal("25.9992"), BigDecimal("26"), 4) < 0)
+    fun `each scale compares at its own precision`() {
+        assertEquals(0, Decimals.MoneyScale.compare(BigDecimal("25.9992"), BigDecimal("26")))
+        assertTrue(Decimals.Scale4.compare(BigDecimal("25.9992"), BigDecimal("26")) < 0)
     }
 
     @Test
-    fun `rounding down never reports more than is there`() {
-        assertEquals(BigDecimal("0.9999"), Decimals.Scale4.roundDown(BigDecimal("0.99995")))
-        assertEquals("0.9999", Decimals.stripZeroesAndRoundDown(BigDecimal("0.99995")))
+    fun `stripping zeroes rounds half up`() {
         assertEquals("1", Decimals.stripZeroesAndRound(BigDecimal("0.99995")))
-    }
-
-    @Test
-    fun `rounding up never reports less than is held`() {
-        assertEquals(BigDecimal("0.0001"), Decimals.Scale4.roundUp(BigDecimal("0.00006")))
-        assertEquals(BigDecimal("0.0001"), Decimals.Scale4.roundUp(BigDecimal("0.00001")))
-        assertEquals(BigDecimal("0.0000"), Decimals.Scale4.roundUp(BigDecimal.ZERO))
     }
 
     @Test
@@ -52,30 +44,36 @@ class DecimalsTest {
         ).forEach { (onHand, reserved) ->
             val onHandExact = BigDecimal(onHand)
             val reservedExact = BigDecimal(reserved)
-            val shownOnHand = Decimals.Scale4.roundDown(onHandExact)
-            val shownReserved = Decimals.Scale4.roundUp(reservedExact)
-            val shownAvailable = Decimals.Scale4.roundDown(onHandExact - reservedExact)
+            val shownOnHand = onHandExact.setScale(Decimals.Scale4.scale, RoundingMode.DOWN)
+            val shownReserved = reservedExact.setScale(Decimals.Scale4.scale, RoundingMode.UP)
+            val shownAvailable = (onHandExact - reservedExact).setScale(Decimals.Scale4.scale, RoundingMode.DOWN)
             assertTrue(shownOnHand - shownReserved <= shownAvailable, "$onHand on hand, $reserved reserved")
         }
     }
 
     @Test
-    fun `zero, negative and values that round to zero are not positive transaction amounts`() {
-        listOf("0", "-5", "0.00004").forEach { amount ->
-            assertThrows(RtsGenericException::class.java) { Decimals.Scale4.requirePositiveAmount(BigDecimal(amount)) }
+    fun `zero and negative values are not positive transaction amounts`() {
+        listOf("0", "-5").forEach { amount ->
+            assertThrows(RtsGenericException::class.java) { Decimals.requirePositive(BigDecimal(amount), "Amount") }
         }
     }
 
     @Test
-    fun `a transaction amount is rounded to scale 4 and may equal the maximum but not exceed it`() {
-        assertEquals(BigDecimal("50.1235"), Decimals.Scale4.requirePositiveAmount(BigDecimal("50.12345")))
-        assertEquals(
-            Decimals.MAXIMUM_TRANSACTION_AMOUNT,
-            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT)
-        )
-        assertThrows(RtsGenericException::class.java) {
-            Decimals.Scale4.requirePositiveAmount(Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")))
+    fun `a magnitude may equal the transaction maximum in either sign but not exceed it`() {
+        Decimals.requireWithinMaximum(Decimals.MAXIMUM_TRANSACTION_AMOUNT, Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
+        Decimals.requireWithinMaximum(Decimals.MAXIMUM_TRANSACTION_AMOUNT.negate(), Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
+        val justOverMaximum = Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.01"))
+        listOf(justOverMaximum, justOverMaximum.negate()).forEach { overMaximum ->
+            assertThrows(RtsGenericException::class.java) {
+                Decimals.requireWithinMaximum(overMaximum, Decimals.MAXIMUM_TRANSACTION_AMOUNT, "Amount")
+            }
         }
+    }
+
+    @Test
+    fun `money rounds half up to two decimals`() {
+        assertEquals(2, Decimals.MoneyScale.scale)
+        assertEquals(BigDecimal("6115.63"), Decimals.MoneyScale.round(BigDecimal("6115.625")))
     }
 
     @Test

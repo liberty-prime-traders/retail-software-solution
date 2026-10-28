@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.organizations.business.fiscal_perio
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerBalanceDto
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -44,9 +43,6 @@ class ContactOpeningBalanceService(
             receivable = latestAmount(contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE)
         )
         val targetBalance = contactOpeningBalanceSetDto.applyTo(existingBalance)
-        if (targetBalance.payable < BigDecimal.ZERO || targetBalance.receivable < BigDecimal.ZERO) {
-            throw RtsGenericException("Opening balance amounts must not be negative")
-        }
         reviseSubledgerDirection(
             contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE,
             existingBalance.receivable, targetBalance.receivable, postingDate
@@ -70,15 +66,14 @@ class ContactOpeningBalanceService(
         targetAmount: BigDecimal,
         postingDate: LocalDate
     ) {
-        val roundedAmount = Decimals.Scale4.round(targetAmount)
-        val signedDelta = roundedAmount - existingAmount
+        val signedDelta = targetAmount - existingAmount
         if (signedDelta.compareTo(BigDecimal.ZERO) == 0) return
 
         val savedContactOpeningBalanceEntity = contactOpeningBalanceRepository.save(
             ContactOpeningBalanceEntity(
                 contactReferenceNumber = contactReferenceNumber,
                 subledgerDirection = subledgerDirection,
-                amount = roundedAmount
+                amount = targetAmount
             )
         )
         contactOpeningBalanceHandlerForKafka.publish(savedContactOpeningBalanceEntity, signedDelta, postingDate)

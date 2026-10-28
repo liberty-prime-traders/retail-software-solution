@@ -21,5 +21,8 @@ class LocationProductPagedSearch(
     override fun countAllProducts(): Long = locationProductCache.countAllLocationProducts()
 
     override fun findAllProducts(parameters: ProductSearchParameters): List<LocationProductDto> =
-        locationProductCache.findAllLocationProducts().filter { it.status in parameters.statusList }
+        locationProductCache.findAllLocationProducts().filter { locationProductDto ->
+            locationProductDto.status in parameters.statusList &&
+                SalePriceFilterStrategy.matches(locationProductDto, parameters.requireDefaultSalePrice)
+        }
 }

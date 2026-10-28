@@ -41,12 +41,12 @@ class LocationProductService(
         locationProductCache.evictAll()
     }
 
-    fun updateProduct(dto: LocationProductUpdateDto): LocationProductResponseDto {
-        val entity = locationProductRepository.findById(dto.id).orElseThrow {
+    fun updateProduct(locationProductUpdateDto: LocationProductUpdateDto): LocationProductResponseDto {
+        val entity = locationProductRepository.findById(locationProductUpdateDto.id).orElseThrow {
             UpdatingNonExistingRecordException()
         }
-        LocationProductValidator.validateProductUpdate(dto)
-        val updated = dto.applyTo(locationProductMapper.toDomainDto(entity))
+        LocationProductValidator.validateProductUpdate(locationProductUpdateDto)
+        val updated = locationProductUpdateDto.applyTo(locationProductMapper.toDomainDto(entity))
         return convertToResponseDto(locationProductCache.save(updated))
     }
 
@@ -71,7 +71,7 @@ class LocationProductService(
         organizationProductService.verifyProductIsActive(orgProductId)
     }
 
-    private fun convertToResponseDto(dto: LocationProductDto): LocationProductResponseDto {
-        return locationProductEnricher.convertToResponseDto(listOf(dto)).first()
+    private fun convertToResponseDto(locationProductDto: LocationProductDto): LocationProductResponseDto {
+        return locationProductEnricher.convertToResponseDto(listOf(locationProductDto)).first()
     }
 }

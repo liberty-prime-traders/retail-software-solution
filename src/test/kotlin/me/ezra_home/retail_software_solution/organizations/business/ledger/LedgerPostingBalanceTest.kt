@@ -23,6 +23,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SalePaymentVoidedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleTaxLedgerEntriesBuilder
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleVoidedEventProcessor
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -156,7 +158,7 @@ class LedgerPostingBalanceTest {
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
         LedgerEntriesValidator.validate(ledgerPostingRequest.entries)
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         accountService.assertPostable(accountPostings)
         accountService.patchBalances(accountPostings)
@@ -174,11 +176,11 @@ class LedgerPostingBalanceTest {
         sourceDocumentId = UUID.randomUUID(),
         contactId = contactId,
         saleReferenceNumber = "SALE-1",
-        taxableAmount = BigDecimal("90.00"),
-        taxBilled = BigDecimal.ZERO,
-        discountTotal = BigDecimal("10.00"),
+        taxableAmount = Money.of(BigDecimal("90.00")),
+        taxBilled = Money.ZERO,
+        discountTotal = Money.of(BigDecimal("10.00")),
         dateSold = LocalDate.of(2026, 1, 15),
-        cogsTotal = BigDecimal.ZERO
+        cogsTotal = Money.ZERO
     )
 
     private fun saleVoidedEvent() = SaleVoidedEvent(
@@ -189,12 +191,12 @@ class LedgerPostingBalanceTest {
         sourceDocumentId = UUID.randomUUID(),
         contactId = contactId,
         saleReferenceNumber = "SALE-1",
-        taxableAmount = BigDecimal("90.00"),
-        taxBilled = BigDecimal.ZERO,
-        discountTotal = BigDecimal("10.00"),
+        taxableAmount = Money.of(BigDecimal("90.00")),
+        taxBilled = Money.ZERO,
+        discountTotal = Money.of(BigDecimal("10.00")),
         dateSold = LocalDate.of(2026, 1, 15),
         dateVoided = LocalDate.of(2026, 1, 16),
-        cogsTotal = BigDecimal.ZERO
+        cogsTotal = Money.ZERO
     )
 
     private fun salePaymentRecordedEvent(amount: BigDecimal) = SalePaymentRecordedEvent(
@@ -208,7 +210,7 @@ class LedgerPostingBalanceTest {
             SalePaymentLineDto(
                 paymentReferenceNumber = "PAY-1",
                 paymentMethodAccountCode = SystemAccount.CASH.code,
-                amount = amount,
+                amount = PositiveMoney.of(amount),
                 paymentDate = OffsetDateTime.now()
             )
         )
@@ -223,7 +225,7 @@ class LedgerPostingBalanceTest {
         contactId = contactId,
         paymentReferenceNumber = "PAY-1",
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = amount,
+        amount = PositiveMoney.of(amount),
         voidedOn = LocalDate.of(2026, 1, 17)
     )
 }

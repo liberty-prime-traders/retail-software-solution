@@ -16,6 +16,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleConfirmedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleTaxLedgerEntriesBuilder
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleVoidedEventProcessor
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -79,8 +81,8 @@ class SaleCogsLedgerEntriesTest {
         assertEquals(LocalDate.of(2026, 1, 15), ledgerPostingRequest.postingDate)
         assertEquals(
             listOf(
-                LedgerEntryRequest.debit(SystemAccount.COST_OF_GOODS_SOLD.code, BigDecimal("40.0000")),
-                LedgerEntryRequest.credit(SystemAccount.INVENTORY.code, BigDecimal("40.0000")),
+                LedgerEntryRequest.debit(SystemAccount.COST_OF_GOODS_SOLD.code, PositiveMoney.of(BigDecimal("40.0000"))),
+                LedgerEntryRequest.credit(SystemAccount.INVENTORY.code, PositiveMoney.of(BigDecimal("40.0000"))),
             ),
             costEntries(ledgerPostingRequest.entries)
         )
@@ -94,8 +96,8 @@ class SaleCogsLedgerEntriesTest {
         assertEquals(LocalDate.of(2026, 1, 16), ledgerPostingRequest.postingDate)
         assertEquals(
             listOf(
-                LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, BigDecimal("40.0000")),
-                LedgerEntryRequest.credit(SystemAccount.COST_OF_GOODS_SOLD.code, BigDecimal("40.0000")),
+                LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, PositiveMoney.of(BigDecimal("40.0000"))),
+                LedgerEntryRequest.credit(SystemAccount.COST_OF_GOODS_SOLD.code, PositiveMoney.of(BigDecimal("40.0000"))),
             ),
             costEntries(ledgerPostingRequest.entries)
         )
@@ -109,11 +111,10 @@ class SaleCogsLedgerEntriesTest {
     }
 
     @Test
-    fun `negative cost is posted so the ledger validator rejects it instead of hiding the bug`() {
-        val ledgerPostingRequest = saleConfirmedProcessor.prepareLedgerRequest(saleConfirmedEvent(BigDecimal("-1.0000")))
-
-        assertEquals(2, costEntries(ledgerPostingRequest.entries).size)
-        assertThrows(RtsGenericException::class.java) { LedgerEntriesValidator.validate(ledgerPostingRequest.entries) }
+    fun `negative cost fails loudly instead of posting or being skipped`() {
+        assertThrows(RtsGenericException::class.java) {
+            saleConfirmedProcessor.prepareLedgerRequest(saleConfirmedEvent(BigDecimal("-1.0000")))
+        }
     }
 
     private fun costEntries(entries: List<LedgerEntryRequest>) = entries.filter {
@@ -128,11 +129,11 @@ class SaleCogsLedgerEntriesTest {
         sourceDocumentId = UUID.randomUUID(),
         contactId = contactId,
         saleReferenceNumber = "SALE-1",
-        taxableAmount = BigDecimal("90.00"),
-        taxBilled = BigDecimal.ZERO,
-        discountTotal = BigDecimal("10.00"),
+        taxableAmount = Money.of(BigDecimal("90.00")),
+        taxBilled = Money.ZERO,
+        discountTotal = Money.of(BigDecimal("10.00")),
         dateSold = LocalDate.of(2026, 1, 15),
-        cogsTotal = cogsTotal
+        cogsTotal = Money.of(cogsTotal)
     )
 
     private fun saleVoidedEvent(cogsTotal: BigDecimal) = SaleVoidedEvent(
@@ -143,11 +144,11 @@ class SaleCogsLedgerEntriesTest {
         sourceDocumentId = UUID.randomUUID(),
         contactId = contactId,
         saleReferenceNumber = "SALE-1",
-        taxableAmount = BigDecimal("90.00"),
-        taxBilled = BigDecimal.ZERO,
-        discountTotal = BigDecimal("10.00"),
+        taxableAmount = Money.of(BigDecimal("90.00")),
+        taxBilled = Money.ZERO,
+        discountTotal = Money.of(BigDecimal("10.00")),
         dateSold = LocalDate.of(2026, 1, 15),
         dateVoided = LocalDate.of(2026, 1, 16),
-        cogsTotal = cogsTotal
+        cogsTotal = Money.of(cogsTotal)
     )
 }

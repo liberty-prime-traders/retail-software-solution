@@ -27,9 +27,9 @@ class PurchaseSearchQueryBuilderPostgresTest {
     private val supplierId = UUID.randomUUID()
     private val createdOn = OffsetDateTime.parse("2030-01-01T00:00:00Z")
 
-    private val partiallyCanceledLine = line(unitCost = "5.00", ordered = "10", storageUnitsPerUnit = 12L, canceled = "36")
-    private val oddlyPricedLine = line(unitCost = "3.3333", ordered = "7", storageUnitsPerUnit = 3L, canceled = "5")
-    private val untouchedLine = line(unitCost = "2.50", ordered = "4", storageUnitsPerUnit = 6L, canceled = "0")
+    private val partiallyCanceledLine = line(unitCost = "5.00", ordered = "10", storageUnitsPerUserProvidedUnit = 12L, canceled = "36")
+    private val oddlyPricedLine = line(unitCost = "3.3333", ordered = "7", storageUnitsPerUserProvidedUnit = 3L, canceled = "5")
+    private val untouchedLine = line(unitCost = "2.50", ordered = "4", storageUnitsPerUserProvidedUnit = 6L, canceled = "0")
 
     @BeforeEach
     fun createSchemaAndFixtures() {
@@ -44,7 +44,7 @@ class PurchaseSearchQueryBuilderPostgresTest {
             )
             statement.execute(
                 """CREATE TABLE purchase_line (id UUID PRIMARY KEY, purchase_id UUID, unit_cost NUMERIC(19,4),
-                   user_provided_quantity_ordered NUMERIC(19,4), storage_units_per_unit BIGINT, storage_quantity_canceled NUMERIC(28,4))"""
+                   user_provided_quantity_ordered NUMERIC(19,4), storage_units_per_user_provided_unit BIGINT, storage_quantity_canceled NUMERIC(28,4))"""
             )
             statement.execute("CREATE TABLE supplier_payment_row (id UUID PRIMARY KEY, purchase_id UUID, amount NUMERIC(19,4))")
             statement.execute("CREATE VIEW active_supplier_payment AS SELECT id, purchase_id, amount FROM supplier_payment_row")
@@ -90,13 +90,13 @@ class PurchaseSearchQueryBuilderPostgresTest {
         assertEquals(listOf("PUR4"), references(list(PurchaseSearchParameters(maxAmount = BigDecimal.ZERO))))
     }
 
-    private fun line(unitCost: String, ordered: String, storageUnitsPerUnit: Long, canceled: String) = PurchaseLineEntity(
+    private fun line(unitCost: String, ordered: String, storageUnitsPerUserProvidedUnit: Long, canceled: String) = PurchaseLineEntity(
         purchaseId = UUID.randomUUID(),
         locationProductId = UUID.randomUUID(),
         userProvidedQuantityOrdered = BigDecimal(ordered),
         unitCost = BigDecimal(unitCost),
         unitId = UUID.randomUUID(),
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
         storageQuantityCanceled = BigDecimal(canceled),
     ).also { it.id = UUID.randomUUID() }
 
@@ -116,7 +116,7 @@ class PurchaseSearchQueryBuilderPostgresTest {
                 statement.setObject(2, purchaseId)
                 statement.setBigDecimal(3, line.unitCost)
                 statement.setBigDecimal(4, line.userProvidedQuantityOrdered)
-                statement.setLong(5, line.storageUnitsPerUnit)
+                statement.setLong(5, line.storageUnitsPerUserProvidedUnit)
                 statement.setBigDecimal(6, line.storageQuantityCanceled)
                 statement.executeUpdate()
             }

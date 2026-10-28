@@ -12,8 +12,8 @@ import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRep
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepaymentVoidEntity
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepaymentVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanResponseBuilder
+import me.ezra_home.retail_software_solution.organizations.business.loan.LoanStatusResolver
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -32,18 +32,21 @@ class LoanRepaymentService(
 ) {
 
     fun recordRepayment(loanRepaymentCreateRequest: LoanRepaymentCreateRequest): LoanResponse {
-        val roundedAmount = Decimals.Scale4.requirePositiveAmount(loanRepaymentCreateRequest.amount)
+        val repaymentAmount = loanRepaymentCreateRequest.amount.toBigDecimal()
         val assetAccountCode = StringUtils.getValueOrException(loanRepaymentCreateRequest.assetAccountCode, "Asset account is required")
         DateTimes.Local.requireNotInFuture(loanRepaymentCreateRequest.repaymentDate, "Repayment date")
         val trimmedNote = StringUtils.getValueOrNull(loanRepaymentCreateRequest.note)
         loanFinder.lockLoan(loanRepaymentCreateRequest.loanId)
         val loanDto = loanFinder.findLoan(loanRepaymentCreateRequest.loanId)
-        loanRepaymentValidator.requireRepayable(loanDto, loanRepaymentCreateRequest.repaymentDate, roundedAmount)
+        val loanStatusFiguresBeforeRepayment = loanFinder.findLoanStatusFigures(loanDto.id)
+        loanRepaymentValidator.requireRepayable(
+            loanDto, loanStatusFiguresBeforeRepayment, loanRepaymentCreateRequest.repaymentDate, repaymentAmount
+        )
         val lenderContactDto = loanFinder.findLender(loanDto)
         loanAccountValidator.requireSelectable(assetAccountCode)
         val loanRepaymentDto = loanMapper.toRepaymentDto(
             loanRepaymentRepository.save(
-                LoanRepaymentEntity(loanDto.id, assetAccountCode, roundedAmount, loanRepaymentCreateRequest.repaymentDate, trimmedNote)
+                LoanRepaymentEntity(loanDto.id, assetAccountCode, repaymentAmount, loanRepaymentCreateRequest.repaymentDate, trimmedNote)
             )
         )
         ledgerPostingService.post(
@@ -52,7 +55,9 @@ class LoanRepaymentService(
                 loanRepaymentDto.amount, loanRepaymentDto.repaymentDate
             )
         )
-        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto)
+        return loanResponseBuilder.buildResponse(
+            loanDto, lenderContactDto, LoanStatusResolver.afterRepayment(loanStatusFiguresBeforeRepayment, loanRepaymentDto.amount)
+        )
     }
 
     fun voidRepayment(loanRepaymentVoidRequest: LoanRepaymentVoidRequest): LoanResponse {
@@ -65,6 +70,7 @@ class LoanRepaymentService(
         loanRepaymentValidator.requireVoidable(loanRepaymentDto)
         val loanDto = loanFinder.findLoan(loanRepaymentDto.loanId)
         val lenderContactDto = loanFinder.findLender(loanDto)
+        val loanStatusFiguresBeforeVoid = loanFinder.findLoanStatusFigures(loanDto.id)
         val loanRepaymentVoidDto = loanMapper.toRepaymentVoidDto(
             loanRepaymentVoidRepository.save(
                 LoanRepaymentVoidEntity(loanRepaymentDto.id, DateTimes.Local.Now.organization(), reason)
@@ -76,6 +82,8 @@ class LoanRepaymentService(
                 loanRepaymentDto.amount, loanRepaymentVoidDto.voidDate
             )
         )
-        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto)
+        return loanResponseBuilder.buildResponse(
+            loanDto, lenderContactDto, LoanStatusResolver.afterRepaymentVoid(loanStatusFiguresBeforeVoid, loanRepaymentDto.amount)
+        )
     }
 }

@@ -95,7 +95,7 @@ databaseChangeLog:
 
               - column:
                   name: last_purchase_price
-                  type: decimal(15,2)
+                  type: decimal(19,4)
 
               - column:
                   name: search_vector

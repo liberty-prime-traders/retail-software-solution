@@ -14,7 +14,7 @@ its own. There are no manual conversions to import (see `unitconversion`).
 
 `BulkUnitImportService.bulkImport` runs `BulkUnitImportValidator.validate`
 first, which returns a `List<String>` of every problem in the payload —
-duplicate/invalid names (compared on alphanumerics), duplicate/oversized codes,
+duplicate/invalid names (compared on alphanumerics), duplicate/oversized/reserved (`"__piece__"`) unit value codes,
 missing or cross-group base-unit references, a unit outside Miscellaneous
 without a base unit, a Miscellaneous unit with one, a payload unit named
 named like the group's effective base unit name in a custom group, a
@@ -88,9 +88,22 @@ that entry stops there (its own name/base-unit/etc. fields are never
 checked, since it won't be created). `BulkUnitImportService` mirrors this at
 save time - `findExistingSystemDefinedGroup` and `existingSystemDefinedCodes`
 resolve a reused entry to its existing id instead of passing it to
-`bulkCreateValidatedList`, so the same code never gets inserted twice. A
+`bulkCreateValidatedList`, so the same code never gets inserted twice. A reused
+code must be listed under the group that owns it: a system code under any other
+group is rejected, because the entry is skipped at save and would otherwise let that
+group's units pass the base-unit group check against a unit that never joins it. A
 payload that lists the same system-defined code twice is still rejected as a
 payload-internal duplicate; only the database-collision error is suppressed.
+
+## Unit group names are unique org-wide, on every write path
+
+A unit group name is unique org-wide on its letters and digits alone (`UnitGroupNameRules`), so "Pack Size" and
+"pack-size" collide. Every path that writes groups enforces it under the `UNIT_GROUP_NAME` advisory lock:
+`UnitGroupService.createUnitGroup` and `updateUnitGroup`, `UnitGroupService.bulkCreateValidatedList` (which guards itself,
+so a caller that skips `BulkUnitImportValidator` still cannot duplicate a name), and `UnitGroupSeeder`. The seeder keys on
+`code`, so a custom group already holding a system group's name stops the seed with an error rather than adding a second
+group; resolve it by renaming or removing the custom group. `unit_group.name_key` holds `StringUtils.alphanumericKey(name)`, set by the entity on persist and update, and
+`uq_unit_group_name_key` makes the database reject exactly what the application check rejects.
 
 ## Codes are unique org-wide; names are unique only within a group
 
@@ -107,7 +120,7 @@ alphanumerics ("Co-unt") is rejected as a duplicate. Group names remain unique
 org-wide either way, and must contain at least one letter or digit (`UnitGroupService.createUnitGroup`'s
 `validateNameOnSave`, and `BulkUnitGroupValidator.validateGroupNames`) — a
 group name that's only symbols/whitespace would otherwise produce an empty
-slug for the Piece-code generation below.
+slug for the root unit code generation below.
 
 ## The base unit is auto-provisioned, named by the caller, and its code is group-scoped
 

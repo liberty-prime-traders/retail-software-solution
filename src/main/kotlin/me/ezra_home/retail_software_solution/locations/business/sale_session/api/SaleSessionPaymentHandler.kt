@@ -1,17 +1,16 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentVoidCreateDto
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import java.util.UUID
 
 @Service
 class SaleSessionPaymentHandler(
@@ -33,7 +32,7 @@ class SaleSessionPaymentHandler(
         val newSaleSessionPayment = SaleSessionPayment(
             identity = persistedPaymentOutcome.identity,
             paymentMethodId = paymentAddDto.paymentMethodId,
-            amount = paymentAddDto.amount,
+            amount = paymentAddDto.amount.toBigDecimal(),
             reference = paymentAddDto.reference,
             paymentDate = persistedPaymentOutcome.paymentDate ?: paymentAddDto.paymentDate,
         )

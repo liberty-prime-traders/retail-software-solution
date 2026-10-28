@@ -1,19 +1,17 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session.api
 
-import java.util.UUID
-
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineAdjustmentReconciler
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContext
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionLineChangeContextBuilder
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStockOverlay
-import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionStore
+import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionUpdateFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale_session.SaleSessionValidator
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LinePricing
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class SaleSessionLineHandler(
@@ -30,7 +28,6 @@ class SaleSessionLineHandler(
     fun applyLineChanges(sessionId: UUID, lineRequestDto: SaleSessionLineRequestDto): SaleSessionResponseDto {
         val saleSession = saleSessionStore.load(sessionId)
         saleSessionValidator.guardMutable(saleSession)
-        saleSessionValidator.guardNonNegativeEffectivePrices(lineRequestDto.updates)
 
         val saleSessionLinesByKey = saleSession.saleLines.associateBy { it.identity.key() }
         guardUpdatesTargetExistingLines(lineRequestDto.updates, saleSessionLinesByKey)
@@ -88,17 +85,24 @@ class SaleSessionLineHandler(
             val productSummary = saleSessionLineChangeContext.locationProductSummariesById.getValue(lineAddDto.locationProductId)
             val defaultSalePrice = saleSessionLineChangeContext.defaultSalePricesByLocationProductId[lineAddDto.locationProductId]
                 ?: throw RtsGenericException("Product ${productSummary.label} has no default sale price")
-            val baseUnitSizeInRoot = saleSessionLineChangeContext.baseUnitSizeInRootByBaseUnitId.getValue(productSummary.baseUnitId)
+            val storageUnitsPerBaseUnit = saleSessionLineChangeContext.storageUnitsPerBaseUnitByBaseUnitId.getValue(productSummary.baseUnitId)
             SaleSessionLine(
                 identity = SessionIdentity.mintFreshIdentity(),
                 locationProductId = lineAddDto.locationProductId,
                 productLabel = productSummary.label,
                 productPrintLabel = productSummary.printLabel,
-                userProvidedQuantity = lineAddDto.userProvidedQuantity,
+                userProvidedQuantity = lineAddDto.userProvidedQuantity.toBigDecimal(),
                 unitId = productSummary.baseUnitId,
                 baseUnitId = productSummary.baseUnitId,
-                storageUnitsPerUnit = baseUnitSizeInRoot,
-                lineTotal = LinePricing.lineTotal(defaultSalePrice, lineAddDto.userProvidedQuantity, baseUnitSizeInRoot, baseUnitSizeInRoot),
+                storageUnitsPerUserProvidedUnit = storageUnitsPerBaseUnit,
+                lineTotal = SaleSessionLine.lineTotal(
+                    defaultSalePrice,
+                    LineQuantities(
+                        userProvidedQuantity = lineAddDto.userProvidedQuantity.toBigDecimal(),
+                        storageUnitsPerUserProvidedUnit = storageUnitsPerBaseUnit,
+                        storageUnitsPerBaseUnit = storageUnitsPerBaseUnit,
+                    ),
+                ),
                 defaultSalePrice = defaultSalePrice,
             )
         }
@@ -112,17 +116,19 @@ class SaleSessionLineHandler(
         val updatesByLineKey = updates.associateBy { it.identity.key() }
         return existingSaleLines.map { saleSessionLine ->
             val lineUpdateDto = updatesByLineKey[saleSessionLine.identity.key()] ?: return@map saleSessionLine
-            val storageUnitsPerUnit = saleSessionLineChangeContext.newStorageUnitsPerUnitByLineKey[saleSessionLine.identity.key()]
-                ?: saleSessionLine.storageUnitsPerUnit
+            val storageUnitsPerUserProvidedUnit = saleSessionLineChangeContext.newStorageUnitsPerUserProvidedUnitByLineKey[saleSessionLine.identity.key()]
+                ?: saleSessionLine.storageUnitsPerUserProvidedUnit
             saleSessionLine.copy(
-                userProvidedQuantity = lineUpdateDto.userProvidedQuantity,
+                userProvidedQuantity = lineUpdateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = lineUpdateDto.unitId,
-                storageUnitsPerUnit = storageUnitsPerUnit,
-                lineTotal = LinePricing.lineTotal(
+                storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                lineTotal = SaleSessionLine.lineTotal(
                     saleSessionLine.defaultSalePrice,
-                    lineUpdateDto.userProvidedQuantity,
-                    storageUnitsPerUnit,
-                    saleSessionLineChangeContext.baseUnitSizeInRootByBaseUnitId.getValue(saleSessionLine.baseUnitId),
+                    LineQuantities(
+                        userProvidedQuantity = lineUpdateDto.userProvidedQuantity.toBigDecimal(),
+                        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                        storageUnitsPerBaseUnit = saleSessionLineChangeContext.storageUnitsPerBaseUnitByBaseUnitId.getValue(saleSessionLine.baseUnitId),
+                    ),
                 ),
             )
         }

@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
@@ -18,10 +19,12 @@ import me.ezra_home.retail_software_solution.locations.business.stock_adjustment
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.StockMovementReasonService
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.business.reference_number.ReferenceNumberGenerator
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.model.TableName
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -103,7 +106,10 @@ class StockAdjustmentServiceTest {
         )
         `when`(referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)).thenReturn("STADJ000001")
         `when`(userQualifier.getCreatorFullName(creatorId)).thenReturn("Test User")
-        `when`(locationProductDataFetcher.getStorageUnitsPerUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
+        `when`(locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
+        `when`(locationProductDataFetcher.findSummaryByIds(setOf(locationProductId))).thenReturn(
+            mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP000001", "Rice", "Grains", UUID.randomUUID()))
+        )
     }
 
     @AfterEach
@@ -118,14 +124,14 @@ class StockAdjustmentServiceTest {
         )
 
         val increaseRequest = increaseRequests.single()
-        assertEquals(BigDecimal("31.5000"), increaseRequest.totalCost)
+        assertEquals(BigDecimal("31.50"), increaseRequest.totalCost)
         assertEquals(0, BigDecimal("36").compareTo(increaseRequest.storageQuantity.toStorageQuantity()))
         assertEquals("STADJ000001", increaseRequest.documentReference)
         assertEquals(StockAdjustmentCategory.FREE_GOODS, increaseRequest.adjustmentDetails.category)
         assertEquals("Bonus cartons on PO-12", increaseRequest.adjustmentDetails.note)
         assertEquals(null, increaseRequest.adjustmentDetails.reasonId)
         assertEquals(StockAdjustmentDirection.INCREASE, response.direction)
-        assertEquals(BigDecimal("31.5000"), response.totalCost)
+        assertEquals(BigDecimal("31.50"), response.totalCost)
         assertEquals(BigDecimal("3"), response.userProvidedQuantity)
         assertEquals("STADJ000001", publishedStockAdjustments.single().referenceNumber)
         assertEquals(emptyList<Pair<MovementType, UUID?>>(), guardedReasons)
@@ -205,8 +211,8 @@ class StockAdjustmentServiceTest {
             )
         )
 
-        assertEquals(BigDecimal("18.0000"), increaseRequests.single().totalCost)
-        assertEquals(BigDecimal("18.0000"), response.totalCost)
+        assertEquals(BigDecimal("18.00"), increaseRequests.single().totalCost)
+        assertEquals(BigDecimal("18.00"), response.totalCost)
     }
 
     @Test
@@ -253,11 +259,11 @@ class StockAdjustmentServiceTest {
         locationProductId = locationProductId,
         category = category,
         direction = direction,
-        userProvidedQuantity = BigDecimal(quantity),
+        userProvidedQuantity = PositiveUserProvidedQuantity.of(BigDecimal(quantity)),
         unitId = boxUnitId,
         stockMovementReasonId = stockMovementReasonId,
         note = note,
-        unitCost = unitCost?.let { BigDecimal(it) },
+        unitCost = unitCost?.let { PositiveMoney.of(BigDecimal(it)) },
     )
 
     private fun anyUnitRequests(): List<LocationProductUnitRequestDto> = anyList()

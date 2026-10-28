@@ -28,5 +28,11 @@ enum class RtsRole(
         )
     ),
 
+    LIBERTY_ADMIN(
+        "LBAR",
+        SchemaLevel.ORGANIZATION,
+        permissions = setOf(RtsPermission.LIBERTY_ADMIN)
+    ),
+
     PLATFORM_ADMIN("PLAD", SchemaLevel.PLATFORM, permissions = setOf(RtsPermission.CREATE_ORGANIZATION))
 }

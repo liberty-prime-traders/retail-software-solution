@@ -22,7 +22,7 @@ fun StockTransferDraftLineEntity.toDomainDto() = StockTransferDraftLineDomainDto
     locationProductId = locationProductId,
     userProvidedQuantity = userProvidedQuantity,
     unitId = unitId,
-    storageUnitsPerUnit = storageUnitsPerUnit,
+    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     createdById = requiredCreatedById(),
     createdOn = requiredCreatedOn()
 )
@@ -37,7 +37,7 @@ fun StockTransferDispatchLineEntity.toDomainDto() = StockTransferDispatchLineDom
     unitId = unitId,
     unitCost = unitCost,
     costDispatched = costDispatched,
-    storageUnitsPerUnit = storageUnitsPerUnit,
+    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     createdById = requiredCreatedById(),
     createdOn = requiredCreatedOn()
 )
@@ -72,5 +72,5 @@ fun StockTransferDispatchLineEntity.toDispatchedLineDto() = StockTransferDispatc
     storageQuantityDispatched = storageQuantityDispatched,
     costDispatched = costDispatched,
     unitId = unitId,
-    storageUnitsPerUnit = storageUnitsPerUnit
+    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit
 )

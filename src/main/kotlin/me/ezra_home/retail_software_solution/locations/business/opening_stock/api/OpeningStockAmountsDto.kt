@@ -6,6 +6,6 @@ import java.util.UUID
 data class OpeningStockAmountsDto(
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
-    val storageUnitsPerUnit: Long,
+    val storageUnitsPerUserProvidedUnit: Long,
     val unitCost: BigDecimal
 )

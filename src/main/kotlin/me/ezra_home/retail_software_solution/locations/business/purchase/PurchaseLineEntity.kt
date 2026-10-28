@@ -28,14 +28,14 @@ class PurchaseLineEntity(
   @Column(name = "user_provided_quantity_ordered", nullable = false, precision = 19, scale = 4)
   var userProvidedQuantityOrdered: BigDecimal,
 
-  @Column(name = "unit_cost", nullable = false, precision = 15, scale = 2)
-  override var unitCost: BigDecimal,
+  @Column(name = "unit_cost", nullable = false, precision = 19, scale = 4)
+  var unitCost: BigDecimal,
 
   @Column(name = "unit_id", nullable = false)
   var unitId: UUID,
 
-  @Column(name = "storage_units_per_unit", nullable = false)
-  var storageUnitsPerUnit: Long,
+  @Column(name = "storage_units_per_user_provided_unit", nullable = false)
+  var storageUnitsPerUserProvidedUnit: Long,
 
   @Column(name = "storage_quantity_delivered", nullable = false, precision = 28, scale = 4)
   var storageQuantityDelivered: BigDecimal = BigDecimal.ZERO,
@@ -43,17 +43,17 @@ class PurchaseLineEntity(
   @Column(name = "storage_quantity_canceled", nullable = false, precision = 28, scale = 4)
   var storageQuantityCanceled: BigDecimal = BigDecimal.ZERO
 
-) : HasLocationProduct, HasUnitCost, HasReferenceEntity() {
+) : HasLocationProduct, HasReferenceEntity() {
 
-  fun storageQuantityOrdered(): ExactQuantity = ExactQuantity.ofUserProvided(userProvidedQuantityOrdered, storageUnitsPerUnit)
+  fun storageQuantityOrdered(): ExactQuantity = ExactQuantity.ofStorageFromUserProvided(userProvidedQuantityOrdered, storageUnitsPerUserProvidedUnit)
 
   fun storageQuantityExpected(): ExactQuantity = storageQuantityOrdered() - ExactQuantity.ofStorage(storageQuantityCanceled)
 
   fun storageQuantityRemaining(): ExactQuantity = storageQuantityExpected() - ExactQuantity.ofStorage(storageQuantityDelivered)
 
-  fun getTotalCost(): BigDecimal = Decimals.Scale4.divide(
+  fun getTotalCost(): BigDecimal = Decimals.MoneyScale.divide(
     unitCost.multiply(storageQuantityExpected().toStorageQuantity()),
-    BigDecimal.valueOf(storageUnitsPerUnit)
+    BigDecimal.valueOf(storageUnitsPerUserProvidedUnit)
   )
 
 }

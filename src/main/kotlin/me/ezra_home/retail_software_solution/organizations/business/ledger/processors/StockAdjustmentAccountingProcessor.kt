@@ -32,10 +32,8 @@ class StockAdjustmentAccountingProcessor(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.STOCK_ADJUSTMENT,
             postingDate = event.postingDate,
-            entries = listOf(
-                LedgerEntryRequest.debit(event.debitAccountCode, event.totalCost),
-                LedgerEntryRequest.credit(event.creditAccountCode, event.totalCost)
-            ),
+            entries = LedgerEntryRequest.debitUnlessZero(event.debitAccountCode, event.totalCost.toBigDecimal()) +
+                LedgerEntryRequest.creditUnlessZero(event.creditAccountCode, event.totalCost.toBigDecimal()),
             subledgerEntries = emptyList()
         )
     }

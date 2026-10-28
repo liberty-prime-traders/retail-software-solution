@@ -17,4 +17,7 @@ data class SaleSessionAdjustment(
 ) {
     fun isPriceOverride(priceOverrideReasonId: UUID): Boolean =
         adjustmentReasonId == priceOverrideReasonId && relatedSaleLineIdentity != null
+
+    fun requiredRelatedSaleLineKey(): UUID = relatedSaleLineIdentity?.key()
+        ?: error("Sale session adjustment ${identity.key()} is not tied to a sale line")
 }

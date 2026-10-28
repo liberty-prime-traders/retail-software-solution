@@ -6,6 +6,8 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.Cont
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceReader
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerBalanceDto
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerService
+import me.ezra_home.retail_software_solution.util.business.MoneyDisplay
+import me.ezra_home.retail_software_solution.util.business.mappers.MoneyQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
@@ -28,7 +30,7 @@ class ContactServiceTest {
     private val createdById = UUID.randomUUID()
 
     private val contactService = ContactService(
-        ContactResponseMapperImpl(userQualifier, StringQualifier),
+        ContactResponseMapperImpl(userQualifier, StringQualifier, MoneyQualifier),
         contactCache,
         mock(ContactValidator::class.java),
         subledgerService,
@@ -57,8 +59,8 @@ class ContactServiceTest {
         val contactResponseDto = contactService.createContact(contactInsertDto)
 
         verify(subledgerService).openBalance("CT000001")
-        assertEquals(0, BigDecimal.ZERO.compareTo(contactResponseDto.receivableBalance))
-        assertEquals(0, BigDecimal.ZERO.compareTo(contactResponseDto.payableBalance))
+        assertEquals(MoneyDisplay.of(BigDecimal.ZERO), contactResponseDto.receivableBalance)
+        assertEquals(MoneyDisplay.of(BigDecimal.ZERO), contactResponseDto.payableBalance)
     }
 
     @Test
@@ -81,10 +83,10 @@ class ContactServiceTest {
         val contactResponsesByReference = contactService.getAllContacts().associateBy { it.referenceNumber }
 
         val withOpeningBalance = contactResponsesByReference.getValue("CT000001")
-        assertEquals(0, BigDecimal("60.00").compareTo(withOpeningBalance.netOpeningBalance))
+        assertEquals(MoneyDisplay.of(BigDecimal("60.00")), withOpeningBalance.netOpeningBalance)
         assertEquals(BalanceEffect.ADDS, withOpeningBalance.netOpeningBalanceEffect)
         val withoutOpeningBalance = contactResponsesByReference.getValue("CT000002")
-        assertEquals(0, BigDecimal.ZERO.compareTo(withoutOpeningBalance.netOpeningBalance))
+        assertEquals(MoneyDisplay.of(BigDecimal.ZERO), withoutOpeningBalance.netOpeningBalance)
         assertEquals(BalanceEffect.ZERO, withoutOpeningBalance.netOpeningBalanceEffect)
     }
 

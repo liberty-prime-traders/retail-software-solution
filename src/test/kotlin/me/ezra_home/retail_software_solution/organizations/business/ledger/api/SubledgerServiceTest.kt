@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Suble
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
+import me.ezra_home.retail_software_solution.util.business.MoneyDisplay
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.StringQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -82,9 +83,9 @@ class SubledgerServiceTest {
         assertEquals(1, pageResponse.contents.size)
         val pageEntry = pageResponse.contents.single()
         assertEquals(LedgerSourceType.SALE, pageEntry.sourceType)
-        assertEquals(0, BigDecimal("5").compareTo(pageEntry.transactionAmount))
+        assertEquals(MoneyDisplay.of(BigDecimal("5")), pageEntry.transactionAmount)
         assertEquals(BalanceEffect.ADDS, pageEntry.transactionBalanceEffect)
-        assertEquals(0, BigDecimal("10").compareTo(pageEntry.netBalance))
+        assertEquals(MoneyDisplay.of(BigDecimal("10")), pageEntry.netBalance)
         assertEquals(BalanceEffect.ADDS, pageEntry.netBalanceEffect)
         verify(subledgerEntryRepository, never()).findFirstPage(contactReferenceNumber, 3)
     }

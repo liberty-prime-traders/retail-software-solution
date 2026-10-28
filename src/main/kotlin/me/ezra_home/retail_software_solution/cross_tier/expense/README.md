@@ -127,7 +127,7 @@ as sale and purchase. See `organizations/business/ledger/README.md`.
 
 ## Amounts and dates
 
-Money is `numeric(19, 4)` and rounded with `Decimals.Scale4.round`. Expense dates are
+Money is `numeric(19, 4)`. A request amount is a `PositiveMoney` (zero, a negative, more decimals than the money scale, or a magnitude above `Decimals.MAXIMUM_TRANSACTION_AMOUNT` are rejected when the request binds, never rounded); a payment is bounded by its expense's remaining balance, so it inherits that ceiling. Expense dates are
 `date`; payment dates are `timestamptz` at the start of the day in the organization zone.
 
 ## Payment state

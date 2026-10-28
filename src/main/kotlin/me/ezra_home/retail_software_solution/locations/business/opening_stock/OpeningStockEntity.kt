@@ -24,10 +24,10 @@ class OpeningStockEntity(
     @Column(name = "unit_id", nullable = false, updatable = false)
     var unitId: UUID,
 
-    @Column(name = "storage_units_per_unit", nullable = false, updatable = false)
-    var storageUnitsPerUnit: Long,
+    @Column(name = "storage_units_per_user_provided_unit", nullable = false, updatable = false)
+    var storageUnitsPerUserProvidedUnit: Long,
 
-    @Column(name = "unit_cost", nullable = false, updatable = false, precision = 15, scale = 2)
+    @Column(name = "unit_cost", nullable = false, updatable = false, precision = 19, scale = 4)
     var unitCost: BigDecimal
 
 ) : ImmutableEntity()

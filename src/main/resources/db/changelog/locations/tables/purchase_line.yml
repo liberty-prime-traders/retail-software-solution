@@ -51,7 +51,7 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: decimal(15,2)
+                  type: decimal(19,4)
                   constraints:
                     nullable: false
                     notNullConstraintName: purchase_line_unit_cost_notnull
@@ -78,11 +78,11 @@ databaseChangeLog:
                     notNullConstraintName: purchase_line_storage_quantity_canceled_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: purchase_line_storage_units_per_unit_notnull
+                    notNullConstraintName: purchase_line_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: created_by_id

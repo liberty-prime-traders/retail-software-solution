@@ -1,12 +1,12 @@
 package me.ezra_home.retail_software_solution.cross_tier.expense.request
 
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 
 data class ExpensePaymentCreateRequest(
     val expenseReference: String,
     val settlement: PaymentInstruction,
-    val amount: BigDecimal
+    val amount: PositiveMoney
 )
 
 data class ExpenseVoidRequest(

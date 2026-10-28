@@ -225,8 +225,8 @@ class DailyPerformanceServiceTest {
     @Suppress("UNCHECKED_CAST")
     private fun readerReturning(movements: List<LedgerMovement>): LedgerMovementReader =
         mock(LedgerMovementReader::class.java) { invocation ->
-            requestedSources = invocation.arguments[3] as Set<LedgerSourceType>
-            requestedLocationId = invocation.arguments[4] as UUID?
+            requestedSources = invocation.arguments[2] as Set<LedgerSourceType>
+            requestedLocationId = invocation.arguments[3] as UUID?
             movements
         }
 

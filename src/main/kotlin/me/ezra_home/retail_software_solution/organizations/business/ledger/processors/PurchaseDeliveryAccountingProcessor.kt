@@ -13,8 +13,8 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @Service
@@ -46,11 +46,9 @@ class PurchaseDeliveryAccountingProcessor(
     }
 
     private fun getLedgerEntries(event: PurchaseDeliveredEvent): List<LedgerEntryRequest> {
-        val total = event.deliveryTotal
-        return listOf(
-            LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, total),
-            LedgerEntryRequest.credit(SystemAccount.TRADE_PAYABLES.code, total)
-        )
+        val total = event.deliveryTotal.toBigDecimal()
+        return LedgerEntryRequest.debitUnlessZero(SystemAccount.INVENTORY.code, total) +
+            LedgerEntryRequest.creditUnlessZero(SystemAccount.TRADE_PAYABLES.code, total)
     }
     private fun getSubLedgerEntries(event: PurchaseDeliveredEvent): List<SubledgerEntryRequest> {
         val supplier = contactService.getContactById(event.supplierId)
@@ -59,7 +57,7 @@ class PurchaseDeliveryAccountingProcessor(
             SubledgerEntryRequest(
                 contactReferenceNumber = supplier.referenceNumber,
                 payableAmount = event.deliveryTotal,
-                receivableAmount = BigDecimal.ZERO
+                receivableAmount = Money.ZERO
             )
         )
     }

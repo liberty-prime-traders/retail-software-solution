@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -16,8 +16,8 @@ data class OpeningBalanceUpsertedEvent(
     val ledgerSourceReferenceNumber: String,
     val accountCode: String,
     val accountEntryType: EntryType,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val postingDate: LocalDate
 ) : TransactionEvent() {
-    override val sourceDocumentId: UUID get() = openingBalanceId
+    override val sourceDocumentId: UUID = openingBalanceId
 }

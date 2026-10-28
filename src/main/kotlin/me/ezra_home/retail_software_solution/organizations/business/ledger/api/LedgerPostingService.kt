@@ -35,7 +35,7 @@ class LedgerPostingService(
         val accountPostings = ledgerPostingRequest.entries.map { ledgerEntryRequest ->
             AccountPosting(
                 accountCode = ledgerEntryRequest.accountCode,
-                amount = ledgerEntryRequest.amount,
+                amount = ledgerEntryRequest.amount.toBigDecimal(),
                 entryType = ledgerEntryRequest.entryType
             )
         }
@@ -74,7 +74,7 @@ class LedgerPostingService(
                     groupReferenceNumber = groupReferenceNumber,
                     accountCode = ledgerEntryRequest.accountCode,
                     entryType = ledgerEntryRequest.entryType,
-                    amount = ledgerEntryRequest.amount
+                    amount = ledgerEntryRequest.amount.toBigDecimal()
                 )
             }
         )
@@ -91,13 +91,13 @@ class LedgerPostingService(
                 val subledgerBalanceEntity = balancesByContact[subledgerEntryRequest.contactReferenceNumber]
                     ?: throw RtsGenericException("No subledger balance exists for contact ${subledgerEntryRequest.contactReferenceNumber}")
                 // Managed entity: dirty checking flushes the new totals with the entry rows.
-                subledgerBalanceEntity.runningPayable += subledgerEntryRequest.payableAmount
-                subledgerBalanceEntity.runningReceivable += subledgerEntryRequest.receivableAmount
+                subledgerBalanceEntity.runningPayable += subledgerEntryRequest.payableAmount.toBigDecimal()
+                subledgerBalanceEntity.runningReceivable += subledgerEntryRequest.receivableAmount.toBigDecimal()
                 SubledgerEntryEntity(
                     groupReferenceNumber = groupReferenceNumber,
                     contactReferenceNumber = subledgerEntryRequest.contactReferenceNumber,
-                    payableAmount = subledgerEntryRequest.payableAmount,
-                    receivableAmount = subledgerEntryRequest.receivableAmount,
+                    payableAmount = subledgerEntryRequest.payableAmount.toBigDecimal(),
+                    receivableAmount = subledgerEntryRequest.receivableAmount.toBigDecimal(),
                     runningPayable = subledgerBalanceEntity.runningPayable,
                     runningReceivable = subledgerBalanceEntity.runningReceivable
                 )

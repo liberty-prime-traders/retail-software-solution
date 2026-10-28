@@ -113,7 +113,7 @@ class SaleDataFetcher(
                 productPrintLabel = productSummary.printLabel,
                 userProvidedQuantity = line.userProvidedQuantity,
                 unitId = line.unitId,
-                storageUnitsPerUnit = line.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedUnit,
                 lineTotal = line.lineTotal,
                 defaultSalePrice = line.defaultSalePrice,
             )

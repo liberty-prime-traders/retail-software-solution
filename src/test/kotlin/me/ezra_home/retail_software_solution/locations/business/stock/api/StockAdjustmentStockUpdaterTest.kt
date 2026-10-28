@@ -1,8 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -18,6 +20,7 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class StockAdjustmentStockUpdaterTest {
 
     private val locationProductId = UUID.randomUUID()
@@ -32,7 +35,9 @@ class StockAdjustmentStockUpdaterTest {
     private val stockReserver = mock(StockReserver::class.java)
     private val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
     private val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
+    private val stockIncreaseRecorder = mock(StockIncreaseRecorder::class.java)
     private val stockAdjustmentStockUpdater = StockAdjustmentStockUpdater(
+        stockIncreaseRecorder,
         stockEntryRepository,
         stockMovementRepository,
         stockBalanceFetcher,
@@ -48,7 +53,7 @@ class StockAdjustmentStockUpdaterTest {
 
         val consumedCost = stockAdjustmentStockUpdater.decreaseStock(decreaseRequest("4")).totalCost
 
-        assertEquals(BigDecimal("12.0000"), consumedCost)
+        assertEquals(BigDecimal("12.00"), consumedCost)
         assertEquals(0, BigDecimal("6").compareTo(layer.storageQuantityRemaining))
         assertEquals(0, BigDecimal("18").compareTo(layer.costRemaining))
     }
@@ -61,7 +66,7 @@ class StockAdjustmentStockUpdaterTest {
 
         val consumedCost = stockAdjustmentStockUpdater.decreaseStock(decreaseRequest("5")).totalCost
 
-        assertEquals(BigDecimal("16.0000"), consumedCost)
+        assertEquals(BigDecimal("16.00"), consumedCost)
         assertEquals(0, BigDecimal.ZERO.compareTo(olderLayer.costRemaining))
         assertEquals(0, BigDecimal("15").compareTo(newerLayer.costRemaining))
     }
@@ -87,7 +92,7 @@ class StockAdjustmentStockUpdaterTest {
         storageQuantity = ExactQuantity.ofStorage(BigDecimal(storageQuantity)),
         userProvidedQuantity = BigDecimal(storageQuantity),
         unitId = pieceId,
-        storageUnitsPerUnit = 1L,
+        storageUnitsPerUserProvidedUnit = 1L,
         documentReference = "STADJ000001",
         adjustmentDetails = StockAdjustmentMovementDetails(StockAdjustmentCategory.INTERNAL_USE, null, "Shop supplies"),
     )

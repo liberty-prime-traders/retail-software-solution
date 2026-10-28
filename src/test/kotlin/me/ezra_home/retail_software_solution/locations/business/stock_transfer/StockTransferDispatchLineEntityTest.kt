@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
@@ -8,10 +10,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class StockTransferDispatchLineEntityTest {
 
     private val locationProductId = UUID.randomUUID()
@@ -24,19 +26,21 @@ class StockTransferDispatchLineEntityTest {
         baleId
     )
 
-    private fun draftLine(userProvidedQuantity: String, storageUnitsPerUnit: Long) = StockTransferDraftLineEntity(
+    private fun draftLine(userProvidedQuantity: String, storageUnitsPerUserProvidedUnit: Long) = StockTransferDraftLineEntity(
         stockTransferDispatchId = UUID.randomUUID(),
         locationProductId = locationProductId,
         userProvidedQuantity = BigDecimal(userProvidedQuantity),
         unitId = baleId,
-        storageUnitsPerUnit = storageUnitsPerUnit,
+        storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
     )
 
     private fun layer(storageQuantity: String, batchCost: String) = StockEntryFifoDto(
         locationProductId = locationProductId,
-        unitCost = BigDecimal(batchCost).divide(BigDecimal(storageQuantity), 10, RoundingMode.HALF_UP),
+        unitCost = Decimals.Scale10.divide(BigDecimal(batchCost), BigDecimal(storageQuantity)),
         storageQuantityRemaining = BigDecimal(storageQuantity),
         costRemaining = BigDecimal(batchCost),
+        storageBatchSize = BigDecimal(storageQuantity),
+        batchCost = BigDecimal(batchCost),
     )
 
     private fun allocate(draft: StockTransferDraftLineEntity, layers: List<StockEntryFifoDto>) =
@@ -60,7 +64,7 @@ class StockTransferDispatchLineEntityTest {
         assertEquals(listOf(BigDecimal("10.0000"), BigDecimal("20.0000"), BigDecimal("6.0000")), dispatchLines.map { it.storageQuantityDispatched })
         assertEquals(BigDecimal("36.0000").compareTo(dispatchLines.sumOf { it.storageQuantityDispatched }), 0)
         assertEquals(setOf(BigDecimal("2")), dispatchLines.map { it.wholeLineUserProvidedQuantity }.toSet())
-        assertEquals(setOf(18L), dispatchLines.map { it.storageUnitsPerUnit }.toSet())
+        assertEquals(setOf(18L), dispatchLines.map { it.storageUnitsPerUserProvidedUnit }.toSet())
         assertEquals(0, BigDecimal("10.0000").add(BigDecimal("40.0000")).add(BigDecimal("18.0000")).compareTo(dispatchLines.sumOf { it.costDispatched }))
     }
 
@@ -68,11 +72,11 @@ class StockTransferDispatchLineEntityTest {
     fun `consecutive layers at the same rate form one cost group and the same rate after a different one starts a new group`() {
         val dispatchLines = allocate(
             draftLine("1", 18L),
-            listOf(layer("5", "10.0000"), layer("5", "10.0000"), layer("5", "20.0000"), layer("20", "40.0000"))
+            listOf(layer("5", "10.00"), layer("5", "10.00"), layer("5", "20.00"), layer("20", "40.00"))
         )
 
         assertEquals(listOf(BigDecimal("10.0000"), BigDecimal("5.0000"), BigDecimal("3.0000")), dispatchLines.map { it.storageQuantityDispatched })
-        assertEquals(listOf(BigDecimal("20.0000"), BigDecimal("20.0000"), BigDecimal("6.0000")), dispatchLines.map { it.costDispatched })
+        assertEquals(listOf(BigDecimal("20.00"), BigDecimal("20.00"), BigDecimal("6.00")), dispatchLines.map { it.costDispatched })
     }
 
     @Test

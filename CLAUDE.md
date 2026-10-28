@@ -52,14 +52,14 @@ Each business domain lives under `*/business/<domain>/`. Anything not under `api
 
 ### Key locations domains
 
-| Domain | What it owns |
-|---|---|
-| `sale/` + `sale_session/` | Full sale lifecycle; session is the only path to create/confirm a sale |
-| `purchase/` + `delivery/` + `supplier_payment/` | Purchase orders, deliveries (stock-in), supplier payments |
-| `stock/` | Stock balances, reservations, FIFO movement |
-| `location_product/` | Per-location product catalog and pricing |
-| `sale_adjustment/` | Discounts and surcharges (shared by sale and sale_session) |
-| `tax_entry/` | Async tax finalization records (written by Kafka consumers) |
+| Domain                                          | What it owns                                                           |
+|-------------------------------------------------|------------------------------------------------------------------------|
+| `sale/` + `sale_session/`                       | Full sale lifecycle; session is the only path to create/confirm a sale |
+| `purchase/` + `delivery/` + `supplier_payment/` | Purchase orders, deliveries (stock-in), supplier payments              |
+| `stock/`                                        | Stock balances, reservations, FIFO movement                            |
+| `location_product/`                             | Per-location product catalog and pricing                               |
+| `sale_adjustment/`                              | Discounts and surcharges (shared by sale and sale_session)             |
+| `tax_entry/`                                    | Async tax finalization records (written by Kafka consumers)            |
 
 Each domain with non-obvious rules has a `README.md` — read it before touching the package, update it after.
 
@@ -70,7 +70,7 @@ Kafka events are published via `ApplicationEventPublisher` and bind to the enclo
 ### Utilities to always use
 
 - `DateTimes` — all `LocalDate` / `OffsetDateTime` logic; never `LocalDate.now()` or `ZoneOffset.UTC`
-- `Decimals` — monetary arithmetic (scale 4, half-up)
+- `Decimals` — monetary arithmetic; money uses `Decimals.MoneyScale` (the `Decimals.MONEY_SCALE` constant, 2, half-up), never a hardcoded scale
 - `StringUtils` — blank-to-null and other string helpers
 
 ### Database migrations

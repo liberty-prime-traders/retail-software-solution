@@ -25,6 +25,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SupplierPaymentAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SupplierPaymentVoidAccountingProcessor
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -37,6 +38,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 
 class SupplierAndOpeningPostingBalanceTest {
 
@@ -133,7 +135,7 @@ class SupplierAndOpeningPostingBalanceTest {
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
         LedgerEntriesValidator.validate(ledgerPostingRequest.entries)
         val accountPostings = ledgerPostingRequest.entries.map {
-            AccountPosting(accountCode = it.accountCode, amount = it.amount, entryType = it.entryType)
+            AccountPosting(accountCode = it.accountCode, amount = it.amount.toBigDecimal(), entryType = it.entryType)
         }
         recordingAccountService.accountService.assertPostable(accountPostings)
         recordingAccountService.accountService.patchBalances(accountPostings)
@@ -164,10 +166,11 @@ class SupplierAndOpeningPostingBalanceTest {
                 locationProductId = UUID.randomUUID(),
                 userProvidedQuantityDelivered = BigDecimal("2"),
                 unitId = UUID.randomUUID(),
-                storageUnitsPerUnit = 1L,
+                storageUnitsPerUserProvidedUnit = 1L,
                 unitCost = BigDecimal("5.00")
             )
-        )
+        ),
+        deliveryTotal = Money.of(BigDecimal("10.00"))
     )
 
     private fun supplierPaymentRecordedEvent(amount: String) = SupplierPaymentRecordedEvent(
@@ -178,7 +181,7 @@ class SupplierAndOpeningPostingBalanceTest {
         paymentId = UUID.randomUUID(),
         supplierId = supplierId,
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         paymentDate = OffsetDateTime.now(),
         paymentReferenceNumber = "SPAY-1"
     )
@@ -192,7 +195,7 @@ class SupplierAndOpeningPostingBalanceTest {
         paymentId = UUID.randomUUID(),
         supplierId = supplierId,
         paymentMethodAccountCode = SystemAccount.CASH.code,
-        amount = BigDecimal(amount),
+        amount = PositiveMoney.of(BigDecimal(amount)),
         voidedOn = LocalDate.of(2026, 1, 20),
         paymentReferenceNumber = "SPAY-1"
     )
@@ -205,8 +208,7 @@ class SupplierAndOpeningPostingBalanceTest {
         openingStockId = UUID.randomUUID(),
         ledgerSourceReferenceNumber = "OS-1",
         locationProductId = UUID.randomUUID(),
-        userProvidedQuantity = BigDecimal("3"),
-        unitCost = BigDecimal("2.00"),
+        totalCost = Money.of(BigDecimal("6.00")),
         postingDate = LocalDate.of(2026, 1, 1)
     )
 
@@ -220,7 +222,7 @@ class SupplierAndOpeningPostingBalanceTest {
             ledgerSourceReferenceNumber = "OB-1",
             accountCode = systemAccount.code,
             accountEntryType = entryType,
-            amount = BigDecimal(amount),
+            amount = PositiveMoney.of(BigDecimal(amount)),
             postingDate = LocalDate.of(2026, 1, 1)
         )
 }

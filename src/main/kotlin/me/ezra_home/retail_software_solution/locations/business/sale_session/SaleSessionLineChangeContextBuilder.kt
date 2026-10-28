@@ -15,8 +15,8 @@ import java.util.UUID
 data class SaleSessionLineChangeContext(
     val locationProductSummariesById: Map<UUID, LocationProductSummaryDto>,
     val defaultSalePricesByLocationProductId: Map<UUID, BigDecimal?>,
-    val newStorageUnitsPerUnitByLineKey: Map<UUID, Long>,
-    val baseUnitSizeInRootByBaseUnitId: Map<UUID, Long>,
+    val newStorageUnitsPerUserProvidedUnitByLineKey: Map<UUID, Long>,
+    val storageUnitsPerBaseUnitByBaseUnitId: Map<UUID, Long>,
 )
 
 @Service
@@ -46,13 +46,13 @@ class SaleSessionLineChangeContextBuilder(
             ?.let { locationProductDataFetcher.findSummaryByIds(it) }
             ?: emptyMap()
 
-        val storageUnitsPerUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             unitChangingLines.map { (lineUpdateDto, saleSessionLine) ->
                 LocationProductUnitRequestDto(saleSessionLine.locationProductId, lineUpdateDto.unitId)
             }
         )
-        val newStorageUnitsPerUnitByLineKey = unitChangingLines.associate { (lineUpdateDto, saleSessionLine) ->
-            lineUpdateDto.identity.key() to storageUnitsPerUnitByLocationProductId.getValue(saleSessionLine.locationProductId)
+        val newStorageUnitsPerUserProvidedUnitByLineKey = unitChangingLines.associate { (lineUpdateDto, saleSessionLine) ->
+            lineUpdateDto.identity.key() to storageUnitsPerUserProvidedUnitByLocationProductId.getValue(saleSessionLine.locationProductId)
         }
 
         val defaultSalePricesByLocationProductId = additionLocationProductIds
@@ -63,13 +63,13 @@ class SaleSessionLineChangeContextBuilder(
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         val baseUnitIds = locationProductSummariesById.values.map { it.baseUnitId } +
             updates.map { saleSessionLinesByKey.getValue(it.identity.key()).baseUnitId }
-        val baseUnitSizeInRootByBaseUnitId = baseUnitIds.distinct().associateWith { unitConversionGraph.getSizeInRoot(it) }
+        val storageUnitsPerBaseUnitByBaseUnitId = baseUnitIds.distinct().associateWith { unitConversionGraph.getSizeInRoot(it) }
 
         return SaleSessionLineChangeContext(
             locationProductSummariesById = locationProductSummariesById,
             defaultSalePricesByLocationProductId = defaultSalePricesByLocationProductId,
-            newStorageUnitsPerUnitByLineKey = newStorageUnitsPerUnitByLineKey,
-            baseUnitSizeInRootByBaseUnitId = baseUnitSizeInRootByBaseUnitId,
+            newStorageUnitsPerUserProvidedUnitByLineKey = newStorageUnitsPerUserProvidedUnitByLineKey,
+            storageUnitsPerBaseUnitByBaseUnitId = storageUnitsPerBaseUnitByBaseUnitId,
         )
     }
 }

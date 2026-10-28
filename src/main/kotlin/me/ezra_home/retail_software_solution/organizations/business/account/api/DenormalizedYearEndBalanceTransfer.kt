@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.account.api
 
+import me.ezra_home.retail_software_solution.organizations.business.account.AccountEntity
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountRepository
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -33,23 +34,26 @@ class DenormalizedYearEndBalanceTransfer(
         val closingAccounts = closingAccountsByCode.values.filter { currentBalancesByCode.getValue(it.code).signum() != 0 }
         if (closingAccounts.isEmpty()) return
 
-        val revenueNet = closingAccounts
-            .filter { it.accountType == AccountType.REVENUE || it.accountType == AccountType.REVENUE_CONTRA }
-            .fold(BigDecimal.ZERO) { runningTotal, closingAccount ->
-                val currentBalance = currentBalancesByCode.getValue(closingAccount.code)
-                if (closingAccount.accountType == AccountType.REVENUE) runningTotal + currentBalance else runningTotal - currentBalance
-            }
-        val expenseNet = closingAccounts
-            .filter { it.accountType == AccountType.EXPENSE || it.accountType == AccountType.EXPENSE_CONTRA }
-            .fold(BigDecimal.ZERO) { runningTotal, closingAccount ->
-                val currentBalance = currentBalancesByCode.getValue(closingAccount.code)
-                if (closingAccount.accountType == AccountType.EXPENSE) runningTotal + currentBalance else runningTotal - currentBalance
-            }
+        val revenueNet = netBalance(closingAccounts, currentBalancesByCode, AccountType.REVENUE, AccountType.REVENUE_CONTRA)
+        val expenseNet = netBalance(closingAccounts, currentBalancesByCode, AccountType.EXPENSE, AccountType.EXPENSE_CONTRA)
         val netIncome = revenueNet - expenseNet
 
+        val balanceUpdatedAt = Instant.now()
         closingAccounts.forEach { closingAccount ->
-            accountRepository.incrementBalance(closingAccount.code, currentBalancesByCode.getValue(closingAccount.code).negate(), Instant.now())
+            accountRepository.incrementBalance(closingAccount.code, currentBalancesByCode.getValue(closingAccount.code).negate(), balanceUpdatedAt)
         }
-        accountRepository.incrementBalance(retainedEarnings.code, netIncome, Instant.now())
+        accountRepository.incrementBalance(retainedEarnings.code, netIncome, balanceUpdatedAt)
     }
+
+    private fun netBalance(
+        closingAccounts: List<AccountEntity>,
+        currentBalancesByCode: Map<String, BigDecimal>,
+        accountType: AccountType,
+        contraAccountType: AccountType
+    ): BigDecimal = closingAccounts
+        .filter { it.accountType == accountType || it.accountType == contraAccountType }
+        .fold(BigDecimal.ZERO) { runningTotal, closingAccount ->
+            val currentBalance = currentBalancesByCode.getValue(closingAccount.code)
+            if (closingAccount.accountType == accountType) runningTotal + currentBalance else runningTotal - currentBalance
+        }
 }

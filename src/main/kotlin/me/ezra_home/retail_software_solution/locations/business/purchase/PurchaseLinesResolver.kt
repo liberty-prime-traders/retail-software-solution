@@ -7,7 +7,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 data class LineUpdateResult(
@@ -39,13 +38,12 @@ class PurchaseLinesResolver(
     }
 
     private fun computeAdditions(purchaseId: UUID, linesToAdd: List<PurchaseLineCreateDto>): List<PurchaseLineEntity> {
-        PurchaseValidator.guardPositiveLineQuantities(linesToAdd)
         locationProductService.guardAllActive(linesToAdd.map { it.locationProductId })
-        val storageUnitsPerUnitByProductId = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitByProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             linesToAdd.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
         )
         return linesToAdd.map {
-            PurchaseMapper.toNewLineEntity(purchaseId, it, storageUnitsPerUnitByProductId.getValue(it.locationProductId))
+            PurchaseMapper.toNewLineEntity(purchaseId, it, storageUnitsPerUserProvidedUnitByProductId.getValue(it.locationProductId))
         }
     }
 
@@ -64,7 +62,7 @@ class PurchaseLinesResolver(
         val changedUnitLineDtos = linesToUpdate.filter { lineDto ->
             existingLinesById[lineDto.id]?.unitId != lineDto.unitId
         }
-        val storageUnitsPerUnitForChangedProducts = locationProductDataFetcher.getStorageUnitsPerUnit(
+        val storageUnitsPerUserProvidedUnitForChangedProducts = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
             changedUnitLineDtos.map {
                 LocationProductUnitRequestDto(existingLinesById[it.id]!!.locationProductId, it.unitId)
             }
@@ -72,15 +70,14 @@ class PurchaseLinesResolver(
 
         for ((id, userProvidedQuantityOrdered, unitId, unitCost) in linesToUpdate) {
             val existing = existingLinesById[id] ?: continue
-            PurchaseValidator.guardNonNegativeUpdateQuantity(userProvidedQuantityOrdered)
-            if (userProvidedQuantityOrdered.compareTo(BigDecimal.ZERO) == 0) {
+            if (userProvidedQuantityOrdered.isZero()) {
                 toDelete.add(existing)
             } else {
-                existing.userProvidedQuantityOrdered = userProvidedQuantityOrdered
-                existing.unitCost = unitCost
+                existing.userProvidedQuantityOrdered = userProvidedQuantityOrdered.toBigDecimal()
+                existing.unitCost = unitCost.toBigDecimal()
                 if (existing.unitId != unitId) {
                     existing.unitId = unitId
-                    existing.storageUnitsPerUnit = storageUnitsPerUnitForChangedProducts.getValue(existing.locationProductId)
+                    existing.storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitForChangedProducts.getValue(existing.locationProductId)
                 }
                 toSave.add(existing)
             }

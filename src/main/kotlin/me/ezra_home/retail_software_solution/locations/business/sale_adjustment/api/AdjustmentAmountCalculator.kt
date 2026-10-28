@@ -1,21 +1,27 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LinePricing
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductLineWithPrice
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import java.math.BigDecimal
 
 object AdjustmentAmountCalculator {
 
-    fun calculateAmount(dto: SaleAdjustmentCreateDto, lines: List<ProductLineWithPrice>): BigDecimal =
-        when (dto.calculationMethod) {
-            PriceAdjustmentMethod.FIXED_LINE_TOTAL -> dto.value
+    fun calculateAmount(saleAdjustmentCreateDto: SaleAdjustmentCreateDto, productLinesWithPrice: List<ProductLineWithPrice>): BigDecimal =
+        when (saleAdjustmentCreateDto.calculationMethod) {
+            PriceAdjustmentMethod.UNIT_PRICE_OVERRIDE -> {
+                val overriddenLine = productLinesWithPrice.first { it.locationProductId == saleAdjustmentCreateDto.locationProductId }
+                Decimals.MoneyScale.round(
+                    LinePricing.overrideDifference(overriddenLine.lineTotal, saleAdjustmentCreateDto.value, overriddenLine.userProvidedQuantity).abs()
+                )
+            }
             PriceAdjustmentMethod.PERCENTAGE -> {
-                val basePrice = if (dto.locationProductId != null) {
-                    lines.first { it.locationProductId == dto.locationProductId }.lineTotal
+                val basePrice = if (saleAdjustmentCreateDto.locationProductId != null) {
+                    productLinesWithPrice.first { it.locationProductId == saleAdjustmentCreateDto.locationProductId }.lineTotal
                 } else {
-                    lines.sumOf { it.lineTotal }
+                    productLinesWithPrice.sumOf { it.lineTotal }
                 }
-                Decimals.Scale4.divide(dto.value.multiply(basePrice), BigDecimal(100))
+                Decimals.MoneyScale.divide(saleAdjustmentCreateDto.value.multiply(basePrice), BigDecimal(100))
             }
         }
 }

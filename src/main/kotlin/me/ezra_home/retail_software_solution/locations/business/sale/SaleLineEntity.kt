@@ -31,19 +31,20 @@ class SaleLineEntity(
     @Column(name = "unit_id", nullable = false)
     var unitId: UUID,
 
+    // Gross, before any price override
     @Column(name = "line_total", nullable = false, precision = 19, scale = 4)
     override var lineTotal: BigDecimal,
 
     @Column(name = "default_sale_price", nullable = false, precision = 28, scale = 10)
     var defaultSalePrice: BigDecimal,
 
-    @Column(name = "storage_units_per_unit", nullable = false)
-    var storageUnitsPerUnit: Long,
+    @Column(name = "storage_units_per_user_provided_unit", nullable = false)
+    var storageUnitsPerUserProvidedUnit: Long,
 
     @Column(name = "cogs_total", precision = 19, scale = 4)
     var cogsTotal: BigDecimal? = null
 
 ) : HasReferenceEntity(), ProductLineWithPrice {
 
-    fun storageQuantity(): ExactQuantity = ExactQuantity.ofUserProvided(userProvidedQuantity, storageUnitsPerUnit)
+    fun storageQuantity(): ExactQuantity = ExactQuantity.ofStorageFromUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit)
 }

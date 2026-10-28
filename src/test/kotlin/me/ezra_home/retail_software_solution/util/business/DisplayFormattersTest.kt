@@ -20,4 +20,10 @@ class DisplayFormattersTest {
     fun `any other quantity is plural`() {
         assertEquals("0.5 bales", DisplayFormatters.pluralize("0.5 bale", BigDecimal("0.5")))
     }
+
+    @Test
+    fun `currency formatting rounds half up like the money scale`() {
+        assertEquals("KES 0.13", DisplayFormatters.formatCurrency(BigDecimal("0.125")))
+        assertEquals("KES 1,234.50", DisplayFormatters.formatCurrency(Money.of(BigDecimal("1234.5"))))
+    }
 }

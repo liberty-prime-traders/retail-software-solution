@@ -2,11 +2,11 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session.ap
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
-import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.business.Percentage
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.quantity.QuantityLimits
-import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
 import java.time.OffsetDateTime
 import java.util.Optional
 import java.util.UUID
@@ -25,24 +25,16 @@ data class SaleSessionStartDto(
 data class SaleSessionLineAddDto(
     val locationProductId: UUID,
     @param:JsonProperty("quantity")
-    val userProvidedQuantity: BigDecimal,
-) {
-    init {
-        Decimals.requireMaxDecimalPlaces(userProvidedQuantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
-    }
-}
+    val userProvidedQuantity: PositiveUserProvidedQuantity,
+)
 
 data class SaleSessionLineUpdateDto(
     val identity: SessionIdentity,
     @param:JsonProperty("quantity")
-    val userProvidedQuantity: BigDecimal,
+    val userProvidedQuantity: PositiveUserProvidedQuantity,
     val unitId: UUID,
-    val unitPriceOverride: BigDecimal,
-) {
-    init {
-        Decimals.requireMaxDecimalPlaces(userProvidedQuantity, QuantityLimits.MAX_USER_QUANTITY_DECIMAL_PLACES, "Quantity")
-    }
-}
+    val unitPriceOverride: Money? = null,
+)
 
 data class SaleSessionLineRequestDto(
     val additions: List<SaleSessionLineAddDto> = emptyList(),
@@ -57,15 +49,20 @@ data class SaleSessionAdjustmentAddDto(
     val relatedSaleLineIdentity: SessionIdentity? = null,
     val adjustmentReasonId: UUID,
     val direction: AdjustmentDirection,
-    val calculationMethod: PriceAdjustmentMethod,
-    val value: BigDecimal,
+    val percentage: Percentage,
     val note: String? = null,
     val approvedById: UUID? = null,
-)
+) {
+    init {
+        if (direction == AdjustmentDirection.BOTH) {
+            throw RtsGenericException("An adjustment is applied as a DISCOUNT or a SURCHARGE, never BOTH")
+        }
+    }
+}
 
 data class SaleSessionPaymentAddDto(
     val paymentMethodId: UUID,
-    val amount: BigDecimal,
+    val amount: PositiveMoney,
     val reference: String? = null,
     val paymentDate: OffsetDateTime? = null,
 )

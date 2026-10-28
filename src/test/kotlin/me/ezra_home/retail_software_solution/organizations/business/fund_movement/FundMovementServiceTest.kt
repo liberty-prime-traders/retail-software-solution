@@ -1,5 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.fund_movement
 
+import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
+import me.ezra_home.retail_software_solution.configuration.session.OrgSession
+import me.ezra_home.retail_software_solution.configuration.session.SessionContext
+import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.fund_movement.api.FundMovementCapitalRequest
 import me.ezra_home.retail_software_solution.organizations.business.fund_movement.api.FundMovementDrawRequest
@@ -11,12 +15,9 @@ import me.ezra_home.retail_software_solution.organizations.business.fund_movemen
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
-import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
-import me.ezra_home.retail_software_solution.configuration.session.OrgSession
-import me.ezra_home.retail_software_solution.configuration.session.SessionContext
-import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
@@ -27,16 +28,10 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyList
-import org.mockito.ArgumentCaptor
-import org.mockito.Mockito.doAnswer
-import org.mockito.Mockito.doThrow
-import org.mockito.Mockito.inOrder
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -95,7 +90,7 @@ class FundMovementServiceTest {
     @Test
     fun `a transfer to the same account is rejected before anything is saved or posted`() {
         assertThrows(RtsGenericException::class.java) {
-            fundMovementService.createTransfer(FundMovementTransferRequest(cashCode, cashCode, BigDecimal("10"), movementDate))
+            fundMovementService.createTransfer(FundMovementTransferRequest(cashCode, cashCode, PositiveMoney.of(BigDecimal("10")), movementDate))
         }
 
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
@@ -104,7 +99,7 @@ class FundMovementServiceTest {
 
     @Test
     fun `a transfer debits the destination and credits the source`() {
-        fundMovementService.createTransfer(FundMovementTransferRequest(cashCode, digitalPaymentsCode, BigDecimal("10"), movementDate))
+        fundMovementService.createTransfer(FundMovementTransferRequest(cashCode, digitalPaymentsCode, PositiveMoney.of(BigDecimal("10")), movementDate))
 
         val saved = savedEntity()
         assertEquals(FundMovementType.TRANSFER_BETWEEN_ACCOUNTS, saved.type)
@@ -115,7 +110,7 @@ class FundMovementServiceTest {
 
     @Test
     fun `capital debits the picked account and credits owners capital`() {
-        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), movementDate))
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(BigDecimal("10")), movementDate))
 
         val saved = savedEntity()
         assertEquals(cashCode, saved.debitAccountCode)
@@ -124,13 +119,13 @@ class FundMovementServiceTest {
     }
 
     @Test
-    fun `a draw debits owners draws, credits the picked account, rounds the amount and blanks the note`() {
-        fundMovementService.createDraw(FundMovementDrawRequest(cashCode, BigDecimal("10.12345"), movementDate, "   "))
+    fun `a draw debits owners draws, credits the picked account and blanks the note`() {
+        fundMovementService.createDraw(FundMovementDrawRequest(cashCode, PositiveMoney.of(BigDecimal("10.12")), movementDate, "   "))
 
         val saved = savedEntity()
         assertEquals(SystemAccount.OWNERS_DRAWS.code, saved.debitAccountCode)
         assertEquals(cashCode, saved.creditAccountCode)
-        assertEquals(BigDecimal("10.1235"), saved.amount)
+        assertEquals(BigDecimal("10.12"), saved.amount)
         assertNull(saved.note)
 
         val posted = postedRequests.single()
@@ -142,22 +137,15 @@ class FundMovementServiceTest {
     fun `zero, negative and amounts that round to zero are rejected`() {
         listOf("0", "-5", "0.00004").forEach { amount ->
             assertThrows(RtsGenericException::class.java) {
-                fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal(amount), movementDate))
+                fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(BigDecimal(amount)), movementDate))
             }
         }
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
     }
 
     @Test
-    fun `an amount above the transaction maximum is rejected and the maximum itself is accepted`() {
-        assertThrows(RtsGenericException::class.java) {
-            fundMovementService.createCapital(
-                FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT.add(BigDecimal("0.0001")), movementDate)
-            )
-        }
-        verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
-
-        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, Decimals.MAXIMUM_TRANSACTION_AMOUNT, movementDate))
+    fun `the transaction maximum itself is accepted`() {
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(Decimals.MAXIMUM_TRANSACTION_AMOUNT), movementDate))
 
         assertEquals(Decimals.MAXIMUM_TRANSACTION_AMOUNT, savedEntity().amount)
     }
@@ -166,7 +154,7 @@ class FundMovementServiceTest {
     fun `a long note is kept in full`() {
         val longNote = "n".repeat(2000)
 
-        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), movementDate, longNote))
+        fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(BigDecimal("10")), movementDate, longNote))
 
         assertEquals(longNote, savedEntity().note)
     }
@@ -176,7 +164,7 @@ class FundMovementServiceTest {
         val tomorrow = DateTimes.Local.Now.organization().plusDays(1)
 
         assertThrows(RtsGenericException::class.java) {
-            fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), tomorrow))
+            fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(BigDecimal("10")), tomorrow))
         }
 
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
@@ -188,7 +176,7 @@ class FundMovementServiceTest {
         doThrow(RtsGenericException("Fund movement account is inactive")).`when`(fundMovementAccountValidator).requireSelectable(listOf(cashCode))
 
         assertThrows(RtsGenericException::class.java) {
-            fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, BigDecimal("10"), movementDate))
+            fundMovementService.createCapital(FundMovementCapitalRequest(cashCode, PositiveMoney.of(BigDecimal("10")), movementDate))
         }
 
         verify(fundMovementRepository, never()).save(any(FundMovementEntity::class.java))
@@ -199,7 +187,7 @@ class FundMovementServiceTest {
         doThrow(RtsGenericException("No open fiscal period")).`when`(ledgerPostingService).post(anyNonNull(LedgerPostingRequest::class.java))
 
         assertThrows(RtsGenericException::class.java) {
-            fundMovementService.createDraw(FundMovementDrawRequest(cashCode, BigDecimal("10"), movementDate))
+            fundMovementService.createDraw(FundMovementDrawRequest(cashCode, PositiveMoney.of(BigDecimal("10")), movementDate))
         }
 
         val transactional = FundMovementService::class.java.getAnnotation(TransactionalOnOrganizationSchema::class.java)

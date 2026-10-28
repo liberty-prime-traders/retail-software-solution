@@ -72,7 +72,7 @@ object SaleSessionQualifierUtil {
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.conversionFactor(
-        saleSessionLine.storageUnitsPerUnit, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine)
+        saleSessionLine.storageUnitsPerUserProvidedUnit, lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine)
     )
 
     @LineBaseQuantity
@@ -81,34 +81,34 @@ object SaleSessionQualifierUtil {
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.baseQuantity(
         saleSessionLine.userProvidedQuantity,
-        saleSessionLine.storageUnitsPerUnit,
-        lineMappingContext.baseUnitSizeInRootFor(saleSessionLine),
+        saleSessionLine.storageUnitsPerUserProvidedUnit,
+        lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine),
         RoundingMode.DOWN,
     )
 
     // On hand and available round down and reserved rounds up, so the displayed available never exceeds what can be sold.
-    @LineOnHandInProductBaseUnit
-    fun toLineOnHandInProductBaseUnit(
+    @LineQuantityOnHandInBaseUnit
+    fun toLineQuantityOnHandInBaseUnit(
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
-        saleSessionLine.storageQuantityOnHand, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.DOWN
+        saleSessionLine.storageQuantityOnHand, lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine), RoundingMode.DOWN
     )
 
-    @LineReservedInProductBaseUnit
-    fun toLineReservedInProductBaseUnit(
+    @LineQuantityReservedInBaseUnit
+    fun toLineQuantityReservedInBaseUnit(
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
-        saleSessionLine.storageQuantityReserved, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.UP
+        saleSessionLine.storageQuantityReserved, lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine), RoundingMode.UP
     )
 
-    @LineAvailableInProductBaseUnit
-    fun toLineAvailableInProductBaseUnit(
+    @LineQuantityAvailableInBaseUnit
+    fun toLineQuantityAvailableInBaseUnit(
         saleSessionLine: SaleSessionLine,
         @Context lineMappingContext: LineMappingContext,
     ): BigDecimal = BaseUnitDisplay.storageQuantityInBaseUnit(
-        saleSessionLine.storageQuantityAvailable, lineMappingContext.baseUnitSizeInRootFor(saleSessionLine), RoundingMode.DOWN
+        saleSessionLine.storageQuantityAvailable, lineMappingContext.storageUnitsPerBaseUnitFor(saleSessionLine), RoundingMode.DOWN
     )
 
     @LineOnHandBreakdown

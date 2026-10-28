@@ -10,11 +10,11 @@ import me.ezra_home.retail_software_solution.organizations.business.loan.LoanMap
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanPostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanRepository
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanResponseBuilder
+import me.ezra_home.retail_software_solution.organizations.business.loan.LoanStatusResolver
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanVoidEntity
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanVoidRepository
 import me.ezra_home.retail_software_solution.organizations.business.loan.LoanVoidValidator
 import me.ezra_home.retail_software_solution.util.business.DateTimes
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -34,7 +34,7 @@ class LoanService(
 ) {
 
     fun createLoan(loanCreateRequest: LoanCreateRequest): LoanResponse {
-        val roundedAmount = Decimals.Scale4.requirePositiveAmount(loanCreateRequest.amount)
+        val loanAmount = loanCreateRequest.amount.toBigDecimal()
         val assetAccountCode = StringUtils.getValueOrException(loanCreateRequest.assetAccountCode, "Asset account is required")
         DateTimes.Local.requireNotInFuture(loanCreateRequest.loanDate, "Loan date")
         val trimmedNote = StringUtils.getValueOrNull(loanCreateRequest.note)
@@ -42,7 +42,7 @@ class LoanService(
         loanAccountValidator.requireSelectable(assetAccountCode)
         val loanDto = loanMapper.toDto(
             loanRepository.save(
-                LoanEntity(lenderContactDto.id, assetAccountCode, roundedAmount, loanCreateRequest.loanDate, trimmedNote)
+                LoanEntity(lenderContactDto.id, assetAccountCode, loanAmount, loanCreateRequest.loanDate, trimmedNote)
             )
         )
         ledgerPostingService.post(
@@ -51,7 +51,7 @@ class LoanService(
                 loanDto.amount, loanDto.loanDate
             )
         )
-        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto)
+        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto, LoanStatusResolver.forNewLoan(loanDto.amount))
     }
 
     fun voidLoan(loanVoidRequest: LoanVoidRequest): LoanResponse {
@@ -60,6 +60,7 @@ class LoanService(
         val loanDto = loanFinder.findLoan(loanVoidRequest.loanId)
         loanVoidValidator.requireVoidable(loanDto)
         val lenderContactDto = loanFinder.findLender(loanDto)
+        val loanStatusFiguresBeforeVoid = loanFinder.findLoanStatusFigures(loanDto.id)
         val loanVoidDto = loanMapper.toVoidDto(
             loanVoidRepository.save(LoanVoidEntity(loanDto.id, DateTimes.Local.Now.organization(), reason))
         )
@@ -69,7 +70,7 @@ class LoanService(
                 loanDto.amount, loanVoidDto.voidDate
             )
         )
-        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto)
+        return loanResponseBuilder.buildResponse(loanDto, lenderContactDto, LoanStatusResolver.afterLoanVoid(loanStatusFiguresBeforeVoid))
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)
@@ -77,6 +78,7 @@ class LoanService(
         val loanEntity = loanRepository.findByReferenceNumber(loanReference)
             ?: throw RtsGenericException("Loan not found: $loanReference")
         val loanDto = loanMapper.toDto(loanEntity)
-        return loanResponseBuilder.buildResponse(loanDto, loanFinder.findLender(loanDto))
+        val lenderContactDto = loanFinder.findLender(loanDto)
+        return loanResponseBuilder.buildResponses(listOf(loanDto), mapOf(lenderContactDto.id to lenderContactDto)).single()
     }
 }

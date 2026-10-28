@@ -71,11 +71,11 @@ databaseChangeLog:
                     notNullConstraintName: sale_line_default_sale_price_notnull
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
                   constraints:
                     nullable: false
-                    notNullConstraintName: sale_line_storage_units_per_unit_notnull
+                    notNullConstraintName: sale_line_storage_units_per_user_provided_unit_notnull
 
               - column:
                   name: cogs_total

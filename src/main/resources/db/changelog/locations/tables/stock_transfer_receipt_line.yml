@@ -40,7 +40,7 @@ databaseChangeLog:
                   type: varchar(30)
                   constraints:
                     nullable: false
-                    notNullConstraintName: stock_transfer_receipt_line_stock_transfer_dispatch_line_ref_notnull
+                    notNullConstraintName: strcl_stock_transfer_dispatch_line_ref_notnull
                     unique: true
                     uniqueConstraintName: uq_stock_transfer_receipt_line_stock_transfer_dispatch_line_ref
 

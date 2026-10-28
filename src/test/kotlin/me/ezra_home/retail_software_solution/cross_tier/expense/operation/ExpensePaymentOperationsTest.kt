@@ -4,40 +4,36 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseSourceType
+import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
+import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentCreateRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.request.ExpensePaymentVoidRequest
 import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseResponseBuilder
 import me.ezra_home.retail_software_solution.cross_tier.expense.response.ExpenseSummaryResponse
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.PaymentInstruction
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseAggregate
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDto
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentDraft
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpenseDto
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.ResolvedSettlement
-import me.ezra_home.retail_software_solution.cross_tier.expense.model.SettledExpense
 import me.ezra_home.retail_software_solution.cross_tier.expense.store.ExpenseStore
-import me.ezra_home.retail_software_solution.cross_tier.expense.ExpenseTier
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.ExpensePaymentVoidedEvent
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyCollection
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.mockito.Mockito.mockingDetails
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoInteractions
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.springframework.context.ApplicationEventPublisher
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -89,7 +85,7 @@ class ExpensePaymentOperationsTest {
 
         assertThrows(RtsGenericException::class.java) {
             expensePaymentOperations.recordPayments(
-                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("50")))
+                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("50"))))
             )
         }
         assertNoPaymentsSaved()
@@ -98,7 +94,7 @@ class ExpensePaymentOperationsTest {
     @Test
     fun `payments to one expense are checked together and the error names the total and the excess`() {
         val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
-        val sixtyEach = ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("60"))
+        val sixtyEach = ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("60")))
 
         val exception = assertThrows(RtsGenericException::class.java) {
             expensePaymentOperations.recordPayments(listOf(sixtyEach, sixtyEach))
@@ -112,13 +108,13 @@ class ExpensePaymentOperationsTest {
     fun `payments to one expense are saved in a single batch`() {
         val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
         val drafts = listOf(
-            ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()),
-            ExpensePaymentDraft(expenseDto.id, BigDecimal("70.0000"), resolvedSettlement())
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("30.00"), resolvedSettlement()),
+            ExpensePaymentDraft(expenseDto.id, BigDecimal("70.00"), resolvedSettlement())
         )
         `when`(expenseStore.savePayments(drafts))
             .thenReturn(listOf(paymentDto(expenseDto.id, "30"), paymentDto(expenseDto.id, "70")))
         val requests = listOf("30", "70").map {
-            ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal(it))
+            ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal(it)))
         }
 
         expensePaymentOperations.recordPayments(requests)
@@ -143,7 +139,7 @@ class ExpensePaymentOperationsTest {
         `when`(expenseStore.findExpensesByReferences(listOf(higherIdExpense.referenceNumber, lowerIdExpense.referenceNumber)))
             .thenReturn(listOf(firstExpense, secondExpense))
         `when`(expenseStore.savePayments(listOf(higherIdExpense, lowerIdExpense).map {
-            ExpensePaymentDraft(it.id, BigDecimal("10.0000"), resolvedSettlement())
+            ExpensePaymentDraft(it.id, BigDecimal("10.00"), resolvedSettlement())
         })).thenReturn(listOf(higherIdExpense, lowerIdExpense).map { paymentDto(it.id, "10") })
         `when`(expenseStore.loadForExpenses(anyCollection())).thenReturn(
             ExpenseAggregate(emptyList(), listOf(lowerIdExpense, higherIdExpense), emptyList(), emptyList(), emptyList())
@@ -151,8 +147,8 @@ class ExpensePaymentOperationsTest {
 
         val summaries = expensePaymentOperations.recordPayments(
             listOf(
-                ExpensePaymentCreateRequest(higherIdExpense.referenceNumber, settlementInstruction, BigDecimal("10")),
-                ExpensePaymentCreateRequest(lowerIdExpense.referenceNumber, settlementInstruction, BigDecimal("10"))
+                ExpensePaymentCreateRequest(higherIdExpense.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("10"))),
+                ExpensePaymentCreateRequest(lowerIdExpense.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("10")))
             )
         )
 
@@ -238,11 +234,11 @@ class ExpensePaymentOperationsTest {
     @Test
     fun `recording payments refreshes the payment state of each paid expense after the payments are saved`() {
         val expenseDto = stubExpense(amount = "100", activePayments = emptyList())
-        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("30.0000"), resolvedSettlement()))))
+        `when`(expenseStore.savePayments(listOf(ExpensePaymentDraft(expenseDto.id, BigDecimal("30.00"), resolvedSettlement()))))
             .thenReturn(listOf(paymentDto(expenseDto.id, "30")))
 
         expensePaymentOperations.recordPayments(
-            listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("30")))
+            listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("30"))))
         )
 
         assertRefreshedAfter("savePayments", listOf(expenseDto))
@@ -296,7 +292,7 @@ class ExpensePaymentOperationsTest {
 
         assertThrows(RtsGenericException::class.java) {
             expensePaymentOperations.recordPayments(
-                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, BigDecimal("50")))
+                listOf(ExpensePaymentCreateRequest(expenseDto.referenceNumber, settlementInstruction, PositiveMoney.of(BigDecimal("50"))))
             )
         }
 

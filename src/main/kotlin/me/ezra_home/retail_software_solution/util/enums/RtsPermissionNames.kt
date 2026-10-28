@@ -10,5 +10,4 @@ object RtsPermissionNames {
     const val VIEW_USERS_OF_LOCATION = "VIEW_USERS_OF_LOCATION"
     const val VIEW_USERS_OF_ORG = "VIEW_USERS_OF_ORG"
     const val LIBERTY_ADMIN = "LIBERTY_ADMIN"
-    const val LIBERTY_CASHIER = "LIBERTY_CASHIER"
 }

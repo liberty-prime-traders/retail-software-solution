@@ -1,8 +1,9 @@
 package me.ezra_home.retail_software_solution.organizations.business.contact.api
 
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import java.io.Serializable
 
-sealed interface ContactIdentity {
+sealed interface ContactIdentity : Serializable {
     val displayName: String
 
     val identityType: IdentityType

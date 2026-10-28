@@ -103,4 +103,13 @@ class QuantityBreakdownTest {
         assertEquals("1 Bale 8 Pieces", before)
         assertEquals("1 Sack 8 Pieces", render(listOf(piece, renamedBale), renamedBale, "26"))
     }
+
+    @Test
+    fun `a typed quantity renders as typed in its own unit, pluralized, never broken down`() {
+        val breakdown = QuantityBreakdown.forBaseUnit(listOf(piece, bale), bale.id)
+
+        assertEquals("1 Bale", breakdown.renderUserProvided(BigDecimal("1.00"), bale.id))
+        assertEquals("2.5 Bales", breakdown.renderUserProvided(BigDecimal("2.50"), bale.id))
+        assertEquals("26 Pieces", breakdown.renderUserProvided(BigDecimal("26"), piece.id))
+    }
 }

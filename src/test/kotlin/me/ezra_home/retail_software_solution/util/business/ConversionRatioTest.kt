@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.util.business
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.math.BigDecimal
 import kotlin.test.assertEquals
 
 class ConversionRatioTest {
@@ -31,11 +30,6 @@ class ConversionRatioTest {
     fun `reduced divides out the gcd`() {
         val ratio = ConversionRatio(24L, 6L).reduced()
         assertEquals(ConversionRatio(4L, 1L), ratio)
-    }
-
-    @Test
-    fun `convertPriceRoundingHalfUp keeps money at scale 4`() {
-        assertEquals(BigDecimal("3.3333"), ConversionRatio(1L, 3L).convertPriceRoundingHalfUp(BigDecimal("10")))
     }
 
     @Test

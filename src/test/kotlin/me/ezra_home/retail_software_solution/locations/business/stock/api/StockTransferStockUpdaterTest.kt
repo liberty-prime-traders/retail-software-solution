@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api
 
+import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
@@ -20,19 +21,21 @@ import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.util.UUID
 
+@WithDefaultOrganizationSession
 class StockTransferStockUpdaterTest {
 
     @Test
     fun `consumeStockForDispatch accumulates a running balance across multiple dispatch lines for the same product`() {
         val locationProductId = UUID.randomUUID()
+        val pieceId = UUID.randomUUID()
         val firstDispatchLineRequest = StockTransferDispatchLineStockRequest(
             dispatchReference = "DISPATCH-1",
             dispatchLineReference = "DISPATCH-LINE-1",
             locationProductId = locationProductId,
             storageQuantity = ExactQuantity.ofStorage(BigDecimal("10.0000")),
             userProvidedQuantity = BigDecimal("10.0000"),
-            unitId = UUID.randomUUID(),
-            storageUnitsPerUnit = 1L,
+            unitId = pieceId,
+            storageUnitsPerUserProvidedUnit = 1L,
         )
         val secondDispatchLineRequest = StockTransferDispatchLineStockRequest(
             dispatchReference = "DISPATCH-1",
@@ -40,8 +43,8 @@ class StockTransferStockUpdaterTest {
             locationProductId = locationProductId,
             storageQuantity = ExactQuantity.ofStorage(BigDecimal("15.0000")),
             userProvidedQuantity = BigDecimal("15.0000"),
-            unitId = UUID.randomUUID(),
-            storageUnitsPerUnit = 1L,
+            unitId = pieceId,
+            storageUnitsPerUserProvidedUnit = 1L,
         )
         val locationProductIds = listOf(locationProductId, locationProductId)
 
@@ -62,7 +65,6 @@ class StockTransferStockUpdaterTest {
         val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
         val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
         val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
-        val pieceId = UUID.randomUUID()
         `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(
             mapOf(
                 locationProductId to QuantityBreakdown.forBaseUnit(

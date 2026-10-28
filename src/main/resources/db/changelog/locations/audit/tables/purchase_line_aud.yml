@@ -44,7 +44,7 @@ databaseChangeLog:
 
               - column:
                   name: unit_cost
-                  type: decimal(15,2)
+                  type: decimal(19,4)
 
               - column:
                   name: unit_id
@@ -59,7 +59,7 @@ databaseChangeLog:
                   type: numeric(28, 4)
 
               - column:
-                  name: storage_units_per_unit
+                  name: storage_units_per_user_provided_unit
                   type: bigint
 
               - column:

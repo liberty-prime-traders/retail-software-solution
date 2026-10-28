@@ -10,7 +10,6 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.api.L
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
@@ -30,15 +29,13 @@ class OpeningStockAccountingProcessor(
         ).not()
 
     override fun prepareLedgerRequest(event: OpeningStockDeclaredEvent): LedgerPostingRequest {
-        val amount = Decimals.Scale4.multiply(event.userProvidedQuantity, event.unitCost)
+        val amount = event.totalCost.toBigDecimal()
         return LedgerPostingRequest(
             sourceReferenceNumber = event.ledgerSourceReferenceNumber,
             sourceType = LedgerSourceType.OPENING_STOCK,
             postingDate = event.postingDate,
-            entries = listOf(
-                LedgerEntryRequest.debit(SystemAccount.INVENTORY.code, amount),
-                LedgerEntryRequest.credit(SystemAccount.OPENING_BALANCE_EQUITY.code, amount)
-            ),
+            entries = LedgerEntryRequest.debitUnlessZero(SystemAccount.INVENTORY.code, amount) +
+                LedgerEntryRequest.creditUnlessZero(SystemAccount.OPENING_BALANCE_EQUITY.code, amount),
             subledgerEntries = emptyList()
         )
     }

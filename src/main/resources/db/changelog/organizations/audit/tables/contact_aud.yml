@@ -50,7 +50,7 @@ databaseChangeLog:
                   type: text
               - column:
                   name: credit_limit
-                  type: decimal(15,2)
+                  type: decimal(19,4)
               - column:
                   name: notes
                   type: text

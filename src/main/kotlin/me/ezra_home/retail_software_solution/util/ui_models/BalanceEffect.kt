@@ -15,8 +15,6 @@ enum class BalanceEffect {
     }
 
     companion object {
-        // A balance is stored in its account's normal direction,
-        // so a negative one sits on the wrong side for every account type.
         fun ofBalance(balance: BigDecimal, effectWhenNormal: BalanceEffect): BalanceEffect = when {
             balance.signum() == 0 -> ZERO
             balance.signum() < 0 -> IRREGULAR

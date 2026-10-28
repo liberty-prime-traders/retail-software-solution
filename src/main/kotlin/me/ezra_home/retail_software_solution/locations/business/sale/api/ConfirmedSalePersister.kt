@@ -96,7 +96,7 @@ class ConfirmedSalePersister(
                 locationProductId = saleLineEntity.locationProductId,
                 userProvidedQuantity = saleLineEntity.userProvidedQuantity,
                 unitId = saleLineEntity.unitId,
-                storageUnitsPerUnit = saleLineEntity.storageUnitsPerUnit,
+                storageUnitsPerUserProvidedUnit = saleLineEntity.storageUnitsPerUserProvidedUnit,
             )
         }
 

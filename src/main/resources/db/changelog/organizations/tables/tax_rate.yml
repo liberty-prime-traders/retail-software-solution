@@ -39,7 +39,7 @@ databaseChangeLog:
 
               - column:
                   name: rate_flat_amount
-                  type: decimal(15,4)
+                  type: decimal(19,4)
 
               - column:
                   name: tax_is_billed_to_customer_separately
