@@ -98,6 +98,13 @@ cost. `OpeningStockEntity` exists alongside them purely to:
   → `OpeningStockService.declareInitialStock`. Response is
   `List<OpeningStockResponseDto>` — `referenceNumber`, `locationProductId`,
   `productLabel`, `quantity`, `unitId`, `unitCost`, `declaredBy`, `declaredAt`.
+- `POST bulk` (body: `[{locationProductReferenceNumber, quantity, unitCode, unitCost, defaultSalePrice}]`)
+  → `OpeningStockBulkService.bulkDeclareInitialStock`. Same response as `POST`. Resolves each row's product
+  reference number (`LocationProductDataFetcher.findIdsByReferenceNumbers`) and unit code (`UnitValueFetcher`, codes are
+  unique org-wide) to ids, reporting every unresolvable or repeated row together as `Row N: ...`, then delegates the
+  resolved lines to `OpeningStockService.declareInitialStock` and, after it succeeds, writes each row's `defaultSalePrice`
+  to its location product via `LocationProductService.updateProduct`. Everything runs in one location transaction, so a
+  failed declaration leaves no price changed.
 - `GET` → `OpeningStockService.getAll` (all declarations for the current
   location, used by the UI to grey out products that already have an
   opening stock).

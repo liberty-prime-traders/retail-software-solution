@@ -1,9 +1,9 @@
 plugins {
-	kotlin("kapt") version "1.9.25"
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	kotlin("plugin.jpa") version "1.9.25"
-	id("org.springframework.boot") version "3.3.11"
+	kotlin("kapt") version "2.4.21"
+	kotlin("jvm") version "2.4.21"
+	kotlin("plugin.spring") version "2.4.21"
+	kotlin("plugin.jpa") version "2.4.21"
+	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("com.google.cloud.tools.jib") version "3.5.4"
 }
@@ -15,7 +15,7 @@ version = "0.0.1-SNAPSHOT"
 
 jib {
 	from {
-		image = "eclipse-temurin:17-jre"
+		image = "eclipse-temurin:25-jre"
 		platforms {
 			platform {
 				architecture = "arm64"
@@ -31,7 +31,8 @@ jib {
 
 java {
 	toolchain {
-		   languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(25)
+		vendor = JvmVendorSpec.ADOPTIUM
 	}
 }
 
@@ -44,10 +45,10 @@ val cucumberTestSourceSet = sourceSets.create("cucumberTest") {
 	runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
 }
 
-val cucumberTestImplementation: Configuration by configurations.getting {
+val cucumberTestImplementation: Configuration = configurations.getByName("cucumberTestImplementation") {
 	extendsFrom(configurations.testImplementation.get())
 }
-val cucumberTestRuntimeOnly: Configuration by configurations.getting {
+val cucumberTestRuntimeOnly: Configuration = configurations.getByName("cucumberTestRuntimeOnly") {
 	extendsFrom(configurations.testRuntimeOnly.get())
 }
 
@@ -82,7 +83,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-web")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("com.h2database:h2")
-	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+	testImplementation("com.tngtech.archunit:archunit-junit5:1.5.1")
 
 	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-suite-engine:1.10.2")
 	cucumberTestRuntimeOnly("org.junit.platform:junit-platform-launcher")

@@ -72,6 +72,19 @@ class SubledgerService(
         )
     }
 
+    @TransactionalOnOrganizationSchema
+    fun openBalances(contactReferenceNumbers: Collection<String>) {
+        subledgerBalanceRepository.saveAll(
+            contactReferenceNumbers.map {
+                SubledgerBalanceEntity(
+                    contactReferenceNumber = it,
+                    runningPayable = SubledgerBalanceDto.ZERO.payable,
+                    runningReceivable = SubledgerBalanceDto.ZERO.receivable
+                )
+            }
+        )
+    }
+
     fun getCurrentBalances(contactReferenceNumbers: Set<String>): Map<String, SubledgerBalanceDto> {
         if (contactReferenceNumbers.isEmpty()) return emptyMap()
         return subledgerBalanceRepository.findByContactReferenceNumberIn(contactReferenceNumbers)

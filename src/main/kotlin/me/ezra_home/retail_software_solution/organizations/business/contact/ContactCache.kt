@@ -35,6 +35,12 @@ class ContactCache(
     }
 
     @CacheEvict(allEntries = true)
+    fun createAll(insertDtos: List<ContactInsertDto>): List<ContactDto> {
+        val saved = contactRepository.saveAll(insertDtos.map { contactMapper.toEntity(it) })
+        return saved.map { contactMapper.toDomainDto(it) }
+    }
+
+    @CacheEvict(allEntries = true)
     fun save(contactDto: ContactDto): ContactDto {
         val saved = contactRepository.save(contactMapper.toEntity(contactDto))
         return contactMapper.toDomainDto(saved)
