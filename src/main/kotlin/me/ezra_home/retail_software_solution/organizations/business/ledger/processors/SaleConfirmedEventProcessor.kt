@@ -28,7 +28,9 @@ class SaleConfirmedEventProcessor(
 
     @TransactionalOnOrganizationSchema(readOnly = true)
     override fun shouldProcess(event: SaleConfirmedEvent): Boolean =
-        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceLocationId(event.saleReferenceNumber, SessionContextProvider.getLocationId()).not()
+        ledgerEntryGroupRepository.existsBySourceReferenceNumberAndSourceLocationId(
+            event.saleReferenceNumber, SessionContextProvider.getLocationId()
+        ).not()
 
     override fun prepareLedgerRequest(event: SaleConfirmedEvent): LedgerPostingRequest {
         val contact = contactService.getContactById(event.contactId)

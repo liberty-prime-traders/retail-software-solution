@@ -57,8 +57,12 @@ BEGIN
       EXECUTE format('ALTER SEQUENCE %I.%I RESTART', organization_schema_name, sequence_name_to_restart);
     END LOOP;
 
-    EXECUTE format('UPDATE %I.account SET current_balance = 0, balance_updated_at = NULL', organization_schema_name);
-    EXECUTE format('UPDATE %I.fiscal_period SET closed_at = NULL, closed_by = NULL', organization_schema_name);
+    IF to_regclass(format('%I.account', organization_schema_name)) IS NOT NULL THEN
+      EXECUTE format('UPDATE %I.account SET current_balance = 0, balance_updated_at = NULL', organization_schema_name);
+    END IF;
+    IF to_regclass(format('%I.fiscal_period', organization_schema_name)) IS NOT NULL THEN
+      EXECUTE format('UPDATE %I.fiscal_period SET closed_at = NULL, closed_by = NULL', organization_schema_name);
+    END IF;
 
     RAISE NOTICE 'cleaned organization schema %', organization_schema_name;
   END LOOP;
@@ -83,7 +87,9 @@ BEGIN
       EXECUTE format('ALTER SEQUENCE %I.%I RESTART', location_schema_name, sequence_name_to_restart);
     END LOOP;
 
-    EXECUTE format('UPDATE %I.location_product SET last_purchase_price = NULL', location_schema_name);
+    IF to_regclass(format('%I.location_product', location_schema_name)) IS NOT NULL THEN
+      EXECUTE format('UPDATE %I.location_product SET last_purchase_price = NULL', location_schema_name);
+    END IF;
 
     RAISE NOTICE 'cleaned location schema %', location_schema_name;
   END LOOP;

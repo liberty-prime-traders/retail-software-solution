@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactBulkInsertDto
+import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactBulkInsertService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactLedgerSearchParameters
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactResponseDto
@@ -19,7 +21,10 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("secured/contacts")
-class ContactEndpoint(private val contactService: ContactService) {
+class ContactEndpoint(
+    private val contactService: ContactService,
+    private val contactBulkInsertService: ContactBulkInsertService
+) {
 
     @GetMapping
     fun getAllContacts(): Collection<ContactResponseDto> = contactService.getAllContacts()
@@ -27,6 +32,10 @@ class ContactEndpoint(private val contactService: ContactService) {
     @PostMapping
     fun createContact(@RequestBody contactInsertDto: ContactInsertDto): ContactResponseDto =
         contactService.createContact(contactInsertDto)
+
+    @PostMapping("bulk")
+    fun bulkCreateContacts(@RequestBody contactBulkInsertDtos: List<ContactBulkInsertDto>): List<ContactResponseDto> =
+        contactBulkInsertService.bulkCreateContacts(contactBulkInsertDtos)
 
     @PutMapping
     fun updateContact(@RequestBody contactUpdateDto: ContactUpdateDto): ContactResponseDto =

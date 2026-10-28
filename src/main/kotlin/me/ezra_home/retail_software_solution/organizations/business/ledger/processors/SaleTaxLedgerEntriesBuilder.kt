@@ -54,13 +54,25 @@ class SaleTaxLedgerEntriesBuilder(
     }
 
     private fun payableLeg(payableAccountCode: String, taxAmount: BigDecimal, creditingPayable: Boolean) =
-        LedgerEntryRequest.unlessZero(payableAccountCode, if (creditingPayable) EntryType.CREDIT else EntryType.DEBIT, taxAmount)
+        LedgerEntryRequest.unlessZero(
+            payableAccountCode,
+            if (creditingPayable) EntryType.CREDIT else EntryType.DEBIT,
+            taxAmount
+        )
 
     private fun grossSalesLeg(taxAmount: BigDecimal, debitingGrossSales: Boolean) =
-        LedgerEntryRequest.unlessZero(SystemAccount.GROSS_SALES.code, if (debitingGrossSales) EntryType.DEBIT else EntryType.CREDIT, taxAmount)
+        LedgerEntryRequest.unlessZero(
+            SystemAccount.GROSS_SALES.code,
+            if (debitingGrossSales) EntryType.DEBIT else EntryType.CREDIT,
+            taxAmount
+        )
 
     private fun taxExpenseLeg(taxAmount: BigDecimal, debitingExpense: Boolean) =
-        LedgerEntryRequest.unlessZero(SystemAccount.TAX_EXPENSE.code, if (debitingExpense) EntryType.DEBIT else EntryType.CREDIT, taxAmount)
+        LedgerEntryRequest.unlessZero(
+            SystemAccount.TAX_EXPENSE.code,
+            if (debitingExpense) EntryType.DEBIT else EntryType.CREDIT,
+            taxAmount
+        )
 
     private fun payableAccountCodesByTaxTypeId(): Map<UUID, String> =
         orgJurisdictionTaxTypeFetcher.getAllDtos().associate { it.jurisdictionTaxTypeId to it.payableAccountCode }
