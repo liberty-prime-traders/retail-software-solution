@@ -13,7 +13,6 @@ enum class SystemUnitValue(
 
     GRAM("g", "Gram", SystemUnitGroup.WEIGHT),
     KILOGRAM("kg", "Kilogram", SystemUnitGroup.WEIGHT, baseUnit = GRAM, unitsOfBasePerUnit = 1000L),
-    TONNE("t", "Tonne", SystemUnitGroup.WEIGHT, baseUnit = KILOGRAM, unitsOfBasePerUnit = 1000L),
 
     MILLILITRE("ml", "Millilitre", SystemUnitGroup.VOLUME),
     LITRE("l", "Litre", SystemUnitGroup.VOLUME, baseUnit = MILLILITRE, unitsOfBasePerUnit = 1000L),
@@ -22,7 +21,6 @@ enum class SystemUnitValue(
     PIECE("pc", "Piece", SystemUnitGroup.COUNTABLE),
     DOZEN("dz", "Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 12L),
     HALF_DOZEN("hdz", "Half Dozen", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 6L),
-    CRATE("crate", "Crate", SystemUnitGroup.COUNTABLE, baseUnit = PIECE, unitsOfBasePerUnit = 24L),
 
     MISC_PIECE("misc-pc", "Piece", SystemUnitGroup.MISC);
 
