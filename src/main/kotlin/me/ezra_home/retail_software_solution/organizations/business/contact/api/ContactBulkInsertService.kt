@@ -49,11 +49,7 @@ class ContactBulkInsertService(
     private fun toValidatedInsertDto(contactBulkInsertDto: ContactBulkInsertDto): ContactInsertDto {
         val contactTypes = parseContactTypes(contactBulkInsertDto.contactTypes)
         contactValidator.validateContactTypes(contactTypes)
-        val identityType = if (StringUtils.hasValue(contactBulkInsertDto.companyName)) {
-            IdentityType.ORGANIZATION
-        } else {
-            IdentityType.INDIVIDUAL
-        }
+        val identityType = IdentityType.forCompanyName(contactBulkInsertDto.companyName)
         contactValidator.validateIdentity(identityType, contactBulkInsertDto.firstName, contactBulkInsertDto.companyName)
         val isOrganization = identityType == IdentityType.ORGANIZATION
         return ContactInsertDto(

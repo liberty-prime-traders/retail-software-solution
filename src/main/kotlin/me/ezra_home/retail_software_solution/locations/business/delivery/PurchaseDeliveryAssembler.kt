@@ -50,13 +50,7 @@ class PurchaseDeliveryAssembler(
           unitId = dl.unitId,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
-          locationProduct = LocationProductSummaryDto(
-            id = product.id,
-            referenceNumber = product.referenceNumber,
-            productName = product.productName,
-            productGroupName = product.productGroupName,
-            baseUnitId = product.baseUnitId
-          )
+          locationProduct = product
         )
       }
     )

@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.configuration.serializer.StripZeroe
 import java.math.BigDecimal
 import java.util.UUID
 
-// quantity* figures are in the base unit, rounded so available never exceeds what can be sold; storage figures and breakdown texts are exact
 data class LocationProductWithAvailability(
     val id: UUID,
     val referenceNumber: String,

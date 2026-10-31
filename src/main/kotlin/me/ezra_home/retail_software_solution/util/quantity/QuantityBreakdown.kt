@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.util.quantity
 
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -26,7 +25,7 @@ class QuantityBreakdown private constructor(
 
     // As typed, in the line's own unit and never broken down: "2.5 Bales"
     fun renderUserProvided(userProvidedQuantity: BigDecimal, unitId: UUID): String =
-        describe(Decimals.stripZeroesAndRound(userProvidedQuantity), userProvidedQuantity, unitNamesById.getValue(unitId))
+        describe(DisplayFormatters.formatQuantity(userProvidedQuantity), userProvidedQuantity, unitNamesById.getValue(unitId))
 
     fun render(storageQuantity: ExactQuantity): String {
         val signedQuantity = storageQuantity.toStorageQuantity()
@@ -41,12 +40,12 @@ class QuantityBreakdown private constructor(
         wholeUnitLevels.forEach { level ->
             val wholeCount = remaining.divideToIntegralValue(BigDecimal.valueOf(level.sizeInRoot))
             if (wholeCount.signum() > 0) {
-                parts.add(describe(wholeCount.toBigInteger().toString(), wholeCount, level.name))
+                parts.add(describe(DisplayFormatters.formatQuantity(wholeCount), wholeCount, level.name))
                 remaining = remaining.subtract(wholeCount.multiply(BigDecimal.valueOf(level.sizeInRoot)))
             }
         }
         if (remaining.signum() > 0) {
-            parts.add(describe(Decimals.stripZeroesAndRound(remaining), remaining, rootUnit.name))
+            parts.add(describe(DisplayFormatters.formatQuantity(remaining), remaining, rootUnit.name))
         }
         return if (parts.isEmpty()) "$ZERO_TEXT ${DisplayFormatters.pluralize(baseUnitName, BigDecimal.ZERO)}"
         else parts.joinToString(" ")

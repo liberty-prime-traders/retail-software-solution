@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.util.business
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -19,11 +21,14 @@ object DisplayFormatters {
     }
 
     fun formatCurrency(decimal: BigDecimal): String = formatCurrency(MoneyDisplay.of(decimal))
-
     fun formatCurrency(money: Money): String = formatCurrency(MoneyDisplay.of(money))
-
-    // Formats the value MoneyDisplay already rounded half-up; DecimalFormat alone would round half-even.
     fun formatCurrency(moneyDisplay: MoneyDisplay): String = buildCurrencyFormatter().format(moneyDisplay.toBigDecimal())
+
+    fun formatQuantity(quantity: BigDecimal): String {
+        val formatter = DecimalFormat("#,##0.####", DecimalFormatSymbols(Locale.US))
+        formatter.roundingMode = RoundingMode.HALF_UP
+        return formatter.format(quantity)
+    }
 
     fun pluralize(text: String, quantity: BigDecimal): String {
         return if (Decimals.Scale4.compare(quantity, BigDecimal.ONE) == 0) {

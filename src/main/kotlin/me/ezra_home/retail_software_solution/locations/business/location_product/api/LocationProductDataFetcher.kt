@@ -82,15 +82,18 @@ class LocationProductDataFetcher(
     )
 
     fun findSummaryByIds(ids: Collection<UUID>): Map<UUID, LocationProductSummaryDto> =
-        locationProductRepository.findAllById(ids).associate { entity ->
-            entity.id!! to LocationProductSummaryDto(
-                id = entity.id!!,
-                referenceNumber = entity.requiredReference(),
-                productName = entity.productName,
-                productGroupName = entity.productGroupName,
-                baseUnitId = entity.baseUnitId,
-            )
-        }
+        ids.chunked(SUMMARY_CHUNK_SIZE)
+            .flatMap { locationProductRepository.findSummariesByIdIn(it) }
+            .associate { summaryView ->
+                summaryView.id to LocationProductSummaryDto(
+                    id = summaryView.id,
+                    referenceNumber = summaryView.referenceNumber,
+                    orgProductId = summaryView.orgProductId,
+                    productName = summaryView.productName,
+                    productGroupName = summaryView.productGroupName,
+                    baseUnitId = summaryView.baseUnitId,
+                )
+            }
 
     fun findIdsByReferenceNumbers(referenceNumbers: Collection<String>): Map<String, UUID> =
         locationProductRepository.findByReferenceNumberIn(referenceNumbers)
@@ -141,5 +144,7 @@ class LocationProductDataFetcher(
 
     companion object {
         const val UNIT_OUTSIDE_PRODUCT_GROUP = "The unit must belong to the same unit group as the product's base unit"
+
+        private const val SUMMARY_CHUNK_SIZE = 10_000
     }
 }
