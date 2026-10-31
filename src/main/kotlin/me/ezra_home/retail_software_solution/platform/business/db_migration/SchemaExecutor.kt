@@ -15,10 +15,10 @@ class SchemaExecutor(
     @param:Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_DATA_SOURCE)
     private val locationDataSource: DataSource,
 
-    @param:Value("\${spring.datasource.organization.changelog}")
+    @param:Value($$"${spring.datasource.organization.changelog}")
     private val organizationChangeLog: String,
 
-    @param:Value("\${spring.datasource.location.changelog}")
+    @param:Value($$"${spring.datasource.location.changelog}")
     private val locationChangeLog: String
 ) {
 

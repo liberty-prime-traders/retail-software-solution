@@ -20,7 +20,7 @@ import java.util.UUID
 class KafkaConsumerTestSupport(
     private val kafkaListenerRegistry: KafkaListenerEndpointRegistry,
 
-    @param:Value("\${spring.kafka.bootstrap-servers}")
+    @param:Value($$"${spring.kafka.bootstrap-servers}")
     private val bootstrapServers: String
 ) {
 

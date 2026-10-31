@@ -32,7 +32,7 @@ class IdentityService(
     private val platformRoleAssignmentService: PlatformRoleAssignmentService,
     private val platformPermissionAssignmentService: PlatformPermissionAssignmentService,
 
-    @param:Value("\${rts.pending-identity-link.expiration-minutes}")
+    @param:Value($$"${rts.pending-identity-link.expiration-minutes}")
     private val pendingLinkExpirationMinutes: Long
 ) {
 

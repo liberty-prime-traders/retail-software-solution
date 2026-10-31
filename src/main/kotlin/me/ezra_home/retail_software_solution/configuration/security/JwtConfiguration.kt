@@ -12,7 +12,7 @@ import javax.crypto.spec.SecretKeySpec
 
 @Configuration
 class JwtConfiguration(
-    @param:Value("\${rts.jwt.secret}")
+    @param:Value($$"${rts.jwt.secret}")
     private val jwtSecret: String
 ) {
 
