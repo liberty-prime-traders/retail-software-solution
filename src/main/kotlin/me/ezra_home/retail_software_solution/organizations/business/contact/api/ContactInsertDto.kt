@@ -16,9 +16,8 @@ data class ContactInsertDto(
     val notes: String? = null,
     val status: ContactStatus = ContactStatus.ACTIVE
 ): Serializable {
-    val identity: ContactIdentity = if (!companyName.isNullOrBlank()) {
-        ContactIdentity.Organization(companyName)
-    } else {
-        ContactIdentity.Individual(firstName.orEmpty(), lastName)
+    val identity: ContactIdentity = when (IdentityType.forCompanyName(companyName)) {
+        IdentityType.ORGANIZATION -> ContactIdentity.Organization(requireNotNull(companyName))
+        IdentityType.INDIVIDUAL -> ContactIdentity.Individual(firstName.orEmpty(), lastName)
     }
 }

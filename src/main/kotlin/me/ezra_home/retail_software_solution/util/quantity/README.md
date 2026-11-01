@@ -39,7 +39,8 @@ nothing rounds on the way in and there is no rounding policy to manage.
    - Money, percentage and the shared `TypedDecimal` base are in `util/business/README.md`.
 6. **Display is a breakdown.** `QuantityBreakdown` renders a storage quantity from the product's base unit down to the
    root, largest first, whole units at each level, the remainder carried down. The root level may carry a fractional
-   remainder, shown with up to 4 decimals and trailing zeros stripped ("2 Bales 0.5 Pieces"). Zero levels are
+   remainder, shown with up to 4 decimals and trailing zeros stripped ("2 Bales 0.5 Pieces"). Every count carries
+   thousands separators ("1,000 Bales"), formatted by `DisplayFormatters.formatQuantity`. Zero levels are
    skipped, and zero stock shows "0" in the product's base unit.
    - Units larger than the base unit are never used. A non-root unit of the base unit's size, other than the base unit
      itself, is skipped. A non-root unit the size of the root is skipped, because the root carries the remainder.

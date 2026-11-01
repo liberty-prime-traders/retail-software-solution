@@ -108,7 +108,7 @@ class StockAdjustmentServiceTest {
         `when`(userQualifier.getCreatorFullName(creatorId)).thenReturn("Test User")
         `when`(locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
         `when`(locationProductDataFetcher.findSummaryByIds(setOf(locationProductId))).thenReturn(
-            mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP000001", "Rice", "Grains", UUID.randomUUID()))
+            mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP000001", UUID.randomUUID(), "Rice", "Grains", UUID.randomUUID()))
         )
     }
 

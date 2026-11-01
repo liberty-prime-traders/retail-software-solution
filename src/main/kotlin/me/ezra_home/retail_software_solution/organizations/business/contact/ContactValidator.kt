@@ -42,6 +42,13 @@ class ContactValidator(
         }
     }
 
+    fun validateUniquenessAgainst(identity: ContactIdentity, existingNormalizedKeys: Set<String>) {
+        if (identity.normalizedKey.isBlank()) return
+        if (identity.normalizedKey in existingNormalizedKeys) {
+            throw RtsGenericException("A Contact with ${identity.description()} already exists")
+        }
+    }
+
     fun validateUniqueness(identity: ContactIdentity, excludeId: UUID? = null) {
         if (identity.normalizedKey.isBlank()) return
 

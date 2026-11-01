@@ -129,13 +129,7 @@ class PurchaseAssembler(
         quantityYetToBeDeliveredBreakdown = quantityBreakdown.render(remaining),
         quantityCanceledBreakdown = quantityBreakdown.render(canceled),
         quantityExpectedBreakdown = quantityBreakdown.render(expected),
-        locationProduct = LocationProductSummaryDto(
-          id = product.id,
-          referenceNumber = product.referenceNumber,
-          productName = product.productName,
-          productGroupName = product.productGroupName,
-          baseUnitId = product.baseUnitId
-        )
+        locationProduct = product
       )
     }
   }

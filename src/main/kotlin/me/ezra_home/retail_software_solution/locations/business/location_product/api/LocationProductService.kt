@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
@@ -37,6 +38,14 @@ class LocationProductService(
     fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
         val products = locationProductRepository.findAllById(prices.keys)
         products.forEach { it.lastPurchasePrice = prices[it.id] }
+        locationProductRepository.saveAll(products)
+        locationProductCache.evictAll()
+    }
+
+    fun updateDefaultSalePrices(defaultSalePricesByLocationProductId: Map<UUID, Money>) {
+        val products = locationProductRepository.findAllById(defaultSalePricesByLocationProductId.keys)
+        if (products.size != defaultSalePricesByLocationProductId.size) throw UpdatingNonExistingRecordException()
+        products.forEach { it.defaultSalePrice = defaultSalePricesByLocationProductId.getValue(requireNotNull(it.id)).toBigDecimal() }
         locationProductRepository.saveAll(products)
         locationProductCache.evictAll()
     }

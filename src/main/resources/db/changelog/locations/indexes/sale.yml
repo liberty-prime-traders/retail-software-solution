@@ -18,3 +18,25 @@ databaseChangeLog:
         - dropIndex:
             indexName: idx_sale_contact_id
             tableName: sale
+
+  - changeSet:
+      id: create-index-sale-status-date-sold
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_status_date_sold
+      changes:
+        - createIndex:
+            indexName: idx_sale_status_date_sold
+            tableName: sale
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: date_sold
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_status_date_sold
+            tableName: sale

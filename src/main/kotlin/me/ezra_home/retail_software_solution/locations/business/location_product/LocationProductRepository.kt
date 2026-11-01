@@ -15,4 +15,11 @@ interface LocationProductRepository : JpaRepository<LocationProductEntity, UUID>
   fun findByOrgProductIdIn(orgProductIds: Collection<UUID>): List<LocationProductEntity>
 
   fun findByReferenceNumberIn(referenceNumbers: Collection<String>): List<LocationProductEntity>
+
+  @Query(
+    "SELECT lp.id AS id, lp.referenceNumber AS referenceNumber, lp.orgProductId AS orgProductId, " +
+      "lp.productName AS productName, lp.productGroupName AS productGroupName, lp.baseUnitId AS baseUnitId " +
+      "FROM LocationProductEntity lp WHERE lp.id IN :ids"
+  )
+  fun findSummariesByIdIn(ids: Collection<UUID>): List<LocationProductSummaryView>
 }

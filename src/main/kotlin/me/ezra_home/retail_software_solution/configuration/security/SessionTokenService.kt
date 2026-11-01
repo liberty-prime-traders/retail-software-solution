@@ -14,7 +14,7 @@ import java.util.UUID
 class SessionTokenService(
     private val jwtEncoder: JwtEncoder,
 
-    @param:Value("\${rts.jwt.expiration-minutes}")
+    @param:Value($$"${rts.jwt.expiration-minutes}")
     private val sessionTokenExpirationMinutes: Long
 ) {
 

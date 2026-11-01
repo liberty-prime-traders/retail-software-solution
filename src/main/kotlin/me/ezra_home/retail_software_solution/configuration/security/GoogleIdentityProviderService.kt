@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class GoogleIdentityProviderService(
-    @param:Value("\${google.oauth.client-id}")
+    @param:Value($$"${google.oauth.client-id}")
     private val googleOauthClientId: String
 ) : IdentityProviderService {
 
