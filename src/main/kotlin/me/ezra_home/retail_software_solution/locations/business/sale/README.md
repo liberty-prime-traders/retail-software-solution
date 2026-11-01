@@ -22,13 +22,13 @@ locations/business/sale/api/
 Only the `api/` sub-package is considered the public surface. Other packages
 must call into sale through one of these classes:
 
-| Class                    | Purpose                                                                                                  |
-|--------------------------|----------------------------------------------------------------------------------------------------------|
-| `DraftSalePersister`     | Persist a sale at `DRAFT` from a `SaleSaveRequest` (called by sale_session)                              |
-| `ConfirmedSalePersister` | Persist a sale at `CONFIRMED` from a `SaleSaveRequest` (FIFO + Kafka)                                    |
-| `SaleUpdater`            | Void a sale; update payment status; update notes                                                         |
-| `SaleDataFetcher`        | Read sales (recent list, context lookup, header/line snapshots, contact, commit-time draft+version load) |
-| `SaleSearchService`      | Filtered/paginated sale search (list + status summary), REST-exposed on `SaleEndpoint`                   |
+| Class                       | Purpose                                                                                                  |
+|-----------------------------|----------------------------------------------------------------------------------------------------------|
+| `DraftSalePersister`        | Persist a sale at `DRAFT` from a `SaleSaveRequest` (called by sale_session)                              |
+| `ConfirmedSalePersister`    | Persist a sale at `CONFIRMED` from a `SaleSaveRequest` (FIFO + Kafka)                                    |
+| `SaleUpdater`               | Void a sale; update payment status; update notes                                                         |
+| `SaleDataFetcher`           | Read sales (recent list, context lookup, header/line snapshots, contact, commit-time draft+version load) |
+| `SaleSearchService`         | Filtered/paginated sale search (list + status summary), REST-exposed on `SaleEndpoint`                   |
 
 Creating and confirming a sale is **only** possible via a session — see
 `sale_session/README.md`. The persisters are the seams the session layer calls
@@ -813,23 +813,24 @@ run** — i.e. as soon as the data it needs is in scope.
 
 ## 15. Where Things Live
 
-| Topic                      | Class(es)                                                                                                                                                      |
-|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| State, header, totals      | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                                                                         |
-| Lines                      | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                                                                             |
-| Validation                 | `SaleValidator`                                                                                                                                                |
-| Save primitives            | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                                                                         |
-| Stock reservation          | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                                                                              |
-| Adjustments (disc + srch)  | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`) |
-| Adjustment reasons         | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)                                                           |
-| Payments                   | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper)                                            |
-| Taxes (synchronous)        | `SaleTaxFinalizer`, `organizations/business/tax_rate/api/TaxAmountCalculator`, `tax_entry/` package                                                            |
-| Kafka publish/republish    | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                                                                                      |
-| Void                       | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                                                                                 |
-| Read APIs                  | `SaleDataFetcher`, `SaleAssembler`                                                                                                                             |
-| Arrears rule               | `SaleArrears` — shared by `SaleAssembler.buildSummary` and `sale/search`                                                                                       |
-| Search (list + summary)    | `sale/search/` package (`SaleSearchQueryBuilder`, `SaleSearchFetcher`, `SaleSearchExecutor`, `SaleSearchRowMapper`, `SaleSearchMapper`, `SaleSearchValidator`), `SaleSearchService` |
-| Session orchestration      | `sale_session/` package (see `sale_session/README.md`)                                                                                                         |
+| Topic                     | Class(es)                                                                                                                                                                           |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| State, header, totals     | `SaleEntity`, `SaleStatus`, `SaleStatusConverter`, `SaleTotalsApplier`                                                                                                              |
+| Lines                     | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                                                                                                  |
+| Validation                | `SaleValidator`                                                                                                                                                                     |
+| Save primitives           | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                                                                                              |
+| Stock reservation         | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                                                                                                   |
+| Adjustments (disc + srch) | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`)                      |
+| Adjustment reasons        | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)                                                                                |
+| Payments                  | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper)                                                                 |
+| Taxes (synchronous)       | `SaleTaxFinalizer`, `organizations/business/tax_rate/api/TaxAmountCalculator`, `tax_entry/` package                                                                                 |
+| Kafka publish/republish   | `SaleConfirmedHandlerForKafka`, `SaleVoidHandlerForKafka`                                                                                                                           |
+| Void                      | `SaleUpdater.voidSale`, `SaleVoidEntity`, `SaleVoidRepository`                                                                                                                      |
+| Read APIs                 | `SaleDataFetcher`, `SaleAssembler`                                                                                                                                                  |
+| Arrears rule              | `SaleArrears` — shared by `SaleAssembler.buildSummary` and `sale/search`                                                                                                            |
+| Search (list + summary)   | `sale/search/` package (`SaleSearchQueryBuilder`, `SaleSearchFetcher`, `SaleSearchExecutor`, `SaleSearchRowMapper`, `SaleSearchMapper`, `SaleSearchValidator`), `SaleSearchService` |
+| Per-product sales reports | `product_sales_report/` package (own README); reads sale tables by SQL, owns no sale state                                                                                          |
+| Session orchestration     | `sale_session/` package (see `sale_session/README.md`)                                                                                                                              |
 
 Keep this table accurate as the package evolves — it is the entry point
 for anyone (or any agent) doing a first-pass investigation.

@@ -36,6 +36,7 @@ DECLARE
   location_schema_name text;
   qualified_table_names text;
   sequence_name_to_restart text;
+  skipped_table_name text;
 BEGIN
   FOR organization_schema_name IN
     SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'org\_%' ORDER BY schema_name
@@ -44,6 +45,13 @@ BEGIN
       INTO qualified_table_names
       FROM unnest(organization_tables_to_truncate) AS table_name
      WHERE to_regclass(format('%I.%I', organization_schema_name, table_name)) IS NOT NULL;
+
+    FOR skipped_table_name IN
+      SELECT table_name FROM unnest(organization_tables_to_truncate) AS table_name
+       WHERE to_regclass(format('%I.%I', organization_schema_name, table_name)) IS NULL
+    LOOP
+      RAISE NOTICE 'skipped missing table %.%', organization_schema_name, skipped_table_name;
+    END LOOP;
 
     IF qualified_table_names IS NOT NULL THEN
       EXECUTE 'TRUNCATE TABLE ' || qualified_table_names;
@@ -59,9 +67,13 @@ BEGIN
 
     IF to_regclass(format('%I.account', organization_schema_name)) IS NOT NULL THEN
       EXECUTE format('UPDATE %I.account SET current_balance = 0, balance_updated_at = NULL', organization_schema_name);
+    ELSE
+      RAISE NOTICE 'skipped missing table %.account', organization_schema_name;
     END IF;
     IF to_regclass(format('%I.fiscal_period', organization_schema_name)) IS NOT NULL THEN
       EXECUTE format('UPDATE %I.fiscal_period SET closed_at = NULL, closed_by = NULL', organization_schema_name);
+    ELSE
+      RAISE NOTICE 'skipped missing table %.fiscal_period', organization_schema_name;
     END IF;
 
     RAISE NOTICE 'cleaned organization schema %', organization_schema_name;
@@ -74,6 +86,13 @@ BEGIN
       INTO qualified_table_names
       FROM unnest(location_tables_to_truncate) AS table_name
      WHERE to_regclass(format('%I.%I', location_schema_name, table_name)) IS NOT NULL;
+
+    FOR skipped_table_name IN
+      SELECT table_name FROM unnest(location_tables_to_truncate) AS table_name
+       WHERE to_regclass(format('%I.%I', location_schema_name, table_name)) IS NULL
+    LOOP
+      RAISE NOTICE 'skipped missing table %.%', location_schema_name, skipped_table_name;
+    END LOOP;
 
     IF qualified_table_names IS NOT NULL THEN
       EXECUTE 'TRUNCATE TABLE ' || qualified_table_names;
@@ -89,6 +108,8 @@ BEGIN
 
     IF to_regclass(format('%I.location_product', location_schema_name)) IS NOT NULL THEN
       EXECUTE format('UPDATE %I.location_product SET last_purchase_price = NULL', location_schema_name);
+    ELSE
+      RAISE NOTICE 'skipped missing table %.location_product', location_schema_name;
     END IF;
 
     RAISE NOTICE 'cleaned location schema %', location_schema_name;

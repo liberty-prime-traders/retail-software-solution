@@ -23,10 +23,11 @@ class ContactBulkInsertService(
         val errors = mutableListOf<String>()
         val validatedInsertDtos = mutableListOf<ContactInsertDto>()
         val identityKeysInRequest = mutableSetOf<String>()
+        val existingNormalizedKeys = contactCache.getAllContacts().map { it.identity.normalizedKey }.toSet()
         contactBulkInsertDtos.forEachIndexed { index, contactBulkInsertDto ->
             try {
                 val contactInsertDto = toValidatedInsertDto(contactBulkInsertDto)
-                contactValidator.validateUniqueness(contactInsertDto.identity)
+                contactValidator.validateUniquenessAgainst(contactInsertDto.identity, existingNormalizedKeys)
                 val identityKey = contactInsertDto.identity.normalizedKey
                 if (identityKey.isNotBlank() && !identityKeysInRequest.add(identityKey)) {
                     throw RtsGenericException("A Contact with ${contactInsertDto.identity.description()} appears more than once in the request")

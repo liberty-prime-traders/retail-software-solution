@@ -3,12 +3,11 @@ package me.ezra_home.retail_software_solution.locations.business.opening_stock.a
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.util.Optional
 import java.util.UUID
 
 @Service
@@ -29,6 +28,7 @@ class OpeningStockBulkService(
         val errors = mutableListOf<String>()
         val referenceNumbersInRequest = mutableSetOf<String>()
         val openingStockLineDtos = mutableListOf<OpeningStockLineDto>()
+        val defaultSalePricesByLocationProductId = mutableMapOf<UUID, Money>()
         openingStockBulkLineDtos.forEachIndexed { index, openingStockBulkLineDto ->
             val referenceNumber = StringUtils.getValueOrNull(openingStockBulkLineDto.locationProductReferenceNumber)
             val unitCode = StringUtils.getValueOrNull(openingStockBulkLineDto.unitCode)
@@ -41,7 +41,10 @@ class OpeningStockBulkService(
                 unitId == null -> errors.add("Row ${index + 1}: Unknown unit code '$unitCode'")
                 !referenceNumbersInRequest.add(referenceNumber) ->
                     errors.add("Row ${index + 1}: Product '$referenceNumber' appears more than once in the request")
-                else -> openingStockLineDtos.add(toOpeningStockLineDto(openingStockBulkLineDto, locationProductId, unitId))
+                else -> {
+                    openingStockLineDtos.add(toOpeningStockLineDto(openingStockBulkLineDto, locationProductId, unitId))
+                    defaultSalePricesByLocationProductId[locationProductId] = openingStockBulkLineDto.defaultSalePrice
+                }
             }
         }
         if (errors.isNotEmpty()) {
@@ -49,19 +52,7 @@ class OpeningStockBulkService(
         }
 
         val openingStockResponseDtos = openingStockService.declareInitialStock(openingStockLineDtos)
-        openingStockBulkLineDtos.forEach { openingStockBulkLineDto ->
-            locationProductService.updateProduct(
-                LocationProductUpdateDto(
-                    id = locationProductIdsByReferenceNumber.getValue(
-                        StringUtils.getValueOrException(
-                            openingStockBulkLineDto.locationProductReferenceNumber,
-                            "Missing product reference number"
-                        )
-                    ),
-                    defaultSalePrice = Optional.of(openingStockBulkLineDto.defaultSalePrice)
-                )
-            )
-        }
+        locationProductService.updateDefaultSalePrices(defaultSalePricesByLocationProductId)
         return openingStockResponseDtos
     }
 

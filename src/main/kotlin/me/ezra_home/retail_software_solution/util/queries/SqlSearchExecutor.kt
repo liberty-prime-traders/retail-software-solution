@@ -22,19 +22,20 @@ abstract class SqlSearchExecutor<T, D>(
     val coercedPageSize = pageSize.coerceIn(MIN_PAGE_SIZE, MAX_PAGE_SIZE)
     val queryParams = sqlQuery.params.toMutableMap()
     queryParams[QueryParameterNames.PAGE_SIZE] = coercedPageSize
-    return runQuery(sqlQuery.copy(params = queryParams), setTimeout)
+    return runQuery(sqlQuery.copy(params = queryParams), setTimeout, QUERY_TIMEOUT_MS)
   }
 
-  fun executeUnpaged(sqlQuery: SqlQuery, setTimeout: Boolean): List<D> = runQuery(sqlQuery, setTimeout)
+  fun executeUnpaged(sqlQuery: SqlQuery, setTimeout: Boolean, queryTimeoutMs: Int = QUERY_TIMEOUT_MS): List<D> =
+    runQuery(sqlQuery, setTimeout, queryTimeoutMs)
 
-  private fun runQuery(sqlQuery: SqlQuery, setTimeout: Boolean): List<D> {
+  private fun runQuery(sqlQuery: SqlQuery, setTimeout: Boolean, queryTimeoutMs: Int): List<D> {
     val startTime = System.currentTimeMillis()
 
     emf.getObject()!!.createEntityManager().use { entityManager ->
       val query = entityManager.createNativeQuery(sqlQuery.sql, resultClass)
       sqlQuery.params.forEach { (key, value) -> query.setParameter(key, value) }
       if (setTimeout) {
-        query.setHint("jakarta.persistence.query.timeout", QUERY_TIMEOUT_MS)
+        query.setHint("jakarta.persistence.query.timeout", queryTimeoutMs)
       }
       @Suppress("UNCHECKED_CAST")
       val results = query.resultList as List<T>

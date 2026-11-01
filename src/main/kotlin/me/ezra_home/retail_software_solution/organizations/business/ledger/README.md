@@ -112,7 +112,8 @@ them as `MoneyDisplay`, so an oversized running balance rounds instead of throwi
 - `subledger_balance` holds one row per contact with its current `running_payable` /
   `running_receivable`, and `getCurrentBalances` reads it. The row is created with the contact
   (`ContactService.createContact`, and `ContactSeeder` for the system Walk-In contact, both through
-  `SubledgerService.openBalance`). Balances are stored in `numeric(19,4)` columns, and `openBalance` seeds
+  `SubledgerService.openBalance`; the bulk contact import opens every new contact's row at once through
+  `SubledgerService.openBalances`). Balances are stored in `numeric(19,4)` columns, and `openBalance` seeds
   them from `SubledgerBalanceDto.ZERO`, which matches that scale. `LedgerPostingService` updates it in the same transaction as each
   `subledger_entry` insert, under the `SUBLEDGER_CONTACT` advisory lock, and fails the posting if
   the contact has no row. Besides posting, only `SubledgerService.reconcileBalances` writes it:

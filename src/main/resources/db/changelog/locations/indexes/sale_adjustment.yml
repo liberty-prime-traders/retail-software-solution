@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-sale-adjustment-sale-line-id
+      author: ezra
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_adjustment_sale_line_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_adjustment_sale_line_id
+            tableName: sale_adjustment
+            columns:
+              - column:
+                  name: sale_line_id
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_adjustment_sale_line_id
+            tableName: sale_adjustment

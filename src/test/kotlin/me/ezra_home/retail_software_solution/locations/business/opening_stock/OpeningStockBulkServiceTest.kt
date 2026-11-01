@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.opening_stock
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
-import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.api.OpeningStockBulkLineDto
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.api.OpeningStockBulkService
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.api.OpeningStockLineDto
@@ -25,7 +24,6 @@ import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-import java.util.Optional
 import java.util.UUID
 
 class OpeningStockBulkServiceTest {
@@ -66,11 +64,8 @@ class OpeningStockBulkServiceTest {
         val result = openingStockBulkService.bulkDeclareInitialStock(listOf(colaRow, chipsRow))
 
         assertSame(declared, result)
-        verify(locationProductService).updateProduct(
-            LocationProductUpdateDto(colaLocationProductId, Optional.of(colaRow.defaultSalePrice))
-        )
-        verify(locationProductService).updateProduct(
-            LocationProductUpdateDto(chipsLocationProductId, Optional.of(chipsRow.defaultSalePrice))
+        verify(locationProductService).updateDefaultSalePrices(
+            mapOf(colaLocationProductId to colaRow.defaultSalePrice, chipsLocationProductId to chipsRow.defaultSalePrice)
         )
     }
 
