@@ -129,16 +129,20 @@ class LocationProductDataFetcher(
                 )
             }
 
-    fun getStorageUnitsPerUserProvidedUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> {
+    fun getStorageUnitsPerUserProvidedUnit(productUnitRequests: List<LocationProductUnitRequestDto>): Map<UUID, Long> =
+        getStorageUnitsByRequest(productUnitRequests).mapKeys { it.key.locationProductId }
+
+    /** Keyed by the request itself, so one product can be asked about several units in a single lookup. */
+    fun getStorageUnitsByRequest(productUnitRequests: List<LocationProductUnitRequestDto>): Map<LocationProductUnitRequestDto, Long> {
         if (productUnitRequests.isEmpty()) return emptyMap()
         val baseUnitIds = getBaseUnitIds(productUnitRequests.map { it.locationProductId })
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
-        return productUnitRequests.associate { (locationProductId, unitId) ->
+        return productUnitRequests.associateWith { (locationProductId, unitId) ->
             val baseUnitId = baseUnitIds.getValue(locationProductId)
             if (unitConversionGraph.getStorageUnitId(unitId) != unitConversionGraph.getStorageUnitId(baseUnitId)) {
                 throw RtsGenericException(UNIT_OUTSIDE_PRODUCT_GROUP)
             }
-            locationProductId to unitConversionGraph.getSizeInRoot(unitId)
+            unitConversionGraph.getSizeInRoot(unitId)
         }
     }
 

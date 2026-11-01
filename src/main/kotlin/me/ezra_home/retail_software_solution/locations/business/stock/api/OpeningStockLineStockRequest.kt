@@ -8,7 +8,7 @@ data class OpeningStockLineStockRequest(
     val locationProductId: UUID,
     val userProvidedQuantity: PositiveUserProvidedQuantity,
     val unitId: UUID,
-    val storageUnitsPerUserProvidedUnit: Long,
-    val unitCost: BigDecimal,
+    val storageUnitsPerUserProvidedQtyUnit: Long,
+    val batchCost: BigDecimal,
     val documentReference: String
 )

@@ -13,6 +13,7 @@ import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.PositiveUserProvidedQuantity
+import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -55,8 +56,8 @@ class OpeningStockBulkServiceTest {
         val colaRow = bulkLine("LP000001", "PC", "12.5", "1.50", "2.00")
         val chipsRow = bulkLine("  LP000002 ", " BOX ", "3", "10.00", "15.00")
         val expectedOpeningStockLines = listOf(
-            OpeningStockLineDto(colaLocationProductId, colaRow.userProvidedQuantity, pieceUnitId, colaRow.unitCost),
-            OpeningStockLineDto(chipsLocationProductId, chipsRow.userProvidedQuantity, boxUnitId, chipsRow.unitCost)
+            OpeningStockLineDto(colaLocationProductId, positiveQuantity(colaRow), pieceUnitId, colaRow.unitCost!!),
+            OpeningStockLineDto(chipsLocationProductId, positiveQuantity(chipsRow), boxUnitId, chipsRow.unitCost!!)
         )
         val declared = listOf(openingStockResponseDto(colaLocationProductId), openingStockResponseDto(chipsLocationProductId))
         `when`(openingStockService.declareInitialStock(expectedOpeningStockLines)).thenReturn(declared)
@@ -136,6 +137,61 @@ class OpeningStockBulkServiceTest {
     }
 
     @Test
+    fun `prices the cost in its own unit when a cost unit code is given`() {
+        `when`(locationProductDataFetcher.findIdsByReferenceNumbers(listOf("LP000001")))
+            .thenReturn(mapOf("LP000001" to colaLocationProductId))
+        val colaRow = bulkLine("LP000001", "PC", "16", "6250.00", "150.00", costUnitCode = " BOX ")
+        val expectedOpeningStockLine = OpeningStockLineDto(
+            colaLocationProductId, positiveQuantity(colaRow), pieceUnitId, colaRow.unitCost!!, boxUnitId
+        )
+        val declared = listOf(openingStockResponseDto(colaLocationProductId))
+        `when`(openingStockService.declareInitialStock(listOf(expectedOpeningStockLine))).thenReturn(declared)
+
+        assertSame(declared, openingStockBulkService.bulkDeclareInitialStock(listOf(colaRow)))
+    }
+
+    @Test
+    fun `a zero quantity row only sets the default sale price`() {
+        `when`(locationProductDataFetcher.findIdsByReferenceNumbers(listOf("LP000001")))
+            .thenReturn(mapOf("LP000001" to colaLocationProductId))
+        val colaRow = bulkLine("LP000001", "PC", "0", null, "2.00")
+
+        val result = openingStockBulkService.bulkDeclareInitialStock(listOf(colaRow))
+
+        assertEquals(emptyList<OpeningStockResponseDto>(), result)
+        verifyNoInteractions(openingStockService)
+        verify(locationProductService).updateDefaultSalePrices(mapOf(colaLocationProductId to colaRow.defaultSalePrice))
+    }
+
+    @Test
+    fun `reports a positive quantity without a unit cost`() {
+        `when`(locationProductDataFetcher.findIdsByReferenceNumbers(listOf("LP000001")))
+            .thenReturn(mapOf("LP000001" to colaLocationProductId))
+
+        val exception = assertThrows(RtsGenericException::class.java) {
+            openingStockBulkService.bulkDeclareInitialStock(listOf(bulkLine("LP000001", "PC", "5", null, "2.00")))
+        }
+
+        assertEquals(listOf("Row 1: Missing unit cost"), exception.payload)
+        verifyNoInteractions(openingStockService, locationProductService)
+    }
+
+    @Test
+    fun `reports an unknown cost unit code`() {
+        `when`(locationProductDataFetcher.findIdsByReferenceNumbers(listOf("LP000001")))
+            .thenReturn(mapOf("LP000001" to colaLocationProductId))
+
+        val exception = assertThrows(RtsGenericException::class.java) {
+            openingStockBulkService.bulkDeclareInitialStock(
+                listOf(bulkLine("LP000001", "PC", "1", "1.00", "2.00", costUnitCode = "NOPE"))
+            )
+        }
+
+        assertEquals(listOf("Row 1: Unknown cost unit code 'NOPE'"), exception.payload)
+        verifyNoInteractions(openingStockService, locationProductService)
+    }
+
+    @Test
     fun `leaves prices untouched when the declaration itself fails`() {
         `when`(locationProductDataFetcher.findIdsByReferenceNumbers(listOf("LP000001")))
             .thenReturn(mapOf("LP000001" to colaLocationProductId))
@@ -151,15 +207,26 @@ class OpeningStockBulkServiceTest {
 
     private fun openingStockLine(locationProductId: UUID): OpeningStockLineDto {
         val row = bulkLine("LP000001", "PC", "1", "1.00", "2.00")
-        return OpeningStockLineDto(locationProductId, row.userProvidedQuantity, pieceUnitId, row.unitCost)
+        return OpeningStockLineDto(locationProductId, positiveQuantity(row), pieceUnitId, row.unitCost!!)
     }
 
-    private fun bulkLine(referenceNumber: String, unitCode: String, quantity: String, unitCost: String, salePrice: String) =
+    private fun positiveQuantity(row: OpeningStockBulkLineDto) =
+        PositiveUserProvidedQuantity.of(row.userProvidedQuantity.toBigDecimal())
+
+    private fun bulkLine(
+        referenceNumber: String,
+        unitCode: String,
+        quantity: String,
+        unitCost: String?,
+        salePrice: String,
+        costUnitCode: String? = null
+    ) =
         OpeningStockBulkLineDto(
             locationProductReferenceNumber = referenceNumber,
-            userProvidedQuantity = PositiveUserProvidedQuantity.of(BigDecimal(quantity)),
+            userProvidedQuantity = UserProvidedQuantity.of(BigDecimal(quantity)),
             unitCode = unitCode,
-            unitCost = PositiveMoney.of(BigDecimal(unitCost)),
+            unitCost = unitCost?.let { PositiveMoney.of(BigDecimal(it)) },
+            costUnitCode = costUnitCode,
             defaultSalePrice = Money.of(BigDecimal(salePrice))
         )
 

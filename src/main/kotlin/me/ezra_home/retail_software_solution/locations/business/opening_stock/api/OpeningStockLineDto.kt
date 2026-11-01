@@ -10,5 +10,7 @@ data class OpeningStockLineDto(
     @param:JsonProperty("quantity")
     val userProvidedQuantity: PositiveUserProvidedQuantity,
     val unitId: UUID,
-    val unitCost: PositiveMoney
+    val unitCost: PositiveMoney,
+    /** The unit [unitCost] is priced per; defaults to [unitId]. */
+    val costUnitId: UUID? = null
 )
