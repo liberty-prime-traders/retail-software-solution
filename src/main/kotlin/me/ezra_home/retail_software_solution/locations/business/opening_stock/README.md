@@ -35,9 +35,14 @@ cost. `OpeningStockEntity` exists alongside them purely to:
   (`OpeningStockRepository.findByLocationProductIdIn`, backed by the
   unique constraint) — the one thing `stock/` has no natural row for.
 - Carry the declaration's **unit**: `opening_stock` stores `user_provided_quantity`, `unit_id` and
-  `storage_units_per_user_provided_unit` (the unit's size in the product's storage unit, captured at declaration, which also rejects a
-  unit outside the product's unit group) beside `unit_cost` (per `unit_id`). `OpeningStockAmountsFetcher` returns the
-  unit with the quantity.
+  `storage_units_per_user_provided_qty_unit` (the unit's size in the product's storage unit, captured at declaration, which also rejects a
+  unit outside the product's unit group) beside `total_cost`, the declaration's exact line total rounded once to cents.
+  A line's `unitCost` may be priced per a different unit than the quantity (`costUnitId`, a cost quoted per carton for stock
+  counted in pieces), so it is turned into `total_cost` at declaration (`OpeningStockService.toTotalCost`) and neither the cost
+  unit nor its size is stored. Storing the total also keeps a ledger reissue stable if a unit's size is edited later. The unit
+  cost the API returns is `total_cost / quantity` per `unit_id` at scale 4 (`OpeningStockEntity.unitCost()`), a display
+  figure that need not round-trip to what was typed.
+  `OpeningStockAmountsFetcher` returns the unit with the quantity.
 - Carry its own `HasReferenceEntity` reference number, which becomes both
   `StockEntryEntity.documentReference` (idempotency, with a null `detailReference`: an opening stock has no line
   reference) and the Kafka event's `sourceReferenceNumber` for ledger posting / DLT
@@ -68,7 +73,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `uq_opening_stock_location_product_id`.
 7. Persist the `OpeningStockEntity` rows in one `saveAll` (not a
    per-line `save` in a loop), storing the typed quantity, its unit, the captured
-   `storage_units_per_user_provided_unit` and the unit cost exactly as declared.
+   `storage_units_per_user_provided_qty_unit` and the exact total cost.
 8. Call `stock/api/OpeningStockStockUpdater.recordOpeningStock` — the
    only cross-domain call this service makes into `stock/`, since
    `ArchitectureTest` forbids reaching past its `api/` package.
@@ -80,7 +85,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `InventoryEventProcessor`'s async hop. The `OpeningStockEntity`'s
    reference number is what ties the two together
    (`StockEntryEntity.documentReference`). The layer's `batch_cost` is the declaration's line total
-   (`unitCost × userProvidedQuantity`, rounded once to cents) and its storage quantity is exact.
+   (`OpeningStockEntity.totalCost`, rounded once to cents) and its storage quantity is exact.
 9. Publish one `OpeningStockDeclaredEvent` per line via
    `OpeningStockHandlerForKafka.publish`; it carries the line total as `Money`, computed once there, so an oversized
    total fails inside the declaring transaction. Ledger posting still has to be
@@ -94,16 +99,19 @@ cost. `OpeningStockEntity` exists alongside them purely to:
 
 `OpeningStockEndpoint` (`secured/opening-stock`):
 
-- `POST` (body: `lines: [{locationProductId, quantity, unitId, unitCost}]`)
+- `POST` (body: `lines: [{locationProductId, quantity, unitId, unitCost, costUnitId?}]`)
   → `OpeningStockService.declareInitialStock`. Response is
   `List<OpeningStockResponseDto>` — `referenceNumber`, `locationProductId`,
-  `productLabel`, `quantity`, `unitId`, `unitCost`, `declaredBy`, `declaredAt`.
-- `POST bulk` (body: `[{locationProductReferenceNumber, quantity, unitCode, unitCost, defaultSalePrice}]`)
+  `productLabel`, `quantity`, `unitId`, `unitCost` (derived, see above), `declaredBy`, `declaredAt`.
+- `POST bulk` (body: `[{locationProductReferenceNumber, quantity, unitCode, unitCost?, costUnitCode?, defaultSalePrice}]`)
   → `OpeningStockBulkService.bulkDeclareInitialStock`. Same response as `POST`. Resolves each row's product
-  reference number (`LocationProductDataFetcher.findIdsByReferenceNumbers`) and unit code (`UnitValueFetcher`, codes are
-  unique org-wide) to ids, reporting every row with a blank product reference number or unit code (`Missing product reference number`,
-  `Missing unit code`), an unknown product or unit, or a repeated product together as `Row N: ...`, then delegates the
-  resolved lines to `OpeningStockService.declareInitialStock` and, after it succeeds, writes each row's `defaultSalePrice`
+  reference number (`LocationProductDataFetcher.findIdsByReferenceNumbers`) and unit codes — `unitCode` and the optional
+  `costUnitCode` (`UnitValueFetcher`, codes are unique org-wide) — to ids, reporting every row with a blank product
+  reference number or unit code (`Missing product reference number`, `Missing unit code`), an unknown product or unit,
+  or a repeated product together as `Row N: ...`, then delegates the
+  resolved lines to `OpeningStockService.declareInitialStock`. A row with a zero `quantity` declares nothing and only
+  sets its price (`unitCost` may be omitted); a positive `quantity` without a `unitCost` is a row error. After the
+  declaration succeeds (skipped when every row is zero), writes each row's `defaultSalePrice`
   to its location product via `LocationProductService.updateDefaultSalePrices` (one batched write). Everything runs in one location transaction, so a
   failed declaration leaves no price changed.
 - `GET` → `OpeningStockService.getAll` (all declarations for the current

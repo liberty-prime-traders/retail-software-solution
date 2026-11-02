@@ -5,7 +5,6 @@ import me.ezra_home.retail_software_solution.locations.business.stock.InboundLay
 import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 
@@ -23,11 +22,11 @@ class OpeningStockStockUpdater(
                 movementType = MovementType.OPENING_STOCK,
                 documentReference = line.documentReference,
                 detailReference = null,
-                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedUnit),
-                batchCost = Decimals.MoneyScale.multiply(line.unitCost, line.userProvidedQuantity.toBigDecimal()),
+                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedQtyUnit),
+                batchCost = line.batchCost,
                 userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                 unitId = line.unitId,
-                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedUnit,
+                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedQtyUnit,
             )
         }
         stockIncreaseRecorder.record(layerSpecs)

@@ -13,9 +13,11 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.Openin
 import me.ezra_home.retail_software_solution.locations.business.stock.api.OpeningStockStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 
 @Service
 @TransactionalOnLocationSchema
@@ -45,17 +47,27 @@ class OpeningStockService(
             .map { it.locationProductId }.toSet()
         OpeningStockValidator.guardNotAlreadyDeclared(alreadyDeclared, productIds, labelsByProductId)
 
-        val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
-            lines.map { LocationProductUnitRequestDto(it.locationProductId, it.unitId) }
+        val storageUnitsByUnitRequest = locationProductDataFetcher.getStorageUnitsByRequest(
+            lines.flatMap { line ->
+                listOf(
+                    LocationProductUnitRequestDto(line.locationProductId, line.unitId),
+                    LocationProductUnitRequestDto(line.locationProductId, line.costUnitId ?: line.unitId)
+                )
+            }.distinct()
         )
         val savedOpeningStocks = openingStockRepository.saveAll(
             lines.map { line ->
+                val storageUnitsPerQtyUnit =
+                    storageUnitsByUnitRequest.getValue(LocationProductUnitRequestDto(line.locationProductId, line.unitId))
+                val storageUnitsPerCostUnit = storageUnitsByUnitRequest.getValue(
+                    LocationProductUnitRequestDto(line.locationProductId, line.costUnitId ?: line.unitId)
+                )
                 OpeningStockEntity(
                     locationProductId = line.locationProductId,
                     userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                     unitId = line.unitId,
-                    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(line.locationProductId),
-                    unitCost = line.unitCost.toBigDecimal()
+                    storageUnitsPerUserProvidedQtyUnit = storageUnitsPerQtyUnit,
+                    totalCost = toTotalCost(line, storageUnitsPerQtyUnit, storageUnitsPerCostUnit)
                 )
             }
         )
@@ -68,8 +80,8 @@ class OpeningStockService(
                     locationProductId = line.locationProductId,
                     userProvidedQuantity = line.userProvidedQuantity,
                     unitId = openingStock.unitId,
-                    storageUnitsPerUserProvidedUnit = openingStock.storageUnitsPerUserProvidedUnit,
-                    unitCost = openingStock.unitCost,
+                    storageUnitsPerUserProvidedQtyUnit = openingStock.storageUnitsPerUserProvidedQtyUnit,
+                    batchCost = openingStock.totalCost,
                     documentReference = openingStock.requiredReference()
                 )
             }
@@ -78,6 +90,14 @@ class OpeningStockService(
         savedOpeningStocks.forEach { openingStock -> openingStockHandlerForKafka.publish(openingStock) }
         return savedOpeningStocks.map { toResponseDto(it, labelsByProductId.getValue(it.locationProductId)) }
     }
+
+    /** [OpeningStockLineDto.unitCost] is per cost unit, so the quantity goes to storage units first and the
+     * division rounds once; converting the cost into the quantity unit would round at scale 4. */
+    private fun toTotalCost(line: OpeningStockLineDto, storageUnitsPerQtyUnit: Long, storageUnitsPerCostUnit: Long) =
+        Decimals.MoneyScale.divide(
+            line.userProvidedQuantity.toBigDecimal().multiply(BigDecimal(storageUnitsPerQtyUnit)).multiply(line.unitCost.toBigDecimal()),
+            BigDecimal(storageUnitsPerCostUnit)
+        )
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getAll(): List<OpeningStockResponseDto> {
@@ -92,7 +112,7 @@ class OpeningStockService(
         productLabel = productLabel,
         userProvidedQuantity = openingStock.userProvidedQuantity,
         unitId = openingStock.unitId,
-        unitCost = openingStock.unitCost,
+        unitCost = openingStock.unitCost(),
         declaredBy = userQualifier.getCreatorFullName(openingStock.requiredCreatedById()),
         declaredAt = openingStock.requiredCreatedOn()
     )
