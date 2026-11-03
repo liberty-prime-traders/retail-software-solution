@@ -29,6 +29,7 @@ rts:
   jwt:
     secret: test-secret-that-is-at-least-32-bytes-long
     expiration-minutes: 60
+    max-session-minutes: 600
   pending-identity-link:
     expiration-minutes: 20
 

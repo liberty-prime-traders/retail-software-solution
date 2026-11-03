@@ -15,17 +15,31 @@ class SessionTokenService(
     private val jwtEncoder: JwtEncoder,
 
     @param:Value($$"${rts.jwt.expiration-minutes}")
-    private val sessionTokenExpirationMinutes: Long
+    private val sessionTokenExpirationMinutes: Long,
+
+    @param:Value($$"${rts.jwt.max-session-minutes}")
+    private val sessionTokenMaxSessionMinutes: Long
 ) {
 
-    fun mint(systemUserId: UUID): String {
+    fun mint(systemUserId: UUID, authTime: Instant = Instant.now()): String {
         val issuedAt = Instant.now()
+        val expiresAt = minOf(
+            issuedAt.plusSeconds(sessionTokenExpirationMinutes * 60),
+            absoluteSessionEnd(authTime)
+        )
         val claims = JwtClaimsSet.builder()
             .subject(systemUserId.toString())
             .issuedAt(issuedAt)
-            .expiresAt(issuedAt.plusSeconds(sessionTokenExpirationMinutes * 60))
+            .expiresAt(expiresAt)
+            .claim(AUTH_TIME_CLAIM, authTime.epochSecond)
             .build()
         val headers = JwsHeader.with(MacAlgorithm.HS256).build()
         return jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).tokenValue
+    }
+
+    fun absoluteSessionEnd(authTime: Instant): Instant = authTime.plusSeconds(sessionTokenMaxSessionMinutes * 60)
+
+    companion object {
+        const val AUTH_TIME_CLAIM = "auth_time"
     }
 }

@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.configuration.security
 
+import me.ezra_home.retail_software_solution.configuration.filters.SessionRenewalFilter
 import me.ezra_home.retail_software_solution.configuration.filters.UserDataExtractionFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
@@ -25,7 +26,11 @@ class SecurityConfiguration(
 
     @Bean
     @Throws(Exception::class)
-    fun filterChain(http: HttpSecurity, userDataExtractionFilter: UserDataExtractionFilter): SecurityFilterChain {
+    fun filterChain(
+        http: HttpSecurity,
+        userDataExtractionFilter: UserDataExtractionFilter,
+        sessionRenewalFilter: SessionRenewalFilter
+    ): SecurityFilterChain {
         return http
             .authorizeHttpRequests {
                 it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -36,11 +41,17 @@ class SecurityConfiguration(
             .cors(Customizer.withDefaults())
             .oauth2ResourceServer { it.jwt(Customizer.withDefaults()) }
             .addFilterAfter(userDataExtractionFilter, BearerTokenAuthenticationFilter::class.java)
+            .addFilterAfter(sessionRenewalFilter, UserDataExtractionFilter::class.java)
             .build()
     }
 
     @Bean
     fun userDataExtractionFilterRegistration(filter: UserDataExtractionFilter): FilterRegistrationBean<UserDataExtractionFilter> {
+        return FilterRegistrationBean(filter).apply { isEnabled = false }
+    }
+
+    @Bean
+    fun sessionRenewalFilterRegistration(filter: SessionRenewalFilter): FilterRegistrationBean<SessionRenewalFilter> {
         return FilterRegistrationBean(filter).apply { isEnabled = false }
     }
 
@@ -52,6 +63,7 @@ class SecurityConfiguration(
             this.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
             this.allowedHeaders = listOf("*")
             this.allowCredentials = true
+            this.exposedHeaders = listOf(SessionRenewalFilter.RENEWED_TOKEN_HEADER)
         }
 
         val source = UrlBasedCorsConfigurationSource()
