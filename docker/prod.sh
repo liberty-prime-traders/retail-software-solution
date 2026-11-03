@@ -5,8 +5,8 @@ ACTION="${1:-up}"  # default to up
 ENV_FILE="prod.env"
 
 APP_VERSION="$(grep -E '^APP_VERSION=' "$ENV_FILE" | cut -d= -f2)"
-if [[ "$APP_VERSION" =~ ^(dev|test|latest)$ ]]; then
-  echo "APP_VERSION must be a pinned release tag, not '$APP_VERSION'." >&2
+if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "APP_VERSION must be a pinned release tag such as 1.2.3, not '$APP_VERSION'." >&2
   exit 1
 fi
 

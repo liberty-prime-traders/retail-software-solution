@@ -80,8 +80,15 @@ headers.
 ## 4. Session JWT vs. effective authorities — two different lifetimes
 
 The JWT `SessionTokenService.mint()` returns is deliberately thin: just
-`sub` (system user id) and standard timing claims. It carries **no**
-roles and is **not** re-minted per request.
+`sub` (system user id), standard timing claims, and `auth_time` (the
+original sign-in time). It carries **no** roles. It is re-minted only by
+`SessionRenewalFilter`: once past half its lifetime, and before the absolute
+cap `rts.jwt.max-session-minutes` after `auth_time`. The renewed token goes
+out in an `X-Renewed-Token` response header, and `auth_time` is preserved. The
+header is written only when the request finished with a status below 400 and the
+response is not yet committed, so a request refused by authorization gets no renewal.
+`SessionRenewalFilter` runs after `UserDataExtractionFilter`, so a disabled account
+never receives one.
 
 What backs `hasRole(...)` checks is entirely separate and lives only in
 memory for the duration of one request: `TenantFilter` calls

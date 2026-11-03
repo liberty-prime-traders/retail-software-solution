@@ -82,6 +82,7 @@ rts:
   jwt:
     secret: ${RTS_JWT_SECRET}
     expiration-minutes: ${RTS_JWT_EXPIRATION_MINUTES:60}
+    max-session-minutes: ${RTS_JWT_MAX_SESSION_MINUTES:480}
   pending-identity-link:
     expiration-minutes: ${RTS_PENDING_IDENTITY_LINK_EXPIRATION_MINUTES:20}
   product-search:
