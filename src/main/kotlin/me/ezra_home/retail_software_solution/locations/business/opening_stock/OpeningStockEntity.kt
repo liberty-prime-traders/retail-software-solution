@@ -26,7 +26,7 @@ class OpeningStockEntity(
     var unitId: UUID,
 
     @Column(name = "storage_units_per_user_provided_qty_unit", nullable = false, updatable = false)
-    var storageUnitsPerUserProvidedQtyUnit: Long,
+    var storageUnitsPerUserProvidedUnit: Long,
 
     @Column(name = "total_cost", nullable = false, updatable = false, precision = 19, scale = 4)
     var totalCost: BigDecimal

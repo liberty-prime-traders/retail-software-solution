@@ -18,7 +18,7 @@ class OpeningStockAmountsFetcher(
             .associate { it.locationProductId to OpeningStockAmountsDto(
                 userProvidedQuantity = it.userProvidedQuantity,
                 unitId = it.unitId,
-                storageUnitsPerUserProvidedQtyUnit = it.storageUnitsPerUserProvidedQtyUnit,
+                storageUnitsPerUserProvidedUnit = it.storageUnitsPerUserProvidedUnit,
                 unitCost = it.unitCost()
             ) }
     }

@@ -22,11 +22,11 @@ class OpeningStockStockUpdater(
                 movementType = MovementType.OPENING_STOCK,
                 documentReference = line.documentReference,
                 detailReference = null,
-                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedQtyUnit),
+                storageQuantity = ExactQuantity.ofStorageFromUserProvided(line.userProvidedQuantity, line.storageUnitsPerUserProvidedUnit),
                 batchCost = line.batchCost,
                 userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                 unitId = line.unitId,
-                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedQtyUnit,
+                storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedUnit,
             )
         }
         stockIncreaseRecorder.record(layerSpecs)

@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account_sel
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountStructureLock
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.AccountTreeBuilder
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 
@@ -10,19 +11,19 @@ import org.springframework.stereotype.Service
 @TransactionalOnOrganizationSchema(readOnly = true)
 class AccountSelectionService(
     private val accountDataFetcher: AccountDataFetcher,
-    private val accountTreeBuilder: AccountTreeBuilder,
     private val accountStructureLock: AccountStructureLock
 ) {
 
     fun buildTreesForSelection(): AccountsTreesForSelection {
         val candidates = accountDataFetcher.getSelectionCandidates()
         return AccountsTreesForSelection(
-            payable = accountTreeBuilder.build(candidates, AccountSelectionRule.TAX_PAYABLE),
-            recoverable = accountTreeBuilder.build(candidates, AccountSelectionRule.TAX_RECOVERABLE),
-            paymentMethods = accountTreeBuilder.build(candidates, AccountSelectionRule.PAYMENT_METHOD),
-            expenseTypes = accountTreeBuilder.build(candidates, AccountSelectionRule.EXPENSE_TYPE),
-            fundMovements = accountTreeBuilder.build(candidates, AccountSelectionRule.FUND_MOVEMENT),
-            loans = accountTreeBuilder.build(candidates, AccountSelectionRule.LOAN)
+            payable = AccountTreeBuilder.build(candidates, AccountSelectionRule.TAX_PAYABLE),
+            recoverable = AccountTreeBuilder.build(candidates, AccountSelectionRule.TAX_RECOVERABLE),
+            paymentMethods = AccountTreeBuilder.build(candidates, AccountSelectionRule.PAYMENT_METHOD),
+            expenseTypes = AccountTreeBuilder.build(candidates, AccountSelectionRule.EXPENSE_TYPE),
+            fundMovements = AccountTreeBuilder.build(candidates, AccountSelectionRule.FUND_MOVEMENT),
+            loans = AccountTreeBuilder.build(candidates, AccountSelectionRule.LOAN),
+            manualJournals = AccountTreeBuilder.build(candidates, AccountSelectionRule.MANUAL_JOURNAL)
         )
     }
 

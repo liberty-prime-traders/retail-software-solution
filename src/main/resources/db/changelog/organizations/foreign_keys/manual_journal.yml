@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-manual-journal-reversal-of
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_manual_journal_reversal_of
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: manual_journal
+            baseColumnNames: reversal_of_manual_journal_id
+            referencedTableName: manual_journal
+            referencedColumnNames: id
+            constraintName: fk_manual_journal_reversal_of
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: manual_journal
+            constraintName: fk_manual_journal_reversal_of
+
+  - changeSet:
+      id: add-foreign-key-manual-journal-line-manual-journal
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_manual_journal_line_manual_journal
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: manual_journal_line
+            baseColumnNames: manual_journal_id
+            referencedTableName: manual_journal
+            referencedColumnNames: id
+            constraintName: fk_manual_journal_line_manual_journal
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: manual_journal_line
+            constraintName: fk_manual_journal_line_manual_journal

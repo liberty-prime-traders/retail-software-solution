@@ -23,5 +23,7 @@ enum class LedgerSourceType(override val code: String) : HasCode {
     LOAN("LN"),
     LOAN_VOID("LNV"),
     LOAN_REPAYMENT("LNR"),
-    LOAN_REPAYMENT_VOID("LNRV")
+    LOAN_REPAYMENT_VOID("LNRV"),
+    MANUAL_JOURNAL("MJ"),
+    MANUAL_JOURNAL_VOID("MJV")
 }

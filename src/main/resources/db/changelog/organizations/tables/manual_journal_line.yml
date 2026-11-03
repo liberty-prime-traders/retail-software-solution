@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-manual-journal-line-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: manual_journal_line
+      changes:
+        - createTable:
+            tableName: manual_journal_line
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: nvarchar2(20)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_manual_journal_line_reference_number
+
+              - column:
+                  name: manual_journal_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_manual_journal_id_notnull
+
+              - column:
+                  name: account_code
+                  type: nvarchar2(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_account_code_notnull
+
+              - column:
+                  name: entry_type
+                  type: nvarchar2(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_entry_type_notnull
+
+              - column:
+                  name: amount
+                  type: decimal(19,4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_amount_notnull
+
+              - column:
+                  name: line_memo
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: manual_journal_line_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: manual_journal_line

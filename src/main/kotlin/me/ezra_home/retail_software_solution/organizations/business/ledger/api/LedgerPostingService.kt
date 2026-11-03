@@ -13,9 +13,9 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.Ledge
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerBalanceRepository
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryEntity
 import me.ezra_home.retail_software_solution.organizations.business.ledger.SubledgerEntryRepository
+import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
-import java.time.Instant
 
 @Service
 @TransactionalOnOrganizationSchema
@@ -59,7 +59,7 @@ class LedgerPostingService(
             sourceType = ledgerPostingRequest.sourceType,
             sourceLocationId = SessionContextProvider.getLocationIdOrNull(),
             fiscalPeriodId = fiscalPeriodId,
-            postedOn = Instant.now()
+            postedOn = DateTimes.Offset.atStartOfDayInOrganizationZone(ledgerPostingRequest.postingDate).toInstant()
         )
         return groupRepository.save(group)
     }

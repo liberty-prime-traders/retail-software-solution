@@ -220,6 +220,10 @@ zone), account, entry type and, for `getMovements`, source. `getMovements` cover
 types, from the start of `from` onward, reporting anything dated at or after `before` under `before`.
 `idx_ledger_entry_grp_posted_on` serves the range scan.
 
+`ledger_entry_group.posted_on` holds the start of the posting date in the organization zone, not the write time, which
+is `created_on`. A group therefore reports on the day it was dated, including backdated manual journals and any other
+event that carries its own date.
+
 ## Contra accounts
 
 Contras are posted like any other account, in their own normal direction

@@ -12,7 +12,7 @@ Depends on `ledger/api` (`LedgerMovementReader`) and `account/api` (`AccountServ
 
 - `from` is inclusive, `before` exclusive, both local dates in the organization zone. `SummaryRange` guards
   `from < before`, `before` not after tomorrow, and at most 92 days between them.
-- A ledger group belongs to the local date of `ledger_entry_group.posted_on`. Day-start boundaries are computed in
+- A ledger group belongs to the local date of its posting date (`ledger_entry_group.posted_on`). Day-start boundaries are computed in
   Kotlin (`DateTimes.Offset.atStartOfDayInOrganizationZone`) and bucketed with `width_bucket` inside `ledger`; the
   organization zone can be a fixed offset, which Postgres `AT TIME ZONE <string>` reads with the opposite sign.
 - A void posts on the day it was processed, so it lowers that day's figures, never the original's.
@@ -29,7 +29,7 @@ location session keeps only groups whose `source_location_id` equals it, which d
 
 Source whitelist, requested explicitly from the reader:
 
-- profit and loss: `SALE`, `SALE_VOID`, `EXPENSE`, `EXPENSE_VOID`, `STOCK_ADJUSTMENT`
+- profit and loss: `SALE`, `SALE_VOID`, `EXPENSE`, `EXPENSE_VOID`, `STOCK_ADJUSTMENT`, `MANUAL_JOURNAL`, `MANUAL_JOURNAL_VOID`
 - money collected and receivables: `SALE`, `SALE_VOID`, `SALE_PAYMENT`, `SALE_PAYMENT_VOID`
 
 Opening balances, opening stock, deliveries, supplier payments, expense payments and fund movements never contribute.

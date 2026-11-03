@@ -9,4 +9,5 @@ data class AccountsTreesForSelection(
     val expenseTypes: List<TreeNode<String>>,
     val fundMovements: List<TreeNode<String>>,
     val loans: List<TreeNode<String>>,
+    val manualJournals: List<TreeNode<String>>,
 )

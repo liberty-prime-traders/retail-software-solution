@@ -28,6 +28,16 @@ enum class RtsRole(
         )
     ),
 
+    MANAGE_MANUAL_JOURNALS(
+        "MMJR",
+        SchemaLevel.ORGANIZATION,
+        permissions = setOf(
+            RtsPermission.CREATE_MANUAL_JOURNAL,
+            RtsPermission.REVERSE_MANUAL_JOURNAL,
+            RtsPermission.VIEW_MANUAL_JOURNAL
+        )
+    ),
+
     LIBERTY_ADMIN(
         "LBAR",
         SchemaLevel.ORGANIZATION,

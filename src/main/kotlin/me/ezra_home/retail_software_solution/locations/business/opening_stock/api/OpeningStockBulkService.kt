@@ -31,29 +31,14 @@ class OpeningStockBulkService(
         val openingStockLineDtos = mutableListOf<OpeningStockLineDto>()
         val defaultSalePricesByLocationProductId = mutableMapOf<UUID, Money>()
         openingStockBulkLineDtos.forEachIndexed { index, openingStockBulkLineDto ->
-            val referenceNumber = StringUtils.getValueOrNull(openingStockBulkLineDto.locationProductReferenceNumber)
-            val unitCode = StringUtils.getValueOrNull(openingStockBulkLineDto.unitCode)
-            val locationProductId = referenceNumber?.let { locationProductIdsByReferenceNumber[it] }
-            val unitId = unitCode?.let { unitIdsByCode[it] }
-            val costUnitCode = StringUtils.getValueOrNull(openingStockBulkLineDto.costUnitCode)
-            val costUnitId = costUnitCode?.let { unitIdsByCode[it] }
-            when {
-                referenceNumber == null -> errors.add("Row ${index + 1}: Missing product reference number")
-                unitCode == null -> errors.add("Row ${index + 1}: Missing unit code")
-                locationProductId == null -> errors.add("Row ${index + 1}: Unknown product '$referenceNumber'")
-                unitId == null -> errors.add("Row ${index + 1}: Unknown unit code '$unitCode'")
-                !openingStockBulkLineDto.userProvidedQuantity.isZero() && openingStockBulkLineDto.unitCost == null ->
-                    errors.add("Row ${index + 1}: Missing unit cost")
-                costUnitCode != null && costUnitId == null ->
-                    errors.add("Row ${index + 1}: Unknown cost unit code '$costUnitCode'")
-                !referenceNumbersInRequest.add(referenceNumber) ->
-                    errors.add("Row ${index + 1}: Product '$referenceNumber' appears more than once in the request")
-                else -> {
-                    defaultSalePricesByLocationProductId[locationProductId] = openingStockBulkLineDto.defaultSalePrice
-                    if (!openingStockBulkLineDto.userProvidedQuantity.isZero()) {
-                        openingStockLineDtos.add(
-                            toOpeningStockLineDto(openingStockBulkLineDto, locationProductId, unitId, costUnitId)
-                        )
+            when (val bulkRow = resolveBulkRow(index, openingStockBulkLineDto, locationProductIdsByReferenceNumber, unitIdsByCode)) {
+                is BulkRow.Invalid -> errors.add(bulkRow.message)
+                is BulkRow.Resolved -> when {
+                    !referenceNumbersInRequest.add(bulkRow.referenceNumber) ->
+                        errors.add("Row ${index + 1}: Product '${bulkRow.referenceNumber}' appears more than once in the request")
+                    else -> {
+                        defaultSalePricesByLocationProductId[bulkRow.locationProductId] = bulkRow.defaultSalePrice
+                        bulkRow.openingStockLineDto?.let(openingStockLineDtos::add)
                     }
                 }
             }
@@ -68,16 +53,53 @@ class OpeningStockBulkService(
         return openingStockResponseDtos
     }
 
-    private fun toOpeningStockLineDto(
+    private fun resolveBulkRow(
+        index: Int,
         openingStockBulkLineDto: OpeningStockBulkLineDto,
-        locationProductId: UUID,
-        unitId: UUID,
-        costUnitId: UUID?
-    ) = OpeningStockLineDto(
-        locationProductId = locationProductId,
-        userProvidedQuantity = PositiveUserProvidedQuantity.of(openingStockBulkLineDto.userProvidedQuantity.toBigDecimal()),
-        unitId = unitId,
-        unitCost = requireNotNull(openingStockBulkLineDto.unitCost),
-        costUnitId = costUnitId
-    )
+        locationProductIdsByReferenceNumber: Map<String, UUID>,
+        unitIdsByCode: Map<String, UUID>
+    ): BulkRow {
+        val row = "Row ${index + 1}"
+        val referenceNumber = StringUtils.getValueOrNull(openingStockBulkLineDto.locationProductReferenceNumber)
+        val unitCode = StringUtils.getValueOrNull(openingStockBulkLineDto.unitCode)
+        val costUnitCode = StringUtils.getValueOrNull(openingStockBulkLineDto.costUnitCode)
+        val locationProductId = referenceNumber?.let { locationProductIdsByReferenceNumber[it] }
+        val unitId = unitCode?.let { unitIdsByCode[it] }
+        val costUnitId = costUnitCode?.let { unitIdsByCode[it] }
+        val isPriceOnly = openingStockBulkLineDto.userProvidedQuantity.isZero()
+        val unitCost = openingStockBulkLineDto.unitCost
+        return when {
+            referenceNumber == null -> BulkRow.Invalid("$row: Missing product reference number")
+            unitCode == null -> BulkRow.Invalid("$row: Missing unit code")
+            locationProductId == null -> BulkRow.Invalid("$row: Unknown product '$referenceNumber'")
+            unitId == null -> BulkRow.Invalid("$row: Unknown unit code '$unitCode'")
+            !isPriceOnly && unitCost == null -> BulkRow.Invalid("$row: Missing unit cost")
+            costUnitCode != null && costUnitId == null -> BulkRow.Invalid("$row: Unknown cost unit code '$costUnitCode'")
+            else -> BulkRow.Resolved(
+                referenceNumber = referenceNumber,
+                locationProductId = locationProductId,
+                defaultSalePrice = openingStockBulkLineDto.defaultSalePrice,
+                openingStockLineDto = unitCost?.takeUnless { isPriceOnly }?.let { positiveUnitCost ->
+                    OpeningStockLineDto(
+                        locationProductId = locationProductId,
+                        userProvidedQuantity = PositiveUserProvidedQuantity.of(openingStockBulkLineDto.userProvidedQuantity.toBigDecimal()),
+                        unitId = unitId,
+                        unitCost = positiveUnitCost,
+                        costUnitId = costUnitId
+                    )
+                }
+            )
+        }
+    }
+
+    private sealed interface BulkRow {
+        data class Invalid(val message: String) : BulkRow
+
+        data class Resolved(
+            val referenceNumber: String,
+            val locationProductId: UUID,
+            val defaultSalePrice: Money,
+            val openingStockLineDto: OpeningStockLineDto?
+        ) : BulkRow
+    }
 }

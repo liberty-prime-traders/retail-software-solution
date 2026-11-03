@@ -24,6 +24,11 @@ class AccountDataFetcher(
             .filter { it.code in accountCodes }
             .associate { it.code to it.label }
 
+    fun getNamesAndTypesByCodes(accountCodes: Set<String>): Map<String, AccountNameAndTypeDto> =
+        accountCache.getAll()
+            .filter { it.code in accountCodes }
+            .associate { it.code to AccountNameAndTypeDto(code = it.code, name = it.name, accountType = it.accountType) }
+
     fun getByCode(accountCode: String): AccountLookupDto {
         val account = accountCache.getAll().firstOrNull { it.code == accountCode }
             ?: throw RtsGenericException("Account $accountCode does not exist")

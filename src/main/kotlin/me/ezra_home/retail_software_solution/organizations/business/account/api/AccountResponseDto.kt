@@ -1,6 +1,5 @@
 package me.ezra_home.retail_software_solution.organizations.business.account.api
 
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import java.io.Serializable
 import java.math.BigDecimal
