@@ -41,6 +41,8 @@ object TableNames {
     const val LOAN_REPAYMENT_VOID = "loan_repayment_void"
     const val LOAN_VOID = "loan_void"
     const val LOCATION = "location"
+    const val MANUAL_JOURNAL = "manual_journal"
+    const val MANUAL_JOURNAL_LINE = "manual_journal_line"
     const val OPENING_BALANCE = "opening_balance"
     const val OPENING_STOCK = "opening_stock"
     const val ORGANIZATION_USER = "organization_user"

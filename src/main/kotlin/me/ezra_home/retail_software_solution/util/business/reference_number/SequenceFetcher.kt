@@ -38,8 +38,8 @@ class SequenceFetcher(
             entityManager.createNativeQuery("SELECT * FROM $procedureName(:sequenceName, :count)")
             .setParameter("sequenceName", sequenceName)
             .setParameter("count", count)
-            .resultList as List<String>
-        }
+            .resultList as List<Long>
+        }.map { it.toString() }
     }
 
     private fun generateSequenceName(tableName: TableName): String {

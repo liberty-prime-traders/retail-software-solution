@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.account
 
+import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountType
 import jakarta.persistence.Converter
 import me.ezra_home.retail_software_solution.util.enums.EnumConverter
 

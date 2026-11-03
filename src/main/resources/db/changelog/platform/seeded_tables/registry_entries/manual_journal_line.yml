@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-manual-journal-line-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: manual_journal_line
+              - column:
+                  name: default_prefix
+                  value: MJL
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_2_id}
+              - column:
+                  name: schema_level
+                  value: ORG
+              - column:
+                  name: display_name
+                  value: Manual Journal Line
+              - column:
+                  name: description
+                  value: Account lines of a manual journal
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

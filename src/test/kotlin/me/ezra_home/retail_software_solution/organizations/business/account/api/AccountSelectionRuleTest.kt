@@ -1,16 +1,12 @@
 package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.organizations.business.account.AccountDto
-import me.ezra_home.retail_software_solution.organizations.business.account.AccountType
 import me.ezra_home.retail_software_solution.organizations.business.account_selection.api.AccountSelectionRule
-import me.ezra_home.retail_software_solution.organizations.business.account_selection.api.AccountTreeBuilder
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.api.AccountSelectionService
 import me.ezra_home.retail_software_solution.util.ui_models.TreeNode
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -127,7 +123,7 @@ class AccountSelectionRuleTest {
         val inactiveExpense = accountDto("005.100", AccountType.EXPENSE, SystemAccount.EXPENSES.code, accountIsActive = false)
         val candidates = candidatesOf(inactiveExpense)
 
-        val expenseTree = AccountTreeBuilder().build(candidates, AccountSelectionRule.EXPENSE_TYPE)
+        val expenseTree = accountSelectionServiceFor(candidates).buildTreesForSelection().expenseTypes
 
         assertEquals(listOf(SystemAccount.EXPENSES.code), expenseTree.map { it.key })
         val expenseChildren = expenseTree.single().children
@@ -135,6 +131,12 @@ class AccountSelectionRuleTest {
         assertNull(expenseChildren.find { it.key == inactiveExpense.code })
         assertTrue(expenseChildren.any { it.key == SystemAccount.RENT_EXPENSE.code && it.selectable })
         assertNull(findNode(expenseTree, SystemAccount.WAGES_EXPENSE.code))
+    }
+
+    private fun accountSelectionServiceFor(candidates: List<AccountSelectionCandidate>): AccountSelectionService {
+        val accountDataFetcher = Mockito.mock(AccountDataFetcher::class.java)
+        Mockito.`when`(accountDataFetcher.getSelectionCandidates()).thenReturn(candidates)
+        return AccountSelectionService(accountDataFetcher, Mockito.mock(AccountStructureLock::class.java))
     }
 
     private fun candidatesOf(vararg orgAccountDtos: AccountDto): List<AccountSelectionCandidate> =

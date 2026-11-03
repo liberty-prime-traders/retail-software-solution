@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.account
 
+import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountType
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity

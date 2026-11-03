@@ -8,16 +8,14 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.inOrder
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 
 // A fresh read taken before the lock would let createChild or toggleActive change the account between check and save.
 class AccountSelectionServiceTest {
 
     private val accountDataFetcher = mock(AccountDataFetcher::class.java)
     private val accountStructureLock = mock(AccountStructureLock::class.java)
-    private val accountSelectionService = AccountSelectionService(accountDataFetcher, AccountTreeBuilder(), accountStructureLock)
+    private val accountSelectionService = AccountSelectionService(accountDataFetcher, accountStructureLock)
 
     @Test
     fun `requireSelectable takes the account lock before reading fresh candidates`() {

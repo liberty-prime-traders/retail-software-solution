@@ -51,23 +51,23 @@ class OpeningStockService(
             lines.flatMap { line ->
                 listOf(
                     LocationProductUnitRequestDto(line.locationProductId, line.unitId),
-                    LocationProductUnitRequestDto(line.locationProductId, line.costUnitId ?: line.unitId)
+                    LocationProductUnitRequestDto(line.locationProductId, line.resolvedCostUnitId)
                 )
             }.distinct()
         )
         val savedOpeningStocks = openingStockRepository.saveAll(
             lines.map { line ->
-                val storageUnitsPerQtyUnit =
+                val storageUnitsPerUserProvidedUnit =
                     storageUnitsByUnitRequest.getValue(LocationProductUnitRequestDto(line.locationProductId, line.unitId))
                 val storageUnitsPerCostUnit = storageUnitsByUnitRequest.getValue(
-                    LocationProductUnitRequestDto(line.locationProductId, line.costUnitId ?: line.unitId)
+                    LocationProductUnitRequestDto(line.locationProductId, line.resolvedCostUnitId)
                 )
                 OpeningStockEntity(
                     locationProductId = line.locationProductId,
                     userProvidedQuantity = line.userProvidedQuantity.toBigDecimal(),
                     unitId = line.unitId,
-                    storageUnitsPerUserProvidedQtyUnit = storageUnitsPerQtyUnit,
-                    totalCost = toTotalCost(line, storageUnitsPerQtyUnit, storageUnitsPerCostUnit)
+                    storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                    totalCost = toTotalCost(line, storageUnitsPerUserProvidedUnit, storageUnitsPerCostUnit)
                 )
             }
         )
@@ -80,7 +80,7 @@ class OpeningStockService(
                     locationProductId = line.locationProductId,
                     userProvidedQuantity = line.userProvidedQuantity,
                     unitId = openingStock.unitId,
-                    storageUnitsPerUserProvidedQtyUnit = openingStock.storageUnitsPerUserProvidedQtyUnit,
+                    storageUnitsPerUserProvidedUnit = openingStock.storageUnitsPerUserProvidedUnit,
                     batchCost = openingStock.totalCost,
                     documentReference = openingStock.requiredReference()
                 )
@@ -93,9 +93,9 @@ class OpeningStockService(
 
     /** [OpeningStockLineDto.unitCost] is per cost unit, so the quantity goes to storage units first and the
      * division rounds once; converting the cost into the quantity unit would round at scale 4. */
-    private fun toTotalCost(line: OpeningStockLineDto, storageUnitsPerQtyUnit: Long, storageUnitsPerCostUnit: Long) =
+    private fun toTotalCost(line: OpeningStockLineDto, storageUnitsPerUserProvidedUnit: Long, storageUnitsPerCostUnit: Long) =
         Decimals.MoneyScale.divide(
-            line.userProvidedQuantity.toBigDecimal().multiply(BigDecimal(storageUnitsPerQtyUnit)).multiply(line.unitCost.toBigDecimal()),
+            line.userProvidedQuantity.toBigDecimal().multiply(BigDecimal(storageUnitsPerUserProvidedUnit)).multiply(line.unitCost.toBigDecimal()),
             BigDecimal(storageUnitsPerCostUnit)
         )
 

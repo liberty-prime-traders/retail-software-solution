@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-manual-journal-line-manual-journal-id
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_manual_journal_line_manual_journal_id
+      changes:
+        - createIndex:
+            tableName: manual_journal_line
+            indexName: idx_manual_journal_line_manual_journal_id
+            columns:
+              - column:
+                  name: manual_journal_id
+      rollback:
+        - dropIndex:
+            tableName: manual_journal_line
+            indexName: idx_manual_journal_line_manual_journal_id

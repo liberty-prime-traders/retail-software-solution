@@ -2,18 +2,9 @@ package me.ezra_home.retail_software_solution.organizations.business.account_sel
 
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountSelectionCandidate
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.MANUAL_JOURNAL_ACCOUNTS
+import me.ezra_home.retail_software_solution.organizations.business.account_selection.RESERVED_EXPENSE_ACCOUNTS
 
-// Flows post to these directly; a custom expense type pointing at one would mix its entries into them.
-private val RESERVED_EXPENSE_ACCOUNTS: Set<SystemAccount> = setOf(
-    SystemAccount.COST_OF_GOODS_SOLD,
-    SystemAccount.WAGES_EXPENSE,
-    SystemAccount.INBOUND_FREIGHT,
-    SystemAccount.OUTBOUND_FREIGHT,
-    SystemAccount.SHRINKAGE_AND_LOSSES,
-    SystemAccount.INTERNAL_USE_EXPENSE,
-    SystemAccount.BAD_DEBT_EXPENSE,
-    SystemAccount.TAX_EXPENSE
-)
 
 enum class AccountSelectionRule(val accountDescription: String) {
 
@@ -46,6 +37,12 @@ enum class AccountSelectionRule(val accountDescription: String) {
             !candidate.isAsset() -> "Org-defined recoverable tax account must be of type Asset"
             else -> null
         }
+    },
+
+    MANUAL_JOURNAL("Manual journal account") {
+        override fun typeAndPlacementRejectionReason(candidate: AccountSelectionCandidate): String? =
+            if (candidate.systemAccount in MANUAL_JOURNAL_ACCOUNTS) null
+            else "Account ${candidate.code} can't be used in a manual journal."
     },
 
     EXPENSE_TYPE("Expense account") {

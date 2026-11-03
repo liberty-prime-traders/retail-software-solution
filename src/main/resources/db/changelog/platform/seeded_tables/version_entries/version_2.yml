@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 'v-2.0.0-entry'
+      author: ezra
+      changes:
+        - insert:
+            tableName: db_version
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: version_number
+                  value: '2.0.0'
+              - column:
+                  name: prev_version_id
+                  valueComputed: ${version_1_id}

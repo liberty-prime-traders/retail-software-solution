@@ -13,4 +13,6 @@ data class OpeningStockLineDto(
     val unitCost: PositiveMoney,
     /** The unit [unitCost] is priced per; defaults to [unitId]. */
     val costUnitId: UUID? = null
-)
+) {
+    val resolvedCostUnitId: UUID = costUnitId ?: unitId
+}

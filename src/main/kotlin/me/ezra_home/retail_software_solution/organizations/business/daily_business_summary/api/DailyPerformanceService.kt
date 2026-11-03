@@ -158,7 +158,9 @@ class DailyPerformanceService(
             LedgerSourceType.SALE_VOID,
             LedgerSourceType.EXPENSE,
             LedgerSourceType.EXPENSE_VOID,
-            LedgerSourceType.STOCK_ADJUSTMENT
+            LedgerSourceType.STOCK_ADJUSTMENT,
+            LedgerSourceType.MANUAL_JOURNAL,
+            LedgerSourceType.MANUAL_JOURNAL_VOID
         )
         val BILLING_SOURCES = setOf(LedgerSourceType.SALE, LedgerSourceType.SALE_VOID)
         val PAYMENT_SOURCES = setOf(LedgerSourceType.SALE_PAYMENT, LedgerSourceType.SALE_PAYMENT_VOID)

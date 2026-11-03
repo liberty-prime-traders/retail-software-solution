@@ -87,8 +87,9 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    (`StockEntryEntity.documentReference`). The layer's `batch_cost` is the declaration's line total
    (`OpeningStockEntity.totalCost`, rounded once to cents) and its storage quantity is exact.
 9. Publish one `OpeningStockDeclaredEvent` per line via
-   `OpeningStockHandlerForKafka.publish`; it carries the line total as `Money`, computed once there, so an oversized
-   total fails inside the declaring transaction. Ledger posting still has to be
+   `OpeningStockHandlerForKafka.publish`; it carries the stored `totalCost` wrapped in `Money.of`, which enforces
+   the money scale, non-negativity and the maximum transaction amount, so an oversized total fails inside the
+   declaring transaction. Ledger posting still has to be
    async — it crosses into the organization datasource — handled by
    `ledger/processors/OpeningStockAccountingProcessor`
    (`SystemAccount.INVENTORY` debit / `SystemAccount.OPENING_BALANCE_EQUITY`

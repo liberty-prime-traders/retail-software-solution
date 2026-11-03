@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sequence-manual-journal-line-reference-number
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sequenceExists:
+                sequenceName: seq_manual_journal_line_reference_number
+      changes:
+        - createSequence:
+            sequenceName: seq_manual_journal_line_reference_number
+            startValue: 1
+            incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: seq_manual_journal_line_reference_number

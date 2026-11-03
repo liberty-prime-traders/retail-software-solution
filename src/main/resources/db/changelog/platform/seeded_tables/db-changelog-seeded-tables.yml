@@ -13,6 +13,11 @@ databaseChangeLog:
       name: version_1_id
       value: (SELECT id FROM db_version WHERE version_number = '1.0.0')
 
+  - property:
+      dbms: postgresql
+      name: version_2_id
+      value: (SELECT id FROM db_version WHERE version_number = '2.0.0')
+
   - includeAll:
       path: version_entries
       relativeToChangelogFile: true

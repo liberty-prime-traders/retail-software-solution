@@ -32,10 +32,11 @@ The order of execution is
 - Register audit tables in `TableNames` and registry as well
 - Prefix limited to 5 characters
 
-### Changeset Management (pre-live)
-- Reuse existing changesets for table modifications
-- Each changeset gets a version label. For now, all labels are 1.0.0
-- Simply delete unwanted changesets when dropping indexes, constraints, etc. No need to add a drop changeset.
+### Changeset Management (live)
+- The app is live. Shipped changesets are immutable: never edit or delete one that has run in any environment.
+- All changes ship under version 2.0.0 until the product is declared stable. Multiple releases stay on 2.0.0.
+- Every change is a new changeset in the current version: ALTER-style additions for columns, constraints and indexes, and drops as new changesets too.
+- Changes that touch existing rows include their data migration and rollback in the same changeset.
 
 ### New Table Creation
 - Add sequence for reference number column
