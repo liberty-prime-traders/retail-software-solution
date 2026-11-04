@@ -386,12 +386,16 @@ Two distinct mechanisms protect inventory:
   the layer has `Q' = 0` and costs all of its `cost_remaining`, so a layer's takes sum exactly to its `batch_cost`. A void
   restores the exact cost it took, which can leave a layer a cent or so off its target; that gap is bounded by the number of
   out-of-order voids and does not change the layer's total.
-  `ConfirmedSalePersister.consumeStockAndRecordCogs` stores the sum in `SaleLineEntity.cogsTotal`. Drafts keep
-  `cogsTotal = null`; a void leaves it untouched.
+  `ConfirmedSalePersister.consumeStockAndRecordCogs` stores the sum in `SaleLineEntity.cogsTotal` and, in the same
+  save, writes one `SaleLineCogsEntity` (`sale_line_cogs`, `ACTIVE`, unique on `sale_line_id`) per line, zero-cost
+  lines included. Drafts keep `cogsTotal = null` and have no cost row; a void leaves both untouched. The cost record
+  is what readers use; the `cogs_total` column is still written until it is dropped.
+- `SaleLineCogsBackfillStore` (`sale/api`) is the only way another domain reads lines missing a cost row or inserts
+  backfilled `sale_line_cogs` rows; the one-off copy itself lives in `sale_cogs_backfill/`.
 - A layer stores its totals (`batch_cost`, `cost_remaining`); `StockEntryEntity.unitCost` is a rate per storage unit at
   scale 10 for display and grouping only, and a total is never recovered by multiplying it by a quantity.
 - `SaleConfirmedEvent` and `SaleVoidedEvent` carry `cogsTotal`, summed from the persisted lines by
-  `SaleDataFetcher.getSaleCogsTotal` (null cost counts as zero) so `reissue` reproduces it. Both events hold every
+  `SaleDataFetcher.getSaleCogsTotal`, which sums the `ACTIVE` `sale_line_cogs` rows of the sale (no rows counts as zero), so `reissue` reproduces it. Both events hold every
   amount as `Money` and derive `amountOwed` (taxable + tax) and `grossRevenue` (taxable + discount) at construction, so
   a sale whose receivable plus tax exceeds `Decimals.MAXIMUM_TRANSACTION_AMOUNT` fails when the event is published, not
   in the ledger consumer.

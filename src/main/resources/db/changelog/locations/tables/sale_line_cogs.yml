@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-line-cogs-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_line_cogs
+      changes:
+        - createTable:
+            tableName: sale_line_cogs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_cogs_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_sale_line_cogs_reference_number
+
+              - column:
+                  name: sale_line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_cogs_sale_line_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_sale_line_cogs_sale_line_id
+
+              - column:
+                  name: cogs_total
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_cogs_cogs_total_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: ACT
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_cogs_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: sale_line_cogs_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: sale_line_cogs

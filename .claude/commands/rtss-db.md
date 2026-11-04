@@ -2,10 +2,15 @@
 
 Apply these rules to every Liquibase, entity, or repository change.
 
-## Changeset management (pre-live)
+## Changeset management (live)
 
-- **Edit the original changeset in-place** for drops (index, constraint, column). Never add a separate drop changeset.
-- Each changeset gets label `1.0.0`.
+- The app is live. A changeset that has run in a live environment is immutable: never edit or delete it.
+- All changes ship under version `2.0.0` until the product is declared stable. Each changeset gets label `2.0.0`.
+- A new changeset is warranted only for a change to something already deployed live: ALTER-style additions for columns,
+  constraints and indexes, and drops as new changesets too.
+- A changeset that touches existing rows carries its data migration and rollback in the same changeset. A column drop's rollback restores the column and its data.
+- A changeset that has not reached a live environment (new on the branch, only dev databases ran it) is edited in place.
+  Clean the dev databases with `/pre-deploy-migrate`.
 - Blank lines between changesets and between column definitions.
 
 ## Constraint naming

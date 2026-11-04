@@ -41,3 +41,7 @@ databaseChangeLog:
   - include:
       file: audit/db-changelog-audit.yml
       relativeToChangelogFile: true
+
+  - include:
+      file: ../shared/procedures/get_next_sequence_values.yml
+      relativeToChangelogFile: true

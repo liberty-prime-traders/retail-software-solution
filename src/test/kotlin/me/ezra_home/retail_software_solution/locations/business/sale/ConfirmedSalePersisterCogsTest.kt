@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sale.api.ConfirmedSalePersister
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineSaveRequest
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineConsumedCost
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
@@ -35,6 +37,7 @@ class ConfirmedSalePersisterCogsTest {
     private val saleLineClientKey = UUID.randomUUID()
     private val saleRepository = mock(SaleRepository::class.java)
     private val saleLineRepository = mock(SaleLineRepository::class.java)
+    private val saleLineCogsRepository = mock(SaleLineCogsRepository::class.java)
     private val saleStockUpdater = mock(SaleStockUpdater::class.java)
     private val saleDataFetcher = mock(SaleDataFetcher::class.java)
     private val saleSaveFinalizer = mock(SaleSaveFinalizer::class.java)
@@ -42,6 +45,7 @@ class ConfirmedSalePersisterCogsTest {
     private val confirmedSalePersister = ConfirmedSalePersister(
         saleRepository = saleRepository,
         saleLineRepository = saleLineRepository,
+        saleLineCogsRepository = saleLineCogsRepository,
         stockReserver = mock(StockReserver::class.java),
         saleStockUpdater = saleStockUpdater,
         saleConfirmedHandlerForKafka = mock(SaleConfirmedHandlerForKafka::class.java),
@@ -107,6 +111,22 @@ class ConfirmedSalePersisterCogsTest {
 
         assertEquals(BigDecimal("16.0000"), saleLineEntity.cogsTotal)
         verify(saleLineRepository, times(2)).saveAll(listOf(saleLineEntity))
+    }
+
+    @Test
+    fun `confirm writes one active cost row per line in the same save as the legacy cost`() {
+        `when`(saleStockUpdater.consumeStock(anyList(), anyString()))
+            .thenReturn(listOf(SaleLineConsumedCost(saleLineId, BigDecimal.ZERO)))
+
+        confirmedSalePersister.confirm(saleSaveRequest)
+
+        @Suppress("UNCHECKED_CAST")
+        val savedCogsCaptor = ArgumentCaptor.forClass(List::class.java) as ArgumentCaptor<List<SaleLineCogsEntity>>
+        verify(saleLineCogsRepository).saveAll(savedCogsCaptor.capture())
+        val savedCogs = savedCogsCaptor.value.single()
+        assertEquals(saleLineId, savedCogs.saleLineId)
+        assertEquals(BigDecimal.ZERO, savedCogs.cogsTotal)
+        assertEquals(SaleLineCogsStatus.ACTIVE, savedCogs.status)
     }
 
     private val saleSaveRequest = SaleSaveRequest(

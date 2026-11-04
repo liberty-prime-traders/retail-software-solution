@@ -6,6 +6,8 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleConfirmedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineCogsEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineCogsRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineSync
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
@@ -26,6 +28,7 @@ import java.util.UUID
 class ConfirmedSalePersister(
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
+    private val saleLineCogsRepository: SaleLineCogsRepository,
     private val stockReserver: StockReserver,
     private val saleStockUpdater: SaleStockUpdater,
     private val saleConfirmedHandlerForKafka: SaleConfirmedHandlerForKafka,
@@ -108,6 +111,9 @@ class ConfirmedSalePersister(
             saleLineEntity.cogsTotal = consumedCostsBySaleLineId.getValue(saleLineEntity.id!!).cost
         }
         saleLineRepository.saveAll(saleLineEntities)
+        saleLineCogsRepository.saveAll(saleLineEntities.map { saleLineEntity ->
+            SaleLineCogsEntity(saleLineId = saleLineEntity.id!!, cogsTotal = saleLineEntity.cogsTotal!!)
+        })
     }
 
     private fun loadOrCreate(saleSaveRequest: SaleSaveRequest, effectiveDateSold: OffsetDateTime): SaleEntity {

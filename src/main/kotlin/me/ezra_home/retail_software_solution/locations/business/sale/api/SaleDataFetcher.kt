@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityA
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleAssembler
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineCogsRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidRepository
@@ -25,6 +26,7 @@ data class SaleContext(val contactId: UUID, val receivableTotal: BigDecimal, val
 class SaleDataFetcher(
     private val saleRepository: SaleRepository,
     private val saleLineRepository: SaleLineRepository,
+    private val saleLineCogsRepository: SaleLineCogsRepository,
     private val saleAssembler: SaleAssembler,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val entityAdvisoryLock: EntityAdvisoryLock,
@@ -61,7 +63,7 @@ class SaleDataFetcher(
     }
 
     fun getSaleCogsTotal(saleId: UUID): BigDecimal {
-        return saleLineRepository.findBySaleId(saleId).sumOf { it.cogsTotal ?: BigDecimal.ZERO }
+        return saleLineCogsRepository.sumCogsTotalBySaleIdAndStatus(saleId, SaleLineCogsStatus.ACTIVE)
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
