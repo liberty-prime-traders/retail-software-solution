@@ -15,7 +15,8 @@ object BaseUnitDisplay {
         storageUnitsPerUserProvidedUnit: Long,
         storageUnitsPerBaseUnit: Long,
         roundingMode: RoundingMode
-    ): BigDecimal = ExactQuantity.ofStorageFromUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit).toDisplayQuantity(storageUnitsPerBaseUnit, roundingMode)
+    ): BigDecimal = ExactQuantity.ofStorageFromUserProvided(userProvidedQuantity, storageUnitsPerUserProvidedUnit)
+        .toDisplayQuantity(storageUnitsPerBaseUnit, roundingMode)
 
     fun storageQuantityInBaseUnit(storageQuantity: BigDecimal, storageUnitsPerBaseUnit: Long, roundingMode: RoundingMode): BigDecimal =
         ExactQuantity.ofStorage(storageQuantity).toDisplayQuantity(storageUnitsPerBaseUnit, roundingMode)

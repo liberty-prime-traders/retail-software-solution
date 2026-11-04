@@ -128,6 +128,12 @@ Rules:
 applies it to stock. `FAILED` is reserved for future error handling and is
 not currently set by any flow.
 
+Revision states, `PARTIALLY_REVISED` ("PRV") and `FULLY_REVISED` ("FRV"),
+describe a delivery with some or all of its lines superseded by a correction
+delivery. Both are applied to stock, so `PurchaseDeliveryStatus.isAppliedToStock()`
+is true for `RECEIVED`, `PARTIALLY_REVISED` and `FULLY_REVISED`. No flow sets
+the revision states yet.
+
 ---
 
 ## 3. Identity: Supplier, OrderedBy, DateOrdered
@@ -318,7 +324,7 @@ line's captured ratio.
 ### Idempotency
 
 - `PurchaseDeliveryInventoryProcessor.shouldProcess` checks the delivery
-  is not already `RECEIVED`.
+  is not already applied to stock (`isAppliedToStock()`), so a revised delivery is never applied twice.
 - The DB constraint `add-unique-index-stock-movement-doc-detail-type-product-entry-reason`
   ensures the stock-movement table cannot record the same delivery twice.
 - Combined, retries are safe: a retried event either skips (already

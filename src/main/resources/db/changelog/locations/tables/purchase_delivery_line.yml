@@ -86,3 +86,29 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: purchase_delivery_line
+
+  - changeSet:
+      id: add-status-to-purchase-delivery-line
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: purchase_delivery_line
+                columnName: status
+      changes:
+        - addColumn:
+            tableName: purchase_delivery_line
+            columns:
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: ACT
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: purchase_delivery_line_status_notnull
+      rollback:
+        - dropColumn:
+            tableName: purchase_delivery_line
+            columnName: status

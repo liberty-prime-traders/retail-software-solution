@@ -25,7 +25,7 @@ class PurchaseDeliveryInventoryProcessor(
   @TransactionalOnLocationSchema(readOnly = true)
   override fun shouldProcess(event: PurchaseDeliveredEvent): Boolean {
     return deliveryRepository.findById(event.deliveryId)
-      .map { it.status != PurchaseDeliveryStatus.RECEIVED }
+      .map { !it.status.isAppliedToStock() }
       .orElseGet {
         log.warn("Skipping PurchaseDeliveredEvent: delivery ${event.deliveryId} not found")
         false
