@@ -28,7 +28,7 @@ posts to and which payees and entry points may use it. Endpoint: `secured/expens
   so a full-object resend can never trip over unchanged account or eligibility fields.
 - `ExpenseTypeSeeder` (an `OrgDataSeeder`) inserts every `SystemExpenseType` whose code is not
   present yet, so it is idempotent. Existing organizations receive new system types through the
-  organization profile's seed-defaults call.
+  admin-data seed-defaults call.
 - Callers resolve a system type with `ExpenseTypeService.getBySystemExpenseType`, which fails with
   "has not been seeded" when the seeder has not run for the organization.
 - Eligibility is enforced per expense row by `ExpenseRowResolver`, not here.

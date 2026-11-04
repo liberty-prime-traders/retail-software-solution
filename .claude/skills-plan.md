@@ -95,7 +95,7 @@ When adding a new skill for a domain:
 **Trigger**: any task touching Liquibase changesets, entities, repositories, constraints, or audit tables.
 
 **Covers**
-- Changeset reuse for drops (edit in-place, never add a drop changeset)
+- Live changeset rules: changesets deployed live are immutable and changed by new changesets under 2.0.0; undeployed ones are edited in place and dev DBs cleaned with pre-deploy-migrate
 - Constraint naming: `uq_` / `fk_` prefixes, `_notnull` suffix
 - Table registry: register every new table + audit table in `TableNames` + registry entries
 - Reference number format: prefix + zero-padded number to 6+ chars (e.g. `OR000042`)

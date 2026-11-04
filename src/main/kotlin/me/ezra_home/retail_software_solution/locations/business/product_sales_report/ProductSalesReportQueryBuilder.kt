@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.product_sales_report
 
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -17,12 +18,15 @@ object ProductSalesReportQueryBuilder {
   private const val SALE_LINE_ALIAS = "sl"
   private const val SALE_ADJUSTMENT_ALIAS = "sa"
   private const val LINE_ADJUSTMENTS_ALIAS = "adj"
+  private const val SALE_LINE_COGS_ALIAS = "slc"
+  private const val LINE_COGS_ALIAS = "cogs"
 
   private const val DATE_SOLD_FROM = "dateSoldFrom"
   private const val DATE_SOLD_BEFORE = "dateSoldBefore"
   private const val LOCATION_PRODUCT_IDS = "locationProductIds"
   private const val SALE_LINE_IDS = "saleLineIds"
   private const val CONFIRMED_STATUS = "confirmedStatus"
+  private const val ACTIVE_COGS_STATUS = "activeCogsStatus"
   private const val DISCOUNT_DIRECTION = "discountDirection"
   private const val SURCHARGE_DIRECTION = "surchargeDirection"
   private const val ORGANIZATION_ZONE = "organizationZone"
@@ -60,6 +64,7 @@ object ProductSalesReportQueryBuilder {
   fun buildLinesQuery(predicate: QueryBuilderContext, cursor: KeysetSearchCursor?): SqlQuery {
     val whereClauses = predicate.whereClauses.toMutableList()
     val params = predicate.params.toMutableMap()
+    params[ACTIVE_COGS_STATUS] = SaleLineCogsStatus.ACTIVE.code
 
     if (cursor != null) {
       whereClauses.add(
@@ -78,9 +83,10 @@ object ProductSalesReportQueryBuilder {
         $SALE_LINE_ALIAS.user_provided_quantity AS user_provided_quantity,
         $SALE_LINE_ALIAS.storage_units_per_user_provided_unit AS storage_units_per_user_provided_unit,
         $SALE_LINE_ALIAS.line_total AS line_total,
-        $SALE_LINE_ALIAS.cogs_total AS cogs_total
+        $LINE_COGS_ALIAS.cogs_total AS cogs_total
       FROM ${TableNames.SALE_LINE} $SALE_LINE_ALIAS
       JOIN ${TableNames.SALE} $SALE_ALIAS ON $SALE_ALIAS.id = $SALE_LINE_ALIAS.sale_id
+      ${lineCogsJoin()}
       WHERE ${whereClauses.joinToString(" AND ")}
       ORDER BY $SALE_ALIAS.date_sold DESC, $SALE_LINE_ALIAS.id DESC
       LIMIT :${QueryParameterNames.PAGE_SIZE}
@@ -125,12 +131,13 @@ object ProductSalesReportQueryBuilder {
     )
   }
 
-  // The lateral subquery is an ungrouped aggregate, so it yields exactly one row per sale line and the
-  // outer SUMs of line_total, cogs_total and quantity are never multiplied by the adjustment count.
+  // Both lateral subqueries are ungrouped aggregates, so each yields exactly one row per sale line and the
+  // outer SUMs of line_total, cogs_total and quantity are never multiplied by the adjustment or cost row count.
   private fun summaryQuery(predicate: QueryBuilderContext, soldOnSelect: String, groupBy: String, queryName: String): SqlQuery {
     val params = predicate.params.toMutableMap()
     params[DISCOUNT_DIRECTION] = AdjustmentDirection.DISCOUNT.code
     params[SURCHARGE_DIRECTION] = AdjustmentDirection.SURCHARGE.code
+    params[ACTIVE_COGS_STATUS] = SaleLineCogsStatus.ACTIVE.code
 
     val sql = """
       SELECT
@@ -139,7 +146,7 @@ object ProductSalesReportQueryBuilder {
         COUNT(*) AS line_count,
         COALESCE(SUM($SALE_LINE_ALIAS.user_provided_quantity * $SALE_LINE_ALIAS.storage_units_per_user_provided_unit), 0) AS storage_quantity,
         COALESCE(SUM($SALE_LINE_ALIAS.line_total), 0) AS gross_sales,
-        COALESCE(SUM($SALE_LINE_ALIAS.cogs_total), 0) AS cogs_total,
+        COALESCE(SUM($LINE_COGS_ALIAS.cogs_total), 0) AS cogs_total,
         COALESCE(SUM($LINE_ADJUSTMENTS_ALIAS.discount_magnitude), 0) AS discount_magnitude,
         COALESCE(SUM($LINE_ADJUSTMENTS_ALIAS.surcharge_magnitude), 0) AS surcharge_magnitude
       FROM ${TableNames.SALE_LINE} $SALE_LINE_ALIAS
@@ -153,10 +160,21 @@ object ProductSalesReportQueryBuilder {
         FROM ${TableNames.SALE_ADJUSTMENT} $SALE_ADJUSTMENT_ALIAS
         WHERE $SALE_ADJUSTMENT_ALIAS.sale_line_id = $SALE_LINE_ALIAS.id
       ) $LINE_ADJUSTMENTS_ALIAS ON TRUE
+      ${lineCogsJoin()}
       WHERE ${predicate.whereClauses.joinToString(" AND ")}
       GROUP BY $groupBy$SALE_LINE_ALIAS.location_product_id
     """.trimIndent()
 
     return SqlQuery(sql, params, ProductSalesReportQueryMetadata(queryName))
   }
+
+  // Ungrouped aggregate: one row per sale line, with a null total when the line has no active cost row.
+  private fun lineCogsJoin(): String = """
+      LEFT JOIN LATERAL (
+        SELECT SUM($SALE_LINE_COGS_ALIAS.cogs_total) AS cogs_total
+        FROM ${TableNames.SALE_LINE_COGS} $SALE_LINE_COGS_ALIAS
+        WHERE $SALE_LINE_COGS_ALIAS.sale_line_id = $SALE_LINE_ALIAS.id
+          AND $SALE_LINE_COGS_ALIAS.status = :$ACTIVE_COGS_STATUS
+      ) $LINE_COGS_ALIAS ON TRUE
+  """.trim()
 }

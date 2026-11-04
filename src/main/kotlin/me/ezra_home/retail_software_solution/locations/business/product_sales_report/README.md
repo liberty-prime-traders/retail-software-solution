@@ -10,14 +10,15 @@ REST: `ProductSalesReportEndpoint` under `secured/sales/product-report`.
 ## Product sales report: `ProductSalesReportService.searchLines(PageRequest<ProductSalesLinesParameters, String>)` / `.summarize(ProductSalesSummaryParameters)`
 - Nothing is stored. Native SQL in this package; `ProductSalesReportCalculator` derives
   everything (net, profit, margins, per-base-unit figures) in Kotlin from the summed totals.
-- Sources: `sale_line.line_total` (gross, never modified by adjustments), `sale_line.cogs_total`
-  (null counts as zero, as in `SaleDataFetcher.getSaleCogsTotal`) and line-level `sale_adjustment` rows
+- Sources: `sale_line.line_total` (gross, never modified by adjustments), the `ACTIVE`
+  `sale_line_cogs.cogs_total` rows of each line (no row counts as zero, as in `SaleDataFetcher.getSaleCogsTotal`) and line-level `sale_adjustment` rows
   (`sale_line_id` not null; order-level adjustments are ignored). Status is fixed to `CONFIRMED`.
 - `from` is inclusive and `before` exclusive on `sale.date_sold`, both `OffsetDateTime`, required, at most
   one year apart (`SearchGuards.guardBoundedRange`). Lines page by `(date_sold, sale_line.id)` descending;
   the cursor's `createdOn` slot carries `date_sold`. The range predicate excludes null `date_sold`.
-- Summary SQL aggregates adjustments in a `LEFT JOIN LATERAL` that yields one row per line, so a line
-  with several adjustments is never counted more than once in gross, cogs or quantity.
+- Summary SQL aggregates adjustments and cost rows in `LEFT JOIN LATERAL` subqueries that each yield one row
+  per line, so a line with several adjustments or cost rows is never counted more than once in gross, cogs or
+  quantity.
 - Stored adjustment amounts are unsigned magnitudes; responses sign them (`DISCOUNT` negative,
   `SURCHARGE` positive): `netSales = grossSales + discountTotal + surchargeTotal`. A price override is an
   ordinary adjustment and is not separated by reason.

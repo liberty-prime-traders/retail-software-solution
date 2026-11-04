@@ -71,3 +71,25 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: purchase_delivery_line_aud
+
+  - changeSet:
+      id: add-status-to-purchase-delivery-line-aud
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: purchase_delivery_line_aud
+                columnName: status
+      changes:
+        - addColumn:
+            tableName: purchase_delivery_line_aud
+            columns:
+              - column:
+                  name: status
+                  type: varchar(5)
+      rollback:
+        - dropColumn:
+            tableName: purchase_delivery_line_aud
+            columnName: status

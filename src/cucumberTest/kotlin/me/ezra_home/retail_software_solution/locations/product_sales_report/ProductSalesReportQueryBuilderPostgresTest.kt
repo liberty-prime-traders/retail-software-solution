@@ -25,7 +25,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-// Executes the SQL the builder emits against Postgres (the adjustment aggregate is LEFT JOIN LATERAL, which H2
+// Executes the SQL the builder emits against Postgres (the adjustment and cost aggregates are LEFT JOIN LATERAL, which H2
 // cannot run). A line with two adjustments must contribute its gross, cogs and quantity exactly once.
 class ProductSalesReportQueryBuilderPostgresTest {
 
@@ -58,7 +58,11 @@ class ProductSalesReportQueryBuilderPostgresTest {
             statement.execute(
                 """CREATE TABLE sale_line (id UUID PRIMARY KEY, sale_id UUID, location_product_id UUID, unit_id UUID,
                    user_provided_quantity NUMERIC(19,4), storage_units_per_user_provided_unit BIGINT,
-                   line_total NUMERIC(19,4), cogs_total NUMERIC(19,4))"""
+                   line_total NUMERIC(19,4))"""
+            )
+            statement.execute(
+                """CREATE TABLE sale_line_cogs (id UUID PRIMARY KEY, sale_line_id UUID, cogs_total NUMERIC(19,4),
+                   status VARCHAR(5))"""
             )
             statement.execute(
                 """CREATE TABLE sale_adjustment (id UUID PRIMARY KEY, sale_id UUID, sale_line_id UUID, direction VARCHAR(5),
@@ -102,6 +106,20 @@ class ProductSalesReportQueryBuilderPostgresTest {
         assertEquals(0, BigDecimal("60").compareTo(row.getValue("cogs_total") as BigDecimal))
         assertEquals(0, BigDecimal("10").compareTo(row.getValue("discount_magnitude") as BigDecimal))
         assertEquals(0, BigDecimal("5").compareTo(row.getValue("surcharge_magnitude") as BigDecimal))
+    }
+
+    @Test
+    fun `summary sums only active cost rows and never multiplies the line by them`() {
+        insertCogs(twoAdjustmentLineId, "500.00", "RVS")
+        insertCogs(plainLineId, "5.00", "ACT")
+        val predicate = ProductSalesReportQueryBuilder.buildPredicate(listOf(productId), dateRange)
+
+        val row = execute(ProductSalesReportQueryBuilder.buildSummaryQuery(predicate)).single()
+
+        assertEquals(2L, (row.getValue("line_count") as Number).toLong())
+        assertEquals(0, BigDecimal("130").compareTo(row.getValue("gross_sales") as BigDecimal))
+        assertEquals(0, BigDecimal("30").compareTo(row.getValue("storage_quantity") as BigDecimal))
+        assertEquals(0, BigDecimal("65").compareTo(row.getValue("cogs_total") as BigDecimal))
     }
 
     @Test
@@ -228,7 +246,7 @@ class ProductSalesReportQueryBuilderPostgresTest {
     ) {
         connection.prepareStatement(
             """INSERT INTO sale_line (id, sale_id, location_product_id, unit_id, user_provided_quantity,
-               storage_units_per_user_provided_unit, line_total, cogs_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+               storage_units_per_user_provided_unit, line_total) VALUES (?, ?, ?, ?, ?, ?, ?)"""
         ).use { statement ->
             statement.setObject(1, saleLineId)
             statement.setObject(2, saleId)
@@ -237,7 +255,19 @@ class ProductSalesReportQueryBuilderPostgresTest {
             statement.setBigDecimal(5, BigDecimal(userProvidedQuantity))
             statement.setLong(6, storageUnitsPerUserProvidedUnit)
             statement.setBigDecimal(7, BigDecimal(lineTotal))
-            statement.setBigDecimal(8, cogsTotal?.let { BigDecimal(it) })
+            statement.executeUpdate()
+        }
+        if (cogsTotal != null) insertCogs(saleLineId, cogsTotal, "ACT")
+    }
+
+    private fun insertCogs(saleLineId: UUID, cogsTotal: String, status: String) {
+        connection.prepareStatement(
+            "INSERT INTO sale_line_cogs (id, sale_line_id, cogs_total, status) VALUES (?, ?, ?, ?)"
+        ).use { statement ->
+            statement.setObject(1, UUID.randomUUID())
+            statement.setObject(2, saleLineId)
+            statement.setBigDecimal(3, BigDecimal(cogsTotal))
+            statement.setString(4, status)
             statement.executeUpdate()
         }
     }

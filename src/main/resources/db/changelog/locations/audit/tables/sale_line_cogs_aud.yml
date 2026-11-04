@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sale-line-cogs-aud-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sale_line_cogs_aud
+      changes:
+        - createTable:
+            tableName: sale_line_cogs_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: sale_line_id
+                  type: uuid
+
+              - column:
+                  name: cogs_total
+                  type: numeric(19, 4)
+
+              - column:
+                  name: status
+                  type: varchar(5)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: sale_line_cogs_aud
+            columnNames: id, rev
+            constraintName: pk_sale_line_cogs_aud
+
+      rollback:
+        - dropTable:
+            tableName: sale_line_cogs_aud

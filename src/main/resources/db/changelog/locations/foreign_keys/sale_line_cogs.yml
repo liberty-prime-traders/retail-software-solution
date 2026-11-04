@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-sale-line-cogs-sale-line
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_sale_line_cogs_sale_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sale_line_cogs
+            baseColumnNames: sale_line_id
+            referencedTableName: sale_line
+            referencedColumnNames: id
+            constraintName: fk_sale_line_cogs_sale_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: sale_line_cogs
+            constraintName: fk_sale_line_cogs_sale_line

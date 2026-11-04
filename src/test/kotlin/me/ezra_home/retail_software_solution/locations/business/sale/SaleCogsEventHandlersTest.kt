@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleConfirmedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleVoidedEvent
@@ -34,11 +35,13 @@ class SaleCogsEventHandlersTest {
     private val secondProductId = UUID.randomUUID()
     private val saleRepository = mock(SaleRepository::class.java)
     private val saleLineRepository = mock(SaleLineRepository::class.java)
+    private val saleLineCogsRepository = mock(SaleLineCogsRepository::class.java)
     private val saleVoidRepository = mock(SaleVoidRepository::class.java)
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val saleDataFetcher = SaleDataFetcher(
         saleRepository = saleRepository,
         saleLineRepository = saleLineRepository,
+        saleLineCogsRepository = saleLineCogsRepository,
         saleAssembler = mock(SaleAssembler::class.java),
         locationProductDataFetcher = mock(LocationProductDataFetcher::class.java),
         entityAdvisoryLock = mock(EntityAdvisoryLock::class.java),
@@ -63,6 +66,7 @@ class SaleCogsEventHandlersTest {
                 it.dateSold = OffsetDateTime.of(2026, 1, 15, 10, 0, 0, 0, ZoneOffset.UTC)
             }
         `when`(saleRepository.getReferenceById(saleId)).thenReturn(saleEntity)
+        `when`(saleLineCogsRepository.sumCogsTotalBySaleIdAndStatus(saleId, SaleLineCogsStatus.ACTIVE)).thenReturn(BigDecimal("30.0000"))
         `when`(saleLineRepository.findBySaleId(saleId)).thenReturn(
             listOf(
                 saleLine(firstProductId, quantity = "1.0000", storageUnitsPerUserProvidedUnit = 12L, cogsTotal = BigDecimal("30.0000")),

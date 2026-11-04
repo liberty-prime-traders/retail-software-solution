@@ -33,9 +33,12 @@ The order of execution is
 - Prefix limited to 5 characters
 
 ### Changeset Management (live)
-- The app is live. Shipped changesets are immutable: never edit or delete one that has run in any environment.
+- The app is live. A changeset that has run in a live environment is immutable: never edit or delete it.
 - All changes ship under version 2.0.0 until the product is declared stable. Multiple releases stay on 2.0.0.
-- Every change is a new changeset in the current version: ALTER-style additions for columns, constraints and indexes, and drops as new changesets too.
+- New changesets are only warranted for changes to something already deployed live: ALTER-style additions for columns,
+  constraints and indexes, and drops as new changesets too.
+- A changeset not yet deployed live (new on the branch, run only on dev databases) is edited in place, and the dev
+  databases are cleaned with `/pre-deploy-migrate`.
 - Changes that touch existing rows include their data migration and rollback in the same changeset.
 
 ### New Table Creation
