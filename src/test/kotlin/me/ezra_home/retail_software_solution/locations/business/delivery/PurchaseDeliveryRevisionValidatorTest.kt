@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineTransferInspector
+import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -31,9 +31,9 @@ class PurchaseDeliveryRevisionValidatorTest {
         `when`(it.forLocationProducts(setOf(locationProductId)))
             .thenReturn(mapOf(locationProductId to mock(QuantityBreakdown::class.java)))
     }
-    private val deliveryLineTransferInspector = mock(DeliveryLineTransferInspector::class.java)
+    private val deliveryLineStockInspector = mock(DeliveryLineStockInspector::class.java)
     private val purchaseDeliveryRevisionValidator = PurchaseDeliveryRevisionValidator(
-        PurchaseDeliveryValidator(locationProductDataFetcher, stockBreakdownProvider), deliveryLineTransferInspector
+        PurchaseDeliveryValidator(locationProductDataFetcher, stockBreakdownProvider), deliveryLineStockInspector
     )
 
     private fun deliveryLine(
@@ -62,13 +62,13 @@ class PurchaseDeliveryRevisionValidatorTest {
 
     @Test
     fun `an active line can be revised`() {
-        assertDoesNotThrow { purchaseDeliveryRevisionValidator.guardLineIsActive(deliveryLine("4")) }
+        assertDoesNotThrow { purchaseDeliveryRevisionValidator.ensureLineIsActive(deliveryLine("4")) }
     }
 
     @Test
     fun `a revised line cannot be revised again, so a chain only grows from its active end`() {
         assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.guardLineIsActive(deliveryLine("4", PurchaseDeliveryLineStatus.REVISED))
+            purchaseDeliveryRevisionValidator.ensureLineIsActive(deliveryLine("4", PurchaseDeliveryLineStatus.REVISED))
         }
     }
 
@@ -101,19 +101,28 @@ class PurchaseDeliveryRevisionValidatorTest {
 
     @Test
     fun `a line with transferred-out stock cannot be revised`() {
-        `when`(deliveryLineTransferInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+        `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
 
         assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.guardNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
+            purchaseDeliveryRevisionValidator.ensureNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
         }
     }
 
     @Test
     fun `stock still at the source does not block a revision`() {
-        `when`(deliveryLineTransferInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(false)
+        `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(false)
 
         assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.guardNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
+            purchaseDeliveryRevisionValidator.ensureNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
+        }
+    }
+
+    @Test
+    fun `a line whose stock has a movement that cannot be reversed cannot be revised`() {
+        `when`(deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+
+        assertThrows(RtsGenericException::class.java) {
+            purchaseDeliveryRevisionValidator.ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber, deliveryLine("4"))
         }
     }
 }

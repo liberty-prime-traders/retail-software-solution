@@ -16,6 +16,8 @@ interface StockEntryRepository : JpaRepository<StockEntryEntity, UUID> {
     fun findFifoEntriesForProducts(locationProductIds: Collection<UUID>): List<StockEntryEntity>
 
 
+    fun findByDocumentReferenceAndDetailReference(documentReference: String, detailReference: String): List<StockEntryEntity>
+
     @Query(
         "SELECT e.locationProductId AS locationProductId, " +
             "SUM(e.storageQuantityRemaining) AS storageRemainingQuantity " +

@@ -134,8 +134,8 @@ lines: `purchase_delivery_line.status` is `ACTIVE` or `REVISED`, and a
 replaces it (same delivery), with a free-text `reason`. Only `ACTIVE` lines can be revised, so a
 correction chains onto the current line. `PurchaseDeliveryStatus.isAppliedToStock()`
 is true for `RECEIVED` only. `PurchaseDeliveryRevisionValidator` holds the
-checks (active line, net remaining quantity, no transferred-out stock); no flow
-revises a line yet.
+checks (active line, pending delivery quantity, no transferred-out stock, no movement that
+cannot be reversed).
 
 ---
 

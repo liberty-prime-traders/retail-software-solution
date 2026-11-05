@@ -43,5 +43,24 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     transferCancelled: MovementType
   ): Long
 
+  @Query("" +
+          "SELECT COUNT(sm) " +
+          "FROM StockMovementEntity sm " +
+          "WHERE sm.movementType IN :movementTypes " +
+          "AND sm.stockEntryId IN (" +
+            "SELECT se.id " +
+            "FROM StockEntryEntity se " +
+            "WHERE se.documentReference = :documentReference " +
+            "AND se.detailReference = :detailReference" +
+          ")"
+  )
+  fun countMovementsOfTypesOnEntriesOfSource(
+    documentReference: String,
+    detailReference: String,
+    movementTypes: Collection<MovementType>
+  ): Long
+
+  fun findByStockEntryIdInOrderByCreatedOnAscIdAsc(stockEntryIds: Collection<UUID>): List<StockMovementEntity>
+
   fun findByLocationProductId(locationProductId: UUID, pageable: Pageable): List<StockMovementEntity>
 }

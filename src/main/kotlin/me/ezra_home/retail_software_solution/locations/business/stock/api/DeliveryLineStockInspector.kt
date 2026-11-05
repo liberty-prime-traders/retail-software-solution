@@ -6,8 +6,8 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_moveme
 import org.springframework.stereotype.Service
 
 @Service
-@TransactionalOnLocationSchema
-class DeliveryLineTransferInspector(
+@TransactionalOnLocationSchema(readOnly = true)
+class DeliveryLineStockInspector(
     private val stockMovementRepository: StockMovementRepository
 ) {
 
@@ -17,5 +17,12 @@ class DeliveryLineTransferInspector(
             deliveryLineReferenceNumber,
             MovementType.TRANSFER_OUT,
             MovementType.TRANSFER_CANCELLED
+        ) > 0
+
+    fun hasMovementsThatCannotBeReversed(deliveryReferenceNumber: String, deliveryLineReferenceNumber: String): Boolean =
+        stockMovementRepository.countMovementsOfTypesOnEntriesOfSource(
+            deliveryReferenceNumber,
+            deliveryLineReferenceNumber,
+            MovementType.movementsThatCannotBeReversed
         ) > 0
 }

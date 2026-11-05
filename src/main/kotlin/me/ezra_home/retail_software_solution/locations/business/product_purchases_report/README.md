@@ -21,7 +21,7 @@ Two status columns decide what is counted. `ProductPurchasesReportQueryBuilder` 
   applies to both the summary and the expansion (`buildReceivedDeliveryPredicate`).
 - **Delivery line** (`purchase_delivery_line.status`): `ACTIVE` lines count toward summary totals only
   (`buildPredicate`). `REVISED` lines stay visible in the expansion and are excluded from totals, so a corrected line
-  is counted once, through its correction delivery. No flow sets `REVISED` yet, so every line is `ACTIVE` today.
+  is counted once, through its correction delivery. A line becomes `REVISED` only through a delivery revision.
 
 ## Counting rules
 

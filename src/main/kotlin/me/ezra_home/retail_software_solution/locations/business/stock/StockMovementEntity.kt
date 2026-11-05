@@ -37,11 +37,9 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
-  // The figure to sum or compare; wholeLineQuantityText is display only
   @Column(name = "storage_moved_quantity", nullable = false, precision = 28, scale = 4)
   var storageMovedQuantity: BigDecimal,
 
-  // The whole line's quantity as typed ("2.5 Bales"), copied onto every movement the line produces, so a stock-out spanning layers repeats it
   @Column(name = "whole_line_quantity_text", nullable = false, length = 200, updatable = false)
   var wholeLineQuantityText: String,
 

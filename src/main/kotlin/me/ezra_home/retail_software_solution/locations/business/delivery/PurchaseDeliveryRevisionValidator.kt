@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineTransferInspector
+import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component
 @Component
 class PurchaseDeliveryRevisionValidator(
   private val purchaseDeliveryValidator: PurchaseDeliveryValidator,
-  private val deliveryLineTransferInspector: DeliveryLineTransferInspector
+  private val deliveryLineStockInspector: DeliveryLineStockInspector
 ) {
 
-  fun guardLineIsActive(purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
+  fun ensureLineIsActive(purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
     if (purchaseDeliveryLineEntity.status != PurchaseDeliveryLineStatus.ACTIVE)
       throw RtsGenericException(
         "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} has already been revised. Revise its current line instead."
@@ -33,16 +33,23 @@ class PurchaseDeliveryRevisionValidator(
     purchaseDeliveryValidator.ensureWithinMaximumQuantity(purchaseLineDto, netRemaining, replacementStorageQuantity)
   }
 
-  fun guardNoTransferredStock(
+  fun ensureNoTransferredStock(
     deliveryReferenceNumber: String,
     purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity
   ) {
-    if (deliveryLineTransferInspector.hasTransferredOut(
+    if (deliveryLineStockInspector.hasTransferredOut(
         deliveryReferenceNumber, purchaseDeliveryLineEntity.requiredReference())
       )
       throw RtsGenericException(
         "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be" +
                 " revised because some of its stock has been transferred out."
+      )
+  }
+
+  fun ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber: String, purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
+    if (deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, purchaseDeliveryLineEntity.requiredReference()))
+      throw RtsGenericException(
+        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be revised because its stock has a movement that cannot be reversed."
       )
   }
 }
