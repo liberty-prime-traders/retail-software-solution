@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: create-entry-for-delivery-revision-in-table-registry
+      id: create-entry-for-stock-revision-in-table-registry
       author: ezra
       changes:
         - insert:
@@ -11,10 +11,10 @@ databaseChangeLog:
                   valueComputed: ${uuid_function}
               - column:
                   name: table_name
-                  value: delivery_revision
+                  value: stock_revision
               - column:
                   name: default_prefix
-                  value: DLRV
+                  value: STRV
               - column:
                   name: minimum_version_id
                   valueComputed: ${version_2_id}
@@ -23,10 +23,10 @@ databaseChangeLog:
                   value: LOC
               - column:
                   name: display_name
-                  value: Delivery Revision
+                  value: Stock Revision
               - column:
                   name: description
-                  value: Links a revised delivery line to its replacement, with the reason
+                  value: Links a revised stock entry to its replacement, with the source of the revision and the reason
               - column:
                   name: reference_number
                   valueComputed: ${table_registry_ref}

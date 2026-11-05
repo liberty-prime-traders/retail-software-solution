@@ -130,12 +130,15 @@ not currently set by any flow.
 
 The header carries no revision state. A revision is recorded on the delivery's
 lines: `purchase_delivery_line.status` is `ACTIVE` or `REVISED`, and a
-`delivery_revision` row links each `REVISED` line to the sibling line that
+`stock_revision` row (source type `DELIVERY_LINE`, carrying the line's reference
+number) links the stock entry of each `REVISED` line to the stock entry of the sibling line that
 replaces it (same delivery), with a free-text `reason`. Only `ACTIVE` lines can be revised, so a
 correction chains onto the current line. `PurchaseDeliveryStatus.isAppliedToStock()`
 is true for `RECEIVED` only. `PurchaseDeliveryRevisionValidator` holds the
 checks (active line, pending delivery quantity, no transferred-out stock, no movement that
-cannot be reversed).
+cannot be reversed). `validate` runs all of them and throws one `RtsGenericException` whose
+`payload` is the list of every failing message. A replacement quantity of zero passes: the
+create-time zero rule lives on `PurchaseDeliveryLineCreateDto`, which revisions do not use.
 
 ---
 

@@ -52,4 +52,27 @@ class PurchaseDeliveryRevisionValidator(
         "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be revised because its stock has a movement that cannot be reversed."
       )
   }
+
+  fun validate(
+    deliveryReferenceNumber: String,
+    purchaseLineDto: PurchaseLineDto,
+    revisedLine: PurchaseDeliveryLineEntity,
+    replacementStorageQuantity: ExactQuantity
+  ) {
+    val errors = listOf(
+      { ensureLineIsActive(revisedLine) },
+      { ensurePendingDeliveryQtyIsNotExceeded(purchaseLineDto, revisedLine, replacementStorageQuantity) },
+      { ensureNoTransferredStock(deliveryReferenceNumber, revisedLine) },
+      { ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber, revisedLine) }
+    ).mapNotNull { check -> errorMessageOf(check) }
+    if (errors.isNotEmpty()) throw RtsGenericException(errors.joinToString(" "), payload = errors)
+  }
+
+  private fun errorMessageOf(check: () -> Unit): String? =
+    try {
+      check()
+      null
+    } catch (rtsGenericException: RtsGenericException) {
+      rtsGenericException.message
+    }
 }

@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -124,5 +125,40 @@ class PurchaseDeliveryRevisionValidatorTest {
         assertThrows(RtsGenericException::class.java) {
             purchaseDeliveryRevisionValidator.ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber, deliveryLine("4"))
         }
+    }
+
+    @Test
+    fun `a replacement of zero is allowed`() {
+        assertDoesNotThrow {
+            purchaseDeliveryRevisionValidator.ensurePendingDeliveryQtyIsNotExceeded(
+                purchaseLine("2"), deliveryLine("4"), ExactQuantity.ZERO
+            )
+        }
+    }
+
+    @Test
+    fun `validate passes when every check passes`() {
+        assertDoesNotThrow {
+            purchaseDeliveryRevisionValidator.validate(
+                deliveryReferenceNumber, purchaseLine("2"), deliveryLine("4"), ExactQuantity.ofStorage(BigDecimal("6"))
+            )
+        }
+    }
+
+    @Test
+    fun `validate collects every failing check into one error list`() {
+        `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+        `when`(deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+
+        val exception = assertThrows(RtsGenericException::class.java) {
+            purchaseDeliveryRevisionValidator.validate(
+                deliveryReferenceNumber,
+                purchaseLine("2"),
+                deliveryLine("4", PurchaseDeliveryLineStatus.REVISED),
+                ExactQuantity.ofStorage(BigDecimal("7"))
+            )
+        }
+
+        assertEquals(4, (exception.payload as List<*>).size)
     }
 }
