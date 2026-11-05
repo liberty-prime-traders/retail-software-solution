@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-entry-for-delivery-revision-in-table-registry
+      author: ezra
+      changes:
+        - insert:
+            tableName: table_registry
+            columns:
+              - column:
+                  name: id
+                  valueComputed: ${uuid_function}
+              - column:
+                  name: table_name
+                  value: delivery_revision
+              - column:
+                  name: default_prefix
+                  value: DLRV
+              - column:
+                  name: minimum_version_id
+                  valueComputed: ${version_2_id}
+              - column:
+                  name: schema_level
+                  value: LOC
+              - column:
+                  name: display_name
+                  value: Delivery Revision
+              - column:
+                  name: description
+                  value: Links a revised delivery line to its replacement, with the reason
+              - column:
+                  name: reference_number
+                  valueComputed: ${table_registry_ref}

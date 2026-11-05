@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-delivery-revision-revised-line
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_delivery_revision_revised_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: delivery_revision
+            baseColumnNames: revised_line_id
+            referencedTableName: purchase_delivery_line
+            referencedColumnNames: id
+            constraintName: fk_delivery_revision_revised_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: delivery_revision
+            constraintName: fk_delivery_revision_revised_line
+
+  - changeSet:
+      id: add-foreign-key-delivery-revision-replacement-line
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_delivery_revision_replacement_line
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: delivery_revision
+            baseColumnNames: replacement_line_id
+            referencedTableName: purchase_delivery_line
+            referencedColumnNames: id
+            constraintName: fk_delivery_revision_replacement_line
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: delivery_revision
+            constraintName: fk_delivery_revision_replacement_line

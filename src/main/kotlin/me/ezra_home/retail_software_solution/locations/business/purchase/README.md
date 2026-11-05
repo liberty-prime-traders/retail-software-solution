@@ -128,11 +128,14 @@ Rules:
 applies it to stock. `FAILED` is reserved for future error handling and is
 not currently set by any flow.
 
-Revision states, `PARTIALLY_REVISED` ("PRV") and `FULLY_REVISED` ("FRV"),
-describe a delivery with some or all of its lines superseded by a correction
-delivery. Both are applied to stock, so `PurchaseDeliveryStatus.isAppliedToStock()`
-is true for `RECEIVED`, `PARTIALLY_REVISED` and `FULLY_REVISED`. No flow sets
-the revision states yet.
+The header carries no revision state. A revision is recorded on the delivery's
+lines: `purchase_delivery_line.status` is `ACTIVE` or `REVISED`, and a
+`delivery_revision` row links each `REVISED` line to the sibling line that
+replaces it (same delivery), with a free-text `reason`. Only `ACTIVE` lines can be revised, so a
+correction chains onto the current line. `PurchaseDeliveryStatus.isAppliedToStock()`
+is true for `RECEIVED` only. `PurchaseDeliveryRevisionValidator` holds the
+checks (active line, net remaining quantity, no transferred-out stock); no flow
+revises a line yet.
 
 ---
 
@@ -324,7 +327,7 @@ line's captured ratio.
 ### Idempotency
 
 - `PurchaseDeliveryInventoryProcessor.shouldProcess` checks the delivery
-  is not already applied to stock (`isAppliedToStock()`), so a revised delivery is never applied twice.
+  is not already applied to stock (`isAppliedToStock()`), so a delivery is never applied twice.
 - The DB constraint `add-unique-index-stock-movement-doc-detail-type-product-entry-reason`
   ensures the stock-movement table cannot record the same delivery twice.
 - Combined, retries are safe: a retried event either skips (already

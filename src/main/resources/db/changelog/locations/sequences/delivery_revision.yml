@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sequence-delivery-revision-reference-number
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sequenceExists:
+                sequenceName: seq_delivery_revision_reference_number
+      changes:
+        - createSequence:
+            sequenceName: seq_delivery_revision_reference_number
+            startValue: 1
+            incrementBy: 1
+      rollback:
+        - dropSequence:
+            sequenceName: seq_delivery_revision_reference_number

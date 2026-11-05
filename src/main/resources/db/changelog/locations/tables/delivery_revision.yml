@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-delivery-revision-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: delivery_revision
+      changes:
+        - createTable:
+            tableName: delivery_revision
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: delivery_revision_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_delivery_revision_reference_number
+
+              - column:
+                  name: revised_line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: delivery_revision_revised_line_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_delivery_revision_revised_line_id
+
+              - column:
+                  name: replacement_line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: delivery_revision_replacement_line_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_delivery_revision_replacement_line_id
+
+              - column:
+                  name: reason
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: delivery_revision_reason_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: delivery_revision_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: delivery_revision

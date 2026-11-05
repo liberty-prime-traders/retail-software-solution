@@ -85,6 +85,7 @@ object TableNames {
     const val PURCHASE = "purchase"
     const val PURCHASE_DELIVERY = "purchase_delivery"
     const val PURCHASE_DELIVERY_LINE = "purchase_delivery_line"
+    const val DELIVERY_REVISION = "delivery_revision"
     const val PURCHASE_LINE = "purchase_line"
     const val SALE = "sale"
     const val SALE_ADJUSTMENT = "sale_adjustment"

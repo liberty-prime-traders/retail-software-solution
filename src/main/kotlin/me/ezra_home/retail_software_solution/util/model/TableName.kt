@@ -89,6 +89,7 @@ enum class TableName(override val code: String, val schemaLevel: SchemaLevel) : 
   PURCHASE(TableNames.PURCHASE, SchemaLevel.LOCATION),
   PURCHASE_DELIVERY(TableNames.PURCHASE_DELIVERY, SchemaLevel.LOCATION),
   PURCHASE_DELIVERY_LINE(TableNames.PURCHASE_DELIVERY_LINE, SchemaLevel.LOCATION),
+  DELIVERY_REVISION(TableNames.DELIVERY_REVISION, SchemaLevel.LOCATION),
   PURCHASE_LINE(TableNames.PURCHASE_LINE, SchemaLevel.LOCATION),
   SALE(TableNames.SALE, SchemaLevel.LOCATION),
   SALE_ADJUSTMENT(TableNames.SALE_ADJUSTMENT, SchemaLevel.LOCATION),

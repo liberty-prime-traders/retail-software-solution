@@ -28,7 +28,7 @@ class ProductPurchasesReportQueryBuilderTest {
 
     assertTrue(context.whereClauses.contains("pd.status = ANY(:appliedDeliveryStatuses)"))
     assertTrue(context.whereClauses.contains("pdl.status = :activeLineStatus"))
-    assertEquals(listOf("R", "PRV", "FRV"), (context.params["appliedDeliveryStatuses"] as Array<*>).toList())
+    assertEquals(listOf("R"), (context.params["appliedDeliveryStatuses"] as Array<*>).toList())
     assertEquals("ACT", context.params["activeLineStatus"])
   }
 

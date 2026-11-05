@@ -42,7 +42,7 @@ class PurchaseDeliveryService(
     val storageUnitsPerUserProvidedUnitByPurchaseLineId = captureStorageUnitsPerUserProvidedUnit(
       purchaseDeliveryCreateDto, context.purchaseLineById
     )
-    purchaseDeliveryValidator.guardWithinRemaining(
+    purchaseDeliveryValidator.ensurePendingDeliveryQtyIsNotExceeded(
       purchaseDeliveryCreateDto,
       context.purchaseLineById,
       storageUnitsPerUserProvidedUnitByPurchaseLineId

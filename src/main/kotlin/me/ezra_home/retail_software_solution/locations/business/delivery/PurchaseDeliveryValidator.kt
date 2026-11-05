@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -29,7 +30,7 @@ class PurchaseDeliveryValidator(
     }
   }
 
-  fun guardWithinRemaining(
+  fun ensurePendingDeliveryQtyIsNotExceeded(
     purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
     storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>
@@ -45,14 +46,39 @@ class PurchaseDeliveryValidator(
         storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
       if (delivered > purchaseLine.storageQuantityRemaining) {
-        val quantityBreakdown = breakdownByLocationProductId.getValue(purchaseLine.locationProductId)
-        throw RtsGenericException(
-          "Maximum quantity that can be delivered for " +
-                  "'${locationProducts.getValue(purchaseLine.locationProductId).label}' is " +
-                  "${quantityBreakdown.render(purchaseLine.storageQuantityRemaining)}." +
-                  " However, ${quantityBreakdown.render(delivered)} was provided."
+        throw maximumQuantityExceeded(
+          locationProducts.getValue(purchaseLine.locationProductId).label,
+          breakdownByLocationProductId.getValue(purchaseLine.locationProductId),
+          purchaseLine.storageQuantityRemaining,
+          delivered
         )
       }
     }
   }
+
+  fun ensureWithinMaximumQuantity(
+    purchaseLineDto: PurchaseLineDto,
+    maximumQuantity: ExactQuantity,
+    providedQuantity: ExactQuantity
+  ) {
+    if (providedQuantity <= maximumQuantity) return
+    val locationProductId = purchaseLineDto.locationProductId
+    throw maximumQuantityExceeded(
+      locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label,
+      stockBreakdownProvider.forLocationProducts(setOf(locationProductId)).getValue(locationProductId),
+      maximumQuantity,
+      providedQuantity
+    )
+  }
+
+  private fun maximumQuantityExceeded(
+    locationProductLabel: String,
+    quantityBreakdown: QuantityBreakdown,
+    maximumQuantity: ExactQuantity,
+    providedQuantity: ExactQuantity
+  ) = RtsGenericException(
+    "Maximum quantity that can be delivered for '$locationProductLabel' is " +
+            "${quantityBreakdown.render(maximumQuantity)}." +
+            " However, ${quantityBreakdown.render(providedQuantity)} was provided."
+  )
 }

@@ -17,12 +17,11 @@ This README is the rules document for the report. It states what the code does a
 Two status columns decide what is counted. `ProductPurchasesReportQueryBuilder` applies both.
 
 - **Delivery header** (`purchase_delivery.status`): only deliveries where `PurchaseDeliveryStatus.isAppliedToStock()` is
-  true count: `RECEIVED`, `PARTIALLY_REVISED` and `FULLY_REVISED`. `PROCESSING` and `FAILED` are excluded. This filter
+  true count: `RECEIVED`. `PROCESSING` and `FAILED` are excluded. This filter
   applies to both the summary and the expansion (`buildReceivedDeliveryPredicate`).
 - **Delivery line** (`purchase_delivery_line.status`): `ACTIVE` lines count toward summary totals only
   (`buildPredicate`). `REVISED` lines stay visible in the expansion and are excluded from totals, so a corrected line
   is counted once, through its correction delivery. No flow sets `REVISED` yet, so every line is `ACTIVE` today.
-- `PARTIALLY_REVISED` and `FULLY_REVISED` are applied-to-stock states. No flow sets them yet either.
 
 ## Counting rules
 
