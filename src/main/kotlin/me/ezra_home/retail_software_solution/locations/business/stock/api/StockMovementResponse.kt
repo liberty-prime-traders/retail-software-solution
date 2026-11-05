@@ -17,5 +17,6 @@ data class StockMovementResponse(
     val stockEntryId: UUID,
     val recordedOn: Instant,
     val conversionDriftNote: String?,
-    val reason: String?
+    val reason: String?,
+    val context: String?
 )

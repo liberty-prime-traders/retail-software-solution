@@ -8,7 +8,13 @@ data class EntryConsumptionSourceDocument(
     val documentReference: String?,
     val detailReference: String?,
 ) {
+    val documentAndDetailReference: String = "$documentReference/$detailReference"
+
     companion object {
-        fun of(movement: StockMovementEntity) = EntryConsumptionSourceDocument(movement.stockEntryId, movement.documentReference, movement.detailReference)
+        fun of(movement: StockMovementEntity) = EntryConsumptionSourceDocument(
+            movement.stockEntryId,
+            movement.documentReference,
+            movement.detailReference
+        )
     }
 }

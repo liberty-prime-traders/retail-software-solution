@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.locations.business.purchase_movement_context_backfill.api.PurchaseMovementContextBackfiller
 import me.ezra_home.retail_software_solution.locations.business.sale_cogs_backfill.api.SaleLineCogsBackfiller
 import me.ezra_home.retail_software_solution.organizations.business.org_profile.api.OrgProfileService
 import org.springframework.http.HttpStatus
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminDataEndpoint(
     private val orgProfileService: OrgProfileService,
     private val saleLineCogsBackfiller: SaleLineCogsBackfiller,
+    private val purchaseMovementContextBackfiller: PurchaseMovementContextBackfiller,
 ) {
 
     @PostMapping("seed-defaults")
@@ -29,4 +31,8 @@ class AdminDataEndpoint(
     @PostMapping("sale-line-cogs/backfill")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun backfillSaleLineCogs() = saleLineCogsBackfiller.startBackfillAllLocations()
+
+    @PostMapping("purchase-movement-context/backfill")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun backfillPurchaseMovementContext() = purchaseMovementContextBackfiller.startBackfillAllLocations()
 }

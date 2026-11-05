@@ -12,6 +12,7 @@ data class PurchaseDeliveredEvent(
   override val timestamp: Instant,
   override val correlationId: UUID?,
   val purchaseId: UUID,
+  val purchaseReferenceNumber: String,
   val deliveryId: UUID,
   val deliveryReferenceNumber: String,
   val deliveredAt: OffsetDateTime,

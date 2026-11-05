@@ -39,6 +39,7 @@ class DeliveryHandlerForPurchase(
         val lines = purchaseLineRepository.findByPurchaseId(purchase.id!!)
         return PurchaseDeliveryContext(
             purchaseId = purchase.id!!,
+            purchaseReferenceNumber = purchase.requiredReference(),
             supplierId = purchase.supplierId,
             purchaseLineById = lines.associateBy { it.id!! }.mapValues {
                 PurchaseMapper.purchaseLineEntityToDto(it.value)

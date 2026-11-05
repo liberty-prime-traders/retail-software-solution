@@ -73,6 +73,9 @@ class StockMovementEntity(
   var category: StockAdjustmentCategory? = null,
 
   @Column(name = "note", length = 500)
-  var note: String? = null
+  var note: String? = null,
+
+  @Column(name = "context", length = 200)
+  var context: String? = null
 
 ) : HasReferenceEntity()

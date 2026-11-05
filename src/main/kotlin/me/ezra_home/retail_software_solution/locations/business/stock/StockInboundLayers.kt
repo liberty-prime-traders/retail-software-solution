@@ -21,6 +21,7 @@ data class InboundLayerSpec(
     val unitId: UUID,
     val storageUnitsPerUserProvidedUnit: Long,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
+    val context: String? = null,
 )
 
 object StockInboundLayers {
@@ -66,5 +67,6 @@ object StockInboundLayers {
         storageUnitsPerUserProvidedUnit = inboundLayerSpec.storageUnitsPerUserProvidedUnit,
         quantityBreakdown = quantityBreakdown,
         adjustmentDetails = inboundLayerSpec.adjustmentDetails,
+        context = inboundLayerSpec.context,
     )
 }

@@ -14,11 +14,11 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class StockEntryConsumptionsTest {
+class StockEntryConsumptionFinderTest {
 
     private val stockMovementRepository = mock(StockMovementRepository::class.java)
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
-    private val stockEntryConsumptions = StockEntryConsumptions(stockMovementRepository, stockEntryRepository)
+    private val stockEntryConsumptionFinder = StockEntryConsumptionFinder(stockMovementRepository, stockEntryRepository)
 
     private val entryReferenceNumber = "STE000001"
 
@@ -39,7 +39,7 @@ class StockEntryConsumptionsTest {
         val stockEntryIds = movementsOnEntries.map { it.stockEntryId }.toSet()
         `when`(stockEntryRepository.findAllById(anyIterable())).thenReturn(stockEntryIds.map { stockEntry(it, entryReferenceNumber) })
         `when`(stockMovementRepository.findByStockEntryIdInOrderByCreatedOnAscIdAsc(stockEntryIds)).thenReturn(movementsOnEntries)
-        return stockEntryConsumptions.netConsumptions(stockEntryIds)
+        return stockEntryConsumptionFinder.netConsumptions(stockEntryIds)
     }
 
     private val stockEntryId = UUID.randomUUID()
@@ -114,7 +114,7 @@ class StockEntryConsumptionsTest {
             )
         )
 
-        assertEquals(listOf("LINE1"), netConsumptions.map { it.consumingMovement.detailReference })
+        assertEquals(listOf("LINE1"), netConsumptions.map { it.detailReference })
     }
 
     @Test
@@ -128,7 +128,7 @@ class StockEntryConsumptionsTest {
             )
         )
 
-        assertEquals(listOf("DISPATCH2"), netConsumptions.map { it.consumingMovement.documentReference })
+        assertEquals(listOf("DISPATCH2"), netConsumptions.map { it.documentReference })
     }
 
     @Test
@@ -193,7 +193,7 @@ class StockEntryConsumptionsTest {
 
     @Test
     fun `no entries have no consumption and read nothing`() {
-        assertTrue(stockEntryConsumptions.netConsumptions(emptySet()).isEmpty())
+        assertTrue(stockEntryConsumptionFinder.netConsumptions(emptySet()).isEmpty())
     }
 
     @Test

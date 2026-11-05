@@ -29,6 +29,7 @@ class PurchaseDeliveryStockUpdater(
                 userProvidedQuantity = line.userProvidedQuantityDelivered,
                 unitId = line.unitId,
                 storageUnitsPerUserProvidedUnit = line.storageUnitsPerUserProvidedUnit,
+                context = StockMovementContexts.purchase(event.purchaseReferenceNumber),
             )
         }
         stockIncreaseRecorder.record(layerSpecs)

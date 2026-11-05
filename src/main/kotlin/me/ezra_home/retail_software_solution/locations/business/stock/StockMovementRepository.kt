@@ -60,6 +60,27 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     movementTypes: Collection<MovementType>
   ): Long
 
+  // Native, because the delivery and purchase tables belong to other domains. Paged by id, so a movement that never
+  // matches (its delivery is gone) is passed over instead of rescanned. Deleted with the purchase movement context backfill.
+  @Query("""
+    SELECT sm.id AS "stockMovementId", p.reference_number AS "purchaseReferenceNumber"
+    FROM stock_movement sm
+    JOIN purchase_delivery d ON d.reference_number = sm.document_reference
+    JOIN purchase p ON p.id = d.purchase_id
+    WHERE sm.movement_type = :movementTypeCode AND sm.context IS NULL AND sm.id > :afterStockMovementId
+    ORDER BY sm.id
+    LIMIT :batchSize
+  """, nativeQuery = true)
+  fun findMovementsOfTypeMissingPurchaseContext(movementTypeCode: String, afterStockMovementId: UUID, batchSize: Int): List<PurchaseMovementContextProjection>
+
+  @Query("""
+    SELECT COUNT(*)
+    FROM stock_movement sm
+    JOIN purchase_delivery d ON d.reference_number = sm.document_reference
+    WHERE sm.movement_type = :movementTypeCode AND sm.context IS NULL
+  """, nativeQuery = true)
+  fun countMovementsOfTypeMissingPurchaseContext(movementTypeCode: String): Long
+
   fun findByStockEntryIdInOrderByCreatedOnAscIdAsc(stockEntryIds: Collection<UUID>): List<StockMovementEntity>
 
   fun findByLocationProductId(locationProductId: UUID, pageable: Pageable): List<StockMovementEntity>

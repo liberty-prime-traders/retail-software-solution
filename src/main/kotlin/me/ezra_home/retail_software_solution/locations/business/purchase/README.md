@@ -312,7 +312,8 @@ live in the `delivery/` package and are coordinated through
    the response **before** stock is updated.
 7. `PurchaseDeliveryInventoryProcessor.handle` (async, separate
    transaction):
-   - Records stock movements via `PurchaseDeliveryStockUpdater`.
+   - Records stock movements via `PurchaseDeliveryStockUpdater`. Each `PURCHASE_RECEIVED` movement carries the context
+     `Purchase <reference>`, from `PurchaseDeliveredEvent.purchaseReferenceNumber`.
    - Updates `LocationProduct.lastPurchasePrice` from
      `event.lines.unitCost`.
    - Flips the delivery from `PROCESSING` → `RECEIVED`.

@@ -106,3 +106,25 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: stock_movement_aud
+
+  - changeSet:
+      id: add-context-to-stock-movement-aud
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: stock_movement_aud
+                columnName: context
+      changes:
+        - addColumn:
+            tableName: stock_movement_aud
+            columns:
+              - column:
+                  name: context
+                  type: varchar(200)
+      rollback:
+        - dropColumn:
+            tableName: stock_movement_aud
+            columnName: context

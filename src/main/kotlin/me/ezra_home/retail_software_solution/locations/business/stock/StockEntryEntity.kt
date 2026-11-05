@@ -5,6 +5,8 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatusConverter
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSourceConverter
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
@@ -51,6 +53,10 @@ class StockEntryEntity(
   override var batchCost: BigDecimal,
 
   @Column(name = "cost_remaining", nullable = false, precision = 28, scale = 4)
-  override var costRemaining: BigDecimal
+  override var costRemaining: BigDecimal,
+
+  @Column(name = "status", nullable = false, length = 5)
+  @Convert(converter = StockEntryStatusConverter::class)
+  var status: StockEntryStatus = StockEntryStatus.ACTIVE
 
 ) : HasReferenceEntity(), FifoLayer

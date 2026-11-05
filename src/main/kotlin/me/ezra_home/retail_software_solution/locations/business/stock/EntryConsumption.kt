@@ -11,4 +11,7 @@ data class EntryConsumption(
 ) {
     val sourceDocument: EntryConsumptionSourceDocument = EntryConsumptionSourceDocument.of(consumingMovement)
     val stockEntryId: UUID = consumingMovement.stockEntryId
+    val documentReference: String? = consumingMovement.documentReference
+    val detailReference: String? = consumingMovement.detailReference
+    val documentAndDetailReference: String = sourceDocument.documentAndDetailReference
 }

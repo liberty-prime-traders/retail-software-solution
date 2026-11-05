@@ -23,6 +23,7 @@ object StockMovementCreator {
         storageUnitsPerUserProvidedUnit: Long,
         quantityBreakdown: QuantityBreakdown,
         adjustmentDetails: StockAdjustmentMovementDetails? = null,
+        context: String? = null,
     ): StockMovementEntity = StockMovementEntity(
         stockEntryId = stockEntryId,
         locationProductId = locationProductId,
@@ -40,5 +41,6 @@ object StockMovementCreator {
         storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
         category = adjustmentDetails?.category,
         note = adjustmentDetails?.note,
+        context = context,
     )
 }

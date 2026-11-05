@@ -8,7 +8,7 @@ import java.util.UUID
 
 @Component
 @TransactionalOnLocationSchema(readOnly = true)
-class StockEntryConsumptions(
+class StockEntryConsumptionFinder(
     private val stockMovementRepository: StockMovementRepository,
     private val stockEntryRepository: StockEntryRepository
 ) {
@@ -40,13 +40,13 @@ class StockEntryConsumptions(
         val consumedSourceDocuments = consumptions.map { it.sourceDocument }.toSet()
         val reversalsWithoutDraw = reversedSourceDocuments
             .filter { it !in consumedSourceDocuments }
-            .map { HistoryProblem(it.stockEntryId, "reversal for ${it.documentReference}/${it.detailReference} has no matching draw") }
+            .map { HistoryProblem(it.stockEntryId, "reversal for ${it.documentAndDetailReference} has no matching draw") }
         val overReversedDraws = consumptions
             .filter { it.netConsumedStorageQuantity < ExactQuantity.ZERO }
             .map {
                 HistoryProblem(
                     it.stockEntryId,
-                    "more reversed than drawn for ${it.consumingMovement.documentReference}/${it.consumingMovement.detailReference}"
+                    "more reversed than drawn for ${it.documentAndDetailReference}"
                 )
             }
         val problems = reversalsWithoutDraw + overReversedDraws

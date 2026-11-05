@@ -12,6 +12,12 @@ class MovementTypeTest {
     }
 
     @Test
+    fun `a revision reversal is a reversal that increases stock`() {
+        assertTrue(MovementType.REVERSED_BY_REVISION.isReversal())
+        assertTrue(MovementType.REVERSED_BY_REVISION.increasesStock())
+    }
+
+    @Test
     fun `a movement type that cannot be reversed is not itself a reversal`() {
         assertTrue(MovementType.movementsThatCannotBeReversed.none { it.isReversal() })
     }

@@ -18,15 +18,18 @@ enum class MovementType(
     TRANSFER_OUT("TO", StockDirection.DECREASE),
     TRANSFER_CANCELLED("TOC", StockDirection.INCREASE),
     PURCHASE_RECEIVED("PR", StockDirection.INCREASE),
-    OPENING_STOCK("OPS", StockDirection.INCREASE);
+    OPENING_STOCK("OPS", StockDirection.INCREASE),
+    REVERSED_BY_REVISION("RBR", StockDirection.INCREASE),
+    STOCK_REVISION_ZEROING("SRZ", StockDirection.DECREASE);
 
-    fun isReversal(): Boolean = reversals.containsKey(this)
+    fun isReversal(): Boolean = reversals.containsKey(this) || this == REVERSED_BY_REVISION
 
     fun increasesStock(): Boolean = stockDirection == StockDirection.INCREASE
 
     fun decreasesStock(): Boolean = stockDirection == StockDirection.DECREASE
 
     companion object {
+        // REVERSED_BY_REVISION is not listed: it undoes a draw of any type, so it names no single reversed type.
         val reversals: Map<MovementType, MovementType> = mapOf(
             SALE_VOID to SALE,
             TRANSFER_CANCELLED to TRANSFER_OUT
