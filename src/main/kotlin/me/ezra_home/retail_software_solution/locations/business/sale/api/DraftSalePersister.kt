@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleLineRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleRepository
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.NewStockReservation
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
@@ -25,6 +26,7 @@ class DraftSalePersister(
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
     private val saleSaveFinalizer: SaleSaveFinalizer,
+    private val saleAdjustmentSyncer: SaleAdjustmentSyncer,
 ) {
 
     fun saveDraft(saleSaveRequest: SaleSaveRequest): SaleSaveResult {
@@ -39,6 +41,7 @@ class DraftSalePersister(
         saleRepository.save(saleEntity)
 
         stockReserver.clearBySale(saleEntity.id!!)
+        val retainedSaleAdjustments = saleAdjustmentSyncer.deleteRemoved(saleEntity.id!!, saleSaveRequest)
         val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         if (lineSyncResult.persistedSaleLines.isNotEmpty()) {
             val storageQuantitiesByLocationProductId = lineSyncResult.persistedSaleLines
@@ -65,6 +68,7 @@ class DraftSalePersister(
             saleEntity = saleEntity,
             saleSaveRequest = saleSaveRequest,
             lineSyncResult = lineSyncResult,
+            retainedSaleAdjustments = retainedSaleAdjustments,
         )
 
         return SaleSaveResult(
