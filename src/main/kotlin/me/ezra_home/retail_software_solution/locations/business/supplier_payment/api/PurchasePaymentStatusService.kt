@@ -25,18 +25,31 @@ class PurchasePaymentStatusService(
     fun patchThenReturnPaymentStatusAfterVoid(purchaseId: UUID, paidTotalBeforeVoid: BigDecimal, voidedAmount: BigDecimal): PaymentStatus =
         patchPaymentStatus(purchaseId, PaymentStatusResolver.paidTotalAfterVoid(paidTotalBeforeVoid, voidedAmount))
 
-    private fun patchPaymentStatus(purchaseId: UUID, totalPaid: BigDecimal): PaymentStatus {
-        val ceiling = purchasePaymentCeilingService.computeCeiling(purchaseId)
-        val status = resolvePaymentStatus(totalPaid, ceiling)
+    fun patchThenReturnPaymentStatus(purchaseId: UUID, paymentCeiling: BigDecimal): PaymentStatus =
+        patchPaymentStatus(
+            purchaseId,
+            paymentsCalculatorService.calculatePaidAmountForPurchase(purchaseId),
+            paymentCeiling
+        )
+
+    private fun patchPaymentStatus(
+        purchaseId: UUID,
+        totalPaid: BigDecimal,
+        paymentCeiling: BigDecimal = purchasePaymentCeilingService.computeCeiling(purchaseId).amount
+    ): PaymentStatus {
+        val status = resolvePaymentStatus(totalPaid, paymentCeiling)
         purchaseUpdater.updatePaymentStatus(purchaseId, status)
         return status
     }
 
-    fun resolvePaymentStatus(totalPaid: BigDecimal, ceiling: PaymentCeiling): PaymentStatus {
+    fun resolvePaymentStatus(totalPaid: BigDecimal, ceiling: PaymentCeiling): PaymentStatus =
+        resolvePaymentStatus(totalPaid, ceiling.amount)
+
+    private fun resolvePaymentStatus(totalPaid: BigDecimal, paymentCeiling: BigDecimal): PaymentStatus {
         return when {
             totalPaid.compareTo(BigDecimal.ZERO) == 0 -> PaymentStatus.UNPAID
-            totalPaid > ceiling.amount -> PaymentStatus.OVERPAID
-            totalPaid.compareTo(ceiling.amount) == 0 -> PaymentStatus.FULLY_SETTLED
+            totalPaid > paymentCeiling -> PaymentStatus.OVERPAID
+            totalPaid.compareTo(paymentCeiling) == 0 -> PaymentStatus.FULLY_SETTLED
             else -> PaymentStatus.PARTIALLY_SETTLED
         }
     }

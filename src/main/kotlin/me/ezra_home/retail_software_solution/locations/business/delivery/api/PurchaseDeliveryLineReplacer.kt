@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Del
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 
 // Writes the line rows only; stock, ledger and purchase totals are the caller's. The caller must hold the product lock
 // for the checks to hold.
@@ -21,6 +22,7 @@ class PurchaseDeliveryLineReplacer(
     private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
 ) {
 
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun replace(purchaseDeliveryLineReplaceRequest: PurchaseDeliveryLineReplaceRequest): ReplacementDeliveryLineDto {
         val revisedLine = purchaseDeliveryLineRepository.getReferenceById(
             purchaseDeliveryLineReplaceRequest.revisedDeliveryLineId
@@ -57,6 +59,7 @@ class PurchaseDeliveryLineReplacer(
             revisedLineReferenceNumber = revisedLine.requiredReference(),
             replacementLineReferenceNumber = replacementLine.requiredReference(),
             purchaseLineId = replacementLine.purchaseLineId,
+            revisedUserProvidedQuantityDelivered = revisedLine.userProvidedQuantityDelivered,
             userProvidedQuantityDelivered = replacementLine.userProvidedQuantityDelivered,
             unitCost = replacementLine.unitCost,
             unitId = replacementLine.unitId,

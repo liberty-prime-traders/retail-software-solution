@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.util.UUID
+import org.springframework.transaction.annotation.Propagation
 
 @Service
 @TransactionalOnLocationSchema
@@ -17,6 +18,7 @@ class StockReplacementLayerRecorder(
     private val stockEntryRepository: StockEntryRepository,
 ) {
 
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun record(stockReplacementLayerRequest: StockReplacementLayerRequest): UUID {
         val revisedStockEntry = stockEntryRepository.findById(
             stockReplacementLayerRequest.revisedStockEntryId

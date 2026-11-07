@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery.api
 
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryStatus
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -13,6 +14,8 @@ data class PurchaseDeliveryResponseDto(
   val deliveredAt: OffsetDateTime,
   val notes: String?,
   val lines: List<PurchaseDeliveryLineResponseDto>,
-  val deliveryTotal: BigDecimal = lines.sumOf { it.lineTotal }
+  val deliveryTotal: BigDecimal = lines
+    .filter { it.status == PurchaseDeliveryLineStatus.ACTIVE }
+    .sumOf { it.lineTotal }
 )
 

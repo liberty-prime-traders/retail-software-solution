@@ -17,6 +17,7 @@ import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
+import org.springframework.transaction.annotation.Propagation
 
 // Writes the reset and the replay of a revision; the replacement layer between them is written by
 // StockReplacementLayerRecorder.
@@ -29,6 +30,7 @@ class StockRevisionCommitter(
     private val stockBalanceFetcher: StockBalanceFetcher
 ) {
 
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun commitReset(stockEntryResetPlan: StockEntryResetPlan, quantityBreakdown: QuantityBreakdown) {
         val locationProductId = stockEntryResetPlan.locationProductId
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductId)
@@ -46,6 +48,7 @@ class StockRevisionCommitter(
     }
 
     // Draws from every layer with stock left, so the replacement layer must already be saved.
+    @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun commitReplay(
         consumerReplayPlans: List<ConsumerReplayPlan>,
         replacementStockEntryId: UUID,

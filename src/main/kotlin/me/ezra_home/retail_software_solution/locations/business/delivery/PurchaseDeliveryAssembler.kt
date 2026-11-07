@@ -50,7 +50,8 @@ class PurchaseDeliveryAssembler(
           unitId = dl.unitId,
           unitCost = dl.unitCost,
           purchaseLineId = dl.purchaseLineId,
-          locationProduct = product
+          locationProduct = product,
+          status = dl.status
         )
       }
     )

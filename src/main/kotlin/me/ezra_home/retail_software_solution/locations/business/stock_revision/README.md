@@ -64,6 +64,7 @@ transaction under the product lock, in this order:
 | 4: plan the draws | `ReplayPlanner`, using `ConsumerReplayer`, returns `ConsumerReplayPlan`s | Planning the replay |
 | 4: write them | `StockRevisionCommitter.commitReplay`, returns `ConsumerReplayDto`s | Committing a revision |
 | Link the layers | `StockRevisionEntity` is saved last, under the reference drawn first | The stock revision row |
+| Purchase totals and response | `PurchaseDeliveryRevisionApplier.apply` (delivered quantity, status, payment status); `revise` returns the purchase response | |
 
 Stock data reaches the planners as DTOs from `stock/api` fetchers (`StockMovementFetcher`, `StockEntryFetcher`,
 `StockBalanceFetcher`); no planner touches a stock entity or repository. The product's quantity breakdown does not change during a
