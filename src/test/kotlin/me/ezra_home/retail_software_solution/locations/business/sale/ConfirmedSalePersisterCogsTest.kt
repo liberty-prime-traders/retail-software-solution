@@ -11,6 +11,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLin
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.RetainedSaleAdjustments
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineConsumedCost
 import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
@@ -41,6 +43,8 @@ class ConfirmedSalePersisterCogsTest {
     private val saleStockUpdater = mock(SaleStockUpdater::class.java)
     private val saleDataFetcher = mock(SaleDataFetcher::class.java)
     private val saleSaveFinalizer = mock(SaleSaveFinalizer::class.java)
+    private val saleAdjustmentSyncer = mock(SaleAdjustmentSyncer::class.java)
+    private val retainedSaleAdjustments = RetainedSaleAdjustments(emptyList())
 
     private val confirmedSalePersister = ConfirmedSalePersister(
         saleRepository = saleRepository,
@@ -52,6 +56,7 @@ class ConfirmedSalePersisterCogsTest {
         saleDataFetcher = saleDataFetcher,
         fiscalPeriodService = mock(FiscalPeriodService::class.java),
         saleSaveFinalizer = saleSaveFinalizer,
+        saleAdjustmentSyncer = saleAdjustmentSyncer,
         saleValidator = mock(SaleValidator::class.java),
         locationProductDataFetcher = mock(LocationProductDataFetcher::class.java),
         saleTaxFinalizer = mock(SaleTaxFinalizer::class.java),
@@ -84,13 +89,15 @@ class ConfirmedSalePersisterCogsTest {
                 it.referenceNumber = "SALE-1"
             }
         `when`(saleDataFetcher.loadDraftAtVersion(saleId, 0L)).thenReturn(draftSale)
+        `when`(saleAdjustmentSyncer.deleteRemoved(saleId, saleSaveRequest)).thenReturn(retainedSaleAdjustments)
         `when`(saleLineRepository.findBySaleId(saleId)).thenReturn(listOf(saleLineEntity))
         `when`(saleLineRepository.saveAll(anyList<SaleLineEntity>())).thenReturn(listOf(saleLineEntity))
         `when`(
             saleSaveFinalizer.finalize(
                 draftSale,
                 saleSaveRequest,
-                SaleLineSync.Result(mapOf(saleLineClientKey to saleLineId), listOf(saleLineEntity))
+                SaleLineSync.Result(mapOf(saleLineClientKey to saleLineId), listOf(saleLineEntity)),
+                retainedSaleAdjustments,
             )
         ).thenReturn(SaleSaveFinalizer.SaleSaveFinalizeResult(emptyMap(), emptyMap()))
     }

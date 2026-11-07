@@ -9,7 +9,7 @@ import java.util.UUID
 @MappedSuperclass
 abstract class BaseEntity(
     @Id
-    @Column(name = "id", nullable = false)
+    @Column(name = ColumnNames.Common.ID, nullable = false)
     var id: UUID? = null
 ) {
 

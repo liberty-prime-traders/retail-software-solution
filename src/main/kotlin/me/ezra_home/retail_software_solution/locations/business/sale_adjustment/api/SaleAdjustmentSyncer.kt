@@ -16,23 +16,32 @@ data class PersistedSaleLine(
     override val lineTotal: BigDecimal,
 ) : ProductLineWithPrice
 
+class RetainedSaleAdjustments internal constructor(internal val entities: List<SaleAdjustmentEntity>)
+
 @Service
 class SaleAdjustmentSyncer(
     private val saleAdjustmentRepository: SaleAdjustmentRepository,
 ) {
+
+    // Must run before SaleLineSync.sync: fk_sale_adjustment_sale_line rejects deleting a line that an adjustment still references.
+    fun deleteRemoved(saleId: UUID, saleSaveRequest: SaleSaveRequest): RetainedSaleAdjustments {
+        val incomingSaleAdjustmentIds = saleSaveRequest.saleAdjustments.mapNotNull { it.existingId }.toHashSet()
+        val existingSaleAdjustments = saleAdjustmentRepository.findBySaleId(saleId)
+        val saleAdjustmentsToDelete = existingSaleAdjustments.filter { it.id !in incomingSaleAdjustmentIds }
+        if (saleAdjustmentsToDelete.isNotEmpty()) {
+            saleAdjustmentRepository.deleteAll(saleAdjustmentsToDelete)
+        }
+        return RetainedSaleAdjustments(existingSaleAdjustments - saleAdjustmentsToDelete.toSet())
+    }
 
     fun sync(
         saleId: UUID,
         saleSaveRequest: SaleSaveRequest,
         persistedSaleLines: List<PersistedSaleLine>,
         saleLineIdsByClientKey: Map<UUID, UUID>,
+        retainedSaleAdjustments: RetainedSaleAdjustments,
     ): Map<UUID, UUID> {
-        val existingSaleAdjustmentsById = saleAdjustmentRepository.findBySaleId(saleId).associateBy { it.id!! }
-        val incomingSaleAdjustmentIds = saleSaveRequest.saleAdjustments.mapNotNull { it.existingId }.toHashSet()
-        val saleAdjustmentsToDelete = existingSaleAdjustmentsById.values.filter { it.id !in incomingSaleAdjustmentIds }
-        if (saleAdjustmentsToDelete.isNotEmpty()) {
-            saleAdjustmentRepository.deleteAll(saleAdjustmentsToDelete)
-        }
+        val existingSaleAdjustmentsById = retainedSaleAdjustments.entities.associateBy { it.id!! }
 
         val persistedSaleLineByLocationProductId = persistedSaleLines.associateBy { it.locationProductId }
         val saleAdjustmentIdsByClientKey = mutableMapOf<UUID, UUID>()

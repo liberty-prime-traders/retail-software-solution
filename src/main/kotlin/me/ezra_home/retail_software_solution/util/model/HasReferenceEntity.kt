@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 @MappedSuperclass
 @EntityListeners(ReferenceNumberEntityListener::class)
 abstract class HasReferenceEntity(
-    @Column(name = "reference_number", unique = true)
+    @Column(name = ColumnNames.Common.REFERENCE_NUMBER, unique = true)
     var referenceNumber: String? = null
 
 ): HasCreatorEntity() {

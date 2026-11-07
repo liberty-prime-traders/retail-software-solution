@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.sale_payment.search
+package me.ezra_home.retail_software_solution.locations.business.reports.payments
 
 import jakarta.persistence.Tuple
 import me.ezra_home.retail_software_solution.configuration.datasource.DataSourceBeanNames
@@ -8,7 +8,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.stereotype.Component
 
 @Component
-class SalePaymentSearchExecutor(
+class PaymentSearchExecutor(
   @Qualifier(DataSourceBeanNames.LOCATION_SCHEMA_ENTITY_MANAGER_FACTORY)
   emf: LocalContainerEntityManagerFactoryBean
 ) : SqlSearchExecutor<Tuple, Tuple>(emf, Tuple::class.java) {

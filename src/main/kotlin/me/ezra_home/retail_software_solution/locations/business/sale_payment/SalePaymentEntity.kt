@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.model.ColumnNames
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -16,22 +17,22 @@ import java.util.UUID
 @HasReference(tableName = TableName.SALE_PAYMENT)
 class SalePaymentEntity(
 
-    @Column(name = "sale_id", nullable = false, updatable = false)
+    @Column(name = ColumnNames.SalePayment.SALE_ID, nullable = false, updatable = false)
     var saleId: UUID,
 
-    @Column(name = "payment_method_id", nullable = false, updatable = false)
+    @Column(name = ColumnNames.Payment.PAYMENT_METHOD_ID, nullable = false, updatable = false)
     var paymentMethodId: UUID,
 
     @Column(name = "payment_method_account_code", nullable = false, updatable = false, length = 30)
     var paymentMethodAccountCode: String,
 
-    @Column(name = "amount", nullable = false, precision = 19, scale = 4, updatable = false)
+    @Column(name = ColumnNames.Payment.AMOUNT, nullable = false, precision = 19, scale = 4, updatable = false)
     var amount: BigDecimal,
 
     @Column(name = "reference", updatable = false)
     var reference: String? = null,
 
-    @Column(name = "payment_date", updatable = false)
+    @Column(name = ColumnNames.Payment.PAYMENT_DATE, updatable = false)
     var paymentDate: OffsetDateTime
 
 ) : ImmutableEntity()

@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.util.enums.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.model.ColumnNames
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -23,7 +24,7 @@ import java.util.UUID
 @HasReference(tableName = TableName.SALE)
 class SaleEntity(
 
-    @Column(name = "contact_id", nullable = false)
+    @Column(name = ColumnNames.Sale.CONTACT_ID, nullable = false)
     var contactId: UUID,
 
     @Column(name = "sold_by_id")
