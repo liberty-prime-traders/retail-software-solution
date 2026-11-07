@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatusConverter
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
+import me.ezra_home.retail_software_solution.util.model.ColumnNames
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -21,7 +22,7 @@ import java.util.UUID
 @HasReference(tableName = TableName.PURCHASE)
 class PurchaseEntity(
 
-  @Column(name = "supplier_id", nullable = false)
+  @Column(name = ColumnNames.Purchase.SUPPLIER_ID, nullable = false)
   var supplierId: UUID,
 
   @Convert(converter = PurchaseStatusConverter::class)
