@@ -8,8 +8,8 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductWithAvailability
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementHistoryBuilder
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementResponse
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementHistoryBuilder
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementResponse
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
 import org.springframework.web.bind.annotation.GetMapping

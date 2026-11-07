@@ -74,7 +74,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
 7. Persist the `OpeningStockEntity` rows in one `saveAll` (not a
    per-line `save` in a loop), storing the typed quantity, its unit, the captured
    `storage_units_per_user_provided_qty_unit` and the exact total cost.
-8. Call `stock/api/OpeningStockStockUpdater.recordOpeningStock` — the
+8. Call `stock/api/updater/OpeningStockStockUpdater.recordOpeningStock` — the
    only cross-domain call this service makes into `stock/`, since
    `ArchitectureTest` forbids reaching past its `api/` package.
    It persists a `StockEntryEntity` (source `StockItemSource.OPENING_STOCK`)

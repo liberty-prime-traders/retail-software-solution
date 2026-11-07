@@ -828,7 +828,7 @@ run** — i.e. as soon as the data it needs is in scope.
 | Lines                     | `SaleLineEntity`, `SaleLineMapper`, `SaleLineSync`                                                                                                                                  |
 | Validation                | `SaleValidator`                                                                                                                                                                     |
 | Save primitives           | `SaleSaveRequest`, `DraftSalePersister`, `ConfirmedSalePersister`, `SaleSaveFinalizer`                                                                                              |
-| Stock reservation         | `StockReserver`, `StockReservationEntity`, `StockReservationDtos`                                                                                                                   |
+| Stock reservation         | `StockReserver`, `StockReservationEntity`, `StockReservationDtos` (`stock_reservation/` package)                                                                                    |
 | Adjustments (disc + srch) | `sale_adjustment/` package (`SaleAdjustmentEntity`, `SaleAdjustmentRepository`, `SaleAdjustmentSyncer`, `SaleAdjustmentFetcher`, `AdjustmentAmountCalculator`)                      |
 | Adjustment reasons        | `organizations/business/adjustment_reason/` (org schema lookup; seeded via `AdjustmentReasonSeeder`)                                                                                |
 | Payments                  | `sale_payment/` package (`SalePaymentWriter` — shared write primitive; `SalePaymentAppender` — commit-time wrapper)                                                                 |

@@ -9,8 +9,8 @@ import me.ezra_home.retail_software_solution.locations.business.opening_stock.Op
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockRepository
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.OpeningStockValidator
-import me.ezra_home.retail_software_solution.locations.business.stock.api.OpeningStockLineStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.OpeningStockStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.OpeningStockLineStockRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.OpeningStockStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals

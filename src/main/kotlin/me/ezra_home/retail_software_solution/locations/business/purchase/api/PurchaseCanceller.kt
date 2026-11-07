@@ -3,16 +3,16 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -24,7 +24,7 @@ class PurchaseCanceller(
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
     private val purchaseDataFetcher: PurchaseDataFetcher,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
 ) {
 
     fun cancel(purchaseId: UUID, lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto {
@@ -32,10 +32,17 @@ class PurchaseCanceller(
         PurchaseValidator.guardCanCancelLines(purchase)
         val existingLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         cancelLines(existingLines, lines)
-        purchase.purchaseStatus = resolvePurchaseStatus(existingLines) ?: purchase.purchaseStatus
+        purchase.purchaseStatus = PurchaseStatusResolver.resolveAfterQuantityChange(existingLines) {
+            purchase.purchaseStatus
+        }
         purchaseRepository.save(purchase)
-        val paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseId)
-        return purchaseAssembler.buildResponse(purchase, existingLines).copy(paymentStatus = paymentStatus)
+        val purchaseResponse = purchaseAssembler.buildResponse(purchase, existingLines)
+        return purchaseResponse.copy(
+            paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(
+                purchaseId,
+                purchaseResponse.paymentCeiling
+            )
+        )
     }
 
     private fun cancelLines(existingLines: List<PurchaseLineEntity>, cancels: List<PurchaseCancelLinesDto>) {
@@ -46,7 +53,9 @@ class PurchaseCanceller(
                 .filter { (line, cancel) -> cancel.unitId != null && cancel.unitId != line.unitId }
                 .map { (line, cancel) -> LocationProductUnitRequestDto(line.locationProductId, cancel.unitId!!) }
         )
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(cancelledLines.map { (line, _) -> line.locationProductId }.toSet())
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+            cancelledLines.map { (line, _) -> line.locationProductId }.toSet()
+        )
         val toSave = cancelledLines.map { (line, cancel) ->
             val storageUnitsPerUserProvidedUnit = if (cancel.unitId == null || cancel.unitId == line.unitId) {
                 line.storageUnitsPerUserProvidedUnit
@@ -59,16 +68,5 @@ class PurchaseCanceller(
             line
         }
         purchaseLineRepository.saveAll(toSave)
-    }
-
-    private fun resolvePurchaseStatus(lines: List<PurchaseLineEntity>): PurchaseStatus? {
-        val allAccountedFor = lines.none { it.storageQuantityRemaining().isPositive() }
-        val anyDelivered = lines.any { it.storageQuantityDelivered > BigDecimal.ZERO }
-        return when {
-            allAccountedFor && !anyDelivered -> PurchaseStatus.CANCELED
-            allAccountedFor -> PurchaseStatus.FULLY_DELIVERED
-            anyDelivered -> PurchaseStatus.PARTIALLY_DELIVERED
-            else -> null
-        }
     }
 }

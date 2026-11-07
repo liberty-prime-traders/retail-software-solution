@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -25,23 +26,26 @@ class PurchaseDeliveryDataFetcher(
             .toMap()
     }
 
-    fun getPurchaseLineId(deliveryLineId: UUID): UUID =
-        purchaseDeliveryLineRepository.findPurchaseLineIdById(deliveryLineId)
-            ?: throw RtsGenericException("Delivery line $deliveryLineId not found")
-
-    fun getPurchaseId(deliveryLineId: UUID): UUID =
-        purchaseDeliveryLineRepository.findPurchaseIdById(deliveryLineId)
+    fun getOwners(deliveryLineId: UUID): DeliveryLineOwnersDto =
+        purchaseDeliveryLineRepository.findOwnersById(deliveryLineId)
+            ?.let { DeliveryLineOwnersDto(it.purchaseId, it.purchaseLineId) }
             ?: throw RtsGenericException("Delivery line $deliveryLineId not found")
 
     fun calculateDeliveredTotal(purchaseId: UUID): BigDecimal {
         val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))
         if (deliveries.isEmpty()) return BigDecimal.ZERO
-        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(deliveries.map { it.id!! })
+        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdInAndStatus(
+            deliveries.map { it.id!! },
+            PurchaseDeliveryLineStatus.ACTIVE
+        )
         return lines.sumOf { it.lineTotal() }
     }
 
     fun calculateSingleDeliveryTotal(deliveryId: UUID): BigDecimal {
-        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(deliveryId))
+        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdInAndStatus(
+            listOf(deliveryId),
+            PurchaseDeliveryLineStatus.ACTIVE
+        )
         return lines.sumOf { it.lineTotal() }
     }
 

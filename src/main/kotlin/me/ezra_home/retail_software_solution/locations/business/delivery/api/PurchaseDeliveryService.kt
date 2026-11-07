@@ -61,7 +61,12 @@ class PurchaseDeliveryService(
     val deliveryRecord = persistDelivery(purchaseDeliveryCreateDto, storageUnitsPerUserProvidedUnitByPurchaseLineId)
     val response = deliveryHandlerForPurchase.commitDelivery(purchaseDeliveryCreateDto.purchaseId, deliveryLines)
     deliveryHandlerForKafka.publish(context, deliveryRecord)
-    return response.copy(paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseDeliveryCreateDto.purchaseId))
+    return response.copy(
+      paymentStatus = purchasePaymentStatusService.patchThenReturnPaymentStatus(
+        purchaseDeliveryCreateDto.purchaseId,
+        response.paymentCeiling
+      )
+    )
   }
 
   private fun captureStorageUnitsPerUserProvidedUnit(

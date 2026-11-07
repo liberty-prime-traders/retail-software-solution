@@ -2,13 +2,13 @@ package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -23,7 +23,7 @@ class SaleValidator(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val salePaymentFetcher: SalePaymentFetcher,
     private val stockReserver: StockReserver,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -61,7 +61,7 @@ class SaleValidator(
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, requested.keys)
         val balances = stockBalanceFetcher.getLatestBalances(requested.keys.toList())
         val reservations = stockReserver.loadReservationBreakdown(requested.keys)
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(requested.keys)
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(requested.keys)
         requested.forEach { (locationProductId, storageQuantity) ->
             val reservedByOthers = reservations[locationProductId]?.excludingSale(saleId) ?: BigDecimal.ZERO
             val available = ExactQuantity.ofStorage(balances.getValue(locationProductId)) - ExactQuantity.ofStorage(reservedByOthers)

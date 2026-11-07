@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.stock.api.availability.StockAvailabilityFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 

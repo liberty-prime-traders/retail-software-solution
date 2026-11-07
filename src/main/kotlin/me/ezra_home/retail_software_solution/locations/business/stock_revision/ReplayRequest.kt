@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.ConsumerReplayPlan
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayPlan
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 
 data class ReplayRequest(

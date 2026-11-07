@@ -3,13 +3,13 @@ package me.ezra_home.retail_software_solution.locations.business.stock_transfer.
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityValidator
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferDispatchLineStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.availability.StockAvailabilityValidator
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockTransferDispatchLineStockRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockTransferStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.ReconciledTransferLine
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineRepository
@@ -53,7 +53,7 @@ class StockTransferDispatchService(
     private val stockTransferDraftDispatchFetcher: StockTransferDraftDispatchFetcher,
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val stockAvailabilityValidator: StockAvailabilityValidator,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
     private val stockTransferSchemaGateway: StockTransferSchemaGateway,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
@@ -89,7 +89,9 @@ class StockTransferDispatchService(
             draftLines = draftLines,
             fifoEntriesByProduct = fifoEntriesByProduct,
             orgProductIdByLocationProductId = orgProductIdByLocationProductId,
-            quantityBreakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds.toSet()),
+            quantityBreakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+                locationProductIds.toSet()
+            ),
             productLabelByLocationProductId = productLabelByLocationProductId
         )
 
@@ -135,7 +137,9 @@ class StockTransferDispatchService(
         summariesByLocationProductId: Map<UUID, LocationProductSummaryDto>
     ): List<ReconciledTransferLine> {
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(summariesByLocationProductId.keys)
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+            summariesByLocationProductId.keys
+        )
         return dispatchLines.map { dispatchLine ->
             val summary = summariesByLocationProductId.getValue(dispatchLine.locationProductId)
             ReconciledTransferLine(

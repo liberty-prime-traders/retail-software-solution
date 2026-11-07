@@ -27,7 +27,9 @@ class SaleLineCogsBackfiller(
     private val backfillRunning = AtomicBoolean(false)
 
     fun startBackfillAllLocations() {
-        if (!backfillRunning.compareAndSet(false, true)) throw RtsGenericException("The sale line COGS backfill is already running.")
+        if (!backfillRunning.compareAndSet(false, true)) throw RtsGenericException(
+            "The sale line COGS backfill is already running."
+        )
         try {
             asyncExecutor.execute {
                 try {

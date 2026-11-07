@@ -2,10 +2,10 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineStockInspector
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
@@ -28,13 +28,13 @@ class PurchaseDeliveryRevisionValidatorTest {
         `when`(summary.label).thenReturn("Sugar")
         `when`(it.findSummaryByIds(setOf(locationProductId))).thenReturn(mapOf(locationProductId to summary))
     }
-    private val stockBreakdownProvider = mock(StockBreakdownProvider::class.java).also {
+    private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java).also {
         `when`(it.forLocationProducts(setOf(locationProductId)))
             .thenReturn(mapOf(locationProductId to mock(QuantityBreakdown::class.java)))
     }
     private val deliveryLineStockInspector = mock(DeliveryLineStockInspector::class.java)
     private val purchaseDeliveryRevisionValidator = PurchaseDeliveryRevisionValidator(
-        PurchaseDeliveryValidator(locationProductDataFetcher, stockBreakdownProvider), deliveryLineStockInspector
+        PurchaseDeliveryValidator(locationProductDataFetcher, productStockBreakdownProvider), deliveryLineStockInspector
     )
 
     private fun deliveryLine(
@@ -120,10 +120,15 @@ class PurchaseDeliveryRevisionValidatorTest {
 
     @Test
     fun `a line whose stock has a movement that cannot be reversed cannot be revised`() {
-        `when`(deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+        `when`(
+            deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")
+        ).thenReturn(true)
 
         assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber, deliveryLine("4"))
+            purchaseDeliveryRevisionValidator.ensureNoMovementsThatCannotBeReversed(
+                deliveryReferenceNumber,
+                deliveryLine("4")
+            )
         }
     }
 
@@ -148,7 +153,9 @@ class PurchaseDeliveryRevisionValidatorTest {
     @Test
     fun `validate collects every failing check into one error list`() {
         `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
-        `when`(deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
+        `when`(
+            deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")
+        ).thenReturn(true)
 
         val exception = assertThrows(RtsGenericException::class.java) {
             purchaseDeliveryRevisionValidator.validate(

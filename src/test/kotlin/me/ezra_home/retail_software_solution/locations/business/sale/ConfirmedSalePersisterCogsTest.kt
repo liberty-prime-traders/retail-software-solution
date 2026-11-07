@@ -11,11 +11,10 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLin
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
-import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.RetainedSaleAdjustments
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
-import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineConsumedCost
-import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleLineConsumedCost
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals

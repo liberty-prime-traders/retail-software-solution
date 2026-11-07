@@ -33,7 +33,10 @@ class PurchaseDeliveryLineReplacerTest {
     private val purchaseDeliveryRevisionValidator = mock(PurchaseDeliveryRevisionValidator::class.java)
     private val deliveryHandlerForPurchase = mock(DeliveryHandlerForPurchase::class.java)
     private val purchaseDeliveryLineReplacer = PurchaseDeliveryLineReplacer(
-        purchaseDeliveryLineRepository, purchaseDeliveryRepository, purchaseDeliveryRevisionValidator, deliveryHandlerForPurchase
+        purchaseDeliveryLineRepository,
+        purchaseDeliveryRepository,
+        purchaseDeliveryRevisionValidator,
+        deliveryHandlerForPurchase
     )
 
     private val deliveryId = UUID.randomUUID()
@@ -64,22 +67,38 @@ class PurchaseDeliveryLineReplacerTest {
         `when`(purchaseDeliveryLineRepository.getReferenceById(revisedLine.id!!)).thenReturn(revisedLine)
         val purchaseId = UUID.randomUUID()
         `when`(purchaseDeliveryRepository.getReferenceById(deliveryId)).thenReturn(
-            PurchaseDeliveryEntity(purchaseId, deliveredAt = OffsetDateTime.now()).also { it.referenceNumber = "DEL000001" }
+            PurchaseDeliveryEntity(
+                purchaseId,
+                deliveredAt = OffsetDateTime.now()
+            ).also { it.referenceNumber = "DEL000001" }
         )
         `when`(deliveryHandlerForPurchase.getDeliveryContext(purchaseId)).thenReturn(
-            PurchaseDeliveryContext(purchaseId, "PUR000001", UUID.randomUUID(), mapOf(revisedLine.purchaseLineId to purchaseLineDto))
+            PurchaseDeliveryContext(
+                purchaseId,
+                "PUR000001",
+                UUID.randomUUID(),
+                mapOf(revisedLine.purchaseLineId to purchaseLineDto)
+            )
         )
-        `when`(purchaseDeliveryLineRepository.save(any(PurchaseDeliveryLineEntity::class.java))).thenAnswer { invocation ->
-            invocation.getArgument<PurchaseDeliveryLineEntity>(0).also { if (it !== revisedLine) it.referenceNumber = "DELN000002" }
+        `when`(
+            purchaseDeliveryLineRepository.save(any(PurchaseDeliveryLineEntity::class.java))
+        ).thenAnswer { invocation ->
+            invocation.getArgument<PurchaseDeliveryLineEntity>(0).also {
+                if (it !== revisedLine) it.referenceNumber = "DELN000002"
+            }
         }
     }
 
     @Test
-    fun `the replacement is a sibling in the same delivery that keeps the purchase line and unit, and the revised line becomes REVISED`() {
+    fun `the replacement is a sibling that keeps the purchase line and unit, and the revised line becomes REVISED`() {
         stubRepositories()
 
         val replacement = purchaseDeliveryLineReplacer.replace(
-            PurchaseDeliveryLineReplaceRequest(revisedLine.id!!, UserProvidedQuantity.of(BigDecimal("0")), Money.of(BigDecimal("6.5000")))
+            PurchaseDeliveryLineReplaceRequest(
+                revisedLine.id!!,
+                UserProvidedQuantity.of(BigDecimal("0")),
+                Money.of(BigDecimal("6.5000"))
+            )
         )
 
         assertEquals(PurchaseDeliveryLineStatus.REVISED, revisedLine.status)
@@ -100,7 +119,13 @@ class PurchaseDeliveryLineReplacerTest {
             .validate("DEL000001", purchaseLineDto, revisedLine, ExactQuantity.ofStorage(BigDecimal("48")))
 
         assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryLineReplacer.replace(PurchaseDeliveryLineReplaceRequest(revisedLine.id!!, UserProvidedQuantity.of(BigDecimal("4")), Money.of(BigDecimal("5.0000"))))
+            purchaseDeliveryLineReplacer.replace(
+                PurchaseDeliveryLineReplaceRequest(
+                    revisedLine.id!!,
+                    UserProvidedQuantity.of(BigDecimal("4")),
+                    Money.of(BigDecimal("5.0000"))
+                )
+            )
         }
 
         verify(purchaseDeliveryLineRepository, never()).save(any(PurchaseDeliveryLineEntity::class.java))

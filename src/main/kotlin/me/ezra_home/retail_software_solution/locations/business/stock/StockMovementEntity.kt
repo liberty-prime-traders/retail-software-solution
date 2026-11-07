@@ -85,5 +85,9 @@ class StockMovementEntity(
 
 ) : HasReferenceEntity() {
 
-  fun quantityAsEntered(): QuantityAsEntered = QuantityAsEntered(unitId, storageUnitsPerUserProvidedUnit, wholeLineQuantityText)
+  fun quantityAsEntered(): QuantityAsEntered = QuantityAsEntered(
+    unitId,
+    storageUnitsPerUserProvidedUnit,
+    wholeLineQuantityText
+  )
 }

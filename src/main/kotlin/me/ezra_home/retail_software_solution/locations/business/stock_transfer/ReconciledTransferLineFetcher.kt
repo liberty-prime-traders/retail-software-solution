@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAvailabilityFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.stock.api.availability.StockAvailabilityFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -18,7 +18,7 @@ class ReconciledTransferLineFetcher(
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val stockAvailabilityFetcher: StockAvailabilityFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
@@ -27,7 +27,9 @@ class ReconciledTransferLineFetcher(
         val lines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatchId)
         val summaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
         val availabilityByLocationProductId = stockAvailabilityFetcher.fetch(lines.map { it.locationProductId }.toSet())
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+            lines.map { it.locationProductId }.toSet()
+        )
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return lines.map { line ->
             val summary = summaries.getValue(line.locationProductId)
@@ -55,7 +57,9 @@ class ReconciledTransferLineFetcher(
     fun dispatchLines(dispatchId: UUID, confirmedRefs: Set<String>): List<ReconciledTransferLine> {
         val lines = stockTransferDispatchLineRepository.findByStockTransferDispatchId(dispatchId)
         val summaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+            lines.map { it.locationProductId }.toSet()
+        )
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         return lines.map { line ->
             val summary = summaries.getValue(line.locationProductId)

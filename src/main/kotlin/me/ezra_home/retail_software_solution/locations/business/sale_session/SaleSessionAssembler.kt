@@ -1,13 +1,13 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleVoidInfoDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionResponseDto
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentDirection
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
@@ -29,7 +29,7 @@ class SaleSessionAssembler(
     private val adjustmentReasonService: AdjustmentReasonService,
     private val sessionToResponseMapper: SessionToResponseMapper,
     private val saleDataFetcher: SaleDataFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
@@ -106,7 +106,9 @@ class SaleSessionAssembler(
             netUnitPriceByLineKey = netUnitPriceByLineKey,
             netLineTotalByLineKey = netLineTotalByLineKey,
             storageUnitsPerBaseUnitByBaseUnitId = storageUnitsPerBaseUnitByBaseUnitId,
-            breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(saleSession.saleLines.map { it.locationProductId }.distinct()),
+            breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+                saleSession.saleLines.map { it.locationProductId }.distinct()
+            ),
         )
     }
 

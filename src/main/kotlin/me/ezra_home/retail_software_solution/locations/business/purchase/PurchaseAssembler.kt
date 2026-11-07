@@ -4,8 +4,8 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryResponseDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
@@ -26,7 +26,7 @@ class PurchaseAssembler(
   private val purchasePaymentCeilingService: PurchasePaymentCeilingService,
   private val contactService: ContactService,
   private val userQualifier: UserQualifier,
-  private val stockBreakdownProvider: StockBreakdownProvider,
+  private val productStockBreakdownProvider: ProductStockBreakdownProvider,
   private val unitConversionGraphFacade: UnitConversionGraphFacade
 ) {
 
@@ -99,7 +99,9 @@ class PurchaseAssembler(
     lines: List<PurchaseLineEntity>,
     productSummaries: Map<UUID, LocationProductSummaryDto>
   ): List<PurchaseLineResponseDto> {
-    val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(lines.map { it.locationProductId }.toSet())
+    val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+        lines.map { it.locationProductId }.toSet()
+    )
     val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
     return lines.map { line ->
       val product = productSummaries[line.locationProductId]!!

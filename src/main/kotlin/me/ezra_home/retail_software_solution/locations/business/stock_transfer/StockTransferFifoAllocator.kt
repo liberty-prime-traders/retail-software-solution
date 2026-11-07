@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoTakePlanner
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.PlannedTake
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity

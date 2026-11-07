@@ -51,7 +51,7 @@ Things that follow from this:
 
 ## Who does what
 
-The planning is here, in `stock_revision`; the rows are written by `StockRevisionCommitter` in `stock/api`. `DeliveryLineRevisioner` (`stock_revision/api`) runs the whole revision in one
+The planning is here, in `stock_revision`; the rows are written by `StockRevisionCommitter` in `stock/api/revision`. `DeliveryLineRevisioner` (`stock_revision/api`) runs the whole revision in one
 transaction under the product lock, in this order:
 
 | Step | Class | Rules below |
@@ -60,14 +60,15 @@ transaction under the product lock, in this order:
 | Work out who still holds stock on the replaced layer | `NetConsumptionCalculator` (returns `StockEntryConsumption`s) | Net consumption of a layer |
 | 1 and 2: plan the put back and the drain | `ResetPlanner`, using `StockEntryRestorer` and `StockEntryDrainer`, returns a `StockEntryResetPlan` | Planning the reset |
 | 1 and 2: write them | `StockRevisionCommitter.commitReset` | Committing a revision |
-| 3: create the corrected layer | `StockReplacementLayerRecorder` (`stock/api`) | The replacement layer |
+| 3: create the corrected layer | `StockReplacementLayerRecorder` (`stock/api/revision`) | The replacement layer |
 | 4: plan the draws | `ReplayPlanner`, using `ConsumerReplayer`, returns `ConsumerReplayPlan`s | Planning the replay |
 | 4: write them | `StockRevisionCommitter.commitReplay`, returns `ConsumerReplayDto`s | Committing a revision |
 | Link the layers | `StockRevisionEntity` is saved last, under the reference drawn first | The stock revision row |
+| Purchase totals and response | `PurchaseDeliveryRevisionApplier.apply` (delivered quantity, status, payment status); `revise` returns the purchase response | |
 
 Stock data reaches the planners as DTOs from `stock/api` fetchers (`StockMovementFetcher`, `StockEntryFetcher`,
 `StockBalanceFetcher`); no planner touches a stock entity or repository. The product's quantity breakdown does not change during a
-revision, so `DeliveryLineRevisioner` loads it once (`StockBreakdownProvider`) and passes it to both planners and both commits.
+revision, so `DeliveryLineRevisioner` loads it once (`ProductStockBreakdownProvider`) and passes it to both planners and both commits.
 Planning writes nothing, so a dry run (the revision preview) can reuse the planners.
 
 Step 3 must happen before step 4, because the replay looks for the replacement layer among the layers with stock left.

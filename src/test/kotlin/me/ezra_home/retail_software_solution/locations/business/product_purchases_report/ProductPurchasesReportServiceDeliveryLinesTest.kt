@@ -5,11 +5,11 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.product_purchases_report.api.ProductPurchasesDeliveryLinesParameters
 import me.ezra_home.retail_software_solution.locations.business.product_purchases_report.api.ProductPurchasesReportService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
-import me.ezra_home.retail_software_solution.locations.business.stock.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactIdentity
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.product_category.api.ProductCategoryService
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.paging.PageRequest

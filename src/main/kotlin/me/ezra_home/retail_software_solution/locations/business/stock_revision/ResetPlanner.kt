@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryResetPlan
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockEntryResetPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -32,7 +32,9 @@ class ResetPlanner(
             )
         }
         val locationProductId = stockEntryDto.locationProductId
-        val productBalance = stockBalanceFetcher.getLatestBalances(listOf(locationProductId)).getValue(locationProductId)
+        val productBalance = stockBalanceFetcher.getLatestBalances(
+            listOf(locationProductId)
+        ).getValue(locationProductId)
 
         val restoration = StockEntryRestorer.restore(
             stockEntryConsumptions, stockEntryDto, stockRevisionReferenceNumber,
@@ -46,6 +48,10 @@ class ResetPlanner(
             balanceBeforeDrain = restoration.endingBalance,
             quantityBreakdown = quantityBreakdown
         )
-        return StockEntryResetPlan(stockEntryId, locationProductId, restoration.reversalDrafts + listOfNotNull(drainDraft))
+        return StockEntryResetPlan(
+            stockEntryId,
+            locationProductId,
+            restoration.reversalDrafts + listOfNotNull(drainDraft)
+        )
     }
 }

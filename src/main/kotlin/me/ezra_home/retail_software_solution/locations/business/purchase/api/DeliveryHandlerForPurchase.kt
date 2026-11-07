@@ -3,10 +3,10 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseMapper
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -58,13 +58,8 @@ class DeliveryHandlerForPurchase(
             } ?: throw RtsGenericException("Purchase line $lineId not found")
         }
         purchaseLineRepository.saveAll(toSave)
-        purchase.purchaseStatus = resolveDeliveryStatus(purchaseLines)
+        purchase.purchaseStatus = PurchaseStatusResolver.resolveAfterQuantityChange(purchaseLines)
         purchaseRepository.save(purchase)
         return purchaseAssembler.buildResponse(purchase, purchaseLines)
-    }
-
-    private fun resolveDeliveryStatus(purchaseLines: List<PurchaseLineEntity>): PurchaseStatus {
-        val fullyDelivered = purchaseLines.none { it.storageQuantityRemaining().isPositive() }
-        return if (fullyDelivered) PurchaseStatus.FULLY_DELIVERED else PurchaseStatus.PARTIALLY_DELIVERED
     }
 }

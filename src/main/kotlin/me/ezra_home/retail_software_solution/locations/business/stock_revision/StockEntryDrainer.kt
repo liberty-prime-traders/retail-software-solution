@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDraft
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockMovementDraft
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -11,7 +11,8 @@ import java.math.BigDecimal
 
 object StockEntryDrainer {
 
-    // The cost leaves with the units, so the drain is not a write-off. A zero-quantity layer has nothing to drain and gets no movement.
+    // The cost leaves with the units, so the drain is not a write-off. A zero-quantity layer has nothing to drain and
+    // gets no movement.
     fun drain(
         stockEntryDto: StockEntryDto,
         restoredQuantity: ExactQuantity,
@@ -35,13 +36,20 @@ object StockEntryDrainer {
             detailReference = stockEntryDto.detailReference,
             unitId = storageUnit.unitId,
             storageUnitsPerUserProvidedUnit = storageUnit.storageUnitsPerUserProvidedUnit,
-            context = StockMovementContexts.drainedByStockRevision(stockRevisionReferenceNumber, revisedSourceTextOf(stockEntryDto)),
+            context = StockMovementContexts.drainedByStockRevision(
+                stockRevisionReferenceNumber,
+                revisedSourceTextOf(stockEntryDto)
+            ),
             stockRevisionReference = stockRevisionReferenceNumber,
         )
     }
 
     private fun revisedSourceTextOf(stockEntryDto: StockEntryDto): String {
-        val sourceReferences = listOfNotNull(stockEntryDto.documentReference, stockEntryDto.detailReference).joinToString("/")
-        return if (stockEntryDto.sourceType == StockItemSource.PURCHASE) "delivery $sourceReferences" else sourceReferences
+        val sourceReferences = listOfNotNull(
+            stockEntryDto.documentReference,
+            stockEntryDto.detailReference
+        ).joinToString("/")
+        val isPurchaseLayer = stockEntryDto.sourceType == StockItemSource.PURCHASE
+        return if (isPurchaseLayer) "delivery $sourceReferences" else sourceReferences
     }
 }

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockTransferReceiptStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockTransferReceiptStockUpdater
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import org.springframework.stereotype.Service

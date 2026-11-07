@@ -10,9 +10,9 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentDecreaseStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentIncreaseStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentDecreaseStockRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentIncreaseStockRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentDirection
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentService

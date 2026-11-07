@@ -78,7 +78,11 @@ class SaleLineCogsBackfillerTest {
                 queuedBlocks.add(block)
             }
         }
-        val queuedBackfiller = SaleLineCogsBackfiller(locationService, locationSaleLineCogsBackfiller, queueingAsyncExecutor)
+        val queuedBackfiller = SaleLineCogsBackfiller(
+            locationService,
+            locationSaleLineCogsBackfiller,
+            queueingAsyncExecutor
+        )
         `when`(locationService.getAllLocationDtos()).thenReturn(emptyList())
 
         queuedBackfiller.startBackfillAllLocations()

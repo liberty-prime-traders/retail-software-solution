@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineStockInspector
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
@@ -16,7 +16,8 @@ class PurchaseDeliveryRevisionValidator(
   fun ensureLineIsActive(purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
     if (purchaseDeliveryLineEntity.status != PurchaseDeliveryLineStatus.ACTIVE)
       throw RtsGenericException(
-        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} has already been revised. Revise its current line instead."
+        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} has already been revised. " +
+            "Revise its current line instead."
       )
   }
 
@@ -48,10 +49,18 @@ class PurchaseDeliveryRevisionValidator(
       )
   }
 
-  fun ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber: String, purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
-    if (deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, purchaseDeliveryLineEntity.requiredReference()))
+  fun ensureNoMovementsThatCannotBeReversed(
+      deliveryReferenceNumber: String,
+      purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity
+  ) {
+    val hasMovementsThatCannotBeReversed = deliveryLineStockInspector.hasMovementsThatCannotBeReversed(
+      deliveryReferenceNumber,
+      purchaseDeliveryLineEntity.requiredReference()
+    )
+    if (hasMovementsThatCannotBeReversed)
       throw RtsGenericException(
-        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be revised because its stock has a movement that cannot be reversed."
+        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be revised because " +
+            "its stock has a movement that cannot be reversed."
       )
   }
 

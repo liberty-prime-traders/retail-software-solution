@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
@@ -27,6 +28,7 @@ class DeliveryHandlerForKafka(
         val delivery = deliveryRepository.findById(sourceDocumentId)
             .orElseThrow { RtsGenericException("Delivery $sourceDocumentId not found") }
         val lines = deliveryLineRepository.findByPurchaseDeliveryIdIn(listOf(sourceDocumentId))
+            .filter { it.status == PurchaseDeliveryLineStatus.ACTIVE }
         val context = deliveryHandlerForPurchase.getDeliveryContext(delivery.purchaseId)
         publish(context, DeliveryRecord(delivery, lines))
     }

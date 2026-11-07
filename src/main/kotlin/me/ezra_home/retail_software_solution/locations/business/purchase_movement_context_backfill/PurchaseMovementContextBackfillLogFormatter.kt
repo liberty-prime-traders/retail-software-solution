@@ -6,7 +6,8 @@ object PurchaseMovementContextBackfillLogFormatter {
         "  Location ............ ${result.locationName}",
         "  Updated this run .... ${result.counts.updatedMovementCount}",
         "  Still missing ....... ${result.counts.movementsStillMissingContextCount}",
-        "  Complete ............ ${if (result.isComplete) "YES" else "NO - movements still lack a context, re-run the backfill"}",
+        "  Complete ............ " + if (result.isComplete) "YES"
+        else "NO - movements still lack a context, re-run the backfill",
     ).joinToString("\n")
 
     fun formatSummary(results: List<PurchaseMovementContextBackfillResult>, failedLocationNames: List<String>): String {
@@ -18,7 +19,8 @@ object PurchaseMovementContextBackfillLogFormatter {
         }
         val failedRows = failedLocationNames.map { "  FAILED      ${it.padEnd(nameWidth)}  see the error logged above" }
         val incompleteCount = results.count { !it.isComplete }
-        val header = "  ${results.size + failedLocationNames.size} location(s): ${results.size - incompleteCount} complete, " +
+        val header = "  ${results.size + failedLocationNames.size} location(s): " +
+            "${results.size - incompleteCount} complete, " +
             "$incompleteCount incomplete, ${failedLocationNames.size} failed"
         return (listOf(header) + resultRows + failedRows).joinToString("\n")
     }

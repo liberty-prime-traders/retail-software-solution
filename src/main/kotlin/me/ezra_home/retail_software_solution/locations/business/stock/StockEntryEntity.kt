@@ -4,8 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatusConverter
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSourceConverter
@@ -64,7 +64,8 @@ class StockEntryEntity(
   @Convert(converter = StockEntryStatusConverter::class)
   var status: StockEntryStatus = StockEntryStatus.ACTIVE,
 
-  // Place in the FIFO order, not an insert time: a replacement layer carries the revised layer's value. Stamped with the current time at persist when absent.
+  // Place in the FIFO order, not an insert time: a replacement layer carries the revised layer's value. Stamped with
+  // the current time at persist when absent.
   @NotAudited
   @Column(name = "activated_on", updatable = false)
   var activatedOn: OffsetDateTime? = null

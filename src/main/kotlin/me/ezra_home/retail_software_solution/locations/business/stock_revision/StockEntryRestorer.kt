@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDraft
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockMovementDraft
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -69,6 +69,9 @@ object StockEntryRestorer {
                     "cannot restore ${entryConsumption.stockMovementOrigin.displayText} because " +
                     "${entryConsumption.consumer.movementType} cannot be reversed."
             }
-            .let { errors -> if (errors.isNotEmpty()) throw RtsGenericException("Consumptions cannot be restored", payload = errors) }
+            .let { errors -> if (errors.isNotEmpty()) throw RtsGenericException(
+                "Consumptions cannot be restored",
+                payload = errors
+            ) }
     }
 }

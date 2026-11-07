@@ -65,6 +65,7 @@ The order of execution is
 ### Naming & Formatting
 - Constraint pattern: `tblname_colname_constrainttype`
 - Blank lines between changesets and between column definitions
+- Cut lines at 120 characters. Up to 124 can be argued for; 125 is a no-no.
 - variable and method names should be verbose. For example,
   - `val ceilingService: PurchasePaymentCeilingService` is bad
   - `val purchasePaymentCeilingService: PurchasePaymentCeilingService` is good

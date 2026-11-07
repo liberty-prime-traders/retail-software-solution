@@ -141,7 +141,9 @@ cannot be reversed). `validate` runs all of them and throws one `RtsGenericExcep
 create-time zero rule lives on `PurchaseDeliveryLineCreateDto`, which revisions do not use.
 `PurchaseDeliveryLineReplacer.replace` writes the rows: it flips the revised line to `REVISED` and inserts the sibling
 `ACTIVE` line in the same delivery (same purchase line, unit and storage ratio), returning both references. It touches no
-stock, ledger or purchase totals.
+stock, ledger or purchase totals. `PurchaseDeliveryRevisionApplier.apply` applies the net quantity change to
+the purchase line's `storageQuantityDelivered` and resolves the status with `PurchaseStatusResolver` (an undelivered
+purchase with open lines falls back to `ORDERED`). Every delivered-total sum counts `ACTIVE` lines only, and a reissued `PurchaseDeliveredEvent` carries `ACTIVE` lines only.
 
 ---
 
@@ -466,8 +468,10 @@ no positive `storageQuantityRemaining` — i.e. `storageQuantityDelivered + stor
 `PurchasePaymentStatusService.patchThenReturnPaymentStatus(purchaseId)` is
 the **single source of truth** for recomputing a purchase's payment
 status. Call it after any flow that changes lines, deliveries, or
-payments. `recordDelivery`, `PurchaseCanceller.cancel`, and
-`voidPayment` all do.
+payments. `recordDelivery`, `PurchaseCanceller.cancel`,
+`PurchaseDeliveryRevisionApplier.apply` and `voidPayment` all do.
+A flow that has just built the purchase response passes its `paymentCeiling` as the second argument
+(`patchThenReturnPaymentStatus(purchaseId, paymentCeiling)`), which skips reloading the lines and deliveries.
 
 ⚠ **`recordPayment` is the one deliberate exception.** It already
 fetched the ceiling and `alreadyPaid` for the over-payment guard, so

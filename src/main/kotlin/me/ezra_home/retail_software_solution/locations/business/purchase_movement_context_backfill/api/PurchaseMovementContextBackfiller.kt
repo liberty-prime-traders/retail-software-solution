@@ -41,17 +41,24 @@ class PurchaseMovementContextBackfiller(
             try {
                 val result = backfillLocation(location)
                 results.add(result)
-                log.info("Purchase movement context backfill location finished\n{}", PurchaseMovementContextBackfillLogFormatter.formatLocation(result))
+                log.info(
+                    "Purchase movement context backfill location finished\n{}",
+                    PurchaseMovementContextBackfillLogFormatter.formatLocation(result)
+                )
             } catch (exception: Exception) {
                 failedLocationNames.add(location.name!!)
                 log.error(
-                    "Purchase movement context backfill FAILED for location '{}'; batches already committed are kept, re-run to resume",
+                    "Purchase movement context backfill FAILED for location '{}'; " +
+                        "batches already committed are kept, re-run to resume",
                     location.name, exception
                 )
             }
         }
 
-        log.info("Purchase movement context backfill finished\n{}", PurchaseMovementContextBackfillLogFormatter.formatSummary(results, failedLocationNames))
+        log.info(
+            "Purchase movement context backfill finished\n{}",
+            PurchaseMovementContextBackfillLogFormatter.formatSummary(results, failedLocationNames)
+        )
     }
 
     private fun backfillLocation(location: LocationDto): PurchaseMovementContextBackfillResult =

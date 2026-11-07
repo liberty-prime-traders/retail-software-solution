@@ -9,8 +9,8 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidat
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidEntity
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleVoidRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service

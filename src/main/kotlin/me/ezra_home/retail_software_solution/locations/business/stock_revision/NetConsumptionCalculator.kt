@@ -3,9 +3,9 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 import java.math.BigDecimal
 import java.util.UUID
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
@@ -25,7 +25,10 @@ class NetConsumptionCalculator(
         val reversalsByOrigin = movementsOnEntry
             .filter { it.movementType.isReversal() }
             .groupBy { StockMovementOrigin.of(it) }
-        val (consistentDraws, contradictingDraws) = drawsByOrigin.entries.partition { drawsDescribeOneConsumer(it.value) }
+        val (
+            consistentDraws,
+            contradictingDraws
+        ) = drawsByOrigin.entries.partition { drawsDescribeOneConsumer(it.value) }
         val firstConsumptionOrderByOrigin = firstConsumptionOrderByOrigin(drawsByOrigin)
         val netConsumptions = consistentDraws.map { (stockMovementOrigin, draws) ->
             netConsumptionOf(
@@ -33,7 +36,12 @@ class NetConsumptionCalculator(
                 firstConsumptionOrderByOrigin.getValue(stockMovementOrigin)
             )
         }
-        rejectInconsistentHistory(stockEntryId, reversalsByOrigin.keys, netConsumptions, contradictingDraws.map { it.key })
+        rejectInconsistentHistory(
+            stockEntryId,
+            reversalsByOrigin.keys,
+            netConsumptions,
+            contradictingDraws.map { it.key }
+        )
         return netConsumptions.filter { it.netConsumedStorageQuantity.isPositive() }.sortedBy { it.orderOfConsumption }
     }
 
@@ -45,7 +53,8 @@ class NetConsumptionCalculator(
     private fun drawsDescribeOneConsumer(draws: List<StockMovementDto>): Boolean =
         draws.map { StockConsumer.of(it) }.distinct().size == 1
 
-    // A replayed draw is stamped with the replay time, so the order of a consumer is its first draw on any layer of the product.
+    // A replayed draw is stamped with the replay time, so the order of a consumer is its first draw on any layer of the
+    // product.
     private fun firstConsumptionOrderByOrigin(
         drawsByOrigin: Map<StockMovementOrigin, List<StockMovementDto>>
     ): Map<StockMovementOrigin, OrderOfConsumption> {
@@ -83,7 +92,9 @@ class NetConsumptionCalculator(
     }
 
     private fun totalStorageQuantityOf(movements: List<StockMovementDto>): ExactQuantity =
-        movements.fold(ExactQuantity.ZERO) { total, movement -> total + ExactQuantity.ofStorage(movement.storageMovedQuantity) }
+        movements.fold(ExactQuantity.ZERO) { total, movement -> total + ExactQuantity.ofStorage(
+            movement.storageMovedQuantity
+        ) }
 
     private fun totalCostOf(movements: List<StockMovementDto>): BigDecimal = movements.sumOf { it.movedCost }
 
