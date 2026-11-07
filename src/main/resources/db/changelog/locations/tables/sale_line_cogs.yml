@@ -34,8 +34,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     notNullConstraintName: sale_line_cogs_sale_line_id_notnull
-                    unique: true
-                    uniqueConstraintName: uq_sale_line_cogs_sale_line_id
 
               - column:
                   name: cogs_total

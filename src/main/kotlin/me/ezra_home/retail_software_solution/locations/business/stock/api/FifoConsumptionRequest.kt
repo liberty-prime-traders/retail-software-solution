@@ -1,6 +1,5 @@
-package me.ezra_home.retail_software_solution.locations.business.stock
+package me.ezra_home.retail_software_solution.locations.business.stock.api
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import java.math.BigDecimal
@@ -16,4 +15,7 @@ data class FifoConsumptionRequest(
     val documentReference: String,
     val detailReference: String?,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
+    val wholeLineQuantityText: String? = null,
+    val context: String? = null,
+    val stockRevisionReference: String? = null,
 )

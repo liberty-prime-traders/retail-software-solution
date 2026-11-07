@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.stock.FifoConsumptionRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.FifoStockConsumer
 import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository

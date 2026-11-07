@@ -39,6 +39,7 @@ class DeliveryHandlerForKafka(
         eventPublisher.publishEvent(
             PurchaseDeliveryMapper.toEvent(
                 context.purchaseId,
+                context.purchaseReferenceNumber,
                 context.supplierId,
                 deliveryRecord,
                 context.purchaseLineById,

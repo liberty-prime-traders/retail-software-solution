@@ -128,11 +128,20 @@ Rules:
 applies it to stock. `FAILED` is reserved for future error handling and is
 not currently set by any flow.
 
-Revision states, `PARTIALLY_REVISED` ("PRV") and `FULLY_REVISED` ("FRV"),
-describe a delivery with some or all of its lines superseded by a correction
-delivery. Both are applied to stock, so `PurchaseDeliveryStatus.isAppliedToStock()`
-is true for `RECEIVED`, `PARTIALLY_REVISED` and `FULLY_REVISED`. No flow sets
-the revision states yet.
+The header carries no revision state. A revision is recorded on the delivery's
+lines: `purchase_delivery_line.status` is `ACTIVE` or `REVISED`, and a
+`stock_revision` row (source type `DELIVERY_LINE`, carrying the line's reference
+number) links the stock entry of each `REVISED` line to the stock entry of the sibling line that
+replaces it (same delivery), with a free-text `reason`. Only `ACTIVE` lines can be revised, so a
+correction chains onto the current line. `PurchaseDeliveryStatus.isAppliedToStock()`
+is true for `RECEIVED` only. `PurchaseDeliveryRevisionValidator` holds the
+checks (active line, pending delivery quantity, no transferred-out stock, no movement that
+cannot be reversed). `validate` runs all of them and throws one `RtsGenericException` whose
+`payload` is the list of every failing message. A replacement quantity of zero passes: the
+create-time zero rule lives on `PurchaseDeliveryLineCreateDto`, which revisions do not use.
+`PurchaseDeliveryLineReplacer.replace` writes the rows: it flips the revised line to `REVISED` and inserts the sibling
+`ACTIVE` line in the same delivery (same purchase line, unit and storage ratio), returning both references. It touches no
+stock, ledger or purchase totals.
 
 ---
 
@@ -306,7 +315,8 @@ live in the `delivery/` package and are coordinated through
    the response **before** stock is updated.
 7. `PurchaseDeliveryInventoryProcessor.handle` (async, separate
    transaction):
-   - Records stock movements via `PurchaseDeliveryStockUpdater`.
+   - Records stock movements via `PurchaseDeliveryStockUpdater`. Each `PURCHASE_RECEIVED` movement carries the context
+     `Purchase <reference>`, from `PurchaseDeliveredEvent.purchaseReferenceNumber`.
    - Updates `LocationProduct.lastPurchasePrice` from
      `event.lines.unitCost`.
    - Flips the delivery from `PROCESSING` → `RECEIVED`.
@@ -324,7 +334,7 @@ line's captured ratio.
 ### Idempotency
 
 - `PurchaseDeliveryInventoryProcessor.shouldProcess` checks the delivery
-  is not already applied to stock (`isAppliedToStock()`), so a revised delivery is never applied twice.
+  is not already applied to stock (`isAppliedToStock()`), so a delivery is never applied twice.
 - The DB constraint `add-unique-index-stock-movement-doc-detail-type-product-entry-reason`
   ensures the stock-movement table cannot record the same delivery twice.
 - Combined, retries are safe: a retried event either skips (already

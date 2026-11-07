@@ -4,6 +4,7 @@ import java.util.UUID
 
 data class PurchaseDeliveryContext(
     val purchaseId: UUID,
+    val purchaseReferenceNumber: String,
     val supplierId: UUID,
     val purchaseLineById: Map<UUID, PurchaseLineDto>
 )

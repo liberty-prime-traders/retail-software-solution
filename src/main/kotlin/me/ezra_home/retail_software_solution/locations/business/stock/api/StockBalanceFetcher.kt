@@ -15,16 +15,7 @@ class StockBalanceFetcher(private val stockEntryRepository: StockEntryRepository
         stockEntryRepository.findFifoEntriesForProducts(locationProductIds)
             .groupBy { it.locationProductId }
             .mapValues { (_, entries) ->
-                entries.sortedWith(stockEntryFifoComparator).map { entry ->
-                    StockEntryFifoDto(
-                        locationProductId = entry.locationProductId,
-                        unitCost = entry.unitCost,
-                        storageQuantityRemaining = entry.storageQuantityRemaining,
-                        costRemaining = entry.costRemaining,
-                        storageBatchSize = entry.storageBatchSize,
-                        batchCost = entry.batchCost
-                    )
-                }
+                entries.sortedWith(stockEntryFifoComparator).map { entry -> entry.toFifoDto() }
             }
 
     fun getLatestBalances(locationProductIds: Collection<UUID>): Map<UUID, BigDecimal> {

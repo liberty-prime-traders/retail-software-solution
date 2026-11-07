@@ -31,6 +31,7 @@ object PurchaseDeliveryMapper {
 
   fun toEvent(
     purchaseId: UUID,
+    purchaseReferenceNumber: String,
     supplierId: UUID,
     deliveryRecord: DeliveryRecord,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
@@ -57,6 +58,7 @@ object PurchaseDeliveryMapper {
         unitCost = dl.unitCost
       )
     },
-    deliveryTotal = Money.of(deliveryRecord.lines.sumOf { it.lineTotal() })
+    deliveryTotal = Money.of(deliveryRecord.lines.sumOf { it.lineTotal() }),
+    purchaseReferenceNumber = purchaseReferenceNumber
   )
 }

@@ -86,3 +86,25 @@ databaseChangeLog:
       rollback:
         - dropTable:
             tableName: stock_entry_aud
+
+  - changeSet:
+      id: add-status-to-stock-entry-aud
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: stock_entry_aud
+                columnName: status
+      changes:
+        - addColumn:
+            tableName: stock_entry_aud
+            columns:
+              - column:
+                  name: status
+                  type: varchar(5)
+      rollback:
+        - dropColumn:
+            tableName: stock_entry_aud
+            columnName: status

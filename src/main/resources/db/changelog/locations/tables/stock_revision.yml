@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-revision-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_revision
+      changes:
+        - createTable:
+            tableName: stock_revision
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_revision_reference_number
+
+              - column:
+                  name: source_type
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_source_type_notnull
+
+              - column:
+                  name: source_reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_source_reference_number_notnull
+
+              - column:
+                  name: revised_stock_entry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_revised_stock_entry_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_revision_revised_stock_entry_id
+
+              - column:
+                  name: replacement_stock_entry_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_replacement_stock_entry_id_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_revision_replacement_stock_entry_id
+
+              - column:
+                  name: reason
+                  type: text
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_reason_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_revision_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: stock_revision

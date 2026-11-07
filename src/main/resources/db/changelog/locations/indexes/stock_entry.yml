@@ -53,3 +53,25 @@ databaseChangeLog:
       rollback:
         - sql:
             sql: DROP INDEX IF EXISTS uq_stock_entry_doc_detail_ref_type_product
+
+  - changeSet:
+      id: replace-index-stock-entry-location-product-id-available-with-activated-on
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_entry_location_product_id_available_activated_on
+      changes:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_stock_entry_location_product_id_available
+
+        - sql:
+            sql: CREATE INDEX idx_stock_entry_location_product_id_available_activated_on ON stock_entry (location_product_id, priority, activated_on) WHERE storage_quantity_remaining > 0
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_stock_entry_location_product_id_available_activated_on
+
+        - sql:
+            sql: CREATE INDEX idx_stock_entry_location_product_id_available ON stock_entry (location_product_id, priority, created_on) WHERE storage_quantity_remaining > 0

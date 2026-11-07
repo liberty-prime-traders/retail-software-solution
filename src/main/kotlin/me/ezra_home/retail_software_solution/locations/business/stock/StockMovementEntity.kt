@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
@@ -37,11 +38,9 @@ class StockMovementEntity(
   @Column(name = "reason_id")
   var reasonId: UUID? = null,
 
-  // The figure to sum or compare; wholeLineQuantityText is display only
   @Column(name = "storage_moved_quantity", nullable = false, precision = 28, scale = 4)
   var storageMovedQuantity: BigDecimal,
 
-  // The whole line's quantity as typed ("2.5 Bales"), copied onto every movement the line produces, so a stock-out spanning layers repeats it
   @Column(name = "whole_line_quantity_text", nullable = false, length = 200, updatable = false)
   var wholeLineQuantityText: String,
 
@@ -75,6 +74,16 @@ class StockMovementEntity(
   var category: StockAdjustmentCategory? = null,
 
   @Column(name = "note", length = 500)
-  var note: String? = null
+  var note: String? = null,
 
-) : HasReferenceEntity()
+  @Column(name = "context", length = 200)
+  var context: String? = null,
+
+  // Part of the unique movement key, so a replayed draw can land on a layer its document already drew from.
+  @Column(name = "stock_revision_reference", length = 30, updatable = false)
+  var stockRevisionReference: String? = null
+
+) : HasReferenceEntity() {
+
+  fun quantityAsEntered(): QuantityAsEntered = QuantityAsEntered(unitId, storageUnitsPerUserProvidedUnit, wholeLineQuantityText)
+}

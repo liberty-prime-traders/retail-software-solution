@@ -83,3 +83,29 @@ databaseChangeLog:
       rollback:
         - sql:
             sql: DROP INDEX IF EXISTS uq_stock_movement_doc_detail_type_product_entry_reason
+
+  - changeSet:
+      id: replace-unique-index-stock-movement-doc-detail-type-product-entry-reason-with-stock-revision-reference
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_stkmv_doc_detail_type_product_entry_reason_revision
+      changes:
+        - sql:
+            sql: DROP INDEX IF EXISTS uq_stock_movement_doc_detail_type_product_entry_reason
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_stkmv_doc_detail_type_product_entry_reason_revision ON stock_movement
+              (document_reference, COALESCE(detail_reference, ''), movement_type, location_product_id, stock_entry_id,
+              COALESCE(reason_id, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(stock_revision_reference, ''))
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS uq_stkmv_doc_detail_type_product_entry_reason_revision
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_stock_movement_doc_detail_type_product_entry_reason ON stock_movement
+              (document_reference, COALESCE(detail_reference, ''), movement_type, location_product_id, stock_entry_id,
+              COALESCE(reason_id, '00000000-0000-0000-0000-000000000000'::uuid))

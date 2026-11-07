@@ -97,6 +97,7 @@ object TableNames {
     const val STOCK_ADJUSTMENT = "stock_adjustment"
     const val STOCK_ENTRY = "stock_entry"
     const val STOCK_MOVEMENT = "stock_movement"
+    const val STOCK_REVISION = "stock_revision"
     const val STOCK_TRANSFER_DISPATCH = "stock_transfer_dispatch"
     const val STOCK_TRANSFER_DISPATCH_LINE = "stock_transfer_dispatch_line"
     const val STOCK_TRANSFER_DRAFT_LINE = "stock_transfer_draft_line"

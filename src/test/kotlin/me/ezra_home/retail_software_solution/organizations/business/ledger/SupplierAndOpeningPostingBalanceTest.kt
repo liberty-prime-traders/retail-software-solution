@@ -155,6 +155,7 @@ class SupplierAndOpeningPostingBalanceTest {
         timestamp = Instant.now(),
         correlationId = null,
         purchaseId = UUID.randomUUID(),
+        purchaseReferenceNumber = "PCH-1",
         deliveryId = UUID.randomUUID(),
         deliveryReferenceNumber = "DEL-1",
         deliveredAt = OffsetDateTime.now(),

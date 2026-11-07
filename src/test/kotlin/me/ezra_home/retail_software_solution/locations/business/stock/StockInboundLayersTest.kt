@@ -46,6 +46,12 @@ class StockInboundLayersTest {
     }
 
     @Test
+    fun `a layer takes the spec's priority so a replacement can sort ahead of ordinary layers`() {
+        assertEquals(0, StockInboundLayers.newLayer(spec("1", 18L, "100.0000")).priority)
+        assertEquals(-1000, StockInboundLayers.newLayer(spec("1", 18L, "100.0000").copy(priority = -1000)).priority)
+    }
+
+    @Test
     fun `a zero cost layer does not divide by zero and a free layer has a zero rate`() {
         val layer = StockInboundLayers.newLayer(spec("1", 18L, "0.0000"))
 

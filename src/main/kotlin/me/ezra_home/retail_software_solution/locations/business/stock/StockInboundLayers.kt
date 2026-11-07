@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import java.math.BigDecimal
+import java.time.OffsetDateTime
 import java.util.UUID
 
 data class InboundLayerSpec(
@@ -21,11 +22,13 @@ data class InboundLayerSpec(
     val unitId: UUID,
     val storageUnitsPerUserProvidedUnit: Long,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
+    val context: String? = null,
+    val priority: Int = 0,
+    val activatedOn: OffsetDateTime? = null,
 )
 
 object StockInboundLayers {
 
-    // The rate is for display and grouping, never multiplied back into a total
     fun newLayer(inboundLayerSpec: InboundLayerSpec): StockEntryEntity {
         val storageQuantity = inboundLayerSpec.storageQuantity.toStorageQuantity()
         val unitCost = if (inboundLayerSpec.storageQuantity.isPositive()) {
@@ -40,10 +43,11 @@ object StockInboundLayers {
             detailReference = inboundLayerSpec.detailReference,
             storageBatchSize = storageQuantity,
             storageQuantityRemaining = storageQuantity,
-            priority = 0,
+            priority = inboundLayerSpec.priority,
             unitCost = unitCost,
             batchCost = inboundLayerSpec.batchCost,
             costRemaining = inboundLayerSpec.batchCost,
+            activatedOn = inboundLayerSpec.activatedOn,
         )
     }
 
@@ -66,5 +70,6 @@ object StockInboundLayers {
         storageUnitsPerUserProvidedUnit = inboundLayerSpec.storageUnitsPerUserProvidedUnit,
         quantityBreakdown = quantityBreakdown,
         adjustmentDetails = inboundLayerSpec.adjustmentDetails,
+        context = inboundLayerSpec.context,
     )
 }

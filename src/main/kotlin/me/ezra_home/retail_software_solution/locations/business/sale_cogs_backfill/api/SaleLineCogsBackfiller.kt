@@ -9,8 +9,10 @@ import me.ezra_home.retail_software_solution.organizations.business.location.api
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.util.async.AsyncExecutor
 import me.ezra_home.retail_software_solution.util.enums.ServiceAccount
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 class SaleLineCogsBackfiller(
@@ -21,11 +23,24 @@ class SaleLineCogsBackfiller(
 
     private val log = LoggerFactory.getLogger(javaClass)
 
+    // Per application instance; across instances the unique index on ACTIVE rows keeps an overlap harmless.
+    private val backfillRunning = AtomicBoolean(false)
+
     fun startBackfillAllLocations() {
-        asyncExecutor.execute {
-            ServiceAccountContext.runWithServiceAccount(ServiceAccount.RECORD_INITIALIZER) {
-                backfillAllLocations()
+        if (!backfillRunning.compareAndSet(false, true)) throw RtsGenericException("The sale line COGS backfill is already running.")
+        try {
+            asyncExecutor.execute {
+                try {
+                    ServiceAccountContext.runWithServiceAccount(ServiceAccount.RECORD_INITIALIZER) {
+                        backfillAllLocations()
+                    }
+                } finally {
+                    backfillRunning.set(false)
+                }
             }
+        } catch (exception: RuntimeException) {
+            backfillRunning.set(false)
+            throw exception
         }
     }
 

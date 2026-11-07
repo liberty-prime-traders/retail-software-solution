@@ -23,7 +23,7 @@ object StockTransferFifoAllocator {
         return draftLines.flatMap { draftLine ->
             val storageQuantityNeeded = draftLine.storageQuantity()
             val fifoEntries = fifoEntriesByProduct[draftLine.locationProductId].orEmpty()
-            val plannedTakes = FifoTakePlanner.planTakes(fifoEntries, storageQuantityNeeded)
+            val plannedTakes = FifoTakePlanner.planTakes(fifoEntries.map { it.fifoLayer }, storageQuantityNeeded)
             guardFulfilled(
                 plannedTakes, storageQuantityNeeded,
                 quantityBreakdownByLocationProductId.getValue(draftLine.locationProductId),
@@ -47,10 +47,11 @@ object StockTransferFifoAllocator {
 
     // Cost groups are runs, not a group-by, so consuming them in order walks the layers in the order they were planned
     private fun groupIntoCostRuns(plannedTakes: List<PlannedTake>, fifoEntries: List<StockEntryFifoDto>): List<CostRun> {
+        val unitCostByStockEntryId = fifoEntries.associate { it.fifoLayer.stockEntryId to it.unitCost }
         val costRuns = mutableListOf<CostRun>()
         var currentRate: BigDecimal? = null
         plannedTakes.forEach { plannedTake ->
-            val rate = Decimals.Scale4.round(fifoEntries[plannedTake.layerIndex].unitCost)
+            val rate = Decimals.Scale4.round(unitCostByStockEntryId.getValue(plannedTake.stockEntryId))
             val currentRun = costRuns.lastOrNull()
             if (currentRun != null && rate.compareTo(currentRate) == 0) {
                 costRuns[costRuns.lastIndex] = CostRun(currentRun.storageQuantity + plannedTake.storageQuantity, currentRun.cost.add(plannedTake.movedCost))

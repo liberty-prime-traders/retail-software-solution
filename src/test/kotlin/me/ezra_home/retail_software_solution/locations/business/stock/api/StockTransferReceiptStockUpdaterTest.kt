@@ -50,6 +50,7 @@ class StockTransferReceiptStockUpdaterTest {
     init {
         doAnswer { invocation ->
             recordedLayerSpecs.addAll(invocation.getArgument<List<InboundLayerSpec>>(0))
+            emptyList<UUID>()
         }.`when`(stockIncreaseRecorder).record(anyList())
     }
 

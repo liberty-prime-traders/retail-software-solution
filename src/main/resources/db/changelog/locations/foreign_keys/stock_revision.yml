@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-stock-revision-revised-stock-entry
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_stock_revision_revised_stock_entry
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_revision
+            baseColumnNames: revised_stock_entry_id
+            referencedTableName: stock_entry
+            referencedColumnNames: id
+            constraintName: fk_stock_revision_revised_stock_entry
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_revision
+            constraintName: fk_stock_revision_revised_stock_entry
+
+  - changeSet:
+      id: add-foreign-key-stock-revision-replacement-stock-entry
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_stock_revision_replacement_stock_entry
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_revision
+            baseColumnNames: replacement_stock_entry_id
+            referencedTableName: stock_entry
+            referencedColumnNames: id
+            constraintName: fk_stock_revision_replacement_stock_entry
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_revision
+            constraintName: fk_stock_revision_replacement_stock_entry

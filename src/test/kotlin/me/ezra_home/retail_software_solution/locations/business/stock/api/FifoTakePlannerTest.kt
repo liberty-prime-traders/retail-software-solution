@@ -21,10 +21,7 @@ class FifoTakePlannerTest {
         for (piecesSold in 1..1000) {
             val plannedTake = FifoTakePlanner.planTakes(listOf(layer), ExactQuantity.ofStorage(BigDecimal.ONE)).single()
             bookedCost += plannedTake.movedCost
-            layer = layer.copy(
-                storageQuantityRemaining = layer.storageQuantityRemaining - BigDecimal.ONE,
-                costRemaining = layer.costRemaining - plannedTake.movedCost
-            )
+            layer = layer.afterTake(plannedTake)
             val exactCost = threeUnitBatchCost.multiply(BigDecimal(piecesSold)).divide(thousandPieceBatchSize)
             assertTrue((bookedCost - exactCost).abs() <= BigDecimal("0.005"), "after $piecesSold pieces booked $bookedCost against exact $exactCost")
         }
@@ -111,9 +108,8 @@ class FifoTakePlannerTest {
         assertEquals(BigDecimal("0.02"), plannedTake.movedCost)
     }
 
-    private fun thousandPieceLayer() = StockEntryFifoDto(
-        locationProductId = UUID.randomUUID(),
-        unitCost = threeUnitBatchCost,
+    private fun thousandPieceLayer() = FifoLayer(
+        stockEntryId = UUID.randomUUID(),
         storageQuantityRemaining = thousandPieceBatchSize,
         costRemaining = threeUnitBatchCost,
         storageBatchSize = thousandPieceBatchSize,

@@ -13,6 +13,7 @@ import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
 @AnalyzeClasses(packages = ["me.ezra_home.retail_software_solution"])
 class ArchitectureTest {
 
+    /** Checks classes only: SQL, such as report query builders joining tables owned by other domains, is free to cross domain lines. */
     @ArchTest
     val domainsShouldBeSelfContained: ArchRule = classes()
         .that(areNonServiceDomainClasses())

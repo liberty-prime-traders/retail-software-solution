@@ -387,8 +387,9 @@ Two distinct mechanisms protect inventory:
   restores the exact cost it took, which can leave a layer a cent or so off its target; that gap is bounded by the number of
   out-of-order voids and does not change the layer's total.
   `ConfirmedSalePersister.consumeStockAndRecordCogs` stores the sum in `SaleLineEntity.cogsTotal` and, in the same
-  save, writes one `SaleLineCogsEntity` (`sale_line_cogs`, `ACTIVE`, unique on `sale_line_id`) per line, zero-cost
-  lines included. Drafts keep `cogsTotal = null` and have no cost row; a void leaves both untouched. The cost record
+  save, writes one `SaleLineCogsEntity` (`sale_line_cogs`, `ACTIVE`) per line, zero-cost
+  lines included. A partial unique index allows one `ACTIVE` row per `sale_line_id`; `REPLACED` is the status a restated row
+  takes, and no flow writes it yet. Drafts keep `cogsTotal = null` and have no cost row; a void leaves both untouched. The cost record
   is what readers use; the `cogs_total` column is still written until it is dropped.
 - `SaleLineCogsBackfillStore` (`sale/api`) is the only way another domain reads lines missing a cost row or inserts
   backfilled `sale_line_cogs` rows; the one-off copy itself lives in `sale_cogs_backfill/`.

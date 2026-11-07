@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoConsumptionRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
 import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
@@ -23,14 +24,25 @@ object FifoStockConsumer {
         quantityBreakdown: QuantityBreakdown,
         productLabel: String
     ): FifoConsumptionResult {
-        val plannedTakes = FifoTakePlanner.planTakes(fifoEntries, fifoConsumptionRequest.storageQuantity)
+        val plannedTakes = FifoTakePlanner.planTakes(fifoEntries.map { it.toFifoLayer() }, fifoConsumptionRequest.storageQuantity)
         throwIfNotFulfilled(fifoConsumptionRequest, plannedTakes, quantityBreakdown, productLabel)
+        return applyTakes(fifoConsumptionRequest, plannedTakes, fifoEntries, startingBalance, quantityBreakdown)
+    }
+
+    fun applyTakes(
+        fifoConsumptionRequest: FifoConsumptionRequest,
+        plannedTakes: List<PlannedTake>,
+        fifoEntries: List<StockEntryEntity>,
+        startingBalance: BigDecimal,
+        quantityBreakdown: QuantityBreakdown
+    ): FifoConsumptionResult {
+        val fifoEntriesById = fifoEntries.associateBy { it.id!! }
         var runningBalance = ExactQuantity.ofStorage(startingBalance)
         var consumedCost = BigDecimal.ZERO
         val touchedEntries = mutableListOf<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
         plannedTakes.forEach { plannedTake ->
-            val stockEntry = fifoEntries[plannedTake.layerIndex]
+            val stockEntry = fifoEntriesById.getValue(plannedTake.stockEntryId)
             stockEntry.storageQuantityRemaining =
                 (ExactQuantity.ofStorage(stockEntry.storageQuantityRemaining) - plannedTake.storageQuantity).toStorageQuantity()
             stockEntry.costRemaining = stockEntry.costRemaining.subtract(plannedTake.movedCost)
@@ -44,13 +56,16 @@ object FifoStockConsumer {
                     storageMoved = plannedTake.storageQuantity,
                     balanceAfterMovement = runningBalance,
                     movedCost = plannedTake.movedCost,
-                    wholeLineQuantityText = quantityBreakdown.renderUserProvided(fifoConsumptionRequest.userProvidedQuantity, fifoConsumptionRequest.unitId),
+                    wholeLineQuantityText = fifoConsumptionRequest.wholeLineQuantityText
+                        ?: quantityBreakdown.renderUserProvided(fifoConsumptionRequest.userProvidedQuantity, fifoConsumptionRequest.unitId),
                     documentReference = fifoConsumptionRequest.documentReference,
                     detailReference = fifoConsumptionRequest.detailReference,
                     unitId = fifoConsumptionRequest.unitId,
                     storageUnitsPerUserProvidedUnit = fifoConsumptionRequest.storageUnitsPerUserProvidedUnit,
                     quantityBreakdown = quantityBreakdown,
                     adjustmentDetails = fifoConsumptionRequest.adjustmentDetails,
+                    context = fifoConsumptionRequest.context,
+                    stockRevisionReference = fifoConsumptionRequest.stockRevisionReference,
                 )
             )
             consumedCost = consumedCost.add(plannedTake.movedCost)

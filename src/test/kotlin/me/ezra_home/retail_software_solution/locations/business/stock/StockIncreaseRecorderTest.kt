@@ -87,6 +87,26 @@ class StockIncreaseRecorderTest {
     }
 
     @Test
+    fun `returned entry ids follow spec order and each layer keeps its own priority`() {
+        `when`(stockBalanceFetcher.getLatestBalances(anyCollection())).thenReturn(mapOf(firstLocationProductId to BigDecimal("0")))
+        `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(mapOf(firstLocationProductId to pieceBreakdown))
+        val savedEntries = mutableListOf<StockEntryEntity>()
+        `when`(stockEntryRepository.save(any(StockEntryEntity::class.java))).thenAnswer { invocation ->
+            invocation.getArgument<StockEntryEntity>(0).also { it.id = UUID.randomUUID(); savedEntries.add(it) }
+        }
+
+        val entryIds = stockIncreaseRecorder.record(
+            listOf(
+                spec(firstLocationProductId, "10", "LINE-1").copy(priority = -1000),
+                spec(firstLocationProductId, "20", "LINE-2"),
+            )
+        )
+
+        assertEquals(savedEntries.map { it.id }, entryIds)
+        assertEquals(listOf(-1000, 0), savedEntries.map { it.priority })
+    }
+
+    @Test
     fun `no specs means no lock, no read and no write`() {
         stockIncreaseRecorder.record(emptyList())
 

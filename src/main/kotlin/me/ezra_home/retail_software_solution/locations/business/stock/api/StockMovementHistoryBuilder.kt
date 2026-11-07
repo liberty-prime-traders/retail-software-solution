@@ -41,7 +41,8 @@ class StockMovementHistoryBuilder(
                 stockEntryId = movement.stockEntryId,
                 recordedOn = movement.requiredCreatedOn().toInstant(),
                 conversionDriftNote = ratioChangeNote(movement, unitNamesById, unitConversionGraph),
-                reason = movement.reasonId?.let { reasonNamesById[it] }
+                reason = movement.reasonId?.let { reasonNamesById[it] },
+                context = movement.context
             )
         }
     }
