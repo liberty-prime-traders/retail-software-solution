@@ -1,10 +1,19 @@
-package me.ezra_home.retail_software_solution.locations.business.stock
+package me.ezra_home.retail_software_solution.locations.business.stock.revision
 
+import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.util.Optional
+import java.util.UUID
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
+import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -16,13 +25,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyCollection
 import org.mockito.ArgumentMatchers.anyIterable
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
-import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.util.UUID
 
 class StockEntryResetterTest {
 
@@ -33,7 +39,7 @@ class StockEntryResetterTest {
     private val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
     private val stockEntryResetter = StockEntryResetter(
         entityAdvisoryLock,
-        StockEntryConsumptionFinder(stockMovementRepository, stockEntryRepository),
+        NetConsumptionCalculator(stockMovementRepository, stockEntryRepository),
         stockEntryRepository,
         stockMovementRepository,
         stockBalanceFetcher,
@@ -49,6 +55,7 @@ class StockEntryResetterTest {
 
     private fun stockEntry(remaining: String, costRemaining: String, status: StockEntryStatus = StockEntryStatus.ACTIVE) = StockEntryEntity(
         locationProductId = locationProductId,
+        sourceType = StockItemSource.PURCHASE,
         storageBatchSize = BigDecimal("10"),
         storageQuantityRemaining = BigDecimal(remaining),
         documentReference = "DLV1",
@@ -69,7 +76,9 @@ class StockEntryResetterTest {
         cost: String,
         documentReference: String,
         minutesAfterBase: Long = 0,
-        context: String? = null
+        context: String? = null,
+        movementUnitId: UUID = unitId,
+        movementStorageUnitsPerUserProvidedUnit: Long = 1L
     ) = StockMovementEntity(
         stockEntryId = stockEntryId,
         locationProductId = locationProductId,
@@ -82,8 +91,8 @@ class StockEntryResetterTest {
         storageRemainingBreakdownText = "text",
         documentReference = documentReference,
         detailReference = "LINE1",
-        unitId = unitId,
-        storageUnitsPerUserProvidedUnit = 1L,
+        unitId = movementUnitId,
+        storageUnitsPerUserProvidedUnit = movementStorageUnitsPerUserProvidedUnit,
         context = context
     ).also { it.createdOn = baseTime.plusMinutes(minutesAfterBase) }
 
@@ -93,11 +102,10 @@ class StockEntryResetterTest {
         stockEntry: StockEntryEntity,
         movementsOnEntry: List<StockMovementEntity>,
         productBalance: String
-    ): List<EntryConsumption> {
-        val stockEntryIds = setOf(stockEntryId)
+    ): List<StockEntryConsumption> {
         `when`(stockEntryRepository.findLocationProductIdsByIdIn(anyCollection())).thenReturn(setOf(locationProductId))
-        `when`(stockEntryRepository.findAllById(anyIterable())).thenReturn(listOf(stockEntry))
-        `when`(stockMovementRepository.findByStockEntryIdInOrderByCreatedOnAscIdAsc(stockEntryIds)).thenReturn(movementsOnEntry)
+        `when`(stockEntryRepository.findById(stockEntryId)).thenReturn(Optional.of(stockEntry))
+        `when`(stockMovementRepository.findByStockEntryId(stockEntryId)).thenReturn(movementsOnEntry)
         `when`(stockBalanceFetcher.getLatestBalances(anyCollection())).thenReturn(mapOf(locationProductId to BigDecimal(productBalance)))
         `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(
             mapOf(locationProductId to QuantityBreakdown.forBaseUnit(listOf(BreakdownUnit(unitId, "pcs", 1L, unitId, baseTime)), unitId))
@@ -107,7 +115,7 @@ class StockEntryResetterTest {
             savedMovements.addAll(movements)
             movements
         }
-        return stockEntryResetter.reset(stockEntryIds, stockRevisionReferenceNumber)
+        return stockEntryResetter.reset(stockEntryId, stockRevisionReferenceNumber)
     }
 
     private fun assertNumber(expected: String, actual: BigDecimal) = assertEquals(0, BigDecimal(expected).compareTo(actual), "expected $expected but was $actual")
@@ -131,10 +139,12 @@ class StockEntryResetterTest {
         val drain = savedMovements[1]
         assertNumber("10", drain.storageMovedQuantity)
         assertNumber("100.00", drain.movedCost)
-        assertEquals("DLV1", drain.documentReference)
+        assertEquals(stockRevisionReferenceNumber, drain.documentReference)
         assertEquals("DLL1", drain.detailReference)
-        assertEquals(StockMovementContexts.drainedByStockRevision(stockRevisionReferenceNumber), drain.context)
+        assertEquals(stockRevisionReferenceNumber, drain.stockRevisionReference)
+        assertEquals("Drained by stock revision STRV000001, which revised delivery DLV1/DLL1", drain.context)
         assertEquals(StockMovementContexts.restoredForStockRevision(stockRevisionReferenceNumber), reversal.context)
+        assertEquals(stockRevisionReferenceNumber, reversal.stockRevisionReference)
         assertNumber("0", drain.storageRemainingQuantity)
         assertNumber("0", stockEntry.storageQuantityRemaining)
         assertNumber("0", stockEntry.costRemaining)
@@ -145,9 +155,9 @@ class StockEntryResetterTest {
         reset(stockEntry("10", "100.00"), listOf(received()), productBalance = "10")
 
         val lockThenReads = inOrder(entityAdvisoryLock, stockEntryRepository, stockMovementRepository)
-        lockThenReads.verify(entityAdvisoryLock).acquire(LockNamespaces.PRODUCT, setOf(locationProductId))
-        lockThenReads.verify(stockEntryRepository).findAllById(anyIterable())
-        lockThenReads.verify(stockMovementRepository, atLeastOnce()).findByStockEntryIdInOrderByCreatedOnAscIdAsc(setOf(stockEntryId))
+        lockThenReads.verify(entityAdvisoryLock).acquire(LockNamespaces.PRODUCT, locationProductId)
+        lockThenReads.verify(stockEntryRepository).findById(stockEntryId)
+        lockThenReads.verify(stockMovementRepository, atLeastOnce()).findByStockEntryId(stockEntryId)
     }
 
     @Test
@@ -262,11 +272,25 @@ class StockEntryResetterTest {
     }
 
     @Test
+    fun `the drain is recorded in the storage unit, not in the unit the layer was received in`() {
+        val receivedInBoxes = movement(
+            MovementType.PURCHASE_RECEIVED, "10", "100.00", "DLV1",
+            movementUnitId = UUID.randomUUID(), movementStorageUnitsPerUserProvidedUnit = 12L
+        )
+
+        reset(stockEntry("10", "100.00"), listOf(receivedInBoxes), productBalance = "10")
+
+        val drain = savedMovements.single()
+        assertEquals(unitId, drain.unitId)
+        assertEquals(1L, drain.storageUnitsPerUserProvidedUnit)
+    }
+
+    @Test
     fun `an unknown stock entry is rejected`() {
-        `when`(stockEntryRepository.findAllById(anyIterable())).thenReturn(emptyList())
+        `when`(stockEntryRepository.findLocationProductIdsByIdIn(anyCollection())).thenReturn(emptySet())
 
         assertThrows(RtsGenericException::class.java) {
-            stockEntryResetter.reset(setOf(stockEntryId), stockRevisionReferenceNumber)
+            stockEntryResetter.reset(stockEntryId, stockRevisionReferenceNumber)
         }
     }
 }

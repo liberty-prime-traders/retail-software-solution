@@ -4,14 +4,6 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import java.math.BigDecimal
 
-interface FifoLayer {
-    val storageQuantityRemaining: BigDecimal
-    val costRemaining: BigDecimal
-    val storageBatchSize: BigDecimal
-    val batchCost: BigDecimal
-}
-
-data class PlannedTake(val layerIndex: Int, val storageQuantity: ExactQuantity, val movedCost: BigDecimal)
 
 object FifoTakePlanner {
 
@@ -19,12 +11,12 @@ object FifoTakePlanner {
     fun planTakes(layers: List<FifoLayer>, storageQuantity: ExactQuantity): List<PlannedTake> {
         var unsatisfiedQuantity = storageQuantity
         val plannedTakes = mutableListOf<PlannedTake>()
-        for ((layerIndex, layer) in layers.withIndex()) {
+        for (layer in layers) {
             if (!unsatisfiedQuantity.isPositive()) break
             val layerRemaining = ExactQuantity.ofStorage(layer.storageQuantityRemaining)
             if (!layerRemaining.isPositive()) continue
             val takenQuantity = minOf(unsatisfiedQuantity, layerRemaining)
-            plannedTakes.add(PlannedTake(layerIndex, takenQuantity, costOfTake(layer, takenQuantity, layerRemaining)))
+            plannedTakes.add(PlannedTake(layer.stockEntryId, takenQuantity, costOfTake(layer, takenQuantity, layerRemaining)))
             unsatisfiedQuantity -= takenQuantity
         }
         return plannedTakes

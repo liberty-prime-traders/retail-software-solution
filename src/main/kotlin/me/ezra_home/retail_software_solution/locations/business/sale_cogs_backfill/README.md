@@ -8,6 +8,9 @@ One-off data fix that copies the legacy `sale_line.cogs_total` into `sale_line_c
   `POST secured/admin-data/sale-line-cogs/backfill` (organization admin, no location header needed). The endpoint
   answers 204 and the work runs asynchronously under the record-initializer service account.
 - It walks every location of the organization and switches the session to each one in turn.
+- A start while a run is in progress is refused with an error. The flag lives in the process, so it guards one application
+  instance; across instances the partial unique index on `ACTIVE` rows keeps an overlap harmless, though the overlapped
+  location logs as failed.
 
 ## What gets copied
 

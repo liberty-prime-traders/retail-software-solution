@@ -16,4 +16,7 @@ data class FifoConsumptionRequest(
     val documentReference: String,
     val detailReference: String?,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
+    val wholeLineQuantityText: String? = null,
+    val context: String? = null,
+    val stockRevisionReference: String? = null,
 )

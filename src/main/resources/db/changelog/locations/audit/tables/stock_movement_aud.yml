@@ -128,3 +128,25 @@ databaseChangeLog:
         - dropColumn:
             tableName: stock_movement_aud
             columnName: context
+
+  - changeSet:
+      id: add-stock-revision-reference-to-stock-movement-aud
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: stock_movement_aud
+                columnName: stock_revision_reference
+      changes:
+        - addColumn:
+            tableName: stock_movement_aud
+            columns:
+              - column:
+                  name: stock_revision_reference
+                  type: varchar(30)
+      rollback:
+        - dropColumn:
+            tableName: stock_movement_aud
+            columnName: stock_revision_reference

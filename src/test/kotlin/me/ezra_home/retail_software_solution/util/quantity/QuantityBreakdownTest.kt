@@ -28,6 +28,15 @@ class QuantityBreakdownTest {
   }
 
   @Test
+  fun `the storage unit is the root of the group, one of it is one storage unit, and the text is the quantity broken down`() {
+    val storageUnit = baleBreakdown.storageUnitAsEntered(ExactQuantity.ofStorage(BigDecimal(17995)))
+
+    assertEquals(pieceId, storageUnit.unitId)
+    assertEquals(1L, storageUnit.storageUnitsPerUserProvidedUnit)
+    assertEquals("999 Bales 13 Pieces", storageUnit.userProvidedQuantityText)
+  }
+
+  @Test
   fun `a count of exactly one is singular and anything else is plural`() {
     assertEquals("1 Bale", baleBreakdown.renderUserProvided(BigDecimal.ONE, baleId))
     assertEquals("0 Bales", baleBreakdown.renderUserProvided(BigDecimal.ZERO, baleId))

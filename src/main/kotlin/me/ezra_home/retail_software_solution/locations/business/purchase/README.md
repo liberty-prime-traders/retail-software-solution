@@ -139,6 +139,9 @@ checks (active line, pending delivery quantity, no transferred-out stock, no mov
 cannot be reversed). `validate` runs all of them and throws one `RtsGenericException` whose
 `payload` is the list of every failing message. A replacement quantity of zero passes: the
 create-time zero rule lives on `PurchaseDeliveryLineCreateDto`, which revisions do not use.
+`PurchaseDeliveryLineReplacer.replace` writes the rows: it flips the revised line to `REVISED` and inserts the sibling
+`ACTIVE` line in the same delivery (same purchase line, unit and storage ratio), returning both references. It touches no
+stock, ledger or purchase totals.
 
 ---
 

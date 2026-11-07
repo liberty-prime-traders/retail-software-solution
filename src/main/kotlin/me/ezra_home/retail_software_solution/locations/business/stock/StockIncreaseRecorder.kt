@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockB
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 @TransactionalOnLocationSchema
@@ -18,22 +19,28 @@ class StockIncreaseRecorder(
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
-    fun record(layerSpecs: List<InboundLayerSpec>) {
-        if (layerSpecs.isEmpty()) return
+    fun record(layerSpecs: List<InboundLayerSpec>): List<UUID> {
+        if (layerSpecs.isEmpty()) return emptyList()
         val locationProductIds = layerSpecs.map { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val runningBalances = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
         val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds)
 
-        val movements = layerSpecs.map { layerSpec ->
+        val savedEntryIds = mutableListOf<UUID>()
+        val movements = mutableListOf<StockMovementEntity>()
+        for (layerSpec in layerSpecs) {
             val entry = stockEntryRepository.save(StockInboundLayers.newLayer(layerSpec))
             val newBalance = ExactQuantity.ofStorage(runningBalances.getValue(layerSpec.locationProductId)) + layerSpec.storageQuantity
             runningBalances[layerSpec.locationProductId] = newBalance.toStorageQuantity()
-            StockInboundLayers.inboundMovement(
-                layerSpec, entry, newBalance,
-                breakdownByLocationProductId.getValue(layerSpec.locationProductId)
+            movements.add(
+                StockInboundLayers.inboundMovement(
+                    layerSpec, entry, newBalance,
+                    breakdownByLocationProductId.getValue(layerSpec.locationProductId)
+                )
             )
+            savedEntryIds.add(entry.id!!)
         }
         stockMovementRepository.saveAll(movements)
+        return savedEntryIds
     }
 }

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.stock_revision
+package me.ezra_home.retail_software_solution.locations.business.stock.revision
 
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID

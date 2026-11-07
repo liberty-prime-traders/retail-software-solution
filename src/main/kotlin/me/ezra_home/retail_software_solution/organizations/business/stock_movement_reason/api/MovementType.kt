@@ -22,22 +22,16 @@ enum class MovementType(
     REVERSED_BY_REVISION("RBR", StockDirection.INCREASE),
     STOCK_REVISION_ZEROING("SRZ", StockDirection.DECREASE);
 
-    fun isReversal(): Boolean = reversals.containsKey(this) || this == REVERSED_BY_REVISION
+    fun isReversal(): Boolean = reversals.contains(this)
 
-    fun increasesStock(): Boolean = stockDirection == StockDirection.INCREASE
+    fun isConsumption(): Boolean = decreasesStock() && this != STOCK_REVISION_ZEROING
 
     fun decreasesStock(): Boolean = stockDirection == StockDirection.DECREASE
 
     companion object {
-        // REVERSED_BY_REVISION is not listed: it undoes a draw of any type, so it names no single reversed type.
-        val reversals: Map<MovementType, MovementType> = mapOf(
-            SALE_VOID to SALE,
-            TRANSFER_CANCELLED to TRANSFER_OUT
-        )
+        private val reversals = setOf(SALE_VOID, TRANSFER_CANCELLED, REVERSED_BY_REVISION)
 
-        // CUSTOMER_RETURN is listed only because no logic has implements a flow for it.
-        // Once it carries the sale's references it can leave this set and become a `reversals` entry for SALE.
-        // SUPPLIER_RETURN stays: it is tied to one delivery's supplier and cost, so a FIFO replay would change whose credit it is.
+        // CUSTOMER_RETURN has no flow yet; SUPPLIER_RETURN stays because a replay would change whose credit it is.
         val movementsThatCannotBeReversed: Set<MovementType> = setOf(CUSTOMER_RETURN, SUPPLIER_RETURN)
     }
 }

@@ -1,0 +1,322 @@
+package me.ezra_home.retail_software_solution.locations.business.stock.revision
+
+import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.util.Optional
+import java.util.UUID
+import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.`when`
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyCollection
+import org.mockito.Mockito.mock
+
+class NetConsumptionCalculatorTest {
+
+    private val stockMovementRepository = mock(StockMovementRepository::class.java)
+    private val stockEntryRepository = mock(StockEntryRepository::class.java)
+    private val netConsumptionCalculator = NetConsumptionCalculator(stockMovementRepository, stockEntryRepository)
+
+    private val entryReferenceNumber = "STE000001"
+
+    private fun stockEntry(id: UUID, referenceNumber: String) = StockEntryEntity(
+        locationProductId = locationProductId,
+        storageBatchSize = BigDecimal("10"),
+        storageQuantityRemaining = BigDecimal("10"),
+        priority = 0,
+        unitCost = BigDecimal("10"),
+        batchCost = BigDecimal("100.00"),
+        costRemaining = BigDecimal("100.00")
+    ).also {
+        it.id = id
+        it.referenceNumber = referenceNumber
+    }
+
+    private fun netConsumptions(
+        movementsOnEntries: List<StockMovementEntity>,
+        movementsOnOtherLayers: List<StockMovementEntity> = emptyList()
+    ): List<StockEntryConsumption> {
+        `when`(stockEntryRepository.findById(stockEntryId)).thenReturn(Optional.of(stockEntry(stockEntryId, entryReferenceNumber)))
+        `when`(stockMovementRepository.findByStockEntryId(stockEntryId)).thenReturn(movementsOnEntries)
+        `when`(stockMovementRepository.findByLocationProductIdAndDocumentReferenceIn(any(UUID::class.java) ?: locationProductId, anyCollection()))
+            .thenReturn(movementsOnEntries + movementsOnOtherLayers)
+        return netConsumptionCalculator.calculateNetConsumptions(stockEntryId)
+    }
+
+    private val stockEntryId = UUID.randomUUID()
+    private val locationProductId = UUID.randomUUID()
+    private val unitId = UUID.randomUUID()
+    private val baseTime = OffsetDateTime.parse("2026-11-01T10:00:00Z")
+
+    private fun movement(
+        movementType: MovementType,
+        quantity: String,
+        cost: String,
+        documentReference: String?,
+        detailReference: String? = "LINE1",
+        minutesAfterBase: Long = 0,
+        reasonId: UUID? = null,
+        entryId: UUID = stockEntryId,
+        drawUnitId: UUID = unitId
+    ) = StockMovementEntity(
+        stockEntryId = entryId,
+        locationProductId = locationProductId,
+        movementType = movementType,
+        reasonId = reasonId,
+        storageMovedQuantity = BigDecimal(quantity),
+        wholeLineQuantityText = "text",
+        storageRemainingQuantity = BigDecimal.ZERO,
+        movedCost = BigDecimal(cost),
+        storageMovedBreakdownText = "text",
+        storageRemainingBreakdownText = "text",
+        documentReference = documentReference,
+        detailReference = detailReference,
+        unitId = drawUnitId,
+        storageUnitsPerUserProvidedUnit = 1L
+    ).also { it.createdOn = baseTime.plusMinutes(minutesAfterBase) }
+
+    private fun received() = movement(MovementType.PURCHASE_RECEIVED, "10", "100.00", "DLV1")
+
+    @Test
+    fun `an entry nobody drew from has no consumption`() {
+        assertTrue(netConsumptions(listOf(received())).isEmpty())
+    }
+
+    @Test
+    fun `a sale draw is a consumption with its quantity and cost`() {
+        val netConsumptions = netConsumptions(
+            listOf(received(), movement(MovementType.SALE, "4", "40.00", "SALE1"))
+        )
+
+        assertEquals(1, netConsumptions.size)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("4")), netConsumptions.single().netConsumedStorageQuantity)
+        assertEquals(BigDecimal("40.00"), netConsumptions.single().netConsumedCost)
+    }
+
+    @Test
+    fun `a voided sale nets to nothing`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1"),
+                movement(MovementType.SALE_VOID, "4", "40.00", "SALE1", minutesAfterBase = 5)
+            )
+        )
+
+        assertTrue(netConsumptions.isEmpty())
+    }
+
+    @Test
+    fun `a void of a different sale line does not cancel the draw`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", detailReference = "LINE1"),
+                movement(MovementType.SALE, "2", "20.00", "SALE1", detailReference = "LINE2", minutesAfterBase = 1),
+                movement(MovementType.SALE_VOID, "2", "20.00", "SALE1", detailReference = "LINE2", minutesAfterBase = 5)
+            )
+        )
+
+        assertEquals(listOf("LINE1"), netConsumptions.map { it.stockMovementOrigin.detailReference })
+    }
+
+    @Test
+    fun `a cancelled transfer nets to nothing and a dispatched one remains`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.TRANSFER_OUT, "2", "20.00", "DISPATCH1", detailReference = "T1"),
+                movement(MovementType.TRANSFER_CANCELLED, "2", "20.00", "DISPATCH1", detailReference = "T1", minutesAfterBase = 5),
+                movement(MovementType.TRANSFER_OUT, "3", "30.00", "DISPATCH2", detailReference = "T2", minutesAfterBase = 6)
+            )
+        )
+
+        assertEquals(listOf("DISPATCH2"), netConsumptions.map { it.stockMovementOrigin.documentReference })
+    }
+
+    @Test
+    fun `the zeroing of a replaced layer is not a consumption`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", minutesAfterBase = 1),
+                movement(MovementType.REVERSED_BY_REVISION, "4", "40.00", "SALE1", minutesAfterBase = 2),
+                movement(MovementType.STOCK_REVISION_ZEROING, "10", "100.00", "DLV1", minutesAfterBase = 3),
+            )
+        )
+
+        assertTrue(netConsumptions.isEmpty())
+    }
+
+    @Test
+    fun `two draws of one consumer on a layer are one consumption netted against that consumer's reversals once`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", minutesAfterBase = 1),
+                movement(MovementType.SALE, "3", "30.00", "SALE1", minutesAfterBase = 2),
+                movement(MovementType.SALE_VOID, "2", "20.00", "SALE1", minutesAfterBase = 3),
+            )
+        )
+
+        val consumption = netConsumptions.single()
+        assertEquals(baseTime.plusMinutes(1), consumption.orderOfConsumption.createdOn)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("5")), consumption.netConsumedStorageQuantity)
+        assertEquals(BigDecimal("50.00"), consumption.netConsumedCost)
+    }
+
+    @Test
+    fun `a stock adjustment decrease is a consumption`() {
+        val netConsumptions = netConsumptions(
+            listOf(received(), movement(MovementType.STOCK_ADJUSTMENT_DECREASE, "1", "10.00", "ADJ1", detailReference = null, reasonId = UUID.randomUUID()))
+        )
+
+        assertEquals(MovementType.STOCK_ADJUSTMENT_DECREASE, netConsumptions.single().consumer.movementType)
+    }
+
+    @Test
+    fun `consumptions come back oldest first whatever order the movements are read in`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                movement(MovementType.SALE, "3", "30.00", "SALE2", minutesAfterBase = 2),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", minutesAfterBase = 1),
+                received()
+            )
+        )
+
+        assertEquals(listOf("SALE1", "SALE2"), netConsumptions.map { it.stockMovementOrigin.documentReference })
+    }
+
+    @Test
+    fun `a consumer is ordered by its first draw on any layer, not by a replayed draw stamped later on this one`() {
+        val earlierLayerId = UUID.randomUUID()
+        val netConsumptions = netConsumptions(
+            movementsOnEntries = listOf(
+                received(),
+                movement(MovementType.SALE, "3", "27.00", "SAL3", minutesAfterBase = 2),
+                movement(MovementType.SALE, "2", "18.00", "SAL1", minutesAfterBase = 3)
+            ),
+            movementsOnOtherLayers = listOf(movement(MovementType.SALE, "4", "32.00", "SAL1", minutesAfterBase = 1, entryId = earlierLayerId))
+        )
+
+        assertEquals(listOf("SAL1", "SAL3"), netConsumptions.map { it.stockMovementOrigin.documentReference })
+    }
+
+    @Test
+    fun `movements of other products or other documents on the layer do not change a consumer's order`() {
+        val netConsumptions = netConsumptions(
+            movementsOnEntries = listOf(
+                received(),
+                movement(MovementType.SALE, "3", "27.00", "SAL3", minutesAfterBase = 2),
+                movement(MovementType.SALE, "2", "18.00", "SAL1", minutesAfterBase = 3)
+            ),
+            movementsOnOtherLayers = listOf(movement(MovementType.SALE, "4", "32.00", "SAL2", minutesAfterBase = 1, entryId = UUID.randomUUID()))
+        )
+
+        assertEquals(listOf("SAL3", "SAL1"), netConsumptions.map { it.stockMovementOrigin.documentReference })
+    }
+
+    @Test
+    fun `movements that are neither draws nor reversals are ignored`() {
+        val netConsumptions = netConsumptions(
+            listOf(received(), movement(MovementType.CUSTOMER_RETURN, "1", "10.00", "CR1"))
+        )
+
+        assertTrue(netConsumptions.isEmpty())
+    }
+
+    @Test
+    fun `a reversal with no matching draw on the entry rejects it`() {
+        val rejection = assertThrows(RtsGenericException::class.java) {
+            netConsumptions(
+                listOf(received(), movement(MovementType.SALE_VOID, "4", "40.00", "SALE1"))
+            )
+        }
+
+        assertEquals(1, (rejection.payload as List<*>).size)
+        assertTrue(rejection.message.contains(entryReferenceNumber))
+    }
+
+    @Test
+    fun `reversing more than was drawn rejects the entry`() {
+        val rejection = assertThrows(RtsGenericException::class.java) {
+            netConsumptions(
+                listOf(
+                    received(),
+                    movement(MovementType.SALE, "4", "40.00", "SALE1"),
+                    movement(MovementType.SALE_VOID, "5", "50.00", "SALE1", minutesAfterBase = 5)
+                )
+            )
+        }
+
+        assertEquals(1, (rejection.payload as List<*>).size)
+        assertTrue(rejection.message.contains(entryReferenceNumber))
+    }
+
+    @Test
+    fun `draws of one document in different units are one consumption labelled by its earliest draw`() {
+        val laterUnitId = UUID.randomUUID()
+        val netConsumption = netConsumptions(
+            listOf(
+                movement(MovementType.SALE, "3", "30.00", "SALE1", minutesAfterBase = 2, drawUnitId = laterUnitId),
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", minutesAfterBase = 1)
+            )
+        ).single()
+
+        assertEquals(unitId, netConsumption.quantityAsEntered.unitId)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal(7)), netConsumption.netConsumedStorageQuantity)
+    }
+
+    @Test
+    fun `draws of one document on a layer that differ in type are rejected as inconsistent history`() {
+        val rejection = assertThrows(RtsGenericException::class.java) {
+            netConsumptions(
+                listOf(
+                    received(),
+                    movement(MovementType.SALE, "4", "40.00", "DOC1", minutesAfterBase = 1),
+                    movement(MovementType.TRANSFER_OUT, "3", "30.00", "DOC1", minutesAfterBase = 2)
+                )
+            )
+        }
+
+        assertEquals(1, (rejection.payload as List<*>).size)
+    }
+
+    @Test
+    fun `draws of different documents in different units are separate consumptions`() {
+        val netConsumptions = netConsumptions(
+            listOf(
+                received(),
+                movement(MovementType.SALE, "4", "40.00", "SALE1", minutesAfterBase = 1),
+                movement(MovementType.SALE, "3", "30.00", "SALE2", minutesAfterBase = 2, drawUnitId = UUID.randomUUID())
+            )
+        )
+
+        assertEquals(listOf("SALE1", "SALE2"), netConsumptions.map { it.stockMovementOrigin.documentReference })
+    }
+
+    @Test
+    fun `every inconsistency is reported together`() {
+        val rejection = assertThrows(RtsGenericException::class.java) {
+            netConsumptions(
+                listOf(
+                    received(),
+                    movement(MovementType.SALE_VOID, "4", "40.00", "SALE1"),
+                    movement(MovementType.TRANSFER_CANCELLED, "2", "20.00", "DISPATCH1", detailReference = "T1")
+                )
+            )
+        }
+
+        assertEquals(2, (rejection.payload as List<*>).size)
+    }
+}

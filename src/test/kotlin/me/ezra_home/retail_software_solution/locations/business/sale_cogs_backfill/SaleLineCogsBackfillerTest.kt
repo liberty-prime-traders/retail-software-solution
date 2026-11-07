@@ -7,8 +7,10 @@ import me.ezra_home.retail_software_solution.locations.business.sale_cogs_backfi
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.util.async.AsyncExecutor
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -66,6 +68,35 @@ class SaleLineCogsBackfillerTest {
         assertTrue(summary.contains("MISMATCH  Warehouse"))
         assertTrue(summary.contains("FAILED    Kisumu"))
         assertEquals(false, mismatched.isReconciled)
+    }
+
+    @Test
+    fun `a second start while the first is still running is refused and a start after it finishes is accepted`() {
+        val queuedBlocks = mutableListOf<() -> Unit>()
+        val queueingAsyncExecutor = object : AsyncExecutor {
+            override fun execute(block: () -> Unit) {
+                queuedBlocks.add(block)
+            }
+        }
+        val queuedBackfiller = SaleLineCogsBackfiller(locationService, locationSaleLineCogsBackfiller, queueingAsyncExecutor)
+        `when`(locationService.getAllLocationDtos()).thenReturn(emptyList())
+
+        queuedBackfiller.startBackfillAllLocations()
+
+        assertThrows(RtsGenericException::class.java) { queuedBackfiller.startBackfillAllLocations() }
+        queuedBlocks.single().invoke()
+        queuedBackfiller.startBackfillAllLocations()
+        assertEquals(2, queuedBlocks.size)
+    }
+
+    @Test
+    fun `a run that crashes releases the guard so the backfill can be started again`() {
+        `when`(locationService.getAllLocationDtos()).thenThrow(IllegalStateException("boom")).thenReturn(emptyList())
+
+        assertThrows(IllegalStateException::class.java) { saleLineCogsBackfiller.startBackfillAllLocations() }
+        saleLineCogsBackfiller.startBackfillAllLocations()
+
+        verify(locationService, times(2)).getAllLocationDtos()
     }
 
     private fun location(name: String, schemaName: String) = LocationDto(

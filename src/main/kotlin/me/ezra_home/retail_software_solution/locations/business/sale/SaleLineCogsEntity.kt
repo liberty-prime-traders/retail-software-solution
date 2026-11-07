@@ -20,7 +20,7 @@ import java.util.UUID
 @HasReference(tableName = TableName.SALE_LINE_COGS)
 class SaleLineCogsEntity(
 
-    @Column(name = "sale_line_id", nullable = false, updatable = false, unique = true)
+    @Column(name = "sale_line_id", nullable = false, updatable = false)
     var saleLineId: UUID,
 
     @Column(name = "cogs_total", nullable = false, precision = 19, scale = 4)

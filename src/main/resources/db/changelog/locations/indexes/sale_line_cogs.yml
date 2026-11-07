@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-sale-line-cogs-sale-line-id
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_sale_line_cogs_sale_line_id
+      changes:
+        - createIndex:
+            indexName: idx_sale_line_cogs_sale_line_id
+            tableName: sale_line_cogs
+            columns:
+              - column:
+                  name: sale_line_id
+      rollback:
+        - dropIndex:
+            indexName: idx_sale_line_cogs_sale_line_id
+            tableName: sale_line_cogs
+
+  - changeSet:
+      id: add-unique-index-sale-line-cogs-active-sale-line-id
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_sale_line_cogs_active_sale_line_id
+      changes:
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_sale_line_cogs_active_sale_line_id ON sale_line_cogs (sale_line_id)
+              WHERE status = 'ACT'
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS uq_sale_line_cogs_active_sale_line_id

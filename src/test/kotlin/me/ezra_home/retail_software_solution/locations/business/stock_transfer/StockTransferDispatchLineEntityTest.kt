@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -35,12 +36,16 @@ class StockTransferDispatchLineEntityTest {
     )
 
     private fun layer(storageQuantity: String, batchCost: String) = StockEntryFifoDto(
+        referenceNumber = "STE000001",
         locationProductId = locationProductId,
         unitCost = Decimals.Scale10.divide(BigDecimal(batchCost), BigDecimal(storageQuantity)),
-        storageQuantityRemaining = BigDecimal(storageQuantity),
-        costRemaining = BigDecimal(batchCost),
-        storageBatchSize = BigDecimal(storageQuantity),
-        batchCost = BigDecimal(batchCost),
+        fifoLayer = FifoLayer(
+            stockEntryId = UUID.randomUUID(),
+            storageQuantityRemaining = BigDecimal(storageQuantity),
+            costRemaining = BigDecimal(batchCost),
+            storageBatchSize = BigDecimal(storageQuantity),
+            batchCost = BigDecimal(batchCost),
+        ),
     )
 
     private fun allocate(draft: StockTransferDraftLineEntity, layers: List<StockEntryFifoDto>) =

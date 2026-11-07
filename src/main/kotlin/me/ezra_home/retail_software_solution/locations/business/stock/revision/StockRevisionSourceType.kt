@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.stock_revision.api
+package me.ezra_home.retail_software_solution.locations.business.stock.revision
 
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 

@@ -15,12 +15,13 @@ DECLARE
   ];
 
   location_tables_to_truncate text[] := ARRAY[
-    'sale', 'sale_aud', 'sale_line', 'sale_line_aud', 'sale_adjustment', 'sale_adjustment_aud',
+    'sale', 'sale_aud', 'sale_line', 'sale_line_aud', 'sale_line_cogs', 'sale_line_cogs_aud',
+    'sale_adjustment', 'sale_adjustment_aud',
     'sale_line_stock_reservation', 'sale_payment', 'sale_payment_void', 'sale_void',
     'purchase', 'purchase_aud', 'purchase_line', 'purchase_line_aud',
     'purchase_delivery', 'purchase_delivery_aud', 'purchase_delivery_line', 'purchase_delivery_line_aud',
     'supplier_payment', 'supplier_payment_void', 'supplier_return', 'supplier_return_aud',
-    'stock_entry', 'stock_entry_aud', 'stock_movement', 'stock_movement_aud',
+    'stock_entry', 'stock_entry_aud', 'stock_movement', 'stock_movement_aud', 'stock_revision',
     'stock_adjustment', 'opening_stock',
     'stock_transfer_dispatch', 'stock_transfer_dispatch_aud',
     'stock_transfer_dispatch_line', 'stock_transfer_dispatch_line_aud',

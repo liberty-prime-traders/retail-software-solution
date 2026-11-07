@@ -1,11 +1,9 @@
-package me.ezra_home.retail_software_solution.locations.business.stock_revision
+package me.ezra_home.retail_software_solution.locations.business.stock.revision
 
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.StockRevisionSourceType
-import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.StockRevisionSourceTypeConverter
 import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.ImmutableEntity
 import me.ezra_home.retail_software_solution.util.model.TableName

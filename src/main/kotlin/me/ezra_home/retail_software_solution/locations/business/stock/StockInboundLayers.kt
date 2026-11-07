@@ -22,11 +22,11 @@ data class InboundLayerSpec(
     val storageUnitsPerUserProvidedUnit: Long,
     val adjustmentDetails: StockAdjustmentMovementDetails? = null,
     val context: String? = null,
+    val priority: Int = 0,
 )
 
 object StockInboundLayers {
 
-    // The rate is for display and grouping, never multiplied back into a total
     fun newLayer(inboundLayerSpec: InboundLayerSpec): StockEntryEntity {
         val storageQuantity = inboundLayerSpec.storageQuantity.toStorageQuantity()
         val unitCost = if (inboundLayerSpec.storageQuantity.isPositive()) {
@@ -41,7 +41,7 @@ object StockInboundLayers {
             detailReference = inboundLayerSpec.detailReference,
             storageBatchSize = storageQuantity,
             storageQuantityRemaining = storageQuantity,
-            priority = 0,
+            priority = inboundLayerSpec.priority,
             unitCost = unitCost,
             batchCost = inboundLayerSpec.batchCost,
             costRemaining = inboundLayerSpec.batchCost,

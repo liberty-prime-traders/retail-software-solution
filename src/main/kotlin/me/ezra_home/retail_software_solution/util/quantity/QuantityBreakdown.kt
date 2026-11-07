@@ -34,6 +34,9 @@ class QuantityBreakdown private constructor(
         return if (isNegative && breakdownText != ZERO_TEXT) "-$breakdownText" else breakdownText
     }
 
+    fun storageUnitAsEntered(storageQuantity: ExactQuantity): QuantityAsEntered =
+        QuantityAsEntered(rootUnit.id, storageUnitsPerUserProvidedUnit = 1L, userProvidedQuantityText = render(storageQuantity))
+
     private fun renderMagnitude(magnitude: BigDecimal): String {
         var remaining = magnitude
         val parts = mutableListOf<String>()

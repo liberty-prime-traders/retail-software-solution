@@ -24,6 +24,7 @@ object StockMovementCreator {
         quantityBreakdown: QuantityBreakdown,
         adjustmentDetails: StockAdjustmentMovementDetails? = null,
         context: String? = null,
+        stockRevisionReference: String? = null,
     ): StockMovementEntity = StockMovementEntity(
         stockEntryId = stockEntryId,
         locationProductId = locationProductId,
@@ -42,5 +43,6 @@ object StockMovementCreator {
         category = adjustmentDetails?.category,
         note = adjustmentDetails?.note,
         context = context,
+        stockRevisionReference = stockRevisionReference,
     )
 }

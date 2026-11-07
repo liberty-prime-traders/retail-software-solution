@@ -12,6 +12,7 @@ import me.ezra_home.retail_software_solution.util.annotations.HasReference
 import me.ezra_home.retail_software_solution.util.model.HasReferenceEntity
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.model.TableNames
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.hibernate.envers.Audited
 import org.hibernate.envers.NotAudited
 import java.math.BigDecimal
@@ -76,6 +77,13 @@ class StockMovementEntity(
   var note: String? = null,
 
   @Column(name = "context", length = 200)
-  var context: String? = null
+  var context: String? = null,
 
-) : HasReferenceEntity()
+  // Part of the unique movement key, so a replayed draw can land on a layer its document already drew from.
+  @Column(name = "stock_revision_reference", length = 30, updatable = false)
+  var stockRevisionReference: String? = null
+
+) : HasReferenceEntity() {
+
+  fun quantityAsEntered(): QuantityAsEntered = QuantityAsEntered(unitId, storageUnitsPerUserProvidedUnit, wholeLineQuantityText)
+}
