@@ -15,10 +15,8 @@ interface StockEntryRepository : JpaRepository<StockEntryEntity, UUID> {
     )
     fun findFifoEntriesForProducts(locationProductIds: Collection<UUID>): List<StockEntryEntity>
 
-
-    // Ids only, so no entity is cached before a caller holds the product lock
-    @Query("SELECT DISTINCT e.locationProductId FROM StockEntryEntity e WHERE e.id IN :stockEntryIds")
-    fun findLocationProductIdsByIdIn(stockEntryIds: Collection<UUID>): Set<UUID>
+    @Query("SELECT e.id FROM StockEntryEntity e WHERE e.documentReference = :documentReference AND e.detailReference = :detailReference")
+    fun findIdsByDocumentAndDetailReference(documentReference: String, detailReference: String): List<UUID>
 
     @Query(
         "SELECT e.locationProductId AS locationProductId, " +

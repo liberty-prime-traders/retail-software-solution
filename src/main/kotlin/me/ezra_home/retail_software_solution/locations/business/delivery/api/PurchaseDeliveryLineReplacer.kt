@@ -5,22 +5,35 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRevisionValidator
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 
-// Writes the line rows only; stock, ledger and purchase totals are the caller's.
+// Writes the line rows only; stock, ledger and purchase totals are the caller's. The caller must hold the product lock for the checks to hold.
 @Service
 @TransactionalOnLocationSchema
 class PurchaseDeliveryLineReplacer(
     private val purchaseDeliveryLineRepository: PurchaseDeliveryLineRepository,
     private val purchaseDeliveryRepository: PurchaseDeliveryRepository,
     private val purchaseDeliveryRevisionValidator: PurchaseDeliveryRevisionValidator,
+    private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
 ) {
 
     fun replace(purchaseDeliveryLineReplaceRequest: PurchaseDeliveryLineReplaceRequest): ReplacementDeliveryLineDto {
         val revisedLine = purchaseDeliveryLineRepository.getReferenceById(purchaseDeliveryLineReplaceRequest.revisedDeliveryLineId)
-        purchaseDeliveryRevisionValidator.ensureLineIsActive(revisedLine)
         val delivery = purchaseDeliveryRepository.getReferenceById(revisedLine.purchaseDeliveryId)
+        val purchaseLineDto = deliveryHandlerForPurchase.getDeliveryContext(delivery.purchaseId)
+            .purchaseLineById.getValue(revisedLine.purchaseLineId)
+        purchaseDeliveryRevisionValidator.validate(
+            delivery.requiredReference(),
+            purchaseLineDto,
+            revisedLine,
+            ExactQuantity.ofStorageFromUserProvided(
+                purchaseDeliveryLineReplaceRequest.userProvidedQuantityDelivered.toBigDecimal(),
+                revisedLine.storageUnitsPerUserProvidedUnit
+            )
+        )
 
         revisedLine.status = PurchaseDeliveryLineStatus.REVISED
         val replacementLine = purchaseDeliveryLineRepository.save(

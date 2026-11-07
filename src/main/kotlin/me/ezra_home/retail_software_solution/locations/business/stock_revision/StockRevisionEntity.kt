@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import jakarta.persistence.Column
 import jakarta.persistence.Convert

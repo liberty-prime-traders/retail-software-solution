@@ -7,11 +7,13 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
 
 - One layer per inbound: a purchase delivery line, opening stock, a stock adjustment increase or a transfer in.
   `StockInboundLayers.newLayer` creates it with the spec's `priority` (0 unless the caller sets one), its `batchCost` and
-  `costRemaining`. `StockIncreaseRecorder.record` returns the new layer ids in spec order.
-- A revision's replacement layer is recorded through `StockReplacementLayerRecorder` (see `revision/README.md`).
+  `costRemaining`. Its `activatedOn` is the time it is saved unless the spec carries one: a revision's replacement layer takes the
+  revised layer's, which is how it keeps that layer's place in the draw order. `StockIncreaseRecorder.record` returns the new layer ids
+  in spec order.
+- A revision's replacement layer is recorded through `StockReplacementLayerRecorder` (see `../stock_revision/README.md`).
 - A layer has a `status`: `ACTIVE`, or `REPLACED` once a revision has restored and drained it. A replaced layer is dead:
   it holds nothing and is never drawn from. Nothing sets it back.
-- Draw order is `priority` ascending, then `createdOn`, nulls last (`stockEntryFifoComparator`). Only layers with
+- Draw order is `priority` ascending, then `activatedOn`, then `createdOn`, nulls last (`stockEntryFifoComparator`). Only layers with
   `storageQuantityRemaining > 0` are drawn from (`StockEntryRepository.findFifoEntriesForProducts`).
 - The balance of a product is the sum of `storageQuantityRemaining` over its layers (`StockBalanceFetcher`), not a sum
   over movements.
@@ -28,7 +30,7 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
   `uq_stkmv_doc_detail_type_product_entry_reason_revision`. Retried processors rely on it.
 - A movement may carry a free-text `context` (`stock_movement.context`, shown in the stock history) for what the document
   and detail references don't say. Purchase deliveries write `Purchase <reference>` on `PURCHASE_RECEIVED` movements
-  (`StockMovementContexts`), and a stock revision's restore, drain and replay write the revision's reference (see `revision/README.md`). Movements
+  (`StockMovementContexts`), and a stock revision's restore, drain and replay write the revision's reference (see `../stock_revision/README.md`). Movements
   written before deliveries carried it get theirs from the purchase movement context backfill.
 - Updaters take the `LockNamespaces.PRODUCT` advisory lock for the products they change before touching layers.
 - Reservations are per product, not per layer. Availability is the balance minus the reserved total
@@ -52,7 +54,7 @@ in or takes them out (`stockDirection`, `decreasesStock()`).
 ## Stock revisions
 
 When a source document is revised after others drew from its layers, the layers are put back, drained, replaced and
-drawn again. The story, the worked example and the rules of each step are in `revision/README.md`.
+drawn again. The story, the worked example and the rules of each step are in `../stock_revision/README.md`.
 
 ## Questions about a delivery line
 

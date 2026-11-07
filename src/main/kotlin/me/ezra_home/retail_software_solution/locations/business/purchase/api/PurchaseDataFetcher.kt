@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
+import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -18,6 +19,7 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class PurchaseDataFetcher(
   private val purchaseRepository: PurchaseRepository,
+  private val purchaseLineRepository: PurchaseLineRepository,
   private val purchaseAssembler: PurchaseAssembler,
   private val entityAdvisoryLock: EntityAdvisoryLock
 ) {
@@ -42,6 +44,10 @@ class PurchaseDataFetcher(
       ?: throw RtsGenericException("Purchase $referenceNumber not found")
     return purchase.toPurchaseInfo()
   }
+
+  fun getLocationProductIdOfLine(purchaseLineId: UUID): UUID =
+    purchaseLineRepository.findLocationProductIdById(purchaseLineId)
+      ?: throw RtsGenericException("Purchase line $purchaseLineId not found")
 
   fun getSupplierId(purchaseId: UUID): UUID {
     return purchaseRepository.getReferenceById(purchaseId).supplierId

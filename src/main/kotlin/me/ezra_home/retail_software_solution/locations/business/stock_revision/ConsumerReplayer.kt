@@ -1,6 +1,8 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
-import me.ezra_home.retail_software_solution.locations.business.stock.FifoConsumptionRequest
+import java.math.BigDecimal
+import me.ezra_home.retail_software_solution.locations.business.stock.api.ConsumerReplayPlan
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoConsumptionRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
 import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
@@ -8,12 +10,8 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockM
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import java.math.BigDecimal
 
-// Replays the consumptions of one replaced layer, each as one draw of its net quantity. A consumer that also drew from other
-// layers keeps that part as it was, so a revision never has more than one batch to put back.
-// Plans on copies of the layers and writes nothing, so a refused replay leaves every layer as it was.
-// A later consumer is planned against what the earlier ones left, which is why the order below matters.
+// A later consumer is planned against what the earlier ones left, so the order below matters.
 object ConsumerReplayer {
 
     fun replay(replayRequest: ReplayRequest): ReplayResult {

@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -23,6 +24,14 @@ class PurchaseDeliveryDataFetcher(
             .mapNotNull { entity -> entity.referenceNumber?.let { entity.id!! to it } }
             .toMap()
     }
+
+    fun getPurchaseLineId(deliveryLineId: UUID): UUID =
+        purchaseDeliveryLineRepository.findPurchaseLineIdById(deliveryLineId)
+            ?: throw RtsGenericException("Delivery line $deliveryLineId not found")
+
+    fun getPurchaseId(deliveryLineId: UUID): UUID =
+        purchaseDeliveryLineRepository.findPurchaseIdById(deliveryLineId)
+            ?: throw RtsGenericException("Delivery line $deliveryLineId not found")
 
     fun calculateDeliveredTotal(purchaseId: UUID): BigDecimal {
         val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))

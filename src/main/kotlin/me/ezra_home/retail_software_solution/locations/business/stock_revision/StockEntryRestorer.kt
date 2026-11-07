@@ -1,52 +1,49 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementCreator
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDraft
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
-import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
+import java.math.BigDecimal
 
 data class StockEntryRestoration(
-    val reversalMovements: List<StockMovementEntity>,
+    val reversalDrafts: List<StockMovementDraft>,
     val endingBalance: ExactQuantity,
+    val restoredQuantity: ExactQuantity,
+    val restoredCost: BigDecimal,
 )
 
 object StockEntryRestorer {
 
     fun restore(
         stockEntryConsumptions: List<StockEntryConsumption>,
-        stockEntry: StockEntryEntity,
+        stockEntryDto: StockEntryDto,
         stockRevisionReferenceNumber: String,
         startingBalance: ExactQuantity,
-        quantityBreakdown: QuantityBreakdown
     ): StockEntryRestoration {
-        rejectConsumptionsThatCannotBeRestored(stockEntryConsumptions, stockEntry)
+        rejectConsumptionsThatCannotBeRestored(stockEntryConsumptions, stockEntryDto)
         var runningBalance = startingBalance
-        val reversalMovements = stockEntryConsumptions.map { stockEntryConsumption ->
+        val reversalDrafts = stockEntryConsumptions.map { stockEntryConsumption ->
             runningBalance += stockEntryConsumption.netConsumedStorageQuantity
-            restoreConsumption(stockEntryConsumption, stockEntry, stockRevisionReferenceNumber, runningBalance, quantityBreakdown)
+            reversalDraftOf(stockEntryConsumption, stockRevisionReferenceNumber, runningBalance)
         }
-        return StockEntryRestoration(reversalMovements, runningBalance)
+        return StockEntryRestoration(
+            reversalDrafts = reversalDrafts,
+            endingBalance = runningBalance,
+            restoredQuantity = runningBalance - startingBalance,
+            restoredCost = stockEntryConsumptions.sumOf { it.netConsumedCost },
+        )
     }
 
-    private fun restoreConsumption(
+    private fun reversalDraftOf(
         stockEntryConsumption: StockEntryConsumption,
-        stockEntry: StockEntryEntity,
         stockRevisionReferenceNumber: String,
-        balanceAfterMovement: ExactQuantity,
-        quantityBreakdown: QuantityBreakdown
-    ): StockMovementEntity {
+        balanceAfterMovement: ExactQuantity
+    ): StockMovementDraft {
         val quantityAsEntered = stockEntryConsumption.quantityAsEntered
-        val currentStockBalance = ExactQuantity.ofStorage(stockEntry.storageQuantityRemaining)
-        val stockBalanceWhenFull = currentStockBalance + stockEntryConsumption.netConsumedStorageQuantity
-        stockEntry.storageQuantityRemaining = stockBalanceWhenFull.toStorageQuantity()
-        stockEntry.costRemaining = stockEntry.costRemaining.add(stockEntryConsumption.netConsumedCost)
-        return StockMovementCreator.create(
-            stockEntryId = stockEntry.id!!,
-            locationProductId = stockEntryConsumption.locationProductId,
+        return StockMovementDraft(
             movementType = MovementType.REVERSED_BY_REVISION,
             storageMoved = stockEntryConsumption.netConsumedStorageQuantity,
             balanceAfterMovement = balanceAfterMovement,
@@ -56,7 +53,6 @@ object StockEntryRestorer {
             detailReference = stockEntryConsumption.stockMovementOrigin.detailReference,
             unitId = quantityAsEntered.unitId,
             storageUnitsPerUserProvidedUnit = quantityAsEntered.storageUnitsPerUserProvidedUnit,
-            quantityBreakdown = quantityBreakdown,
             context = StockMovementContexts.restoredForStockRevision(stockRevisionReferenceNumber),
             stockRevisionReference = stockRevisionReferenceNumber,
         )
@@ -64,12 +60,12 @@ object StockEntryRestorer {
 
     private fun rejectConsumptionsThatCannotBeRestored(
         stockEntryConsumptions: List<StockEntryConsumption>,
-        stockEntry: StockEntryEntity
+        stockEntryDto: StockEntryDto
     ) {
         stockEntryConsumptions
             .filter { it.consumer.movementType in MovementType.movementsThatCannotBeReversed }
             .map { entryConsumption ->
-                "Stock entry ${stockEntry.requiredReference()}: " +
+                "Stock entry ${stockEntryDto.referenceNumber}: " +
                     "cannot restore ${entryConsumption.stockMovementOrigin.displayText} because " +
                     "${entryConsumption.consumer.movementType} cannot be reversed."
             }

@@ -1,53 +1,54 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-import java.util.Optional
 import java.util.UUID
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementFetcher
+import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyCollection
+import org.mockito.ArgumentMatchers.anySet
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 class NetConsumptionCalculatorTest {
 
-    private val stockMovementRepository = mock(StockMovementRepository::class.java)
-    private val stockEntryRepository = mock(StockEntryRepository::class.java)
-    private val netConsumptionCalculator = NetConsumptionCalculator(stockMovementRepository, stockEntryRepository)
+    private val stockMovementFetcher = mock(StockMovementFetcher::class.java)
+    private val stockEntryFetcher = mock(StockEntryFetcher::class.java)
+    private val netConsumptionCalculator = NetConsumptionCalculator(stockMovementFetcher, stockEntryFetcher)
 
     private val entryReferenceNumber = "STE000001"
 
-    private fun stockEntry(id: UUID, referenceNumber: String) = StockEntryEntity(
-        locationProductId = locationProductId,
-        storageBatchSize = BigDecimal("10"),
-        storageQuantityRemaining = BigDecimal("10"),
-        priority = 0,
-        unitCost = BigDecimal("10"),
-        batchCost = BigDecimal("100.00"),
-        costRemaining = BigDecimal("100.00")
-    ).also {
-        it.id = id
-        it.referenceNumber = referenceNumber
-    }
-
     private fun netConsumptions(
-        movementsOnEntries: List<StockMovementEntity>,
-        movementsOnOtherLayers: List<StockMovementEntity> = emptyList()
+        movementsOnEntries: List<StockMovementDto>,
+        movementsOnOtherLayers: List<StockMovementDto> = emptyList()
     ): List<StockEntryConsumption> {
-        `when`(stockEntryRepository.findById(stockEntryId)).thenReturn(Optional.of(stockEntry(stockEntryId, entryReferenceNumber)))
-        `when`(stockMovementRepository.findByStockEntryId(stockEntryId)).thenReturn(movementsOnEntries)
-        `when`(stockMovementRepository.findByLocationProductIdAndDocumentReferenceIn(any(UUID::class.java) ?: locationProductId, anyCollection()))
+        `when`(stockEntryFetcher.get(stockEntryId)).thenReturn(
+            StockEntryDto(
+                id = stockEntryId,
+                referenceNumber = entryReferenceNumber,
+                locationProductId = locationProductId,
+                sourceType = StockItemSource.PURCHASE,
+                documentReference = "DLV1",
+                detailReference = "DLL1",
+                storageQuantityRemaining = BigDecimal.TEN,
+                costRemaining = BigDecimal.TEN,
+                status = StockEntryStatus.ACTIVE,
+            )
+        )
+        `when`(stockMovementFetcher.findOnEntry(stockEntryId)).thenReturn(movementsOnEntries)
+        `when`(stockMovementFetcher.findOfDocuments(any(UUID::class.java) ?: locationProductId, anySet<String>() ?: emptySet()))
             .thenReturn(movementsOnEntries + movementsOnOtherLayers)
         return netConsumptionCalculator.calculateNetConsumptions(stockEntryId)
     }
@@ -64,25 +65,21 @@ class NetConsumptionCalculatorTest {
         documentReference: String?,
         detailReference: String? = "LINE1",
         minutesAfterBase: Long = 0,
-        reasonId: UUID? = null,
         entryId: UUID = stockEntryId,
         drawUnitId: UUID = unitId
-    ) = StockMovementEntity(
+    ) = StockMovementDto(
+        id = null,
+        createdOn = baseTime.plusMinutes(minutesAfterBase),
         stockEntryId = entryId,
         locationProductId = locationProductId,
         movementType = movementType,
-        reasonId = reasonId,
         storageMovedQuantity = BigDecimal(quantity),
-        wholeLineQuantityText = "text",
-        storageRemainingQuantity = BigDecimal.ZERO,
         movedCost = BigDecimal(cost),
-        storageMovedBreakdownText = "text",
-        storageRemainingBreakdownText = "text",
         documentReference = documentReference,
         detailReference = detailReference,
-        unitId = drawUnitId,
-        storageUnitsPerUserProvidedUnit = 1L
-    ).also { it.createdOn = baseTime.plusMinutes(minutesAfterBase) }
+        adjustmentDetails = null,
+        quantityAsEntered = QuantityAsEntered(drawUnitId, 1L, "text"),
+    )
 
     private fun received() = movement(MovementType.PURCHASE_RECEIVED, "10", "100.00", "DLV1")
 
@@ -177,7 +174,7 @@ class NetConsumptionCalculatorTest {
     @Test
     fun `a stock adjustment decrease is a consumption`() {
         val netConsumptions = netConsumptions(
-            listOf(received(), movement(MovementType.STOCK_ADJUSTMENT_DECREASE, "1", "10.00", "ADJ1", detailReference = null, reasonId = UUID.randomUUID()))
+            listOf(received(), movement(MovementType.STOCK_ADJUSTMENT_DECREASE, "1", "10.00", "ADJ1", detailReference = null))
         )
 
         assertEquals(MovementType.STOCK_ADJUSTMENT_DECREASE, netConsumptions.single().consumer.movementType)

@@ -57,12 +57,11 @@ class PurchaseDeliveryValidator(
   }
 
   fun ensureWithinMaximumQuantity(
-    purchaseLineDto: PurchaseLineDto,
+    locationProductId: UUID,
     maximumQuantity: ExactQuantity,
     providedQuantity: ExactQuantity
   ) {
     if (providedQuantity <= maximumQuantity) return
-    val locationProductId = purchaseLineDto.locationProductId
     throw maximumQuantityExceeded(
       locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label,
       stockBreakdownProvider.forLocationProducts(setOf(locationProductId)).getValue(locationProductId),

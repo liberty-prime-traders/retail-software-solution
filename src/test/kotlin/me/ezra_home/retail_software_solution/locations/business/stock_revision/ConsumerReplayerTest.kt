@@ -1,15 +1,17 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -45,30 +47,25 @@ class ConsumerReplayerTest {
         stockEntryId: UUID = revisedStockEntryId,
         movementType: MovementType = MovementType.SALE,
         category: StockAdjustmentCategory? = null,
-    ) = StockMovementEntity(
+    ) = StockMovementDto(
+        id = null,
+        createdOn = null,
         stockEntryId = stockEntryId,
         locationProductId = locationProductId,
         movementType = movementType,
-        reasonId = null,
         storageMovedQuantity = BigDecimal(quantity),
-        wholeLineQuantityText = "whole line of $documentReference",
-        storageRemainingQuantity = BigDecimal.ZERO,
         movedCost = BigDecimal(cost),
-        storageMovedBreakdownText = "text",
-        storageRemainingBreakdownText = "text",
         documentReference = documentReference,
         detailReference = detailReference,
-        unitId = unitId,
-        storageUnitsPerUserProvidedUnit = 1L,
-        category = category,
-        note = category?.let { "counted short" },
+        adjustmentDetails = category?.let { StockAdjustmentMovementDetails(it, null, "counted short") },
+        quantityAsEntered = QuantityAsEntered(unitId, 1L, "whole line of $documentReference"),
     )
 
-    private fun consumption(movement: StockMovementEntity) = StockEntryConsumption(
+    private fun consumption(movement: StockMovementDto) = StockEntryConsumption(
         stockEntryId = movement.stockEntryId,
         locationProductId = movement.locationProductId,
         consumer = StockConsumer.of(movement),
-        quantityAsEntered = movement.quantityAsEntered(),
+        quantityAsEntered = movement.quantityAsEntered,
         orderOfConsumption = OrderOfConsumption.of(movement),
         netConsumedStorageQuantity = ExactQuantity.ofStorage(movement.storageMovedQuantity),
         netConsumedCost = movement.movedCost,
@@ -88,8 +85,8 @@ class ConsumerReplayerTest {
 
     @Test
     fun `consumers replay oldest draw first whatever order they are listed in`() {
-        val laterSale = draw("SAL1", "SALL1", "4", "40.00").also { it.createdOn = baseTime.plusMinutes(5) }
-        val earlierSale = draw("SAL2", "SALL1", "3", "30.00").also { it.createdOn = baseTime }
+        val laterSale = draw("SAL1", "SALL1", "4", "40.00").copy(createdOn = baseTime.plusMinutes(5))
+        val earlierSale = draw("SAL2", "SALL1", "3", "30.00").copy(createdOn = baseTime)
 
         val replayResult = replay(listOf(consumption(laterSale), consumption(earlierSale)), listOf(layer("STE3", "50", "700.00")))
 

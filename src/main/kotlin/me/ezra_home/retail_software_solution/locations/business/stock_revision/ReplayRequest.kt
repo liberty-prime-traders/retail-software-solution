@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.ConsumerReplayPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 
@@ -13,4 +14,9 @@ data class ProductBeingReplayed(
     val productLabel: String,
     val quantityBreakdown: QuantityBreakdown,
     val fifoEntriesAvailableForConsumption: List<StockEntryFifoDto>,
+)
+
+data class ReplayResult(
+    val consumerReplayPlans: List<ConsumerReplayPlan>,
+    val errors: List<String>,
 )

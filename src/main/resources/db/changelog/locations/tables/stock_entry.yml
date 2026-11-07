@@ -126,3 +126,32 @@ databaseChangeLog:
         - dropColumn:
             tableName: stock_entry
             columnName: status
+
+  - changeSet:
+      id: add-activated-on-to-stock-entry
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: stock_entry
+                columnName: activated_on
+      changes:
+        - addColumn:
+            tableName: stock_entry
+            columns:
+              - column:
+                  name: activated_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_entry_activated_on_notnull
+
+        - sql:
+            sql: UPDATE stock_entry SET activated_on = COALESCE(created_on, activated_on)
+      rollback:
+        - dropColumn:
+            tableName: stock_entry
+            columnName: activated_on

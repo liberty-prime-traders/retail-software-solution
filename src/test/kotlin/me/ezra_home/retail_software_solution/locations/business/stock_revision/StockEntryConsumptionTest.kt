@@ -1,14 +1,14 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
+import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.util.UUID
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.time.OffsetDateTime
-import java.util.UUID
 
 class StockEntryConsumptionTest {
 

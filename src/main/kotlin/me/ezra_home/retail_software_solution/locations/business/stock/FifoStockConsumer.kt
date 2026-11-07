@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
+import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoConsumptionRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
 import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType

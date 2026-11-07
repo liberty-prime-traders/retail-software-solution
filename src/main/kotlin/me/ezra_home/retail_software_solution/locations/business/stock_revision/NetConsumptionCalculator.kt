@@ -1,24 +1,24 @@
-package me.ezra_home.retail_software_solution.locations.business.stock.revision
+package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
+import java.math.BigDecimal
+import java.util.UUID
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
-import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.util.UUID
 
 @Component
 @TransactionalOnLocationSchema(readOnly = true)
 class NetConsumptionCalculator(
-    private val stockMovementRepository: StockMovementRepository,
-    private val stockEntryRepository: StockEntryRepository
+    private val stockMovementFetcher: StockMovementFetcher,
+    private val stockEntryFetcher: StockEntryFetcher
 ) {
 
     fun calculateNetConsumptions(stockEntryId: UUID): List<StockEntryConsumption> {
-        val movementsOnEntry = stockMovementRepository.findByStockEntryId(stockEntryId)
+        val movementsOnEntry = stockMovementFetcher.findOnEntry(stockEntryId)
         val drawsByOrigin = movementsOnEntry
             .filter { it.movementType.isConsumption() }
             .groupBy { StockMovementOrigin.of(it) }
@@ -42,16 +42,17 @@ class NetConsumptionCalculator(
      * origin (For example, same sale and same line) to draw from a layer it already consumed before.
      * This method checks that the provided draws, all originate from the same origin/consumer.
      */
-    private fun drawsDescribeOneConsumer(draws: List<StockMovementEntity>): Boolean =
+    private fun drawsDescribeOneConsumer(draws: List<StockMovementDto>): Boolean =
         draws.map { StockConsumer.of(it) }.distinct().size == 1
 
     // A replayed draw is stamped with the replay time, so the order of a consumer is its first draw on any layer of the product.
     private fun firstConsumptionOrderByOrigin(
-        drawsByOrigin: Map<StockMovementOrigin, List<StockMovementEntity>>
+        drawsByOrigin: Map<StockMovementOrigin, List<StockMovementDto>>
     ): Map<StockMovementOrigin, OrderOfConsumption> {
         val firstDraw = drawsByOrigin.values.firstOrNull()?.first() ?: return emptyMap()
         val documentReferences = drawsByOrigin.keys.mapNotNull { it.documentReference }.toSet()
-        val allConsumptionsForDocument = stockMovementRepository.findByLocationProductIdAndDocumentReferenceIn(firstDraw.locationProductId, documentReferences)
+        val allConsumptionsForDocument = stockMovementFetcher
+            .findOfDocuments(firstDraw.locationProductId, documentReferences)
             .filter { it.movementType.isConsumption() }
             .groupBy { StockMovementOrigin.of(it) }
         return drawsByOrigin.mapValues { (stockMovementOrigin, draws) ->
@@ -61,8 +62,8 @@ class NetConsumptionCalculator(
 
     private fun netConsumptionOf(
         stockEntryId: UUID,
-        draws: List<StockMovementEntity>,
-        reversals: List<StockMovementEntity>,
+        draws: List<StockMovementDto>,
+        reversals: List<StockMovementDto>,
         orderOfConsumption: OrderOfConsumption
     ): StockEntryConsumption {
         val totalDrawnStorageQuantity = totalStorageQuantityOf(draws)
@@ -74,17 +75,17 @@ class NetConsumptionCalculator(
             stockEntryId = stockEntryId,
             locationProductId = earliestDraw.locationProductId,
             consumer = StockConsumer.of(earliestDraw),
-            quantityAsEntered = earliestDraw.quantityAsEntered(),
+            quantityAsEntered = earliestDraw.quantityAsEntered,
             orderOfConsumption = orderOfConsumption,
             netConsumedStorageQuantity = totalDrawnStorageQuantity - totalReversedStorageQuantity,
             netConsumedCost = totalDrawnCost.subtract(totalReversedCost),
         )
     }
 
-    private fun totalStorageQuantityOf(movements: List<StockMovementEntity>): ExactQuantity =
+    private fun totalStorageQuantityOf(movements: List<StockMovementDto>): ExactQuantity =
         movements.fold(ExactQuantity.ZERO) { total, movement -> total + ExactQuantity.ofStorage(movement.storageMovedQuantity) }
 
-    private fun totalCostOf(movements: List<StockMovementEntity>): BigDecimal = movements.sumOf { it.movedCost }
+    private fun totalCostOf(movements: List<StockMovementDto>): BigDecimal = movements.sumOf { it.movedCost }
 
     private fun rejectInconsistentHistory(
         stockEntryId: UUID,
@@ -104,7 +105,7 @@ class NetConsumptionCalculator(
         }
         val problems = reversalsWithoutDraw + overReversedDraws + contradictingDraws
         if (problems.isEmpty()) return
-        val reference = stockEntryRepository.findById(stockEntryId).orElseThrow().requiredReference()
+        val reference = stockEntryFetcher.get(stockEntryId).referenceNumber
         val errors = problems.map { "Stock entry $reference: $it." }
         throw RtsGenericException(errors.joinToString(" "), payload = errors)
     }

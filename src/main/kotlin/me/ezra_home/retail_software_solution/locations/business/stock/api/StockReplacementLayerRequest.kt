@@ -16,5 +16,5 @@ data class StockReplacementLayerRequest(
     val unitId: UUID,
     val storageUnitsPerUserProvidedUnit: Long,
     val batchCost: BigDecimal,
-    val priority: Int,
+    val revisedStockEntryId: UUID,
 )

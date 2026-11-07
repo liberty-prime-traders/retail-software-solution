@@ -30,7 +30,9 @@ class PurchaseDeliveryRevisionValidator(
       revisedLine.storageUnitsPerUserProvidedUnit
     )
     val netRemaining = purchaseLineDto.storageQuantityRemaining + revisedStorageQuantity
-    purchaseDeliveryValidator.ensureWithinMaximumQuantity(purchaseLineDto, netRemaining, replacementStorageQuantity)
+    purchaseDeliveryValidator.ensureWithinMaximumQuantity(
+      purchaseLineDto.locationProductId, netRemaining, replacementStorageQuantity
+    )
   }
 
   fun ensureNoTransferredStock(
