@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.location_produc
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductResponseDto
 import me.ezra_home.retail_software_solution.locations.business.opening_stock.api.OpeningStockAmountsFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.QuantityBreakdownFactory
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay

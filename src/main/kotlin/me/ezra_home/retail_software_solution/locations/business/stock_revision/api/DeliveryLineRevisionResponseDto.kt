@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision.api
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.ReplacementDeliveryLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.ConsumerReplayDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayDto
 
 data class DeliveryLineRevisionResponseDto(
     val stockRevisionReferenceNumber: String,

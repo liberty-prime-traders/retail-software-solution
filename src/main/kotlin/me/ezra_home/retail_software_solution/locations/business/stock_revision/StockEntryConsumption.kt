@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
@@ -49,7 +49,10 @@ data class StockMovementOrigin(
     val displayText: String = listOfNotNull(documentReference, detailReference).joinToString("/")
 
     companion object {
-        fun of(stockMovementDto: StockMovementDto) = StockMovementOrigin(stockMovementDto.documentReference, stockMovementDto.detailReference)
+        fun of(stockMovementDto: StockMovementDto) = StockMovementOrigin(
+            stockMovementDto.documentReference,
+            stockMovementDto.detailReference
+        )
     }
 }
 

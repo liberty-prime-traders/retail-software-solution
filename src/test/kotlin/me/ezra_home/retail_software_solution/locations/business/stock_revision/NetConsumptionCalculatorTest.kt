@@ -3,11 +3,11 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -48,7 +48,12 @@ class NetConsumptionCalculatorTest {
             )
         )
         `when`(stockMovementFetcher.findOnEntry(stockEntryId)).thenReturn(movementsOnEntries)
-        `when`(stockMovementFetcher.findOfDocuments(any(UUID::class.java) ?: locationProductId, anySet<String>() ?: emptySet()))
+        `when`(
+            stockMovementFetcher.findOfDocuments(
+                any(UUID::class.java) ?: locationProductId,
+                anySet<String>() ?: emptySet()
+            )
+        )
             .thenReturn(movementsOnEntries + movementsOnOtherLayers)
         return netConsumptionCalculator.calculateNetConsumptions(stockEntryId)
     }
@@ -132,8 +137,22 @@ class NetConsumptionCalculatorTest {
             listOf(
                 received(),
                 movement(MovementType.TRANSFER_OUT, "2", "20.00", "DISPATCH1", detailReference = "T1"),
-                movement(MovementType.TRANSFER_CANCELLED, "2", "20.00", "DISPATCH1", detailReference = "T1", minutesAfterBase = 5),
-                movement(MovementType.TRANSFER_OUT, "3", "30.00", "DISPATCH2", detailReference = "T2", minutesAfterBase = 6)
+                movement(
+                    MovementType.TRANSFER_CANCELLED,
+                    "2",
+                    "20.00",
+                    "DISPATCH1",
+                    detailReference = "T1",
+                    minutesAfterBase = 5
+                ),
+                movement(
+                    MovementType.TRANSFER_OUT,
+                    "3",
+                    "30.00",
+                    "DISPATCH2",
+                    detailReference = "T2",
+                    minutesAfterBase = 6
+                )
             )
         )
 
@@ -174,7 +193,10 @@ class NetConsumptionCalculatorTest {
     @Test
     fun `a stock adjustment decrease is a consumption`() {
         val netConsumptions = netConsumptions(
-            listOf(received(), movement(MovementType.STOCK_ADJUSTMENT_DECREASE, "1", "10.00", "ADJ1", detailReference = null))
+            listOf(
+                received(),
+                movement(MovementType.STOCK_ADJUSTMENT_DECREASE, "1", "10.00", "ADJ1", detailReference = null)
+            )
         )
 
         assertEquals(MovementType.STOCK_ADJUSTMENT_DECREASE, netConsumptions.single().consumer.movementType)
@@ -202,7 +224,9 @@ class NetConsumptionCalculatorTest {
                 movement(MovementType.SALE, "3", "27.00", "SAL3", minutesAfterBase = 2),
                 movement(MovementType.SALE, "2", "18.00", "SAL1", minutesAfterBase = 3)
             ),
-            movementsOnOtherLayers = listOf(movement(MovementType.SALE, "4", "32.00", "SAL1", minutesAfterBase = 1, entryId = earlierLayerId))
+            movementsOnOtherLayers = listOf(
+                movement(MovementType.SALE, "4", "32.00", "SAL1", minutesAfterBase = 1, entryId = earlierLayerId)
+            )
         )
 
         assertEquals(listOf("SAL1", "SAL3"), netConsumptions.map { it.stockMovementOrigin.documentReference })
@@ -216,7 +240,9 @@ class NetConsumptionCalculatorTest {
                 movement(MovementType.SALE, "3", "27.00", "SAL3", minutesAfterBase = 2),
                 movement(MovementType.SALE, "2", "18.00", "SAL1", minutesAfterBase = 3)
             ),
-            movementsOnOtherLayers = listOf(movement(MovementType.SALE, "4", "32.00", "SAL2", minutesAfterBase = 1, entryId = UUID.randomUUID()))
+            movementsOnOtherLayers = listOf(
+                movement(MovementType.SALE, "4", "32.00", "SAL2", minutesAfterBase = 1, entryId = UUID.randomUUID())
+            )
         )
 
         assertEquals(listOf("SAL3", "SAL1"), netConsumptions.map { it.stockMovementOrigin.documentReference })

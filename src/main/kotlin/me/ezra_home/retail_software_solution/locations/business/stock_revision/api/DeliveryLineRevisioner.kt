@@ -4,13 +4,13 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplaceRequest
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplacer
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.DeliveryLineStockInspector
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReplacementLayerRecorder
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReplacementLayerRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockRevisionCommitter
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRecorder
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockRevisionCommitter
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.NetConsumptionCalculator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayPlanner
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ResetPlanner
@@ -42,18 +42,26 @@ class DeliveryLineRevisioner(
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val referenceNumberGenerator: ReferenceNumberGenerator,
     private val stockRevisionRepository: StockRevisionRepository,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
 ) {
 
     fun revise(deliveryLineRevisionRequest: DeliveryLineRevisionRequest): DeliveryLineRevisionResponseDto {
-        StringUtils.requireHasValue(deliveryLineRevisionRequest.reason, "A reason is required to revise a delivery line.")
+        StringUtils.requireHasValue(
+            deliveryLineRevisionRequest.reason,
+            "A reason is required to revise a delivery line."
+        )
         val locationProductId = purchaseDataFetcher.getLocationProductIdOfLine(
             purchaseDeliveryDataFetcher.getPurchaseLineId(deliveryLineRevisionRequest.revisedDeliveryLineId)
         )
-        // The id lookups read scalars, so no entity is cached before the locks. Purchase first, the order a delivery takes, so the two cannot deadlock.
-        purchaseDataFetcher.lockPurchase(purchaseDeliveryDataFetcher.getPurchaseId(deliveryLineRevisionRequest.revisedDeliveryLineId))
+        // The id lookups read scalars, so no entity is cached before the locks. Purchase first, the order a delivery
+        // takes, so the two cannot deadlock.
+        purchaseDataFetcher.lockPurchase(
+            purchaseDeliveryDataFetcher.getPurchaseId(deliveryLineRevisionRequest.revisedDeliveryLineId)
+        )
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductId)
-        val quantityBreakdown = stockBreakdownProvider.forLocationProducts(listOf(locationProductId)).getValue(locationProductId)
+        val quantityBreakdown = productStockBreakdownProvider.forLocationProducts(
+            listOf(locationProductId)
+        ).getValue(locationProductId)
 
         val stockRevisionReferenceNumber = referenceNumberGenerator.generateSingle(TableName.STOCK_REVISION)
         val replacementLine = purchaseDeliveryLineReplacer.replace(
@@ -69,7 +77,12 @@ class DeliveryLineRevisioner(
 
         val consumptionsOnRevisedLayer = netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)
         stockRevisionCommitter.commitReset(
-            resetPlanner.plan(revisedStockEntryId, consumptionsOnRevisedLayer, stockRevisionReferenceNumber, quantityBreakdown),
+            resetPlanner.plan(
+                revisedStockEntryId,
+                consumptionsOnRevisedLayer,
+                stockRevisionReferenceNumber,
+                quantityBreakdown
+            ),
             quantityBreakdown
         )
         val replacementStockEntryId = stockReplacementLayerRecorder.record(
@@ -83,11 +96,18 @@ class DeliveryLineRevisioner(
                 userProvidedQuantity = replacementLine.userProvidedQuantityDelivered,
                 unitId = replacementLine.unitId,
                 storageUnitsPerUserProvidedUnit = replacementLine.storageUnitsPerUserProvidedUnit,
-                batchCost = Decimals.MoneyScale.multiply(replacementLine.unitCost, replacementLine.userProvidedQuantityDelivered),
+                batchCost = Decimals.MoneyScale.multiply(
+                    replacementLine.unitCost,
+                    replacementLine.userProvidedQuantityDelivered
+                ),
                 revisedStockEntryId = revisedStockEntryId,
             )
         )
-        val consumerReplayPlans = replayPlanner.plan(consumptionsOnRevisedLayer, stockRevisionReferenceNumber, quantityBreakdown)
+        val consumerReplayPlans = replayPlanner.plan(
+            consumptionsOnRevisedLayer,
+            stockRevisionReferenceNumber,
+            quantityBreakdown
+        )
         val consumerReplays = stockRevisionCommitter.commitReplay(
             consumerReplayPlans, replacementStockEntryId, quantityBreakdown
         )

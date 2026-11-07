@@ -1,9 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
@@ -15,7 +15,7 @@ class StockIncreaseRecorder(
     private val stockEntryRepository: StockEntryRepository,
     private val stockMovementRepository: StockMovementRepository,
     private val stockBalanceFetcher: StockBalanceFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
@@ -24,7 +24,7 @@ class StockIncreaseRecorder(
         val locationProductIds = layerSpecs.map { it.locationProductId }
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIds.toSet())
         val runningBalances = stockBalanceFetcher.getLatestBalances(locationProductIds).toMutableMap()
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(locationProductIds)
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(locationProductIds)
 
         val savedEntryIds = mutableListOf<UUID>()
         val movements = mutableListOf<StockMovementEntity>()

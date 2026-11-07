@@ -33,8 +33,23 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
   (`StockMovementContexts`), and a stock revision's restore, drain and replay write the revision's reference (see `../stock_revision/README.md`). Movements
   written before deliveries carried it get theirs from the purchase movement context backfill.
 - Updaters take the `LockNamespaces.PRODUCT` advisory lock for the products they change before touching layers.
-- Reservations are per product, not per layer. Availability is the balance minus the reserved total
-  (`StockAvailabilityValidator`).
+- Reservations are per product, not per layer, and live in the `stock_reservation` domain. Availability is the balance minus the
+  reserved total (`StockAvailabilityValidator`, `StockAvailabilityFetcher`); those two stay here because they read the balance.
+
+## Layout of `api/`
+
+Other domains reach stock only through `stock/api`, grouped by what the caller does:
+
+| Subpackage | What it holds |
+|---|---|
+| `updater/` | The updaters that change stock for a document (sale, transfer dispatch and receipt, adjustment, purchase delivery, opening stock) and their request and result types |
+| `revision/` | What a stock revision writes through: `StockRevisionCommitter`, `StockReplacementLayerRecorder`, and the drafts, plans and DTOs they take and return |
+| `read/` | Read access: balances, entry and movement DTOs and fetchers, the movement history, the delivery line inspector and the purchase movement context backfill store |
+| `fifo/` | FIFO planning types: `FifoTakePlanner`, `FifoConsumptionRequest`, `PlannedTake`, `FifoLayer`, `StockEntryFifoDto` |
+| `availability/` | The availability guard and fetcher |
+| (root) | Vocabulary shared by all of the above: adjustment category and details, entry status, movement contexts |
+
+`ArchitectureTest` treats every package whose name contains `.api` as public, so the subpackages need no rule of their own.
 
 ## What a movement type is
 

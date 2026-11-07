@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryStatus
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PurchaseDeliveryStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.PurchaseDeliveryStockUpdater
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.InventoryEventProcessor
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException

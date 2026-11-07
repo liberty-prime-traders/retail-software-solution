@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBalanceFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockBalanceFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -32,10 +32,14 @@ class StockIncreaseRecorderTest {
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
     private val stockMovementRepository = mock(StockMovementRepository::class.java)
     private val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
-    private val stockBreakdownProvider = mock(StockBreakdownProvider::class.java)
+    private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java)
     private val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
     private val stockIncreaseRecorder = StockIncreaseRecorder(
-        stockEntryRepository, stockMovementRepository, stockBalanceFetcher, stockBreakdownProvider, entityAdvisoryLock
+        stockEntryRepository,
+        stockMovementRepository,
+        stockBalanceFetcher,
+        productStockBreakdownProvider,
+        entityAdvisoryLock
     )
 
     private val savedMovements = mutableListOf<StockMovementEntity>()
@@ -64,7 +68,7 @@ class StockIncreaseRecorderTest {
         `when`(stockBalanceFetcher.getLatestBalances(anyCollection())).thenReturn(
             mapOf(firstLocationProductId to BigDecimal("100"), secondLocationProductId to BigDecimal("5"))
         )
-        `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(
+        `when`(productStockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(
             mapOf(firstLocationProductId to pieceBreakdown, secondLocationProductId to pieceBreakdown)
         )
         `when`(stockEntryRepository.save(any(StockEntryEntity::class.java))).thenAnswer { invocation ->
@@ -88,8 +92,12 @@ class StockIncreaseRecorderTest {
 
     @Test
     fun `returned entry ids follow spec order and each layer keeps its own priority`() {
-        `when`(stockBalanceFetcher.getLatestBalances(anyCollection())).thenReturn(mapOf(firstLocationProductId to BigDecimal("0")))
-        `when`(stockBreakdownProvider.forLocationProducts(anyCollection())).thenReturn(mapOf(firstLocationProductId to pieceBreakdown))
+        `when`(
+            stockBalanceFetcher.getLatestBalances(anyCollection())
+        ).thenReturn(mapOf(firstLocationProductId to BigDecimal("0")))
+        `when`(
+            productStockBreakdownProvider.forLocationProducts(anyCollection())
+        ).thenReturn(mapOf(firstLocationProductId to pieceBreakdown))
         val savedEntries = mutableListOf<StockEntryEntity>()
         `when`(stockEntryRepository.save(any(StockEntryEntity::class.java))).thenAnswer { invocation ->
             invocation.getArgument<StockEntryEntity>(0).also { it.id = UUID.randomUUID(); savedEntries.add(it) }

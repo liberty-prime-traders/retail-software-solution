@@ -10,7 +10,8 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 
-// Writes the line rows only; stock, ledger and purchase totals are the caller's. The caller must hold the product lock for the checks to hold.
+// Writes the line rows only; stock, ledger and purchase totals are the caller's. The caller must hold the product lock
+// for the checks to hold.
 @Service
 @TransactionalOnLocationSchema
 class PurchaseDeliveryLineReplacer(
@@ -21,7 +22,9 @@ class PurchaseDeliveryLineReplacer(
 ) {
 
     fun replace(purchaseDeliveryLineReplaceRequest: PurchaseDeliveryLineReplaceRequest): ReplacementDeliveryLineDto {
-        val revisedLine = purchaseDeliveryLineRepository.getReferenceById(purchaseDeliveryLineReplaceRequest.revisedDeliveryLineId)
+        val revisedLine = purchaseDeliveryLineRepository.getReferenceById(
+            purchaseDeliveryLineReplaceRequest.revisedDeliveryLineId
+        )
         val delivery = purchaseDeliveryRepository.getReferenceById(revisedLine.purchaseDeliveryId)
         val purchaseLineDto = deliveryHandlerForPurchase.getDeliveryContext(delivery.purchaseId)
             .purchaseLineById.getValue(revisedLine.purchaseLineId)
@@ -40,7 +43,8 @@ class PurchaseDeliveryLineReplacer(
             PurchaseDeliveryLineEntity(
                 purchaseDeliveryId = revisedLine.purchaseDeliveryId,
                 purchaseLineId = revisedLine.purchaseLineId,
-                userProvidedQuantityDelivered = purchaseDeliveryLineReplaceRequest.userProvidedQuantityDelivered.toBigDecimal(),
+                userProvidedQuantityDelivered =
+                    purchaseDeliveryLineReplaceRequest.userProvidedQuantityDelivered.toBigDecimal(),
                 unitCost = purchaseDeliveryLineReplaceRequest.unitCost.toBigDecimal(),
                 unitId = revisedLine.unitId,
                 storageUnitsPerUserProvidedUnit = revisedLine.storageUnitsPerUserProvidedUnit,

@@ -30,13 +30,18 @@ class StockEntryFifoOrderTest {
     private fun at(day: Int) = OffsetDateTime.parse("2026-10-%02dT08:00:00Z".format(day))
 
     @Test
-    fun `a replacement that carries the revised activation date sorts into the slot of the revised layer, however late it was created`() {
+    fun `a replacement with the revised activation date takes the revised layer's slot however late it was made`() {
         val firstDelivery = stockEntry("first", at(1))
         val secondDelivery = stockEntry("second", at(2))
         val fourthDelivery = stockEntry("fourth", at(4))
         val replacementOfThird = stockEntry("replacement-of-third", activatedOn = at(3), createdOn = at(20))
 
-        val sorted = listOf(fourthDelivery, replacementOfThird, firstDelivery, secondDelivery).sortedWith(stockEntryFifoComparator)
+        val sorted = listOf(
+            fourthDelivery,
+            replacementOfThird,
+            firstDelivery,
+            secondDelivery
+        ).sortedWith(stockEntryFifoComparator)
 
         assertEquals(listOf("first", "second", "replacement-of-third", "fourth"), sorted.map { it.detailReference })
     }
@@ -49,7 +54,10 @@ class StockEntryFifoOrderTest {
 
         val sorted = listOf(thirdDelivery, replacementOfFirst, replacementOfSecond).sortedWith(stockEntryFifoComparator)
 
-        assertEquals(listOf("replacement-of-first", "replacement-of-second", "third"), sorted.map { it.detailReference })
+        assertEquals(
+            listOf("replacement-of-first", "replacement-of-second", "third"),
+            sorted.map { it.detailReference }
+        )
     }
 
     @Test

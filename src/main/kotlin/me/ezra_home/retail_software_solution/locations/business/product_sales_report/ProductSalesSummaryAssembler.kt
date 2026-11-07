@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.product_sales_report
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.locations.business.product_sales_report.api.ProductSalesSummaryDto
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.QuantityBreakdownFactory
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException

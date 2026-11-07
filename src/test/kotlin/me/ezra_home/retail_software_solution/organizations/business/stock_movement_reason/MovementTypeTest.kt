@@ -14,7 +14,12 @@ class MovementTypeTest {
     @Test
     fun `the types that draw stock for a consumer are exactly these`() {
         assertEquals(
-            setOf(MovementType.SALE, MovementType.SUPPLIER_RETURN, MovementType.STOCK_ADJUSTMENT_DECREASE, MovementType.TRANSFER_OUT),
+            setOf(
+                MovementType.SALE,
+                MovementType.SUPPLIER_RETURN,
+                MovementType.STOCK_ADJUSTMENT_DECREASE,
+                MovementType.TRANSFER_OUT
+            ),
             MovementType.entries.filter { it.isConsumption() }.toSet()
         )
     }
@@ -23,7 +28,10 @@ class MovementTypeTest {
     fun `the types that undo a draw are exactly these, and each puts stock back`() {
         val reversals = MovementType.entries.filter { it.isReversal() }.toSet()
 
-        assertEquals(setOf(MovementType.SALE_VOID, MovementType.TRANSFER_CANCELLED, MovementType.REVERSED_BY_REVISION), reversals)
+        assertEquals(
+            setOf(MovementType.SALE_VOID, MovementType.TRANSFER_CANCELLED, MovementType.REVERSED_BY_REVISION),
+            reversals
+        )
         assertTrue(reversals.all { it.stockDirection == StockDirection.INCREASE })
     }
 
@@ -39,11 +47,15 @@ class MovementTypeTest {
     @Test
     fun `every type that puts stock in is a reversal, a layer creator, or one that cannot be reversed`() {
         val layerCreators = setOf(
-            MovementType.PURCHASE_RECEIVED, MovementType.OPENING_STOCK, MovementType.TRANSFER_IN, MovementType.STOCK_ADJUSTMENT_INCREASE
+            MovementType.PURCHASE_RECEIVED,
+            MovementType.OPENING_STOCK,
+            MovementType.TRANSFER_IN,
+            MovementType.STOCK_ADJUSTMENT_INCREASE
         )
         val increasing = MovementType.entries.filter { it.stockDirection == StockDirection.INCREASE }.toSet()
         val reversals = MovementType.entries.filter { it.isReversal() }.toSet()
-        val increasingAndCannotBeReversed = MovementType.movementsThatCannotBeReversed.filter { it.stockDirection == StockDirection.INCREASE }
+        val increasingAndCannotBeReversed =
+            MovementType.movementsThatCannotBeReversed.filter { it.stockDirection == StockDirection.INCREASE }
 
         assertEquals(increasing, reversals + layerCreators + increasingAndCannotBeReversed)
         assertTrue(layerCreators.none { it.isReversal() })

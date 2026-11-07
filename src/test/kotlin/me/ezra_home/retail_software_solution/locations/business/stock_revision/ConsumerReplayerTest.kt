@@ -3,11 +3,11 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -23,7 +23,10 @@ class ConsumerReplayerTest {
     private val locationProductId = UUID.randomUUID()
     private val unitId = UUID.randomUUID()
     private val baseTime = OffsetDateTime.parse("2026-11-01T10:00:00Z")
-    private val quantityBreakdown = QuantityBreakdown.forBaseUnit(listOf(BreakdownUnit(unitId, "pcs", 1L, unitId, baseTime)), unitId)
+    private val quantityBreakdown = QuantityBreakdown.forBaseUnit(
+        listOf(BreakdownUnit(unitId, "pcs", 1L, unitId, baseTime)),
+        unitId
+    )
     private val revisedStockEntryId = UUID.randomUUID()
 
     private fun layer(reference: String, quantity: String, batchCost: String) = StockEntryFifoDto(
@@ -71,7 +74,10 @@ class ConsumerReplayerTest {
         netConsumedCost = movement.movedCost,
     )
 
-    private fun replay(consumptions: List<StockEntryConsumption>, fifoEntriesInFifoOrder: List<StockEntryFifoDto>) = ConsumerReplayer.replay(
+    private fun replay(
+        consumptions: List<StockEntryConsumption>,
+        fifoEntriesInFifoOrder: List<StockEntryFifoDto>
+    ) = ConsumerReplayer.replay(
         ReplayRequest(
             consumptionsOnReplacedLayer = consumptions,
             productBeingReplayed = ProductBeingReplayed(
@@ -88,9 +94,15 @@ class ConsumerReplayerTest {
         val laterSale = draw("SAL1", "SALL1", "4", "40.00").copy(createdOn = baseTime.plusMinutes(5))
         val earlierSale = draw("SAL2", "SALL1", "3", "30.00").copy(createdOn = baseTime)
 
-        val replayResult = replay(listOf(consumption(laterSale), consumption(earlierSale)), listOf(layer("STE3", "50", "700.00")))
+        val replayResult = replay(
+            listOf(consumption(laterSale), consumption(earlierSale)),
+            listOf(layer("STE3", "50", "700.00"))
+        )
 
-        assertEquals(listOf("SAL2", "SAL1"), replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference })
+        assertEquals(
+            listOf("SAL2", "SAL1"),
+            replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference }
+        )
     }
 
     @Test
@@ -105,11 +117,23 @@ class ConsumerReplayerTest {
         )
 
         assertTrue(replayResult.errors.isEmpty())
-        assertEquals(listOf("SAL1", "SAL2"), replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference })
-        assertEquals(listOf(BigDecimal("40.00"), BigDecimal("30.00")), replayResult.consumerReplayPlans.map { it.oldCost })
-        assertEquals(listOf(BigDecimal("48.00"), BigDecimal("36.00")), replayResult.consumerReplayPlans.map { it.newCost })
+        assertEquals(
+            listOf("SAL1", "SAL2"),
+            replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference }
+        )
+        assertEquals(
+            listOf(BigDecimal("40.00"), BigDecimal("30.00")),
+            replayResult.consumerReplayPlans.map { it.oldCost }
+        )
+        assertEquals(
+            listOf(BigDecimal("48.00"), BigDecimal("36.00")),
+            replayResult.consumerReplayPlans.map { it.newCost }
+        )
         val replacementId = replacement.fifoLayer.stockEntryId
-        assertEquals(listOf(listOf(replacementId), listOf(replacementId)), replayResult.consumerReplayPlans.map { plan -> plan.plannedTakes.map { it.stockEntryId } })
+        assertEquals(
+            listOf(listOf(replacementId), listOf(replacementId)),
+            replayResult.consumerReplayPlans.map { plan -> plan.plannedTakes.map { it.stockEntryId } }
+        )
     }
 
     @Test
@@ -126,13 +150,22 @@ class ConsumerReplayerTest {
 
         assertTrue(replayResult.errors.isEmpty())
         val secondPlan = replayResult.consumerReplayPlans.last()
-        assertEquals(listOf(replacement.fifoLayer.stockEntryId, laterLayer.fifoLayer.stockEntryId), secondPlan.plannedTakes.map { it.stockEntryId })
-        assertEquals(listOf(BigDecimal("1.0000"), BigDecimal("2.0000")), secondPlan.plannedTakes.map { it.storageQuantity.toStorageQuantity() })
+        assertEquals(
+            listOf(replacement.fifoLayer.stockEntryId, laterLayer.fifoLayer.stockEntryId),
+            secondPlan.plannedTakes.map { it.stockEntryId }
+        )
+        assertEquals(
+            listOf(BigDecimal("1.0000"), BigDecimal("2.0000")),
+            secondPlan.plannedTakes.map { it.storageQuantity.toStorageQuantity() }
+        )
     }
 
     @Test
     fun `the replayed draw keeps the draw's type, references, unit and whole-line text and names the revision`() {
-        val replayResult = replay(listOf(consumption(draw("SAL1", "SALL1", "4", "40.00"))), listOf(layer("STE2", "10", "120.00")))
+        val replayResult = replay(
+            listOf(consumption(draw("SAL1", "SALL1", "4", "40.00"))),
+            listOf(layer("STE2", "10", "120.00"))
+        )
 
         val fifoConsumptionRequest = replayResult.consumerReplayPlans.single().fifoConsumptionRequest
         assertEquals(MovementType.SALE, fifoConsumptionRequest.movementType)
@@ -147,7 +180,18 @@ class ConsumerReplayerTest {
     @Test
     fun `an adjustment keeps its category and note`() {
         val replayResult = replay(
-            listOf(consumption(draw("ADJ1", "ADJL1", "2", "20.00", movementType = MovementType.STOCK_ADJUSTMENT_DECREASE, category = StockAdjustmentCategory.INTERNAL_USE))),
+            listOf(
+                consumption(
+                    draw(
+                        "ADJ1",
+                        "ADJL1",
+                        "2",
+                        "20.00",
+                        movementType = MovementType.STOCK_ADJUSTMENT_DECREASE,
+                        category = StockAdjustmentCategory.INTERNAL_USE
+                    )
+                )
+            ),
             listOf(layer("STE2", "10", "120.00"))
         )
 
@@ -166,17 +210,26 @@ class ConsumerReplayerTest {
             listOf(layer("STE2", "5", "60.00"))
         )
 
-        assertEquals(listOf("SAL1"), replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference })
+        assertEquals(
+            listOf("SAL1"),
+            replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference }
+        )
         assertEquals(1, replayResult.errors.size)
         assertTrue(replayResult.errors.single().contains("SAL2/SALL1"))
     }
 
     @Test
     fun `a replayed draw carries the revision reference so it may land on a layer the consumer already drew from`() {
-        val replayResult = replay(listOf(consumption(draw("SAL1", "SALL1", "4", "40.00"))), listOf(layer("STE3", "50", "700.00")))
+        val replayResult = replay(
+            listOf(consumption(draw("SAL1", "SALL1", "4", "40.00"))),
+            listOf(layer("STE3", "50", "700.00"))
+        )
 
         assertTrue(replayResult.errors.isEmpty())
-        assertEquals("STRV000001", replayResult.consumerReplayPlans.single().fifoConsumptionRequest.stockRevisionReference)
+        assertEquals(
+            "STRV000001",
+            replayResult.consumerReplayPlans.single().fifoConsumptionRequest.stockRevisionReference
+        )
     }
 
     @Test

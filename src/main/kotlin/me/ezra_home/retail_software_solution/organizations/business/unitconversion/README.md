@@ -65,3 +65,10 @@ eviction and the commit would otherwise cache the old committed rows, and a rebu
 rolls back would cache rows that never existed. The cache is per JVM.
 
 Every write in `UnitValueService` invalidates.
+
+## 5. Quantity breakdowns
+
+`QuantityBreakdownFactory.forBaseUnits(baseUnitIds)` (`api/`) returns one `QuantityBreakdown` per base unit, built from the cached
+graph's breakdown units, so it is invalidated with the graph. A breakdown renders a storage-unit quantity in the product's units
+(for example "2 boxes 3 pcs"). It depends on nothing but this domain's facade; the per-product lookup that turns location products
+into base units is `ProductStockBreakdownProvider` in `location_product/api`.

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase_movement_context_backfill
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PurchaseMovementContextBackfillStore
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PurchaseMovementContextCandidate
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.PurchaseMovementContextBackfillStore
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.PurchaseMovementContextCandidate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,7 +37,9 @@ class LocationPurchaseMovementContextBackfillerTest {
     @Test
     fun `an empty batch updates nothing`() {
         val startingId = UUID(0L, 0L)
-        `when`(purchaseMovementContextBackfillStore.findMovementsMissingContext(startingId, 500)).thenReturn(emptyList())
+        `when`(
+            purchaseMovementContextBackfillStore.findMovementsMissingContext(startingId, 500)
+        ).thenReturn(emptyList())
 
         val batch = locationPurchaseMovementContextBackfiller.backfillNextBatch(startingId)
 

@@ -7,7 +7,7 @@ adjustment, never edited.
 
 Like `opening_stock`, the row exists next to the real ledger (`stock/StockEntryEntity` / `StockMovementEntity`) to carry
 what that ledger has no place for: the typed quantity and unit, the category, the reason, the note and the total cost.
-Balances change only through `stock/api/StockAdjustmentStockUpdater`. The category, reason and note are also stored on
+Balances change only through `stock/api/updater/StockAdjustmentStockUpdater`. The category, reason and note are also stored on
 every movement the adjustment produces (`StockMovementEntity.category` / `reasonId` / `note`).
 
 ## Categories (`StockAdjustmentCategoryRules`)

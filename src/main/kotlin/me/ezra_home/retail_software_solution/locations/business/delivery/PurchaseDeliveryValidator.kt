@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
@@ -13,7 +13,7 @@ import java.util.UUID
 @Component
 class PurchaseDeliveryValidator(
   private val locationProductDataFetcher: LocationProductDataFetcher,
-  private val stockBreakdownProvider: StockBreakdownProvider
+  private val productStockBreakdownProvider: ProductStockBreakdownProvider
 ) {
 
   fun validate(purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto, purchaseLineById: Map<UUID, PurchaseLineDto>) {
@@ -36,7 +36,7 @@ class PurchaseDeliveryValidator(
     storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>
   ) {
     val locationProducts = locationProductDataFetcher.findSummaryByIds(purchaseLineById.values.map { it.locationProductId }.toSet())
-    val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(
+    val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
       purchaseLineById.values.map { it.locationProductId }.toSet()
     )
     purchaseDeliveryCreateDto.lines.forEach { lineDto ->
@@ -64,7 +64,7 @@ class PurchaseDeliveryValidator(
     if (providedQuantity <= maximumQuantity) return
     throw maximumQuantityExceeded(
       locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label,
-      stockBreakdownProvider.forLocationProducts(setOf(locationProductId)).getValue(locationProductId),
+      productStockBreakdownProvider.forLocationProducts(setOf(locationProductId)).getValue(locationProductId),
       maximumQuantity,
       providedQuantity
     )

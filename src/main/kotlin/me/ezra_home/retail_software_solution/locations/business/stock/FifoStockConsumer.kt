@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoConsumptionRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoConsumptionRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoTakePlanner
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.PlannedTake
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -24,7 +24,10 @@ object FifoStockConsumer {
         quantityBreakdown: QuantityBreakdown,
         productLabel: String
     ): FifoConsumptionResult {
-        val plannedTakes = FifoTakePlanner.planTakes(fifoEntries.map { it.toFifoLayer() }, fifoConsumptionRequest.storageQuantity)
+        val plannedTakes = FifoTakePlanner.planTakes(
+            fifoEntries.map { it.toFifoLayer() },
+            fifoConsumptionRequest.storageQuantity
+        )
         throwIfNotFulfilled(fifoConsumptionRequest, plannedTakes, quantityBreakdown, productLabel)
         return applyTakes(fifoConsumptionRequest, plannedTakes, fifoEntries, startingBalance, quantityBreakdown)
     }
@@ -57,7 +60,10 @@ object FifoStockConsumer {
                     balanceAfterMovement = runningBalance,
                     movedCost = plannedTake.movedCost,
                     wholeLineQuantityText = fifoConsumptionRequest.wholeLineQuantityText
-                        ?: quantityBreakdown.renderUserProvided(fifoConsumptionRequest.userProvidedQuantity, fifoConsumptionRequest.unitId),
+                        ?: quantityBreakdown.renderUserProvided(
+                            fifoConsumptionRequest.userProvidedQuantity,
+                            fifoConsumptionRequest.unitId
+                        ),
                     documentReference = fifoConsumptionRequest.documentReference,
                     detailReference = fifoConsumptionRequest.detailReference,
                     unitId = fifoConsumptionRequest.unitId,

@@ -3,12 +3,12 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.api
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineEntity
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseValidator
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
@@ -24,7 +24,7 @@ class PurchaseCanceller(
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
     private val purchaseDataFetcher: PurchaseDataFetcher,
     private val locationProductDataFetcher: LocationProductDataFetcher,
-    private val stockBreakdownProvider: StockBreakdownProvider,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
 ) {
 
     fun cancel(purchaseId: UUID, lines: List<PurchaseCancelLinesDto>): PurchaseResponseDto {
@@ -46,7 +46,9 @@ class PurchaseCanceller(
                 .filter { (line, cancel) -> cancel.unitId != null && cancel.unitId != line.unitId }
                 .map { (line, cancel) -> LocationProductUnitRequestDto(line.locationProductId, cancel.unitId!!) }
         )
-        val breakdownByLocationProductId = stockBreakdownProvider.forLocationProducts(cancelledLines.map { (line, _) -> line.locationProductId }.toSet())
+        val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
+            cancelledLines.map { (line, _) -> line.locationProductId }.toSet()
+        )
         val toSave = cancelledLines.map { (line, cancel) ->
             val storageUnitsPerUserProvidedUnit = if (cancel.unitId == null || cancel.unitId == line.unitId) {
                 line.storageUnitsPerUserProvidedUnit

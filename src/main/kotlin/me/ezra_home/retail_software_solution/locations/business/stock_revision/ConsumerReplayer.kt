@@ -1,11 +1,11 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import java.math.BigDecimal
-import me.ezra_home.retail_software_solution.locations.business.stock.api.ConsumerReplayPlan
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoConsumptionRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoTakePlanner
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PlannedTake
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayPlan
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoConsumptionRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoTakePlanner
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.PlannedTake
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -25,7 +25,10 @@ object ConsumerReplayer {
 
         consumptionsOnReplacedLayer.sortedBy { it.orderOfConsumption }.forEach { stockEntryConsumption ->
             val availableStockLayers = availableFifoEntries.map { it.fifoLayer }
-            val plannedTakes = FifoTakePlanner.planTakes(availableStockLayers, stockEntryConsumption.netConsumedStorageQuantity)
+            val plannedTakes = FifoTakePlanner.planTakes(
+                availableStockLayers,
+                stockEntryConsumption.netConsumedStorageQuantity
+            )
 
             uncoveredQuantityErrorOf(stockEntryConsumption, plannedTakes, productBeingReplayed)
                 ?.let {
@@ -53,7 +56,9 @@ object ConsumerReplayer {
         productBeingReplayed: ProductBeingReplayed
     ): String? {
         val quantityRequired = stockEntryConsumption.netConsumedStorageQuantity
-        val availableQuantity = plannedTakes.fold(ExactQuantity.ZERO) { sum, plannedTake -> sum + plannedTake.storageQuantity }
+        val availableQuantity = plannedTakes.fold(
+            ExactQuantity.ZERO
+        ) { sum, plannedTake -> sum + plannedTake.storageQuantity }
         if (availableQuantity >= quantityRequired) return null
         val quantityBreakdown = productBeingReplayed.quantityBreakdown
         return "Cannot replay ${stockEntryConsumption.stockMovementOrigin.displayText}" +
@@ -62,7 +67,10 @@ object ConsumerReplayer {
                 " of ${quantityBreakdown.render(quantityRequired)}."
     }
 
-    private fun afterTakes(fifoEntries: List<StockEntryFifoDto>, plannedTakes: List<PlannedTake>): List<StockEntryFifoDto> {
+    private fun afterTakes(
+        fifoEntries: List<StockEntryFifoDto>,
+        plannedTakes: List<PlannedTake>
+    ): List<StockEntryFifoDto> {
         val plannedTakeByStockEntryId = plannedTakes.associateBy { it.stockEntryId }
         return fifoEntries.map { fifoEntry ->
             val plannedTake = plannedTakeByStockEntryId[fifoEntry.fifoLayer.stockEntryId]
@@ -90,7 +98,9 @@ object ConsumerReplayer {
             storageUnitsPerUserProvidedUnit = quantityAsEntered.storageUnitsPerUserProvidedUnit,
             movementType = consumer.movementType,
             documentReference = stockMovementOrigin.documentReference
-                ?: throw RtsGenericException("A draw for ${productBeingReplayed.productLabel} has no document reference and cannot be replayed."),
+                ?: throw RtsGenericException(
+                    "A draw for ${productBeingReplayed.productLabel} has no document reference and cannot be replayed."
+                ),
             detailReference = stockMovementOrigin.detailReference,
             adjustmentDetails = consumer.adjustmentDetails,
             wholeLineQuantityText = quantityAsEntered.userProvidedQuantityText,

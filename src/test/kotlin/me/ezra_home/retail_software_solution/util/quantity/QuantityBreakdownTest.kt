@@ -28,7 +28,7 @@ class QuantityBreakdownTest {
   }
 
   @Test
-  fun `the storage unit is the root of the group, one of it is one storage unit, and the text is the quantity broken down`() {
+  fun `the storage unit is the group's root, one of it is one storage unit, the text is the quantity broken down`() {
     val storageUnit = baleBreakdown.storageUnitAsEntered(ExactQuantity.ofStorage(BigDecimal(17995)))
 
     assertEquals(pieceId, storageUnit.unitId)

@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PurchaseMovementContextBackfillStore
-import me.ezra_home.retail_software_solution.locations.business.stock.api.PurchaseMovementContextCandidate
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.PurchaseMovementContextBackfillStore
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.PurchaseMovementContextCandidate
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

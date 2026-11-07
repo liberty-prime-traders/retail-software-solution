@@ -2,9 +2,9 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.stock.api.FifoLayer
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
+import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -37,11 +37,26 @@ class ReplayPlannerTest {
     )
 
     private fun givenLayerWithStockLeft(quantity: String, batchCost: String) {
-        val fifoLayer = FifoLayer(UUID.randomUUID(), BigDecimal(quantity), BigDecimal(batchCost), BigDecimal(quantity), BigDecimal(batchCost))
+        val fifoLayer = FifoLayer(
+            UUID.randomUUID(),
+            BigDecimal(quantity),
+            BigDecimal(batchCost),
+            BigDecimal(quantity),
+            BigDecimal(batchCost)
+        )
         `when`(stockEntryFetcher.findWithStockLeftInDrawOrder(locationProductId))
             .thenReturn(listOf(StockEntryFifoDto("STE2", locationProductId, BigDecimal.ONE, fifoLayer)))
         `when`(locationProductDataFetcher.findSummaryByIds(anyCollection())).thenReturn(
-            mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP1", UUID.randomUUID(), "Sugar", "Pantry", unitId))
+            mapOf(
+                locationProductId to LocationProductSummaryDto(
+                    locationProductId,
+                    "LP1",
+                    UUID.randomUUID(),
+                    "Sugar",
+                    "Pantry",
+                    unitId
+                )
+            )
         )
     }
 
@@ -66,7 +81,11 @@ class ReplayPlannerTest {
     fun `consumers the later layers can cover are planned at the replacement's cost`() {
         givenLayerWithStockLeft("10", "120.00")
 
-        val consumerReplayPlans = replayPlanner.plan(listOf(consumption("SAL1", "4", "40.00")), "STRV000001", quantityBreakdown)
+        val consumerReplayPlans = replayPlanner.plan(
+            listOf(consumption("SAL1", "4", "40.00")),
+            "STRV000001",
+            quantityBreakdown
+        )
 
         assertEquals(0, BigDecimal("48.00").compareTo(consumerReplayPlans.single().newCost))
         assertEquals(0, BigDecimal("40.00").compareTo(consumerReplayPlans.single().oldCost))
@@ -77,7 +96,11 @@ class ReplayPlannerTest {
         givenLayerWithStockLeft("5", "60.00")
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            replayPlanner.plan(listOf(consumption("SAL1", "4", "40.00"), consumption("SAL2", "4", "40.00")), "STRV000001", quantityBreakdown)
+            replayPlanner.plan(
+                listOf(consumption("SAL1", "4", "40.00"), consumption("SAL2", "4", "40.00")),
+                "STRV000001",
+                quantityBreakdown
+            )
         }
 
         assertEquals(1, (exception.payload as List<*>).size)

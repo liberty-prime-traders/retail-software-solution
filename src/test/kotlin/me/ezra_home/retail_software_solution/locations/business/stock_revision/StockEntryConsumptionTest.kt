@@ -26,13 +26,17 @@ class StockEntryConsumptionTest {
     fun `consumptions of different documents on one layer pass`() {
         val stockEntryId = UUID.randomUUID()
 
-        StockEntryConsumption.requireOnOneLayer(listOf(consumptionOn(stockEntryId, "SAL1"), consumptionOn(stockEntryId, "SAL2")))
+        StockEntryConsumption.requireOnOneLayer(
+            listOf(consumptionOn(stockEntryId, "SAL1"), consumptionOn(stockEntryId, "SAL2"))
+        )
     }
 
     @Test
     fun `consumptions on two layers are rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
-            StockEntryConsumption.requireOnOneLayer(listOf(consumptionOn(UUID.randomUUID(), "SAL1"), consumptionOn(UUID.randomUUID(), "SAL2")))
+            StockEntryConsumption.requireOnOneLayer(
+                listOf(consumptionOn(UUID.randomUUID(), "SAL1"), consumptionOn(UUID.randomUUID(), "SAL2"))
+            )
         }
     }
 

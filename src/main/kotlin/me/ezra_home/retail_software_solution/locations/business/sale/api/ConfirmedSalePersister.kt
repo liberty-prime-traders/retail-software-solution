@@ -14,9 +14,9 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleReposit
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleTaxFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
-import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleLineStockRequest
-import me.ezra_home.retail_software_solution.locations.business.stock.api.SaleStockUpdater
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockReserver
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleLineStockRequest
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service

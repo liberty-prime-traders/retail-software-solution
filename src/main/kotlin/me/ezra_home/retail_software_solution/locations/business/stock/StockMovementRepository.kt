@@ -24,7 +24,8 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
   )
   fun findPresentDetailReferences(documentReference: String, detailReferences: Collection<String>, movementType: MovementType): Set<String>
 
-  // A cancelled dispatch leaves its TRANSFER_OUT rows in place and adds a TRANSFER_CANCELLED row for each, so the net is what is still out.
+  // A cancelled dispatch leaves its TRANSFER_OUT rows in place and adds a TRANSFER_CANCELLED row for each, so the net
+  // is what is still out.
   @Query("" +
           "SELECT COALESCE(SUM(CASE WHEN sm.movementType = :transferOut THEN 1 ELSE -1 END), 0) " +
           "FROM StockMovementEntity sm " +
@@ -61,7 +62,8 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
   ): Long
 
   // Native, because the delivery and purchase tables belong to other domains. Paged by id, so a movement that never
-  // matches (its delivery is gone) is passed over instead of rescanned. Deleted with the purchase movement context backfill.
+  // matches (its delivery is gone) is passed over instead of rescanned. Deleted with the purchase movement context
+  // backfill.
   @Query("""
     SELECT sm.id AS "stockMovementId", p.reference_number AS "purchaseReferenceNumber"
     FROM stock_movement sm
@@ -71,7 +73,11 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     ORDER BY sm.id
     LIMIT :batchSize
   """, nativeQuery = true)
-  fun findMovementsOfTypeMissingPurchaseContext(movementTypeCode: String, afterStockMovementId: UUID, batchSize: Int): List<PurchaseMovementContextProjection>
+  fun findMovementsOfTypeMissingPurchaseContext(
+    movementTypeCode: String,
+    afterStockMovementId: UUID,
+    batchSize: Int
+  ): List<PurchaseMovementContextProjection>
 
   @Query("""
     SELECT COUNT(*)
@@ -83,7 +89,10 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
 
   fun findByStockEntryId(stockEntryId: UUID): List<StockMovementEntity>
 
-  fun findByLocationProductIdAndDocumentReferenceIn(locationProductId: UUID, documentReferences: Collection<String>): List<StockMovementEntity>
+  fun findByLocationProductIdAndDocumentReferenceIn(
+    locationProductId: UUID,
+    documentReferences: Collection<String>
+  ): List<StockMovementEntity>
 
   fun findByLocationProductId(locationProductId: UUID, pageable: Pageable): List<StockMovementEntity>
 }
