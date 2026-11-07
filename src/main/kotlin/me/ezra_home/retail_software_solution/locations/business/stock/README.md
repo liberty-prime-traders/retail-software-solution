@@ -32,6 +32,9 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
   and detail references don't say. Purchase deliveries write `Purchase <reference>` on `PURCHASE_RECEIVED` movements
   (`StockMovementContexts`), and a stock revision's restore, drain and replay write the revision's reference (see `../stock_revision/README.md`). Movements
   written before deliveries carried it get theirs from the purchase movement context backfill.
+- The stock history (`StockMovementHistoryBuilder`) is the 100 most recent movements of a location product, newest first
+  by `created_on` then id. The query must stay sorted: an unsorted limit returns arbitrary rows, and an updated row
+  moves physically and can fall out of it.
 - Updaters take the `LockNamespaces.PRODUCT` advisory lock for the products they change before touching layers.
 - Reservations are per product, not per layer, and live in the `stock_reservation` domain. Availability is the balance minus the
   reserved total (`StockAvailabilityValidator`, `StockAvailabilityFetcher`); those two stay here because they read the balance.
@@ -40,14 +43,14 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
 
 Other domains reach stock only through `stock/api`, grouped by what the caller does:
 
-| Subpackage | What it holds |
-|---|---|
-| `updater/` | The updaters that change stock for a document (sale, transfer dispatch and receipt, adjustment, purchase delivery, opening stock) and their request and result types |
-| `revision/` | What a stock revision writes through: `StockRevisionCommitter`, `StockReplacementLayerRecorder`, and the drafts, plans and DTOs they take and return |
-| `read/` | Read access: balances, entry and movement DTOs and fetchers, the movement history, the delivery line inspector and the purchase movement context backfill store |
-| `fifo/` | FIFO planning types: `FifoTakePlanner`, `FifoConsumptionRequest`, `PlannedTake`, `FifoLayer`, `StockEntryFifoDto` |
-| `availability/` | The availability guard and fetcher |
-| (root) | Vocabulary shared by all of the above: adjustment category and details, entry status, movement contexts |
+| Subpackage      | What it holds                                                                                                                                                        |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `updater/`      | The updaters that change stock for a document (sale, transfer dispatch and receipt, adjustment, purchase delivery, opening stock) and their request and result types |
+| `revision/`     | What a stock revision writes through: `StockRevisionCommitter`, `StockReplacementLayerRecorder`, and the drafts, plans and DTOs they take and return                 |
+| `read/`         | Read access: balances, entry and movement DTOs and fetchers, the movement history, the delivery line inspector and the purchase movement context backfill store      |
+| `fifo/`         | FIFO planning types: `FifoTakePlanner`, `FifoConsumptionRequest`, `PlannedTake`, `FifoLayer`, `StockEntryFifoDto`                                                    |
+| `availability/` | The availability guard and fetcher                                                                                                                                   |
+| (root)          | Vocabulary shared by all of the above: adjustment category and details, entry status, movement contexts                                                              |
 
 `ArchitectureTest` treats every package whose name contains `.api` as public, so the subpackages need no rule of their own.
 
@@ -56,15 +59,15 @@ Other domains reach stock only through `stock/api`, grouped by what the caller d
 Every `MovementType` declares its `stockDirection`, so a new type cannot be added without saying whether it puts units
 in or takes them out (`stockDirection`, `decreasesStock()`).
 
-| Role | Types |
-|---|---|
-| Decreases stock: a draw from a layer | `SALE`, `STOCK_ADJUSTMENT_DECREASE`, `TRANSFER_OUT`, `SUPPLIER_RETURN` |
-| Decreases stock: zeroes a layer a revision replaces (`StockEntryDrainer`), not a consumption | `STOCK_REVISION_ZEROING` |
-| Increases stock, a reversal: undoes a draw, listed in `MovementType.reversals` | `SALE_VOID` (of `SALE`), `TRANSFER_CANCELLED` (of `TRANSFER_OUT`) |
-| Increases stock, a reversal of a draw of any type, written by a revision's restore (`StockEntryRestorer`) | `REVERSED_BY_REVISION` |
-| Increases stock, a layer creator: how a layer was born | `PURCHASE_RECEIVED`, `OPENING_STOCK`, `TRANSFER_IN`, `STOCK_ADJUSTMENT_INCREASE` |
-| Increases stock, neither: `CUSTOMER_RETURN` | |
-| Cannot be reversed: `MovementType.movementsThatCannotBeReversed` | `CUSTOMER_RETURN`, `SUPPLIER_RETURN` |
+| Role                                                                                                      | Types                                                                            |
+|-----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| Decreases stock: a draw from a layer                                                                      | `SALE`, `STOCK_ADJUSTMENT_DECREASE`, `TRANSFER_OUT`, `SUPPLIER_RETURN`           |
+| Decreases stock: zeroes a layer a revision replaces (`StockEntryDrainer`), not a consumption              | `STOCK_REVISION_ZEROING`                                                         |
+| Increases stock, a reversal: undoes a draw, listed in `MovementType.reversals`                            | `SALE_VOID` (of `SALE`), `TRANSFER_CANCELLED` (of `TRANSFER_OUT`)                |
+| Increases stock, a reversal of a draw of any type, written by a revision's restore (`StockEntryRestorer`) | `REVERSED_BY_REVISION`                                                           |
+| Increases stock, a layer creator: how a layer was born                                                    | `PURCHASE_RECEIVED`, `OPENING_STOCK`, `TRANSFER_IN`, `STOCK_ADJUSTMENT_INCREASE` |
+| Increases stock, neither: `CUSTOMER_RETURN`                                                               |                                                                                  |
+| Cannot be reversed: `MovementType.movementsThatCannotBeReversed`                                          | `CUSTOMER_RETURN`, `SUPPLIER_RETURN`                                             |
 
 ## Stock revisions
 

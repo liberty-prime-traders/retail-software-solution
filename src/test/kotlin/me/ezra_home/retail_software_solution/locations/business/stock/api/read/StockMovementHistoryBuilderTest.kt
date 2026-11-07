@@ -15,7 +15,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import org.springframework.data.domain.Pageable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -57,7 +56,7 @@ class StockMovementHistoryBuilderTest {
     }
 
     private fun givenMovements(vararg movements: StockMovementEntity, baleSize: Long = 18L) {
-        `when`(stockMovementRepository.findByLocationProductId(locationProductId, Pageable.ofSize(100)))
+        `when`(stockMovementRepository.findByLocationProductId(locationProductId, StockMovementHistoryBuilder.LATEST_MOVEMENTS))
             .thenReturn(movements.toList())
         `when`(unitValueFetcher.getUnitNamesById()).thenReturn(mapOf(pieceId to "Piece", baleId to "Bale"))
         `when`(unitConversionGraphFacade.getOrLoad()).thenReturn(graph(baleSize))

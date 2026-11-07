@@ -7,7 +7,8 @@ import me.ezra_home.retail_software_solution.organizations.business.unitconversi
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.organizations.business.unitvalue.api.UnitValueFetcher
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
-import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.UUID
@@ -21,7 +22,7 @@ class StockMovementHistoryBuilder(
 ) {
 
     fun build(locationProductId: UUID): Collection<StockMovementResponse> {
-        val movements = stockMovementRepository.findByLocationProductId(locationProductId, Pageable.ofSize(100))
+        val movements = stockMovementRepository.findByLocationProductId(locationProductId, LATEST_MOVEMENTS)
         if (movements.isEmpty()) return emptyList()
 
         val unitNamesById = unitValueFetcher.getUnitNamesById()
@@ -63,5 +64,16 @@ class StockMovementHistoryBuilder(
         val storageUnitName = unitNamesById[unitConversionGraph.getStorageUnitId(movement.unitId)] ?: return null
         val recordedFactor = BigDecimal.valueOf(movement.storageUnitsPerUserProvidedUnit)
         return DisplayFormatters.pluralize("1 $unitName was ${movement.storageUnitsPerUserProvidedUnit} $storageUnitName", recordedFactor)
+    }
+
+    companion object {
+        private const val CREATED_ON_PROPERTY = "createdOn"
+        private const val ID_PROPERTY = "id"
+
+        internal val LATEST_MOVEMENTS: PageRequest = PageRequest.of(
+            0,
+            100,
+            Sort.by(Sort.Order.desc(CREATED_ON_PROPERTY), Sort.Order.desc(ID_PROPERTY))
+        )
     }
 }
