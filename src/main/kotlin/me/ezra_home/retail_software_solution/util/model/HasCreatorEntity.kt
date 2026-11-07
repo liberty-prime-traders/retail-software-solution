@@ -17,7 +17,7 @@ abstract class HasCreatorEntity(
     @Column(name = "created_by_id", updatable = false)
     var createdById: UUID? = null,
 
-    @Column(name = "created_on", updatable = false)
+    @Column(name = ColumnNames.Common.CREATED_ON, updatable = false)
     var createdOn: OffsetDateTime? = null
 
 ): BaseEntity() {

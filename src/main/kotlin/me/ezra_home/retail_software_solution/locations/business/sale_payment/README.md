@@ -18,9 +18,9 @@ sale and sale-session flows call into this package; this document covers the pay
 
 ## Where voided rows are still read directly
 
-`SalePaymentFetcher.getPaymentSnapshots` and the payment search list voided payments with their reason, so they read
-`sale_payment` and join `sale_payment_void`. The payment search summary splits active and voided totals from that same
-join. A change to what counts as voided therefore touches the view and these joins.
+`SalePaymentFetcher.getPaymentSnapshots` lists voided payments with their reason, and the Payments screen search
+(`reports/payments`, see its README) lists them and splits active and voided totals the same way, so they read
+`sale_payment` and join `sale_payment_void`. A change to what counts as voided therefore touches the view and these joins.
 
 ## Recording and voiding
 

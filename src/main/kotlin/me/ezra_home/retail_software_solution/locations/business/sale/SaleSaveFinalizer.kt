@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale
 
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.RetainedSaleAdjustments
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.PersistedSalePayment
@@ -21,6 +22,7 @@ class SaleSaveFinalizer(
         saleEntity: SaleEntity,
         saleSaveRequest: SaleSaveRequest,
         lineSyncResult: SaleLineSync.Result,
+        retainedSaleAdjustments: RetainedSaleAdjustments,
     ): SaleSaveFinalizeResult {
         val saleId = saleEntity.id!!
         val saleAdjustmentIdsByClientKey = saleAdjustmentSyncer.sync(
@@ -28,6 +30,7 @@ class SaleSaveFinalizer(
             saleSaveRequest = saleSaveRequest,
             persistedSaleLines = lineSyncResult.toPersistedSaleLines(),
             saleLineIdsByClientKey = lineSyncResult.saleLineIdsByClientKey,
+            retainedSaleAdjustments = retainedSaleAdjustments,
         )
         saleTotalsApplier.applyTotals(
             saleEntity,

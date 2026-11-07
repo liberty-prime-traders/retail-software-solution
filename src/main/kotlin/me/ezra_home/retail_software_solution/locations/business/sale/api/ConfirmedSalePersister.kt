@@ -14,6 +14,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.SaleReposit
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleSaveFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleTaxFinalizer
 import me.ezra_home.retail_software_solution.locations.business.sale.SaleValidator
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleLineStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_reservation.api.StockReserver
@@ -35,6 +36,7 @@ class ConfirmedSalePersister(
     private val saleDataFetcher: SaleDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
     private val saleSaveFinalizer: SaleSaveFinalizer,
+    private val saleAdjustmentSyncer: SaleAdjustmentSyncer,
     private val saleValidator: SaleValidator,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleTaxFinalizer: SaleTaxFinalizer,
@@ -53,6 +55,7 @@ class ConfirmedSalePersister(
         saleRepository.save(saleEntity)
 
         stockReserver.clearBySale(saleEntity.id!!)
+        val retainedSaleAdjustments = saleAdjustmentSyncer.deleteRemoved(saleEntity.id!!, saleSaveRequest)
         val lineSyncResult = SaleLineSync.sync(saleEntity, saleSaveRequest, saleLineRepository)
         guardStockAvailability(saleEntity.id!!, lineSyncResult.persistedSaleLines)
 
@@ -61,6 +64,7 @@ class ConfirmedSalePersister(
             saleEntity = saleEntity,
             saleSaveRequest = saleSaveRequest,
             lineSyncResult = lineSyncResult,
+            retainedSaleAdjustments = retainedSaleAdjustments,
         )
 
         consumeStockAndRecordCogs(saleEntity, lineSyncResult.persistedSaleLines)

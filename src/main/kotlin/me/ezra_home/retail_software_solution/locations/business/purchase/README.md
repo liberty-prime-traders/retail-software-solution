@@ -836,7 +836,7 @@ Add new guards as early as the data they need is in scope.
   only when `supplierIds` is non-empty, a second `GROUP BY supplier_id` query — omitted (`null`)
   otherwise, since an unfiltered per-supplier breakdown would be unbounded. Header totals
   (`purchaseCount`/`totalOrdered`/`totalPaid`) are the sum of the `byPaymentStatus` rows in Kotlin,
-  not a third query — same trick as `SalePaymentSearchService`. `totalOutstanding` is
+  not a third query — same trick as `PaymentSearchService`. `totalOutstanding` is
   `totalOrdered - totalPaid` (the ordered basis): a `PAID` purchase can still show non-zero
   outstanding if more was ordered than delivered. `totalPaid` always excludes voided
   `supplier_payment` rows (joined via `supplier_payment_void`), same as everywhere else paid amounts

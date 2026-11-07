@@ -242,10 +242,14 @@ persistence model, lifecycle, and reconciliation logic.
 
 ### Sync semantics at commit
 
-`SaleAdjustmentSyncer.sync` reconciles the adjustment set against the
-incoming input:
+Both persisters (`DraftSalePersister.saveDraft`, `ConfirmedSalePersister.confirm`)
+call `SaleAdjustmentSyncer.deleteRemoved` before `SaleLineSync.sync`. It returns
+the surviving adjustments, which `SaleAdjustmentSyncer.sync` then reconciles
+against the incoming input, so the adjustment table is read once per save:
 
-- Existing adjustments not in the incoming set → DELETE.
+- Existing adjustments not in the incoming set → DELETE, in `deleteRemoved`.
+  It runs first because `fk_sale_adjustment_sale_line` would otherwise
+  block the sync from deleting a removed line that an adjustment still references.
 - Existing adjustments in the incoming set → UPDATE in place:
   `calculatedAmount` and `saleLineId` are recomputed against the
   just-persisted lines so a kept percentage adjustment reflects the
