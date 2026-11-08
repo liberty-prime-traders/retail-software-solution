@@ -22,7 +22,6 @@ object ConsumerReplayer {
         val productBeingReplayed = replayRequest.productBeingReplayed
         var availableFifoEntries = productBeingReplayed.fifoEntriesAvailableForConsumption
         val problems = mutableListOf<BlockingProblem>()
-        var totalTakenByUncoveredConsumers = ExactQuantity.ZERO
         val movementTypesOfUncoveredConsumers = mutableSetOf<MovementType>()
         val consumerReplayPlans = mutableListOf<ConsumerReplayPlan>()
 
@@ -39,7 +38,6 @@ object ConsumerReplayer {
             availableFifoEntries = afterTakes(availableFifoEntries, plannedTakes)
             val uncoveredQuantity = stockEntryConsumption.netConsumedStorageQuantity - coveredQuantity
             if (uncoveredQuantity > ExactQuantity.ZERO) {
-                totalTakenByUncoveredConsumers += stockEntryConsumption.netConsumedStorageQuantity
                 movementTypesOfUncoveredConsumers.add(stockEntryConsumption.consumer.movementType)
                 problems.add(
                     uncoveredQuantityProblemOf(stockEntryConsumption, coveredQuantity, productBeingReplayed)
@@ -57,7 +55,10 @@ object ConsumerReplayer {
                 )
             )
         }
-        return ReplayResult(consumerReplayPlans, problems, totalTakenByUncoveredConsumers, movementTypesOfUncoveredConsumers)
+        val totalTakenByConsumers = consumptionsOnReplacedLayer.fold(ExactQuantity.ZERO) { sum, stockEntryConsumption ->
+            sum + stockEntryConsumption.netConsumedStorageQuantity
+        }
+        return ReplayResult(consumerReplayPlans, problems, totalTakenByConsumers, movementTypesOfUncoveredConsumers)
     }
 
     private fun uncoveredQuantityProblemOf(

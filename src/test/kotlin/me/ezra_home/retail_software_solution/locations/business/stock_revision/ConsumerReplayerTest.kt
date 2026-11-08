@@ -221,7 +221,7 @@ class ConsumerReplayerTest {
     }
 
     @Test
-    fun `uncovered consumers add up what each one took from the delivery`() {
+    fun `the total taken adds up what each consumer took from the delivery`() {
         val replayResult = replay(
             listOf(
                 consumption(draw("SAL1", "SALL1", "1", "10.00").copy(createdOn = baseTime)),
@@ -233,11 +233,11 @@ class ConsumerReplayerTest {
 
         assertEquals(listOf("SAL1", "SAL2", "SAL3"), replayResult.problems.map { it.documentReference })
         assertEquals("After your change none of it could be covered.", replayResult.problems[0].effect)
-        assertEquals(ExactQuantity.ofStorage(BigDecimal("6")), replayResult.totalTakenByUncoveredConsumers)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("6")), replayResult.totalTakenByConsumers)
     }
 
     @Test
-    fun `a partly covered consumer takes what is left and only the next one's own shortfall is reported`() {
+    fun `a partly covered consumer takes what is left, and the total taken counts the covered ones too`() {
         val replayResult = replay(
             listOf(
                 consumption(draw("SAL1", "SALL1", "4", "40.00").copy(createdOn = baseTime)),
@@ -247,7 +247,7 @@ class ConsumerReplayerTest {
         )
 
         assertTrue(replayResult.problems.single().effect.startsWith("After your change only 1 pc"))
-        assertEquals(ExactQuantity.ofStorage(BigDecimal("4")), replayResult.totalTakenByUncoveredConsumers)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("8")), replayResult.totalTakenByConsumers)
     }
 
     @Test

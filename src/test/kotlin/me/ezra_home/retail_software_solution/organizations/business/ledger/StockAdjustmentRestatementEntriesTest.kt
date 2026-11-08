@@ -6,8 +6,8 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
-import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.PostedStockAdjustmentAccounts
-import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.PostedStockAdjustmentAccountsReader
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.PostedStockAdjustmentAccounts
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.PostedStockAdjustmentAccountsReader
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.StockAdjustmentRestatementAccountingProcessor
 import me.ezra_home.retail_software_solution.util.business.Money
 import org.junit.jupiter.api.Assertions.assertEquals

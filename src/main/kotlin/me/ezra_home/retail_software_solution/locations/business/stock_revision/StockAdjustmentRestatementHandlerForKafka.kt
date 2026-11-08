@@ -2,10 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementFetcher
-import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentAccountCodesFetcher
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockAdjustmentCostRestatedEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockAdjustmentCostRestatementDto
-import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -16,7 +13,7 @@ import java.util.UUID
 class StockAdjustmentRestatementHandlerForKafka(
     stockRevisionRepository: StockRevisionRepository,
     private val stockMovementFetcher: StockMovementFetcher,
-    private val stockAdjustmentAccountCodesFetcher: StockAdjustmentAccountCodesFetcher,
+    private val stockAdjustmentRestatements: StockAdjustmentRestatements,
     private val eventPublisher: ApplicationEventPublisher
 ) : StockRevisionEventHandler(stockRevisionRepository) {
 
@@ -28,8 +25,7 @@ class StockAdjustmentRestatementHandlerForKafka(
     }
 
     fun publish(stockRevision: StockRevisionEntity, consumerCostChanges: List<ConsumerCostChange>) {
-        val adjustmentCostChanges = RestatableConsumers.stockAdjustmentsOf(consumerCostChanges)
-        val restatements = restatementsOf(adjustmentCostChanges)
+        val restatements = stockAdjustmentRestatements.of(consumerCostChanges)
         if (restatements.isEmpty()) return
         eventPublisher.publishEvent(
             StockAdjustmentCostRestatedEvent(
@@ -43,24 +39,5 @@ class StockAdjustmentRestatementHandlerForKafka(
                 postingDate = postingDate()
             )
         )
-    }
-
-    private fun restatementsOf(adjustmentCostChanges: List<ConsumerCostChange>): List<StockAdjustmentCostRestatementDto> {
-        if (adjustmentCostChanges.isEmpty()) return emptyList()
-        val accountCodesByReferenceNumber = stockAdjustmentAccountCodesFetcher
-            .getByReferenceNumber(adjustmentCostChanges.map { it.documentReference })
-        return adjustmentCostChanges
-            .groupBy { it.documentReference }
-            .map { (adjustmentReferenceNumber, costChanges) ->
-                val currentRuleAccountCodes = accountCodesByReferenceNumber.getValue(adjustmentReferenceNumber)
-                StockAdjustmentCostRestatementDto(
-                    adjustmentReferenceNumber = adjustmentReferenceNumber,
-                    currentRuleDebitAccountCode = currentRuleAccountCodes.debitAccountCode,
-                    currentRuleCreditAccountCode = currentRuleAccountCodes.creditAccountCode,
-                    oldCostTotal = Money.of(costChanges.sumOf { it.oldCost }),
-                    newCostTotal = Money.of(costChanges.sumOf { it.newCost }),
-                )
-            }
-            .filter { it.oldCostTotal.toBigDecimal().compareTo(it.newCostTotal.toBigDecimal()) != 0 }
     }
 }

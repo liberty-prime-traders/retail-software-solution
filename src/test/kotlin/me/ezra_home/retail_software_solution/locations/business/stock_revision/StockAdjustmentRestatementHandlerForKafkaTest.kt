@@ -29,7 +29,7 @@ class StockAdjustmentRestatementHandlerForKafkaTest {
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val stockAdjustmentRestatementHandlerForKafka = StockAdjustmentRestatementHandlerForKafka(
         mock(StockRevisionRepository::class.java), mock(StockMovementFetcher::class.java),
-        stockAdjustmentAccountCodesFetcher, eventPublisher
+        StockAdjustmentRestatements(stockAdjustmentAccountCodesFetcher), eventPublisher
     )
     private val stockRevision = StockRevisionEntity(
         sourceType = StockRevisionSourceType.DELIVERY_LINE,

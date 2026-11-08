@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
+import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
@@ -51,12 +52,12 @@ class RestatableConsumersTest {
 
     @Test
     fun `any other consumer type is refused and named`() {
-        val exception = assertThrows(IllegalStateException::class.java) {
+        val exception = assertThrows(RtsGenericException::class.java) {
             RestatableConsumers.requireAllRestatable(
                 listOf(consumption(MovementType.SALE), consumption(MovementType.TRANSFER_OUT))
             )
         }
 
-        assertTrue(exception.message!!.contains("TRANSFER_OUT"))
+        assertTrue(exception.message.contains("TRANSFER_OUT"))
     }
 }

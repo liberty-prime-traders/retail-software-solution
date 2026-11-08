@@ -22,6 +22,6 @@ data class ProductBeingReplayed(
 data class ReplayResult(
     val consumerReplayPlans: List<ConsumerReplayPlan>,
     val problems: List<BlockingProblem>,
-    val totalTakenByUncoveredConsumers: ExactQuantity = ExactQuantity.ZERO,
+    val totalTakenByConsumers: ExactQuantity = ExactQuantity.ZERO,
     val movementTypesOfUncoveredConsumers: Set<MovementType> = emptySet(),
 )

@@ -3,11 +3,10 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger.proc
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SaleCostRestatedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.RevisionLedgerEntries
 import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
@@ -28,24 +27,14 @@ class SaleCogsRestatementAccountingProcessor(
             event.sourceContext, event.stockRevisionReferenceNumber, LedgerSourceType.SALE_COGS_RESTATEMENT
         ).not()
 
-    override fun prepareLedgerRequest(event: SaleCostRestatedEvent): LedgerPostingRequest {
-        val costChange = event.newCostTotal.toBigDecimal().subtract(event.oldCostTotal.toBigDecimal())
-        val amount = costChange.abs()
-        val entries = buildList {
-            if (costChange.signum() > 0) {
-                addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.COST_OF_GOODS_SOLD.code, amount))
-                addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.INVENTORY.code, amount))
-            } else {
-                addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.INVENTORY.code, amount))
-                addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.COST_OF_GOODS_SOLD.code, amount))
-            }
-        }
-        return LedgerPostingRequest(
+    override fun prepareLedgerRequest(event: SaleCostRestatedEvent): LedgerPostingRequest =
+        LedgerPostingRequest(
             sourceReferenceNumber = event.stockRevisionReferenceNumber,
             sourceType = LedgerSourceType.SALE_COGS_RESTATEMENT,
             postingDate = event.postingDate,
-            entries = entries,
+            entries = RevisionLedgerEntries.saleCogsRestatement(
+                event.oldCostTotal.toBigDecimal(), event.newCostTotal.toBigDecimal()
+            ),
             subledgerEntries = emptyList()
         )
-    }
 }

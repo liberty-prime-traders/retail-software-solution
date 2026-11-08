@@ -19,6 +19,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.revisi
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineStockReviser
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.NetConsumptionCalculator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayPlanner
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReservationShortfall
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ResetPlanner
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.RevisionCostPropagator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.OrderOfConsumption
@@ -155,7 +156,7 @@ class DeliveryLineRevisionInitiatorTest {
         problems = emptyList(),
     )
     private val passingAssessment = DeliveryLineRevisionAssessment(
-        validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()), emptyList()
+        validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()), null
     )
     private val deliveredStorageQuantity = ExactQuantity.ofStorage(BigDecimal("30"))
     private val purchaseResponse = PurchaseResponseDto(
@@ -314,7 +315,8 @@ class DeliveryLineRevisionInitiatorTest {
         val problem = BlockingProblem("SAL000420 (draft)", "Draft sale holding 4 pcs of Sugar.", "Remove it.")
         `when`(deliveryLineRevisionAssessor.assess(request())).thenReturn(
             DeliveryLineRevisionAssessment(
-                validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()), listOf(problem)
+                validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()),
+                ReservationShortfall(listOf(problem), "Sugar", ExactQuantity.ZERO, ExactQuantity.ZERO)
             )
         )
 
@@ -372,7 +374,7 @@ class DeliveryLineRevisionInitiatorTest {
         )
         `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(listOf(transferOut))
 
-        assertThrows(IllegalStateException::class.java) {
+        assertThrows(RtsGenericException::class.java) {
             deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
         }
 

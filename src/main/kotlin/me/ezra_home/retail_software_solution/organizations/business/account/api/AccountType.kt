@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account.api
 
 import me.ezra_home.retail_software_solution.util.enums.HasCode
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
+import java.math.BigDecimal
 
 enum class AccountType(override val code: String, val normalBalance: EntryType) : HasCode {
     ASSET("A", EntryType.DEBIT),
@@ -34,6 +35,16 @@ enum class AccountType(override val code: String, val normalBalance: EntryType) 
         EQUITY, EQUITY_CONTRA -> AccountCategory.EQUITY
         REVENUE, REVENUE_CONTRA -> AccountCategory.REVENUE
         EXPENSE, EXPENSE_CONTRA -> AccountCategory.EXPENSE
+    }
+
+    fun amountInNormalDirection(entryType: EntryType, amount: BigDecimal): BigDecimal =
+        entryType.amountTowards(normalBalance, amount)
+
+    // What an entry on an account of this type does to profit; entries on balance sheet accounts do none.
+    fun profitChangeOf(entryType: EntryType, amount: BigDecimal): BigDecimal {
+        if (category() != AccountCategory.REVENUE && category() != AccountCategory.EXPENSE) return BigDecimal.ZERO
+        val changeToAccount = amountInNormalDirection(entryType, amount)
+        return if (balanceEffect() == BalanceEffect.ADDS) changeToAccount else changeToAccount.negate()
     }
 
     fun isContra() = this in CONTRA_ACCOUNTS

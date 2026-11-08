@@ -20,18 +20,18 @@ class ReservationShortfallChecker(
     private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
-    fun problemsAfterPendingChange(
+    fun shortfallAfterPendingChange(
         locationProductId: UUID,
         pendingStorageQuantityChange: ExactQuantity,
         quantityBreakdown: QuantityBreakdown
-    ): List<BlockingProblem> {
+    ): ReservationShortfall? {
         val productReservations = stockReserver.loadReservationBreakdown(listOf(locationProductId))[locationProductId]
-            ?: return emptyList()
+            ?: return null
         val onHandAfterChange = ExactQuantity.ofStorage(
             stockBalanceFetcher.getLatestBalances(listOf(locationProductId)).getValue(locationProductId)
         ) + pendingStorageQuantityChange
         val reservedTotal = ExactQuantity.ofStorage(productReservations.total)
-        if (reservedTotal <= onHandAfterChange) return emptyList()
+        if (reservedTotal <= onHandAfterChange) return null
 
         val productName = locationProductDataFetcher.findSummaryByIds(listOf(locationProductId))
             .getValue(locationProductId).productName
@@ -44,7 +44,7 @@ class ReservationShortfallChecker(
             "the draft sales hold $reservedBreakdown between them"
         }
         val effect = "After your change only $eventualOnHandBreakdown would be left in stock, but $holdersText."
-        return productReservations.bySale
+        val blockingProblems = productReservations.bySale
             .map { (saleId, reservedQuantity) ->
                 BlockingProblem(
                     documentReference = "${referenceNumberBySaleId.getValue(saleId)} (draft)",
@@ -54,5 +54,6 @@ class ReservationShortfallChecker(
                 )
             }
             .sortedBy { it.documentReference }
+        return ReservationShortfall(blockingProblems, productName, onHandAfterChange, reservedTotal)
     }
 }

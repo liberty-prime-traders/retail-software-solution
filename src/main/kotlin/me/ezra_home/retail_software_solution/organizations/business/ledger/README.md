@@ -5,9 +5,9 @@ delivery, opening balance, …) is turned into a `LedgerPostingRequest` by a
 processor under `processors/` and persisted by `LedgerPostingService.post`
 as a `ledger_entry_group` + `ledger_entry` rows (+ `subledger_entry` rows per
 contact). `processors/` holds only event processors; the classes they share
-(`LedgerPostingGate`, `SaleTaxLedgerEntriesBuilder`, `ExpensePostingRequests`, `ExpenseLiabilityAccount`,
-`PostedStockAdjustmentAccountsReader`) live in `helpers/`. Running balances live on the account (see `account/README.md`),
-not here.
+(`LedgerPostingGate`, `SaleTaxLedgerEntriesBuilder`, `ExpensePostingRequests`, `ExpenseLiabilityAccount`) live in
+`helpers/`. `PostedStockAdjustmentAccountsReader` is in `api/`, because the delivery revision preview in the locations
+layer reads it too. Running balances live on the account (see `account/README.md`), not here.
 
 ## Entry type is stated by the processor, never derived
 
@@ -271,9 +271,10 @@ each is dated today, in the current period. The postings are skipped when their 
 | `SALE_COGS_RESTATEMENT`         | `SaleCogsRestatementAccountingProcessor`       | Dr Cost of goods sold, Cr Inventory when the sales' cost rises; reversed when it falls |
 | `STOCK_ADJUSTMENT_RESTATEMENT`  | `StockAdjustmentRestatementAccountingProcessor`| Each restated adjustment's own legs for a rise, reversed for a fall, netted by account |
 
-The supplier subledger is additive and never negative, so a cheaper line posts to the receivable side, not a negative
+The entries are built by `RevisionLedgerEntries` (`locations/business/stock_revision/api`), which the processors and
+the delivery revision preview both call, so the preview shows what will post. The supplier subledger is additive and never negative, so a cheaper line posts to the receivable side, not a negative
 payable. The adjustment restatement takes its accounts from the original `STOCK_ADJUSTMENT` posting
-(`helpers/PostedStockAdjustmentAccountsReader`), so a later change to the category rules cannot split an adjustment across
+(`api/PostedStockAdjustmentAccountsReader`), so a later change to the category rules cannot split an adjustment across
 two sets of accounts; the accounts the current rules give are used only for an adjustment whose original cost was zero, which
 posted no entries. An adjustment with no original posting fails the event, which the event log sweeper retries.
 

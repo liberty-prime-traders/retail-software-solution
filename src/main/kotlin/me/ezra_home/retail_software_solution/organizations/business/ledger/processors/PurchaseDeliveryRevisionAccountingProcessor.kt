@@ -3,12 +3,11 @@ package me.ezra_home.retail_software_solution.organizations.business.ledger.proc
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveryRevisedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.processors.AccountingEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerSourceType
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.RevisionLedgerEntries
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerEntryRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import me.ezra_home.retail_software_solution.util.business.Money
@@ -34,24 +33,19 @@ class PurchaseDeliveryRevisionAccountingProcessor(
 
     override fun prepareLedgerRequest(event: PurchaseDeliveryRevisedEvent): LedgerPostingRequest {
         val supplier = contactService.getContactById(event.supplierId)
-        val changeInLineTotal = event.replacementLineTotal.toBigDecimal().subtract(event.revisedLineTotal.toBigDecimal())
+        val revisedLineTotal = event.revisedLineTotal.toBigDecimal()
+        val replacementLineTotal = event.replacementLineTotal.toBigDecimal()
+        val changeInLineTotal = replacementLineTotal.subtract(revisedLineTotal)
         val increasesAmountOwed = changeInLineTotal.signum() > 0
         val amount = changeInLineTotal.abs()
 
-        val entries = buildList {
-            if (increasesAmountOwed) {
-                addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.INVENTORY.code, amount))
-                addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.TRADE_PAYABLES.code, amount))
-            } else {
-                addAll(LedgerEntryRequest.debitUnlessZero(SystemAccount.TRADE_PAYABLES.code, amount))
-                addAll(LedgerEntryRequest.creditUnlessZero(SystemAccount.INVENTORY.code, amount))
-            }
-        }
         return LedgerPostingRequest(
             sourceReferenceNumber = event.stockRevisionReferenceNumber,
             sourceType = LedgerSourceType.PURCHASE_DELIVERY_REVISION,
             postingDate = event.postingDate,
-            entries = entries,
+            entries = RevisionLedgerEntries.purchaseDeliveryRevision(
+                revisedLineTotal, replacementLineTotal
+            ),
             subledgerEntries = listOf(
                 SubledgerEntryRequest(
                     contactReferenceNumber = supplier.referenceNumber,

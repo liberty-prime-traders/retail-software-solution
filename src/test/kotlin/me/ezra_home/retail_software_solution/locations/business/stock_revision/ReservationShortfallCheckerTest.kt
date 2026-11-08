@@ -10,6 +10,7 @@ import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -77,10 +78,10 @@ class ReservationShortfallCheckerTest {
         givenOnHand("5")
         `when`(stockReserver.loadReservationBreakdown(listOf(locationProductId))).thenReturn(emptyMap())
 
-        assertTrue(
-            reservationShortfallChecker.problemsAfterPendingChange(
+        assertNull(
+            reservationShortfallChecker.shortfallAfterPendingChange(
                 locationProductId, ExactQuantity.ZERO, quantityBreakdown
-            ).isEmpty()
+            )
         )
     }
 
@@ -89,10 +90,10 @@ class ReservationShortfallCheckerTest {
         givenOnHand("10")
         givenReservedBySale("4", "6")
 
-        assertTrue(
-            reservationShortfallChecker.problemsAfterPendingChange(
+        assertNull(
+            reservationShortfallChecker.shortfallAfterPendingChange(
                 locationProductId, ExactQuantity.ZERO, quantityBreakdown
-            ).isEmpty()
+            )
         )
     }
 
@@ -101,11 +102,15 @@ class ReservationShortfallCheckerTest {
         givenOnHand("10")
         givenReservedBySale("4", "6")
 
-        val problems = reservationShortfallChecker.problemsAfterPendingChange(
+        val shortfall = reservationShortfallChecker.shortfallAfterPendingChange(
             locationProductId, ExactQuantity.ofStorage(BigDecimal("-2")), quantityBreakdown
-        )
+        )!!
+        val problems = shortfall.blockingProblems
 
         assertEquals(listOf("SAL000420 (draft)", "SAL000421 (draft)"), problems.map { it.documentReference })
+        assertEquals("Sugar", shortfall.productName)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("8")), shortfall.quantityLeftInStock)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("10")), shortfall.quantityHeld)
         assertEquals("Draft sale holding 4 pcs of Sugar.", problems.first().description)
         assertTrue(problems.first().effect.contains("8 pcs"))
         assertTrue(problems.first().effect.contains("10 pcs between them"))
@@ -116,9 +121,9 @@ class ReservationShortfallCheckerTest {
         givenOnHand("10")
         givenOneDraftSaleHolding("9")
 
-        val problems = reservationShortfallChecker.problemsAfterPendingChange(
+        val problems = reservationShortfallChecker.shortfallAfterPendingChange(
             locationProductId, ExactQuantity.ofStorage(BigDecimal("-2")), quantityBreakdown
-        )
+        )!!.blockingProblems
 
         assertTrue(problems.single().effect.contains("the draft sale holds 9 pcs"))
         assertTrue(!problems.single().effect.contains("between them"))
@@ -129,10 +134,10 @@ class ReservationShortfallCheckerTest {
         givenOnHand("8")
         givenReservedBySale("4", "6")
 
-        assertTrue(
-            reservationShortfallChecker.problemsAfterPendingChange(
+        assertNull(
+            reservationShortfallChecker.shortfallAfterPendingChange(
                 locationProductId, ExactQuantity.ofStorage(BigDecimal("2")), quantityBreakdown
-            ).isEmpty()
+            )
         )
     }
 }
