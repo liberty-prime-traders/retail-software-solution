@@ -83,7 +83,7 @@ class ConsumerReplayerTest {
             productBeingReplayed = ProductBeingReplayed(
                 fifoEntriesAvailableForConsumption = fifoEntriesInFifoOrder,
                 quantityBreakdown = quantityBreakdown,
-                productLabel = "Sugar"
+                productName = "Sugar"
             ),
             stockRevisionReferenceNumber = "STRV000001"
         )
@@ -217,7 +217,37 @@ class ConsumerReplayerTest {
         val problem = replayResult.problems.single()
         assertEquals("SAL2", problem.documentReference)
         assertTrue(problem.description.startsWith("Sale that took"))
-        assertTrue(problem.effect.contains("Enter a bigger quantity"))
+        assertTrue(problem.effect.contains("could be covered"))
+    }
+
+    @Test
+    fun `uncovered consumers add up what each one took from the delivery`() {
+        val replayResult = replay(
+            listOf(
+                consumption(draw("SAL1", "SALL1", "1", "10.00").copy(createdOn = baseTime)),
+                consumption(draw("SAL2", "SALL1", "4", "40.00").copy(createdOn = baseTime.plusMinutes(1))),
+                consumption(draw("SAL3", "SALL1", "1", "10.00").copy(createdOn = baseTime.plusMinutes(2))),
+            ),
+            emptyList()
+        )
+
+        assertEquals(listOf("SAL1", "SAL2", "SAL3"), replayResult.problems.map { it.documentReference })
+        assertEquals("After your change none of it could be covered.", replayResult.problems[0].effect)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("6")), replayResult.totalTakenByUncoveredConsumers)
+    }
+
+    @Test
+    fun `a partly covered consumer takes what is left and only the next one's own shortfall is reported`() {
+        val replayResult = replay(
+            listOf(
+                consumption(draw("SAL1", "SALL1", "4", "40.00").copy(createdOn = baseTime)),
+                consumption(draw("SAL2", "SALL1", "4", "40.00").copy(createdOn = baseTime.plusMinutes(1))),
+            ),
+            listOf(layer("STE2", "5", "60.00"))
+        )
+
+        assertTrue(replayResult.problems.single().effect.startsWith("After your change only 1 pc"))
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("4")), replayResult.totalTakenByUncoveredConsumers)
     }
 
     @Test

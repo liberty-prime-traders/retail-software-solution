@@ -31,6 +31,7 @@ class DeliveryLineRevisionPreviewerTest {
     private val deliveryLineRevisionRequest = DeliveryLineRevisionRequest(
         revisedDeliveryLineId = revisedDeliveryLineId,
         userProvidedQuantityDelivered = UserProvidedQuantity.of(BigDecimal("8")),
+        unitId = unitId,
         unitCost = Money.of(BigDecimal("12.0000")),
         reason = "Miscounted",
     )
@@ -48,6 +49,8 @@ class DeliveryLineRevisionPreviewerTest {
                     revisedLineReferenceNumber = "DELN000001",
                     purchaseLineId = UUID.randomUUID(),
                     locationProductId = UUID.randomUUID(),
+                    revisedUnitId = unitId,
+                    revisedStorageUnitsPerUserProvidedUnit = 1L,
                     unitId = unitId,
                     storageUnitsPerUserProvidedUnit = 1L,
                     revisedUserProvidedQuantityDelivered = BigDecimal("10"),

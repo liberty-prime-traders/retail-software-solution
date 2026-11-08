@@ -35,10 +35,12 @@ class ReservationShortfallCheckerTest {
         mock(SaleDataFetcher::class.java).also {
             `when`(it.getReferenceNumbersById(setOf(firstSaleId, secondSaleId)))
                 .thenReturn(mapOf(firstSaleId to "SAL000420", secondSaleId to "SAL000421"))
+            `when`(it.getReferenceNumbersById(setOf(firstSaleId)))
+                .thenReturn(mapOf(firstSaleId to "SAL000420"))
         },
         mock(LocationProductDataFetcher::class.java).also {
             val summary = mock(LocationProductSummaryDto::class.java)
-            `when`(summary.label).thenReturn("Sugar")
+            `when`(summary.productName).thenReturn("Sugar")
             `when`(it.findSummaryByIds(listOf(locationProductId))).thenReturn(mapOf(locationProductId to summary))
         }
     )
@@ -46,6 +48,17 @@ class ReservationShortfallCheckerTest {
     private fun givenOnHand(onHand: String) {
         `when`(stockBalanceFetcher.getLatestBalances(listOf(locationProductId)))
             .thenReturn(mapOf(locationProductId to BigDecimal(onHand)))
+    }
+
+    private fun givenOneDraftSaleHolding(reservedQuantity: String) {
+        `when`(stockReserver.loadReservationBreakdown(listOf(locationProductId))).thenReturn(
+            mapOf(
+                locationProductId to ProductReservations(
+                    total = BigDecimal(reservedQuantity),
+                    bySale = mapOf(firstSaleId to BigDecimal(reservedQuantity)),
+                )
+            )
+        )
     }
 
     private fun givenReservedBySale(firstSale: String, secondSale: String) {
@@ -95,7 +108,20 @@ class ReservationShortfallCheckerTest {
         assertEquals(listOf("SAL000420 (draft)", "SAL000421 (draft)"), problems.map { it.documentReference })
         assertEquals("Draft sale holding 4 pcs of Sugar.", problems.first().description)
         assertTrue(problems.first().effect.contains("8 pcs"))
-        assertTrue(problems.first().effect.contains("10 pcs"))
+        assertTrue(problems.first().effect.contains("10 pcs between them"))
+    }
+
+    @Test
+    fun `one draft sale holding the product is described as the draft sale, not as sales between them`() {
+        givenOnHand("10")
+        givenOneDraftSaleHolding("9")
+
+        val problems = reservationShortfallChecker.problemsAfterPendingChange(
+            locationProductId, ExactQuantity.ofStorage(BigDecimal("-2")), quantityBreakdown
+        )
+
+        assertTrue(problems.single().effect.contains("the draft sale holds 9 pcs"))
+        assertTrue(!problems.single().effect.contains("between them"))
     }
 
     @Test

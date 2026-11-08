@@ -117,6 +117,8 @@ class DeliveryLineRevisionerTest {
         revisedLineReferenceNumber = "DELN000001",
         purchaseLineId = revisedPurchaseLineId,
         locationProductId = locationProductId,
+        revisedUnitId = unitId,
+        revisedStorageUnitsPerUserProvidedUnit = 12L,
         unitId = unitId,
         storageUnitsPerUserProvidedUnit = 12L,
         revisedUserProvidedQuantityDelivered = BigDecimal("3"),
@@ -153,7 +155,7 @@ class DeliveryLineRevisionerTest {
     private val consumerReplayPlans = emptyList<ConsumerReplayPlan>()
 
     private fun request(reason: String = "Supplier corrected the invoice") = DeliveryLineRevisionRequest(
-        revisedDeliveryLineId, UserProvidedQuantity.of(BigDecimal("4")), Money.of(BigDecimal("6.5000")), reason
+        revisedDeliveryLineId, UserProvidedQuantity.of(BigDecimal("4")), unitId, Money.of(BigDecimal("6.5000")), reason
     )
 
     private fun stubCollaborators() {

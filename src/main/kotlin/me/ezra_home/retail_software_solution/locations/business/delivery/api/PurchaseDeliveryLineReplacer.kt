@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRevisionValidator
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
@@ -23,6 +25,7 @@ class PurchaseDeliveryLineReplacer(
     private val purchaseDeliveryRepository: PurchaseDeliveryRepository,
     private val purchaseDeliveryRevisionValidator: PurchaseDeliveryRevisionValidator,
     private val deliveryHandlerForPurchase: DeliveryHandlerForPurchase,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -35,8 +38,11 @@ class PurchaseDeliveryLineReplacer(
             .purchaseLineById.getValue(revisedLine.purchaseLineId)
         val replacementUserProvidedQuantity =
             purchaseDeliveryLineReplaceRequest.userProvidedQuantityDelivered.toBigDecimal()
+        val replacementStorageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitOf(
+            purchaseLineDto.locationProductId, purchaseDeliveryLineReplaceRequest.unitId
+        )
         val replacementStorageQuantity = ExactQuantity.ofStorageFromUserProvided(
-            replacementUserProvidedQuantity, revisedLine.storageUnitsPerUserProvidedUnit
+            replacementUserProvidedQuantity, replacementStorageUnitsPerUserProvidedUnit
         )
         val problems = purchaseDeliveryRevisionValidator.problemsOf(
             delivery.requiredReference(), purchaseLineDto,
@@ -48,8 +54,10 @@ class PurchaseDeliveryLineReplacer(
             revisedLineReferenceNumber = revisedLine.requiredReference(),
             purchaseLineId = revisedLine.purchaseLineId,
             locationProductId = purchaseLineDto.locationProductId,
-            unitId = revisedLine.unitId,
-            storageUnitsPerUserProvidedUnit = revisedLine.storageUnitsPerUserProvidedUnit,
+            revisedUnitId = revisedLine.unitId,
+            revisedStorageUnitsPerUserProvidedUnit = revisedLine.storageUnitsPerUserProvidedUnit,
+            unitId = purchaseDeliveryLineReplaceRequest.unitId,
+            storageUnitsPerUserProvidedUnit = replacementStorageUnitsPerUserProvidedUnit,
             revisedUserProvidedQuantityDelivered = revisedLine.userProvidedQuantityDelivered,
             revisedUnitCost = revisedLine.unitCost,
             userProvidedQuantityDelivered = replacementUserProvidedQuantity,
@@ -70,8 +78,8 @@ class PurchaseDeliveryLineReplacer(
                 purchaseLineId = revisedLine.purchaseLineId,
                 userProvidedQuantityDelivered = validatedDeliveryLineRevision.userProvidedQuantityDelivered,
                 unitCost = validatedDeliveryLineRevision.unitCost,
-                unitId = revisedLine.unitId,
-                storageUnitsPerUserProvidedUnit = revisedLine.storageUnitsPerUserProvidedUnit,
+                unitId = validatedDeliveryLineRevision.unitId,
+                storageUnitsPerUserProvidedUnit = validatedDeliveryLineRevision.storageUnitsPerUserProvidedUnit,
             )
         )
         purchaseDeliveryLineRepository.save(revisedLine)
@@ -86,6 +94,12 @@ class PurchaseDeliveryLineReplacer(
             unitId = replacementLine.unitId,
             storageUnitsPerUserProvidedUnit = replacementLine.storageUnitsPerUserProvidedUnit,
         )
+    }
+
+    private fun storageUnitsPerUserProvidedUnitOf(locationProductId: UUID, unitId: UUID): Long {
+        val locationProductUnitRequest = LocationProductUnitRequestDto(locationProductId, unitId)
+        return locationProductDataFetcher.getStorageUnitsByRequest(listOf(locationProductUnitRequest))
+            .getValue(locationProductUnitRequest)
     }
 
     private fun requiredRevisedLine(revisedDeliveryLineId: UUID): PurchaseDeliveryLineEntity =

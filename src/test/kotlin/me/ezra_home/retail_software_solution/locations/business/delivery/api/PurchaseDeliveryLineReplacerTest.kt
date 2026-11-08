@@ -5,6 +5,8 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRevisionValidator
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryContext
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
@@ -34,11 +36,13 @@ class PurchaseDeliveryLineReplacerTest {
     private val purchaseDeliveryRepository = mock(PurchaseDeliveryRepository::class.java)
     private val purchaseDeliveryRevisionValidator = mock(PurchaseDeliveryRevisionValidator::class.java)
     private val deliveryHandlerForPurchase = mock(DeliveryHandlerForPurchase::class.java)
+    private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
     private val purchaseDeliveryLineReplacer = PurchaseDeliveryLineReplacer(
         purchaseDeliveryLineRepository,
         purchaseDeliveryRepository,
         purchaseDeliveryRevisionValidator,
-        deliveryHandlerForPurchase
+        deliveryHandlerForPurchase,
+        locationProductDataFetcher
     )
 
     private val deliveryId = UUID.randomUUID()
@@ -65,7 +69,14 @@ class PurchaseDeliveryLineReplacerTest {
         storageQuantityRemaining = ExactQuantity.ZERO,
     )
 
+    private fun givenStorageUnitsPerUserProvidedUnit(unitId: UUID, storageUnitsPerUserProvidedUnit: Long) {
+        val locationProductUnitRequest = LocationProductUnitRequestDto(purchaseLineDto.locationProductId, unitId)
+        `when`(locationProductDataFetcher.getStorageUnitsByRequest(listOf(locationProductUnitRequest)))
+            .thenReturn(mapOf(locationProductUnitRequest to storageUnitsPerUserProvidedUnit))
+    }
+
     private fun stubRepositories() {
+        givenStorageUnitsPerUserProvidedUnit(revisedLine.unitId, 12L)
         `when`(purchaseDeliveryLineRepository.findById(revisedLine.id!!)).thenReturn(Optional.of(revisedLine))
         val purchaseId = UUID.randomUUID()
         `when`(purchaseDeliveryRepository.getReferenceById(deliveryId)).thenReturn(
@@ -122,6 +133,7 @@ class PurchaseDeliveryLineReplacerTest {
             PurchaseDeliveryLineReplaceRequest(
                 revisedLine.id!!,
                 UserProvidedQuantity.of(BigDecimal("4")),
+                revisedLine.unitId,
                 Money.of(BigDecimal("5.0000"))
             )
         )
@@ -129,6 +141,29 @@ class PurchaseDeliveryLineReplacerTest {
         assertEquals(listOf(problem), validated.problems)
         assertEquals(purchaseLineDto.locationProductId, validated.locationProductId)
         verify(purchaseDeliveryLineRepository, never()).save(any(PurchaseDeliveryLineEntity::class.java))
+    }
+
+    @Test
+    fun `a revision in another unit is converted with that unit and compared with the line's own unit`() {
+        stubRepositories()
+        val pieceUnitId = UUID.randomUUID()
+        givenStorageUnitsPerUserProvidedUnit(pieceUnitId, 1L)
+        `when`(purchaseDeliveryRevisionValidator.problemsOf(
+            "DEL000001", purchaseLineDto, revisedLine, ExactQuantity.ofStorage(BigDecimal("30"))
+        )).thenReturn(emptyList())
+
+        val validated = purchaseDeliveryLineReplacer.validateRevisionReportingProblems(
+            PurchaseDeliveryLineReplaceRequest(
+                revisedLine.id!!, UserProvidedQuantity.of(BigDecimal("30")), pieceUnitId,
+                Money.of(BigDecimal("0.4000"))
+            )
+        )
+
+        assertEquals(revisedLine.unitId, validated.revisedUnitId)
+        assertEquals(pieceUnitId, validated.unitId)
+        assertEquals(1L, validated.storageUnitsPerUserProvidedUnit)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("30")), validated.replacementStorageQuantity)
+        assertEquals(ExactQuantity.ofStorage(BigDecimal("-90")), validated.storageQuantityChange)
     }
 
     @Test
@@ -140,6 +175,7 @@ class PurchaseDeliveryLineReplacerTest {
                 PurchaseDeliveryLineReplaceRequest(
                     revisedLine.id!!,
                     UserProvidedQuantity.of(BigDecimal("4")),
+                    revisedLine.unitId,
                     Money.of(BigDecimal("5.0000"))
                 )
             )
@@ -172,6 +208,8 @@ class PurchaseDeliveryLineReplacerTest {
         revisedLineReferenceNumber = "DELN000001",
         purchaseLineId = revisedLine.purchaseLineId,
         locationProductId = purchaseLineDto.locationProductId,
+        revisedUnitId = revisedLine.unitId,
+        revisedStorageUnitsPerUserProvidedUnit = 12L,
         unitId = revisedLine.unitId,
         storageUnitsPerUserProvidedUnit = 12L,
         revisedUserProvidedQuantityDelivered = BigDecimal("10"),

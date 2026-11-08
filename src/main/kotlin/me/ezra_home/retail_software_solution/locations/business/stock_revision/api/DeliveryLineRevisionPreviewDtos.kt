@@ -29,10 +29,20 @@ data class RevisionPreviewLedgerEntryDto(
     val lines: List<RevisionPreviewLedgerLineDto>,
 )
 
+data class TextSegmentDto(
+    val text: String,
+    val emphasis: Boolean = false,
+)
+
+data class GuidanceParagraphDto(
+    val segments: List<TextSegmentDto>,
+)
+
 data class DeliveryLineRevisionPreviewDto(
     val revisedDeliveryLineReferenceNumber: String,
     val changeSummary: String,
     val transactions: List<RevisionPreviewItemDto>,
+    val guidance: List<GuidanceParagraphDto>,
     val ledgerEntries: List<RevisionPreviewLedgerEntryDto>,
 ) {
     val blocksSaveCount: Int = transactions.count { it.severity == RevisionPreviewSeverity.BLOCKS_SAVE }

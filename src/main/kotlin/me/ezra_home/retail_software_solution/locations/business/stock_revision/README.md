@@ -142,7 +142,7 @@ draw order would have. Its movement context names the stock revision (`StockMove
 
 The consumers of the replaced layer still need their stock, so `ReplayPlanner.planReplayForExecution(consumptions, stockRevisionReferenceNumber, quantityBreakdown)`
 plans their draws against the layers as they stand, which must already include the replacement. It reads the layers in draw order
-(`StockEntryFetcher`) and the product's label, and hands them, with the breakdown it was given, to `ConsumerReplayer`, which plans every consumer on
+(`StockEntryFetcher`) and the product's name, and hands them, with the breakdown it was given, to `ConsumerReplayer`, which plans every consumer on
 `StockEntryFifoDto` copies of the layers and writes nothing. It returns one `ConsumerReplayPlan` per consumer (the draw to
 make and the layers to take from) and collects every uncovered consumer as a `BlockingProblem` in `ReplayResult.problems`; `planReplayForExecution` throws them as one
 `BlockedChangeException`. A replacement smaller than what was drawn is normal: the rest of each consumer's quantity comes
@@ -179,11 +179,22 @@ the draw order where the save will put it. `ResetPlanner` is not run, since it o
 
 - `ReplayResult.problems` holds one `BlockingProblem` per consumer the later stock cannot cover. The preview shows each as
   a blocking row; the save throws them as one `BlockedChangeException`. The validator's problems take the same two routes.
+- The request carries the unit of the new quantity and cost, which may differ from the revised line's. The replacement is
+  converted with its own unit's factor and compared with the revised line using the revised line's factor
+  (`ValidatedDeliveryLineRevisionDto.storageQuantityChange`), and the change summary names each side's unit.
 - `RevisionPreviewStoryWriter` writes every sentence of the response: the header, each item's reference, description and effect,
   and the money and quantity text, using the product's `QuantityBreakdown` and `DisplayFormatters`. The screen only places the text.
   A consumer whose cost does not move gets no item. `netProfitChange` is set for sales only (old cost minus new cost).
-- A shortfall leaves its consumer out of the replay, so later consumers are planned against more stock than they would get.
-  While anything blocks the save the response carries the blocking rows only, because the cost rows would be wrong.
+- A consumer the stock cannot cover takes what is left, so later consumers are planned against the stock that remains and
+  each shortfall counts once (the uncovered consumers' own quantities add up in `ReplayResult.totalTakenByUncoveredConsumers`). Its row states how much
+  of it could still be covered, counting every layer, and gives no quantity to type, since a number offered for the purpose of passing the check invites a wrong value. While anything
+  blocks the save the response carries the blocking rows only, because the cost rows would be wrong.
+- `RevisionGuidanceWriter` writes the `guidance` paragraphs for the "what can I do" tab as `TextSegmentDto(text, emphasis)`
+  lists, so the screen places and styles them and holds no wording. For uncovered consumers it names their references, the
+  quantity they took from this delivery between them (what the records show, not a target) and the quantity the change leaves, then always lists the possible causes: the delivery
+  was entered short, a sale was recorded wrongly (correct or void it), or the stock came from a delivery that was never
+  recorded. A revision to 0 adds that the sales must be voided first. The paragraphs are written for sales, so they are left out when any uncovered consumer is a transfer, stock adjustment or supplier return (`ReplayResult.movementTypesOfUncoveredConsumers`); its rows still show. For draft sales it names the drafts and says nothing
+  has been sold on them. Product names in the rows are the product name alone, not the full label.
 - Not yet reported: draft transfers, a payment above the revised total, and
   ledger entries (`ledgerEntries` is empty until revisions post to the ledger).
 

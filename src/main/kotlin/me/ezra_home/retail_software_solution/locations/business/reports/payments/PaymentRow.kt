@@ -8,7 +8,7 @@ import java.util.UUID
 data class PaymentRow(
   val id: UUID,
   val type: PaymentType,
-  val referenceNumber: String,
+  val parentReferenceNumber: String,
   val contactId: UUID,
   val paymentMethodId: UUID,
   val amount: BigDecimal,
