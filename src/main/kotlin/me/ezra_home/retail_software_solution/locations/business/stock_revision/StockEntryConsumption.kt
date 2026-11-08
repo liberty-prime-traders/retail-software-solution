@@ -48,6 +48,10 @@ data class StockMovementOrigin(
 ) {
     val displayText: String = listOfNotNull(documentReference, detailReference).joinToString("/")
 
+    fun requiredDocumentReference(): String = checkNotNull(documentReference) {
+        "A stock movement of $displayText has no document reference."
+    }
+
     companion object {
         fun of(stockMovementDto: StockMovementDto) = StockMovementOrigin(
             stockMovementDto.documentReference,

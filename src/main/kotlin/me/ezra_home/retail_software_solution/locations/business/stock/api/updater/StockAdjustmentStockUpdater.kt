@@ -70,9 +70,7 @@ class StockAdjustmentStockUpdater(
                 stockEntryRepository.findFifoEntriesForProducts(listOf(locationProductId))
             )[locationProductId].orEmpty(),
             startingBalance = stockBalanceFetcher.getLatestBalances(listOf(locationProductId)).getValue(locationProductId),
-            quantityBreakdown = productStockBreakdownProvider.forLocationProducts(
-                listOf(locationProductId)
-            ).getValue(locationProductId),
+            quantityBreakdown = productStockBreakdownProvider.forLocationProduct(locationProductId),
             productLabel = productLabel,
         )
         stockEntryRepository.saveAll(fifoConsumptionResult.touchedEntries)

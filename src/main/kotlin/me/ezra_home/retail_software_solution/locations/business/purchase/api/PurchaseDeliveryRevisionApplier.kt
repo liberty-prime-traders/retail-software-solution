@@ -19,21 +19,18 @@ class PurchaseDeliveryRevisionApplier(
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
 ) {
 
-    // The caller holds the purchase lock and has already saved the replacement delivery line, so the ceiling sums see it.
+    // The caller holds the purchase lock and has already saved the replacement delivery line, so the ceiling sums
+    // see it.
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
     fun apply(
         purchaseId: UUID,
         purchaseLineId: UUID,
-        revisedStorageQuantity: ExactQuantity,
-        replacementStorageQuantity: ExactQuantity
+        storageQuantityDelivered: ExactQuantity
     ): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         val purchaseLine = purchaseLines.first { it.id == purchaseLineId }
-        val currentStorageQuantityDelivered = ExactQuantity.ofStorage(purchaseLine.storageQuantityDelivered)
-        purchaseLine.storageQuantityDelivered = (
-            currentStorageQuantityDelivered - revisedStorageQuantity + replacementStorageQuantity
-            ).toStorageQuantity()
+        purchaseLine.storageQuantityDelivered = storageQuantityDelivered.toStorageQuantity()
         purchaseLineRepository.save(purchaseLine)
         purchase.purchaseStatus = PurchaseStatusResolver.resolveAfterQuantityChange(purchaseLines)
         purchaseRepository.save(purchase)

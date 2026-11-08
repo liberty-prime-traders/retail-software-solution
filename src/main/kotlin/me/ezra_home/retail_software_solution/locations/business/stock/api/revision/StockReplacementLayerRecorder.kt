@@ -1,12 +1,10 @@
 package me.ezra_home.retail_software_solution.locations.business.stock.api.revision
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
-import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
-import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
+import me.ezra_home.retail_software_solution.locations.business.stock.StockReplacementLayerSpecs
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
-import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.util.UUID
 import org.springframework.transaction.annotation.Propagation
@@ -23,27 +21,12 @@ class StockReplacementLayerRecorder(
         val revisedStockEntry = stockEntryRepository.findById(
             stockReplacementLayerRequest.revisedStockEntryId
         ).orElseThrow {
-            RtsGenericException("Stock entry ${stockReplacementLayerRequest.revisedStockEntryId} not found.")
+            RtsGenericException(
+                "The stock of this delivery could not be found. Please contact support."
+            )
         }
-        val layerSpec = InboundLayerSpec(
-            locationProductId = stockReplacementLayerRequest.locationProductId,
-            sourceType = stockReplacementLayerRequest.sourceType,
-            movementType = stockReplacementLayerRequest.movementType,
-            documentReference = stockReplacementLayerRequest.documentReference,
-            detailReference = stockReplacementLayerRequest.detailReference,
-            storageQuantity = ExactQuantity.ofStorageFromUserProvided(
-                stockReplacementLayerRequest.userProvidedQuantity,
-                stockReplacementLayerRequest.storageUnitsPerUserProvidedUnit
-            ),
-            batchCost = stockReplacementLayerRequest.batchCost,
-            userProvidedQuantity = stockReplacementLayerRequest.userProvidedQuantity,
-            unitId = stockReplacementLayerRequest.unitId,
-            storageUnitsPerUserProvidedUnit = stockReplacementLayerRequest.storageUnitsPerUserProvidedUnit,
-            context = StockMovementContexts.replacementFromStockRevision(
-                stockReplacementLayerRequest.stockRevisionReferenceNumber
-            ),
-            activatedOn = revisedStockEntry.requiredActivatedOn(),
+        return stockIncreaseRecorder.record(
+            StockReplacementLayerSpecs.of(stockReplacementLayerRequest, revisedStockEntry)
         )
-        return stockIncreaseRecorder.record(listOf(layerSpec)).single()
     }
 }

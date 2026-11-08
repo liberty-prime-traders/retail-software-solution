@@ -70,31 +70,38 @@ class PurchaseDeliveryRevisionApplierTest {
             .thenReturn(PaymentStatus.PARTIALLY_SETTLED)
     }
 
-    private fun revise(deliveredBefore: String, revised: String, replacement: String): PurchaseResponseDto {
-        purchaseLine.storageQuantityDelivered = BigDecimal(deliveredBefore)
-        return purchaseDeliveryRevisionApplier.apply(
+    private fun applyDelivered(storageQuantityDelivered: String): PurchaseResponseDto =
+        purchaseDeliveryRevisionApplier.apply(
             purchaseId,
             purchaseLineId,
-            ExactQuantity.ofStorage(BigDecimal(revised)),
-            ExactQuantity.ofStorage(BigDecimal(replacement))
+            ExactQuantity.ofStorage(BigDecimal(storageQuantityDelivered))
         )
-    }
 
     @Test
-    fun `a revision applies the net quantity change and reopens a fully delivered purchase`() {
+    fun `a revision sets the delivered quantity and reopens a fully delivered purchase`() {
         purchase.purchaseStatus = PurchaseStatus.FULLY_DELIVERED
+        purchaseLine.storageQuantityDelivered = BigDecimal("18")
 
-        revise("18", "18", "12")
+        applyDelivered("12")
 
         assertEquals(0, BigDecimal("12").compareTo(purchaseLine.storageQuantityDelivered))
         assertEquals(PurchaseStatus.PARTIALLY_DELIVERED, purchase.purchaseStatus)
     }
 
     @Test
+    fun `a stored total that drifted is replaced by the computed one`() {
+        purchaseLine.storageQuantityDelivered = BigDecimal("7")
+
+        applyDelivered("12")
+
+        assertEquals(0, BigDecimal("12").compareTo(purchaseLine.storageQuantityDelivered))
+    }
+
+    @Test
     fun `a revision to zero returns an undelivered purchase to ordered`() {
         purchase.purchaseStatus = PurchaseStatus.PARTIALLY_DELIVERED
 
-        revise("6", "6", "0")
+        applyDelivered("0")
 
         assertEquals(0, BigDecimal.ZERO.compareTo(purchaseLine.storageQuantityDelivered))
         assertEquals(PurchaseStatus.ORDERED, purchase.purchaseStatus)
@@ -102,14 +109,14 @@ class PurchaseDeliveryRevisionApplierTest {
 
     @Test
     fun `a revision upward can complete the line`() {
-        revise("12", "12", "18")
+        applyDelivered("18")
 
         assertEquals(PurchaseStatus.FULLY_DELIVERED, purchase.purchaseStatus)
     }
 
     @Test
     fun `the payment status is patched with the ceiling the response already carries`() {
-        val response = revise("12", "12", "18")
+        val response = applyDelivered("18")
 
         verify(purchasePaymentStatusService).patchThenReturnPaymentStatus(purchaseId, BigDecimal("10.00"))
         assertEquals(PaymentStatus.PARTIALLY_SETTLED, response.paymentStatus)

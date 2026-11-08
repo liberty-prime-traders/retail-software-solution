@@ -6,12 +6,12 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
-import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -29,8 +29,7 @@ class PurchaseDeliveryRevisionValidatorTest {
         `when`(it.findSummaryByIds(setOf(locationProductId))).thenReturn(mapOf(locationProductId to summary))
     }
     private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java).also {
-        `when`(it.forLocationProducts(setOf(locationProductId)))
-            .thenReturn(mapOf(locationProductId to mock(QuantityBreakdown::class.java)))
+        `when`(it.forLocationProduct(locationProductId)).thenReturn(mock(QuantityBreakdown::class.java))
     }
     private val deliveryLineStockInspector = mock(DeliveryLineStockInspector::class.java)
     private val purchaseDeliveryRevisionValidator = PurchaseDeliveryRevisionValidator(
@@ -63,59 +62,61 @@ class PurchaseDeliveryRevisionValidatorTest {
 
     @Test
     fun `an active line can be revised`() {
-        assertDoesNotThrow { purchaseDeliveryRevisionValidator.ensureLineIsActive(deliveryLine("4")) }
+        assertNull(purchaseDeliveryRevisionValidator.problemIfLineIsNotActive(deliveryLine("4")))
     }
 
     @Test
     fun `a revised line cannot be revised again, so a chain only grows from its active end`() {
-        assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.ensureLineIsActive(deliveryLine("4", PurchaseDeliveryLineStatus.REVISED))
-        }
+        assertNotNull(
+            purchaseDeliveryRevisionValidator.problemIfLineIsNotActive(
+                deliveryLine("4", PurchaseDeliveryLineStatus.REVISED)
+            )
+        )
     }
 
     @Test
     fun `a cost-only revision repeating the delivered quantity fits even when nothing is left to deliver`() {
-        assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.ensurePendingDeliveryQtyIsNotExceeded(
+        assertNull(
+            purchaseDeliveryRevisionValidator.problemIfPendingDeliveryQuantityIsExceeded(
                 purchaseLine("0"), deliveryLine("4"), ExactQuantity.ofStorage(BigDecimal("4"))
             )
-        }
+        )
     }
 
     @Test
     fun `the replacement may use the revised line's quantity plus what is still remaining`() {
-        assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.ensurePendingDeliveryQtyIsNotExceeded(
+        assertNull(
+            purchaseDeliveryRevisionValidator.problemIfPendingDeliveryQuantityIsExceeded(
                 purchaseLine("2"), deliveryLine("4"), ExactQuantity.ofStorage(BigDecimal("6"))
             )
-        }
+        )
     }
 
     @Test
     fun `a replacement above the net remaining quantity is rejected`() {
-        assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.ensurePendingDeliveryQtyIsNotExceeded(
+        assertNotNull(
+            purchaseDeliveryRevisionValidator.problemIfPendingDeliveryQuantityIsExceeded(
                 purchaseLine("2"), deliveryLine("4"), ExactQuantity.ofStorage(BigDecimal("7"))
             )
-        }
+        )
     }
 
     @Test
     fun `a line with transferred-out stock cannot be revised`() {
         `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
 
-        assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.ensureNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
-        }
+        assertNotNull(
+            purchaseDeliveryRevisionValidator.problemIfStockWasTransferred(deliveryReferenceNumber, deliveryLine("4"))
+        )
     }
 
     @Test
     fun `stock still at the source does not block a revision`() {
         `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(false)
 
-        assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.ensureNoTransferredStock(deliveryReferenceNumber, deliveryLine("4"))
-        }
+        assertNull(
+            purchaseDeliveryRevisionValidator.problemIfStockWasTransferred(deliveryReferenceNumber, deliveryLine("4"))
+        )
     }
 
     @Test
@@ -124,48 +125,47 @@ class PurchaseDeliveryRevisionValidatorTest {
             deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")
         ).thenReturn(true)
 
-        assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.ensureNoMovementsThatCannotBeReversed(
+        assertNotNull(
+            purchaseDeliveryRevisionValidator.problemIfStockHasMovementsThatCannotBeReversed(
                 deliveryReferenceNumber,
                 deliveryLine("4")
             )
-        }
+        )
     }
 
     @Test
     fun `a replacement of zero is allowed`() {
-        assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.ensurePendingDeliveryQtyIsNotExceeded(
+        assertNull(
+            purchaseDeliveryRevisionValidator.problemIfPendingDeliveryQuantityIsExceeded(
                 purchaseLine("2"), deliveryLine("4"), ExactQuantity.ZERO
             )
-        }
+        )
     }
 
     @Test
-    fun `validate passes when every check passes`() {
-        assertDoesNotThrow {
-            purchaseDeliveryRevisionValidator.validate(
+    fun `no problems when every check passes`() {
+        assertEquals(
+            emptyList<BlockingProblem>(),
+            purchaseDeliveryRevisionValidator.problemsOf(
                 deliveryReferenceNumber, purchaseLine("2"), deliveryLine("4"), ExactQuantity.ofStorage(BigDecimal("6"))
             )
-        }
+        )
     }
 
     @Test
-    fun `validate collects every failing check into one error list`() {
+    fun `every failing check is reported, not just the first`() {
         `when`(deliveryLineStockInspector.hasTransferredOut(deliveryReferenceNumber, "DLL000001")).thenReturn(true)
         `when`(
             deliveryLineStockInspector.hasMovementsThatCannotBeReversed(deliveryReferenceNumber, "DLL000001")
         ).thenReturn(true)
 
-        val exception = assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryRevisionValidator.validate(
-                deliveryReferenceNumber,
-                purchaseLine("2"),
-                deliveryLine("4", PurchaseDeliveryLineStatus.REVISED),
-                ExactQuantity.ofStorage(BigDecimal("7"))
-            )
-        }
+        val problems = purchaseDeliveryRevisionValidator.problemsOf(
+            deliveryReferenceNumber,
+            purchaseLine("2"),
+            deliveryLine("4", PurchaseDeliveryLineStatus.REVISED),
+            ExactQuantity.ofStorage(BigDecimal("7"))
+        )
 
-        assertEquals(4, (exception.payload as List<*>).size)
+        assertEquals(4, problems.size)
     }
 }

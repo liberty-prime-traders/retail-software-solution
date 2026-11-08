@@ -5,7 +5,8 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.read.S
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockEntryResetPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockEntryStatus
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.springframework.stereotype.Component
@@ -26,9 +27,14 @@ class ResetPlanner(
     ): StockEntryResetPlan {
         val stockEntryDto = stockEntryFetcher.get(stockEntryId)
         if (stockEntryDto.status == StockEntryStatus.REPLACED) {
-            throw RtsGenericException(
-                "Replaced entries cannot be reset again",
-                payload = listOf("Stock entry ${stockEntryDto.referenceNumber} was already replaced.")
+            throw BlockedChangeException.contactSupport(
+                listOf(
+                    BlockingProblem(
+                        documentReference = stockEntryDto.referenceNumber,
+                        description = "This stock record was already replaced by an earlier change.",
+                        effect = "Change the latest delivery line instead."
+                    )
+                )
             )
         }
         val locationProductId = stockEntryDto.locationProductId

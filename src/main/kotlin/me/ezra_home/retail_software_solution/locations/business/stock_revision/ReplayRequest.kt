@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 
 data class ReplayRequest(
@@ -18,5 +19,5 @@ data class ProductBeingReplayed(
 
 data class ReplayResult(
     val consumerReplayPlans: List<ConsumerReplayPlan>,
-    val errors: List<String>,
+    val problems: List<BlockingProblem>,
 )

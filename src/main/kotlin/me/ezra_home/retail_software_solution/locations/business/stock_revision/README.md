@@ -62,7 +62,7 @@ transaction under the product lock, in this order:
 | 1 and 2: write them | `StockRevisionCommitter.commitReset` | Committing a revision |
 | 3: create the corrected layer | `StockReplacementLayerRecorder` (`stock/api/revision`) | The replacement layer |
 | 4: plan the draws | `ReplayPlanner`, using `ConsumerReplayer`, returns `ConsumerReplayPlan`s | Planning the replay |
-| 4: write them | `StockRevisionCommitter.commitReplay`, returns `ConsumerReplayDto`s | Committing a revision |
+| 4: write them | `StockRevisionCommitter.commitReplay` | Committing a revision |
 | Link the layers | `StockRevisionEntity` is saved last, under the reference drawn first | The stock revision row |
 | Purchase totals and response | `PurchaseDeliveryRevisionApplier.apply` (delivered quantity, status, payment status); `revise` returns the purchase response | |
 
@@ -95,8 +95,8 @@ so the orchestrator wraps every step in a single transaction.
   oldest first.
 - A reversal with no draw, a draw reversed by more than it took, or draws of one origin on a layer that differ in
   movement type or adjustment details, is a corrupt history. A layer serves many documents in different units; only
-  one document disagreeing with itself is rejected. All such problems are reported together in one `RtsGenericException`,
-  whose payload lists `Stock entry <reference>: ...` lines.
+  one document disagreeing with itself is rejected. All such problems are reported together in one `BlockedChangeException.contactSupport`,
+  one `BlockingProblem` per origin, each quoting the stock record reference.
 - Movements that increase stock without being a reversal are ignored. `SUPPLIER_RETURN` decreases stock but has no
   reversal and cannot be replayed through FIFO, so a caller rejects a layer holding the cannot-be-reversed types first.
 - `REVERSED_BY_REVISION` pairs with its draw like any reversal. `STOCK_REVISION_ZEROING` decreases stock but drains a
@@ -107,7 +107,7 @@ so the orchestrator wraps every step in a single transaction.
 
 `ResetPlanner.plan(stockEntryId, consumptions, stockRevisionReferenceNumber, quantityBreakdown)` works out the movements that empty the one layer a
 revision replaces and returns them as `StockMovementDraft`s in a `StockEntryResetPlan`. It rejects a layer that is already
-replaced before it plans anything. Because restoring every consumer and then draining always ends a layer empty, the plan holds
+replaced before it plans anything (a `BlockedChangeException.contactSupport`; the validator refuses such a line earlier). Because restoring every consumer and then draining always ends a layer empty, the plan holds
 only movements; the committer sets the layer to zero and `REPLACED`.
 
 - Every net consumption is reversed for its net quantity and cost by one `REVERSED_BY_REVISION` draft (`StockEntryRestorer`),
@@ -123,7 +123,7 @@ only movements; the committer sets the layer to zero and `REPLACED`.
   everything a revision wrote.
 - The product balance on each draft is the running balance, so the drain leaves it short until the replacement layer exists.
 - A consumer whose type is in `MovementType.movementsThatCannotBeReversed` is rejected before anything is written, all
-  together in one `RtsGenericException` with the lines as `payload`. Only `SUPPLIER_RETURN` can reach this check, because a
+  together in one `BlockedChangeException`, one `BlockingProblem` per consumer. Only `SUPPLIER_RETURN` can reach this check, because a
   consumer is always a decrease. `CUSTOMER_RETURN` increases stock, so it is never a consumer; a layer holding one is
   refused before a revision starts, by `DeliveryLineStockInspector.hasMovementsThatCannotBeReversed`.
 
@@ -140,12 +140,12 @@ draw order would have. Its movement context names the stock revision (`StockMove
 
 ## Planning the replay (`ReplayPlanner`)
 
-The consumers of the replaced layer still need their stock, so `ReplayPlanner.plan(consumptions, stockRevisionReferenceNumber, quantityBreakdown)`
+The consumers of the replaced layer still need their stock, so `ReplayPlanner.planReplayForExecution(consumptions, stockRevisionReferenceNumber, quantityBreakdown)`
 plans their draws against the layers as they stand, which must already include the replacement. It reads the layers in draw order
 (`StockEntryFetcher`) and the product's label, and hands them, with the breakdown it was given, to `ConsumerReplayer`, which plans every consumer on
 `StockEntryFifoDto` copies of the layers and writes nothing. It returns one `ConsumerReplayPlan` per consumer (the draw to
-make and the layers to take from) and collects every problem; `plan` throws one `RtsGenericException` whose `payload` lists them
-before a layer is changed. A replacement smaller than what was drawn is normal: the rest of each consumer's quantity comes
+make and the layers to take from) and collects every uncovered consumer as a `BlockingProblem` in `ReplayResult.problems`; `planReplayForExecution` throws them as one
+`BlockedChangeException`. A replacement smaller than what was drawn is normal: the rest of each consumer's quantity comes
 from the next layers in order, and only when all layers together cannot cover a consumer does the replay fail.
 
 - The replayer takes the consumptions of one replaced layer and rejects consumptions of several, since a revision replaces one
@@ -157,6 +157,69 @@ from the next layers in order, and only when all layers together cannot cover a 
   reference in `stock_movement.stock_revision_reference`, so it does not collide with the document's earlier draw on the same layer.
 - Each plan reports `oldCost` (the net cost put back on the replaced layer) and `newCost` (the sum of its takes). They cover only what was drawn from the replaced
   layer: a consumer that also drew from other layers keeps that part as it was.
+
+## Assessing a revision (`DeliveryLineRevisionAssessor`)
+
+`DeliveryLineRevisionAssessor.assess(request)` finds every blocking problem without writing anything: the line checks
+(`PurchaseDeliveryLineReplacer.validateRevisionReportingProblems`), the replay against the layers as they will stand after the
+revision, and the reservation check. The save calls it under the purchase and product locks and throws the problems as one
+`BlockedChangeException` before the first write, so a blocked save writes nothing and draws no reference numbers.
+`PurchaseDeliveryLineReplacer.replace` takes the `ValidatedDeliveryLineRevisionDto` the assessment produced and refuses one that
+still carries problems. The preview calls the same assessor without locks and turns the result into rows.
+
+## Previewing a revision (`DeliveryLineRevisionPreviewer`)
+
+`DeliveryLineRevisionPreviewer.preview(request)` returns a `DeliveryLineRevisionPreviewDto` and writes nothing. It takes no
+lock, so it reports what the save would plan at that moment; the save plans again under the product lock, and nothing is cached
+between the two. It runs the same checks as the save (`PurchaseDeliveryLineReplacer.validateRevisionReportingProblems`), reads the consumptions of
+the revised layer (`NetConsumptionCalculator`), and replays them with `ReplayPlanner.planReplayForPreview` over the layers as they will
+stand after the revision: the revised layer removed and the replacement added by `StockReplacementLayerPreviewer`. The replacement
+comes from the same builders the save uses (`StockReplacementLayerSpecs`, `DeliveryReplacementLayerRequests`), so it sorts into
+the draw order where the save will put it. `ResetPlanner` is not run, since it only plans the writes.
+
+- `ReplayResult.problems` holds one `BlockingProblem` per consumer the later stock cannot cover. The preview shows each as
+  a blocking row; the save throws them as one `BlockedChangeException`. The validator's problems take the same two routes.
+- `RevisionPreviewStoryWriter` writes every sentence of the response: the header, each item's reference, description and effect,
+  and the money and quantity text, using the product's `QuantityBreakdown` and `DisplayFormatters`. The screen only places the text.
+  A consumer whose cost does not move gets no item. `netProfitChange` is set for sales only (old cost minus new cost).
+- A shortfall leaves its consumer out of the replay, so later consumers are planned against more stock than they would get.
+  While anything blocks the save the response carries the blocking rows only, because the cost rows would be wrong.
+- Not yet reported: draft transfers, a payment above the revised total, and
+  ledger entries (`ledgerEntries` is empty until revisions post to the ledger).
+
+## Transactions
+
+`DeliveryLineRevisioner` runs the whole revision in one transaction. Every write inside it (`StockRevisionCommitter.commitReset`
+and `commitReplay`, `StockReplacementLayerRecorder.record`, `PurchaseDeliveryLineReplacer.replace`,
+`PurchaseDeliveryRevisionApplier.apply`) is `Propagation.MANDATORY`, so none of them can commit part of a revision when called
+alone. Spring enforces this at runtime; `RevisionWritePathPropagationTest` pins the annotation on each method. The preview
+(`DeliveryLineRevisionPreviewer`) is read-only and takes no lock.
+
+## Reservations (`ReservationShortfallChecker`)
+
+A draft sale holds stock without drawing from a layer, so the replay never sees it. A revision that lowers on-hand stock can
+still leave the draft sales holding more than is left. `ReservationShortfallChecker` compares the product's reserved total
+(`StockReserver`) with its on-hand quantity after the revision. If the reservations exceed it, there is one `BlockingProblem`
+per draft sale holding the product (reference with "(draft)", the quantity it holds), all with the same effect line: how much is
+in stock, how much the draft sales hold, and to remove the product from a draft sale. The check is per product and does not say
+which sale loses, since any of them could.
+
+- The preview adds the on-hand change the revision will make (`ValidatedDeliveryLineRevisionDto.storageQuantityChange`, replacement
+  minus revised quantity) to the current balance. Every consumer is replayed in full, so that is the whole change. The check is
+  skipped while a replay shortfall already blocks the save, because the arithmetic assumes every consumer is covered.
+- The save runs the same check as part of the assessment below, before any write.
+- Draft transfers hold no reservation and are not checked.
+
+## Blocking problems (`BlockingProblem`, `BlockedChangeException`)
+
+Anything that stops a revision for a reason the person can act on is a `BlockingProblem(documentReference, description,
+effect)`, written in plain shop language: what is wrong, then what to do. The save throws them as one `BlockedChangeException`
+whose `message` is a single headline ("This change cannot be saved. 2 things need fixing.") and whose payload is the problem
+list, so the screen reads `error.error.body` as items and shows the headline from `message`. The preview returns the same
+problems as `BLOCKS_SAVE` rows, so one rendering serves both and a save that meets a new blocker after a preview shows it
+the same way. A problem that only support can fix uses `BlockedChangeException.contactSupport`, whose headline says so and whose
+rows quote the stock record reference. A single-sentence failure with nothing to list (a line that cannot be found, a missing
+reason) stays a plain `RtsGenericException`.
 
 ## The stock revision row
 
@@ -177,5 +240,4 @@ product lock `DeliveryLineRevisioner` holds, so it does not validate them again;
   A zero-quantity layer is marked `REPLACED` too, with no movements.
 - `commitReplay(plans, replacementStockEntryId, quantityBreakdown)` draws every plan against the layers with stock left, in plan
   order, with `FifoStockConsumer.applyTakes`, then saves the touched layers and the movements. It refuses a replacement that is missing,
-  already replaced or of another product (the reason is on the check). It returns
-  one `ConsumerReplayDto` per plan: the consumer's references and `oldCost`/`newCost`, never movement entities.
+  already replaced or of another product (the reason is on the check).

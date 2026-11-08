@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLin
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleLineCogsStatus
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleSaveRequest
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
+import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.RetainedSaleAdjustments
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.SaleAdjustmentSyncer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleLineConsumedCost
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.SaleStockUpdater

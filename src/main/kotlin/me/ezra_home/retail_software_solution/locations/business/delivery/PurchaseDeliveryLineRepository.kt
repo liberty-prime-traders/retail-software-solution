@@ -15,6 +15,11 @@ interface PurchaseDeliveryLineRepository : JpaRepository<PurchaseDeliveryLineEnt
     status: PurchaseDeliveryLineStatus
   ): List<PurchaseDeliveryLineEntity>
 
+  fun findByPurchaseLineIdAndStatus(
+    purchaseLineId: UUID,
+    status: PurchaseDeliveryLineStatus
+  ): List<PurchaseDeliveryLineEntity>
+
   @Query(
     "SELECT d.purchaseId AS purchaseId, l.purchaseLineId AS purchaseLineId " +
       "FROM PurchaseDeliveryEntity d, PurchaseDeliveryLineEntity l " +

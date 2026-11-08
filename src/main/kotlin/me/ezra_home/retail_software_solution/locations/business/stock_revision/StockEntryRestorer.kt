@@ -4,7 +4,8 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.read.S
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockMovementDraft
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import java.math.BigDecimal
 
@@ -62,16 +63,17 @@ object StockEntryRestorer {
         stockEntryConsumptions: List<StockEntryConsumption>,
         stockEntryDto: StockEntryDto
     ) {
-        stockEntryConsumptions
-            .filter { it.consumer.movementType in MovementType.movementsThatCannotBeReversed }
-            .map { entryConsumption ->
-                "Stock entry ${stockEntryDto.referenceNumber}: " +
-                    "cannot restore ${entryConsumption.stockMovementOrigin.displayText} because " +
-                    "${entryConsumption.consumer.movementType} cannot be reversed."
-            }
-            .let { errors -> if (errors.isNotEmpty()) throw RtsGenericException(
-                "Consumptions cannot be restored",
-                payload = errors
-            ) }
+        BlockedChangeException.throwIfAny(
+            stockEntryConsumptions
+                .filter { it.consumer.movementType in MovementType.movementsThatCannotBeReversed }
+                .map { entryConsumption ->
+                    BlockingProblem(
+                        documentReference = entryConsumption.stockMovementOrigin.requiredDocumentReference(),
+                        description = "${StockConsumerLabel.of(entryConsumption.consumer.movementType)} took stock " +
+                            "from this delivery, and returns cannot be undone.",
+                        effect = "This delivery cannot be changed (stock record ${stockEntryDto.referenceNumber})."
+                    )
+                }
+        )
     }
 }

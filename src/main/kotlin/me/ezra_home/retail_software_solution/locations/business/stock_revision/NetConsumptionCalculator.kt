@@ -6,7 +6,8 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementFetcher
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockEntryFetcher
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
 
@@ -105,19 +106,28 @@ class NetConsumptionCalculator(
         originsWithContradictingDraws: List<StockMovementOrigin>
     ) {
         val consumedOrigins = consumptions.map { it.stockMovementOrigin }.toSet() + originsWithContradictingDraws
-        val reversalsWithoutDraw = reversedOrigins
-            .filter { it !in consumedOrigins }
-            .map { "reversal for ${it.displayText} has no matching draw" }
-        val overReversedDraws = consumptions
+        val originsReversedWithoutDraw = reversedOrigins.filter { it !in consumedOrigins }
+        val originsOverReversed = consumptions
             .filter { it.netConsumedStorageQuantity < ExactQuantity.ZERO }
-            .map { "more reversed than drawn for ${it.stockMovementOrigin.displayText}" }
-        val contradictingDraws = originsWithContradictingDraws.map {
-            "draws for ${it.displayText} differ in movement type or adjustment details"
-        }
-        val problems = reversalsWithoutDraw + overReversedDraws + contradictingDraws
-        if (problems.isEmpty()) return
-        val reference = stockEntryFetcher.get(stockEntryId).referenceNumber
-        val errors = problems.map { "Stock entry $reference: $it." }
-        throw RtsGenericException(errors.joinToString(" "), payload = errors)
+            .map { it.stockMovementOrigin }
+        if (originsReversedWithoutDraw.isEmpty() && originsOverReversed.isEmpty() &&
+            originsWithContradictingDraws.isEmpty()
+        ) return
+        val stockRecordReference = stockEntryFetcher.get(stockEntryId).referenceNumber
+        val effect = "Please contact support and quote stock record $stockRecordReference."
+        fun problemOf(stockMovementOrigin: StockMovementOrigin, description: String) = BlockingProblem(
+            documentReference = stockMovementOrigin.requiredDocumentReference(),
+            description = "${stockMovementOrigin.displayText} $description",
+            effect = effect
+        )
+        throw BlockedChangeException.contactSupport(
+            originsReversedWithoutDraw.map {
+                problemOf(it, "shows stock put back that was never taken from this delivery.")
+            } + originsOverReversed.map {
+                problemOf(it, "shows more stock put back than was taken from this delivery.")
+            } + originsWithContradictingDraws.map {
+                problemOf(it, "took stock from this delivery in two different ways.")
+            }
+        )
     }
 }

@@ -11,19 +11,21 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.business.Money
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.time.OffsetDateTime
+import java.util.Optional
 import java.util.UUID
 
 class PurchaseDeliveryLineReplacerTest {
@@ -64,7 +66,7 @@ class PurchaseDeliveryLineReplacerTest {
     )
 
     private fun stubRepositories() {
-        `when`(purchaseDeliveryLineRepository.getReferenceById(revisedLine.id!!)).thenReturn(revisedLine)
+        `when`(purchaseDeliveryLineRepository.findById(revisedLine.id!!)).thenReturn(Optional.of(revisedLine))
         val purchaseId = UUID.randomUUID()
         `when`(purchaseDeliveryRepository.getReferenceById(deliveryId)).thenReturn(
             PurchaseDeliveryEntity(
@@ -93,13 +95,7 @@ class PurchaseDeliveryLineReplacerTest {
     fun `the replacement is a sibling that keeps the purchase line and unit, and the revised line becomes REVISED`() {
         stubRepositories()
 
-        val replacement = purchaseDeliveryLineReplacer.replace(
-            PurchaseDeliveryLineReplaceRequest(
-                revisedLine.id!!,
-                UserProvidedQuantity.of(BigDecimal("0")),
-                Money.of(BigDecimal("6.5000"))
-            )
-        )
+        val replacement = purchaseDeliveryLineReplacer.replace(validatedRevision("0", "6.50"))
 
         assertEquals(PurchaseDeliveryLineStatus.REVISED, revisedLine.status)
         assertEquals("DEL000001", replacement.deliveryReferenceNumber)
@@ -113,13 +109,34 @@ class PurchaseDeliveryLineReplacerTest {
     }
 
     @Test
-    fun `a line that fails revision validation is rejected before any row is written`() {
+    fun `validation reports the problems and the product without throwing or writing`() {
         stubRepositories()
-        doThrow(RtsGenericException("already revised")).`when`(purchaseDeliveryRevisionValidator)
-            .validate("DEL000001", purchaseLineDto, revisedLine, ExactQuantity.ofStorage(BigDecimal("48")))
+        val problem = BlockingProblem("DELN000001", "Already changed.", "Change its latest line.")
+        `when`(
+            purchaseDeliveryRevisionValidator.problemsOf(
+                "DEL000001", purchaseLineDto, revisedLine, ExactQuantity.ofStorage(BigDecimal("48"))
+            )
+        ).thenReturn(listOf(problem))
 
-        assertThrows(RtsGenericException::class.java) {
-            purchaseDeliveryLineReplacer.replace(
+        val validated = purchaseDeliveryLineReplacer.validateRevisionReportingProblems(
+            PurchaseDeliveryLineReplaceRequest(
+                revisedLine.id!!,
+                UserProvidedQuantity.of(BigDecimal("4")),
+                Money.of(BigDecimal("5.0000"))
+            )
+        )
+
+        assertEquals(listOf(problem), validated.problems)
+        assertEquals(purchaseLineDto.locationProductId, validated.locationProductId)
+        verify(purchaseDeliveryLineRepository, never()).save(any(PurchaseDeliveryLineEntity::class.java))
+    }
+
+    @Test
+    fun `an unknown delivery line is reported as not found`() {
+        `when`(purchaseDeliveryLineRepository.findById(revisedLine.id!!)).thenReturn(Optional.empty())
+
+        val exception = assertThrows(RtsGenericException::class.java) {
+            purchaseDeliveryLineReplacer.validateRevisionReportingProblems(
                 PurchaseDeliveryLineReplaceRequest(
                     revisedLine.id!!,
                     UserProvidedQuantity.of(BigDecimal("4")),
@@ -128,7 +145,39 @@ class PurchaseDeliveryLineReplacerTest {
             )
         }
 
+        assertEquals("That delivery line could not be found. Refresh the page and try again.", exception.message)
+    }
+
+    @Test
+    fun `a revision with problems is rejected before any row is written`() {
+        stubRepositories()
+        val problem = BlockingProblem("DLL000001", "already changed", "change the latest line")
+
+        val exception = assertThrows(BlockedChangeException::class.java) {
+            purchaseDeliveryLineReplacer.replace(validatedRevision("4", "5.0000", listOf(problem)))
+        }
+
+        assertEquals(listOf(problem), exception.problems)
         verify(purchaseDeliveryLineRepository, never()).save(any(PurchaseDeliveryLineEntity::class.java))
         assertEquals(PurchaseDeliveryLineStatus.ACTIVE, revisedLine.status)
     }
+
+    private fun validatedRevision(
+        userProvidedQuantity: String,
+        unitCost: String,
+        problems: List<BlockingProblem> = emptyList()
+    ) = ValidatedDeliveryLineRevisionDto(
+        revisedDeliveryLineId = revisedLine.id!!,
+        deliveryReferenceNumber = "DEL000001",
+        revisedLineReferenceNumber = "DELN000001",
+        purchaseLineId = revisedLine.purchaseLineId,
+        locationProductId = purchaseLineDto.locationProductId,
+        unitId = revisedLine.unitId,
+        storageUnitsPerUserProvidedUnit = 12L,
+        revisedUserProvidedQuantityDelivered = BigDecimal("10"),
+        revisedUnitCost = BigDecimal("5.0000"),
+        userProvidedQuantityDelivered = BigDecimal(userProvidedQuantity),
+        unitCost = BigDecimal(unitCost),
+        problems = problems,
+    )
 }

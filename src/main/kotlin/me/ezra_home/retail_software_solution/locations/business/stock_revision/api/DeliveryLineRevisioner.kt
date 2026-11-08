@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision.
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplaceRequest
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplacer
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.ReplacementDeliveryLineDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
@@ -12,22 +11,20 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRecorder
-import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockRevisionCommitter
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryReplacementLayerRequests
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.NetConsumptionCalculator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayPlanner
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineRevisionAssessor
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ResetPlanner
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionSourceType
-import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
-import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.business.StringUtils
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.reference_number.ReferenceNumberGenerator
 import me.ezra_home.retail_software_solution.util.model.TableName
-import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -49,25 +46,23 @@ class DeliveryLineRevisioner(
     private val stockRevisionRepository: StockRevisionRepository,
     private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val purchaseDeliveryRevisionApplier: PurchaseDeliveryRevisionApplier,
+    private val deliveryLineRevisionAssessor: DeliveryLineRevisionAssessor,
 ) {
 
-    fun revise(deliveryLineRevisionRequest: DeliveryLineRevisionRequest): PurchaseResponseDto {
+    fun initiateDeliveryLineRevision(deliveryLineRevisionRequest: DeliveryLineRevisionRequest): PurchaseResponseDto {
         val reason = StringUtils.getValueOrException(
             deliveryLineRevisionRequest.reason,
-            "A reason is required to revise a delivery line."
+            "Enter the reason for this change."
         )
         val revisedDeliveryLineId = deliveryLineRevisionRequest.revisedDeliveryLineId
         val (purchaseId, purchaseLineId) = purchaseDeliveryDataFetcher.getOwners(revisedDeliveryLineId)
         val locationProductId = purchaseDataFetcher.getLocationProductIdOfLine(purchaseLineId)
         lockPurchaseThenProduct(purchaseId, locationProductId)
 
-        val replacementLine = purchaseDeliveryLineReplacer.replace(
-            PurchaseDeliveryLineReplaceRequest(
-                revisedDeliveryLineId = revisedDeliveryLineId,
-                userProvidedQuantityDelivered = deliveryLineRevisionRequest.userProvidedQuantityDelivered,
-                unitCost = deliveryLineRevisionRequest.unitCost,
-            )
-        )
+        val assessment = deliveryLineRevisionAssessor.assess(deliveryLineRevisionRequest)
+        BlockedChangeException.throwIfAny(assessment.blockingProblems)
+
+        val replacementLine = purchaseDeliveryLineReplacer.replace(assessment.validatedDeliveryLineRevision)
         reviseStock(replacementLine, locationProductId, reason)
         return applyToPurchase(purchaseId, replacementLine)
     }
@@ -80,9 +75,7 @@ class DeliveryLineRevisioner(
     }
 
     private fun reviseStock(replacementLine: ReplacementDeliveryLineDto, locationProductId: UUID, reason: String) {
-        val quantityBreakdown = productStockBreakdownProvider.forLocationProducts(
-            listOf(locationProductId)
-        ).getValue(locationProductId)
+        val quantityBreakdown = productStockBreakdownProvider.forLocationProduct(locationProductId)
         val stockRevisionReferenceNumber = referenceNumberGenerator.generateSingle(TableName.STOCK_REVISION)
         val revisedStockEntryId = deliveryLineStockInspector.getStockEntryId(
             replacementLine.deliveryReferenceNumber, replacementLine.revisedLineReferenceNumber
@@ -102,7 +95,9 @@ class DeliveryLineRevisioner(
             replacementLine, locationProductId, stockRevisionReferenceNumber, revisedStockEntryId
         )
         stockRevisionCommitter.commitReplay(
-            replayPlanner.plan(consumptionsOnRevisedLayer, stockRevisionReferenceNumber, quantityBreakdown),
+            replayPlanner.planReplayForExecution(
+                consumptionsOnRevisedLayer, stockRevisionReferenceNumber, quantityBreakdown
+            ),
             replacementStockEntryId,
             quantityBreakdown
         )
@@ -124,20 +119,15 @@ class DeliveryLineRevisioner(
         stockRevisionReferenceNumber: String,
         revisedStockEntryId: UUID
     ): UUID = stockReplacementLayerRecorder.record(
-        StockReplacementLayerRequest(
+        DeliveryReplacementLayerRequests.of(
             locationProductId = locationProductId,
-            sourceType = StockItemSource.PURCHASE,
-            movementType = MovementType.PURCHASE_RECEIVED,
-            documentReference = replacementLine.deliveryReferenceNumber,
-            detailReference = replacementLine.replacementLineReferenceNumber,
+            deliveryReferenceNumber = replacementLine.deliveryReferenceNumber,
+            replacementLineReferenceNumber = replacementLine.replacementLineReferenceNumber,
             stockRevisionReferenceNumber = stockRevisionReferenceNumber,
-            userProvidedQuantity = replacementLine.userProvidedQuantityDelivered,
+            userProvidedQuantityDelivered = replacementLine.userProvidedQuantityDelivered,
             unitId = replacementLine.unitId,
             storageUnitsPerUserProvidedUnit = replacementLine.storageUnitsPerUserProvidedUnit,
-            batchCost = Decimals.MoneyScale.multiply(
-                replacementLine.unitCost,
-                replacementLine.userProvidedQuantityDelivered
-            ),
+            unitCost = replacementLine.unitCost,
             revisedStockEntryId = revisedStockEntryId,
         )
     )
@@ -146,13 +136,8 @@ class DeliveryLineRevisioner(
         purchaseDeliveryRevisionApplier.apply(
             purchaseId = purchaseId,
             purchaseLineId = replacementLine.purchaseLineId,
-            revisedStorageQuantity = ExactQuantity.ofStorageFromUserProvided(
-                replacementLine.revisedUserProvidedQuantityDelivered,
-                replacementLine.storageUnitsPerUserProvidedUnit
-            ),
-            replacementStorageQuantity = ExactQuantity.ofStorageFromUserProvided(
-                replacementLine.userProvidedQuantityDelivered,
-                replacementLine.storageUnitsPerUserProvidedUnit
+            storageQuantityDelivered = purchaseDeliveryDataFetcher.calculateStorageQuantityDelivered(
+                replacementLine.purchaseLineId
             ),
         )
 }

@@ -8,7 +8,6 @@ data class ReplacementDeliveryLineDto(
     val revisedLineReferenceNumber: String,
     val replacementLineReferenceNumber: String,
     val purchaseLineId: UUID,
-    val revisedUserProvidedQuantityDelivered: BigDecimal,
     val userProvidedQuantityDelivered: BigDecimal,
     val unitCost: BigDecimal,
     val unitId: UUID,

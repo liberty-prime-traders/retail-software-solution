@@ -48,4 +48,16 @@ class StockEntryConsumptionTest {
 
         assertEquals(listOf(sameTimeLowerId, earlier, unknown), listOf(unknown, earlier, sameTimeLowerId).sorted())
     }
+
+    @Test
+    fun `a movement origin with a document reference returns it`() {
+        assertEquals("SAL1", StockMovementOrigin("SAL1", "SALL1").requiredDocumentReference())
+    }
+
+    @Test
+    fun `a movement origin without a document reference fails loudly`() {
+        assertThrows(IllegalStateException::class.java) {
+            StockMovementOrigin(null, "SALL1").requiredDocumentReference()
+        }
+    }
 }

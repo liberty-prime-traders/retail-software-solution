@@ -136,13 +136,13 @@ replaces it (same delivery), with a free-text `reason`. Only `ACTIVE` lines can 
 correction chains onto the current line. `PurchaseDeliveryStatus.isAppliedToStock()`
 is true for `RECEIVED` only. `PurchaseDeliveryRevisionValidator` holds the
 checks (active line, pending delivery quantity, no transferred-out stock, no movement that
-cannot be reversed). `validate` runs all of them and throws one `RtsGenericException` whose
-`payload` is the list of every failing message. A replacement quantity of zero passes: the
+cannot be reversed). Each returns a `BlockingProblem` or null; `problemsOf` collects every failing one, and
+`PurchaseDeliveryLineReplacer.replace` throws them as one `BlockedChangeException` (see "Blocking problems" in the stock revision README). A replacement quantity of zero passes: the
 create-time zero rule lives on `PurchaseDeliveryLineCreateDto`, which revisions do not use.
 `PurchaseDeliveryLineReplacer.replace` writes the rows: it flips the revised line to `REVISED` and inserts the sibling
 `ACTIVE` line in the same delivery (same purchase line, unit and storage ratio), returning both references. It touches no
-stock, ledger or purchase totals. `PurchaseDeliveryRevisionApplier.apply` applies the net quantity change to
-the purchase line's `storageQuantityDelivered` and resolves the status with `PurchaseStatusResolver` (an undelivered
+stock, ledger or purchase totals. `PurchaseDeliveryRevisionApplier.apply` sets
+the purchase line's `storageQuantityDelivered` to the sum of its `ACTIVE` delivery lines (`PurchaseDeliveryDataFetcher.calculateStorageQuantityDelivered`, so a drifted total is corrected) and resolves the status with `PurchaseStatusResolver` (an undelivered
 purchase with open lines falls back to `ORDERED`). Every delivered-total sum counts `ACTIVE` lines only, and a reissued `PurchaseDeliveredEvent` carries `ACTIVE` lines only.
 
 ---

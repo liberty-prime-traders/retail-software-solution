@@ -11,6 +11,10 @@ class ProductStockBreakdownProvider(
     private val quantityBreakdownFactory: QuantityBreakdownFactory,
 ) {
 
+    fun forLocationProduct(locationProductId: UUID): QuantityBreakdown {
+        return forLocationProducts(listOf(locationProductId)).getValue(locationProductId)
+    }
+
     fun forLocationProducts(locationProductIds: Collection<UUID>): Map<UUID, QuantityBreakdown> {
         if (locationProductIds.isEmpty()) return emptyMap()
         val baseUnitIdByLocationProductId = locationProductDataFetcher.getBaseUnitIds(locationProductIds)

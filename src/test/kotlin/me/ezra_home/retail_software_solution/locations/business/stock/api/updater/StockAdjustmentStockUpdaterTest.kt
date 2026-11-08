@@ -94,6 +94,7 @@ class StockAdjustmentStockUpdaterTest {
     private fun givenStock(balance: String, layers: List<StockEntryEntity>) {
         `when`(stockEntryRepository.findFifoEntriesForProducts(anyCollection())).thenReturn(layers)
         `when`(stockBalanceFetcher.getLatestBalances(anyCollection())).thenReturn(mapOf(locationProductId to BigDecimal(balance)))
+        `when`(productStockBreakdownProvider.forLocationProduct(locationProductId)).thenReturn(pieceBreakdown)
         `when`(
             productStockBreakdownProvider.forLocationProducts(anyCollection())
         ).thenReturn(mapOf(locationProductId to pieceBreakdown))

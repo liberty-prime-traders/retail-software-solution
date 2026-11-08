@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.read.S
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementFetcher
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -259,19 +259,19 @@ class NetConsumptionCalculatorTest {
 
     @Test
     fun `a reversal with no matching draw on the entry rejects it`() {
-        val rejection = assertThrows(RtsGenericException::class.java) {
+        val rejection = assertThrows(BlockedChangeException::class.java) {
             netConsumptions(
                 listOf(received(), movement(MovementType.SALE_VOID, "4", "40.00", "SALE1"))
             )
         }
 
-        assertEquals(1, (rejection.payload as List<*>).size)
-        assertTrue(rejection.message.contains(entryReferenceNumber))
+        assertEquals(1, rejection.problems.size)
+        assertTrue(rejection.problems.single().effect.contains(entryReferenceNumber))
     }
 
     @Test
     fun `reversing more than was drawn rejects the entry`() {
-        val rejection = assertThrows(RtsGenericException::class.java) {
+        val rejection = assertThrows(BlockedChangeException::class.java) {
             netConsumptions(
                 listOf(
                     received(),
@@ -281,8 +281,8 @@ class NetConsumptionCalculatorTest {
             )
         }
 
-        assertEquals(1, (rejection.payload as List<*>).size)
-        assertTrue(rejection.message.contains(entryReferenceNumber))
+        assertEquals(1, rejection.problems.size)
+        assertTrue(rejection.problems.single().effect.contains(entryReferenceNumber))
     }
 
     @Test
@@ -302,7 +302,7 @@ class NetConsumptionCalculatorTest {
 
     @Test
     fun `draws of one document on a layer that differ in type are rejected as inconsistent history`() {
-        val rejection = assertThrows(RtsGenericException::class.java) {
+        val rejection = assertThrows(BlockedChangeException::class.java) {
             netConsumptions(
                 listOf(
                     received(),
@@ -312,7 +312,7 @@ class NetConsumptionCalculatorTest {
             )
         }
 
-        assertEquals(1, (rejection.payload as List<*>).size)
+        assertEquals(1, rejection.problems.size)
     }
 
     @Test
@@ -330,7 +330,7 @@ class NetConsumptionCalculatorTest {
 
     @Test
     fun `every inconsistency is reported together`() {
-        val rejection = assertThrows(RtsGenericException::class.java) {
+        val rejection = assertThrows(BlockedChangeException::class.java) {
             netConsumptions(
                 listOf(
                     received(),
@@ -340,6 +340,6 @@ class NetConsumptionCalculatorTest {
             )
         }
 
-        assertEquals(2, (rejection.payload as List<*>).size)
+        assertEquals(2, rejection.problems.size)
     }
 }

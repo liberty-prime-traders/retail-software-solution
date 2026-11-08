@@ -116,7 +116,7 @@ class ConsumerReplayerTest {
             listOf(replacement, layer("STE3", "50", "700.00"))
         )
 
-        assertTrue(replayResult.errors.isEmpty())
+        assertTrue(replayResult.problems.isEmpty())
         assertEquals(
             listOf("SAL1", "SAL2"),
             replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference }
@@ -148,7 +148,7 @@ class ConsumerReplayerTest {
             listOf(replacement, laterLayer)
         )
 
-        assertTrue(replayResult.errors.isEmpty())
+        assertTrue(replayResult.problems.isEmpty())
         val secondPlan = replayResult.consumerReplayPlans.last()
         assertEquals(
             listOf(replacement.fifoLayer.stockEntryId, laterLayer.fifoLayer.stockEntryId),
@@ -214,8 +214,10 @@ class ConsumerReplayerTest {
             listOf("SAL1"),
             replayResult.consumerReplayPlans.map { it.fifoConsumptionRequest.documentReference }
         )
-        assertEquals(1, replayResult.errors.size)
-        assertTrue(replayResult.errors.single().contains("SAL2/SALL1"))
+        val problem = replayResult.problems.single()
+        assertEquals("SAL2", problem.documentReference)
+        assertTrue(problem.description.startsWith("Sale that took"))
+        assertTrue(problem.effect.contains("Enter a bigger quantity"))
     }
 
     @Test
@@ -225,7 +227,7 @@ class ConsumerReplayerTest {
             listOf(layer("STE3", "50", "700.00"))
         )
 
-        assertTrue(replayResult.errors.isEmpty())
+        assertTrue(replayResult.problems.isEmpty())
         assertEquals(
             "STRV000001",
             replayResult.consumerReplayPlans.single().fifoConsumptionRequest.stockRevisionReference
@@ -250,6 +252,6 @@ class ConsumerReplayerTest {
         val replayResult = replay(emptyList(), listOf(layer("STE2", "10", "120.00")))
 
         assertTrue(replayResult.consumerReplayPlans.isEmpty())
-        assertTrue(replayResult.errors.isEmpty())
+        assertTrue(replayResult.problems.isEmpty())
     }
 }

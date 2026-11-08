@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.util.UUID
@@ -29,7 +30,7 @@ class PurchaseDeliveryDataFetcher(
     fun getOwners(deliveryLineId: UUID): DeliveryLineOwnersDto =
         purchaseDeliveryLineRepository.findOwnersById(deliveryLineId)
             ?.let { DeliveryLineOwnersDto(it.purchaseId, it.purchaseLineId) }
-            ?: throw RtsGenericException("Delivery line $deliveryLineId not found")
+            ?: throw RtsGenericException("That delivery line could not be found. Refresh the page and try again.")
 
     fun calculateDeliveredTotal(purchaseId: UUID): BigDecimal {
         val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))
@@ -47,6 +48,19 @@ class PurchaseDeliveryDataFetcher(
             PurchaseDeliveryLineStatus.ACTIVE
         )
         return lines.sumOf { it.lineTotal() }
+    }
+
+    fun calculateStorageQuantityDelivered(purchaseLineId: UUID): ExactQuantity {
+        val activeLines = purchaseDeliveryLineRepository.findByPurchaseLineIdAndStatus(
+            purchaseLineId,
+            PurchaseDeliveryLineStatus.ACTIVE
+        )
+        return activeLines.fold(ExactQuantity.ZERO) { total, line ->
+            total + ExactQuantity.ofStorageFromUserProvided(
+                line.userProvidedQuantityDelivered,
+                line.storageUnitsPerUserProvidedUnit
+            )
+        }
     }
 
     fun getDeliveryResponses(
