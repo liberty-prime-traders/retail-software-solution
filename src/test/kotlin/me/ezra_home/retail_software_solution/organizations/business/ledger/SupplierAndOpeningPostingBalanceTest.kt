@@ -9,6 +9,7 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.OpeningStockDeclaredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
+import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveryRevisedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
 import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
@@ -19,10 +20,11 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountPosting
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningStockAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryAccountingProcessor
+import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryRevisionAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SupplierPaymentAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SupplierPaymentVoidAccountingProcessor
 import me.ezra_home.retail_software_solution.util.business.Money
@@ -53,6 +55,9 @@ class SupplierAndOpeningPostingBalanceTest {
     private val ledgerPostingService = mock(LedgerPostingService::class.java)
 
     private val purchaseDeliveryProcessor = PurchaseDeliveryAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
+    private val purchaseDeliveryRevisionProcessor = PurchaseDeliveryRevisionAccountingProcessor(
+        contactService, LedgerPostingGate(ledgerEntryGroupRepository), ledgerPostingService
+    )
     private val supplierPaymentProcessor = SupplierPaymentAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
     private val supplierPaymentVoidProcessor = SupplierPaymentVoidAccountingProcessor(contactService, LedgerPostingGate(ledgerEntryGroupRepository), ledgerPostingService)
     private val openingStockProcessor = OpeningStockAccountingProcessor(ledgerEntryGroupRepository, ledgerPostingService)
@@ -82,6 +87,24 @@ class SupplierAndOpeningPostingBalanceTest {
 
         assertBalance("10.00", SystemAccount.INVENTORY)
         assertBalance("10.00", SystemAccount.TRADE_PAYABLES)
+    }
+
+    @Test
+    fun `a revision that raises a line total raises inventory and trade payables by the change`() {
+        post(purchaseDeliveryProcessor.prepareLedgerRequest(purchaseDeliveredEvent()))
+        post(purchaseDeliveryRevisionProcessor.prepareLedgerRequest(purchaseDeliveryRevisedEvent("10.00", "14.50")))
+
+        assertBalance("14.50", SystemAccount.INVENTORY)
+        assertBalance("14.50", SystemAccount.TRADE_PAYABLES)
+    }
+
+    @Test
+    fun `a revision that lowers a line total lowers inventory and trade payables by the change`() {
+        post(purchaseDeliveryProcessor.prepareLedgerRequest(purchaseDeliveredEvent()))
+        post(purchaseDeliveryRevisionProcessor.prepareLedgerRequest(purchaseDeliveryRevisedEvent("10.00", "3.25")))
+
+        assertBalance("3.25", SystemAccount.INVENTORY)
+        assertBalance("3.25", SystemAccount.TRADE_PAYABLES)
     }
 
     @Test
@@ -148,6 +171,21 @@ class SupplierAndOpeningPostingBalanceTest {
             "${systemAccount.name} expected $expected but was ${recordingAccountService.balance(systemAccount)}"
         )
     }
+
+    private fun purchaseDeliveryRevisedEvent(revisedLineTotal: String, replacementLineTotal: String) =
+        PurchaseDeliveryRevisedEvent(
+            eventId = UUID.randomUUID(),
+            sourceContext = locationLevelContext,
+            timestamp = Instant.now(),
+            correlationId = null,
+            stockRevisionId = UUID.randomUUID(),
+            stockRevisionReferenceNumber = "STRV000001",
+            purchaseReferenceNumber = "PCH-1",
+            supplierId = supplierId,
+            revisedLineTotal = Money.of(BigDecimal(revisedLineTotal)),
+            replacementLineTotal = Money.of(BigDecimal(replacementLineTotal)),
+            postingDate = LocalDate.now()
+        )
 
     private fun purchaseDeliveredEvent() = PurchaseDeliveredEvent(
         eventId = UUID.randomUUID(),

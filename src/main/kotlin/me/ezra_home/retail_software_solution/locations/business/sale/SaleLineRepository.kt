@@ -12,6 +12,8 @@ interface SaleLineRepository : JpaRepository<SaleLineEntity, UUID> {
 
     fun findBySaleId(saleId: UUID): List<SaleLineEntity>
 
+    fun findByReferenceNumberIn(referenceNumbers: Collection<String>): List<SaleLineEntity>
+
     fun countByCogsTotalIsNotNull(): Long
 
     @Query(

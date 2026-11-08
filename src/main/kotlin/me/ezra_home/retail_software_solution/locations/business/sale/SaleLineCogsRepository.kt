@@ -11,6 +11,8 @@ import java.util.UUID
 @Repository
 interface SaleLineCogsRepository : JpaRepository<SaleLineCogsEntity, UUID> {
 
+    fun findBySaleLineIdInAndStatus(saleLineIds: Collection<UUID>, status: SaleLineCogsStatus): List<SaleLineCogsEntity>
+
     @Query(
         """
         SELECT COALESCE(SUM(saleLineCogs.cogsTotal), 0)

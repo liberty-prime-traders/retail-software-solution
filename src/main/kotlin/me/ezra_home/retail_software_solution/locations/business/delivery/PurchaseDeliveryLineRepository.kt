@@ -8,6 +8,8 @@ import java.util.UUID
 
 @Repository
 interface PurchaseDeliveryLineRepository : JpaRepository<PurchaseDeliveryLineEntity, UUID> {
+  fun findByReferenceNumberIn(referenceNumbers: List<String>): List<PurchaseDeliveryLineEntity>
+
   fun findByPurchaseDeliveryIdIn(deliveryIds: List<UUID>): List<PurchaseDeliveryLineEntity>
 
   fun findByPurchaseDeliveryIdInAndStatus(

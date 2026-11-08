@@ -139,7 +139,9 @@ class DailyPerformanceServiceTest {
 
         assertEquals(
             setOf(
-                LedgerSourceType.SALE, LedgerSourceType.SALE_VOID, LedgerSourceType.EXPENSE, LedgerSourceType.EXPENSE_VOID,
+                LedgerSourceType.SALE, LedgerSourceType.SALE_VOID, LedgerSourceType.SALE_COGS_RESTATEMENT,
+                LedgerSourceType.STOCK_ADJUSTMENT_RESTATEMENT,
+                LedgerSourceType.EXPENSE, LedgerSourceType.EXPENSE_VOID,
                 LedgerSourceType.STOCK_ADJUSTMENT, LedgerSourceType.MANUAL_JOURNAL, LedgerSourceType.MANUAL_JOURNAL_VOID,
                 LedgerSourceType.SALE_PAYMENT, LedgerSourceType.SALE_PAYMENT_VOID
             ),

@@ -20,7 +20,7 @@ import me.ezra_home.retail_software_solution.organizations.business.ledger.proce
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpensePaymentVoidedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseRecordedAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseVoidedAccountingProcessor
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach

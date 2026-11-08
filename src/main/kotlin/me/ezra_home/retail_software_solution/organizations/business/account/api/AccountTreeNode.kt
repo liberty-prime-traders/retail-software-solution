@@ -12,5 +12,5 @@ data class AccountTreeNode(
     val isLeaf: Boolean
 ) {
     fun amountInNormalDirection(entryType: EntryType, amount: BigDecimal): BigDecimal =
-        if (entryType == normalBalance) amount else amount.negate()
+        entryType.amountTowards(normalBalance, amount)
 }

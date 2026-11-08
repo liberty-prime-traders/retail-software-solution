@@ -17,11 +17,11 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountPosting
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleConfirmedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SalePaymentRecordedEventProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SalePaymentVoidedEventProcessor
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleTaxLedgerEntriesBuilder
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.SaleTaxLedgerEntriesBuilder
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.SaleVoidedEventProcessor
 import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.PositiveMoney

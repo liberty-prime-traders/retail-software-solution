@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision.api
 
+import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import java.math.BigDecimal
 
 // Declaration order is the display order: blocking items first.
@@ -17,10 +18,13 @@ data class RevisionPreviewItemDto(
     val netProfitChange: BigDecimal? = null,
 )
 
+// accountText names the account and what the line does to its own balance, such as "Trade Payables (decreases)".
+// balanceEffect is what that does to the business: a liability that decreases adds, an asset that decreases subtracts.
 data class RevisionPreviewLedgerLineDto(
-    val accountName: String,
-    val debit: String?,
-    val credit: String?,
+    val accountText: String,
+    val debit: BigDecimal?,
+    val credit: BigDecimal?,
+    val balanceEffect: BalanceEffect,
 )
 
 data class RevisionPreviewLedgerEntryDto(

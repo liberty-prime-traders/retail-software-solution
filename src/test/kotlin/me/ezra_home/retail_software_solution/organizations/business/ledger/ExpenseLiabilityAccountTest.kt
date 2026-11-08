@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.business.ledger
 
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ExpenseLiabilityAccount
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.ExpenseLiabilityAccount
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

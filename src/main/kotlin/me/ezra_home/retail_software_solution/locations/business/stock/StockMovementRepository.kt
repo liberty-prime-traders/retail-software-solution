@@ -87,6 +87,8 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
   """, nativeQuery = true)
   fun countMovementsOfTypeMissingPurchaseContext(movementTypeCode: String): Long
 
+  fun findByStockRevisionReference(stockRevisionReference: String): List<StockMovementEntity>
+
   fun findByStockEntryId(stockEntryId: UUID): List<StockMovementEntity>
 
   fun findByLocationProductIdAndDocumentReferenceIn(

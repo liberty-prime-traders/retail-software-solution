@@ -4,7 +4,9 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Val
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.StockMovementDto
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.AdjustmentCostChange
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.RevisionPreviewSeverity
+import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -92,7 +94,7 @@ class RevisionPreviewStoryWriterTest {
             listOf(layer("10", "120.00"))
         )
 
-        val items = RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown)
+        val items = RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown, null, emptyMap())
 
         assertEquals(listOf("SAL1/LINE1", "TRF1/LINE1"), items.map { it.documentReference })
         assertEquals(RevisionPreviewSeverity.NOTE, items.first().severity)
@@ -103,10 +105,79 @@ class RevisionPreviewStoryWriterTest {
     }
 
     @Test
+    fun `a consumer priced wholly from the replacement says so`() {
+        val replacement = layer("10", "120.00")
+        val replayResult = replay(listOf(consumption("SAL1", "4", "40.00")), listOf(replacement))
+
+        val item = RevisionPreviewStoryWriter.write(
+            replayResult, emptyList(), quantityBreakdown, replacement.fifoLayer.stockEntryId, emptyMap()
+        ).single()
+
+        assertTrue(item.effect.endsWith("All of it is priced at this delivery's revised cost."))
+    }
+
+    @Test
+    fun `a consumer the replacement only partly covers says how the rest is priced`() {
+        val replacement = layer("3", "60.00")
+        val laterDelivery = layer("50", "700.00")
+        val replayResult = replay(listOf(consumption("SAL1", "4", "40.00")), listOf(replacement, laterDelivery))
+
+        val item = RevisionPreviewStoryWriter.write(
+            replayResult, emptyList(), quantityBreakdown, replacement.fifoLayer.stockEntryId, emptyMap()
+        ).single()
+
+        assertTrue(item.effect.contains("This delivery covers only 3 pcs"))
+        assertTrue(item.effect.endsWith("is priced from other deliveries at their own cost."))
+        assertTrue(item.effect.contains("of it at its revised cost; the other 1 pc"))
+    }
+
+    @Test
+    fun `a consumer the replacement does not cover at all says so`() {
+        val laterDelivery = layer("50", "700.00")
+        val replayResult = replay(listOf(consumption("SAL1", "4", "40.00")), listOf(laterDelivery))
+
+        val item = RevisionPreviewStoryWriter.write(
+            replayResult, emptyList(), quantityBreakdown, UUID.randomUUID(), emptyMap()
+        ).single()
+
+        assertTrue(
+            item.effect.endsWith(
+                "This delivery has none of it left, so all of it is priced from other deliveries at their own cost."
+            )
+        )
+    }
+
+    @Test
+    fun `an adjustment reports the profit its restated cost moves, and one with no known accounts reports none`() {
+        val replayResult = replay(
+            listOf(
+                consumption("ADJ1", "4", "40.00", MovementType.STOCK_ADJUSTMENT_DECREASE),
+                consumption("ADJ2", "3", "30.00", MovementType.STOCK_ADJUSTMENT_DECREASE),
+            ),
+            listOf(layer("10", "120.00"))
+        )
+        val adjustmentCostChanges = mapOf(
+            "ADJ1" to AdjustmentCostChange(
+                SystemAccount.INTERNAL_USE_EXPENSE.code, SystemAccount.INVENTORY.code, BigDecimal("8.00")
+            )
+        )
+
+        val items = RevisionPreviewStoryWriter.write(
+            replayResult, emptyList(), quantityBreakdown, null, adjustmentCostChanges
+        )
+
+        val internalUseItem = items.first { it.documentReference == "ADJ1/LINE1" }
+        assertEquals(0, BigDecimal("-8.00").compareTo(internalUseItem.netProfitChange))
+        assertNull(items.first { it.documentReference == "ADJ2/LINE1" }.netProfitChange)
+    }
+
+    @Test
     fun `a consumer whose cost does not move is left out`() {
         val replayResult = replay(listOf(consumption("SAL1", "4", "40.00")), listOf(layer("10", "100.00")))
 
-        assertTrue(RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown).isEmpty())
+        assertTrue(
+            RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown, null, emptyMap()).isEmpty()
+        )
     }
 
     @Test
@@ -116,7 +187,7 @@ class RevisionPreviewStoryWriterTest {
             listOf(layer("6", "60.00"))
         )
 
-        val items = RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown)
+        val items = RevisionPreviewStoryWriter.write(replayResult, emptyList(), quantityBreakdown, null, emptyMap())
 
         assertEquals(1, items.size)
         assertEquals(RevisionPreviewSeverity.BLOCKS_SAVE, items.single().severity)
@@ -131,7 +202,9 @@ class RevisionPreviewStoryWriterTest {
             "SAL000420 (draft)", "Draft sale holding 4 pcs of Sugar.", "Remove it."
         )
 
-        val items = RevisionPreviewStoryWriter.write(replayResult, listOf(reservationProblem), quantityBreakdown)
+        val items = RevisionPreviewStoryWriter.write(
+            replayResult, listOf(reservationProblem), quantityBreakdown, null, emptyMap()
+        )
 
         assertEquals(listOf("SAL000420 (draft)", "SAL1/LINE1"), items.map { it.documentReference })
         assertEquals(

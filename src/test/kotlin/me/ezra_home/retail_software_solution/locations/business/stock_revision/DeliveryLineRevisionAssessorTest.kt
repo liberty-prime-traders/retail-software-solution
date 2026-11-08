@@ -5,13 +5,16 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.ValidatedDeliveryLineRevisionDto
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.DeliveryLineRevisionRequest
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
+import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerPreviewer
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -100,25 +103,25 @@ class DeliveryLineRevisionAssessorTest {
         verifyNoInteractions(replayPlanner, netConsumptionCalculator, stockReplacementLayerPreviewer)
     }
 
+    private fun previewReplacementLayerRequest() = DeliveryReplacementLayerRequests.of(
+        locationProductId = locationProductId,
+        deliveryReferenceNumber = "DEL000001",
+        replacementLineReferenceNumber = "PREVIEW",
+        stockRevisionReferenceNumber = "PREVIEW",
+        userProvidedQuantityDelivered = BigDecimal("8"),
+        unitId = unitId,
+        storageUnitsPerUserProvidedUnit = 1L,
+        unitCost = BigDecimal("12.0000"),
+        revisedStockEntryId = revisedStockEntryId,
+    )
+
     private fun givenPassingRevisionWithReplay(replayResult: ReplayResult) {
         givenValidation(emptyList())
         `when`(deliveryLineStockInspector.getStockEntryId("DEL000001", "DELN000001")).thenReturn(revisedStockEntryId)
         `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(emptyList())
         val layersAfterReplacement = emptyList<StockEntryFifoDto>()
         `when`(
-            stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(
-                DeliveryReplacementLayerRequests.of(
-                    locationProductId = locationProductId,
-                    deliveryReferenceNumber = "DEL000001",
-                    replacementLineReferenceNumber = "PREVIEW",
-                    stockRevisionReferenceNumber = "PREVIEW",
-                    userProvidedQuantityDelivered = BigDecimal("8"),
-                    unitId = unitId,
-                    storageUnitsPerUserProvidedUnit = 1L,
-                    unitCost = BigDecimal("12.0000"),
-                    revisedStockEntryId = revisedStockEntryId,
-                )
-            )
+            stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(previewReplacementLayerRequest())
         ).thenReturn(layersAfterReplacement)
         `when`(replayPlanner.planReplayForPreview(emptyList(), layersAfterReplacement, "PREVIEW", quantityBreakdown))
             .thenReturn(replayResult)
@@ -134,13 +137,63 @@ class DeliveryLineRevisionAssessorTest {
     }
 
     @Test
+    fun `a consumer no ledger restatement covers blocks the revision and nothing is replayed`() {
+        givenPassingRevisionWithReplay(ReplayResult(emptyList(), emptyList()))
+        `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(
+            listOf(
+                StockEntryConsumption(
+                    stockEntryId = revisedStockEntryId,
+                    locationProductId = locationProductId,
+                    consumer = StockConsumer(StockMovementOrigin("TRF1", "TRFL1"), MovementType.TRANSFER_OUT, null),
+                    quantityAsEntered = QuantityAsEntered(unitId, 1L, "whole line"),
+                    orderOfConsumption = OrderOfConsumption(null, null),
+                    netConsumedStorageQuantity = ExactQuantity.ofStorage(BigDecimal.ONE),
+                    netConsumedCost = BigDecimal("10.00"),
+                )
+            )
+        )
+
+        val assessment = deliveryLineRevisionAssessor.assess(deliveryLineRevisionRequest)
+
+        assertEquals(listOf("TRF1"), assessment.blockingProblems.map { it.documentReference })
+        verifyNoInteractions(replayPlanner, reservationShortfallChecker)
+    }
+
+    @Test
+    fun `the replacement layer is the one the preview labelled with its own reference`() {
+        givenValidation(emptyList())
+        `when`(deliveryLineStockInspector.getStockEntryId("DEL000001", "DELN000001")).thenReturn(revisedStockEntryId)
+        `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(emptyList())
+        fun fifoLayerOf(referenceNumber: String) = StockEntryFifoDto(
+            referenceNumber, locationProductId, BigDecimal.ONE,
+            FifoLayer(UUID.randomUUID(), BigDecimal.TEN, BigDecimal("100.00"), BigDecimal.TEN, BigDecimal("100.00"))
+        )
+        val laterDelivery = fifoLayerOf("STE000009")
+        val replacementLayer = fifoLayerOf("PREVIEW")
+        val layersAfterReplacement = listOf(replacementLayer, laterDelivery)
+        `when`(stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(previewReplacementLayerRequest()))
+            .thenReturn(layersAfterReplacement)
+        `when`(replayPlanner.planReplayForPreview(emptyList(), layersAfterReplacement, "PREVIEW", quantityBreakdown))
+            .thenReturn(ReplayResult(emptyList(), emptyList()))
+
+        val assessment = deliveryLineRevisionAssessor.assess(deliveryLineRevisionRequest)
+
+        assertEquals(replacementLayer.fifoLayer.stockEntryId, assessment.replacementStockEntryId)
+    }
+
+    @Test
     fun `draft sales left short by the revision are blocking rows`() {
         givenPassingRevisionWithReplay(ReplayResult(emptyList(), emptyList()))
         `when`(
-            reservationShortfallChecker.problemsAfterPendingChange(
+            reservationShortfallChecker.shortfallAfterPendingChange(
                 locationProductId, ExactQuantity.ofStorage(BigDecimal("-2")), quantityBreakdown
             )
-        ).thenReturn(listOf(BlockingProblem("SAL000420 (draft)", "Draft sale holding 4 pcs of Sugar.", "Remove it.")))
+        ).thenReturn(
+            ReservationShortfall(
+                listOf(BlockingProblem("SAL000420 (draft)", "Draft sale holding 4 pcs of Sugar.", "Remove it.")),
+                "Sugar", ExactQuantity.ofStorage(BigDecimal("8")), ExactQuantity.ofStorage(BigDecimal("10"))
+            )
+        )
 
         val assessment = deliveryLineRevisionAssessor.assess(deliveryLineRevisionRequest)
 

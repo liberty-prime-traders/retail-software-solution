@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock_revision.a
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 
 object RevisionGuidanceWriter {
 
@@ -20,26 +21,29 @@ object RevisionGuidanceWriter {
         if (assessment.replayResult.problems.isNotEmpty()) {
             return if (onlySalesAreUncovered(assessment)) uncoveredRecordsGuidance(assessment) else emptyList()
         }
-        if (assessment.reservationProblems.isNotEmpty()) {
-            return listOf(draftSalesGuidance(assessment.reservationProblems))
+        val reservationShortfall = assessment.reservationShortfall
+        if (reservationShortfall != null) {
+            return listOf(draftSalesGuidance(reservationShortfall, assessment.quantityBreakdown))
         }
         return emptyList()
     }
 
     private fun onlySalesAreUncovered(assessment: DeliveryLineRevisionAssessment): Boolean {
-        return assessment.replayResult.movementTypesOfUncoveredConsumers.all { it == MovementType.SALE }
+        val uncoveredMovementTypes = assessment.replayResult.movementTypesOfUncoveredConsumers
+        return uncoveredMovementTypes.isNotEmpty() && uncoveredMovementTypes.all { it == MovementType.SALE }
     }
 
     private fun uncoveredRecordsGuidance(assessment: DeliveryLineRevisionAssessment): List<GuidanceParagraphDto> {
         val replacementStorageQuantity = assessment.validatedDeliveryLineRevision.replacementStorageQuantity
-        val quantityTheRecordsTook = assessment.replayResult.totalTakenByUncoveredConsumers
+        val quantityTheRecordsTook = assessment.replayResult.totalTakenByConsumers
         val quantityBreakdown = assessment.quantityBreakdown
         val explanation = GuidanceParagraphDto(
             buildList {
                 addAll(referenceSegments(assessment.replayResult.problems))
-                add(TextSegmentDto(" took "))
+                add(TextSegmentDto(" cannot be fully covered. Together, the records that drew from this delivery "))
+                add(TextSegmentDto("took "))
                 add(TextSegmentDto(quantityBreakdown.render(quantityTheRecordsTook), emphasis = true))
-                add(TextSegmentDto(" from this delivery between them. Your change leaves "))
+                add(TextSegmentDto(", and your change leaves "))
                 add(TextSegmentDto(quantityBreakdown.render(replacementStorageQuantity), emphasis = true))
                 add(TextSegmentDto("."))
             }
@@ -53,14 +57,25 @@ object RevisionGuidanceWriter {
         }
     }
 
-    private fun draftSalesGuidance(reservationProblems: List<BlockingProblem>): GuidanceParagraphDto {
+    private fun draftSalesGuidance(
+        reservationShortfall: ReservationShortfall,
+        quantityBreakdown: QuantityBreakdown
+    ): GuidanceParagraphDto {
+        val isOneDraft = reservationShortfall.blockingProblems.size == 1
+        val heldBetweenThem = if (isOneDraft) "" else " between them"
+        val them = if (isOneDraft) "it" else "them"
+        val drafts = if (isOneDraft) "that draft" else "those drafts"
         return GuidanceParagraphDto(
             buildList {
-                add(TextSegmentDto("Draft sales "))
-                addAll(referenceSegments(reservationProblems))
-                add(TextSegmentDto(" are holding this product, and your change would leave too little in stock. "))
-                add(TextSegmentDto("Nothing has been sold on them yet. Reduce or remove the product on those drafts, "))
-                add(TextSegmentDto("or check that the quantity on this delivery is right."))
+                add(TextSegmentDto(if (isOneDraft) "Draft sale " else "Draft sales "))
+                addAll(referenceSegments(reservationShortfall.blockingProblems))
+                add(TextSegmentDto(if (isOneDraft) " holds " else " hold "))
+                add(TextSegmentDto(quantityBreakdown.render(reservationShortfall.quantityHeld), emphasis = true))
+                add(TextSegmentDto(" of ${reservationShortfall.productName}$heldBetweenThem, but your change would "))
+                add(TextSegmentDto("leave only "))
+                add(TextSegmentDto(quantityBreakdown.render(reservationShortfall.quantityLeftInStock), emphasis = true))
+                add(TextSegmentDto(" in stock. Nothing has been sold on $them yet. Reduce or remove the product on "))
+                add(TextSegmentDto("$drafts, or check that the quantity you are updating on this delivery is right."))
             }
         )
     }

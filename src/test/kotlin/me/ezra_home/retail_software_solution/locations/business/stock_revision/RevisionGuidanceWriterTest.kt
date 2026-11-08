@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_revision
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.ValidatedDeliveryLineRevisionDto
-import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.TextSegmentDto
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.GuidanceParagraphDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -26,7 +26,9 @@ class RevisionGuidanceWriterTest {
         replayProblems: List<BlockingProblem>,
         takenQuantity: String,
         movementTypes: Set<MovementType> = setOf(MovementType.SALE),
-        reservationProblems: List<BlockingProblem> = emptyList()
+        reservationProblems: List<BlockingProblem> = emptyList(),
+        quantityHeld: String = "0",
+        quantityLeft: String = "0"
     ) = DeliveryLineRevisionAssessment(
         validatedDeliveryLineRevision = ValidatedDeliveryLineRevisionDto(
             revisedDeliveryLineId = UUID.randomUUID(),
@@ -48,10 +50,25 @@ class RevisionGuidanceWriterTest {
         replayResult = ReplayResult(
             emptyList(), replayProblems, ExactQuantity.ofStorage(BigDecimal(takenQuantity)), movementTypes
         ),
-        reservationProblems = reservationProblems,
+        reservationShortfall = reservationProblems.takeIf { it.isNotEmpty() }?.let {
+            ReservationShortfall(
+                it, "Sugar", ExactQuantity.ofStorage(BigDecimal(quantityLeft)), ExactQuantity.ofStorage(BigDecimal(quantityHeld))
+            )
+        },
     )
 
     private fun problem(reference: String) = BlockingProblem(reference, "Sale.", "Enter more.")
+
+    @Test
+    fun `the quantity compared with what the change leaves is everything that drew from the delivery`() {
+        val guidance = RevisionGuidanceWriter.write(assessment("12", listOf(problem("SAL1150")), "13"))
+
+        assertEquals(
+            "SAL1150 cannot be fully covered. Together, the records that drew from this delivery took 13 pcs, " +
+                "and your change leaves 12 pcs.",
+            guidance.first().segments.joinToString("") { it.text }
+        )
+    }
 
     @Test
     fun `uncovered records are named with the quantity they took and the quantity left`() {
@@ -91,13 +108,50 @@ class RevisionGuidanceWriterTest {
     }
 
     @Test
-    fun `draft sales holding the stock are named`() {
+    fun `no sales guidance is written for blocking rows that name no uncovered consumer type`() {
+        assertTrue(
+            RevisionGuidanceWriter.write(assessment("2", listOf(problem("ADJ1")), "0", emptySet())).isEmpty()
+        )
+    }
+
+    private fun textOf(guidance: List<GuidanceParagraphDto>) = guidance.single().segments.joinToString("") { it.text }
+
+    @Test
+    fun `one draft sale is named with what it holds and what the change leaves`() {
         val guidance = RevisionGuidanceWriter.write(
-            assessment("2", emptyList(), "0", reservationProblems = listOf(problem("SAL9 (draft)")))
+            assessment(
+                "2", emptyList(), "0", reservationProblems = listOf(problem("SAL9 (draft)")),
+                quantityHeld = "9", quantityLeft = "8"
+            )
         )
 
-        val emphasisedSegments = guidance.single().segments.filter { it.emphasis }
-        assertEquals(listOf(TextSegmentDto("SAL9 (draft)", emphasis = true)), emphasisedSegments)
+        assertEquals(
+            "Draft sale SAL9 (draft) holds 9 pcs of Sugar, but your change would leave only 8 pcs in stock. " +
+                "Nothing has been sold on it yet. Reduce or remove the product on that draft, " +
+                "or check that the quantity you are updating on this delivery is right.",
+            textOf(guidance)
+        )
+        assertEquals(
+            listOf("SAL9 (draft)", "9 pcs", "8 pcs"),
+            guidance.single().segments.filter { it.emphasis }.map { it.text }
+        )
+    }
+
+    @Test
+    fun `several draft sales are named with what they hold between them`() {
+        val guidance = RevisionGuidanceWriter.write(
+            assessment(
+                "2", emptyList(), "0", reservationProblems = listOf(problem("SAL9 (draft)"), problem("SAL8 (draft)")),
+                quantityHeld = "10", quantityLeft = "8"
+            )
+        )
+
+        assertEquals(
+            "Draft sales SAL8 (draft), SAL9 (draft) hold 10 pcs of Sugar between them, but your change would " +
+                "leave only 8 pcs in stock. Nothing has been sold on them yet. Reduce or remove the product on " +
+                "those drafts, or check that the quantity you are updating on this delivery is right.",
+            textOf(guidance)
+        )
     }
 
     @Test

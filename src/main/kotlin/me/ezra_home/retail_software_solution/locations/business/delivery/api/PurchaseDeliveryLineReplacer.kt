@@ -93,6 +93,8 @@ class PurchaseDeliveryLineReplacer(
             unitCost = replacementLine.unitCost,
             unitId = replacementLine.unitId,
             storageUnitsPerUserProvidedUnit = replacementLine.storageUnitsPerUserProvidedUnit,
+            revisedLineTotal = revisedLine.lineTotal(),
+            replacementLineTotal = replacementLine.lineTotal(),
         )
     }
 

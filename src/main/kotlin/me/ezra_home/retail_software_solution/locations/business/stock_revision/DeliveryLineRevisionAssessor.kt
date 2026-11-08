@@ -39,40 +39,48 @@ class DeliveryLineRevisionAssessor(
         if (validatedDeliveryLineRevision.problems.isNotEmpty()) {
             return DeliveryLineRevisionAssessment(
                 validatedDeliveryLineRevision, quantityBreakdown,
-                ReplayResult(emptyList(), emptyList()), emptyList()
+                ReplayResult(emptyList(), emptyList()), null
             )
         }
-        val replayResult = replayOnRevisedLayer(validatedDeliveryLineRevision, quantityBreakdown)
-        val reservationProblems = if (replayResult.problems.isEmpty()) {
-            reservationShortfallChecker.problemsAfterPendingChange(
+        val replay = replayOnRevisedLayer(validatedDeliveryLineRevision, quantityBreakdown)
+        val reservationShortfall = if (replay.replayResult.problems.isEmpty()) {
+            reservationShortfallChecker.shortfallAfterPendingChange(
                 validatedDeliveryLineRevision.locationProductId,
                 validatedDeliveryLineRevision.storageQuantityChange,
                 quantityBreakdown
             )
         } else {
-            emptyList()
+            null
         }
         return DeliveryLineRevisionAssessment(
-            validatedDeliveryLineRevision, quantityBreakdown, replayResult, reservationProblems
+            validatedDeliveryLineRevision, quantityBreakdown, replay.replayResult,
+            reservationShortfall, replay.replacementStockEntryId
         )
     }
 
     private fun replayOnRevisedLayer(
         validatedDeliveryLineRevision: ValidatedDeliveryLineRevisionDto,
         quantityBreakdown: QuantityBreakdown
-    ): ReplayResult {
+    ): ReplayOnRevisedLayer {
         val revisedStockEntryId = deliveryLineStockInspector.getStockEntryId(
             validatedDeliveryLineRevision.deliveryReferenceNumber,
             validatedDeliveryLineRevision.revisedLineReferenceNumber
         )
-        return replayPlanner.planReplayForPreview(
-            netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId),
-            stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(
-                replacementLayerRequestOf(validatedDeliveryLineRevision, revisedStockEntryId)
-            ),
-            ASSESSMENT_REFERENCE,
-            quantityBreakdown
+        val consumptionsOnRevisedLayer = netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)
+        val problemsOfUnrestatableConsumers = RestatableConsumers.problemsOf(consumptionsOnRevisedLayer)
+        if (problemsOfUnrestatableConsumers.isNotEmpty()) {
+            return ReplayOnRevisedLayer(ReplayResult(emptyList(), problemsOfUnrestatableConsumers), null)
+        }
+        val fifoEntriesAfterReplacement = stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(
+            replacementLayerRequestOf(validatedDeliveryLineRevision, revisedStockEntryId)
         )
+        val replayResult = replayPlanner.planReplayForPreview(
+            consumptionsOnRevisedLayer, fifoEntriesAfterReplacement, ASSESSMENT_REFERENCE, quantityBreakdown
+        )
+        // The previewer labels the unsaved replacement layer with the detail reference of the request.
+        val replacementStockEntryId = fifoEntriesAfterReplacement
+            .firstOrNull { it.referenceNumber == ASSESSMENT_REFERENCE }?.fifoLayer?.stockEntryId
+        return ReplayOnRevisedLayer(replayResult, replacementStockEntryId)
     }
 
     private fun replacementLayerRequestOf(
@@ -89,6 +97,8 @@ class DeliveryLineRevisionAssessor(
         unitCost = validatedDeliveryLineRevision.unitCost,
         revisedStockEntryId = revisedStockEntryId,
     )
+
+    private data class ReplayOnRevisedLayer(val replayResult: ReplayResult, val replacementStockEntryId: UUID?)
 
     private companion object {
         const val ASSESSMENT_REFERENCE = "PREVIEW"

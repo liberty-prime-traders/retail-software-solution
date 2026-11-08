@@ -35,7 +35,7 @@ class DailyPerformanceService(
         val movements = ledgerMovementReader.getMovements(
             from = range.from,
             before = range.before,
-            sources = PROFIT_AND_LOSS_SOURCES + COLLECTION_SOURCES,
+            sources = LedgerSourceType.profitAndLossSources + COLLECTION_SOURCES,
             locationId = SessionContextProvider.getLocationIdOrNull()
         )
         val movementsByDate = movements.groupBy { movement -> movement.localDate }
@@ -57,7 +57,7 @@ class DailyPerformanceService(
         movements: List<LedgerMovement>,
         accountNodesByCode: Map<String, AccountTreeNode>
     ): PerformanceComponents {
-        val profitAndLossByAccount = amountsByAccount(movements, PROFIT_AND_LOSS_SOURCES, accountNodesByCode)
+        val profitAndLossByAccount = amountsByAccount(movements, LedgerSourceType.profitAndLossSources, accountNodesByCode)
         val collectedByAccount = amountsByAccount(movements, PAYMENT_SOURCES, accountNodesByCode)
             .filterKeys { accountCode -> accountCode != SystemAccount.TRADE_RECEIVABLES.code }
         val billedToCustomers = amountsByAccount(movements, BILLING_SOURCES, accountNodesByCode)[SystemAccount.TRADE_RECEIVABLES.code]
@@ -153,15 +153,6 @@ class DailyPerformanceService(
     }
 
     private companion object {
-        val PROFIT_AND_LOSS_SOURCES = setOf(
-            LedgerSourceType.SALE,
-            LedgerSourceType.SALE_VOID,
-            LedgerSourceType.EXPENSE,
-            LedgerSourceType.EXPENSE_VOID,
-            LedgerSourceType.STOCK_ADJUSTMENT,
-            LedgerSourceType.MANUAL_JOURNAL,
-            LedgerSourceType.MANUAL_JOURNAL_VOID
-        )
         val BILLING_SOURCES = setOf(LedgerSourceType.SALE, LedgerSourceType.SALE_VOID)
         val PAYMENT_SOURCES = setOf(LedgerSourceType.SALE_PAYMENT, LedgerSourceType.SALE_PAYMENT_VOID)
         val COLLECTION_SOURCES = BILLING_SOURCES + PAYMENT_SOURCES

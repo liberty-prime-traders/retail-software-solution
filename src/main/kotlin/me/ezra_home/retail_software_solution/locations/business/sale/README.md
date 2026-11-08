@@ -505,7 +505,7 @@ committed.
 - `SaleEntity.taxTotal` / `taxBilled` are set by the time `confirm()`
   returns, so `receivableTotal()` already reflects the real amount owed
   from that point on — see §5.
-- The ledger (`organizations/business/ledger/processors/SaleTaxLedgerEntriesBuilder`)
+- The ledger (`organizations/business/ledger/helpers/SaleTaxLedgerEntriesBuilder`)
   reads the persisted `TaxEntryEntity` rows by `sourceReferenceNumber` and
   branches per entry on both flags to produce the right journal (exclusive
   / inclusive / absorbed-as-expense). That read is the one legitimate

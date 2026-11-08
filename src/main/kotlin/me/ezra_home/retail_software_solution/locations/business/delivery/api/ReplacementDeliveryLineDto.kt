@@ -12,4 +12,6 @@ data class ReplacementDeliveryLineDto(
     val unitCost: BigDecimal,
     val unitId: UUID,
     val storageUnitsPerUserProvidedUnit: Long,
+    val revisedLineTotal: BigDecimal,
+    val replacementLineTotal: BigDecimal,
 )
