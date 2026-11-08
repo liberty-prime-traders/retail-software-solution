@@ -34,7 +34,7 @@ object RevisionPreviewStoryWriter {
     ): String {
         val before = lineText(
             quantityBreakdown,
-            validatedDeliveryLineRevision.unitId,
+            validatedDeliveryLineRevision.revisedUnitId,
             validatedDeliveryLineRevision.revisedUserProvidedQuantityDelivered,
             validatedDeliveryLineRevision.revisedUnitCost
         )

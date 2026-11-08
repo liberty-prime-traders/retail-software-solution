@@ -56,10 +56,6 @@ class PaymentSearchService(
     )
   }
 
-  // A deleted or unnamed payment method is absent from the names map, and its payments remain.
-  private fun paymentMethodNameOf(paymentMethodId: UUID, paymentMethodNamesById: Map<UUID, String>) =
-    paymentMethodNamesById[paymentMethodId] ?: paymentMethodId.toString()
-
   private fun includedSources(paymentSearchParameters: PaymentSearchParameters) =
     PaymentSource.entries.filter { paymentSearchParameters.includes(it.type) }
 
@@ -70,9 +66,9 @@ class PaymentSearchService(
   ) = PaymentRowDto(
     id = paymentRow.id,
     type = paymentRow.type,
-    referenceNumber = paymentRow.referenceNumber,
+    parentReferenceNumber = paymentRow.parentReferenceNumber,
     contactName = contactNamesById[paymentRow.contactId],
-    paymentMethodName = paymentMethodNameOf(paymentRow.paymentMethodId, paymentMethodNamesById),
+    paymentMethodName = paymentMethodNamesById.getValue(paymentRow.paymentMethodId),
     amount = paymentRow.amount,
     balanceEffect = PaymentSource.forType(paymentRow.type).balanceEffect,
     paymentDate = paymentRow.paymentDate,
@@ -96,7 +92,7 @@ class PaymentSearchService(
       .map { paymentMethodTotal ->
         PaymentMethodSummaryDto(
           paymentMethodId = paymentMethodTotal.paymentMethodId,
-          paymentMethodName = paymentMethodNameOf(paymentMethodTotal.paymentMethodId, paymentMethodNamesById),
+          paymentMethodName = paymentMethodNamesById.getValue(paymentMethodTotal.paymentMethodId),
           activeTotal = paymentMethodTotal.activeTotal,
           voidedTotal = paymentMethodTotal.voidedTotal
         )

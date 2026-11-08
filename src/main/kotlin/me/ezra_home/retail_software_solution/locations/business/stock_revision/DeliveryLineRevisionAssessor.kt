@@ -29,6 +29,7 @@ class DeliveryLineRevisionAssessor(
             PurchaseDeliveryLineReplaceRequest(
                 revisedDeliveryLineId = deliveryLineRevisionRequest.revisedDeliveryLineId,
                 userProvidedQuantityDelivered = deliveryLineRevisionRequest.userProvidedQuantityDelivered,
+                unitId = deliveryLineRevisionRequest.unitId,
                 unitCost = deliveryLineRevisionRequest.unitCost,
             )
         )

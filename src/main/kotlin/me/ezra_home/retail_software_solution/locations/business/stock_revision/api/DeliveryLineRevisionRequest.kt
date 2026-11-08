@@ -7,6 +7,7 @@ import java.util.UUID
 data class DeliveryLineRevisionRequest(
     val revisedDeliveryLineId: UUID,
     val userProvidedQuantityDelivered: UserProvidedQuantity,
+    val unitId: UUID,
     val unitCost: Money,
     val reason: String,
 )

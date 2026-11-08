@@ -46,9 +46,9 @@ class ReplayPlanner(
                 stockRevisionReferenceNumber = stockRevisionReferenceNumber,
                 consumptionsOnReplacedLayer = consumptionsOnReplacedLayer,
                 productBeingReplayed = ProductBeingReplayed(
-                    productLabel = locationProductDataFetcher.findSummaryByIds(
+                    productName = locationProductDataFetcher.findSummaryByIds(
                         listOf(locationProductId)
-                    ).getValue(locationProductId).label,
+                    ).getValue(locationProductId).productName,
                     quantityBreakdown = quantityBreakdown,
                     fifoEntriesAvailableForConsumption = fifoEntriesAvailableForConsumption,
                 )

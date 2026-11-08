@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision.
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineRevisionAssessor
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.RevisionGuidanceWriter
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.RevisionPreviewStoryWriter
 import org.springframework.stereotype.Service
 
@@ -28,6 +29,7 @@ class DeliveryLineRevisionPreviewer(
                 validatedDeliveryLineRevision, assessment.quantityBreakdown
             ),
             transactions = transactions,
+            guidance = RevisionGuidanceWriter.write(assessment),
             ledgerEntries = emptyList(),
         )
     }

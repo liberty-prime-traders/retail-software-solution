@@ -121,7 +121,7 @@ class RevisionPreviewStoryWriterTest {
         assertEquals(1, items.size)
         assertEquals(RevisionPreviewSeverity.BLOCKS_SAVE, items.single().severity)
         assertEquals("SAL2", items.single().documentReference)
-        assertTrue(items.single().effect.contains("Enter a bigger quantity"))
+        assertTrue(items.single().effect.contains("could be covered"))
     }
 
     @Test
@@ -149,6 +149,8 @@ class RevisionPreviewStoryWriterTest {
                 revisedLineReferenceNumber = "DLL1",
                 purchaseLineId = UUID.randomUUID(),
                 locationProductId = locationProductId,
+                revisedUnitId = unitId,
+                revisedStorageUnitsPerUserProvidedUnit = 1L,
                 unitId = unitId,
                 storageUnitsPerUserProvidedUnit = 1L,
                 revisedUserProvidedQuantityDelivered = BigDecimal("200"),

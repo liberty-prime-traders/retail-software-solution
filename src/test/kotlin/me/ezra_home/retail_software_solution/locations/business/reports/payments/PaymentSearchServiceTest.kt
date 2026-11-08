@@ -79,7 +79,7 @@ class PaymentSearchServiceTest {
   ) = PaymentRow(
     id = UUID.randomUUID(),
     type = type,
-    referenceNumber = referenceNumber,
+    parentReferenceNumber = referenceNumber,
     contactId = if (type == PaymentType.SALE) customerId else supplierId,
     paymentMethodId = if (type == PaymentType.SALE) cashMethodId else bankMethodId,
     amount = BigDecimal("100.00"),
@@ -234,7 +234,7 @@ class PaymentSearchServiceTest {
 
     val page = paymentSearchService.search(pageRequest(searchParameters()))
 
-    assertEquals(listOf("SP000002", "SUP000001"), page.contents.map { it.referenceNumber })
+    assertEquals(listOf("SP000002", "SUP000001"), page.contents.map { it.parentReferenceNumber })
     assertEquals(listOf(PaymentType.SALE, PaymentType.PURCHASE), page.contents.map { it.type })
     assertEquals(listOf(BalanceEffect.ADDS, BalanceEffect.SUBTRACTS), page.contents.map { it.balanceEffect })
     assertEquals(listOf("Jane Customer", "Acme Supplier"), page.contents.map { it.contactName })
@@ -251,7 +251,7 @@ class PaymentSearchServiceTest {
 
     val page = paymentSearchService.search(pageRequest(searchParameters(), size = 2))
 
-    assertEquals(listOf("SP000003", "SUP000002"), page.contents.map { it.referenceNumber })
+    assertEquals(listOf("SP000003", "SUP000002"), page.contents.map { it.parentReferenceNumber })
     assertTrue(page.hasMore)
     val keysetSearchCursor = KeysetSearchCursor.decode(page.currentCursor)
     assertNotNull(keysetSearchCursor)
