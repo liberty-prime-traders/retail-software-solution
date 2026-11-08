@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ACTION="${1:-up}"  # default to up
-ENV_FILE="prod.env"
+ENV_FILE="deployment/env/prod.env"
+COMPOSE=(docker compose -f deployment/compose/docker-compose.yml --env-file "$ENV_FILE")
 
 APP_VERSION="$(grep -E '^APP_VERSION=' "$ENV_FILE" | cut -d= -f2)"
 if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -11,9 +12,9 @@ if [[ ! "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 if [[ "$ACTION" == "down" ]]; then
-  docker compose --env-file "$ENV_FILE" down
+  "${COMPOSE[@]}" down
 elif [[ "$ACTION" == "server" ]]; then
-  docker compose --env-file "$ENV_FILE" up -d --no-deps rtss-server
+  "${COMPOSE[@]}" up -d --no-deps rtss-server
 else
-  docker compose --env-file "$ENV_FILE" up -d
+  "${COMPOSE[@]}" up -d
 fi
