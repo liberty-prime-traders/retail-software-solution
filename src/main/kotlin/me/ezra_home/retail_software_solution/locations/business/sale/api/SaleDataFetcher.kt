@@ -80,6 +80,9 @@ class SaleDataFetcher(
         return sale
     }
 
+    fun getReferenceNumbersById(saleIds: Collection<UUID>): Map<UUID, String> =
+        saleRepository.findAllById(saleIds).associate { it.id!! to it.requiredReference() }
+
     fun getSaleHeader(saleId: UUID): SaleHeaderDto {
         val saleEntity = saleRepository.findById(saleId).orElseThrow {
             RtsGenericException("Sale $saleId not found")

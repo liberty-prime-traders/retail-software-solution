@@ -8,7 +8,6 @@ import me.ezra_home.retail_software_solution.organizations.business.stock_item_s
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
@@ -18,7 +17,12 @@ import java.util.UUID
 
 class StockReplacementLayerRecorderTest {
 
-    private val stockIncreaseRecorder = mock(StockIncreaseRecorder::class.java)
+    private val recordedSpecs = mutableListOf<InboundLayerSpec>()
+    private var recordedStockEntryId = UUID.randomUUID()
+    private val stockIncreaseRecorder = mock(StockIncreaseRecorder::class.java) { invocation ->
+        recordedSpecs.add(invocation.getArgument(0))
+        recordedStockEntryId
+    }
     private val stockEntryRepository = mock(StockEntryRepository::class.java)
     private val stockReplacementLayerRecorder = StockReplacementLayerRecorder(
         stockIncreaseRecorder,
@@ -43,7 +47,8 @@ class StockReplacementLayerRecorderTest {
         revisedStockEntryId = revisedStockEntryId,
     )
 
-    private fun stubRevisedEntryAndCaptureSpecs(replacementStockEntryId: UUID): List<InboundLayerSpec> {
+    private fun stubRevisedEntry(replacementStockEntryId: UUID): List<InboundLayerSpec> {
+        recordedStockEntryId = replacementStockEntryId
         val revisedStockEntry = StockEntryEntity(
             locationProductId = locationProductId,
             storageBatchSize = BigDecimal("4"),
@@ -55,18 +60,13 @@ class StockReplacementLayerRecorderTest {
             activatedOn = revisedActivatedOn,
         )
         `when`(stockEntryRepository.findById(revisedStockEntryId)).thenReturn(Optional.of(revisedStockEntry))
-        val recordedSpecs = mutableListOf<InboundLayerSpec>()
-        `when`(stockIncreaseRecorder.record(anyList())).thenAnswer { invocation ->
-            recordedSpecs.addAll(invocation.getArgument<List<InboundLayerSpec>>(0))
-            listOf(replacementStockEntryId)
-        }
         return recordedSpecs
     }
 
     @Test
     fun `the layer keeps the document reference, takes the new line reference and names the revision in its context`() {
         val replacementStockEntryId = UUID.randomUUID()
-        val recordedSpecs = stubRevisedEntryAndCaptureSpecs(replacementStockEntryId)
+        val recordedSpecs = stubRevisedEntry(replacementStockEntryId)
 
         val returnedStockEntryId = stockReplacementLayerRecorder.record(replacementRequest())
 
@@ -80,7 +80,7 @@ class StockReplacementLayerRecorderTest {
 
     @Test
     fun `the layer takes the place of the revised layer in the draw order`() {
-        val recordedSpecs = stubRevisedEntryAndCaptureSpecs(UUID.randomUUID())
+        val recordedSpecs = stubRevisedEntry(UUID.randomUUID())
 
         stockReplacementLayerRecorder.record(replacementRequest())
 

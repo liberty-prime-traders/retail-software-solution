@@ -53,8 +53,8 @@ class StockRevisionCommitter(
         consumerReplayPlans: List<ConsumerReplayPlan>,
         replacementStockEntryId: UUID,
         quantityBreakdown: QuantityBreakdown
-    ): List<ConsumerReplayDto> {
-        if (consumerReplayPlans.isEmpty()) return emptyList()
+    ) {
+        if (consumerReplayPlans.isEmpty()) return
         val locationProductId = consumerReplayPlans.first().fifoConsumptionRequest.locationProductId
         entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductId)
         requireActiveReplacementOfProduct(replacementStockEntryId, locationProductId)
@@ -68,7 +68,7 @@ class StockRevisionCommitter(
         ).getValue(locationProductId)
         val touchedEntries = LinkedHashSet<StockEntryEntity>()
         val movements = mutableListOf<StockMovementEntity>()
-        val consumerReplayDtos = consumerReplayPlans.map { consumerReplayPlan ->
+        consumerReplayPlans.forEach { consumerReplayPlan ->
             val fifoConsumptionRequest = consumerReplayPlan.fifoConsumptionRequest
             val fifoConsumptionResult = FifoStockConsumer.applyTakes(
                 fifoConsumptionRequest = fifoConsumptionRequest,
@@ -80,19 +80,10 @@ class StockRevisionCommitter(
             runningBalance = fifoConsumptionResult.endingBalance
             touchedEntries.addAll(fifoConsumptionResult.touchedEntries)
             movements.addAll(fifoConsumptionResult.movements)
-            ConsumerReplayDto(
-                locationProductId = locationProductId,
-                movementType = fifoConsumptionRequest.movementType,
-                documentReference = fifoConsumptionRequest.documentReference,
-                detailReference = fifoConsumptionRequest.detailReference,
-                oldCost = consumerReplayPlan.oldCost,
-                newCost = fifoConsumptionResult.cost,
-            )
         }
 
         stockEntryRepository.saveAll(touchedEntries)
         stockMovementRepository.saveAll(movements)
-        return consumerReplayDtos
     }
 
     // Checked by id because a zero-quantity replacement is legitimate but is not among the layers with stock left.

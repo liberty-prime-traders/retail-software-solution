@@ -72,7 +72,7 @@ class ReplayPlannerTest {
 
     @Test
     fun `a layer nobody drew from plans nothing and reads nothing`() {
-        assertTrue(replayPlanner.plan(emptyList(), "STRV000001", quantityBreakdown).isEmpty())
+        assertTrue(replayPlanner.planReplayForExecution(emptyList(), "STRV000001", quantityBreakdown).isEmpty())
 
         verifyNoInteractions(stockEntryFetcher, locationProductDataFetcher)
     }
@@ -81,7 +81,7 @@ class ReplayPlannerTest {
     fun `consumers the later layers can cover are planned at the replacement's cost`() {
         givenLayerWithStockLeft("10", "120.00")
 
-        val consumerReplayPlans = replayPlanner.plan(
+        val consumerReplayPlans = replayPlanner.planReplayForExecution(
             listOf(consumption("SAL1", "4", "40.00")),
             "STRV000001",
             quantityBreakdown
@@ -92,11 +92,33 @@ class ReplayPlannerTest {
     }
 
     @Test
+    fun `a preview reports a consumer the layers cannot cover as a problem instead of throwing`() {
+        givenLayerWithStockLeft("5", "60.00")
+
+        val replayResult = replayPlanner.planReplayForPreview(
+            listOf(consumption("SAL1", "4", "40.00"), consumption("SAL2", "4", "40.00")),
+            listOf(
+                StockEntryFifoDto(
+                    "STE2", locationProductId, BigDecimal.ONE,
+                    FifoLayer(
+                        UUID.randomUUID(), BigDecimal("5"), BigDecimal("60.00"), BigDecimal("5"), BigDecimal("60.00")
+                    )
+                )
+            ),
+            "PREVIEW",
+            quantityBreakdown
+        )
+
+        assertEquals(1, replayResult.consumerReplayPlans.size)
+        assertEquals("SAL2", replayResult.problems.single().documentReference)
+    }
+
+    @Test
     fun `when any consumer cannot be covered the whole replay is refused with every problem listed`() {
         givenLayerWithStockLeft("5", "60.00")
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            replayPlanner.plan(
+            replayPlanner.planReplayForExecution(
                 listOf(consumption("SAL1", "4", "40.00"), consumption("SAL2", "4", "40.00")),
                 "STRV000001",
                 quantityBreakdown

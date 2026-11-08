@@ -8,7 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.P
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
 import me.ezra_home.retail_software_solution.util.business.Decimals
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 
 // A later consumer is planned against what the earlier ones left, so the order below matters.
@@ -20,7 +20,7 @@ object ConsumerReplayer {
         StockEntryConsumption.requireOnOneLayer(consumptionsOnReplacedLayer)
         val productBeingReplayed = replayRequest.productBeingReplayed
         var availableFifoEntries = productBeingReplayed.fifoEntriesAvailableForConsumption
-        val errors = mutableListOf<String>()
+        val problems = mutableListOf<BlockingProblem>()
         val consumerReplayPlans = mutableListOf<ConsumerReplayPlan>()
 
         consumptionsOnReplacedLayer.sortedBy { it.orderOfConsumption }.forEach { stockEntryConsumption ->
@@ -30,41 +30,44 @@ object ConsumerReplayer {
                 stockEntryConsumption.netConsumedStorageQuantity
             )
 
-            uncoveredQuantityErrorOf(stockEntryConsumption, plannedTakes, productBeingReplayed)
-                ?.let {
-                    errors.add(it)
-                    return@forEach
-                }
+            uncoveredQuantityProblemOf(stockEntryConsumption, plannedTakes, productBeingReplayed)?.let {
+                problems.add(it)
+                return@forEach
+            }
 
             availableFifoEntries = afterTakes(availableFifoEntries, plannedTakes)
             consumerReplayPlans.add(
                 ConsumerReplayPlan(
                     fifoConsumptionRequest = fifoConsumptionRequestOf(
-                        stockEntryConsumption, productBeingReplayed, replayRequest.stockRevisionReferenceNumber
+                        stockEntryConsumption,
+                        replayRequest.stockRevisionReferenceNumber
                     ),
                     plannedTakes = plannedTakes,
                     oldCost = stockEntryConsumption.netConsumedCost,
                 )
             )
         }
-        return ReplayResult(consumerReplayPlans, errors)
+        return ReplayResult(consumerReplayPlans, problems)
     }
 
-    private fun uncoveredQuantityErrorOf(
+    private fun uncoveredQuantityProblemOf(
         stockEntryConsumption: StockEntryConsumption,
         plannedTakes: List<PlannedTake>,
         productBeingReplayed: ProductBeingReplayed
-    ): String? {
-        val quantityRequired = stockEntryConsumption.netConsumedStorageQuantity
-        val availableQuantity = plannedTakes.fold(
+    ): BlockingProblem? {
+        val coveredQuantity = plannedTakes.fold(
             ExactQuantity.ZERO
         ) { sum, plannedTake -> sum + plannedTake.storageQuantity }
-        if (availableQuantity >= quantityRequired) return null
+        if (coveredQuantity >= stockEntryConsumption.netConsumedStorageQuantity) return null
         val quantityBreakdown = productBeingReplayed.quantityBreakdown
-        return "Cannot replay ${stockEntryConsumption.stockMovementOrigin.displayText}" +
-                " for ${productBeingReplayed.productLabel}:" +
-                " later stock covers ${quantityBreakdown.render(availableQuantity)}" +
-                " of ${quantityBreakdown.render(quantityRequired)}."
+        return BlockingProblem(
+            documentReference = stockEntryConsumption.stockMovementOrigin.requiredDocumentReference(),
+            description = "${StockConsumerLabel.of(stockEntryConsumption.consumer.movementType)} that took " +
+                "${quantityBreakdown.render(stockEntryConsumption.netConsumedStorageQuantity)} of " +
+                "${productBeingReplayed.productLabel} from this delivery.",
+            effect = "After your change, only ${quantityBreakdown.render(coveredQuantity)} is left to cover it. " +
+                "Enter a bigger quantity."
+        )
     }
 
     private fun afterTakes(
@@ -80,7 +83,6 @@ object ConsumerReplayer {
 
     private fun fifoConsumptionRequestOf(
         stockEntryConsumption: StockEntryConsumption,
-        productBeingReplayed: ProductBeingReplayed,
         stockRevisionReferenceNumber: String
     ): FifoConsumptionRequest {
         val consumer = stockEntryConsumption.consumer
@@ -97,10 +99,7 @@ object ConsumerReplayer {
             unitId = quantityAsEntered.unitId,
             storageUnitsPerUserProvidedUnit = quantityAsEntered.storageUnitsPerUserProvidedUnit,
             movementType = consumer.movementType,
-            documentReference = stockMovementOrigin.documentReference
-                ?: throw RtsGenericException(
-                    "A draw for ${productBeingReplayed.productLabel} has no document reference and cannot be replayed."
-                ),
+            documentReference = stockMovementOrigin.requiredDocumentReference(),
             detailReference = stockMovementOrigin.detailReference,
             adjustmentDetails = consumer.adjustmentDetails,
             wholeLineQuantityText = quantityAsEntered.userProvidedQuantityText,

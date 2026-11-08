@@ -20,7 +20,10 @@ class DeliveryLineStockInspector(
             deliveryReferenceNumber,
             deliveryLineReferenceNumber
         ).singleOrNull()
-            ?: throw RtsGenericException("Delivery line $deliveryLineReferenceNumber has no single stock layer.")
+            ?: throw RtsGenericException(
+                "The stock records of delivery line $deliveryLineReferenceNumber are incomplete, " +
+                    "so it cannot be changed. Please contact support."
+            )
 
     fun hasTransferredOut(deliveryReferenceNumber: String, deliveryLineReferenceNumber: String): Boolean =
         stockMovementRepository.countNetTransferredOutOnEntriesOfSource(

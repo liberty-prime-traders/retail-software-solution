@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.delivery
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
-import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Component
 
@@ -13,77 +13,70 @@ class PurchaseDeliveryRevisionValidator(
   private val deliveryLineStockInspector: DeliveryLineStockInspector
 ) {
 
-  fun ensureLineIsActive(purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity) {
-    if (purchaseDeliveryLineEntity.status != PurchaseDeliveryLineStatus.ACTIVE)
-      throw RtsGenericException(
-        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} has already been revised. " +
-            "Revise its current line instead."
-      )
+  fun problemIfLineIsNotActive(purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity): BlockingProblem? {
+    if (purchaseDeliveryLineEntity.status == PurchaseDeliveryLineStatus.ACTIVE) return null
+    return BlockingProblem(
+      documentReference = purchaseDeliveryLineEntity.requiredReference(),
+      description = "This delivery line has already been changed.",
+      effect = "Change its latest line instead."
+    )
   }
 
-  fun ensurePendingDeliveryQtyIsNotExceeded(
+  fun problemIfPendingDeliveryQuantityIsExceeded(
     purchaseLineDto: PurchaseLineDto,
     revisedLine: PurchaseDeliveryLineEntity,
     replacementStorageQuantity: ExactQuantity
-  ) {
+  ): BlockingProblem? {
     val revisedStorageQuantity = ExactQuantity.ofStorageFromUserProvided(
       revisedLine.userProvidedQuantityDelivered,
       revisedLine.storageUnitsPerUserProvidedUnit
     )
     val netRemaining = purchaseLineDto.storageQuantityRemaining + revisedStorageQuantity
-    purchaseDeliveryValidator.ensureWithinMaximumQuantity(
-      purchaseLineDto.locationProductId, netRemaining, replacementStorageQuantity
+    return purchaseDeliveryValidator.maximumQuantityProblem(
+      revisedLine.requiredReference(), purchaseLineDto.locationProductId, netRemaining, replacementStorageQuantity
     )
   }
 
-  fun ensureNoTransferredStock(
+  fun problemIfStockWasTransferred(
     deliveryReferenceNumber: String,
     purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity
-  ) {
-    if (deliveryLineStockInspector.hasTransferredOut(
+  ): BlockingProblem? {
+    if (!deliveryLineStockInspector.hasTransferredOut(
         deliveryReferenceNumber, purchaseDeliveryLineEntity.requiredReference())
-      )
-      throw RtsGenericException(
-        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be" +
-                " revised because some of its stock has been transferred out."
-      )
-  }
-
-  fun ensureNoMovementsThatCannotBeReversed(
-      deliveryReferenceNumber: String,
-      purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity
-  ) {
-    val hasMovementsThatCannotBeReversed = deliveryLineStockInspector.hasMovementsThatCannotBeReversed(
-      deliveryReferenceNumber,
-      purchaseDeliveryLineEntity.requiredReference()
+    ) return null
+    return BlockingProblem(
+      documentReference = purchaseDeliveryLineEntity.requiredReference(),
+      description = "Some of this delivery's stock has already been sent to another branch.",
+      effect = "This line cannot be changed."
     )
-    if (hasMovementsThatCannotBeReversed)
-      throw RtsGenericException(
-        "Delivery line ${purchaseDeliveryLineEntity.requiredReference()} cannot be revised because " +
-            "its stock has a movement that cannot be reversed."
-      )
   }
 
-  fun validate(
+  fun problemIfStockHasMovementsThatCannotBeReversed(
+    deliveryReferenceNumber: String,
+    purchaseDeliveryLineEntity: PurchaseDeliveryLineEntity
+  ): BlockingProblem? {
+    val hasIrreversibleMovements = deliveryLineStockInspector.hasMovementsThatCannotBeReversed(
+      deliveryReferenceNumber, purchaseDeliveryLineEntity.requiredReference()
+    )
+    if (hasIrreversibleMovements) {
+      return BlockingProblem(
+        documentReference = purchaseDeliveryLineEntity.requiredReference(),
+        description = "Some of this delivery's stock was returned, and returns cannot be undone.",
+        effect = "This line cannot be changed."
+      )
+    }
+    return null
+  }
+
+  fun problemsOf(
     deliveryReferenceNumber: String,
     purchaseLineDto: PurchaseLineDto,
     revisedLine: PurchaseDeliveryLineEntity,
     replacementStorageQuantity: ExactQuantity
-  ) {
-    val errors = listOf(
-      { ensureLineIsActive(revisedLine) },
-      { ensurePendingDeliveryQtyIsNotExceeded(purchaseLineDto, revisedLine, replacementStorageQuantity) },
-      { ensureNoTransferredStock(deliveryReferenceNumber, revisedLine) },
-      { ensureNoMovementsThatCannotBeReversed(deliveryReferenceNumber, revisedLine) }
-    ).mapNotNull { check -> errorMessageOf(check) }
-    if (errors.isNotEmpty()) throw RtsGenericException(errors.joinToString(" "), payload = errors)
-  }
-
-  private fun errorMessageOf(check: () -> Unit): String? =
-    try {
-      check()
-      null
-    } catch (rtsGenericException: RtsGenericException) {
-      rtsGenericException.message
-    }
+  ): List<BlockingProblem> = listOfNotNull(
+    problemIfLineIsNotActive(revisedLine),
+    problemIfPendingDeliveryQuantityIsExceeded(purchaseLineDto, revisedLine, replacementStorageQuantity),
+    problemIfStockWasTransferred(deliveryReferenceNumber, revisedLine),
+    problemIfStockHasMovementsThatCannotBeReversed(deliveryReferenceNumber, revisedLine)
+  )
 }

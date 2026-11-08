@@ -195,27 +195,25 @@ class StockRevisionCommitterTest {
     }
 
     @Test
-    fun `a replay draws the planned layers down, saves the movements and reports old and new cost`() {
+    fun `a replay draws the planned layers down and saves the movements at the replayed cost`() {
         val replacement = layer("STE2", "10", "120.00")
         givenLayersWithStockLeft(listOf(replacement))
         givenSavedReplacement(replacement)
 
-        val consumerReplays = stockRevisionCommitter.commitReplay(
+        stockRevisionCommitter.commitReplay(
             listOf(replayPlan("SAL1", replacement, "4", "48.00", "40.00")), replacement.id!!, quantityBreakdown
         )
 
         assertEquals(BigDecimal("6.0000"), replacement.storageQuantityRemaining)
         assertEquals(BigDecimal("72.00"), replacement.costRemaining)
-        assertEquals(BigDecimal("48.00"), consumerReplays.single().newCost)
-        assertEquals(BigDecimal("40.00"), consumerReplays.single().oldCost)
+        assertEquals(BigDecimal("48.00"), savedMovements.single().movedCost)
         assertEquals(listOf(replacement.id), savedMovements.map { it.stockEntryId })
     }
 
     @Test
     fun `a replay of nothing writes nothing and takes no lock`() {
-        val consumerReplays = stockRevisionCommitter.commitReplay(emptyList(), UUID.randomUUID(), quantityBreakdown)
+        stockRevisionCommitter.commitReplay(emptyList(), UUID.randomUUID(), quantityBreakdown)
 
-        assertTrue(consumerReplays.isEmpty())
         verify(entityAdvisoryLock, never()).acquire(LockNamespaces.PRODUCT, locationProductId)
         verify(stockMovementRepository, never()).saveAll(anyIterable<StockMovementEntity>())
     }
@@ -268,11 +266,11 @@ class StockRevisionCommitterTest {
         givenLayersWithStockLeft(listOf(later))
         givenSavedReplacement(zeroReplacement)
 
-        val consumerReplays = stockRevisionCommitter.commitReplay(
+        stockRevisionCommitter.commitReplay(
             listOf(replayPlan("SAL1", later, "4", "36.00", "40.00")), zeroReplacement.id!!, quantityBreakdown
         )
 
         assertEquals(listOf(later.id), savedMovements.map { it.stockEntryId })
-        assertEquals(BigDecimal("36.00"), consumerReplays.single().newCost)
+        assertEquals(BigDecimal("36.00"), savedMovements.single().movedCost)
     }
 }

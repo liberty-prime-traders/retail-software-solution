@@ -2,7 +2,6 @@ package me.ezra_home.retail_software_solution.locations.business.stock_revision.
 
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.DeliveryLineOwnersDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplaceRequest
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryLineReplacer
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.ReplacementDeliveryLineDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
@@ -11,7 +10,6 @@ import me.ezra_home.retail_software_solution.locations.business.purchase.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryRevisionApplier
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseStatus
-import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRequest
@@ -39,6 +37,12 @@ import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineRevisionAssessment
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineRevisionAssessor
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayResult
+import me.ezra_home.retail_software_solution.locations.business.delivery.api.ValidatedDeliveryLineRevisionDto
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -67,6 +71,7 @@ class DeliveryLineRevisionerTest {
     private val stockRevisionRepository = mock(StockRevisionRepository::class.java)
     private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java)
     private val purchaseDeliveryRevisionApplier = mock(PurchaseDeliveryRevisionApplier::class.java)
+    private val deliveryLineRevisionAssessor = mock(DeliveryLineRevisionAssessor::class.java)
     private val deliveryLineRevisioner = DeliveryLineRevisioner(
         purchaseDeliveryDataFetcher,
         purchaseDataFetcher,
@@ -81,7 +86,8 @@ class DeliveryLineRevisionerTest {
         referenceNumberGenerator,
         stockRevisionRepository,
         productStockBreakdownProvider,
-        purchaseDeliveryRevisionApplier
+        purchaseDeliveryRevisionApplier,
+        deliveryLineRevisionAssessor
     )
 
     private val revisedDeliveryLineId = UUID.randomUUID()
@@ -100,20 +106,29 @@ class DeliveryLineRevisionerTest {
         revisedLineReferenceNumber = "DELN000001",
         replacementLineReferenceNumber = "DELN000002",
         purchaseLineId = revisedPurchaseLineId,
-        revisedUserProvidedQuantityDelivered = BigDecimal("3"),
         userProvidedQuantityDelivered = BigDecimal("4"),
         unitCost = BigDecimal("6.50"),
         unitId = unitId,
         storageUnitsPerUserProvidedUnit = 12L,
     )
-    private val consumerReplay = ConsumerReplayDto(
-        locationProductId,
-        MovementType.SALE,
-        "SAL000001",
-        "SALN000001",
-        BigDecimal("30.00"),
-        BigDecimal("39.00")
+    private val validatedRevision = ValidatedDeliveryLineRevisionDto(
+        revisedDeliveryLineId = revisedDeliveryLineId,
+        deliveryReferenceNumber = "DEL000001",
+        revisedLineReferenceNumber = "DELN000001",
+        purchaseLineId = revisedPurchaseLineId,
+        locationProductId = locationProductId,
+        unitId = unitId,
+        storageUnitsPerUserProvidedUnit = 12L,
+        revisedUserProvidedQuantityDelivered = BigDecimal("3"),
+        revisedUnitCost = BigDecimal("6.00"),
+        userProvidedQuantityDelivered = BigDecimal("4"),
+        unitCost = BigDecimal("6.50"),
+        problems = emptyList(),
     )
+    private val passingAssessment = DeliveryLineRevisionAssessment(
+        validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()), emptyList()
+    )
+    private val deliveredStorageQuantity = ExactQuantity.ofStorage(BigDecimal("30"))
     private val purchaseResponse = PurchaseResponseDto(
         id = purchaseId,
         referenceNumber = "PUR000001",
@@ -146,28 +161,18 @@ class DeliveryLineRevisionerTest {
         `when`(purchaseDeliveryDataFetcher.getOwners(revisedDeliveryLineId))
             .thenReturn(DeliveryLineOwnersDto(purchaseId, revisedPurchaseLineId))
         `when`(referenceNumberGenerator.generateSingle(TableName.STOCK_REVISION)).thenReturn("STRV000001")
-        `when`(
-            purchaseDeliveryLineReplacer.replace(
-                any(PurchaseDeliveryLineReplaceRequest::class.java) ?: PurchaseDeliveryLineReplaceRequest(
-                    revisedDeliveryLineId,
-                    UserProvidedQuantity.of(BigDecimal("4")),
-                    Money.of(BigDecimal("6.5000"))
-                )
-            )
-        )
-            .thenReturn(replacementLine)
+        `when`(deliveryLineRevisionAssessor.assess(request())).thenReturn(passingAssessment)
+        `when`(purchaseDeliveryLineReplacer.replace(validatedRevision)).thenReturn(replacementLine)
         `when`(deliveryLineStockInspector.getStockEntryId("DEL000001", "DELN000001")).thenReturn(revisedStockEntryId)
         `when`(
             netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)
         ).thenReturn(consumptionsOnRevisedLayer)
-        `when`(
-            productStockBreakdownProvider.forLocationProducts(listOf(locationProductId))
-        ).thenReturn(mapOf(locationProductId to quantityBreakdown))
+        `when`(productStockBreakdownProvider.forLocationProduct(locationProductId)).thenReturn(quantityBreakdown)
         `when`(
             resetPlanner.plan(revisedStockEntryId, consumptionsOnRevisedLayer, "STRV000001", quantityBreakdown)
         ).thenReturn(stockEntryResetPlan)
         `when`(
-            replayPlanner.plan(consumptionsOnRevisedLayer, "STRV000001", quantityBreakdown)
+            replayPlanner.planReplayForExecution(consumptionsOnRevisedLayer, "STRV000001", quantityBreakdown)
         ).thenReturn(consumerReplayPlans)
         `when`(
             stockReplacementLayerRecorder.record(
@@ -175,14 +180,13 @@ class DeliveryLineRevisionerTest {
             )
         )
             .thenReturn(replacementStockEntryId)
-        `when`(stockRevisionCommitter.commitReplay(consumerReplayPlans, replacementStockEntryId, quantityBreakdown))
-            .thenReturn(listOf(consumerReplay))
+        `when`(purchaseDeliveryDataFetcher.calculateStorageQuantityDelivered(replacementLine.purchaseLineId))
+            .thenReturn(deliveredStorageQuantity)
         `when`(
             purchaseDeliveryRevisionApplier.apply(
                 purchaseId,
                 replacementLine.purchaseLineId,
-                ExactQuantity.ofStorageFromUserProvided(BigDecimal("3"), 12L),
-                ExactQuantity.ofStorageFromUserProvided(BigDecimal("4"), 12L)
+                deliveredStorageQuantity
             )
         ).thenReturn(purchaseResponse)
     }
@@ -205,11 +209,12 @@ class DeliveryLineRevisionerTest {
     fun `a revision locks, replaces the line, resets, records the replacement, replays and saves the revision last`() {
         stubCollaborators()
 
-        val response = deliveryLineRevisioner.revise(request())
+        val response = deliveryLineRevisioner.initiateDeliveryLineRevision(request())
 
         val ordered = inOrder(
             purchaseDataFetcher,
             entityAdvisoryLock,
+            deliveryLineRevisionAssessor,
             purchaseDeliveryLineReplacer,
             stockRevisionCommitter,
             stockReplacementLayerRecorder,
@@ -218,13 +223,8 @@ class DeliveryLineRevisionerTest {
         )
         ordered.verify(purchaseDataFetcher).lockPurchase(purchaseId)
         ordered.verify(entityAdvisoryLock).acquire(LockNamespaces.PRODUCT, locationProductId)
-        ordered.verify(purchaseDeliveryLineReplacer).replace(
-            any(PurchaseDeliveryLineReplaceRequest::class.java) ?: PurchaseDeliveryLineReplaceRequest(
-                revisedDeliveryLineId,
-                UserProvidedQuantity.of(BigDecimal("4")),
-                Money.of(BigDecimal("6.5000"))
-            )
-        )
+        ordered.verify(deliveryLineRevisionAssessor).assess(request())
+        ordered.verify(purchaseDeliveryLineReplacer).replace(validatedRevision)
         ordered.verify(stockRevisionCommitter).commitReset(stockEntryResetPlan, quantityBreakdown)
         ordered.verify(stockReplacementLayerRecorder).record(
             any(StockReplacementLayerRequest::class.java) ?: layerRequestPlaceholder()
@@ -238,8 +238,7 @@ class DeliveryLineRevisionerTest {
         ordered.verify(purchaseDeliveryRevisionApplier).apply(
             purchaseId,
             replacementLine.purchaseLineId,
-            ExactQuantity.ofStorageFromUserProvided(BigDecimal("3"), 12L),
-            ExactQuantity.ofStorageFromUserProvided(BigDecimal("4"), 12L)
+            deliveredStorageQuantity
         )
         assertEquals(purchaseResponse, response)
     }
@@ -248,7 +247,7 @@ class DeliveryLineRevisionerTest {
     fun `the replacement layer keeps the delivery document, takes the new line as detail and costs the whole batch`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.revise(request())
+        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
 
         val layerRequestCaptor = ArgumentCaptor.forClass(StockReplacementLayerRequest::class.java)
         verify(stockReplacementLayerRecorder).record(layerRequestCaptor.capture() ?: layerRequestPlaceholder())
@@ -263,10 +262,32 @@ class DeliveryLineRevisionerTest {
     }
 
     @Test
+    fun `a revision with a blocking problem is refused under the locks before anything is written`() {
+        stubCollaborators()
+        val problem = BlockingProblem("SAL000420 (draft)", "Draft sale holding 4 pcs of Sugar.", "Remove it.")
+        `when`(deliveryLineRevisionAssessor.assess(request())).thenReturn(
+            DeliveryLineRevisionAssessment(
+                validatedRevision, quantityBreakdown, ReplayResult(emptyList(), emptyList()), listOf(problem)
+            )
+        )
+
+        val exception = assertThrows(BlockedChangeException::class.java) {
+            deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+        }
+
+        assertEquals(listOf(problem), exception.problems)
+        verify(entityAdvisoryLock).acquire(LockNamespaces.PRODUCT, locationProductId)
+        verifyNoInteractions(
+            purchaseDeliveryLineReplacer, stockRevisionCommitter, stockReplacementLayerRecorder,
+            stockRevisionRepository, purchaseDeliveryRevisionApplier
+        )
+    }
+
+    @Test
     fun `the stock revision links the revised and replacement layers under the drawn reference`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.revise(request())
+        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
 
         val revisionCaptor = ArgumentCaptor.forClass(StockRevisionEntity::class.java)
         verify(stockRevisionRepository).save(revisionCaptor.capture() ?: unusedRevisionEntity())
@@ -283,7 +304,7 @@ class DeliveryLineRevisionerTest {
     fun `the replacement layer is recorded in the place of the revised layer`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.revise(request())
+        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
 
         val layerRequestCaptor = ArgumentCaptor.forClass(StockReplacementLayerRequest::class.java)
         verify(stockReplacementLayerRecorder).record(layerRequestCaptor.capture() ?: layerRequestPlaceholder())
@@ -292,7 +313,9 @@ class DeliveryLineRevisionerTest {
 
     @Test
     fun `a blank reason is refused before anything is read or locked`() {
-        assertThrows(RtsGenericException::class.java) { deliveryLineRevisioner.revise(request(reason = "  ")) }
+        assertThrows(RtsGenericException::class.java) {
+            deliveryLineRevisioner.initiateDeliveryLineRevision(request(reason = "  "))
+        }
 
         verifyNoInteractions(purchaseDeliveryDataFetcher, entityAdvisoryLock, stockRevisionCommitter)
     }

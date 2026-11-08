@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Pur
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
@@ -30,12 +31,14 @@ class PurchaseDeliveryValidator(
     }
   }
 
-  fun ensurePendingDeliveryQtyIsNotExceeded(
+  fun ensurePendingDeliveryQuantityIsNotExceeded(
     purchaseDeliveryCreateDto: PurchaseDeliveryCreateDto,
     purchaseLineById: Map<UUID, PurchaseLineDto>,
     storageUnitsPerUserProvidedUnitByPurchaseLineId: Map<UUID, Long>
   ) {
-    val locationProducts = locationProductDataFetcher.findSummaryByIds(purchaseLineById.values.map { it.locationProductId }.toSet())
+    val locationProducts = locationProductDataFetcher.findSummaryByIds(
+      purchaseLineById.values.map { it.locationProductId }.toSet()
+    )
     val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
       purchaseLineById.values.map { it.locationProductId }.toSet()
     )
@@ -46,38 +49,47 @@ class PurchaseDeliveryValidator(
         storageUnitsPerUserProvidedUnitByPurchaseLineId.getValue(lineDto.purchaseLineId)
       )
       if (delivered > purchaseLine.storageQuantityRemaining) {
-        throw maximumQuantityExceeded(
-          locationProducts.getValue(purchaseLine.locationProductId).label,
-          breakdownByLocationProductId.getValue(purchaseLine.locationProductId),
-          purchaseLine.storageQuantityRemaining,
-          delivered
+        throw RtsGenericException(
+          maximumQuantityMessageOf(
+            locationProducts.getValue(purchaseLine.locationProductId).label,
+            breakdownByLocationProductId.getValue(purchaseLine.locationProductId),
+            purchaseLine.storageQuantityRemaining,
+            delivered
+          )
         )
       }
     }
   }
 
-  fun ensureWithinMaximumQuantity(
+  fun maximumQuantityProblem(
+    documentReference: String,
     locationProductId: UUID,
     maximumQuantity: ExactQuantity,
     providedQuantity: ExactQuantity
-  ) {
-    if (providedQuantity <= maximumQuantity) return
-    throw maximumQuantityExceeded(
-      locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label,
-      productStockBreakdownProvider.forLocationProducts(setOf(locationProductId)).getValue(locationProductId),
-      maximumQuantity,
-      providedQuantity
+  ): BlockingProblem? {
+    if (providedQuantity <= maximumQuantity) return null
+    val quantityBreakdown = productStockBreakdownProvider.forLocationProduct(locationProductId)
+    return BlockingProblem(
+      documentReference = documentReference,
+      description = maximumQuantityMessageOf(
+        locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label,
+        quantityBreakdown,
+        maximumQuantity,
+        providedQuantity
+      ),
+      effect = "Enter ${quantityBreakdown.render(maximumQuantity)} or less."
     )
   }
 
-  private fun maximumQuantityExceeded(
+  private fun maximumQuantityMessageOf(
     locationProductLabel: String,
     quantityBreakdown: QuantityBreakdown,
     maximumQuantity: ExactQuantity,
     providedQuantity: ExactQuantity
-  ) = RtsGenericException(
-    "Maximum quantity that can be delivered for '$locationProductLabel' is " +
-            "${quantityBreakdown.render(maximumQuantity)}." +
-            " However, ${quantityBreakdown.render(providedQuantity)} was provided."
-  )
+  ): String {
+    val maximumQuantityText = quantityBreakdown.render(maximumQuantity)
+    val providedQuantityText = quantityBreakdown.render(providedQuantity)
+    return "You can deliver at most $maximumQuantityText of '$locationProductLabel', " +
+      "but you entered $providedQuantityText."
+  }
 }

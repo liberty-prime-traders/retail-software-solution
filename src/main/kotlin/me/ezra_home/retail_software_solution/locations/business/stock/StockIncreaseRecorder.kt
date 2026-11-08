@@ -19,6 +19,10 @@ class StockIncreaseRecorder(
     private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
+    fun record(layerSpec: InboundLayerSpec): UUID {
+        return record(listOf(layerSpec)).single()
+    }
+
     fun record(layerSpecs: List<InboundLayerSpec>): List<UUID> {
         if (layerSpecs.isEmpty()) return emptyList()
         val locationProductIds = layerSpecs.map { it.locationProductId }
