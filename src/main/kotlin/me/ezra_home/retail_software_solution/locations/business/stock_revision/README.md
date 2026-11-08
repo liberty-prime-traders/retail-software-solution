@@ -126,6 +126,10 @@ only movements; the committer sets the layer to zero and `REPLACED`.
   together in one `BlockedChangeException`, one `BlockingProblem` per consumer. Only `SUPPLIER_RETURN` can reach this check, because a
   consumer is always a decrease. `CUSTOMER_RETURN` increases stock, so it is never a consumer; a layer holding one is
   refused before a revision starts, by `DeliveryLineStockInspector.hasMovementsThatCannotBeReversed`.
+- Only `SALE` and `STOCK_ADJUSTMENT_DECREASE` consumers can be replayed, because only they have a ledger restatement
+  (`RestatableConsumers`). The assessor turns any other consumer on the layer into a `BlockingProblem`, so the preview shows it,
+  and the revisioner checks the same set again before it writes, so a type added later fails loudly instead of leaving the
+  ledger's inventory behind the stock. Transfers and supplier returns are refused earlier, by the delivery validator.
 
 ## The replacement layer (`StockReplacementLayerRecorder`)
 
@@ -205,6 +209,40 @@ and `commitReplay`, `StockReplacementLayerRecorder.record`, `PurchaseDeliveryLin
 `PurchaseDeliveryRevisionApplier.apply`) is `Propagation.MANDATORY`, so none of them can commit part of a revision when called
 alone. Spring enforces this at runtime; `RevisionWritePathPropagationTest` pins the annotation on each method. The preview
 (`DeliveryLineRevisionPreviewer`) is read-only and takes no lock.
+
+## Ledger (`StockRevisionHandlerForKafka`)
+
+After the revision's stock rows are written, `DeliveryLineRevisioner` publishes a `PurchaseDeliveryRevisedEvent` carrying the
+revised and replacement line totals (`ReplacementDeliveryLineDto`, from `PurchaseDeliveryLineEntity.lineTotal`). The event binds to
+the transaction commit, and an unchanged total publishes nothing, since the ledger rejects zero entries.
+`PurchaseDeliveryRevisionAccountingProcessor` posts the change as `PURCHASE_DELIVERY_REVISION`, keyed on the stock revision
+reference: Dr Inventory and Cr Trade payables for an increase, the opposite for a decrease. The supplier subledger holds no
+negative amounts, so a decrease is recorded on the receivable side, as a supplier payment is. The posting date is the
+revision date, in the current period. A reissue rebuilds the event from the stock revision, the revised line (the detail
+reference of the revised stock entry) and the replacement line.
+
+Sale costs restate in the same transaction. `ConsumerCostChange` holds each consumer's cost over the part it drew from the
+revised layer, built from the replay plans on save and from the revision's tagged movements on a reissue (the restore
+movements carry the old cost, the replayed draws the new). `SaleCostRestater` (`sale/api`) replaces each affected sale
+line's active `sale_line_cogs` row with one that moves by the difference, leaving the sale itself unchanged. Every draw's cost is already at money scale, so the totals are exact and no rounding step exists: a finer value fails in
+`Money.of`. The totals publish a `SaleCostRestatedEvent`, and `SaleCogsRestatementAccountingProcessor` posts the net as `SALE_COGS_RESTATEMENT`, keyed
+on the stock revision reference: Dr Cost of goods sold and Cr Inventory when cost rises, the opposite when it falls. The
+posting is in the current period and counts in the daily profit and loss.
+
+Stock adjustments that drew from the revised layer restate in the ledger only. The adjustment record is immutable and keeps its
+original `total_cost`; the replayed movements and the ledger carry the restated cost. `StockAdjustmentRestatementHandlerForKafka`
+totals the old and new cost of each restated adjustment and publishes a `StockAdjustmentCostRestatedEvent`.
+`StockAdjustmentRestatementAccountingProcessor` posts `STOCK_ADJUSTMENT_RESTATEMENT`, keyed on the stock revision reference:
+each adjustment's own legs for an increase, reversed for a decrease, netted by account. The accounts are the ones the original
+`STOCK_ADJUSTMENT` posting used (`PostedStockAdjustmentAccountsReader`), so a later change to the category rules never splits an
+adjustment across two sets of accounts. The event also carries the accounts the current rules give
+(`StockAdjustmentAccountCodesFetcher`), used only for an adjustment whose original cost was zero, which posted no entries. If the
+original posting does not exist yet, the processor fails, the event is logged as FAILED and the event log sweeper retries it
+every 5 minutes. A reissue rebuilds both restatement events from the movements tagged with the revision.
+
+Example: an internal-use adjustment restates from 5.00 to 4.50 and a shrinkage adjustment from 2.00 to 2.30. The first debits
+Internal use expense by -0.50 and credits Inventory by -0.50; the second debits Shrinkage by 0.30 and credits Inventory by 0.30.
+Netted by account, the posting is Cr Internal use expense 0.50, Dr Inventory 0.20 and Dr Shrinkage 0.30.
 
 ## Reservations (`ReservationShortfallChecker`)
 

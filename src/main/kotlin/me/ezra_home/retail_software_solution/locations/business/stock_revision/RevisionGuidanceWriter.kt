@@ -27,7 +27,8 @@ object RevisionGuidanceWriter {
     }
 
     private fun onlySalesAreUncovered(assessment: DeliveryLineRevisionAssessment): Boolean {
-        return assessment.replayResult.movementTypesOfUncoveredConsumers.all { it == MovementType.SALE }
+        val uncoveredMovementTypes = assessment.replayResult.movementTypesOfUncoveredConsumers
+        return uncoveredMovementTypes.isNotEmpty() && uncoveredMovementTypes.all { it == MovementType.SALE }
     }
 
     private fun uncoveredRecordsGuidance(assessment: DeliveryLineRevisionAssessment): List<GuidanceParagraphDto> {

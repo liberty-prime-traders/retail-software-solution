@@ -91,6 +91,13 @@ class RevisionGuidanceWriterTest {
     }
 
     @Test
+    fun `no sales guidance is written for blocking rows that name no uncovered consumer type`() {
+        assertTrue(
+            RevisionGuidanceWriter.write(assessment("2", listOf(problem("ADJ1")), "0", emptySet())).isEmpty()
+        )
+    }
+
+    @Test
     fun `draft sales holding the stock are named`() {
         val guidance = RevisionGuidanceWriter.write(
             assessment("2", emptyList(), "0", reservationProblems = listOf(problem("SAL9 (draft)")))

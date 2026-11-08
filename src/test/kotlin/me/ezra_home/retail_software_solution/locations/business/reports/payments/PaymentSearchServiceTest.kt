@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyCollection
@@ -259,13 +260,12 @@ class PaymentSearchServiceTest {
   }
 
   @Test
-  fun `list shows the method id for a payment whose method is no longer named`() {
-    val deletedMethodId = UUID.randomUUID()
-    searchRows = listOf(paymentRow(PaymentType.SALE, "SP000001", at(10)).copy(paymentMethodId = deletedMethodId))
+  fun `list fails for a payment whose method no longer exists, so the bad delete gets fixed`() {
+    searchRows = listOf(paymentRow(PaymentType.SALE, "SP000001", at(10)).copy(paymentMethodId = UUID.randomUUID()))
 
-    val page = paymentSearchService.search(pageRequest(searchParameters()))
-
-    assertEquals(deletedMethodId.toString(), page.contents.single().paymentMethodName)
+    assertThrows(NoSuchElementException::class.java) {
+      paymentSearchService.search(pageRequest(searchParameters()))
+    }
   }
 
   @Test

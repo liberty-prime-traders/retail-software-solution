@@ -14,6 +14,9 @@ class StockMovementFetcher(
     fun findOnEntry(stockEntryId: UUID): List<StockMovementDto> =
         stockMovementRepository.findByStockEntryId(stockEntryId).map { StockMovementDto.of(it) }
 
+    fun findOfRevision(stockRevisionReference: String): List<StockMovementDto> =
+        stockMovementRepository.findByStockRevisionReference(stockRevisionReference).map { StockMovementDto.of(it) }
+
     fun findOfDocuments(locationProductId: UUID, documentReferences: Set<String>): List<StockMovementDto> =
         stockMovementRepository.findByLocationProductIdAndDocumentReferenceIn(locationProductId, documentReferences)
             .map { StockMovementDto.of(it) }

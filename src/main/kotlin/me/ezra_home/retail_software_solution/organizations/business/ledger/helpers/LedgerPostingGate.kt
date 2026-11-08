@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.organizations.business.ledger.processors
+package me.ezra_home.retail_software_solution.organizations.business.ledger.helpers
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider

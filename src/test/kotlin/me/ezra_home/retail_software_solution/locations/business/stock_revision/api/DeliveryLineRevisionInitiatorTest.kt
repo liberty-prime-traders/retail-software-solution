@@ -16,11 +16,20 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.revisi
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockRevisionCommitter
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockEntryResetPlan
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineStockReviser
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.NetConsumptionCalculator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayPlanner
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ResetPlanner
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.RevisionCostPropagator
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.OrderOfConsumption
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockEntryConsumption
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockConsumer
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockMovementOrigin
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionEntity
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleCostRestater
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.SaleCostRestatementHandlerForKafka
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockAdjustmentRestatementHandlerForKafka
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.StockRevisionSourceType
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
@@ -33,6 +42,7 @@ import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.model.TableName
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
+import me.ezra_home.retail_software_solution.util.quantity.QuantityAsEntered
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import me.ezra_home.retail_software_solution.util.quantity.UserProvidedQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -46,6 +56,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Val
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -55,7 +66,7 @@ import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class DeliveryLineRevisionerTest {
+class DeliveryLineRevisionInitiatorTest {
 
     private val purchaseDeliveryDataFetcher = mock(PurchaseDeliveryDataFetcher::class.java)
     private val purchaseDataFetcher = mock(PurchaseDataFetcher::class.java)
@@ -72,22 +83,36 @@ class DeliveryLineRevisionerTest {
     private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java)
     private val purchaseDeliveryRevisionApplier = mock(PurchaseDeliveryRevisionApplier::class.java)
     private val deliveryLineRevisionAssessor = mock(DeliveryLineRevisionAssessor::class.java)
-    private val deliveryLineRevisioner = DeliveryLineRevisioner(
-        purchaseDeliveryDataFetcher,
-        purchaseDataFetcher,
-        purchaseDeliveryLineReplacer,
+    private val stockRevisionHandlerForKafka = mock(StockRevisionHandlerForKafka::class.java)
+    private val saleCostRestater = mock(SaleCostRestater::class.java)
+    private val saleCostRestatementHandlerForKafka = mock(SaleCostRestatementHandlerForKafka::class.java)
+    private val stockAdjustmentRestatementHandlerForKafka = mock(StockAdjustmentRestatementHandlerForKafka::class.java)
+    private val deliveryLineStockReviser = DeliveryLineStockReviser(
         deliveryLineStockInspector,
         stockRevisionCommitter,
         stockReplacementLayerRecorder,
         netConsumptionCalculator,
         resetPlanner,
         replayPlanner,
-        entityAdvisoryLock,
         referenceNumberGenerator,
         stockRevisionRepository,
-        productStockBreakdownProvider,
+        productStockBreakdownProvider
+    )
+    private val revisionCostPropagator = RevisionCostPropagator(
+        stockRevisionHandlerForKafka,
+        saleCostRestater,
+        saleCostRestatementHandlerForKafka,
+        stockAdjustmentRestatementHandlerForKafka
+    )
+    private val deliveryLineRevisionInitiator = DeliveryLineRevisionInitiator(
+        purchaseDeliveryDataFetcher,
+        purchaseDataFetcher,
+        purchaseDeliveryLineReplacer,
+        entityAdvisoryLock,
         purchaseDeliveryRevisionApplier,
-        deliveryLineRevisionAssessor
+        deliveryLineRevisionAssessor,
+        deliveryLineStockReviser,
+        revisionCostPropagator
     )
 
     private val revisedDeliveryLineId = UUID.randomUUID()
@@ -110,6 +135,8 @@ class DeliveryLineRevisionerTest {
         unitCost = BigDecimal("6.50"),
         unitId = unitId,
         storageUnitsPerUserProvidedUnit = 12L,
+        revisedLineTotal = BigDecimal("100.00"),
+        replacementLineTotal = BigDecimal("26.00"),
     )
     private val validatedRevision = ValidatedDeliveryLineRevisionDto(
         revisedDeliveryLineId = revisedDeliveryLineId,
@@ -159,6 +186,8 @@ class DeliveryLineRevisionerTest {
     )
 
     private fun stubCollaborators() {
+        `when`(stockRevisionRepository.save(any(StockRevisionEntity::class.java) ?: unusedRevisionEntity()))
+            .thenAnswer { it.arguments[0] }
         `when`(purchaseDataFetcher.getLocationProductIdOfLine(revisedPurchaseLineId)).thenReturn(locationProductId)
         `when`(purchaseDeliveryDataFetcher.getOwners(revisedDeliveryLineId))
             .thenReturn(DeliveryLineOwnersDto(purchaseId, revisedPurchaseLineId))
@@ -211,7 +240,7 @@ class DeliveryLineRevisionerTest {
     fun `a revision locks, replaces the line, resets, records the replacement, replays and saves the revision last`() {
         stubCollaborators()
 
-        val response = deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+        val response = deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
 
         val ordered = inOrder(
             purchaseDataFetcher,
@@ -246,10 +275,26 @@ class DeliveryLineRevisionerTest {
     }
 
     @Test
+    fun `the revision is published for the ledger with both line totals after the stock is written`() {
+        stubCollaborators()
+
+        deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
+
+        val revisedLineTotal = BigDecimal("100.00")
+        val replacementLineTotal = BigDecimal("26.00")
+        verify(stockRevisionHandlerForKafka).publish(
+            any(StockRevisionEntity::class.java) ?: unusedRevisionEntity(),
+            eq(purchaseId) ?: purchaseId,
+            eq(revisedLineTotal) ?: revisedLineTotal,
+            eq(replacementLineTotal) ?: replacementLineTotal
+        )
+    }
+
+    @Test
     fun `the replacement layer keeps the delivery document, takes the new line as detail and costs the whole batch`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+        deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
 
         val layerRequestCaptor = ArgumentCaptor.forClass(StockReplacementLayerRequest::class.java)
         verify(stockReplacementLayerRecorder).record(layerRequestCaptor.capture() ?: layerRequestPlaceholder())
@@ -274,7 +319,7 @@ class DeliveryLineRevisionerTest {
         )
 
         val exception = assertThrows(BlockedChangeException::class.java) {
-            deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+            deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
         }
 
         assertEquals(listOf(problem), exception.problems)
@@ -289,7 +334,7 @@ class DeliveryLineRevisionerTest {
     fun `the stock revision links the revised and replacement layers under the drawn reference`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+        deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
 
         val revisionCaptor = ArgumentCaptor.forClass(StockRevisionEntity::class.java)
         verify(stockRevisionRepository).save(revisionCaptor.capture() ?: unusedRevisionEntity())
@@ -306,7 +351,7 @@ class DeliveryLineRevisionerTest {
     fun `the replacement layer is recorded in the place of the revised layer`() {
         stubCollaborators()
 
-        deliveryLineRevisioner.initiateDeliveryLineRevision(request())
+        deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
 
         val layerRequestCaptor = ArgumentCaptor.forClass(StockReplacementLayerRequest::class.java)
         verify(stockReplacementLayerRecorder).record(layerRequestCaptor.capture() ?: layerRequestPlaceholder())
@@ -314,9 +359,30 @@ class DeliveryLineRevisionerTest {
     }
 
     @Test
+    fun `a layer drawn by a consumer no ledger restatement covers is refused before the stock is reset`() {
+        stubCollaborators()
+        val transferOut = StockEntryConsumption(
+            stockEntryId = revisedStockEntryId,
+            locationProductId = locationProductId,
+            consumer = StockConsumer(StockMovementOrigin("TRF000001", "TRFL000001"), MovementType.TRANSFER_OUT, null),
+            quantityAsEntered = QuantityAsEntered(unitId, 1L, "whole line"),
+            orderOfConsumption = OrderOfConsumption(null, null),
+            netConsumedStorageQuantity = ExactQuantity.ofStorage(BigDecimal.ONE),
+            netConsumedCost = BigDecimal("10.00"),
+        )
+        `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(listOf(transferOut))
+
+        assertThrows(IllegalStateException::class.java) {
+            deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request())
+        }
+
+        verifyNoInteractions(stockRevisionCommitter, stockReplacementLayerRecorder, stockRevisionRepository)
+    }
+
+    @Test
     fun `a blank reason is refused before anything is read or locked`() {
         assertThrows(RtsGenericException::class.java) {
-            deliveryLineRevisioner.initiateDeliveryLineRevision(request(reason = "  "))
+            deliveryLineRevisionInitiator.initiateDeliveryLineRevision(request(reason = "  "))
         }
 
         verifyNoInteractions(purchaseDeliveryDataFetcher, entityAdvisoryLock, stockRevisionCommitter)

@@ -65,8 +65,13 @@ class DeliveryLineRevisionAssessor(
             validatedDeliveryLineRevision.deliveryReferenceNumber,
             validatedDeliveryLineRevision.revisedLineReferenceNumber
         )
+        val consumptionsOnRevisedLayer = netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)
+        val problemsOfUnrestatableConsumers = RestatableConsumers.problemsOf(consumptionsOnRevisedLayer)
+        if (problemsOfUnrestatableConsumers.isNotEmpty()) {
+            return ReplayResult(emptyList(), problemsOfUnrestatableConsumers)
+        }
         return replayPlanner.planReplayForPreview(
-            netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId),
+            consumptionsOnRevisedLayer,
             stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(
                 replacementLayerRequestOf(validatedDeliveryLineRevision, revisedStockEntryId)
             ),
