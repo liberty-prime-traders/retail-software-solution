@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSess
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
+import me.ezra_home.retail_software_solution.locations.business.stock.NetStockDrawReader
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
@@ -37,6 +38,7 @@ class SaleStockUpdaterTest {
         stockBalanceFetcher = stockBalanceFetcher,
         productStockBreakdownProvider = productStockBreakdownProvider,
         entityAdvisoryLock = mock(EntityAdvisoryLock::class.java),
+        netStockDrawReader = mock(NetStockDrawReader::class.java),
     )
 
     @Test

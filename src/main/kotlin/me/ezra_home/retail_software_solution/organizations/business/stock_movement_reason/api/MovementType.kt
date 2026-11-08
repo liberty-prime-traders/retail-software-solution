@@ -24,12 +24,18 @@ enum class MovementType(
 
     fun isReversal(): Boolean = reversals.contains(this)
 
+    fun reversalTypes(): Set<MovementType> =
+        if (isConsumption()) setOfNotNull(ownReversals[this], REVERSED_BY_REVISION) else emptySet()
+
+    fun withReversalTypes(): Set<MovementType> = setOf(this) + reversalTypes()
+
     fun isConsumption(): Boolean = decreasesStock() && this != STOCK_REVISION_ZEROING
 
     fun decreasesStock(): Boolean = stockDirection == StockDirection.DECREASE
 
     companion object {
-        private val reversals = setOf(SALE_VOID, TRANSFER_CANCELLED, REVERSED_BY_REVISION)
+        private val ownReversals = mapOf(SALE to SALE_VOID, TRANSFER_OUT to TRANSFER_CANCELLED)
+        private val reversals = ownReversals.values.toSet() + REVERSED_BY_REVISION
 
         // CUSTOMER_RETURN has no flow yet; SUPPLIER_RETURN stays because a replay would change whose credit it is.
         val movementsThatCannotBeReversed: Set<MovementType> = setOf(CUSTOMER_RETURN, SUPPLIER_RETURN)

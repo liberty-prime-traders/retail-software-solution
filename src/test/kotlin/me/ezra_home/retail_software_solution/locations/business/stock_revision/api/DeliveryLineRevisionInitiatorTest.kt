@@ -16,6 +16,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.revisi
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockRevisionCommitter
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ConsumerReplayPlan
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockEntryResetPlan
+import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentCostRestater
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.DeliveryLineStockReviser
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.NetConsumptionCalculator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.ReplayPlanner
@@ -102,6 +103,7 @@ class DeliveryLineRevisionInitiatorTest {
     private val revisionCostPropagator = RevisionCostPropagator(
         stockRevisionHandlerForKafka,
         saleCostRestater,
+        mock(StockAdjustmentCostRestater::class.java),
         saleCostRestatementHandlerForKafka,
         stockAdjustmentRestatementHandlerForKafka
     )

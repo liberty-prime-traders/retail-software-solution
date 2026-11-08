@@ -37,8 +37,9 @@ class SaleCostRestater(
                     "Sale line ${saleLineCostChange.saleLineReferenceNumber} would have a negative cost after the revision"
                 )
             }
+            // Flushed first: the unique index on ACTIVE rows is not deferrable and inserts flush before updates.
             activeCogs.status = SaleLineCogsStatus.REPLACED
-            saleLineCogsRepository.save(activeCogs)
+            saleLineCogsRepository.saveAndFlush(activeCogs)
             saleLineCogsRepository.save(SaleLineCogsEntity(saleLineId = saleLine.id!!, cogsTotal = restatedCogsTotal))
         }
     }

@@ -171,6 +171,14 @@ revision, and the reservation check. The save calls it under the purchase and pr
 `PurchaseDeliveryLineReplacer.replace` takes the `ValidatedDeliveryLineRevisionDto` the assessment produced and refuses one that
 still carries problems. The preview calls the same assessor without locks and turns the result into rows.
 
+## Saving a revision (`POST secured/deliveries/line-revisions`)
+
+`PurchaseDeliveryEndpoint.reviseLine` delegates to `DeliveryLineRevisionInitiator.initiateDeliveryLineRevision` and returns the
+updated `PurchaseResponseDto`. The route, like `recordDelivery` and the preview route, has no `@PreAuthorize`: any authenticated
+user can revise. A failed save writes nothing and answers with the `BlockedChangeException` headline, which the screen shows under
+the Revise form after closing the preview dialog, with a hint to open the preview for the detail. The dialog's Save revision
+button is disabled while the preview blocks save and while a save is running.
+
 ## Previewing a revision (`DeliveryLineRevisionPreviewer`)
 
 `DeliveryLineRevisionPreviewer.preview(request)` returns a `DeliveryLineRevisionPreviewDto` and writes nothing. It takes no
@@ -249,9 +257,10 @@ line's active `sale_line_cogs` row with one that moves by the difference, leavin
 on the stock revision reference: Dr Cost of goods sold and Cr Inventory when cost rises, the opposite when it falls. The
 posting is in the current period and counts in the daily profit and loss.
 
-Stock adjustments that drew from the revised layer restate in the ledger only. The adjustment record is immutable and keeps its
-original `total_cost`; the replayed movements and the ledger carry the restated cost. `StockAdjustmentRestatementHandlerForKafka`
-totals the old and new cost of each restated adjustment and publishes a `StockAdjustmentCostRestatedEvent`.
+Stock adjustments that drew from the revised layer restate the same way. The adjustment record is immutable and keeps its
+original `total_cost`; `StockAdjustmentCostRestater` (`stock_adjustment/api`) replaces its active `stock_adjustment_cost` row with one
+that moves by the adjustment's total old-to-new difference, and skips an adjustment whose cost did not change.
+`StockAdjustmentRestatementHandlerForKafka` totals the same figures and publishes a `StockAdjustmentCostRestatedEvent`.
 `StockAdjustmentRestatementAccountingProcessor` posts `STOCK_ADJUSTMENT_RESTATEMENT`, keyed on the stock revision reference:
 each adjustment's own legs for an increase, reversed for a decrease, netted by account. The accounts are the ones the original
 `STOCK_ADJUSTMENT` posting used (`PostedStockAdjustmentAccountsReader`), so a later change to the category rules never splits an

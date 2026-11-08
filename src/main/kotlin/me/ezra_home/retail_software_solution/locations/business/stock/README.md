@@ -24,7 +24,15 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
 
 - A draw writes one movement per layer it touches, with the layer id, the quantity and the cost moved.
 - A reversal (`FifoStockConsumer.restore`) puts the quantity and cost back on the layer and writes a movement of the
-  reversal type that copies the document and detail references of the movement it undoes.
+  reversal type that copies the document and detail references of the draw it undoes. A sale void and a transfer cancel
+  reverse the net draw per layer and line (`NetStockDraw.netOf`): the document's draws there minus its `SALE_VOID` /
+  `TRANSFER_CANCELLED` and `REVERSED_BY_REVISION` movements, read from the document's own movements by
+  `NetStockDrawReader` after it takes the product locks (a revision moves a document's draws under them). A layer a revision
+  replaced nets to zero and is skipped, a layer a replay drew from twice gets one reversal, and a document with nothing
+  net left writes nothing, so a repeated void is a no-op. A group that nets below zero is skipped, not failed.
+  `NetConsumptionCalculator` is not used for this: it is layer-scoped (every consumer on a layer, two reads per layer) and
+  throws on any consumer's bad history, so one document's corrupt rows would block another document's void; and `stock/`
+  cannot depend on `stock_revision/`, which depends on `stock/api`.
 - At most one movement exists per document reference, detail reference, type, product, layer, reason and stock revision
   reference (null except on a revision's drain and replayed draws): the unique index
   `uq_stkmv_doc_detail_type_product_entry_reason_revision`. Retried processors rely on it.
