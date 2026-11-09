@@ -19,7 +19,8 @@ class StockAdjustmentAccountCodesFetcherTest {
     private fun adjustment(referenceNumber: String, category: StockAdjustmentCategory, direction: StockAdjustmentDirection) =
         StockAdjustmentEntity(
             locationProductId = UUID.randomUUID(), category = category, direction = direction,
-            userProvidedQuantity = BigDecimal.ONE, unitId = UUID.randomUUID(), storageUnitsPerUserProvidedUnit = 1L,
+            userProvidedQuantity = BigDecimal.ONE, unitId = UUID.randomUUID(), quantityText = "1 Piece",
+            storageUnitsPerUserProvidedUnit = 1L,
             storageQuantity = BigDecimal.ONE, totalCost = BigDecimal("5.00"), stockMovementReasonId = null
         ).also { it.referenceNumber = referenceNumber }
 
