@@ -375,8 +375,9 @@ Two distinct mechanisms protect inventory:
   reference number as the movement's `detail_reference` (the sale's reference is the `document_reference`). Each layer a
   sale line consumes gets one `StockMovementEntity` with `storageMovedQuantity` (that layer's exact share, so the rows
   sum to the line's storage quantity) and the **same** `wholeLineQuantityText` (the whole line's typed quantity and unit, frozen as text
-  such as "2.5 Bales", never a share). `restoreStock` adds back exactly each movement's `storageMovedQuantity` and
-  `movedCost`, and its reversal movements copy the references and the entered quantity.
+  such as "2.5 Bales", never a share). `restoreStock` adds back exactly each layer's net `storageMovedQuantity` and
+  `movedCost` (draws minus reversals, so a revised sale is not restored twice), and its reversal movements copy the
+  references and the entered quantity. It reads the sale's movements only after taking the product lock.
 - Nothing rounds on the way into stock. Stock sufficiency is exact and strict: available must be at least the
   requested storage quantity, with no tolerance, so one storage unit too many is rejected. Insufficient-stock messages
   and the availability shown to a cashier are breakdowns ("1 Bale 8 Pieces"), built from one plan per base unit

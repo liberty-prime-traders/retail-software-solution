@@ -80,7 +80,7 @@ object FifoStockConsumer {
     }
 
     fun restore(
-        movementsToReverse: List<StockMovementEntity>,
+        netStockDraws: List<NetStockDraw>,
         stockEntriesById: Map<UUID, StockEntryEntity>,
         startingBalance: BigDecimal,
         quantityBreakdown: QuantityBreakdown,
@@ -89,26 +89,26 @@ object FifoStockConsumer {
         var runningBalance = ExactQuantity.ofStorage(startingBalance)
         val touchedEntries = mutableListOf<StockEntryEntity>()
         val reversalMovements = mutableListOf<StockMovementEntity>()
-        movementsToReverse.forEach { movementToReverse ->
-            val stockEntry = stockEntriesById.getValue(movementToReverse.stockEntryId)
-            val restoredQuantity = ExactQuantity.ofStorage(movementToReverse.storageMovedQuantity)
+        netStockDraws.forEach { netStockDraw ->
+            val stockEntry = stockEntriesById.getValue(netStockDraw.stockEntryId)
+            val restoredQuantity = ExactQuantity.ofStorage(netStockDraw.storageMovedQuantity)
             stockEntry.storageQuantityRemaining = (ExactQuantity.ofStorage(stockEntry.storageQuantityRemaining) + restoredQuantity).toStorageQuantity()
-            stockEntry.costRemaining = stockEntry.costRemaining.add(movementToReverse.movedCost)
+            stockEntry.costRemaining = stockEntry.costRemaining.add(netStockDraw.movedCost)
             touchedEntries.add(stockEntry)
             runningBalance += restoredQuantity
             reversalMovements.add(
                 StockMovementCreator.create(
-                    stockEntryId = movementToReverse.stockEntryId,
-                    locationProductId = movementToReverse.locationProductId,
+                    stockEntryId = netStockDraw.stockEntryId,
+                    locationProductId = netStockDraw.locationProductId,
                     movementType = reversalType,
                     storageMoved = restoredQuantity,
                     balanceAfterMovement = runningBalance,
-                    movedCost = movementToReverse.movedCost,
-                    wholeLineQuantityText = movementToReverse.wholeLineQuantityText,
-                    documentReference = movementToReverse.documentReference,
-                    detailReference = movementToReverse.detailReference,
-                    unitId = movementToReverse.unitId,
-                    storageUnitsPerUserProvidedUnit = movementToReverse.storageUnitsPerUserProvidedUnit,
+                    movedCost = netStockDraw.movedCost,
+                    wholeLineQuantityText = netStockDraw.wholeLineQuantityText,
+                    documentReference = netStockDraw.documentReference,
+                    detailReference = netStockDraw.detailReference,
+                    unitId = netStockDraw.unitId,
+                    storageUnitsPerUserProvidedUnit = netStockDraw.storageUnitsPerUserProvidedUnit,
                     quantityBreakdown = quantityBreakdown,
                 )
             )

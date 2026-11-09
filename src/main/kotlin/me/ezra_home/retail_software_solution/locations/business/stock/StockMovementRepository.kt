@@ -10,9 +10,30 @@ import java.util.UUID
 @Repository
 interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
 
-  fun findByDocumentReferenceAndMovementType(
+  @Query("" +
+          "SELECT DISTINCT sm.locationProductId " +
+          "FROM StockMovementEntity sm " +
+          "WHERE sm.documentReference = :documentReference " +
+          "AND sm.movementType = :movementType"
+  )
+  fun findLocationProductIdsOfDocument(documentReference: String, movementType: MovementType): Set<UUID>
+
+  @Query("" +
+          "SELECT DISTINCT sm.locationProductId " +
+          "FROM StockMovementEntity sm " +
+          "WHERE sm.documentReference = :documentReference " +
+          "AND sm.detailReference IN :detailReferences " +
+          "AND sm.movementType = :movementType"
+  )
+  fun findLocationProductIdsOfDocumentLines(
     documentReference: String,
+    detailReferences: Collection<String>,
     movementType: MovementType
+  ): Set<UUID>
+
+  fun findByDocumentReferenceAndMovementTypeInOrderByCreatedOn(
+    documentReference: String,
+    movementTypes: Collection<MovementType>
   ): List<StockMovementEntity>
 
   @Query("" +
@@ -86,6 +107,11 @@ interface StockMovementRepository : JpaRepository<StockMovementEntity, UUID> {
     WHERE sm.movement_type = :movementTypeCode AND sm.context IS NULL
   """, nativeQuery = true)
   fun countMovementsOfTypeMissingPurchaseContext(movementTypeCode: String): Long
+
+  fun findByDocumentReferenceInAndMovementTypeIn(
+    documentReferences: Collection<String>,
+    movementTypes: Collection<MovementType>
+  ): List<StockMovementEntity>
 
   fun findByStockRevisionReference(stockRevisionReference: String): List<StockMovementEntity>
 

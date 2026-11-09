@@ -60,7 +60,7 @@ class FifoStockConsumerTest {
         assertEquals(0, BigDecimal("74").compareTo(layer.storageQuantityRemaining))
         assertEquals(listOf("1 Bale 8 Pieces"), consumption.movements.map { it.storageMovedBreakdownText })
 
-        FifoStockConsumer.restore(consumption.movements, mapOf(layer.id!! to layer), consumption.endingBalance, baleBreakdown, MovementType.SALE_VOID)
+        FifoStockConsumer.restore(consumption.movements.map { NetStockDraw.of(it) }, mapOf(layer.id!! to layer), consumption.endingBalance, baleBreakdown, MovementType.SALE_VOID)
 
         assertEquals(0, BigDecimal("100").compareTo(layer.storageQuantityRemaining))
         assertEquals(0, BigDecimal("200.0000").compareTo(layer.costRemaining))
@@ -136,7 +136,7 @@ class FifoStockConsumerTest {
         )
 
         val restoration = FifoStockConsumer.restore(
-            consumption.movements, listOf(firstLayer, secondLayer).associateBy { it.id!! }, consumption.endingBalance,
+            consumption.movements.map { NetStockDraw.of(it) }, listOf(firstLayer, secondLayer).associateBy { it.id!! }, consumption.endingBalance,
             baleBreakdown, MovementType.SALE_VOID
         )
 
@@ -163,7 +163,7 @@ class FifoStockConsumerTest {
         assertEquals(0, BigDecimal("100.0000").compareTo(movements.sumOf { it.movedCost }))
         assertEquals(0, BigDecimal.ZERO.compareTo(layer.costRemaining))
 
-        FifoStockConsumer.restore(movements, mapOf(layer.id!! to layer), balance, baleBreakdown, MovementType.SALE_VOID)
+        FifoStockConsumer.restore(movements.map { NetStockDraw.of(it) }, mapOf(layer.id!! to layer), balance, baleBreakdown, MovementType.SALE_VOID)
 
         assertEquals(0, BigDecimal("100.0000").compareTo(layer.costRemaining))
         assertEquals(0, BigDecimal("3000000").compareTo(layer.storageQuantityRemaining))

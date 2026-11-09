@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
@@ -36,11 +35,13 @@ class SaleCostRestaterTest {
 
         saleCostRestater.restate(listOf(SaleLineCostChange("SALN1", BigDecimal("75.4000"), BigDecimal("74.1000"))))
 
-        val savedCaptor = ArgumentCaptor.forClass(SaleLineCogsEntity::class.java)
-        verify(saleLineCogsRepository, times(2)).save(savedCaptor.capture())
-        assertEquals(SaleLineCogsStatus.REPLACED, savedCaptor.allValues[0].status)
-        assertEquals(SaleLineCogsStatus.ACTIVE, savedCaptor.allValues[1].status)
-        assertEquals(BigDecimal("98.7000"), savedCaptor.allValues[1].cogsTotal)
+        val flippedCaptor = ArgumentCaptor.forClass(SaleLineCogsEntity::class.java)
+        val insertedCaptor = ArgumentCaptor.forClass(SaleLineCogsEntity::class.java)
+        verify(saleLineCogsRepository).saveAndFlush(flippedCaptor.capture())
+        verify(saleLineCogsRepository).save(insertedCaptor.capture())
+        assertEquals(SaleLineCogsStatus.REPLACED, flippedCaptor.value.status)
+        assertEquals(SaleLineCogsStatus.ACTIVE, insertedCaptor.value.status)
+        assertEquals(BigDecimal("98.7000"), insertedCaptor.value.cogsTotal)
     }
 
     @Test
