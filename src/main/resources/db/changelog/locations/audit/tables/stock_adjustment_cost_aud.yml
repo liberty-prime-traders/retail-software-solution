@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-adjustment-cost-aud-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_adjustment_cost_aud
+      changes:
+        - createTable:
+            tableName: stock_adjustment_cost_aud
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: rev
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: revtype
+                  type: smallint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: stock_adjustment_id
+                  type: uuid
+
+              - column:
+                  name: total_cost
+                  type: numeric(28, 4)
+
+              - column:
+                  name: status
+                  type: varchar(5)
+
+              - column:
+                  name: revend
+                  type: bigint
+
+              - column:
+                  name: revend_tstmp
+                  type: timestamp
+
+        - addPrimaryKey:
+            tableName: stock_adjustment_cost_aud
+            columnNames: id, rev
+            constraintName: pk_stock_adjustment_cost_aud
+
+      rollback:
+        - dropTable:
+            tableName: stock_adjustment_cost_aud

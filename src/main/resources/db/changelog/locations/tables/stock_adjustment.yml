@@ -71,6 +71,13 @@ databaseChangeLog:
                     notNullConstraintName: stock_adjustment_storage_units_per_user_provided_unit_notnull
 
               - column:
+                  name: quantity_text
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_quantity_text_notnull
+
+              - column:
                   name: storage_quantity
                   type: numeric(28,4)
                   constraints:

@@ -40,6 +40,9 @@ class StockAdjustmentEntity(
     @Column(name = "storage_units_per_user_provided_unit", nullable = false, updatable = false)
     var storageUnitsPerUserProvidedUnit: Long,
 
+    @Column(name = "quantity_text", nullable = false, updatable = false, length = 200)
+    var quantityText: String,
+
     @Column(name = "storage_quantity", nullable = false, updatable = false, precision = 28, scale = 4)
     var storageQuantity: BigDecimal,
 

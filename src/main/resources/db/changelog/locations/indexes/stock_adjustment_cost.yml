@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-stock-adjustment-cost-stock-adjustment-id
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_stock_adjustment_cost_stock_adjustment_id
+      changes:
+        - createIndex:
+            indexName: idx_stock_adjustment_cost_stock_adjustment_id
+            tableName: stock_adjustment_cost
+            columns:
+              - column:
+                  name: stock_adjustment_id
+      rollback:
+        - dropIndex:
+            indexName: idx_stock_adjustment_cost_stock_adjustment_id
+            tableName: stock_adjustment_cost
+
+  - changeSet:
+      id: add-unique-index-stock-adjustment-cost-active-stock-adjustment-id
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: uq_stock_adjustment_cost_active_stock_adjustment_id
+      changes:
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_stock_adjustment_cost_active_stock_adjustment_id
+              ON stock_adjustment_cost (stock_adjustment_id) WHERE status = 'ACT'
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS uq_stock_adjustment_cost_active_stock_adjustment_id

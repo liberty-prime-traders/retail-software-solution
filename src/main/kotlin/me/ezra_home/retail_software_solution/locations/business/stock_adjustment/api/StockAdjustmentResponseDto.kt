@@ -17,6 +17,7 @@ data class StockAdjustmentResponseDto(
     @get:JsonProperty("quantity")
     val userProvidedQuantity: BigDecimal,
     val unitId: UUID,
+    val quantityText: String,
     @field:JsonSerialize(using = StripZeroesAndRound::class)
     val totalCost: BigDecimal,
     val stockMovementReasonId: UUID?,

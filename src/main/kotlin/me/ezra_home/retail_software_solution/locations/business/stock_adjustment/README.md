@@ -67,9 +67,10 @@ creation time.
 
 ## Frozen quantity text and cost rows
 
-- `quantity_text` is the typed quantity in its own unit ("2.5 Bales"), rendered once by the product's `QuantityBreakdown`
-  when the adjustment is saved, so it keeps the units as the user saw them. The response returns it as `quantityText`. It is
-  null only on rows the backfill has not reached, and the screen then shows the quantity and unit.
+- `quantity_text` (required) is the typed quantity in its own unit ("2.5 Bales"), rendered once by the product's
+  `QuantityBreakdown` when the adjustment is saved, so it keeps the units as the user saw them. The response returns it as
+  `quantityText` and the grid shows it. The column is created `NOT NULL` with the table; rows that predate it carry the text
+  frozen on their first movement.
 - `stock_adjustment_cost` holds the adjustment's cost as a history: one `ACTIVE` row, written with the adjustment, and a
   `REPLACED` row for each earlier value. `StockAdjustmentCostRestater` flips the active row and inserts the restated one
   when a stock revision replays the adjustment. The response's `totalCost` is the active row's cost.
@@ -77,7 +78,7 @@ creation time.
   own difference.
 - `stock_adjustment_cost` is a separate table from `sale_line_cogs`: each has its own parent key and foreign key, its own
   partial unique index on active rows and its own readers, and a shared table would trade those for a type column.
-- Rows that exist before the tables do are filled by the stock adjustment backfill (`../stock_adjustment_backfill/README.md`).
+- Adjustments that predate `stock_adjustment_cost` are given their cost row by the stock adjustment backfill (`../stock_adjustment_backfill/README.md`).
 
 ## Ledger posting
 
