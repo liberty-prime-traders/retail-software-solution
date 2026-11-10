@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.product_purchases_report
 
 import jakarta.persistence.Tuple
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.util.business.mappers.DateQualifier
 import java.math.BigDecimal
 import java.time.Instant

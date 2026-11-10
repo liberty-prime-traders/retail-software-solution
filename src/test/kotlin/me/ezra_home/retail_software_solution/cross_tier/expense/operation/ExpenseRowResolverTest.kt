@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,9 +26,11 @@ class ExpenseRowResolverTest {
 
     private val expenseTypeService = mock(ExpenseTypeService::class.java)
     private val contactService = mock(ContactService::class.java)
-    private val paymentMethodService = mock(PaymentMethodService::class.java)
+    private val paymentMethodDataFetcher = mock(PaymentMethodDataFetcher::class.java)
     private val fiscalPeriodService = mock(FiscalPeriodService::class.java)
-    private val expenseRowResolver = ExpenseRowResolver(expenseTypeService, contactService, paymentMethodService, fiscalPeriodService)
+    private val expenseRowResolver = ExpenseRowResolver(
+        expenseTypeService, contactService, paymentMethodDataFetcher, fiscalPeriodService
+    )
 
     private val batchExpenseDate = LocalDate.of(2026, 3, 10)
     private val supplierContact = contactDto(setOf(ContactType.SUPPLIER))
@@ -87,7 +89,7 @@ class ExpenseRowResolverTest {
     fun `a settlement's payment date follows the row's effective expense date unless it declares its own`() {
         stub(freightExpenseType, supplierContact)
         val paymentMethodId = UUID.randomUUID()
-        `when`(paymentMethodService.findAccountCode(paymentMethodId)).thenReturn("001.001")
+        `when`(paymentMethodDataFetcher.findAccountCode(paymentMethodId)).thenReturn("001.001")
         val ownPaymentDate = LocalDate.of(2026, 3, 20)
 
         val resolvedExpenseRows = expenseRowResolver.resolve(ExpenseSourceType.ADHOC, ExpenseSubmission(batchExpenseDate, listOf(

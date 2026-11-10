@@ -10,7 +10,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.Sal
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentVoidRepository
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.SalePaymentWriter
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -26,7 +26,7 @@ class SalePaymentService(
     private val salePaymentFetcher: SalePaymentFetcher,
     private val salePaymentWriter: SalePaymentWriter,
     private val salePaymentVoidHandlerForKafka: SalePaymentVoidHandlerForKafka,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService,
 ) {
 
@@ -56,7 +56,7 @@ class SalePaymentService(
         return SalePaymentMapper.toResponseDto(
             savedSalePayment,
             null,
-            paymentMethodService.getNamesById(),
+            paymentMethodDataFetcher.getNamesById(),
             writeResult.newPaymentStatus,
             updatedSaleVersion,
         )
@@ -82,7 +82,7 @@ class SalePaymentService(
         return SalePaymentMapper.toResponseDto(
             payment,
             voidEntity.reason,
-            paymentMethodService.getNamesById(),
+            paymentMethodDataFetcher.getNamesById(),
             newStatus,
             updatedSaleVersion,
         )

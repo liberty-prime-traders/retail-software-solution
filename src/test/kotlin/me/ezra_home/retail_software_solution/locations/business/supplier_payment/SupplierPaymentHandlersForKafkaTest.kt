@@ -4,7 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.session.LocationSessi
 import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.DeliveryHandlerForPurchase
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent

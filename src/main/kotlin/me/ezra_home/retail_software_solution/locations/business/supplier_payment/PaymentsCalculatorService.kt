@@ -10,10 +10,16 @@ class PaymentsCalculatorService(
 ) {
 
     fun calculatePaidAmountForPurchase(purchaseId: UUID): BigDecimal {
-        return activeSupplierPaymentRepository.findByPurchaseId(purchaseId).sumOf { it.amount }
+        return calculatePaidAmountsForPurchases(setOf(purchaseId)).getValue(purchaseId)
+    }
+
+    fun calculatePaidAmountsForPurchases(purchaseIds: Set<UUID>): Map<UUID, BigDecimal> {
+        val paidAmountsByPurchaseId = activeSupplierPaymentRepository.sumAmountsByPurchaseIdIn(purchaseIds)
+            .associate { it.purchaseId to it.paidAmount }
+        return purchaseIds.associateWith { paidAmountsByPurchaseId[it] ?: BigDecimal.ZERO }
     }
 
     fun calculatePaidAmountForDelivery(deliveryId: UUID): BigDecimal {
-        return activeSupplierPaymentRepository.findByDeliveryId(deliveryId).sumOf { it.amount }
+        return activeSupplierPaymentRepository.sumAmountByDeliveryId(deliveryId)
     }
 }

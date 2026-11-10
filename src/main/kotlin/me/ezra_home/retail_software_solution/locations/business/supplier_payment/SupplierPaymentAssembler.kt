@@ -3,9 +3,10 @@ package me.ezra_home.retail_software_solution.locations.business.supplier_paymen
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher.PurchaseInfo
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -14,7 +15,7 @@ import java.util.UUID
 class SupplierPaymentAssembler(
     private val purchaseDataFetcher: PurchaseDataFetcher,
     private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
     private val contactService: ContactService,
     private val userQualifier: UserQualifier
 ) {
@@ -24,11 +25,19 @@ class SupplierPaymentAssembler(
         paymentVoid: SupplierPaymentVoidEntity?,
         paymentStatus: PaymentStatus?
     ): SupplierPaymentResponseDto {
-        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(listOf(payment.purchaseId)).getValue(payment.purchaseId)
-        val deliveryRef = payment.deliveryId?.let { purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(listOf(it))[it] }
-        val paymentMethodName = paymentMethodService.getAllPaymentMethods().find { it.id == payment.paymentMethodId }?.name ?: ""
+        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(
+            setOf(payment.purchaseId)
+        ).getValue(payment.purchaseId)
+        val deliveryRef = payment.deliveryId?.let {
+            purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(listOf(it))[it]
+        }
+        val paymentMethodName = paymentMethodDataFetcher.getNamesById()[payment.paymentMethodId] ?: ""
         val supplierName = contactService.getContactById(purchaseInfo.supplierId).identity.displayName
-        return toDto(payment, purchaseInfo.referenceNumber, deliveryRef, paymentMethodName, supplierName, paymentVoid, paymentStatus)
+        return toDto(
+            payment, purchaseInfo.referenceNumber,
+            deliveryRef, paymentMethodName, supplierName,
+            paymentVoid, paymentStatus
+        )
     }
 
     fun buildResponses(
@@ -36,11 +45,28 @@ class SupplierPaymentAssembler(
         voidsByPaymentId: Map<UUID, SupplierPaymentVoidEntity>
     ): List<SupplierPaymentResponseDto> {
         if (payments.isEmpty()) return emptyList()
-        val purchaseInfoById = purchaseDataFetcher.findPurchaseInfoByIds(payments.map { it.purchaseId }.distinct())
+        return buildResponses(
+            payments,
+            voidsByPaymentId,
+            purchaseDataFetcher.findPurchaseInfoByIds(payments.map { it.purchaseId }.toSet())
+        )
+    }
+
+    fun buildResponses(
+        payments: List<SupplierPaymentEntity>,
+        voidsByPaymentId: Map<UUID, SupplierPaymentVoidEntity>,
+        purchaseInfoById: Map<UUID, PurchaseInfo>
+    ): List<SupplierPaymentResponseDto> {
+        if (payments.isEmpty()) return emptyList()
         val deliveryIds = payments.mapNotNull { it.deliveryId }
-        val deliveryRefsById = if (deliveryIds.isNotEmpty()) purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(deliveryIds) else emptyMap()
-        val paymentMethodNamesById = paymentMethodService.getAllPaymentMethods().associateBy({ it.id }, { it.name })
-        val supplierNamesById = contactService.getAllContactDtos().associateBy({ it.id }, { it.identity.displayName })
+        val deliveryRefsById = if (deliveryIds.isNotEmpty())
+            purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(deliveryIds)
+        else
+            emptyMap()
+        val paymentMethodNamesById = paymentMethodDataFetcher.getNamesById()
+        val supplierNamesById = contactService.getAllContactDtos().associateBy(
+            { it.id }, { it.identity.displayName }
+        )
         return payments.map { payment ->
             val purchaseInfo = purchaseInfoById.getValue(payment.purchaseId)
             toDto(

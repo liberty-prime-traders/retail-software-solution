@@ -23,21 +23,6 @@ class PaymentMethodService(
     private val accountService: AccountService
 ) {
 
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getAllPaymentMethods(): Collection<PaymentMethodResponseDto> {
-        val accountNamesByCode = accountService.getAccountNamesByCode()
-        return paymentMethodCache.getAllPaymentMethods().map {
-            paymentMethodMapper.toResponseDto(it, accountNamesByCode[it.accountCode])
-        }
-    }
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun findAccountCode(id: UUID): String {
-        val paymentMethod = paymentMethodCache.getAllPaymentMethods().find { it.id == id }
-            ?: throw RtsGenericException("Payment method $id not found")
-        return paymentMethod.accountCode
-    }
-
     fun createPaymentMethod(paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto {
         validateNameOnSave(Optional.ofNullable(paymentMethodInsertDto.name))
         paymentAccountValidator.validate(paymentMethodInsertDto.accountCode)
@@ -63,10 +48,6 @@ class PaymentMethodService(
         val accountNamesByCode = accountService.getAccountNamesByCode()
         return paymentMethodMapper.toResponseDto(saved, accountNamesByCode[saved.accountCode])
     }
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getNamesById(): Map<UUID, String> =
-        paymentMethodCache.getAllPaymentMethods().mapNotNull { it.name?.let { name -> it.id to name } }.toMap()
 
     fun deletePaymentMethod(id: UUID) {
         paymentMethodCache.deletePaymentMethod(id)

@@ -26,7 +26,9 @@ locations/business/supplier_payment/  — payments to the supplier
 locations/business/supplier_return/   — returns to the supplier (entity only)
 ```
 
-The public surface is the `api/` sub-package of each domain.
+The public surface is the `api/` sub-package of each domain. Within `purchase/api/`, `bulk_payment/`, `search/`,
+`delivery/` and `payment/` group the bulk payment grid, search, delivery-facing and payment-ceiling classes; the purchase
+write services, `PurchaseDataFetcher`, `PurchaseUpdater` and the core DTOs stay directly in `api/`.
 Cross-package callers **MUST** use these entry points (enforced by
 `ArchitectureTest`, which forbids access to non-`api` classes from
 outside the domain). `PurchaseAssembler` lives in the parent package
@@ -812,8 +814,10 @@ Add new guards as early as the data they need is in scope.
   the shared `util/queries/KeysetSearchCursor` — sale_payment search uses the same class.
 - **List** filters down to a page of `PurchaseEntity` via a native query mapped straight onto the
   entity (`SELECT p.*`), then hands that page to the existing `PurchaseAssembler.buildResponses` —
-  no slim row DTO, no second supplier-name lookup, no separate line/delivery fetch. Keyset paged on
-  `created_on DESC, id DESC`; cursor is the same opaque base64 string as sale payment search.
+  no slim row DTO, no second supplier-name lookup, no separate line/delivery fetch. Keyset paged on `created_on DESC, id
+  DESC`, or `created_on ASC, id ASC` when `PurchaseSearchFetcher.search` is called with `oldestFirst` (the cursor
+  comparison flips with it, and a cursor is only valid with the direction that produced it); cursor is the same opaque
+  base64 string as sale payment search.
   Max page size is 200 (vs. 500 for sale payments) — each row carries its lines and deliveries, so
   the payload per row is much heavier.
 - **Amount filter** (`minAmount`/`maxAmount`) is the one predicate that isn't a plain column
@@ -870,3 +874,43 @@ Add new guards as early as the data they need is in scope.
 
 Keep this table accurate as the package evolves — it is the entry point
 for anyone (or any agent) doing a first-pass investigation.
+
+## Bulk payment
+
+The bulk supplier payment grid belongs to purchase; supplier_payment only supplies
+`SupplierPaymentService.recordPaymentsForLockedPurchases` and `SupplierPaymentDataFetcher.getPaidAmountsByPurchaseIds`.
+Both calls return a plain list of `PurchaseBulkPaymentResponseDto`, one per purchase, keyed by the purchase `id` and
+`referenceNumber` so a client can upsert rows by id. The list carries no totals: a client sums `payable` and
+`appliedAmount`, and a row with no `payable` and no `appliedAmount` was skipped. `PurchaseBulkPaymentAssembler` builds
+the rows from the purchase entities, the ceilings from `PurchasePaymentCeilingService.computeCeilings` and the paid
+totals, with no full `PurchaseResponseDto` assembly; `PurchaseOrdering` holds the oldest-first order and
+`PurchasePayableCalculator` (in `api/payment`, beside the ceiling service) the payable rule that
+`SupplierPaymentService` also applies.
+
+- `PurchaseBulkPaymentService.loadPayable` (`POST secured/purchases/bulk-payment/search`, body
+  `PurchaseBulkPaymentSearchDto`: `supplierId`, `orderedFrom` and `orderedBefore`, both required and at most a year
+  apart) lists the supplier's payable purchases oldest first.
+  `PayablePurchaseFinder.findPayablePurchases(PurchaseBulkPaymentSearchDto)` runs one `PurchaseSearchFetcher.search` for
+  `ORDERED`/`PARTIALLY_DELIVERED`/`FULLY_DELIVERED` purchases that are `UNPAID`/`PARTIALLY_SETTLED`, inside the
+  `date_ordered` range. It guards that range itself (`PurchaseSearchValidator.guardValidPayableRange`) because the
+  general search's bounded `recordedFrom`/`recordedBefore` requirement does not apply to a supplier-scoped, capped
+  query.
+- `PurchaseBulkPaymentService.record` (`POST secured/purchases/bulk-payment`) locks every selected purchase in ascending
+  `id` order, asks `PurchaseBulkPaymentPlanner` for the allocations, hands them, with the ceilings and paid totals the
+  planner already read, to `SupplierPaymentService.recordPaymentsForLockedPurchases` in the one transaction, then
+  returns the selected purchases the planner loaded, with nothing re-read (the planner selects those rows once and
+  `PurchaseUpdater.updatePaymentStatuses` selects them again in one bulk query): paid totals are the paid totals read
+  before plus the new payments, and the payment status comes from the recorded payment, plus `appliedAmount`,
+  `supplierPaymentId` and `paymentReferenceNumber` on the rows that were paid.
+- The planner rejects, listing the IDs, a purchase that is missing, belongs to another supplier, or is a draft or
+  canceled order. Delivery state does not matter.
+- Payable is `paymentCeiling` (delivered total once fully delivered, otherwise the larger of PO total and delivered
+  total) minus paid, floored at zero (`PurchasePayableCalculator.calculatePayable`). A zero-payable purchase gets no
+  payment row; a purchase never reached because the amount ran out is not paid either.
+- Order is `created_on`, then `id` (`PurchaseOrdering.OLDEST_FIRST`), the same order the load query returns, so the grid
+  is never re-sorted and the allocation follows what the user sees. An amount above the summed payable rejects the batch
+  and the message states that total.
+- Limits: `loadPayable` returns the first `PayablePurchaseFinder.MAX_PAYABLE_RESULTS` (50) purchases by `created_on`
+  ascending (`PurchaseSearchFetcher.search` runs with `oldestFirst`) and never pages, so a client narrows the date range
+  to reach later ones; `record` rejects more than `PurchaseBulkPaymentService.MAX_PAID_PURCHASES` (20) selected
+  purchases.

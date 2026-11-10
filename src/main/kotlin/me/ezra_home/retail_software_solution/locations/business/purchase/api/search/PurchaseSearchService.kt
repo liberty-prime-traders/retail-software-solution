@@ -1,5 +1,6 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase.api
+package me.ezra_home.retail_software_solution.locations.business.purchase.api.search
 
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler

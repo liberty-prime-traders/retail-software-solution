@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.reports.payment
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.api.PaymentSearchParameters
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.api.PaymentSearchService
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.api.PaymentType
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.mappers.NameResolution
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
@@ -56,7 +56,7 @@ class PaymentSearchServiceTest {
     }
   }
 
-  private val paymentMethodService = mock(PaymentMethodService::class.java).also {
+  private val paymentMethodDataFetcher = mock(PaymentMethodDataFetcher::class.java).also {
     `when`(it.getNamesById()).thenReturn(mapOf(cashMethodId to "CASH", bankMethodId to "BANK"))
   }
 
@@ -66,7 +66,7 @@ class PaymentSearchServiceTest {
   }
 
   private val paymentSearchService =
-    PaymentSearchService(FakePaymentSearchFetcher(), paymentMethodService, nameResolution)
+    PaymentSearchService(FakePaymentSearchFetcher(), paymentMethodDataFetcher, nameResolution)
 
   private fun totals(methodId: UUID, active: String, voided: String, activeCount: Long, voidedCount: Long) =
     PaymentMethodTotals(methodId, BigDecimal(active), BigDecimal(voided), activeCount, voidedCount)

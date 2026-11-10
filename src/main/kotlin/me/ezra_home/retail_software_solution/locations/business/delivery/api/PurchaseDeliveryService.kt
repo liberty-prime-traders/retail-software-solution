@@ -9,8 +9,8 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryValidator
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryHandlerForPurchase
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.DeliveryLineQuantity
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.DeliveryHandlerForPurchase
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.DeliveryLineQuantity
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService

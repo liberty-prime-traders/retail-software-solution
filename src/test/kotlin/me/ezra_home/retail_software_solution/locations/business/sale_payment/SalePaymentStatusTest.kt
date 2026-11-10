@@ -15,7 +15,7 @@ import me.ezra_home.retail_software_solution.locations.business.sale_payment.api
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentService
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentVoidCreateDto
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.AfterEach
@@ -65,16 +65,21 @@ class SalePaymentStatusTest {
         it.referenceNumber = "SP000001"
     }
 
-    private fun paymentMethodServiceNamingTheMethod() = mock(PaymentMethodService::class.java).also {
+    private fun paymentMethodDataFetcherNamingTheMethod() = mock(PaymentMethodDataFetcher::class.java).also {
         `when`(it.getNamesById()).thenReturn(mapOf(paymentMethodId to "Cash"))
     }
 
     private fun salePaymentWriter(): SalePaymentWriter {
         val salePaymentRepository = mock(SalePaymentRepository::class.java)
         `when`(salePaymentRepository.saveAll(anyList<SalePaymentEntity>())).thenAnswer { it.getArgument<List<SalePaymentEntity>>(0) }
-        val paymentMethodService = mock(PaymentMethodService::class.java)
-        `when`(paymentMethodService.findAccountCode(paymentMethodId)).thenReturn("CASH")
-        return SalePaymentWriter(salePaymentRepository, salePaymentFetcher, mock(SalePaymentHandlerForKafka::class.java), paymentMethodService)
+        val paymentMethodDataFetcher = mock(PaymentMethodDataFetcher::class.java)
+        `when`(paymentMethodDataFetcher.findAccountCode(paymentMethodId)).thenReturn("CASH")
+        return SalePaymentWriter(
+            salePaymentRepository,
+            salePaymentFetcher,
+            mock(SalePaymentHandlerForKafka::class.java),
+            paymentMethodDataFetcher
+        )
     }
 
     @Test
@@ -121,7 +126,7 @@ class SalePaymentStatusTest {
             salePaymentFetcher,
             salePaymentWriter(),
             mock(SalePaymentVoidHandlerForKafka::class.java),
-            paymentMethodServiceNamingTheMethod(),
+            paymentMethodDataFetcherNamingTheMethod(),
             mock(FiscalPeriodService::class.java)
         )
 
@@ -147,7 +152,7 @@ class SalePaymentStatusTest {
             salePaymentFetcher,
             salePaymentWriter(),
             mock(SalePaymentVoidHandlerForKafka::class.java),
-            paymentMethodServiceNamingTheMethod(),
+            paymentMethodDataFetcherNamingTheMethod(),
             mock(FiscalPeriodService::class.java)
         )
 
@@ -177,7 +182,7 @@ class SalePaymentStatusTest {
             salePaymentFetcher,
             salePaymentWriter(),
             mock(SalePaymentVoidHandlerForKafka::class.java),
-            paymentMethodServiceNamingTheMethod(),
+            paymentMethodDataFetcherNamingTheMethod(),
             mock(FiscalPeriodService::class.java)
         )
 

@@ -1,4 +1,4 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase.api
+package me.ezra_home.retail_software_solution.locations.business.purchase.api.payment
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
@@ -15,12 +15,21 @@ class PurchasePaymentCeilingService(
     private val purchaseDeliveryDataFetcher: PurchaseDeliveryDataFetcher
 ) {
 
-    data class PaymentCeiling(val amount: BigDecimal, val isFullyDelivered: Boolean, val deliveredTotal: BigDecimal)
+    data class PaymentCeiling(
+        val amount: BigDecimal,
+        val isFullyDelivered: Boolean,
+        val deliveredTotal: BigDecimal,
+        val orderedTotal: BigDecimal
+    )
 
-    fun computeCeiling(purchaseId: UUID): PaymentCeiling {
-        val lines = purchaseLineRepository.findByPurchaseId(purchaseId)
-        val deliveredTotal = purchaseDeliveryDataFetcher.calculateDeliveredTotal(purchaseId)
-        return computeCeiling(lines, deliveredTotal)
+    fun computeCeiling(purchaseId: UUID): PaymentCeiling = computeCeilings(setOf(purchaseId)).getValue(purchaseId)
+
+    fun computeCeilings(purchaseIds: Set<UUID>): Map<UUID, PaymentCeiling> {
+        val linesByPurchaseId = purchaseLineRepository.findByPurchaseIdIn(purchaseIds).groupBy { it.purchaseId }
+        val deliveredTotalsByPurchaseId = purchaseDeliveryDataFetcher.calculateDeliveredTotals(purchaseIds)
+        return purchaseIds.associateWith { purchaseId ->
+            computeCeiling(linesByPurchaseId[purchaseId].orEmpty(), deliveredTotalsByPurchaseId.getValue(purchaseId))
+        }
     }
 
     fun computeCeiling(lines: List<PurchaseLineEntity>, deliveredTotal: BigDecimal): PaymentCeiling {
@@ -32,6 +41,11 @@ class PurchasePaymentCeilingService(
             deliveredTotal > BigDecimal.ZERO -> poTotal.max(deliveredTotal)
             else -> poTotal
         }
-        return PaymentCeiling(amount = ceiling, isFullyDelivered = isFullyDelivered, deliveredTotal = deliveredTotal)
+        return PaymentCeiling(
+            amount = ceiling,
+            isFullyDelivered = isFullyDelivered,
+            deliveredTotal = deliveredTotal,
+            orderedTotal = poTotal
+        )
     }
 }

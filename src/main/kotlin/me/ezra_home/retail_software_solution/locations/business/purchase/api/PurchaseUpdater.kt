@@ -16,9 +16,14 @@ class PurchaseUpdater(
 ) {
 
     fun updatePaymentStatus(purchaseId: UUID, status: PaymentStatus) {
-        val purchase = purchaseRepository.getReferenceById(purchaseId)
-        purchase.paymentStatus = status
-        purchaseRepository.save(purchase)
+        updatePaymentStatuses(mapOf(purchaseId to status))
+    }
+
+    fun updatePaymentStatuses(paymentStatusesByPurchaseId: Map<UUID, PaymentStatus>) {
+        val purchases = purchaseRepository.findAllById(paymentStatusesByPurchaseId.keys)
+        if (purchases.size != paymentStatusesByPurchaseId.size) throw UpdatingNonExistingRecordException()
+        purchases.forEach { it.paymentStatus = paymentStatusesByPurchaseId.getValue(it.id!!) }
+        purchaseRepository.saveAll(purchases)
     }
 
     fun updateNotes(id: UUID, notes: Optional<String>?) {

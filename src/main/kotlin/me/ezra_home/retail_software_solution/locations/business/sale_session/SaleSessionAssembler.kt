@@ -13,7 +13,7 @@ import me.ezra_home.retail_software_solution.organizations.business.unitconversi
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.AdjustmentReasonService
 import me.ezra_home.retail_software_solution.organizations.business.adjustment_reason.api.SystemAdjustmentReason
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.enums.SystemContact
@@ -25,7 +25,7 @@ import java.util.UUID
 @Component
 class SaleSessionAssembler(
     private val contactService: ContactService,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
     private val adjustmentReasonService: AdjustmentReasonService,
     private val sessionToResponseMapper: SessionToResponseMapper,
     private val saleDataFetcher: SaleDataFetcher,
@@ -54,7 +54,7 @@ class SaleSessionAssembler(
             sessionMappingContext,
             adjustmentMappingContext,
             lineMappingContext,
-            paymentMethodService.getNamesById(),
+            paymentMethodDataFetcher.getNamesById(),
         )
     }
 

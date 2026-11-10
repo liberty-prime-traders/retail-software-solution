@@ -1,5 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
+import java.time.OffsetDateTime
+import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
@@ -43,6 +45,24 @@ class PurchaseSearchQueryBuilderTest {
 
     assertRoundsAtMoneyScale(PurchaseSearchQueryBuilder.buildPaymentStatusSummaryQuery(predicate).sql)
     assertRoundsAtMoneyScale(PurchaseSearchQueryBuilder.buildSupplierSummaryQuery(predicate).sql)
+  }
+
+  private fun cursor() = KeysetSearchCursor(OffsetDateTime.parse("2026-01-01T00:00:00Z"), UUID.randomUUID())
+
+  @Test
+  fun `the list is newest first by default and keysets with a less-than cursor`() {
+    val sql = PurchaseSearchQueryBuilder.buildListQuery(QueryBuilderContext(), cursor()).sql
+
+    assertTrue(sql.contains("created_on DESC") && sql.contains(".id DESC"), sql)
+    assertTrue(sql.contains(") < ("), sql)
+  }
+
+  @Test
+  fun `the list is oldest first with a greater-than cursor when asked`() {
+    val sql = PurchaseSearchQueryBuilder.buildListQuery(QueryBuilderContext(), cursor(), oldestFirst = true).sql
+
+    assertTrue(sql.contains("created_on ASC") && sql.contains(".id ASC"), sql)
+    assertTrue(sql.contains(") > ("), sql)
   }
 
   @Test

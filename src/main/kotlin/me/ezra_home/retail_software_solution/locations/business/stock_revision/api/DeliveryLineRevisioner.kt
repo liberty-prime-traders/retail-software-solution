@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.api.Rep
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryRevisionApplier
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryRevisionApplier
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerRecorder
@@ -28,7 +28,6 @@ import me.ezra_home.retail_software_solution.util.model.TableName
 import org.springframework.stereotype.Service
 import java.util.UUID
 
-// Reset, replacement layer and replay commit together, so the whole revision runs in this one transaction.
 @Service
 @TransactionalOnLocationSchema
 class DeliveryLineRevisioner(

@@ -30,7 +30,18 @@ class PurchaseDataFetcher(
     val supplierId: UUID,
     val purchaseStatus: PurchaseStatus,
     val paymentStatus: PaymentStatus
-  )
+  ) {
+
+    companion object {
+      fun from(purchaseEntity: PurchaseEntity) = PurchaseInfo(
+        purchaseEntity.id!!,
+        purchaseEntity.requiredReference(),
+        purchaseEntity.supplierId,
+        purchaseEntity.purchaseStatus,
+        purchaseEntity.paymentStatus
+      )
+    }
+  }
 
   fun fetchTop(n: Int?): List<PurchaseResponseDto> {
     val recordCount = n ?: 10
@@ -42,7 +53,7 @@ class PurchaseDataFetcher(
   fun findPurchaseInfoByReferenceNumber(referenceNumber: String): PurchaseInfo {
     val purchase = purchaseRepository.findByReferenceNumber(referenceNumber)
       ?: throw RtsGenericException("Purchase $referenceNumber not found")
-    return purchase.toPurchaseInfo()
+    return PurchaseInfo.from(purchase)
   }
 
   fun getLocationProductIdOfLine(purchaseLineId: UUID): UUID =
@@ -53,10 +64,9 @@ class PurchaseDataFetcher(
     return purchaseRepository.getReferenceById(purchaseId).supplierId
   }
 
-
-  fun findPurchaseInfoByIds(purchaseIds: List<UUID>): Map<UUID, PurchaseInfo> {
+  fun findPurchaseInfoByIds(purchaseIds: Set<UUID>): Map<UUID, PurchaseInfo> {
     return purchaseRepository.findAllById(purchaseIds)
-      .associateBy({ it.id!! }, { it.toPurchaseInfo() })
+      .associateBy({ it.id!! }, { PurchaseInfo.from(it) })
   }
 
   @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
@@ -70,6 +80,4 @@ class PurchaseDataFetcher(
     return purchaseRepository.getReferenceById(purchaseId)
   }
 
-  private fun PurchaseEntity.toPurchaseInfo() =
-    PurchaseInfo(id!!, requiredReference(), supplierId, purchaseStatus, paymentStatus)
 }

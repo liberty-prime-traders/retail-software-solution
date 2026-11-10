@@ -10,14 +10,14 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService.PaymentCeiling
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.payment.PurchasePaymentCeilingService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.payment.PurchasePaymentCeilingService.PaymentCeiling
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentService
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentVoidCreateDto
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -67,7 +67,10 @@ class SupplierPaymentVoidStatusTest {
         `when`(supplierPaymentVoidMapper.toEntity(voidCreateDto)).thenReturn(SupplierPaymentVoidEntity(payment.id!!, "entered twice"))
         `when`(paymentsCalculatorService.calculatePaidAmountForPurchase(purchaseId)).thenReturn(BigDecimal(preVoidPaidTotal))
         `when`(purchasePaymentCeilingService.computeCeiling(purchaseId))
-            .thenReturn(PaymentCeiling(BigDecimal("100"), isFullyDelivered = true, deliveredTotal = BigDecimal("100")))
+            .thenReturn(PaymentCeiling(
+                BigDecimal("100"), isFullyDelivered = true, deliveredTotal = BigDecimal("100"),
+                orderedTotal = BigDecimal("100")
+            ))
 
         val supplierPaymentService = SupplierPaymentService(
             supplierPaymentRepository,
@@ -76,7 +79,7 @@ class SupplierPaymentVoidStatusTest {
             supplierPaymentVoidMapper,
             mock(PurchaseDataFetcher::class.java),
             purchaseUpdater,
-            mock(PaymentMethodService::class.java),
+            mock(PaymentMethodDataFetcher::class.java),
             mock(SupplierPaymentHandlerForKafka::class.java),
             mock(SupplierPaymentVoidHandlerForKafka::class.java),
             mock(SupplierPaymentAssembler::class.java),

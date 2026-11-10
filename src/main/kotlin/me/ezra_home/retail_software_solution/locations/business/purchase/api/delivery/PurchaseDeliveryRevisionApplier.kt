@@ -1,10 +1,11 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase.api
+package me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseAssembler
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseLineRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseRepository
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseStatusResolver
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.PurchasePaymentStatusService
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
@@ -19,14 +20,10 @@ class PurchaseDeliveryRevisionApplier(
     private val purchasePaymentStatusService: PurchasePaymentStatusService,
 ) {
 
-    // The caller holds the purchase lock and has already saved the replacement delivery line, so the ceiling sums
-    // see it.
+    // The caller holds the purchase lock and has already saved the replacement delivery line,
+    // so the ceiling sums see it.
     @TransactionalOnLocationSchema(propagation = Propagation.MANDATORY)
-    fun apply(
-        purchaseId: UUID,
-        purchaseLineId: UUID,
-        storageQuantityDelivered: ExactQuantity
-    ): PurchaseResponseDto {
+    fun apply(purchaseId: UUID, purchaseLineId: UUID, storageQuantityDelivered: ExactQuantity): PurchaseResponseDto {
         val purchase = purchaseRepository.getReferenceById(purchaseId)
         val purchaseLines = purchaseLineRepository.findByPurchaseId(purchaseId)
         val purchaseLine = purchaseLines.first { it.id == purchaseLineId }
