@@ -1,7 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchParameters
 import me.ezra_home.retail_software_solution.util.queries.SearchGuards
+import java.time.OffsetDateTime
 
 object PurchaseSearchValidator {
 
@@ -47,6 +48,13 @@ object PurchaseSearchValidator {
       purchaseSearchParameters.purchaseDateFrom,
       purchaseSearchParameters.purchaseDateBefore,
       "purchaseDateFrom must not be after purchaseDateBefore"
+    ) { from, before -> from.isAfter(before) }
+  }
+
+  fun guardValidPayableRange(orderedFrom: OffsetDateTime, orderedBefore: OffsetDateTime) {
+    SearchGuards.guardBoundedRange(orderedFrom, orderedBefore, "orderedFrom", "orderedBefore")
+    SearchGuards.guardRangeOrder(
+      orderedFrom, orderedBefore, "orderedFrom must not be after orderedBefore"
     ) { from, before -> from.isAfter(before) }
   }
 

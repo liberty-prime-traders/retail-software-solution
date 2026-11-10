@@ -6,7 +6,7 @@ import me.ezra_home.retail_software_solution.locations.business.reports.payments
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.PaymentSearchFetcher
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.PaymentSearchValidator
 import me.ezra_home.retail_software_solution.locations.business.reports.payments.PaymentSource
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.mappers.NameResolution
 import me.ezra_home.retail_software_solution.util.paging.PageRequest
 import me.ezra_home.retail_software_solution.util.paging.PageResponse
@@ -18,7 +18,7 @@ import java.util.UUID
 @TransactionalOnLocationSchema(readOnly = true)
 class PaymentSearchService(
   private val paymentSearchFetcher: PaymentSearchFetcher,
-  private val paymentMethodService: PaymentMethodService,
+  private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
   private val nameResolution: NameResolution
 ) {
 
@@ -33,7 +33,7 @@ class PaymentSearchService(
     )
 
     val pagePaymentRows = paymentRows.take(pageRequest.requestedSize)
-    val paymentMethodNamesById = paymentMethodService.getNamesById()
+    val paymentMethodNamesById = paymentMethodDataFetcher.getNamesById()
     val contactNamesById = nameResolution.organizationContacts(pagePaymentRows.map { it.contactId })
 
     return PageResponse(
@@ -46,7 +46,7 @@ class PaymentSearchService(
 
   fun summarize(paymentSearchParameters: PaymentSearchParameters): PaymentSummaryResponseDto {
     PaymentSearchValidator.guardValidParameters(paymentSearchParameters)
-    val paymentMethodNamesById = paymentMethodService.getNamesById()
+    val paymentMethodNamesById = paymentMethodDataFetcher.getNamesById()
 
     return PaymentSummaryResponseDto(
       summaries = includedSources(paymentSearchParameters).map { paymentSource ->

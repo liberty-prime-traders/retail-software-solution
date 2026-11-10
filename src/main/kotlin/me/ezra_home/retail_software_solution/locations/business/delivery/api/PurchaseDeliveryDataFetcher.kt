@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -50,14 +50,17 @@ class PurchaseDeliveryDataFetcher(
             ?.let { DeliveryLineOwnersDto(it.purchaseId, it.purchaseLineId) }
             ?: throw RtsGenericException("That delivery line could not be found. Refresh the page and try again.")
 
-    fun calculateDeliveredTotal(purchaseId: UUID): BigDecimal {
-        val deliveries = purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))
-        if (deliveries.isEmpty()) return BigDecimal.ZERO
-        val lines = purchaseDeliveryLineRepository.findByPurchaseDeliveryIdInAndStatus(
-            deliveries.map { it.id!! },
-            PurchaseDeliveryLineStatus.ACTIVE
-        )
-        return lines.sumOf { it.lineTotal() }
+    fun calculateDeliveredTotals(purchaseIds: Set<UUID>): Map<UUID, BigDecimal> {
+        val purchaseIdByDeliveryId = purchaseDeliveryRepository.findByPurchaseIdIn(purchaseIds)
+            .associate { it.id!! to it.purchaseId }
+        if (purchaseIdByDeliveryId.isEmpty()) return purchaseIds.associateWith { BigDecimal.ZERO }
+        val deliveredTotalsByPurchaseId = purchaseDeliveryLineRepository
+            .findByPurchaseDeliveryIdInAndStatus(
+                purchaseIdByDeliveryId.keys.toList(), PurchaseDeliveryLineStatus.ACTIVE
+            )
+            .groupBy { purchaseIdByDeliveryId.getValue(it.purchaseDeliveryId) }
+            .mapValues { (_, lines) -> lines.sumOf { it.lineTotal() } }
+        return purchaseIds.associateWith { deliveredTotalsByPurchaseId[it] ?: BigDecimal.ZERO }
     }
 
     fun calculateSingleDeliveryTotal(deliveryId: UUID): BigDecimal {

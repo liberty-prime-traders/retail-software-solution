@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
@@ -13,7 +13,7 @@ interface PurchaseDeliveryLineRepository : JpaRepository<PurchaseDeliveryLineEnt
   fun findByPurchaseDeliveryIdIn(deliveryIds: List<UUID>): List<PurchaseDeliveryLineEntity>
 
   fun findByPurchaseDeliveryIdInAndStatus(
-    deliveryIds: List<UUID>,
+    deliveryIds: Collection<UUID>,
     status: PurchaseDeliveryLineStatus
   ): List<PurchaseDeliveryLineEntity>
 

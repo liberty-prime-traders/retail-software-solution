@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodInsertDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
@@ -21,11 +22,12 @@ import java.util.UUID
 @RestController
 @RequestMapping("secured/payment-methods")
 class PaymentMethodEndpoint (
-    private val paymentMethodService: PaymentMethodService
+    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher
 ) {
 
     @GetMapping
-    fun getAllPaymentMethods(): Collection<PaymentMethodResponseDto> = paymentMethodService.getAllPaymentMethods()
+    fun getAllPaymentMethods(): Collection<PaymentMethodResponseDto> = paymentMethodDataFetcher.getAllPaymentMethods()
 
     @PostMapping
     fun  createPaymentMethod(@RequestBody paymentMethodInsertDto: PaymentMethodInsertDto): PaymentMethodResponseDto =

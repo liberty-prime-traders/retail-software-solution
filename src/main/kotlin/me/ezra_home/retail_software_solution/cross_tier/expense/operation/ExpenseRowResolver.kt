@@ -11,7 +11,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.StringUtils
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -24,7 +24,7 @@ import java.util.UUID
 class ExpenseRowResolver(
     private val expenseTypeService: ExpenseTypeService,
     private val contactService: ContactService,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
     private val fiscalPeriodService: FiscalPeriodService
 ) {
 
@@ -73,7 +73,7 @@ class ExpenseRowResolver(
         defaultPaymentDate: LocalDate,
         openDates: MutableSet<LocalDate> = HashSet()
     ): ResolvedSettlement {
-        val paymentMethodAccountCode = paymentMethodService.findAccountCode(paymentInstruction.paymentMethodId)
+        val paymentMethodAccountCode = paymentMethodDataFetcher.findAccountCode(paymentInstruction.paymentMethodId)
         val paymentDate = paymentInstruction.paymentDate ?: defaultPaymentDate
         requireOpenPeriod(openDates, paymentDate)
         return ResolvedSettlement(

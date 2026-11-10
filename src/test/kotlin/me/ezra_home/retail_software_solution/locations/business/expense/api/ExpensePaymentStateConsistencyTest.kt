@@ -22,7 +22,7 @@ import me.ezra_home.retail_software_solution.locations.business.expense.ExpenseV
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import org.junit.jupiter.api.AfterEach
@@ -144,10 +144,12 @@ class ExpensePaymentStateConsistencyTest {
         `when`(expenseTypeService.getAll(null)).thenReturn(
             listOf(ExpenseTypeResponseDto(expenseTypeId, null, "Freight", "005.005", emptySet(), emptySet(), false))
         )
-        val paymentMethodService = mock(PaymentMethodService::class.java)
-        `when`(paymentMethodService.getNamesById()).thenReturn(mapOf(paymentMethodId to "Cash"))
+        val paymentMethodDataFetcher = mock(PaymentMethodDataFetcher::class.java)
+        `when`(paymentMethodDataFetcher.getNamesById()).thenReturn(mapOf(paymentMethodId to "Cash"))
         val userQualifier = mock(UserQualifier::class.java)
         `when`(userQualifier.getCreatorFullName(creatorId)).thenReturn("Creator")
-        return ExpenseResponseBuilder(expenseTypeService, mock(ContactService::class.java), paymentMethodService, userQualifier)
+        return ExpenseResponseBuilder(
+            expenseTypeService, mock(ContactService::class.java), paymentMethodDataFetcher, userQualifier
+        )
     }
 }

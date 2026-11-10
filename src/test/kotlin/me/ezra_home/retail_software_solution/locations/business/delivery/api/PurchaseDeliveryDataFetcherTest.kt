@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.delivery.Purchas
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineEntity
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryLineRepository
 import me.ezra_home.retail_software_solution.locations.business.delivery.PurchaseDeliveryRepository
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -26,9 +26,13 @@ class PurchaseDeliveryDataFetcherTest {
         mock(PurchaseDeliveryAssembler::class.java)
     )
 
-    private fun deliveryLine(userProvidedQuantity: String, storageUnitsPerUserProvidedUnit: Long) =
+    private fun deliveryLine(
+        userProvidedQuantity: String,
+        storageUnitsPerUserProvidedUnit: Long,
+        purchaseDeliveryId: UUID = UUID.randomUUID()
+    ) =
         PurchaseDeliveryLineEntity(
-            purchaseDeliveryId = UUID.randomUUID(),
+            purchaseDeliveryId = purchaseDeliveryId,
             purchaseLineId = purchaseLineId,
             userProvidedQuantityDelivered = BigDecimal(userProvidedQuantity),
             unitCost = BigDecimal("10.00"),
@@ -67,16 +71,18 @@ class PurchaseDeliveryDataFetcherTest {
     fun `a purchase total counts the active lines only`() {
         val purchaseId = UUID.randomUUID()
         val deliveryId = UUID.randomUUID()
-        `when`(purchaseDeliveryRepository.findByPurchaseIdIn(listOf(purchaseId))).thenReturn(
+        `when`(purchaseDeliveryRepository.findByPurchaseIdIn(setOf(purchaseId))).thenReturn(
             listOf(PurchaseDeliveryEntity(purchaseId, deliveredAt = OffsetDateTime.now()).also { it.id = deliveryId })
         )
         `when`(
             purchaseDeliveryLineRepository.findByPurchaseDeliveryIdInAndStatus(
                 listOf(deliveryId), PurchaseDeliveryLineStatus.ACTIVE
             )
-        ).thenReturn(listOf(deliveryLine("2", 1L)))
+        ).thenReturn(listOf(deliveryLine("2", 1L, deliveryId)))
 
-        assertEquals(0, BigDecimal("20.00").compareTo(purchaseDeliveryDataFetcher.calculateDeliveredTotal(purchaseId)))
+        val deliveredTotals = purchaseDeliveryDataFetcher.calculateDeliveredTotals(setOf(purchaseId))
+
+        assertEquals(0, BigDecimal("20.00").compareTo(deliveredTotals.getValue(purchaseId)))
     }
 
     @Test

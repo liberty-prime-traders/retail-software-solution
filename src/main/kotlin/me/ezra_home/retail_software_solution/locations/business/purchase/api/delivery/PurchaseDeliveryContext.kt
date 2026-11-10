@@ -1,6 +1,7 @@
-package me.ezra_home.retail_software_solution.locations.business.purchase.api
+package me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery
 
 import java.util.UUID
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineDto
 
 data class PurchaseDeliveryContext(
     val purchaseId: UUID,

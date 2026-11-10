@@ -2,7 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.purchase.PurchaseEntity
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchParameters
 import me.ezra_home.retail_software_solution.util.queries.KeysetSearchCursor
 import org.springframework.stereotype.Component
 
@@ -16,10 +16,11 @@ class PurchaseSearchFetcher(
   fun search(
     purchaseSearchParameters: PurchaseSearchParameters,
     cursor: KeysetSearchCursor?,
-    requestedSize: Int
+    requestedSize: Int,
+    oldestFirst: Boolean = false
   ): List<PurchaseEntity> {
     val predicate = PurchaseSearchQueryBuilder.buildPredicate(purchaseSearchParameters)
-    val sqlQuery = PurchaseSearchQueryBuilder.buildListQuery(predicate, cursor)
+    val sqlQuery = PurchaseSearchQueryBuilder.buildListQuery(predicate, cursor, oldestFirst)
     return purchaseSearchListExecutor.execute(sqlQuery, requestedSize + 1, setTimeout = true)
   }
 

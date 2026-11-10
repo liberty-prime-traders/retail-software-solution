@@ -2,8 +2,8 @@ package me.ezra_home.retail_software_solution.locations.business.supplier_paymen
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService.PaymentCeiling
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.payment.PurchasePaymentCeilingService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.payment.PurchasePaymentCeilingService.PaymentCeiling
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.PaymentsCalculatorService
 import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver

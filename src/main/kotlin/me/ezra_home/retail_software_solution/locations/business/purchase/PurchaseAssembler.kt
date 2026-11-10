@@ -7,7 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseLineResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchasePaymentCeilingService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.payment.PurchasePaymentCeilingService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier

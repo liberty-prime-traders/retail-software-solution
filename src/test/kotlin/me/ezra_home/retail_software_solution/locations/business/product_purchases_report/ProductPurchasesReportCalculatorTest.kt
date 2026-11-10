@@ -1,7 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.product_purchases_report
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.quantity.BreakdownUnit
 import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown

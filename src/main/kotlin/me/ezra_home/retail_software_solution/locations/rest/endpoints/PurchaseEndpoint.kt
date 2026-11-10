@@ -1,14 +1,18 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.bulk_payment.PurchaseBulkPaymentCreateDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.bulk_payment.PurchaseBulkPaymentResponseDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.bulk_payment.PurchaseBulkPaymentSearchDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.bulk_payment.PurchaseBulkPaymentService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCancelLinesDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCanceller
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseCreateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseNotesUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchService
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchSummaryDto
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchService
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseUpdater
@@ -33,7 +37,18 @@ class PurchaseEndpoint(
   private val purchaseCanceller: PurchaseCanceller,
   private val purchaseUpdater: PurchaseUpdater,
   private val purchaseSearchService: PurchaseSearchService,
+  private val purchaseBulkPaymentService: PurchaseBulkPaymentService,
 ) {
+
+  @PostMapping("bulk-payment/search")
+  fun loadBulkPayment(
+    @RequestBody purchaseBulkPaymentSearchDto: PurchaseBulkPaymentSearchDto
+  ): List<PurchaseBulkPaymentResponseDto> = purchaseBulkPaymentService.loadPayable(purchaseBulkPaymentSearchDto)
+
+  @PostMapping("bulk-payment")
+  fun recordBulkPayment(
+    @RequestBody purchaseBulkPaymentCreateDto: PurchaseBulkPaymentCreateDto
+  ): List<PurchaseBulkPaymentResponseDto> = purchaseBulkPaymentService.record(purchaseBulkPaymentCreateDto)
 
   @PostMapping("draft")
   fun createDraft(@RequestBody dto: PurchaseCreateDto): PurchaseResponseDto =

@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.product_purchases_report
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseDeliveryLineStatus
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID

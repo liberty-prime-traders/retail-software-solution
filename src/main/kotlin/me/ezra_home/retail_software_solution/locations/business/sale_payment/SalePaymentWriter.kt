@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.locations.business.sale_payment
 import me.ezra_home.retail_software_solution.util.enums.PaymentStatus
 import me.ezra_home.retail_software_solution.util.business.PaymentStatusResolver
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentFetcher
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -15,7 +15,7 @@ class SalePaymentWriter(
     private val salePaymentRepository: SalePaymentRepository,
     private val salePaymentFetcher: SalePaymentFetcher,
     private val salePaymentHandlerForKafka: SalePaymentHandlerForKafka,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
 ) {
 
     fun write(
@@ -32,7 +32,7 @@ class SalePaymentWriter(
             SalePaymentEntity(
                 saleId = saleId,
                 paymentMethodId = newSalePayment.paymentMethodId,
-                paymentMethodAccountCode = paymentMethodService.findAccountCode(newSalePayment.paymentMethodId),
+                paymentMethodAccountCode = paymentMethodDataFetcher.findAccountCode(newSalePayment.paymentMethodId),
                 amount = newSalePayment.amount,
                 reference = newSalePayment.reference,
                 paymentDate = newSalePayment.paymentDate ?: DateTimes.Offset.Now.organization(),

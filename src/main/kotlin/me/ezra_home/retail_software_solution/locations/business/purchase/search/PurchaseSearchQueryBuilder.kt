@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
-import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseSearchParameters
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchParameters
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.model.TableNames
 import me.ezra_home.retail_software_solution.util.model.ViewNames
@@ -102,13 +102,19 @@ object PurchaseSearchQueryBuilder {
     return context
   }
 
-  fun buildListQuery(predicate: QueryBuilderContext, cursor: KeysetSearchCursor?): SqlQuery {
+  fun buildListQuery(
+    predicate: QueryBuilderContext,
+    cursor: KeysetSearchCursor?,
+    oldestFirst: Boolean = false
+  ): SqlQuery {
+    val sortDirection = if (oldestFirst) "ASC" else "DESC"
+    val cursorComparison = if (oldestFirst) ">" else "<"
     val whereClauses = predicate.whereClauses.toMutableList()
     val params = predicate.params.toMutableMap()
 
     if (cursor != null) {
       whereClauses.add(
-        "(${PurchaseSearchAliases.PURCHASE}.created_on, ${PurchaseSearchAliases.PURCHASE}.id) < " +
+        "(${PurchaseSearchAliases.PURCHASE}.created_on, ${PurchaseSearchAliases.PURCHASE}.id) $cursorComparison " +
           "(:${QueryParameterNames.CURSOR_CREATED_ON}, :${QueryParameterNames.CURSOR_ID})"
       )
       params[QueryParameterNames.CURSOR_CREATED_ON] = cursor.createdOn
@@ -122,7 +128,8 @@ object PurchaseSearchQueryBuilder {
       SELECT ${PurchaseSearchAliases.PURCHASE}.*
       $fromAndJoins
       WHERE ${whereClauses.joinToString(" AND ")}
-      ORDER BY ${PurchaseSearchAliases.PURCHASE}.created_on DESC, ${PurchaseSearchAliases.PURCHASE}.id DESC
+      ORDER BY ${PurchaseSearchAliases.PURCHASE}.created_on $sortDirection,
+        ${PurchaseSearchAliases.PURCHASE}.id $sortDirection
       LIMIT :${QueryParameterNames.PAGE_SIZE}
     """.trimIndent()
 

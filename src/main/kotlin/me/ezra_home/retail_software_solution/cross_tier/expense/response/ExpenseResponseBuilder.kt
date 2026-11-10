@@ -5,7 +5,7 @@ import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePay
 import me.ezra_home.retail_software_solution.cross_tier.expense.model.ExpensePaymentVoidDto
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.expense_type.api.ExpenseTypeService
-import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodService
+import me.ezra_home.retail_software_solution.organizations.business.payment_method.api.PaymentMethodDataFetcher
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -16,7 +16,7 @@ import java.util.UUID
 class ExpenseResponseBuilder(
     private val expenseTypeService: ExpenseTypeService,
     private val contactService: ContactService,
-    private val paymentMethodService: PaymentMethodService,
+    private val paymentMethodDataFetcher: PaymentMethodDataFetcher,
     private val userQualifier: UserQualifier
 ) {
 
@@ -24,7 +24,7 @@ class ExpenseResponseBuilder(
         if (expenseAggregate.expenses.isEmpty()) return emptyList()
         val expenseTypesById = expenseTypeService.getAll(null).associateBy { it.id }
         val contactsById = contactService.getAllContactDtos().associateBy { it.id }
-        val paymentMethodNamesById = paymentMethodService.getNamesById()
+        val paymentMethodNamesById = paymentMethodDataFetcher.getNamesById()
         val batchesById = expenseAggregate.batches.associateBy { it.id }
         val paymentsByExpenseId = expenseAggregate.payments.groupBy { it.expenseId }
         val paymentVoidsByPaymentId = expenseAggregate.paymentVoids.associateBy { it.paymentId }

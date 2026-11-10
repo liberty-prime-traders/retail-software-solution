@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.rest.endpoints
 
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentCreateDto
+import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentResponseDto
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentService
 import me.ezra_home.retail_software_solution.locations.business.supplier_payment.api.SupplierPaymentVoidCreateDto
@@ -14,7 +15,10 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("secured/supplier-payments")
-class SupplierPaymentEndpoint(private val supplierPaymentService: SupplierPaymentService) {
+class SupplierPaymentEndpoint(
+    private val supplierPaymentService: SupplierPaymentService,
+    private val supplierPaymentDataFetcher: SupplierPaymentDataFetcher
+) {
 
     @PostMapping
     fun recordPayment(@RequestBody dto: SupplierPaymentCreateDto): SupplierPaymentResponseDto =
@@ -26,5 +30,5 @@ class SupplierPaymentEndpoint(private val supplierPaymentService: SupplierPaymen
 
     @GetMapping
     fun getByPurchaseId(@RequestParam purchaseId: UUID): List<SupplierPaymentResponseDto> =
-        supplierPaymentService.getPaymentsByPurchaseId(purchaseId)
+        supplierPaymentDataFetcher.getPaymentsByPurchaseId(purchaseId)
 }
