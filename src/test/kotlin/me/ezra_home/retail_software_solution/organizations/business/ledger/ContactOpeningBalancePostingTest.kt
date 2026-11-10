@@ -9,7 +9,7 @@ import me.ezra_home.retail_software_solution.organizations.business.contact_open
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.ContactOpeningBalanceAccountingProcessor
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.LedgerPostingGate
+import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
 import me.ezra_home.retail_software_solution.support.WithDefaultOrganizationSession
 import me.ezra_home.retail_software_solution.util.business.PositiveMoney
 import org.junit.jupiter.api.Assertions.assertEquals

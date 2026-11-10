@@ -4,6 +4,7 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentCategory
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentDecreaseStockRequest
@@ -11,6 +12,8 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.update
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockAdjustmentMovementDetails
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentStockUpdater
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentCategoryRules
+import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentCostEntity
+import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentCostRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.StockAdjustmentRepository
@@ -32,6 +35,8 @@ import java.math.BigDecimal
 @TransactionalOnLocationSchema
 class StockAdjustmentService(
     private val stockAdjustmentRepository: StockAdjustmentRepository,
+    private val stockAdjustmentCostRepository: StockAdjustmentCostRepository,
+    private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val stockAdjustmentStockUpdater: StockAdjustmentStockUpdater,
     private val stockAdjustmentHandlerForKafka: StockAdjustmentHandlerForKafka,
     private val locationProductService: LocationProductService,
@@ -64,7 +69,7 @@ class StockAdjustmentService(
             note = StringUtils.getValueOrNull(stockAdjustmentCreateDto.note)
         )
 
-        val productLabel = locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).label
+        val productLabel = locationProductDataFetcher.findSummaryByIds(setOf(locationProductId)).getValue(locationProductId).printLabel
 
         val totalCost = when (direction) {
             StockAdjustmentDirection.INCREASE -> applyIncrease(
@@ -92,26 +97,35 @@ class StockAdjustmentService(
                 userProvidedQuantity = stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(),
                 unitId = stockAdjustmentCreateDto.unitId,
                 storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnit,
+                quantityText = productStockBreakdownProvider.forLocationProduct(locationProductId)
+                    .renderUserProvided(stockAdjustmentCreateDto.userProvidedQuantity.toBigDecimal(), stockAdjustmentCreateDto.unitId),
                 storageQuantity = storageQuantity.toStorageQuantity(),
                 totalCost = totalCost,
                 stockMovementReasonId = stockAdjustmentCreateDto.stockMovementReasonId,
                 note = adjustmentDetails.note
             ).also { it.referenceNumber = referenceNumber }
         )
+        stockAdjustmentCostRepository.save(
+            StockAdjustmentCostEntity(stockAdjustmentId = savedStockAdjustment.id!!, totalCost = totalCost)
+        )
         stockAdjustmentHandlerForKafka.publish(savedStockAdjustment)
-        return toResponseDto(savedStockAdjustment, productLabel)
+        return toResponseDto(savedStockAdjustment, productLabel, totalCost)
     }
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun getAll(): List<StockAdjustmentResponseDto> {
         val stockAdjustments = stockAdjustmentRepository.findAll()
+        val activeTotalCostByStockAdjustmentId = stockAdjustmentCostRepository
+            .findByStockAdjustmentIdInAndStatus(stockAdjustments.map { it.id!! }, StockAdjustmentCostStatus.ACTIVE)
+            .associate { it.stockAdjustmentId to it.totalCost }
         val labelsByLocationProductId = locationProductDataFetcher
             .findSummaryByIds(stockAdjustments.map { stockAdjustment -> stockAdjustment.locationProductId }.toSet())
-            .mapValues { locationProductSummary -> locationProductSummary.value.label }
+            .mapValues { locationProductSummary -> locationProductSummary.value.printLabel }
         return stockAdjustments.map { stockAdjustment ->
             toResponseDto(
                 stockAdjustment,
-                labelsByLocationProductId[stockAdjustment.locationProductId] ?: stockAdjustment.locationProductId.toString()
+                labelsByLocationProductId[stockAdjustment.locationProductId] ?: stockAdjustment.locationProductId.toString(),
+                activeTotalCostByStockAdjustmentId.getValue(stockAdjustment.id!!)
             )
         }
     }
@@ -161,7 +175,11 @@ class StockAdjustmentService(
         return totalCost
     }
 
-    private fun toResponseDto(stockAdjustmentEntity: StockAdjustmentEntity, productLabel: String) = StockAdjustmentResponseDto(
+    private fun toResponseDto(
+        stockAdjustmentEntity: StockAdjustmentEntity,
+        productLabel: String,
+        activeTotalCost: BigDecimal
+    ) = StockAdjustmentResponseDto(
         referenceNumber = stockAdjustmentEntity.requiredReference(),
         locationProductId = stockAdjustmentEntity.locationProductId,
         productLabel = productLabel,
@@ -169,7 +187,8 @@ class StockAdjustmentService(
         direction = stockAdjustmentEntity.direction,
         userProvidedQuantity = stockAdjustmentEntity.userProvidedQuantity,
         unitId = stockAdjustmentEntity.unitId,
-        totalCost = stockAdjustmentEntity.totalCost,
+        quantityText = stockAdjustmentEntity.quantityText,
+        totalCost = activeTotalCost,
         stockMovementReasonId = stockAdjustmentEntity.stockMovementReasonId,
         note = stockAdjustmentEntity.note,
         adjustedBy = userQualifier.getCreatorFullName(stockAdjustmentEntity.requiredCreatedById()),

@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-stock-adjustment-cost-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: stock_adjustment_cost
+      changes:
+        - createTable:
+            tableName: stock_adjustment_cost
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_cost_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_stock_adjustment_cost_reference_number
+
+              - column:
+                  name: stock_adjustment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_cost_stock_adjustment_id_notnull
+
+              - column:
+                  name: total_cost
+                  type: numeric(28, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_cost_total_cost_notnull
+
+              - column:
+                  name: status
+                  type: varchar(5)
+                  defaultValue: ACT
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_cost_status_notnull
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: stock_adjustment_cost_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: stock_adjustment_cost

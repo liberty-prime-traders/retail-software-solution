@@ -20,35 +20,40 @@ class ReservationShortfallChecker(
     private val locationProductDataFetcher: LocationProductDataFetcher,
 ) {
 
-    fun problemsAfterPendingChange(
+    fun shortfallAfterPendingChange(
         locationProductId: UUID,
         pendingStorageQuantityChange: ExactQuantity,
         quantityBreakdown: QuantityBreakdown
-    ): List<BlockingProblem> {
+    ): ReservationShortfall? {
         val productReservations = stockReserver.loadReservationBreakdown(listOf(locationProductId))[locationProductId]
-            ?: return emptyList()
+            ?: return null
         val onHandAfterChange = ExactQuantity.ofStorage(
             stockBalanceFetcher.getLatestBalances(listOf(locationProductId)).getValue(locationProductId)
         ) + pendingStorageQuantityChange
         val reservedTotal = ExactQuantity.ofStorage(productReservations.total)
-        if (reservedTotal <= onHandAfterChange) return emptyList()
+        if (reservedTotal <= onHandAfterChange) return null
 
-        val productLabel = locationProductDataFetcher.findSummaryByIds(listOf(locationProductId))
-            .getValue(locationProductId).label
+        val productName = locationProductDataFetcher.findSummaryByIds(listOf(locationProductId))
+            .getValue(locationProductId).productName
         val referenceNumberBySaleId = saleDataFetcher.getReferenceNumbersById(productReservations.bySale.keys)
         val eventualOnHandBreakdown = quantityBreakdown.render(onHandAfterChange)
-        val effect = "After your change only $eventualOnHandBreakdown will be left in stock," +
-                " but draft sales hold ${quantityBreakdown.render(reservedTotal)}. " +
-                " Reduce the quantity reserved to at most $eventualOnHandBreakdown."
-        return productReservations.bySale
+        val reservedBreakdown = quantityBreakdown.render(reservedTotal)
+        val holdersText = if (productReservations.bySale.size == 1) {
+            "the draft sale holds $reservedBreakdown"
+        } else {
+            "the draft sales hold $reservedBreakdown between them"
+        }
+        val effect = "After your change only $eventualOnHandBreakdown would be left in stock, but $holdersText."
+        val blockingProblems = productReservations.bySale
             .map { (saleId, reservedQuantity) ->
                 BlockingProblem(
                     documentReference = "${referenceNumberBySaleId.getValue(saleId)} (draft)",
                     description = "Draft sale holding " +
-                        "${quantityBreakdown.render(ExactQuantity.ofStorage(reservedQuantity))} of $productLabel.",
+                        "${quantityBreakdown.render(ExactQuantity.ofStorage(reservedQuantity))} of $productName.",
                     effect = effect
                 )
             }
             .sortedBy { it.documentReference }
+        return ReservationShortfall(blockingProblems, productName, onHandAfterChange, reservedTotal)
     }
 }

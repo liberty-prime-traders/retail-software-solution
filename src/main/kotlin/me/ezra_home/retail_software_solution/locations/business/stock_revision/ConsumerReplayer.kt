@@ -7,6 +7,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.F
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.PlannedTake
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.StockMovementContexts
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
@@ -21,6 +22,7 @@ object ConsumerReplayer {
         val productBeingReplayed = replayRequest.productBeingReplayed
         var availableFifoEntries = productBeingReplayed.fifoEntriesAvailableForConsumption
         val problems = mutableListOf<BlockingProblem>()
+        val movementTypesOfUncoveredConsumers = mutableSetOf<MovementType>()
         val consumerReplayPlans = mutableListOf<ConsumerReplayPlan>()
 
         consumptionsOnReplacedLayer.sortedBy { it.orderOfConsumption }.forEach { stockEntryConsumption ->
@@ -30,12 +32,18 @@ object ConsumerReplayer {
                 stockEntryConsumption.netConsumedStorageQuantity
             )
 
-            uncoveredQuantityProblemOf(stockEntryConsumption, plannedTakes, productBeingReplayed)?.let {
-                problems.add(it)
+            val coveredQuantity = plannedTakes.fold(ExactQuantity.ZERO) { sum, plannedTake ->
+                sum + plannedTake.storageQuantity
+            }
+            availableFifoEntries = afterTakes(availableFifoEntries, plannedTakes)
+            val uncoveredQuantity = stockEntryConsumption.netConsumedStorageQuantity - coveredQuantity
+            if (uncoveredQuantity > ExactQuantity.ZERO) {
+                movementTypesOfUncoveredConsumers.add(stockEntryConsumption.consumer.movementType)
+                problems.add(
+                    uncoveredQuantityProblemOf(stockEntryConsumption, coveredQuantity, productBeingReplayed)
+                )
                 return@forEach
             }
-
-            availableFifoEntries = afterTakes(availableFifoEntries, plannedTakes)
             consumerReplayPlans.add(
                 ConsumerReplayPlan(
                     fifoConsumptionRequest = fifoConsumptionRequestOf(
@@ -47,26 +55,29 @@ object ConsumerReplayer {
                 )
             )
         }
-        return ReplayResult(consumerReplayPlans, problems)
+        val totalTakenByConsumers = consumptionsOnReplacedLayer.fold(ExactQuantity.ZERO) { sum, stockEntryConsumption ->
+            sum + stockEntryConsumption.netConsumedStorageQuantity
+        }
+        return ReplayResult(consumerReplayPlans, problems, totalTakenByConsumers, movementTypesOfUncoveredConsumers)
     }
 
     private fun uncoveredQuantityProblemOf(
         stockEntryConsumption: StockEntryConsumption,
-        plannedTakes: List<PlannedTake>,
+        coveredQuantity: ExactQuantity,
         productBeingReplayed: ProductBeingReplayed
-    ): BlockingProblem? {
-        val coveredQuantity = plannedTakes.fold(
-            ExactQuantity.ZERO
-        ) { sum, plannedTake -> sum + plannedTake.storageQuantity }
-        if (coveredQuantity >= stockEntryConsumption.netConsumedStorageQuantity) return null
+    ): BlockingProblem {
         val quantityBreakdown = productBeingReplayed.quantityBreakdown
+        val coveredText = if (coveredQuantity > ExactQuantity.ZERO) {
+            "only ${quantityBreakdown.render(coveredQuantity)} of it"
+        } else {
+            "none of it"
+        }
         return BlockingProblem(
             documentReference = stockEntryConsumption.stockMovementOrigin.requiredDocumentReference(),
             description = "${StockConsumerLabel.of(stockEntryConsumption.consumer.movementType)} that took " +
                 "${quantityBreakdown.render(stockEntryConsumption.netConsumedStorageQuantity)} of " +
-                "${productBeingReplayed.productLabel} from this delivery.",
-            effect = "After your change, only ${quantityBreakdown.render(coveredQuantity)} is left to cover it. " +
-                "Enter a bigger quantity."
+                "${productBeingReplayed.productName} from this delivery.",
+            effect = "After your change $coveredText could be covered."
         )
     }
 

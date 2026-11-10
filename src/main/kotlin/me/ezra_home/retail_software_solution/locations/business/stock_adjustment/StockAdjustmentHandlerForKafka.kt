@@ -28,6 +28,7 @@ class StockAdjustmentHandlerForKafka(
         publish(stockAdjustment)
     }
 
+    // Posts the original cost: a revision's restatement posts its own difference, so a reissue must not repeat it.
     // A zero-cost adjustment moves no value, and the ledger rejects zero-amount entries.
     fun publish(stockAdjustment: StockAdjustmentEntity) {
         if (stockAdjustment.totalCost.signum() == 0) return

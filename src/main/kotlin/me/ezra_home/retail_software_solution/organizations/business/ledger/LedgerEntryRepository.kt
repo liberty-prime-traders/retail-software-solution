@@ -25,6 +25,8 @@ private const val GROUP_BY_BUCKET_ACCOUNT_ENTRY_SOURCE = "        GROUP BY 1, 2,
 @Repository
 interface LedgerEntryRepository : JpaRepository<LedgerEntryEntity, UUID> {
 
+    fun findByGroupReferenceNumberIn(groupReferenceNumbers: Collection<String>): List<LedgerEntryEntity>
+
     @Query(SUM_MOVEMENTS_IN_RANGE + GROUP_BY_BUCKET_ACCOUNT_ENTRY_SOURCE, nativeQuery = true)
     fun sumMovementsInRange(
         dayStartsLiteral: String, // e.g. '{2024-01-01T00:00:00Z, 2024-01-02T00:00:00Z, 2024-01-03T00:00:00Z}'

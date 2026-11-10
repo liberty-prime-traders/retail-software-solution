@@ -11,6 +11,7 @@ import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyCollection
@@ -79,7 +80,7 @@ class PaymentSearchServiceTest {
   ) = PaymentRow(
     id = UUID.randomUUID(),
     type = type,
-    referenceNumber = referenceNumber,
+    parentReferenceNumber = referenceNumber,
     contactId = if (type == PaymentType.SALE) customerId else supplierId,
     paymentMethodId = if (type == PaymentType.SALE) cashMethodId else bankMethodId,
     amount = BigDecimal("100.00"),
@@ -234,7 +235,7 @@ class PaymentSearchServiceTest {
 
     val page = paymentSearchService.search(pageRequest(searchParameters()))
 
-    assertEquals(listOf("SP000002", "SUP000001"), page.contents.map { it.referenceNumber })
+    assertEquals(listOf("SP000002", "SUP000001"), page.contents.map { it.parentReferenceNumber })
     assertEquals(listOf(PaymentType.SALE, PaymentType.PURCHASE), page.contents.map { it.type })
     assertEquals(listOf(BalanceEffect.ADDS, BalanceEffect.SUBTRACTS), page.contents.map { it.balanceEffect })
     assertEquals(listOf("Jane Customer", "Acme Supplier"), page.contents.map { it.contactName })
@@ -251,7 +252,7 @@ class PaymentSearchServiceTest {
 
     val page = paymentSearchService.search(pageRequest(searchParameters(), size = 2))
 
-    assertEquals(listOf("SP000003", "SUP000002"), page.contents.map { it.referenceNumber })
+    assertEquals(listOf("SP000003", "SUP000002"), page.contents.map { it.parentReferenceNumber })
     assertTrue(page.hasMore)
     val keysetSearchCursor = KeysetSearchCursor.decode(page.currentCursor)
     assertNotNull(keysetSearchCursor)
@@ -259,13 +260,12 @@ class PaymentSearchServiceTest {
   }
 
   @Test
-  fun `list shows the method id for a payment whose method is no longer named`() {
-    val deletedMethodId = UUID.randomUUID()
-    searchRows = listOf(paymentRow(PaymentType.SALE, "SP000001", at(10)).copy(paymentMethodId = deletedMethodId))
+  fun `list fails for a payment whose method no longer exists, so the bad delete gets fixed`() {
+    searchRows = listOf(paymentRow(PaymentType.SALE, "SP000001", at(10)).copy(paymentMethodId = UUID.randomUUID()))
 
-    val page = paymentSearchService.search(pageRequest(searchParameters()))
-
-    assertEquals(deletedMethodId.toString(), page.contents.single().paymentMethodName)
+    assertThrows(NoSuchElementException::class.java) {
+      paymentSearchService.search(pageRequest(searchParameters()))
+    }
   }
 
   @Test

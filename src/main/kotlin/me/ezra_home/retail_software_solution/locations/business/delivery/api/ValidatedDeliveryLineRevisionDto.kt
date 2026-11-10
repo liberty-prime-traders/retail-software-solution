@@ -11,6 +11,8 @@ data class ValidatedDeliveryLineRevisionDto(
     val revisedLineReferenceNumber: String,
     val purchaseLineId: UUID,
     val locationProductId: UUID,
+    val revisedUnitId: UUID,
+    val revisedStorageUnitsPerUserProvidedUnit: Long,
     val unitId: UUID,
     val storageUnitsPerUserProvidedUnit: Long,
     val revisedUserProvidedQuantityDelivered: BigDecimal,
@@ -19,9 +21,10 @@ data class ValidatedDeliveryLineRevisionDto(
     val unitCost: BigDecimal,
     val problems: List<BlockingProblem>,
 ) {
-    val storageQuantityChange: ExactQuantity =
-        ExactQuantity.ofStorageFromUserProvided(userProvidedQuantityDelivered, storageUnitsPerUserProvidedUnit) -
-            ExactQuantity.ofStorageFromUserProvided(
-                revisedUserProvidedQuantityDelivered, storageUnitsPerUserProvidedUnit
-            )
+    val replacementStorageQuantity: ExactQuantity =
+        ExactQuantity.ofStorageFromUserProvided(userProvidedQuantityDelivered, storageUnitsPerUserProvidedUnit)
+    val storageQuantityChange: ExactQuantity = replacementStorageQuantity -
+        ExactQuantity.ofStorageFromUserProvided(
+            revisedUserProvidedQuantityDelivered, revisedStorageUnitsPerUserProvidedUnit
+        )
 }

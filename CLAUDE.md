@@ -17,12 +17,12 @@ Quick rules:
 
 ```bash
 # Start infrastructure (Postgres, Redis), on the dev infra host
-cd docker && ./dev.sh          # up
-cd docker && ./dev.sh down     # down
+./deployment/scripts/dev.sh          # up
+./deployment/scripts/dev.sh down     # down
 
-# Start only the app container, against the infra that dev.sh started (hosts come from dev.env)
-cd docker && ./debug.sh        # up
-cd docker && ./debug.sh down   # down
+# Start only the app container, against the infra that dev.sh started (hosts come from deployment/env/dev.env)
+./deployment/scripts/debug.sh        # up
+./deployment/scripts/debug.sh down   # down
 ```
 
 ## Architecture

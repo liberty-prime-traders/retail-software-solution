@@ -132,7 +132,7 @@ class AccountService(
         val balanceUpdatedAt = Instant.now()
         accountPostings.forEach { accountPosting ->
             val account = accountsByCode.getValue(accountPosting.accountCode)
-            val delta = if (account.accountType.normalBalance == accountPosting.entryType) accountPosting.amount else accountPosting.amount.negate()
+            val delta = account.accountType.amountInNormalDirection(accountPosting.entryType, accountPosting.amount)
             accountRepository.incrementBalance(account.code, delta, balanceUpdatedAt)
         }
     }

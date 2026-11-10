@@ -1,0 +1,6 @@
+services:
+  rtss-kafka-ui:
+    ports:
+      - "8082:8080"
+    environment:
+      AUTH_TYPE: disabled

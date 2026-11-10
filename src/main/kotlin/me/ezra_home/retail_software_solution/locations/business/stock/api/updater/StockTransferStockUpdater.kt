@@ -5,6 +5,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.FifoStockConsumer
+import me.ezra_home.retail_software_solution.locations.business.stock.NetStockDrawReader
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryEntity
 import me.ezra_home.retail_software_solution.locations.business.stock.StockEntryRepository
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementEntity
@@ -24,6 +25,7 @@ class StockTransferStockUpdater(
     private val stockBalanceFetcher: StockBalanceFetcher,
     private val productStockBreakdownProvider: ProductStockBreakdownProvider,
     private val entityAdvisoryLock: EntityAdvisoryLock,
+    private val netStockDrawReader: NetStockDrawReader,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -79,28 +81,26 @@ class StockTransferStockUpdater(
 
     fun restoreStockForLines(dispatchReference: String, dispatchLineRefs: Collection<String>) {
         if (dispatchLineRefs.isEmpty()) return
-        val transferOutMovements = stockMovementRepository
-            .findByDocumentReferenceAndMovementType(dispatchReference, MovementType.TRANSFER_OUT)
-            .filter { it.detailReference in dispatchLineRefs }
-        if (transferOutMovements.isEmpty()) return
-
-        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, transferOutMovements.map { it.locationProductId }.toSet())
+        val netStockDraws = netStockDrawReader.lockAndReadNetDrawsOfLines(
+            dispatchReference, dispatchLineRefs, MovementType.TRANSFER_OUT
+        )
+        if (netStockDraws.isEmpty()) return
 
         val stockEntriesById = stockEntryRepository
-            .findAllById(transferOutMovements.map { it.stockEntryId }.distinct())
+            .findAllById(netStockDraws.map { it.stockEntryId }.distinct())
             .associateBy { it.id!! }
         val balancesByLocationProductId = stockBalanceFetcher.getLatestBalances(
-            transferOutMovements.map { it.locationProductId }.distinct()
+            netStockDraws.map { it.locationProductId }.distinct()
         )
         val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
-            transferOutMovements.map { it.locationProductId }.toSet()
+            netStockDraws.map { it.locationProductId }.toSet()
         )
 
         val modifiedEntries = mutableListOf<StockEntryEntity>()
         val newMovements = mutableListOf<StockMovementEntity>()
-        transferOutMovements.groupBy { it.locationProductId }.forEach { (locationProductId, stockMovementsForProduct) ->
+        netStockDraws.groupBy { it.locationProductId }.forEach { (locationProductId, netStockDrawsForProduct) ->
             val fifoRestorationResult = FifoStockConsumer.restore(
-                movementsToReverse = stockMovementsForProduct,
+                netStockDraws = netStockDrawsForProduct,
                 stockEntriesById = stockEntriesById,
                 startingBalance = balancesByLocationProductId.getValue(locationProductId),
                 quantityBreakdown = breakdownByLocationProductId.getValue(locationProductId),

@@ -10,10 +10,10 @@ HTTP-level E2E tests against a real Postgres and Kafka stack, isolated from dev/
 Postgres and Kafka are managed automatically by Testcontainers with container reuse enabled. Docker Desktop must be running before starting any tests.
 
 ```bash
-./cucumber.sh              # all tests (regression lane)
-./cucumber.sh smoke
-./cucumber.sh kafka-producer
-./cucumber.sh kafka-consumer
+./scripts/cucumber.sh              # all tests (regression lane)
+./scripts/cucumber.sh smoke
+./scripts/cucumber.sh kafka-producer
+./scripts/cucumber.sh kafka-consumer
 ```
 
 Individual scenarios can also be run directly from the IDE by clicking the run button next to a scenario in any feature file.

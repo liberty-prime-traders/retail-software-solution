@@ -3,6 +3,7 @@ package me.ezra_home.retail_software_solution.locations.rest.endpoints
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryCreateDto
 import me.ezra_home.retail_software_solution.locations.business.delivery.api.PurchaseDeliveryService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.PurchaseResponseDto
+import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.DeliveryLineRevisionInitiator
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.DeliveryLineRevisionPreviewDto
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.DeliveryLineRevisionPreviewer
 import me.ezra_home.retail_software_solution.locations.business.stock_revision.api.DeliveryLineRevisionRequest
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("secured/deliveries")
 class PurchaseDeliveryEndpoint(
   private val purchaseDeliveryService: PurchaseDeliveryService,
-  private val deliveryLineRevisionPreviewer: DeliveryLineRevisionPreviewer
+  private val deliveryLineRevisionPreviewer: DeliveryLineRevisionPreviewer,
+  private val deliveryLineRevisionInitiator: DeliveryLineRevisionInitiator
 ) {
 
   @PostMapping("line-revisions/preview")
@@ -23,6 +25,9 @@ class PurchaseDeliveryEndpoint(
     @RequestBody deliveryLineRevisionRequest: DeliveryLineRevisionRequest
   ): DeliveryLineRevisionPreviewDto = deliveryLineRevisionPreviewer.preview(deliveryLineRevisionRequest)
 
+  @PostMapping("line-revisions")
+  fun reviseLine(@RequestBody deliveryLineRevisionRequest: DeliveryLineRevisionRequest): PurchaseResponseDto =
+    deliveryLineRevisionInitiator.initiateDeliveryLineRevision(deliveryLineRevisionRequest)
 
   @PostMapping
   fun recordDelivery(@RequestBody dto: PurchaseDeliveryCreateDto): PurchaseResponseDto =

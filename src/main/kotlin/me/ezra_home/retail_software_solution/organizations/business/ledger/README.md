@@ -4,8 +4,10 @@ Double-entry postings. Every business event that moves money (sale, payment,
 delivery, opening balance, …) is turned into a `LedgerPostingRequest` by a
 processor under `processors/` and persisted by `LedgerPostingService.post`
 as a `ledger_entry_group` + `ledger_entry` rows (+ `subledger_entry` rows per
-contact). Running balances live on the account (see `account/README.md`),
-not here.
+contact). `processors/` holds only event processors; the classes they share
+(`LedgerPostingGate`, `SaleTaxLedgerEntriesBuilder`, `ExpensePostingRequests`, `ExpenseLiabilityAccount`) live in
+`helpers/`. `PostedStockAdjustmentAccountsReader` is in `api/`, because the delivery revision preview in the locations
+layer reads it too. Running balances live on the account (see `account/README.md`), not here.
 
 ## Entry type is stated by the processor, never derived
 
@@ -155,7 +157,7 @@ payee and request. They serve both location and org expenses.
 
 The liability is derived at posting time from the expense account snapshotted on the expense row (`expense_account_code`, copied from the expense type when recorded and never re-read from it): `WAGES_EXPENSE`
 credits `WAGES_PAYABLE`, every other account credits `TRADE_PAYABLES`
-(`ExpenseLiabilityAccount`, in `processors/`).
+(`ExpenseLiabilityAccount`, in `helpers/`).
 
 Voiding an expense is the only entry that credits the expense account; a refund-style
 reversal of a payment never touches it.
@@ -237,7 +239,8 @@ each processor's real output through the real `AccountService.patchBalances`
 (via `RecordingAccountService`) and assert the resulting balances. Add a case
 there when adding or changing a processor — the balanced-entries check
 cannot catch a processor that flips both legs.
-Not yet covered: `SaleTaxLedgerEntriesBuilder`.
+Not yet covered: `SaleTaxLedgerEntriesBuilder`. `RevisionInventoryConsistencyTest` checks that the three stock revision
+postings move inventory by the stock value change.
 
 The synchronous callers' builders are tested in their own domains (`FundMovementPostingRequestsBalanceTest`,
 `LoanPostingRequestsBalanceTest`), which run each request's entries through `AccountService` and check the subledger
@@ -255,3 +258,32 @@ sum themselves, so a ceiling breach cannot surface in the consumer (see `util/bu
 group (dated `dateSold`); `SaleVoidedEventProcessor` posts the reverse (dated `dateVoided`). Both skip the pair only
 when the total is exactly zero. A negative total is not skipped: `PositiveMoney.of` rejects it, so the posting fails
 loudly.
+
+## Stock revision postings
+
+A stock revision (a delivery line revised after other documents drew from its stock) posts up to three groups. Each is
+keyed on the revision's reference, so a revision posts one group per source type rather than one per affected document, and
+each is dated today, in the current period. The postings are skipped when their amount is unchanged.
+
+| Source type                     | Processor                                      | Posts                                                                                    |
+|---------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------|
+| `PURCHASE_DELIVERY_REVISION`    | `PurchaseDeliveryRevisionAccountingProcessor`  | Dr Inventory, Cr Trade payables for a dearer line; reversed for a cheaper one          |
+| `SALE_COGS_RESTATEMENT`         | `SaleCogsRestatementAccountingProcessor`       | Dr Cost of goods sold, Cr Inventory when the sales' cost rises; reversed when it falls |
+| `STOCK_ADJUSTMENT_RESTATEMENT`  | `StockAdjustmentRestatementAccountingProcessor`| Each restated adjustment's own legs for a rise, reversed for a fall, netted by account |
+
+The entries are built by `RevisionLedgerEntries` (`locations/business/stock_revision/api`), which the processors and
+the delivery revision preview both call, so the preview shows what will post. The supplier subledger is additive and never negative, so a cheaper line posts to the receivable side, not a negative
+payable. The adjustment restatement takes its accounts from the original `STOCK_ADJUSTMENT` posting
+(`api/PostedStockAdjustmentAccountsReader`), so a later change to the category rules cannot split an adjustment across
+two sets of accounts; the accounts the current rules give are used only for an adjustment whose original cost was zero, which
+posted no entries. An adjustment with no original posting fails the event, which the event log sweeper retries.
+
+The sale and adjustment restatements count in the daily profit and loss; the purchase revision does not. Every
+`LedgerSourceType` states this in its `postsToProfitAndLoss` flag, and `LedgerSourceType.profitAndLossSources` is the set
+`DailyPerformanceService` reads, so a new source type decides it when it is declared. All three processors declare
+`idempotencyConstraintName` from `LedgerPostingGate`, so only a lost race on the group's own unique index is benign.
+
+After a revision the ledger's inventory moves by the change in the stock on hand's value: the line total change minus the
+change in what the consumers drew from it. This holds only while every consumer type a revision can replay has a
+restatement (`RestatableConsumers` in `stock_revision`); `RevisionInventoryConsistencyTest` runs the three processors and
+checks it.

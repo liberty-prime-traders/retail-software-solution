@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-stock-adjustment-cost-stock-adjustment
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_stock_adjustment_cost_stock_adjustment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: stock_adjustment_cost
+            baseColumnNames: stock_adjustment_id
+            referencedTableName: stock_adjustment
+            referencedColumnNames: id
+            constraintName: fk_stock_adjustment_cost_stock_adjustment
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: stock_adjustment_cost
+            constraintName: fk_stock_adjustment_cost_stock_adjustment

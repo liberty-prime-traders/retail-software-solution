@@ -126,6 +126,10 @@ only movements; the committer sets the layer to zero and `REPLACED`.
   together in one `BlockedChangeException`, one `BlockingProblem` per consumer. Only `SUPPLIER_RETURN` can reach this check, because a
   consumer is always a decrease. `CUSTOMER_RETURN` increases stock, so it is never a consumer; a layer holding one is
   refused before a revision starts, by `DeliveryLineStockInspector.hasMovementsThatCannotBeReversed`.
+- Only `SALE` and `STOCK_ADJUSTMENT_DECREASE` consumers can be replayed, because only they have a ledger restatement
+  (`RestatableConsumers`). The assessor turns any other consumer on the layer into a `BlockingProblem`, so the preview shows it,
+  and the revisioner checks the same set again before it writes, so a type added later fails loudly instead of leaving the
+  ledger's inventory behind the stock. Transfers and supplier returns are refused earlier, by the delivery validator.
 
 ## The replacement layer (`StockReplacementLayerRecorder`)
 
@@ -142,7 +146,7 @@ draw order would have. Its movement context names the stock revision (`StockMove
 
 The consumers of the replaced layer still need their stock, so `ReplayPlanner.planReplayForExecution(consumptions, stockRevisionReferenceNumber, quantityBreakdown)`
 plans their draws against the layers as they stand, which must already include the replacement. It reads the layers in draw order
-(`StockEntryFetcher`) and the product's label, and hands them, with the breakdown it was given, to `ConsumerReplayer`, which plans every consumer on
+(`StockEntryFetcher`) and the product's name, and hands them, with the breakdown it was given, to `ConsumerReplayer`, which plans every consumer on
 `StockEntryFifoDto` copies of the layers and writes nothing. It returns one `ConsumerReplayPlan` per consumer (the draw to
 make and the layers to take from) and collects every uncovered consumer as a `BlockingProblem` in `ReplayResult.problems`; `planReplayForExecution` throws them as one
 `BlockedChangeException`. A replacement smaller than what was drawn is normal: the rest of each consumer's quantity comes
@@ -167,6 +171,14 @@ revision, and the reservation check. The save calls it under the purchase and pr
 `PurchaseDeliveryLineReplacer.replace` takes the `ValidatedDeliveryLineRevisionDto` the assessment produced and refuses one that
 still carries problems. The preview calls the same assessor without locks and turns the result into rows.
 
+## Saving a revision (`POST secured/deliveries/line-revisions`)
+
+`PurchaseDeliveryEndpoint.reviseLine` delegates to `DeliveryLineRevisionInitiator.initiateDeliveryLineRevision` and returns the
+updated `PurchaseResponseDto`. The route, like `recordDelivery` and the preview route, has no `@PreAuthorize`: any authenticated
+user can revise. A failed save writes nothing and answers with the `BlockedChangeException` headline, which the screen shows under
+the Revise form after closing the preview dialog, with a hint to open the preview for the detail. The dialog's Save revision
+button is disabled while the preview blocks save and while a save is running.
+
 ## Previewing a revision (`DeliveryLineRevisionPreviewer`)
 
 `DeliveryLineRevisionPreviewer.preview(request)` returns a `DeliveryLineRevisionPreviewDto` and writes nothing. It takes no
@@ -179,13 +191,44 @@ the draw order where the save will put it. `ResetPlanner` is not run, since it o
 
 - `ReplayResult.problems` holds one `BlockingProblem` per consumer the later stock cannot cover. The preview shows each as
   a blocking row; the save throws them as one `BlockedChangeException`. The validator's problems take the same two routes.
+- The request carries the unit of the new quantity and cost, which may differ from the revised line's. The replacement is
+  converted with its own unit's factor and compared with the revised line using the revised line's factor
+  (`ValidatedDeliveryLineRevisionDto.storageQuantityChange`), and the change summary names each side's unit.
 - `RevisionPreviewStoryWriter` writes every sentence of the response: the header, each item's reference, description and effect,
   and the money and quantity text, using the product's `QuantityBreakdown` and `DisplayFormatters`. The screen only places the text.
-  A consumer whose cost does not move gets no item. `netProfitChange` is set for sales only (old cost minus new cost).
-- A shortfall leaves its consumer out of the replay, so later consumers are planned against more stock than they would get.
-  While anything blocks the save the response carries the blocking rows only, because the cost rows would be wrong.
-- Not yet reported: draft transfers, a payment above the revised total, and
-  ledger entries (`ledgerEntries` is empty until revisions post to the ledger).
+  A consumer whose cost does not move gets no item. `netProfitChange` is old cost minus new cost for a sale. For a stock
+  adjustment it is what the restated cost does to the revenue and expense accounts the adjustment posts to
+  (`AdjustmentCostChange.netProfitChange`, from `AccountType.profitChangeOf`): an expense that rises lowers profit, one that
+  falls raises it, and a posting between balance sheet accounts moves none. The accounts are those of the adjustment's
+  original posting, else the category rules' (`AdjustmentCostChangeResolver`, resolved once and shared with the ledger tab).
+  A cost row also says why the cost moved: all of the consumer's quantity is priced at the revised delivery's cost, or the
+  revised delivery covers only part of it and the rest is priced from other deliveries at their own cost, or it covers none
+  of it. The replacement layer is told apart from the others by the reference the preview gives it
+  (`DeliveryLineRevisionAssessment.replacementStockEntryId`); without it the row states the cost change only.
+- A consumer the stock cannot cover takes what is left, so later consumers are planned against the stock that remains and
+  each shortfall counts once (what every consumer took from the layer adds up in `ReplayResult.totalTakenByConsumers`). Its row states how much
+  of it could still be covered, counting every layer, and gives no quantity to type, since a number offered for the purpose of passing the check invites a wrong value. While anything
+  blocks the save the response carries the blocking rows only, because the cost rows would be wrong.
+- `RevisionGuidanceWriter` writes the `guidance` paragraphs for the "what can I do" tab as `TextSegmentDto(text, emphasis)`
+  lists, so the screen places and styles them and holds no wording. For uncovered consumers it names their references, the
+  quantity they took from this delivery between them (what the records show, not a target) and the quantity the change leaves, then always lists the possible causes: the delivery
+  was entered short, a sale was recorded wrongly (correct or void it), or the stock came from a delivery that was never
+  recorded. A revision to 0 adds that the sales must be voided first. The paragraphs are written for sales, so they are left out when any uncovered consumer is a transfer, stock adjustment or supplier return (`ReplayResult.movementTypesOfUncoveredConsumers`); its rows still show. For draft sales it names the drafts and says nothing
+  has been sold on them. Product names in the rows are the product name alone, not the full label.
+- For draft sales the paragraph also states what the drafts hold, with the product name, and what the change leaves in
+  stock (`ReservationShortfall`), singular for one draft and "between them" for several.
+- `RevisionLedgerPreviewWriter` fills `ledgerEntries` with the entries the save will post: one entry per ledger source type
+  that has an amount (`PURCHASE_DELIVERY_REVISION`, `SALE_COGS_RESTATEMENT`, `STOCK_ADJUSTMENT_RESTATEMENT`), built with the
+  functions the ledger processors post with (`RevisionLedgerEntries`, in this package's `api`, which the processors import), so
+  the preview and the posting cannot differ. The
+  adjustment entry uses the accounts of each adjustment's original posting (`PostedStockAdjustmentAccountsReader`), and the
+  accounts the current category rules give only when there is none to read (cost zero, or not posted yet). The entries are
+  empty while anything blocks the save. A line carries numeric amounts, its account text with the change in words
+  ("Trade Payables (decreases)") and a `balanceEffect`: what that does to the business, from the account type, so a liability
+  that decreases adds and an asset that decreases subtracts. The screen colours the amount by the effect and adds up the
+  totals; it holds no wording. The
+  purchase entry's description names the supplier.
+- Not yet reported: draft transfers and a payment above the revised total.
 
 ## Transactions
 
@@ -195,13 +238,50 @@ and `commitReplay`, `StockReplacementLayerRecorder.record`, `PurchaseDeliveryLin
 alone. Spring enforces this at runtime; `RevisionWritePathPropagationTest` pins the annotation on each method. The preview
 (`DeliveryLineRevisionPreviewer`) is read-only and takes no lock.
 
+## Ledger (`StockRevisionHandlerForKafka`)
+
+After the revision's stock rows are written, `DeliveryLineRevisioner` publishes a `PurchaseDeliveryRevisedEvent` carrying the
+revised and replacement line totals (`ReplacementDeliveryLineDto`, from `PurchaseDeliveryLineEntity.lineTotal`). The event binds to
+the transaction commit, and an unchanged total publishes nothing, since the ledger rejects zero entries.
+`PurchaseDeliveryRevisionAccountingProcessor` posts the change as `PURCHASE_DELIVERY_REVISION`, keyed on the stock revision
+reference: Dr Inventory and Cr Trade payables for an increase, the opposite for a decrease. The supplier subledger holds no
+negative amounts, so a decrease is recorded on the receivable side, as a supplier payment is. The posting date is the
+revision date, in the current period. A reissue rebuilds the event from the stock revision, the revised line (the detail
+reference of the revised stock entry) and the replacement line.
+
+Sale costs restate in the same transaction. `ConsumerCostChange` holds each consumer's cost over the part it drew from the
+revised layer, built from the replay plans on save and from the revision's tagged movements on a reissue (the restore
+movements carry the old cost, the replayed draws the new). `SaleCostRestater` (`sale/api`) replaces each affected sale
+line's active `sale_line_cogs` row with one that moves by the difference, leaving the sale itself unchanged. Every draw's cost is already at money scale, so the totals are exact and no rounding step exists: a finer value fails in
+`Money.of`. The totals publish a `SaleCostRestatedEvent`, and `SaleCogsRestatementAccountingProcessor` posts the net as `SALE_COGS_RESTATEMENT`, keyed
+on the stock revision reference: Dr Cost of goods sold and Cr Inventory when cost rises, the opposite when it falls. The
+posting is in the current period and counts in the daily profit and loss.
+
+Stock adjustments that drew from the revised layer restate the same way. The adjustment record is immutable and keeps its
+original `total_cost`; `StockAdjustmentCostRestater` (`stock_adjustment/api`) replaces its active `stock_adjustment_cost` row with one
+that moves by the adjustment's total old-to-new difference, and skips an adjustment whose cost did not change.
+`StockAdjustmentRestatementHandlerForKafka` totals the same figures and publishes a `StockAdjustmentCostRestatedEvent`.
+`StockAdjustmentRestatementAccountingProcessor` posts `STOCK_ADJUSTMENT_RESTATEMENT`, keyed on the stock revision reference:
+each adjustment's own legs for an increase, reversed for a decrease, netted by account. The accounts are the ones the original
+`STOCK_ADJUSTMENT` posting used (`PostedStockAdjustmentAccountsReader`), so a later change to the category rules never splits an
+adjustment across two sets of accounts. The event also carries the accounts the current rules give
+(`StockAdjustmentAccountCodesFetcher`), used only for an adjustment whose original cost was zero, which posted no entries. If the
+original posting does not exist yet, the processor fails, the event is logged as FAILED and the event log sweeper retries it
+every 5 minutes. A reissue rebuilds both restatement events from the movements tagged with the revision.
+
+Example: an internal-use adjustment restates from 5.00 to 4.50 and a shrinkage adjustment from 2.00 to 2.30. The first debits
+Internal use expense by -0.50 and credits Inventory by -0.50; the second debits Shrinkage by 0.30 and credits Inventory by 0.30.
+Netted by account, the posting is Cr Internal use expense 0.50, Dr Inventory 0.20 and Dr Shrinkage 0.30.
+
 ## Reservations (`ReservationShortfallChecker`)
 
 A draft sale holds stock without drawing from a layer, so the replay never sees it. A revision that lowers on-hand stock can
 still leave the draft sales holding more than is left. `ReservationShortfallChecker` compares the product's reserved total
 (`StockReserver`) with its on-hand quantity after the revision. If the reservations exceed it, there is one `BlockingProblem`
 per draft sale holding the product (reference with "(draft)", the quantity it holds), all with the same effect line: how much is
-in stock, how much the draft sales hold, and to remove the product from a draft sale. The check is per product and does not say
+in stock, how much the draft sales hold, and to remove the product from a draft sale. The checker returns a
+`ReservationShortfall`, which carries those problems with the product name, the quantity the draft sales hold and the quantity
+the change leaves in stock, so the guidance can state them. The check is per product and does not say
 which sale loses, since any of them could.
 
 - The preview adds the on-hand change the revision will make (`ValidatedDeliveryLineRevisionDto.storageQuantityChange`, replacement

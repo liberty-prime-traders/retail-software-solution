@@ -6,6 +6,7 @@ import me.ezra_home.retail_software_solution.configuration.session.SessionContex
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductUnitRequestDto
 import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
@@ -13,6 +14,7 @@ import me.ezra_home.retail_software_solution.locations.business.stock.api.StockA
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentDecreaseStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentIncreaseStockRequest
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockAdjustmentStockUpdater
+import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentCostStatus
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentCreateDto
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentDirection
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment.api.StockAdjustmentService
@@ -30,7 +32,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import org.mockito.ArgumentMatchers.anyList
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
@@ -43,9 +48,11 @@ class StockAdjustmentServiceTest {
     private val boxUnitId = UUID.randomUUID()
     private val stockMovementReasonId = UUID.randomUUID()
     private val creatorId = UUID.randomUUID()
+    private val stockAdjustmentId = UUID.randomUUID()
     private val stockAdjustmentRepository = mock(StockAdjustmentRepository::class.java) { invocation ->
         if (invocation.method.name == "save") {
             (invocation.arguments[0] as StockAdjustmentEntity).also {
+                it.id = stockAdjustmentId
                 it.createdById = creatorId
                 it.createdOn = OffsetDateTime.parse("2026-01-01T00:00:00Z")
             }
@@ -83,8 +90,13 @@ class StockAdjustmentServiceTest {
     }
     private val referenceNumberGenerator = mock(ReferenceNumberGenerator::class.java)
     private val userQualifier = mock(UserQualifier::class.java)
+    private val stockAdjustmentCostRepository = mock(StockAdjustmentCostRepository::class.java)
+    private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java)
+    private val quantityBreakdown = mock(QuantityBreakdown::class.java) { invocation -> "${invocation.arguments[0]} Cartons" }
     private val stockAdjustmentService = StockAdjustmentService(
         stockAdjustmentRepository,
+        stockAdjustmentCostRepository,
+        productStockBreakdownProvider,
         stockAdjustmentStockUpdater,
         stockAdjustmentHandlerForKafka,
         mock(LocationProductService::class.java),
@@ -106,6 +118,7 @@ class StockAdjustmentServiceTest {
         )
         `when`(referenceNumberGenerator.generateSingle(TableName.STOCK_ADJUSTMENT)).thenReturn("STADJ000001")
         `when`(userQualifier.getCreatorFullName(creatorId)).thenReturn("Test User")
+        `when`(productStockBreakdownProvider.forLocationProduct(locationProductId)).thenReturn(quantityBreakdown)
         `when`(locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(anyUnitRequests())).thenReturn(mapOf(locationProductId to 12L))
         `when`(locationProductDataFetcher.findSummaryByIds(setOf(locationProductId))).thenReturn(
             mapOf(locationProductId to LocationProductSummaryDto(locationProductId, "LP000001", UUID.randomUUID(), "Rice", "Grains", UUID.randomUUID()))
@@ -135,6 +148,21 @@ class StockAdjustmentServiceTest {
         assertEquals(BigDecimal("3"), response.userProvidedQuantity)
         assertEquals("STADJ000001", publishedStockAdjustments.single().referenceNumber)
         assertEquals(emptyList<Pair<MovementType, UUID?>>(), guardedReasons)
+    }
+
+    @Test
+    fun `the typed quantity is frozen as text on the adjustment and its cost is recorded as the active cost row`() {
+        val response = stockAdjustmentService.adjust(
+            createDto(StockAdjustmentCategory.FREE_GOODS, "3", unitCost = "10.50", note = "Bonus cartons on PO-12")
+        )
+
+        assertEquals("3 Cartons", response.quantityText)
+        assertEquals("3 Cartons", publishedStockAdjustments.single().quantityText)
+        val costCaptor = ArgumentCaptor.forClass(StockAdjustmentCostEntity::class.java)
+        verify(stockAdjustmentCostRepository).save(costCaptor.capture())
+        assertEquals(stockAdjustmentId, costCaptor.value.stockAdjustmentId)
+        assertEquals(BigDecimal("31.50"), costCaptor.value.totalCost)
+        assertEquals(StockAdjustmentCostStatus.ACTIVE, costCaptor.value.status)
     }
 
     @Test

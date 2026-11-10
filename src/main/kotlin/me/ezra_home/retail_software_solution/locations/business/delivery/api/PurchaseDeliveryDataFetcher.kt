@@ -27,6 +27,24 @@ class PurchaseDeliveryDataFetcher(
             .toMap()
     }
 
+    fun getRevisionTotals(
+        revisedLineReferenceNumber: String,
+        replacementLineReferenceNumber: String
+    ): DeliveryLineRevisionTotalsDto {
+        val lineByReferenceNumber = purchaseDeliveryLineRepository
+            .findByReferenceNumberIn(listOf(revisedLineReferenceNumber, replacementLineReferenceNumber))
+            .associateBy { it.requiredReference() }
+        val revisedLine = lineByReferenceNumber[revisedLineReferenceNumber]
+            ?: throw RtsGenericException("Delivery line $revisedLineReferenceNumber not found")
+        val replacementLine = lineByReferenceNumber[replacementLineReferenceNumber]
+            ?: throw RtsGenericException("Delivery line $replacementLineReferenceNumber not found")
+        return DeliveryLineRevisionTotalsDto(
+            purchaseId = purchaseDeliveryRepository.getReferenceById(replacementLine.purchaseDeliveryId).purchaseId,
+            revisedLineTotal = revisedLine.lineTotal(),
+            replacementLineTotal = replacementLine.lineTotal(),
+        )
+    }
+
     fun getOwners(deliveryLineId: UUID): DeliveryLineOwnersDto =
         purchaseDeliveryLineRepository.findOwnersById(deliveryLineId)
             ?.let { DeliveryLineOwnersDto(it.purchaseId, it.purchaseLineId) }

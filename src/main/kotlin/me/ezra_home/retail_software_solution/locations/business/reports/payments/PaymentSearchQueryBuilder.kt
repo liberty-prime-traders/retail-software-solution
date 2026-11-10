@@ -18,7 +18,6 @@ object PaymentSearchQueryBuilder {
   private const val PARENT = "parent"
 
   private const val PAYMENT_ID_COLUMN = "$PAYMENT.${ColumnNames.Common.ID}"
-  private const val PAYMENT_REFERENCE_NUMBER_COLUMN = "$PAYMENT.${ColumnNames.Common.REFERENCE_NUMBER}"
   private const val PAYMENT_CREATED_ON_COLUMN = "$PAYMENT.${ColumnNames.Common.CREATED_ON}"
   private const val PAYMENT_DATE_COLUMN = "$PAYMENT.${ColumnNames.Payment.PAYMENT_DATE}"
   private const val PAYMENT_METHOD_ID_COLUMN = "$PAYMENT.${ColumnNames.Payment.PAYMENT_METHOD_ID}"
@@ -117,7 +116,7 @@ object PaymentSearchQueryBuilder {
     (
       SELECT
         ${PAYMENT_ID_COLUMN} AS id,
-        ${PAYMENT_REFERENCE_NUMBER_COLUMN} AS reference_number,
+        ${PARENT_REFERENCE_NUMBER_COLUMN} AS reference_number,
         ${PAYMENT_CREATED_ON_COLUMN} AS created_on,
         ${PAYMENT_DATE_COLUMN} AS payment_date,
         $PARENT.${paymentSource.parentContactColumn} AS contact_id,

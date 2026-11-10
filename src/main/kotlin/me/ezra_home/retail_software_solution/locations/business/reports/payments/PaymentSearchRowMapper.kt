@@ -12,7 +12,7 @@ object PaymentSearchRowMapper {
   fun toPaymentRow(tuple: Tuple) = PaymentRow(
     id = tuple.get("id", UUID::class.java),
     type = PaymentType.valueOf(tuple.get("payment_type", String::class.java)),
-    referenceNumber = tuple.get("reference_number", String::class.java),
+    parentReferenceNumber = tuple.get("reference_number", String::class.java),
     contactId = tuple.get("contact_id", UUID::class.java),
     paymentMethodId = tuple.get("payment_method_id", UUID::class.java),
     amount = tuple.get("amount", BigDecimal::class.java),
