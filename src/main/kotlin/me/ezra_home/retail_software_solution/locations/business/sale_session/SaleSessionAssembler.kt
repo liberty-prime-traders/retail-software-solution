@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.ProductStockBreakdownProvider
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
@@ -30,6 +31,7 @@ class SaleSessionAssembler(
     private val sessionToResponseMapper: SessionToResponseMapper,
     private val saleDataFetcher: SaleDataFetcher,
     private val productStockBreakdownProvider: ProductStockBreakdownProvider,
+    private val locationProductDataFetcher: LocationProductDataFetcher,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
@@ -108,6 +110,9 @@ class SaleSessionAssembler(
             storageUnitsPerBaseUnitByBaseUnitId = storageUnitsPerBaseUnitByBaseUnitId,
             breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
                 saleSession.saleLines.map { it.locationProductId }.distinct()
+            ),
+            inactiveLocationProductIds = locationProductDataFetcher.findInactiveIds(
+                saleSession.saleLines.map { it.locationProductId }.toSet()
             ),
         )
     }

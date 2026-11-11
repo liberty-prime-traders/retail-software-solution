@@ -123,6 +123,12 @@ object SaleSessionQualifierUtil {
         @Context lineMappingContext: LineMappingContext,
     ): String = lineMappingContext.breakdownFor(saleSessionLine).render(ExactQuantity.ofStorage(saleSessionLine.storageQuantityAvailable))
 
+    @LineProductActive
+    fun toLineProductActive(
+        saleSessionLine: SaleSessionLine,
+        @Context lineMappingContext: LineMappingContext,
+    ): Boolean = lineMappingContext.productActiveFor(saleSessionLine)
+
     @LineNetTotal
     fun toLineNetTotal(
         saleSessionLine: SaleSessionLine,

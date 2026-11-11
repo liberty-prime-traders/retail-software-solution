@@ -35,11 +35,9 @@ class RevisionLedgerPreviewWriterTest {
         `when`(it.getOwners(revisedDeliveryLineId)).thenReturn(DeliveryLineOwnersDto(purchaseId, UUID.randomUUID()))
     }
     private val purchaseDataFetcher = mock(PurchaseDataFetcher::class.java).also {
-        `when`(it.findPurchaseInfoByIds(listOf(purchaseId))).thenReturn(
-            mapOf(
-                purchaseId to PurchaseDataFetcher.PurchaseInfo(
-                    purchaseId, "PCH000001", supplierId, PurchaseStatus.PARTIALLY_DELIVERED, PaymentStatus.UNPAID
-                )
+        `when`(it.findPurchaseInfoById(purchaseId)).thenReturn(
+            PurchaseDataFetcher.PurchaseInfo(
+                purchaseId, "PCH000001", supplierId, PurchaseStatus.PARTIALLY_DELIVERED, PaymentStatus.UNPAID
             )
         )
     }

@@ -95,37 +95,43 @@ class LocationProductDataFetcher(
                 )
             }
 
+    fun findInactiveIds(ids: Set<UUID>): Set<UUID> =
+        ids.asSequence().chunked(SUMMARY_CHUNK_SIZE)
+            .flatMap { locationProductRepository.findIdsByIdInAndStatusNot(it, ProductStatus.ACTIVE) }
+            .toSet()
+
     fun findIdsByReferenceNumbers(referenceNumbers: Collection<String>): Map<String, UUID> =
-        locationProductRepository.findByReferenceNumberIn(referenceNumbers)
-            .associate { it.requiredReference() to it.id!! }
+        locationProductRepository.findReferenceViewsByReferenceNumberIn(referenceNumbers)
+            .associate { it.referenceNumber to it.id }
 
     fun getDefaultSalePrices(locationProductIds: Collection<UUID>): Map<UUID, BigDecimal?> =
-        locationProductRepository.findAllById(locationProductIds)
-            .associate { it.id!! to it.defaultSalePrice }
+        locationProductRepository.findDefaultSalePriceViewsByIdIn(locationProductIds)
+            .associate { it.id to it.defaultSalePrice }
 
     fun getBaseUnitIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
-        locationProductRepository.findAllById(locationProductIds)
-            .associate { it.id!! to it.baseUnitId }
+        locationProductRepository.findIdentityViewsByIdIn(locationProductIds)
+            .associate { it.id to it.baseUnitId }
 
     fun getBaseUnitIdsByOrgProductIds(orgProductIds: Collection<UUID>): Map<UUID, UUID> =
-        locationProductRepository.findByOrgProductIdIn(orgProductIds).associate { it.orgProductId to it.baseUnitId }
+        locationProductRepository.findIdentityViewsByOrgProductIdIn(orgProductIds)
+            .associate { it.orgProductId to it.baseUnitId }
 
     fun getOrgProductIds(locationProductIds: Collection<UUID>): Map<UUID, UUID> =
-        locationProductRepository.findAllById(locationProductIds)
-            .associate { it.id!! to it.orgProductId }
+        locationProductRepository.findIdentityViewsByIdIn(locationProductIds)
+            .associate { it.id to it.orgProductId }
 
     fun findIdentityByOrgProductId(orgProductId: UUID): LocationProductIdentityDto {
-        val entity = locationProductRepository.findByOrgProductId(orgProductId)
+        val identityView = locationProductRepository.findIdentityViewsByOrgProductIdIn(listOf(orgProductId)).firstOrNull()
             ?: throw RtsGenericException("No location product found for product $orgProductId")
-        return LocationProductIdentityDto(locationProductId = entity.id!!, orgProductId = entity.orgProductId)
+        return LocationProductIdentityDto(locationProductId = identityView.id, orgProductId = identityView.orgProductId)
     }
 
     fun findIdentitiesByOrgProductIds(orgProductIds: Collection<UUID>): Map<UUID, LocationProductIdentityDto> =
-        locationProductRepository.findByOrgProductIdIn(orgProductIds)
-            .associate { entity ->
-                entity.orgProductId to LocationProductIdentityDto(
-                    locationProductId = entity.id!!,
-                    orgProductId = entity.orgProductId
+        locationProductRepository.findIdentityViewsByOrgProductIdIn(orgProductIds)
+            .associate { identityView ->
+                identityView.orgProductId to LocationProductIdentityDto(
+                    locationProductId = identityView.id,
+                    orgProductId = identityView.orgProductId
                 )
             }
 

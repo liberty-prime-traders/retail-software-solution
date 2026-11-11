@@ -75,6 +75,7 @@ class SaleSessionPersister(
         saleSessionValidator.guardMutable(saleSession)
         val saleSessionWithTotals = SaleSessionTotalsCalculator.recompute(saleSession)
         saleSessionValidator.validate(saleSessionWithTotals)
+        saleSessionValidator.guardNoInactiveProducts(saleSessionWithTotals)
         return saleSessionWithTotals
     }
 

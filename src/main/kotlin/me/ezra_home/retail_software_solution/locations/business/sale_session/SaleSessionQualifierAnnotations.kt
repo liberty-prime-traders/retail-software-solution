@@ -101,3 +101,8 @@ annotation class LineOnHandBreakdown
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.FUNCTION)
 annotation class LineAvailableBreakdown
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class LineProductActive

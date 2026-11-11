@@ -14,10 +14,18 @@ import java.util.UUID
 data class SaleSessionStartDto(
     val contactId: UUID? = null,
     val saleId: UUID? = null,
+    val copyFromSaleId: UUID? = null,
 ) {
     init {
-        if (contactId == null && saleId == null) {
-            throw RtsGenericException("Either contactId or saleId must be provided when starting a new Sale Session")
+        val nothingProvided = contactId == null && saleId == null && copyFromSaleId == null
+        if (nothingProvided) {
+            throw RtsGenericException(
+                "Either contactId, saleId or copyFromSaleId must be provided when starting a new Sale Session"
+            )
+        }
+        val editAndCopyRequested = saleId != null && copyFromSaleId != null
+        if (editAndCopyRequested) {
+            throw RtsGenericException("A Sale Session cannot both edit a sale and copy from a sale")
         }
     }
 }

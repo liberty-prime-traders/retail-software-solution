@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_adjustment.api.PriceAdjustmentMethod
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
@@ -16,6 +17,7 @@ import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
@@ -26,7 +28,8 @@ import java.util.UUID
 class SaleSessionValidatorTest {
 
     private val adjustmentReasonService = mock(AdjustmentReasonService::class.java)
-    private val saleSessionValidator = SaleSessionValidator(adjustmentReasonService)
+    private val locationProductService = mock(LocationProductService::class.java)
+    private val saleSessionValidator = SaleSessionValidator(adjustmentReasonService, locationProductService)
     private val maximum = Decimals.MAXIMUM_TRANSACTION_AMOUNT
 
     private val priceOverrideReasonId = UUID.randomUUID()
@@ -88,6 +91,20 @@ class SaleSessionValidatorTest {
         assertThrows(RtsGenericException::class.java) {
             saleSessionValidator.validate(saleSession(listOf(saleSessionLine(maximum)), listOf(surcharge)))
         }
+    }
+
+    @Test
+    fun `a session line whose product is inactive blocks the commit until the line is removed`() {
+        val inactiveProductLine = saleSessionLine(BigDecimal("10.00"))
+        val activeProductLine = saleSessionLine(BigDecimal("5.00"))
+        doThrow(RtsGenericException("Inactive products are not allowed"))
+            .`when`(locationProductService).guardAllActive(listOf(inactiveProductLine.locationProductId, activeProductLine.locationProductId))
+
+        assertThrows(RtsGenericException::class.java) {
+            saleSessionValidator.guardNoInactiveProducts(saleSession(listOf(inactiveProductLine, activeProductLine)))
+        }
+
+        saleSessionValidator.guardNoInactiveProducts(saleSession(listOf(activeProductLine)))
     }
 
     private fun percentageAdjustment(direction: AdjustmentDirection, percentage: BigDecimal, line: SaleSessionLine?) = SaleSessionAdjustment(

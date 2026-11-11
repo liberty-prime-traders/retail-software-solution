@@ -64,6 +64,10 @@ class PurchaseDataFetcher(
     return purchaseRepository.getReferenceById(purchaseId).supplierId
   }
 
+  fun findPurchaseInfoById(purchaseId: UUID): PurchaseInfo {
+    return findPurchaseInfoByIds(setOf(purchaseId)).getValue(purchaseId)
+  }
+
   fun findPurchaseInfoByIds(purchaseIds: Set<UUID>): Map<UUID, PurchaseInfo> {
     return purchaseRepository.findAllById(purchaseIds)
       .associateBy({ it.id!! }, { PurchaseInfo.from(it) })

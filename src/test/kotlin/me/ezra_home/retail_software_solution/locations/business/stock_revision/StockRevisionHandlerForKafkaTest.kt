@@ -69,7 +69,7 @@ class StockRevisionHandlerForKafkaTest {
         val purchaseInfo = mock(PurchaseDataFetcher.PurchaseInfo::class.java)
         `when`(purchaseInfo.referenceNumber).thenReturn("PRCH1")
         `when`(purchaseInfo.supplierId).thenReturn(supplierId)
-        `when`(purchaseDataFetcher.findPurchaseInfoByIds(listOf(purchaseId))).thenReturn(mapOf(purchaseId to purchaseInfo))
+        `when`(purchaseDataFetcher.findPurchaseInfoById(purchaseId)).thenReturn(purchaseInfo)
     }
 
     @Test

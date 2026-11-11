@@ -33,6 +33,8 @@ Internal collaborators (do not call from outside `sale_session`):
 - `SaleSessionStore` — storage interface; `SaleSessionRedisStore`
   (`redis-active` profile) or `SaleSessionInMemoryStore` (default —
   `!redis-active`)
+- `SaleSessionBuilder` — stamps session id, location, user and timestamps from the request context; the loader
+  composes the rest (sale link, header, lines, adjustments, payments, reservation state) onto it
 - `SaleSessionLoader` — `loadFromSale` rehydrates an existing `SaleEntity` into
   the session shape via `DomainToSessionMapper`; `newSession` mints a fresh
   empty session
@@ -93,6 +95,7 @@ sale_session" direction is a convention upheld by review, not by the test.
 ```
 [New Sale btn] ──► SaleSessionHandler.start({contactId})
 [Edit Sale btn] ──► SaleSessionHandler.start({contactId, saleId})
+[Copy Sale btn] ──► SaleSessionHandler.start({copyFromSaleId})
                           │
                           ▼
         ┌────────── session in Redis (TTL 2h) ──────────┐
@@ -122,6 +125,16 @@ further edits; only `confirm` and `abandon` actually terminate the session.
 `SaleSessionHandler.start` short-circuits when an active session already exists
 for the supplied `saleId` — returns the existing one (one-session-per-sale
 guarantee).
+
+`start({copyFromSaleId})` mints a new unsaved DRAFT session from a sale in **any** status
+(`SaleSessionLoader.copyFromSale`); it never short-circuits, and may be called repeatedly for the same
+source. It reads the persisted sale, so unsaved edits in the source's open session are not copied. The copy
+has `saleId = null`, fresh transient identities on every line and adjustment (adjustments re-keyed to the new
+line identities), no payments, `contactId` and `notes` carried, and `referenceNumber`, `soldById` and
+`dateSold` blank. Lines keep the stored `defaultSalePrice`, `lineTotal` and
+`storageUnitsPerUserProvidedUnit`; adjustment amounts are recomputed by the normal totals pass. `productsVersion`
+starts at 1 so the unreserved-changes warning shows. No void info carries over. The response's `id` is the session
+id; `saleId` is the persisted sale's id (null until the first save) and is what the UI sends as `copyFromSaleId`.
 
 Loading is **status-agnostic** — sales in any state (DRAFT, CONFIRMED, VOIDED,
 DISCARDED) can be loaded into a session for display. The session records the
@@ -259,7 +272,7 @@ product gets deactivated).
 ```
 1. SaleSessionPersister.saveDraft
 2. `guardMutable`, recompute totals, run full structural `validate`
-   (`loadAndValidate`)
+   (`loadAndValidate`, which also runs `guardNoInactiveProducts`)
 3. transform SaleSession → SaleSaveRequest (`SessionToSaveRequestMapper`)
 4. DraftSalePersister.saveDraft:
      - if payments present: guard date-not-future + fiscal period open
@@ -289,7 +302,7 @@ product gets deactivated).
 ```
 1. SaleSessionPersister.confirm
 2. `guardMutable`, recompute totals, run full structural `validate`
-   (`loadAndValidate`)
+   (`loadAndValidate`, which also runs `guardNoInactiveProducts`)
 3. `guardNonEmptyLines`, `guardWalkInFullyCovered`, `guardPaymentsWithinTotal`
 4. transform SaleSession → SaleSaveRequest (`SessionToSaveRequestMapper`)
 5. ConfirmedSalePersister.confirm:
@@ -387,6 +400,11 @@ session before finalize.
 - **One session per sale.** `SaleSessionHandler.start({saleId})` returns the
   existing session instead of minting a new one; the `by-sale` Redis key is the
   source of truth.
+- **Inactive products block commit, not editing.** `SaleSessionValidator.guardNoInactiveProducts` runs in
+  `SaleSessionPersister.loadAndValidate` (`saveDraft` and `confirm`), never in `validate()`: a copied or reloaded
+  session may legitimately hold inactive lines and must stay loadable so the cashier can remove them. Each line
+  response carries `productActive` for the UI. The same guard blocks an existing draft whose product was
+  deactivated after it was saved.
 - **Walk-in coverage is only enforced at confirm.** The mutation-time validator
   allows under-coverage so the cashier can build up payments incrementally.
 - **Discount ceilings ARE enforced on every mutation.** Drafts can no longer

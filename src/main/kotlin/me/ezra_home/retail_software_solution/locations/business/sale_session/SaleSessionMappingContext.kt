@@ -30,7 +30,11 @@ data class LineMappingContext(
     private val netLineTotalByLineKey: Map<UUID, BigDecimal>,
     private val storageUnitsPerBaseUnitByBaseUnitId: Map<UUID, Long>,
     private val breakdownByLocationProductId: Map<UUID, QuantityBreakdown>,
+    private val inactiveLocationProductIds: Set<UUID>,
 ) {
+    fun productActiveFor(saleSessionLine: SaleSessionLine): Boolean =
+        saleSessionLine.locationProductId !in inactiveLocationProductIds
+
     fun storageUnitsPerBaseUnitFor(saleSessionLine: SaleSessionLine): Long =
         storageUnitsPerBaseUnitByBaseUnitId.getValue(saleSessionLine.baseUnitId)
 
