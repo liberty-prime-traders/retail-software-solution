@@ -185,7 +185,8 @@ button is disabled while the preview blocks save and while a save is running.
 lock, so it reports what the save would plan at that moment; the save plans again under the product lock, and nothing is cached
 between the two. It runs the same checks as the save (`PurchaseDeliveryLineReplacer.validateRevisionReportingProblems`), reads the consumptions of
 the revised layer (`NetConsumptionCalculator`), and replays them with `ReplayPlanner.planReplayForPreview` over the layers as they will
-stand after the revision: the revised layer removed and the replacement added by `StockReplacementLayerPreviewer`. The replacement
+stand after the revision: the revised layer removed and the replacement added by `StockReplacementLayerPreviewer`, which returns the replacement's id
+with the layers (`ReplacementLayerPreview`) so the assessor never finds it by label; `"PREVIEW"` is only the placeholder reference of the unsaved layer. The replacement
 comes from the same builders the save uses (`StockReplacementLayerSpecs`, `DeliveryReplacementLayerRequests`), so it sorts into
 the draw order where the save will put it. `ResetPlanner` is not run, since it only plans the writes.
 

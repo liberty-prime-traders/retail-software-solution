@@ -9,9 +9,9 @@ class StockTransferDraftDispatchFetcher(
     private val stockTransferDispatchRepository: StockTransferDispatchRepository
 ) {
 
-    fun requireDraftDispatch(orderRef: String): StockTransferDispatchEntity {
-        val dispatchEntity = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
+    fun requireDraftDispatch(orderReferenceNumber: String): StockTransferDispatchEntity {
+        val dispatchEntity = stockTransferDispatchRepository.findByStockTransferOrderRef(orderReferenceNumber)
+            ?: throw RtsGenericException("Dispatch not found for order $orderReferenceNumber")
         if (dispatchEntity.status != StockTransferStatus.DRAFT) {
             throw RtsGenericException("Operation only allowed in DRAFT status. Current: ${dispatchEntity.status}")
         }

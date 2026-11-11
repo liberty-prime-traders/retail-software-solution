@@ -26,11 +26,14 @@ class StockTransferDraftService(
     private val reconciledTransferLineFetcher: ReconciledTransferLineFetcher
 ) {
 
-    fun applyLineChanges(orderRef: String, lineRequestDto: StockTransferLineRequestDto): StockTransferResponse {
-        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
+    fun applyLineChanges(
+        orderReferenceNumber: String,
+        lineRequestDto: StockTransferLineRequestDto
+    ): StockTransferResponse {
+        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderReferenceNumber)
         val existingLines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatch.id!!)
-        val existingLinesByRef = existingLines.associateBy { it.requiredReference() }
-        guardUpdatesTargetExistingLines(lineRequestDto.updates, existingLinesByRef)
+        val existingLinesByReferenceNumber = existingLines.associateBy { it.requiredReference() }
+        guardUpdatesTargetExistingLines(lineRequestDto.updates, existingLinesByReferenceNumber)
 
         val locationProductSummariesById = locationProductDataFetcher.findSummaryByIds(
             existingLines.map { it.locationProductId } + lineRequestDto.additions.map { it.locationProductId }
@@ -39,7 +42,7 @@ class StockTransferDraftService(
         guardNoDuplicateAdditionProducts(lineRequestDto.additions, existingLines, locationProductSummariesById)
 
         val storageUnitsPerUserProvidedUnitByLocationProductId = locationProductDataFetcher.getStorageUnitsPerUserProvidedUnit(
-            storageUnitRequests(lineRequestDto, existingLinesByRef, locationProductBaseUnitIds)
+            storageUnitRequests(lineRequestDto, existingLinesByReferenceNumber, locationProductBaseUnitIds)
         )
 
         val newDraftLines = lineRequestDto.additions.map { addition ->
@@ -53,7 +56,7 @@ class StockTransferDraftService(
         }
 
         val updatedExistingLines = lineRequestDto.updates.map { update ->
-            val existingLine = existingLinesByRef.getValue(update.lineRef)
+            val existingLine = existingLinesByReferenceNumber.getValue(update.lineRef)
             val newUnitId = update.unitId ?: existingLine.unitId
             if (newUnitId != existingLine.unitId) {
                 existingLine.storageUnitsPerUserProvidedUnit = storageUnitsPerUserProvidedUnitByLocationProductId.getValue(existingLine.locationProductId)
@@ -65,12 +68,12 @@ class StockTransferDraftService(
 
         stockTransferDraftLineRepository.saveAll(newDraftLines)
         stockTransferDraftLineRepository.saveAll(updatedExistingLines)
-        return buildDraftResponse(orderRef, dispatch)
+        return buildDraftResponse(orderReferenceNumber, dispatch)
     }
 
     private fun storageUnitRequests(
         lineRequestDto: StockTransferLineRequestDto,
-        existingLinesByRef: Map<String, StockTransferDraftLineEntity>,
+        existingLinesByReferenceNumber: Map<String, StockTransferDraftLineEntity>,
         locationProductBaseUnitIds: Map<UUID, UUID>
     ): List<LocationProductUnitRequestDto> = buildList {
         lineRequestDto.additions.forEach { addition ->
@@ -78,7 +81,7 @@ class StockTransferDraftService(
             add(LocationProductUnitRequestDto(addition.locationProductId, baseUnitId))
         }
         lineRequestDto.updates.forEach { update ->
-            val existingLine = existingLinesByRef.getValue(update.lineRef)
+            val existingLine = existingLinesByReferenceNumber.getValue(update.lineRef)
             val newUnitId = update.unitId ?: existingLine.unitId
             if (newUnitId != existingLine.unitId) {
                 add(LocationProductUnitRequestDto(existingLine.locationProductId, newUnitId))
@@ -88,11 +91,12 @@ class StockTransferDraftService(
 
     private fun guardUpdatesTargetExistingLines(
         updates: List<StockTransferLineUpdateDto>,
-        existingLinesByRef: Map<String, StockTransferDraftLineEntity>
+        existingLinesByReferenceNumber: Map<String, StockTransferDraftLineEntity>
     ) {
-        val missingRefs = updates.map { it.lineRef }.filterNot { existingLinesByRef.containsKey(it) }
-        if (missingRefs.isNotEmpty()) {
-            throw RtsGenericException("Line(s) not found on this draft: ${missingRefs.joinToString()}")
+        val missingReferenceNumbers = updates.map { it.lineRef }
+            .filterNot { existingLinesByReferenceNumber.containsKey(it) }
+        if (missingReferenceNumbers.isNotEmpty()) {
+            throw RtsGenericException("Line(s) not found on this draft: ${missingReferenceNumbers.joinToString()}")
         }
     }
 
@@ -112,15 +116,18 @@ class StockTransferDraftService(
         }
     }
 
-    fun removeLine(orderRef: String, lineRef: String): StockTransferResponse {
-        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
+    fun removeLine(orderReferenceNumber: String, lineRef: String): StockTransferResponse {
+        val dispatch = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderReferenceNumber)
         val draftLine = requireDraftLine(lineRef, dispatch.id!!)
         stockTransferDraftLineRepository.delete(draftLine)
-        return buildDraftResponse(orderRef, dispatch)
+        return buildDraftResponse(orderReferenceNumber, dispatch)
     }
 
-    private fun buildDraftResponse(orderRef: String, dispatch: StockTransferDispatchEntity): StockTransferResponse {
-        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderRef)
+    private fun buildDraftResponse(
+        orderReferenceNumber: String,
+        dispatch: StockTransferDispatchEntity
+    ): StockTransferResponse {
+        val order = stockTransferOrderDataFetcher.getByReferenceNumber(orderReferenceNumber)
         val draftLines = reconciledTransferLineFetcher.draftLines(dispatch.id!!)
         return stockTransferResponseAssembler.buildDispatchOnly(order, dispatch, draftLines)
     }

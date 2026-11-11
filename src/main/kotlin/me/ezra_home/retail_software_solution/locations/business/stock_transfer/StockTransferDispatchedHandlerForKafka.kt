@@ -5,12 +5,14 @@ import me.ezra_home.retail_software_solution.configuration.session.withLocationS
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventReissueHandler
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
+import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Component
@@ -27,44 +29,41 @@ class StockTransferDispatchedHandlerForKafka(
     override fun reissue(sourceDocumentId: UUID) {
         val order = stockTransferOrderDataFetcher.getById(sourceDocumentId)
         val sourceSchema = locationService.getSchemaByLocationId(order.sourceLocationId)
-        val destinationSchema = locationService.getSchemaByLocationId(order.destinationLocationId)
-
-        val dispatchRecord = locationService.withLocationSchema(sourceSchema) {
-            stockTransferSchemaGateway.readDispatchAndLines(order.referenceNumber)
+        val dispatchReferenceNumber = locationService.withLocationSchema(sourceSchema) {
+            stockTransferSchemaGateway.readDispatchAndLines(order.referenceNumber).dispatch.requiredReference()
         }
         publish(
             orderId = order.id,
-            orderRef = order.referenceNumber,
-            dispatchRef = dispatchRecord.dispatch.requiredReference(),
+            orderReferenceNumber = order.referenceNumber,
+            dispatchReferenceNumber = dispatchReferenceNumber,
             sourceSchema = sourceSchema,
-            destinationSchema = destinationSchema,
-            lines = dispatchRecord.lines.map { it.toDispatchedLineDto() }
+            totalCost = Money.of(order.requiredTotalDispatchedCost()),
+            postingDate = DateTimes.Local.atOrganizationZone(order.requiredDispatchedAt())
         )
     }
 
     fun publish(
         orderId: UUID,
-        orderRef: String,
-        dispatchRef: String,
+        orderReferenceNumber: String,
+        dispatchReferenceNumber: String,
         sourceSchema: String,
-        destinationSchema: String,
-        lines: List<StockTransferDispatchedLineDto>
+        totalCost: Money,
+        postingDate: LocalDate
     ) {
         eventPublisher.publishEvent(
             StockTransferDispatchedEvent(
                 eventId = UUID.randomUUID(),
                 sourceContext = EventSourceContext.LocationLevel(
                     orgSchema = SessionContextProvider.getOrganizationSchema(),
-                    locationSchema = destinationSchema
+                    locationSchema = sourceSchema
                 ),
                 timestamp = Instant.now(),
                 correlationId = null,
                 sourceDocumentId = orderId,
-                orderReferenceNumber = orderRef,
-                dispatchReferenceNumber = dispatchRef,
-                sourceLocationSchema = sourceSchema,
-                destinationLocationSchema = destinationSchema,
-                lines = lines
+                orderReferenceNumber = orderReferenceNumber,
+                dispatchReferenceNumber = dispatchReferenceNumber,
+                totalCost = totalCost,
+                postingDate = postingDate
             )
         )
     }

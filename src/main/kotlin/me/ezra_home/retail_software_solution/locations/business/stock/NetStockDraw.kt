@@ -1,6 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
+import me.ezra_home.retail_software_solution.util.exceptions.BlockingProblem
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -30,8 +32,23 @@ data class NetStockDraw(
             storageUnitsPerUserProvidedUnit = stockMovementEntity.storageUnitsPerUserProvidedUnit,
         )
 
-        // A group at zero or below is skipped, not failed, so a document with an odd history can still be voided.
-        // Not NetConsumptionCalculator: it is layer-scoped and rejects other documents' bad history on the layer.
+        private fun reversedMoreThanDrawn(
+            stockMovementEntity: StockMovementEntity,
+            excessStorageQuantity: BigDecimal
+        ) = BlockedChangeException(
+            "The stock records of this document do not add up, so it cannot be undone. Please contact support.",
+            listOf(
+                BlockingProblem(
+                    documentReference = stockMovementEntity.documentReference.orEmpty(),
+                    description = "Its movements on one layer reverse $excessStorageQuantity more than they drew.",
+                    effect = "It cannot be voided or cancelled until support corrects its stock records."
+                )
+            )
+        )
+
+        // Exactly zero is a layer already reversed (a repeated void, a replaced layer) and is skipped. Below zero is
+        // corrupt history and blocks the undo. Not NetConsumptionCalculator: it is layer-scoped and rejects other
+        // documents' bad history on the layer.
         fun netOf(
             stockMovementEntities: List<StockMovementEntity>,
             drawType: MovementType
@@ -43,7 +60,8 @@ data class NetStockDraw(
                 val (draws, reversals) = movementsOfOneLineOnOneLayer.partition { it.movementType == drawType }
                 if (draws.isEmpty()) return@mapNotNull null
                 val netQuantity = draws.sumOf { it.storageMovedQuantity } - reversals.sumOf { it.storageMovedQuantity }
-                if (netQuantity.signum() <= 0) return@mapNotNull null
+                if (netQuantity.signum() < 0) throw reversedMoreThanDrawn(draws.first(), netQuantity.negate())
+                if (netQuantity.signum() == 0) return@mapNotNull null
                 of(draws.first()).copy(
                     storageMovedQuantity = netQuantity,
                     movedCost = draws.sumOf { it.movedCost } - reversals.sumOf { it.movedCost },

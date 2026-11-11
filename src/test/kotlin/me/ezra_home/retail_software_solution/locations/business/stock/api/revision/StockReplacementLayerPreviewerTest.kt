@@ -57,11 +57,11 @@ class StockReplacementLayerPreviewerTest {
         `when`(stockEntryRepository.findFifoEntriesForProducts(listOf(locationProductId)))
             .thenReturn(listOf(laterLayer, revisedLayer, olderLayer))
 
-        val fifoEntries = stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(
-            replacementRequest(revisedLayer.id!!)
-        )
+        val preview = stockReplacementLayerPreviewer.previewReplacement(replacementRequest(revisedLayer.id!!))
 
+        val fifoEntries = preview.fifoEntries
         assertEquals(listOf("STE000001", "PREVIEW", "STE000003"), fifoEntries.map { it.referenceNumber })
         assertEquals(0, BigDecimal("8").compareTo(fifoEntries[1].fifoLayer.storageQuantityRemaining))
+        assertEquals(fifoEntries[1].fifoLayer.stockEntryId, preview.replacementStockEntryId)
     }
 }

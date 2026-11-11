@@ -81,6 +81,7 @@ call creates any `SystemAccount` missing from the cache, whether or not
 `CHART_OF_ACCOUNTS` is activated (the feature activator calls it too). Safe to
 re-run, since it only inserts codes not already present.
 
+- `INVENTORY_IN_TRANSIT` (`001.001.006`) is a closed leaf under `CURRENT_ASSETS`. Only the stock transfer postings use it (ledger README); an org that existed before it was added gets it the next time seed defaults run (`OrgProfileService.applySeedDefaults`), and transfer postings fail until it exists.
 - `LOANS_PAYABLE` (`002.004`) is a closed leaf under `LIABILITIES`, not an extension point. Only `loan/` posts to it, so its
   balance equals the sum of outstanding loans; it takes no manual opening balance (`opening_balance/README.md`).
 - `accountIsSystemMaintained = true` accounts cannot be renamed, deactivated,

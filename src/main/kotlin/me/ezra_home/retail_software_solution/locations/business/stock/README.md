@@ -29,7 +29,7 @@ Stock is a set of FIFO layers (`StockEntryEntity`) and an append-only history of
   `TRANSFER_CANCELLED` and `REVERSED_BY_REVISION` movements, read from the document's own movements by
   `NetStockDrawReader` after it takes the product locks (a revision moves a document's draws under them). A layer a revision
   replaced nets to zero and is skipped, a layer a replay drew from twice gets one reversal, and a document with nothing
-  net left writes nothing, so a repeated void is a no-op. A group that nets below zero is skipped, not failed.
+  net left writes nothing, so a repeated void is a no-op. A group that nets below zero is corrupt history and blocks the void or cancel with a `BlockedChangeException`.
   `NetConsumptionCalculator` is not used for this: it is layer-scoped (every consumer on a layer, two reads per layer) and
   throws on any consumer's bad history, so one document's corrupt rows would block another document's void; and `stock/`
   cannot depend on `stock_revision/`, which depends on `stock/api`.

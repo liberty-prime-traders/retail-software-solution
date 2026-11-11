@@ -7,7 +7,7 @@ import java.util.UUID
 
 // quantity and quantityReceived are whole-line figures repeated on every cost-group row of a dispatched line: never sum them
 data class ReconciledTransferLine(
-    val dispatchLineRef: String,
+    val dispatchLineReferenceNumber: String,
     val productLabel: String,
     val quantity: BigDecimal,
     val unitId: UUID,

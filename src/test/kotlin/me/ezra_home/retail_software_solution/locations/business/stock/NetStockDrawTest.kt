@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.locations.business.stock
 
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
+import me.ezra_home.retail_software_solution.util.exceptions.BlockedChangeException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.util.UUID
@@ -75,6 +77,21 @@ class NetStockDrawTest {
                 movement(layerId, MovementType.SALE_VOID, "4", "32.00"),
             )
         )
+    }
+
+    @Test
+    fun `a layer reversed more than it was drawn blocks the undo instead of being skipped`() {
+        val layerId = UUID.randomUUID()
+
+        val exception = assertThrows(BlockedChangeException::class.java) {
+            netSaleDraws(
+                movement(layerId, MovementType.SALE, "4", "32.00"),
+                movement(layerId, MovementType.SALE_VOID, "4", "32.00"),
+                movement(layerId, MovementType.SALE_VOID, "4", "32.00"),
+            )
+        }
+
+        assertEquals(1, exception.problems.size)
     }
 
     @Test

@@ -17,4 +17,10 @@ data class StockTransferOrderDomainDto(
     val dispatchedByName: String?,
     val createdById: UUID,
     val createdOn: OffsetDateTime
-)
+) {
+    fun requiredDispatchedAt(): OffsetDateTime =
+        requireNotNull(dispatchedAt) { "Stock transfer order $referenceNumber has no dispatch time" }
+
+    fun requiredTotalDispatchedCost(): BigDecimal =
+        requireNotNull(totalDispatchedCost) { "Stock transfer order $referenceNumber has no dispatched cost" }
+}

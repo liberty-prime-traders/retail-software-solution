@@ -1,7 +1,9 @@
 package me.ezra_home.retail_software_solution.messaging.kafka.transaction.events
 
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
+import me.ezra_home.retail_software_solution.util.business.Money
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 data class StockTransferDispatchedEvent(
@@ -12,7 +14,6 @@ data class StockTransferDispatchedEvent(
     override val sourceDocumentId: UUID,
     val orderReferenceNumber: String,
     val dispatchReferenceNumber: String,
-    val sourceLocationSchema: String,
-    val destinationLocationSchema: String,
-    val lines: List<StockTransferDispatchedLineDto>
+    val totalCost: Money,
+    val postingDate: LocalDate
 ) : TransactionEvent()

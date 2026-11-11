@@ -2,13 +2,14 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api.updat
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.springframework.stereotype.Service
@@ -21,31 +22,40 @@ class StockTransferReceiptStockUpdater(
     private val stockMovementRepository: StockMovementRepository,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
+    private val entityAdvisoryLock: EntityAdvisoryLock,
 ) {
 
-    @TransactionalOnLocationSchema(readOnly = true)
-    fun findUnprocessedLineRefs(dispatchReference: String, lineRefs: Collection<String>): Set<String> {
-        if (lineRefs.isEmpty()) return emptySet()
-        val processed = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_IN)
-        return lineRefs.toSet() - processed
-    }
-
-    fun recordTransferReceipt(event: StockTransferDispatchedEvent) {
-        val orgProductIds = event.lines.map { it.orgProductId }.toSet()
+    // Lines that already have a TRANSFER_IN movement are skipped, so a repeated call never credits a line twice.
+    // The product lock comes before that check: the check and the credit are one decision.
+    fun recordTransferReceipt(
+        dispatchReferenceNumber: String,
+        stockTransferReceiptLineStockRequests: List<StockTransferReceiptLineStockRequest>
+    ) {
+        val orgProductIds = stockTransferReceiptLineStockRequests.map { it.orgProductId }.toSet()
         val identitiesByOrgProductId = locationProductDataFetcher.findIdentitiesByOrgProductIds(orgProductIds)
         val locationProductIdByOrgProductId = orgProductIds.associateWith { orgProductId ->
             identitiesByOrgProductId[orgProductId]?.locationProductId
                 ?: throw RtsGenericException("No location product found for product $orgProductId at destination")
         }
+        entityAdvisoryLock.acquire(LockNamespaces.PRODUCT, locationProductIdByOrgProductId.values.toSet())
 
-        guardSameStorageUnit(event, locationProductIdByOrgProductId)
+        val creditedLineReferences = stockMovementRepository.findPresentDetailReferences(
+            dispatchReferenceNumber,
+            stockTransferReceiptLineStockRequests.map { it.dispatchLineReferenceNumber },
+            MovementType.TRANSFER_IN
+        )
+        val linesToCredit = stockTransferReceiptLineStockRequests
+            .filter { it.dispatchLineReferenceNumber !in creditedLineReferences }
+        if (linesToCredit.isEmpty()) return
 
-        val layerSpecs = event.lines.map { line ->
+        guardSameStorageUnit(linesToCredit, locationProductIdByOrgProductId)
+
+        val layerSpecs = linesToCredit.map { line ->
             InboundLayerSpec(
                 locationProductId = locationProductIdByOrgProductId.getValue(line.orgProductId),
                 sourceType = StockItemSource.TRANSFER_IN,
                 movementType = MovementType.TRANSFER_IN,
-                documentReference = event.dispatchReferenceNumber,
+                documentReference = dispatchReferenceNumber,
                 detailReference = line.dispatchLineReferenceNumber,
                 storageQuantity = ExactQuantity.ofStorage(line.storageQuantityDispatched),
                 batchCost = line.costDispatched,
@@ -59,12 +69,12 @@ class StockTransferReceiptStockUpdater(
 
     // The dispatch quantity is in the source's storage unit, so the destination must count stock in the same root
     private fun guardSameStorageUnit(
-        event: StockTransferDispatchedEvent,
+        stockTransferReceiptLineStockRequests: List<StockTransferReceiptLineStockRequest>,
         locationProductIdByOrgProductId: Map<UUID, UUID>
     ) {
         val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
         val baseUnitIdByLocationProductId = locationProductDataFetcher.getBaseUnitIds(locationProductIdByOrgProductId.values)
-        event.lines.forEach { line ->
+        stockTransferReceiptLineStockRequests.forEach { line ->
             val destinationBaseUnitId = baseUnitIdByLocationProductId.getValue(locationProductIdByOrgProductId.getValue(line.orgProductId))
             if (unitConversionGraph.getStorageUnitId(line.unitId) != unitConversionGraph.getStorageUnitId(destinationBaseUnitId)) {
                 throw RtsGenericException(SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER)

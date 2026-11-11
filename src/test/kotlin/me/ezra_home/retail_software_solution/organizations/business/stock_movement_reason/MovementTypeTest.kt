@@ -62,6 +62,29 @@ class MovementTypeTest {
     }
 
     @Test
+    fun `a consumption is undone by its own reversal and by a revision, and nothing else has reversals`() {
+        assertEquals(
+            mapOf(
+                MovementType.SALE to setOf(MovementType.SALE_VOID, MovementType.REVERSED_BY_REVISION),
+                MovementType.TRANSFER_OUT to setOf(MovementType.TRANSFER_CANCELLED, MovementType.REVERSED_BY_REVISION),
+                MovementType.SUPPLIER_RETURN to setOf(MovementType.REVERSED_BY_REVISION),
+                MovementType.STOCK_ADJUSTMENT_DECREASE to setOf(MovementType.REVERSED_BY_REVISION),
+            ),
+            MovementType.entries.filter { it.isConsumption() }.associateWith { it.reversalTypes() }
+        )
+        assertTrue(MovementType.entries.filter { !it.isConsumption() }.all { it.reversalTypes().isEmpty() })
+    }
+
+    @Test
+    fun `a type together with its reversals is the set a net draw reads`() {
+        assertEquals(
+            setOf(MovementType.SALE, MovementType.SALE_VOID, MovementType.REVERSED_BY_REVISION),
+            MovementType.SALE.withReversalTypes()
+        )
+        assertEquals(setOf(MovementType.TRANSFER_IN), MovementType.TRANSFER_IN.withReversalTypes())
+    }
+
+    @Test
     fun `no type is both a consumption and a reversal`() {
         assertTrue(MovementType.entries.none { it.isConsumption() && it.isReversal() })
     }

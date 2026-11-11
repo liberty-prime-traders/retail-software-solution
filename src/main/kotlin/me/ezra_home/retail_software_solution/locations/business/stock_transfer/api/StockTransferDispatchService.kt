@@ -14,24 +14,24 @@ import me.ezra_home.retail_software_solution.locations.business.stock_transfer.R
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineEntity
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchRepository
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftDispatchFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDispatchedHandlerForKafka
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineRepository
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferFifoAllocator
+import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferOrderLocker
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferResponseAssembler
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferSchemaGateway
 import me.ezra_home.retail_software_solution.locations.business.stock_transfer.StockTransferDraftLineEntity
-import me.ezra_home.retail_software_solution.locations.business.stock_transfer.toDispatchedLineDto
 import me.ezra_home.retail_software_solution.configuration.session.withLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductSummaryDto
 import me.ezra_home.retail_software_solution.organizations.business.location.api.LocationService
-import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.quantity.BaseUnitDisplay
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderService
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Service
@@ -44,8 +44,8 @@ class StockTransferDispatchService(
     private val stockTransferDraftLineRepository: StockTransferDraftLineRepository,
     private val stockTransferDispatchLineRepository: StockTransferDispatchLineRepository,
     private val stockBalanceFetcher: StockBalanceFetcher,
-    private val stockTransferStockUpdater: StockTransferStockUpdater,
     private val stockTransferDispatchedHandlerForKafka: StockTransferDispatchedHandlerForKafka,
+    private val stockTransferStockUpdater: StockTransferStockUpdater,
     private val stockTransferResponseAssembler: StockTransferResponseAssembler,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val locationService: LocationService,
@@ -54,15 +54,15 @@ class StockTransferDispatchService(
     private val entityAdvisoryLock: EntityAdvisoryLock,
     private val stockAvailabilityValidator: StockAvailabilityValidator,
     private val productStockBreakdownProvider: ProductStockBreakdownProvider,
-    private val stockTransferOrderDataFetcher: StockTransferOrderDataFetcher,
+    private val stockTransferOrderLocker: StockTransferOrderLocker,
     private val stockTransferSchemaGateway: StockTransferSchemaGateway,
     private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
     @TransactionalOnLocationSchema
-    fun dispatch(orderRef: String): StockTransferResponse {
-        val dispatchEntity = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderRef)
-        entityAdvisoryLock.acquire(LockNamespaces.STOCK_TRANSFER_ORDER, dispatchEntity.id!!)
+    fun dispatch(orderReferenceNumber: String): StockTransferResponse {
+        val orderBeforeDispatch = stockTransferOrderLocker.lockThenFetch(orderReferenceNumber)
+        val dispatchEntity = stockTransferDraftDispatchFetcher.requireDraftDispatch(orderReferenceNumber)
         val draftLines = stockTransferDraftLineRepository.findByStockTransferDispatchId(dispatchEntity.id!!)
         if (draftLines.isEmpty()) throw RtsGenericException("Cannot dispatch a transfer with no lines")
 
@@ -78,7 +78,7 @@ class StockTransferDispatchService(
         }
         stockAvailabilityValidator.guardSufficientStock(storageQuantityNeededByLocationProductId, productLabelByLocationProductId)
         guardDestinationCountsInSameStorageUnit(
-            stockTransferOrderDataFetcher.getByReferenceNumber(orderRef).destinationLocationId,
+            orderBeforeDispatch.destinationLocationId,
             draftLines,
             summariesByLocationProductId,
             orgProductIdByLocationProductId
@@ -109,21 +109,21 @@ class StockTransferDispatchService(
 
         val totalDispatchedCost = dispatchLines.sumOf { it.costDispatched }
         stockTransferOrderService.setDispatchSummary(
-            referenceNumber = orderRef,
+            referenceNumber = orderReferenceNumber,
             lineCount = dispatchLines.size,
             totalDispatchedCost = totalDispatchedCost,
             dispatchedAt = dispatchedAt,
             dispatchedByName = userQualifier.getUserFullName(dispatchedUserId)
         )
 
-        val order = stockTransferOrderService.updateStatusToDispatched(orderRef)
+        val order = stockTransferOrderService.updateStatusToDispatched(orderReferenceNumber)
         stockTransferDispatchedHandlerForKafka.publish(
             orderId = order.id,
-            orderRef = orderRef,
-            dispatchRef = dispatchEntity.requiredReference(),
+            orderReferenceNumber = orderReferenceNumber,
+            dispatchReferenceNumber = dispatchEntity.requiredReference(),
             sourceSchema = SessionContextProvider.getLocationSchema(),
-            destinationSchema = locationService.getSchemaByLocationId(order.destinationLocationId),
-            lines = dispatchLines.map { it.toDispatchedLineDto() }
+            totalCost = Money.of(totalDispatchedCost),
+            postingDate = DateTimes.Local.atOrganizationZone(dispatchedAt)
         )
         return stockTransferResponseAssembler.buildDispatchOnly(
             orderDomainDto = order,
@@ -143,7 +143,7 @@ class StockTransferDispatchService(
         return dispatchLines.map { dispatchLine ->
             val summary = summariesByLocationProductId.getValue(dispatchLine.locationProductId)
             ReconciledTransferLine(
-                dispatchLineRef = dispatchLine.requiredReference(),
+                dispatchLineReferenceNumber = dispatchLine.requiredReference(),
                 productLabel = summary.label,
                 quantity = dispatchLine.wholeLineUserProvidedQuantity,
                 unitId = dispatchLine.unitId,
