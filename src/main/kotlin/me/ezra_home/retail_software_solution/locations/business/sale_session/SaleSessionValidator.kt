@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
@@ -18,6 +19,7 @@ import java.util.UUID
 @Component
 class SaleSessionValidator(
     private val adjustmentReasonService: AdjustmentReasonService,
+    private val locationProductService: LocationProductService,
 ) {
 
     fun validate(saleSession: SaleSession) {
@@ -83,6 +85,10 @@ class SaleSessionValidator(
                 "Cannot add a payment because the sale is ${saleSession.originalStatus}"
             )
         }
+    }
+
+    fun guardNoInactiveProducts(saleSession: SaleSession) {
+        locationProductService.guardAllActive(saleSession.saleLines.map { it.locationProductId })
     }
 
     fun guardNonEmptyLines(saleSession: SaleSession) {

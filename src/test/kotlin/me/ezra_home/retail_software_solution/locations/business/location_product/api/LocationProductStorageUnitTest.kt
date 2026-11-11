@@ -1,8 +1,8 @@
 package me.ezra_home.retail_software_solution.locations.business.location_product.api
 
-import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEntity
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductEnricher
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductForSaleAssembler
+import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductIdentityView
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductPagedSearch
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductRepository
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
@@ -48,11 +48,13 @@ class LocationProductStorageUnitTest {
     )
 
     private fun productWithBaseUnit(baseUnitId: UUID): UUID {
-        val product = LocationProductEntity(
-            orgProductId = UUID.randomUUID(), productName = "P", productGroupName = "G", categoryId = UUID.randomUUID(), baseUnitId = baseUnitId
-        ).also { it.id = UUID.randomUUID() }
-        `when`(locationProductRepository.findAllById(listOf(product.id!!))).thenReturn(listOf(product))
-        return product.id!!
+        val locationProductId = UUID.randomUUID()
+        val identityView = mock(LocationProductIdentityView::class.java).also {
+            `when`(it.id).thenReturn(locationProductId)
+            `when`(it.baseUnitId).thenReturn(baseUnitId)
+        }
+        `when`(locationProductRepository.findIdentityViewsByIdIn(listOf(locationProductId))).thenReturn(listOf(identityView))
+        return locationProductId
     }
 
     @Test

@@ -51,6 +51,7 @@ interface SessionToResponseMapper {
     @Mapping(target = "quantityAvailableInBaseUnit", source = ".", qualifiedBy = [LineQuantityAvailableInBaseUnit::class])
     @Mapping(target = "quantityOnHandBreakdown", source = ".", qualifiedBy = [LineOnHandBreakdown::class])
     @Mapping(target = "quantityAvailableBreakdown", source = ".", qualifiedBy = [LineAvailableBreakdown::class])
+    @Mapping(target = "productActive", source = ".", qualifiedBy = [LineProductActive::class])
     @Mapping(target = "lineTotal", source = ".", qualifiedBy = [LineNetTotal::class])
     fun toLineDto(
         saleSessionLine: SaleSessionLine,

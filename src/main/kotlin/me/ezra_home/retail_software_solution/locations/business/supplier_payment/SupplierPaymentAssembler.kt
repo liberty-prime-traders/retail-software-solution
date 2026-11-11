@@ -25,9 +25,7 @@ class SupplierPaymentAssembler(
         paymentVoid: SupplierPaymentVoidEntity?,
         paymentStatus: PaymentStatus?
     ): SupplierPaymentResponseDto {
-        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(
-            setOf(payment.purchaseId)
-        ).getValue(payment.purchaseId)
+        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoById(payment.purchaseId)
         val deliveryRef = payment.deliveryId?.let {
             purchaseDeliveryDataFetcher.getDeliveryReferenceNumbersById(listOf(it))[it]
         }

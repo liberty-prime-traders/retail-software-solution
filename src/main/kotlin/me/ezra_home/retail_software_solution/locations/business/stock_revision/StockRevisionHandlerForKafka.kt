@@ -42,7 +42,7 @@ class StockRevisionHandlerForKafka(
         replacementLineTotal: BigDecimal
     ) {
         if (revisedLineTotal.compareTo(replacementLineTotal) == 0) return
-        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoByIds(listOf(purchaseId)).getValue(purchaseId)
+        val purchaseInfo = purchaseDataFetcher.findPurchaseInfoById(purchaseId)
         eventPublisher.publishEvent(
             PurchaseDeliveryRevisedEvent(
                 eventId = UUID.randomUUID(),

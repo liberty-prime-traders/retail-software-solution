@@ -12,6 +12,7 @@ import java.util.UUID
 
 data class SaleSessionResponseDto(
     val id: UUID,
+    val saleId: UUID?,
     val referenceNumber: String?,
     val createdBy: String,
     val lastUpdatedAt: OffsetDateTime,
@@ -67,6 +68,7 @@ data class SaleSessionLineResponse(
     val storageQuantityAvailable: BigDecimal,
     val quantityOnHandBreakdown: String,
     val quantityAvailableBreakdown: String,
+    val productActive: Boolean,
 )
 
 data class SaleSessionAdjustmentResponse(

@@ -69,7 +69,7 @@ class RevisionLedgerPreviewWriter(
     private fun supplierNameOf(validatedDeliveryLineRevision: ValidatedDeliveryLineRevisionDto): String {
         val purchaseId = purchaseDeliveryDataFetcher
             .getOwners(validatedDeliveryLineRevision.revisedDeliveryLineId).purchaseId
-        val supplierId = purchaseDataFetcher.findPurchaseInfoByIds(listOf(purchaseId)).getValue(purchaseId).supplierId
+        val supplierId = purchaseDataFetcher.findPurchaseInfoById(purchaseId).supplierId
         return nameResolution.organizationContacts(listOf(supplierId)).getValue(supplierId)
     }
 

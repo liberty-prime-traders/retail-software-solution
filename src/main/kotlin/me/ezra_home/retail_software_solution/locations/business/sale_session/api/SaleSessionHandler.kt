@@ -20,6 +20,10 @@ class SaleSessionHandler(
 
     @TransactionalOnLocationSchema(readOnly = true)
     fun start(sessionStartDto: SaleSessionStartDto): SaleSessionResponseDto {
+        sessionStartDto.copyFromSaleId?.let { sourceSaleId ->
+            val copiedSession = saleSessionLoader.copyFromSale(UUID.randomUUID(), sourceSaleId)
+            return saleSessionUpdateFinalizer.finalize(copiedSession)
+        }
         sessionStartDto.saleId?.let { saleId ->
             saleSessionStore.findOpenSessionForSale(saleId)?.let { existingSession ->
                 return saleSessionAssembler.buildResponse(existingSession)
@@ -29,9 +33,7 @@ class SaleSessionHandler(
         val session = if (sessionStartDto.saleId != null) {
             saleSessionLoader.loadFromSale(sessionId, sessionStartDto.saleId)
         } else {
-            val locationId = SessionContextProvider.getLocationId()
-            val userId = SessionContextProvider.getUserId()
-            saleSessionLoader.newSession(sessionId, locationId, sessionStartDto.contactId!!, userId)
+            saleSessionLoader.newSession(sessionId, sessionStartDto.contactId!!)
         }
         return saleSessionUpdateFinalizer.finalize(session)
     }
