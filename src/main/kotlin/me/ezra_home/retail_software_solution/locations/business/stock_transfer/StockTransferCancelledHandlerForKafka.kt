@@ -7,6 +7,8 @@ import me.ezra_home.retail_software_solution.messaging.kafka.transaction.EventRe
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferCancelledEvent
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferOrderDataFetcher
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
+import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.Money
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -29,13 +31,20 @@ class StockTransferCancelledHandlerForKafka(
             ?: throw RtsGenericException("Dispatch not found for order ${order.referenceNumber}")
         publish(
             orderId = order.id,
-            orderRef = order.referenceNumber,
-            dispatchRef = dispatch.requiredReference(),
-            sourceSchema = SessionContextProvider.getLocationSchema()
+            orderReferenceNumber = order.referenceNumber,
+            dispatchReferenceNumber = dispatch.requiredReference(),
+            sourceSchema = SessionContextProvider.getLocationSchema(),
+            totalCost = Money.of(order.requiredTotalDispatchedCost())
         )
     }
 
-    fun publish(orderId: UUID, orderRef: String, dispatchRef: String, sourceSchema: String) {
+    fun publish(
+        orderId: UUID,
+        orderReferenceNumber: String,
+        dispatchReferenceNumber: String,
+        sourceSchema: String,
+        totalCost: Money
+    ) {
         eventPublisher.publishEvent(
             StockTransferCancelledEvent(
                 eventId = UUID.randomUUID(),
@@ -46,9 +55,10 @@ class StockTransferCancelledHandlerForKafka(
                 timestamp = Instant.now(),
                 correlationId = null,
                 sourceDocumentId = orderId,
-                orderReferenceNumber = orderRef,
-                dispatchReferenceNumber = dispatchRef,
-                sourceLocationSchema = sourceSchema
+                orderReferenceNumber = orderReferenceNumber,
+                dispatchReferenceNumber = dispatchReferenceNumber,
+                totalCost = totalCost,
+                postingDate = DateTimes.Local.Now.organization()
             )
         )
     }

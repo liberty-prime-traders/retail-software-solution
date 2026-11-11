@@ -28,14 +28,6 @@ class StockTransferStockUpdater(
     private val netStockDrawReader: NetStockDrawReader,
 ) {
 
-    @TransactionalOnLocationSchema(readOnly = true)
-    fun findUnrestoredLineRefs(dispatchReference: String, lineRefs: Collection<String>): Set<String> {
-        if (lineRefs.isEmpty()) return emptySet()
-        val consumedLineRefs = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_OUT)
-        val restoredLineRefs = stockMovementRepository.findPresentDetailReferences(dispatchReference, lineRefs, MovementType.TRANSFER_CANCELLED)
-        return consumedLineRefs - restoredLineRefs
-    }
-
     fun consumeStockForDispatch(dispatchLineRequests: List<StockTransferDispatchLineStockRequest>) {
         if (dispatchLineRequests.isEmpty()) return
         val locationProductIds = dispatchLineRequests.map { it.locationProductId }
@@ -79,10 +71,10 @@ class StockTransferStockUpdater(
         stockMovementRepository.saveAll(movements)
     }
 
-    fun restoreStockForLines(dispatchReference: String, dispatchLineRefs: Collection<String>) {
-        if (dispatchLineRefs.isEmpty()) return
+    fun restoreStockForLines(dispatchReference: String, dispatchLineReferenceNumbers: Collection<String>) {
+        if (dispatchLineReferenceNumbers.isEmpty()) return
         val netStockDraws = netStockDrawReader.lockAndReadNetDrawsOfLines(
-            dispatchReference, dispatchLineRefs, MovementType.TRANSFER_OUT
+            dispatchReference, dispatchLineReferenceNumbers, MovementType.TRANSFER_OUT
         )
         if (netStockDraws.isEmpty()) return
 

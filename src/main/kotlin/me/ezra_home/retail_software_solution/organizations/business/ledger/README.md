@@ -259,6 +259,25 @@ group (dated `dateSold`); `SaleVoidedEventProcessor` posts the reverse (dated `d
 when the total is exactly zero. A negative total is not skipped: `PositiveMoney.of` rejects it, so the posting fails
 loudly.
 
+## Stock transfer postings
+
+A transfer posts balance-sheet entries only (`postsToProfitAndLoss = false`), so goods in transit are an asset, not a cost.
+Each group is keyed on the **dispatch's** reference and differs by source type and location; the amount is the dispatch's
+total cost, carried on each event as `totalCost`.
+
+| Source type               | Processor                                  | Location    | Posts                                  |
+|---------------------------|--------------------------------------------|-------------|----------------------------------------|
+| `STOCK_TRANSFER_DISPATCH` | `StockTransferDispatchAccountingProcessor` | source      | Dr Inventory in transit, Cr Inventory  |
+| `STOCK_TRANSFER_RECEIPT`  | `StockTransferReceiptAccountingProcessor`  | destination | Dr Inventory, Cr Inventory in transit  |
+| `STOCK_TRANSFER_CANCEL`   | `StockTransferCancelAccountingProcessor`   | source      | Dr Inventory, Cr Inventory in transit  |
+
+The in-transit balance is therefore positive at the source location and negative at the destination while a transfer is
+open, and nets to zero organization-wide. A receipt or cancel clears an in-transit balance only after the dispatch's own
+posting exists at the source (`StockTransferLedgerPostings.requireDispatchPosted` for the receipt, `LedgerPostingGate.requirePosted`
+for the cancel). Until it does, they fail like the voids above: the dispatch and receipt events sit on different partitions, so
+a receipt can be consumed before its dispatch posts, and the failed event is retried by the sweeper until the dispatch lands. A
+zero-cost dispatch posts nothing, so its receipt and cancel are not processed either.
+
 ## Stock revision postings
 
 A stock revision (a delivery line revised after other documents drew from its stock) posts up to three groups. Each is

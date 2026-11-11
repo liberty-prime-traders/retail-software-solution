@@ -65,6 +65,10 @@ The order of execution is
 ### Naming & Formatting
 - Constraint pattern: `tblname_colname_constrainttype`
 - Blank lines between changesets and between column definitions
+- Write plain code. Don't use a construct just because the language allows it: no long `&&`/`||` chains broken across
+  lines, no `.not()` tacked onto a multi-line call, no clever one-liners. Name each condition in a `val`
+  (`val dispatchAlreadyPosted = ...`) and combine the names (`return dispatchCarriesCost && !dispatchAlreadyPosted`).
+  If a reader has to parse it twice, split it.
 - Cut lines at 120 characters. Up to 124 can be argued for; 125 is a no-no.
 - variable and method names should be verbose. For example,
   - `val ceilingService: PurchasePaymentCeilingService` is bad

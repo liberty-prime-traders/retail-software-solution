@@ -32,53 +32,53 @@ class StockTransferEndpoint(
     fun createTransfer(@RequestBody stockTransferCreateDto: StockTransferCreateDto): StockTransferResponse =
         stockTransferService.createTransfer(stockTransferCreateDto)
 
-    @PostMapping("{orderRef}/dispatch")
-    fun dispatch(@PathVariable orderRef: String): StockTransferResponse =
-        stockTransferDispatchService.dispatch(orderRef)
+    @PostMapping("{orderReferenceNumber}/dispatch")
+    fun dispatch(@PathVariable orderReferenceNumber: String): StockTransferResponse =
+        stockTransferDispatchService.dispatch(orderReferenceNumber)
 
-    @PostMapping("{orderRef}/cancel")
-    fun cancelTransfer(@PathVariable orderRef: String): StockTransferResponse =
-        stockTransferService.cancelTransfer(orderRef)
+    @PostMapping("{orderReferenceNumber}/cancel")
+    fun cancelTransfer(@PathVariable orderReferenceNumber: String): StockTransferResponse =
+        stockTransferService.cancelTransfer(orderReferenceNumber)
 
-    @PostMapping("{orderRef}/lines")
+    @PostMapping("{orderReferenceNumber}/lines")
     fun applyLineChanges(
-        @PathVariable orderRef: String,
+        @PathVariable orderReferenceNumber: String,
         @RequestBody lineRequestDto: StockTransferLineRequestDto
     ): StockTransferResponse =
-        stockTransferDraftService.applyLineChanges(orderRef, lineRequestDto)
+        stockTransferDraftService.applyLineChanges(orderReferenceNumber, lineRequestDto)
 
-    @PostMapping("{orderRef}/lines/remove/{lineRef}")
+    @PostMapping("{orderReferenceNumber}/lines/remove/{lineRef}")
     fun removeLine(
-        @PathVariable orderRef: String,
+        @PathVariable orderReferenceNumber: String,
         @PathVariable lineRef: String
     ): StockTransferResponse =
-        stockTransferDraftService.removeLine(orderRef, lineRef)
+        stockTransferDraftService.removeLine(orderReferenceNumber, lineRef)
 
-    @PostMapping("{orderRef}/lines/confirm/{dispatchLineRef}")
+    @PostMapping("{orderReferenceNumber}/lines/confirm/{dispatchLineReferenceNumber}")
     fun confirmLine(
-        @PathVariable orderRef: String,
-        @PathVariable dispatchLineRef: String
+        @PathVariable orderReferenceNumber: String,
+        @PathVariable dispatchLineReferenceNumber: String
     ): StockTransferResponse =
-        stockTransferReceiptService.confirmLine(orderRef, dispatchLineRef)
+        stockTransferReceiptService.confirmLine(orderReferenceNumber, dispatchLineReferenceNumber)
 
-    @DeleteMapping("{orderRef}/lines/unconfirm/{dispatchLineRef}")
+    @DeleteMapping("{orderReferenceNumber}/lines/unconfirm/{dispatchLineReferenceNumber}")
     fun unconfirmLine(
-        @PathVariable orderRef: String,
-        @PathVariable dispatchLineRef: String
+        @PathVariable orderReferenceNumber: String,
+        @PathVariable dispatchLineReferenceNumber: String
     ): StockTransferResponse =
-        stockTransferReceiptService.unconfirmLine(orderRef, dispatchLineRef)
+        stockTransferReceiptService.unconfirmLine(orderReferenceNumber, dispatchLineReferenceNumber)
 
-    @PostMapping("{receiptRef}/complete")
-    fun completeTransfer(@PathVariable receiptRef: String): StockTransferResponse =
-        stockTransferReceiptService.completeTransfer(receiptRef)
+    @PostMapping("{receiptReferenceNumber}/complete")
+    fun completeTransfer(@PathVariable receiptReferenceNumber: String): StockTransferResponse =
+        stockTransferReceiptService.completeTransfer(receiptReferenceNumber)
 
     @GetMapping
     fun fetchTop(@RequestParam n: Int?): List<StockTransferResponse> =
         stockTransferService.fetchTop(n ?: 50)
 
-    @GetMapping("{orderRef}")
-    fun fetchByOrderRef(@PathVariable orderRef: String): StockTransferResponse =
-        stockTransferService.fetchByOrderRef(orderRef)
+    @GetMapping("{orderReferenceNumber}")
+    fun fetchByOrderReferenceNumber(@PathVariable orderReferenceNumber: String): StockTransferResponse =
+        stockTransferService.fetchByOrderReferenceNumber(orderReferenceNumber)
 
     @GetMapping("summary")
     fun fetchSummary(@RequestParam n: Int?): List<StockTransferSummaryDto> =

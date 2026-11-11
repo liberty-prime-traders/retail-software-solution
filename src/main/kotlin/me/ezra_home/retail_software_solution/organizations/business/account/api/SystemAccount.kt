@@ -21,6 +21,7 @@ enum class SystemAccount(
     INVENTORY("001.001.003", "Inventory", AccountType.ASSET, parent = CURRENT_ASSETS),
     TAX_RECOVERABLE("001.001.004", "Tax Recoverable", AccountType.ASSET, parent = CURRENT_ASSETS),
     DIGITAL_PAYMENTS("001.001.005", "Digital Payments", AccountType.ASSET, parent = CURRENT_ASSETS),
+    INVENTORY_IN_TRANSIT("001.001.006", "Inventory in Transit", AccountType.ASSET, parent = CURRENT_ASSETS),
 
     // Fixed Assets
     FIXED_ASSETS("001.002", "Fixed Assets", AccountType.ASSET, parent = ASSETS),

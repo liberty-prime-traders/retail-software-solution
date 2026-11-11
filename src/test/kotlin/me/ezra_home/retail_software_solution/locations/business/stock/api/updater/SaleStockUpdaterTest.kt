@@ -14,9 +14,11 @@ import me.ezra_home.retail_software_solution.util.quantity.QuantityBreakdown
 import java.time.OffsetDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anySet
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
 import java.util.UUID
@@ -30,6 +32,7 @@ class SaleStockUpdaterTest {
     private val stockBalanceFetcher = mock(StockBalanceFetcher::class.java)
     private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
     private val productStockBreakdownProvider = mock(ProductStockBreakdownProvider::class.java)
+    private val netStockDrawReader = mock(NetStockDrawReader::class.java)
 
     private val saleStockUpdater = SaleStockUpdater(
         stockEntryRepository = stockEntryRepository,
@@ -38,8 +41,17 @@ class SaleStockUpdaterTest {
         stockBalanceFetcher = stockBalanceFetcher,
         productStockBreakdownProvider = productStockBreakdownProvider,
         entityAdvisoryLock = mock(EntityAdvisoryLock::class.java),
-        netStockDrawReader = mock(NetStockDrawReader::class.java),
+        netStockDrawReader = netStockDrawReader,
     )
+
+    @Test
+    fun `restoring a sale with no net draw left, as on a repeated void, reads and writes nothing`() {
+        `when`(netStockDrawReader.lockAndReadNetDrawsOfDocument("SALE-1", MovementType.SALE)).thenReturn(emptyList())
+
+        saleStockUpdater.restoreStock("SALE-1")
+
+        verifyNoInteractions(stockEntryRepository, stockBalanceFetcher, productStockBreakdownProvider)
+    }
 
     @Test
     fun `consumption spanning layers with different costs sums each layer at its own cost`() {

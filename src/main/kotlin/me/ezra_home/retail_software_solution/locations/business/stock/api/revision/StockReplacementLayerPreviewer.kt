@@ -18,9 +18,9 @@ class StockReplacementLayerPreviewer(
     private val stockEntryRepository: StockEntryRepository,
 ) {
 
-    fun fifoEntriesAfterReplacement(
+    fun previewReplacement(
         stockReplacementLayerRequest: StockReplacementLayerRequest
-    ): List<StockEntryFifoDto> {
+    ): ReplacementLayerPreview {
         val revisedStockEntry = findRevisedStockEntry(stockReplacementLayerRequest.revisedStockEntryId)
         val replacementEntry = StockInboundLayers.newLayer(
             StockReplacementLayerSpecs.of(stockReplacementLayerRequest, revisedStockEntry)
@@ -33,11 +33,13 @@ class StockReplacementLayerPreviewer(
             stockEntryFifoComparator.compare(it, replacementEntry) <= 0
         }
 
-        return buildList {
+        val unsavedReplacement = unsavedFifoDtoOf(replacementEntry, stockReplacementLayerRequest.detailReference)
+        val fifoEntries = buildList {
             addAll(entriesDrawnBefore.map { it.toFifoDto() })
-            add(unsavedFifoDtoOf(replacementEntry, stockReplacementLayerRequest.detailReference))
+            add(unsavedReplacement)
             addAll(entriesDrawnAfter.map { it.toFifoDto() })
         }
+        return ReplacementLayerPreview(fifoEntries, unsavedReplacement.fifoLayer.stockEntryId)
     }
 
     private fun findRevisedStockEntry(revisedStockEntryId: UUID): StockEntryEntity =

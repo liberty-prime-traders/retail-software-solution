@@ -37,7 +37,7 @@ class ReconciledTransferLineFetcher(
             val availability = availabilityByLocationProductId.getValue(line.locationProductId)
             val storageQuantity = line.storageQuantity()
             ReconciledTransferLine(
-                dispatchLineRef = line.requiredReference(),
+                dispatchLineReferenceNumber = line.requiredReference(),
                 productLabel = summary.label,
                 quantity = line.userProvidedQuantity,
                 unitId = line.unitId,
@@ -54,7 +54,10 @@ class ReconciledTransferLineFetcher(
     }
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.MANDATORY)
-    fun dispatchLines(dispatchId: UUID, confirmedRefs: Set<String>): List<ReconciledTransferLine> {
+    fun dispatchLines(
+        dispatchId: UUID,
+        confirmedDispatchLineReferenceNumbers: Set<String>
+    ): List<ReconciledTransferLine> {
         val lines = stockTransferDispatchLineRepository.findByStockTransferDispatchId(dispatchId)
         val summaries = locationProductDataFetcher.findSummaryByIds(lines.map { it.locationProductId }.toSet())
         val breakdownByLocationProductId = productStockBreakdownProvider.forLocationProducts(
@@ -65,7 +68,7 @@ class ReconciledTransferLineFetcher(
             val summary = summaries.getValue(line.locationProductId)
             val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(summary.baseUnitId)
             ReconciledTransferLine(
-                dispatchLineRef = line.requiredReference(),
+                dispatchLineReferenceNumber = line.requiredReference(),
                 productLabel = summary.label,
                 quantity = line.wholeLineUserProvidedQuantity,
                 unitId = line.unitId,
@@ -73,7 +76,7 @@ class ReconciledTransferLineFetcher(
                 conversionFactor = BaseUnitDisplay.conversionFactor(line.storageUnitsPerUserProvidedUnit, storageUnitsPerBaseUnit),
                 unitCost = line.unitCost,
                 totalCost = line.costDispatched,
-                quantityReceived = if (line.requiredReference() in confirmedRefs) line.wholeLineUserProvidedQuantity else null,
+                quantityReceived = if (line.requiredReference() in confirmedDispatchLineReferenceNumbers) line.wholeLineUserProvidedQuantity else null,
                 storageQuantity = line.storageQuantityDispatched,
                 storageBreakdownText = breakdownByLocationProductId.getValue(line.locationProductId)
                     .render(ExactQuantity.ofStorage(line.storageQuantityDispatched))

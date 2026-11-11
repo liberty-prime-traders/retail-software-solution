@@ -2,16 +2,15 @@ package me.ezra_home.retail_software_solution.locations.business.stock.api.updat
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductIdentityDto
+import me.ezra_home.retail_software_solution.locations.business.lock.api.EntityAdvisoryLock
 import me.ezra_home.retail_software_solution.locations.business.stock.InboundLayerSpec
 import me.ezra_home.retail_software_solution.locations.business.stock.StockIncreaseRecorder
 import me.ezra_home.retail_software_solution.locations.business.stock.StockMovementRepository
-import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedEvent
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
 import me.ezra_home.retail_software_solution.organizations.business.stock_item_source.api.StockItemSource
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraph
 import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
+import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.quantity.ExactQuantity
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,11 +19,11 @@ import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyCollection
 import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import java.math.BigDecimal
-import java.time.Instant
 import java.util.UUID
 
 class StockTransferReceiptStockUpdaterTest {
@@ -41,8 +40,10 @@ class StockTransferReceiptStockUpdaterTest {
     private val locationProductDataFetcher = mock(LocationProductDataFetcher::class.java)
     private val unitConversionGraphFacade = mock(UnitConversionGraphFacade::class.java)
     private val unitConversionGraph = mock(UnitConversionGraph::class.java)
+    private val entityAdvisoryLock = mock(EntityAdvisoryLock::class.java)
     private val stockTransferReceiptStockUpdater = StockTransferReceiptStockUpdater(
-        stockIncreaseRecorder, stockMovementRepository, locationProductDataFetcher, unitConversionGraphFacade
+        stockIncreaseRecorder, stockMovementRepository, locationProductDataFetcher, unitConversionGraphFacade,
+        entityAdvisoryLock
     )
 
     private val recordedLayerSpecs = mutableListOf<InboundLayerSpec>()
@@ -55,7 +56,7 @@ class StockTransferReceiptStockUpdaterTest {
     }
 
     private fun line(orgProductId: UUID, lineReference: String, storageQuantity: String, cost: String, wholeLineQuantity: String, ratio: Long) =
-        StockTransferDispatchedLineDto(
+        StockTransferReceiptLineStockRequest(
             dispatchLineReferenceNumber = lineReference,
             orgProductId = orgProductId,
             wholeLineUserProvidedQuantity = BigDecimal(wholeLineQuantity),
@@ -64,19 +65,6 @@ class StockTransferReceiptStockUpdaterTest {
             unitId = pieceId,
             storageUnitsPerUserProvidedUnit = ratio,
         )
-
-    private fun event(lines: List<StockTransferDispatchedLineDto>) = StockTransferDispatchedEvent(
-        eventId = UUID.randomUUID(),
-        sourceContext = EventSourceContext.LocationLevel("org-a", "loc-1"),
-        timestamp = Instant.parse("2026-01-01T00:00:00Z"),
-        correlationId = null,
-        sourceDocumentId = UUID.randomUUID(),
-        orderReferenceNumber = "ORDER-1",
-        dispatchReferenceNumber = "DISPATCH-1",
-        sourceLocationSchema = "loc-1",
-        destinationLocationSchema = "loc-2",
-        lines = lines,
-    )
 
     private fun givenDestinationProducts(destinationBaseUnitId: UUID = pieceId) {
         `when`(locationProductDataFetcher.findIdentitiesByOrgProductIds(anyCollection())).thenReturn(
@@ -97,12 +85,11 @@ class StockTransferReceiptStockUpdaterTest {
         givenDestinationProducts()
 
         stockTransferReceiptStockUpdater.recordTransferReceipt(
-            event(
-                listOf(
-                    line(firstOrgProductId, "DL-1", "36", "100.0000", "2", 18L),
-                    line(secondOrgProductId, "DL-2", "5", "7.5000", "5", 1L),
-                    line(firstOrgProductId, "DL-3", "4", "9.0000", "4", 1L),
-                )
+            "DISPATCH-1",
+            listOf(
+                line(firstOrgProductId, "DL-1", "36", "100.0000", "2", 18L),
+                line(secondOrgProductId, "DL-2", "5", "7.5000", "5", 1L),
+                line(firstOrgProductId, "DL-3", "4", "9.0000", "4", 1L),
             )
         )
 
@@ -130,7 +117,9 @@ class StockTransferReceiptStockUpdaterTest {
         givenDestinationProducts(destinationBaseUnitId = UUID.randomUUID())
 
         val exception = assertThrows(RtsGenericException::class.java) {
-            stockTransferReceiptStockUpdater.recordTransferReceipt(event(listOf(line(firstOrgProductId, "DL-1", "1", "1.0000", "1", 1L))))
+            stockTransferReceiptStockUpdater.recordTransferReceipt(
+                "DISPATCH-1", listOf(line(firstOrgProductId, "DL-1", "1", "1.0000", "1", 1L))
+            )
         }
 
         assertEquals(StockTransferReceiptStockUpdater.SOURCE_AND_DESTINATION_STORAGE_UNITS_DIFFER, exception.message)
@@ -142,9 +131,65 @@ class StockTransferReceiptStockUpdaterTest {
         `when`(locationProductDataFetcher.findIdentitiesByOrgProductIds(anyCollection())).thenReturn(emptyMap())
 
         assertThrows(RtsGenericException::class.java) {
-            stockTransferReceiptStockUpdater.recordTransferReceipt(event(listOf(line(firstOrgProductId, "DL-1", "1", "1.0000", "1", 1L))))
+            stockTransferReceiptStockUpdater.recordTransferReceipt(
+                "DISPATCH-1", listOf(line(firstOrgProductId, "DL-1", "1", "1.0000", "1", 1L))
+            )
         }
 
         verifyNoInteractions(stockIncreaseRecorder)
+    }
+
+    @Test
+    fun `a line that already has a transfer-in movement is not credited again`() {
+        givenDestinationProducts()
+        `when`(
+            stockMovementRepository.findPresentDetailReferences(
+                "DISPATCH-1", listOf("DL-1", "DL-2"), MovementType.TRANSFER_IN
+            )
+        ).thenReturn(setOf("DL-1"))
+
+        stockTransferReceiptStockUpdater.recordTransferReceipt(
+            "DISPATCH-1",
+            listOf(
+                line(firstOrgProductId, "DL-1", "36", "100.0000", "2", 18L),
+                line(secondOrgProductId, "DL-2", "5", "7.5000", "5", 1L),
+            )
+        )
+
+        assertEquals(listOf("DL-2"), recordedLayerSpecs.map { it.detailReference })
+    }
+
+    @Test
+    fun `a dispatch whose lines are all already credited records nothing`() {
+        givenDestinationProducts()
+        `when`(
+            stockMovementRepository.findPresentDetailReferences("DISPATCH-1", listOf("DL-1"), MovementType.TRANSFER_IN)
+        ).thenReturn(setOf("DL-1"))
+
+        stockTransferReceiptStockUpdater.recordTransferReceipt(
+            "DISPATCH-1",
+            listOf(line(firstOrgProductId, "DL-1", "1", "1.0000", "1", 1L))
+        )
+
+        verifyNoInteractions(stockIncreaseRecorder)
+    }
+
+    @Test
+    fun `the product lock is taken before the credited lines are looked up`() {
+        givenDestinationProducts()
+
+        stockTransferReceiptStockUpdater.recordTransferReceipt(
+            "DISPATCH-1",
+            listOf(
+                line(firstOrgProductId, "DL-1", "36", "100.0000", "2", 18L),
+                line(secondOrgProductId, "DL-2", "5", "7.5000", "5", 1L),
+            )
+        )
+
+        val inOrder = inOrder(entityAdvisoryLock, stockMovementRepository)
+        inOrder.verify(entityAdvisoryLock)
+            .acquire(LockNamespaces.PRODUCT, setOf(firstLocationProductId, secondLocationProductId))
+        inOrder.verify(stockMovementRepository)
+            .findPresentDetailReferences("DISPATCH-1", listOf("DL-1", "DL-2"), MovementType.TRANSFER_IN)
     }
 }

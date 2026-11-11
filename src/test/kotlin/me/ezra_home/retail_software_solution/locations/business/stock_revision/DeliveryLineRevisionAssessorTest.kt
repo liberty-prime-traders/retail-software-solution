@@ -8,6 +8,7 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.FifoLayer
 import me.ezra_home.retail_software_solution.locations.business.stock.api.fifo.StockEntryFifoDto
 import me.ezra_home.retail_software_solution.locations.business.stock.api.read.DeliveryLineStockInspector
+import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.ReplacementLayerPreview
 import me.ezra_home.retail_software_solution.locations.business.stock.api.revision.StockReplacementLayerPreviewer
 import me.ezra_home.retail_software_solution.organizations.business.stock_movement_reason.api.MovementType
 import me.ezra_home.retail_software_solution.util.business.Money
@@ -120,9 +121,8 @@ class DeliveryLineRevisionAssessorTest {
         `when`(deliveryLineStockInspector.getStockEntryId("DEL000001", "DELN000001")).thenReturn(revisedStockEntryId)
         `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(emptyList())
         val layersAfterReplacement = emptyList<StockEntryFifoDto>()
-        `when`(
-            stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(previewReplacementLayerRequest())
-        ).thenReturn(layersAfterReplacement)
+        `when`(stockReplacementLayerPreviewer.previewReplacement(previewReplacementLayerRequest()))
+            .thenReturn(ReplacementLayerPreview(layersAfterReplacement, UUID.randomUUID()))
         `when`(replayPlanner.planReplayForPreview(emptyList(), layersAfterReplacement, "PREVIEW", quantityBreakdown))
             .thenReturn(replayResult)
     }
@@ -160,7 +160,7 @@ class DeliveryLineRevisionAssessorTest {
     }
 
     @Test
-    fun `the replacement layer is the one the preview labelled with its own reference`() {
+    fun `the replacement layer is the one the previewer reports, whatever it is labelled`() {
         givenValidation(emptyList())
         `when`(deliveryLineStockInspector.getStockEntryId("DEL000001", "DELN000001")).thenReturn(revisedStockEntryId)
         `when`(netConsumptionCalculator.calculateNetConsumptions(revisedStockEntryId)).thenReturn(emptyList())
@@ -169,10 +169,10 @@ class DeliveryLineRevisionAssessorTest {
             FifoLayer(UUID.randomUUID(), BigDecimal.TEN, BigDecimal("100.00"), BigDecimal.TEN, BigDecimal("100.00"))
         )
         val laterDelivery = fifoLayerOf("STE000009")
-        val replacementLayer = fifoLayerOf("PREVIEW")
+        val replacementLayer = fifoLayerOf("NOT-THE-ASSESSMENT-LABEL")
         val layersAfterReplacement = listOf(replacementLayer, laterDelivery)
-        `when`(stockReplacementLayerPreviewer.fifoEntriesAfterReplacement(previewReplacementLayerRequest()))
-            .thenReturn(layersAfterReplacement)
+        `when`(stockReplacementLayerPreviewer.previewReplacement(previewReplacementLayerRequest()))
+            .thenReturn(ReplacementLayerPreview(layersAfterReplacement, replacementLayer.fifoLayer.stockEntryId))
         `when`(replayPlanner.planReplayForPreview(emptyList(), layersAfterReplacement, "PREVIEW", quantityBreakdown))
             .thenReturn(ReplayResult(emptyList(), emptyList()))
 

@@ -10,5 +10,5 @@ data class ReceiptSnapshot(
     val receivedById: UUID,
     val receivedAt: OffsetDateTime,
     val notes: String?,
-    val confirmedDispatchLineRefs: Set<String>
+    val confirmedDispatchLineReferenceNumbers: Set<String>
 )

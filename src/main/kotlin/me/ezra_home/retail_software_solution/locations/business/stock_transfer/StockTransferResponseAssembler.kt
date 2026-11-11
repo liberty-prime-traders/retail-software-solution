@@ -28,9 +28,10 @@ class StockTransferResponseAssembler(
 
         val dispatchWithLines = locationService.withLocationSchema(sourceLocationSchema) {
             stockTransferSchemaGateway.buildDispatchWithLines(
-                orderRef = orderDomainDto.referenceNumber,
+                orderReferenceNumber = orderDomainDto.referenceNumber,
                 isDraft = orderDomainDto.status == StockTransferStatus.DRAFT,
-                confirmedRefs = receiptSnapshot?.confirmedDispatchLineRefs ?: emptySet()
+                confirmedDispatchLineReferenceNumbers =
+                    receiptSnapshot?.confirmedDispatchLineReferenceNumbers ?: emptySet()
             )
         }
 
@@ -85,13 +86,13 @@ class StockTransferResponseAssembler(
         receiptLines: List<StockTransferReceiptLineEntity>
     ): StockTransferResponse {
         val sourceLocationSchema = locationService.getSchemaByLocationId(orderDomainDto.sourceLocationId)
-        val confirmedRefs = receiptLines.map { it.stockTransferDispatchLineRef }.toSet()
+        val confirmedDispatchLineReferenceNumbers = receiptLines.map { it.stockTransferDispatchLineRef }.toSet()
 
         val dispatchWithLines = locationService.withLocationSchema(sourceLocationSchema) {
             stockTransferSchemaGateway.buildDispatchWithLines(
-                orderRef = orderDomainDto.referenceNumber,
+                orderReferenceNumber = orderDomainDto.referenceNumber,
                 isDraft = false,
-                confirmedRefs = confirmedRefs
+                confirmedDispatchLineReferenceNumbers = confirmedDispatchLineReferenceNumbers
             )
         }
 

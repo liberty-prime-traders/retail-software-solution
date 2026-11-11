@@ -1,6 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.StockTransferDispatchedLineDto
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockTransferReceiptLineStockRequest
 
 
 fun StockTransferDispatchEntity.toDomainDto() = StockTransferDispatchDomainDto(
@@ -65,7 +65,7 @@ fun StockTransferReceiptLineEntity.toDomainDto() = StockTransferReceiptLineDomai
     createdOn = requiredCreatedOn()
 )
 
-fun StockTransferDispatchLineEntity.toDispatchedLineDto() = StockTransferDispatchedLineDto(
+fun StockTransferDispatchLineEntity.toReceiptLineStockRequest() = StockTransferReceiptLineStockRequest(
     dispatchLineReferenceNumber = requiredReference(),
     orgProductId = orgProductId,
     wholeLineUserProvidedQuantity = wholeLineUserProvidedQuantity,

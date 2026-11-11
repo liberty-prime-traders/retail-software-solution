@@ -2,6 +2,7 @@ package me.ezra_home.retail_software_solution.locations.business.stock_transfer
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductDataFetcher
+import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.StockTransferStockUpdater
 import me.ezra_home.retail_software_solution.organizations.business.stock_transfer.api.StockTransferStatus
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import org.springframework.stereotype.Component
@@ -16,6 +17,7 @@ class StockTransferSchemaGateway(
     private val stockTransferReceiptLineRepository: StockTransferReceiptLineRepository,
     private val reconciledTransferLineFetcher: ReconciledTransferLineFetcher,
     private val locationProductDataFetcher: LocationProductDataFetcher,
+    private val stockTransferStockUpdater: StockTransferStockUpdater,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
@@ -24,29 +26,22 @@ class StockTransferSchemaGateway(
 
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    fun readDispatchLine(dispatchLineRef: String): StockTransferDispatchLineEntity =
-        stockTransferDispatchLineRepository.findByReferenceNumber(dispatchLineRef)
-            ?: throw RtsGenericException("Dispatch line $dispatchLineRef not found")
+    fun readDispatchLine(dispatchLineReferenceNumber: String): StockTransferDispatchLineEntity =
+        stockTransferDispatchLineRepository.findByReferenceNumber(dispatchLineReferenceNumber)
+            ?: throw RtsGenericException("Dispatch line $dispatchLineReferenceNumber not found")
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    fun readAllDispatchLines(orderRef: String): List<StockTransferDispatchLineEntity> {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
-        return stockTransferDispatchLineRepository.findByStockTransferDispatchId(dispatch.id!!)
-    }
-
-    @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    fun readDispatchAndLines(orderRef: String): DispatchWithLines {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
+    fun readDispatchAndLines(orderReferenceNumber: String): DispatchWithLines {
+        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderReferenceNumber)
+            ?: throw RtsGenericException("Dispatch not found for order $orderReferenceNumber")
         val lines = stockTransferDispatchLineRepository.findByStockTransferDispatchId(dispatch.id!!)
         return DispatchWithLines(dispatch, lines)
     }
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    fun readReceiptSnapshot(orderRef: String): ReceiptSnapshot? {
-        val receipt = stockTransferReceiptRepository.findByStockTransferOrderRef(orderRef) ?: return null
-        val confirmedRefs = stockTransferReceiptLineRepository
+    fun readReceiptSnapshot(orderReferenceNumber: String): ReceiptSnapshot? {
+        val receipt = stockTransferReceiptRepository.findByStockTransferOrderRef(orderReferenceNumber) ?: return null
+        val confirmedDispatchLineReferenceNumbers = stockTransferReceiptLineRepository
             .findByStockTransferReceiptId(receipt.id!!)
             .map { it.stockTransferDispatchLineRef }
             .toSet()
@@ -57,33 +52,38 @@ class StockTransferSchemaGateway(
             receivedById = receipt.receivedById,
             receivedAt = receipt.receivedAt,
             notes = receipt.notes,
-            confirmedDispatchLineRefs = confirmedRefs
+            confirmedDispatchLineReferenceNumbers = confirmedDispatchLineReferenceNumbers
         )
     }
 
     @TransactionalOnLocationSchema(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    fun buildDispatchWithLines(orderRef: String, isDraft: Boolean, confirmedRefs: Set<String>): DispatchWithReconciledLines {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
+    fun buildDispatchWithLines(orderReferenceNumber: String, isDraft: Boolean, confirmedDispatchLineReferenceNumbers: Set<String>): DispatchWithReconciledLines {
+        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderReferenceNumber)
+            ?: throw RtsGenericException("Dispatch not found for order $orderReferenceNumber")
         val lines = if (isDraft) {
             reconciledTransferLineFetcher.draftLines(dispatch.id!!)
         } else {
-            reconciledTransferLineFetcher.dispatchLines(dispatch.id!!, confirmedRefs)
+            reconciledTransferLineFetcher.dispatchLines(dispatch.id!!, confirmedDispatchLineReferenceNumbers)
         }
         return DispatchWithReconciledLines(dispatch = dispatch.toDomainDto(), lines = lines)
     }
 
     @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
-    fun markDispatchCompleted(orderRef: String) {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef) ?: return
+    fun markDispatchCompleted(orderReferenceNumber: String) {
+        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderReferenceNumber) ?: return
         dispatch.status = StockTransferStatus.COMPLETED
         stockTransferDispatchRepository.save(dispatch)
     }
 
+    // The restore and the status share one transaction, so a blocked restore leaves the dispatch DISPATCHED
     @TransactionalOnLocationSchema(propagation = Propagation.REQUIRES_NEW)
-    fun cancelDispatch(orderRef: String): String {
-        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderRef)
-            ?: throw RtsGenericException("Dispatch not found for order $orderRef")
+    fun cancelDispatch(orderReferenceNumber: String): String {
+        val dispatch = stockTransferDispatchRepository.findByStockTransferOrderRef(orderReferenceNumber)
+            ?: throw RtsGenericException("Dispatch not found for order $orderReferenceNumber")
+        val dispatchLineReferences = stockTransferDispatchLineRepository
+            .findByStockTransferDispatchId(dispatch.id!!)
+            .map { it.requiredReference() }
+        stockTransferStockUpdater.restoreStockForLines(dispatch.requiredReference(), dispatchLineReferences)
         dispatch.status = StockTransferStatus.CANCELLED
         stockTransferDispatchRepository.save(dispatch)
         return dispatch.requiredReference()
