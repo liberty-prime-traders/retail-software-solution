@@ -33,22 +33,19 @@ under an account lock (`assertPostable`) reads.
   `AccountService.getAll()` + `AccountResponseBuilder`'s full rolled-up tree.
   `hasChildren` and the lookup itself are two targeted `AccountRepository`
   queries (`existsByParentAccountCode`, `findByCode`), not a filter over the
-  cached list. Used directly by `opening_balance`'s `OpeningBalanceService`
-  and `OpeningBalanceHandlerForKafka`.
+  cached list. Used directly by `opening_balance`'s `OpeningBalanceService`.
   `AccountDataFetcher` must **not** depend on `AccountResponseBuilder` —
   that's why `getAll()` lives on `AccountService` instead: `AccountService`
   → `AccountResponseBuilder` → `AccountDataFetcher` is fine (one direction),
   but `AccountDataFetcher` → `AccountResponseBuilder` would close the loop.
   For the same reason, `AccountResponseBuilder`'s `openingBalance` rollup
-  calls `opening_balance`'s `OpeningBalanceService.getAmountsByAccountCodes`
-  **directly**, not through `AccountDataFetcher` — `OpeningBalanceService`
-  itself depends on `AccountDataFetcher` directly (for `upsert`'s
-  validation), so routing the amounts call through
-  `AccountDataFetcher` too would make `AccountDataFetcher` depend on
-  `OpeningBalanceService`, which depends on `AccountDataFetcher` — a cycle.
-  Keeping `AccountResponseBuilder` as the caller (not `AccountDataFetcher`)
-  avoids it, since nothing in the `OpeningBalanceService` chain depends on
-  `AccountResponseBuilder`.
+  calls `opening_balance`'s `OpeningBalanceReader.getAmountsByAccountCodes`,
+  never `OpeningBalanceService`: the reader depends only on the repository,
+  while `OpeningBalanceService` depends on `LedgerPostingService` →
+  `AccountService` → `AccountResponseBuilder`, so `AccountResponseBuilder`
+  calling it would be a cycle. Routing the amounts call through
+  `AccountDataFetcher` would likewise make `AccountDataFetcher` depend on
+  `opening_balance`, which depends on `AccountDataFetcher`.
 
 ## Account types (`AccountType`)
 
@@ -192,9 +189,9 @@ exposes `AccountSelectionCandidate` (via `AccountDataFetcher.getSelectionCandida
   type (`AccountType.isContraOf`, e.g. `SALES_DISCOUNTS` under `SALES_REVENUE`)
   is subtracted, since every balance is stored in its own normal direction.
   `openingBalance` is rolled up the same way,
-  sourced via `opening_balance`'s `OpeningBalanceService.getAmountsByAccountCodes`
-  (see `api/AccountDataFetcher` above for why this calls `OpeningBalanceService`
-  directly rather than through `AccountDataFetcher`).
+  sourced via `opening_balance`'s `OpeningBalanceReader.getAmountsByAccountCodes`
+  (see `api/AccountDataFetcher` above for why this calls the reader rather than
+  `OpeningBalanceService` or `AccountDataFetcher`).
 - Year-end close (`api/DenormalizedYearEndBalanceTransfer`) zeroes every
   `isClosingType()` account with a non-zero balance and transfers net income
   (revenue − revenue contra − (expense − expense contra)) into `SystemAccount.RETAINED_EARNINGS`, all via

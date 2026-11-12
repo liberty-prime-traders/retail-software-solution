@@ -18,8 +18,8 @@ debited *and* credited (a receivable rises on a sale, falls on a payment),
 so the account alone can't say which one an event is. Keeping direction
 independent of account type is also what makes the balanced-entries check
 meaningful — a flipped leg fails it instead of producing a balanced, wrong
-posting. The processors with a runtime direction (`OpeningBalanceAccountingProcessor`,
-`ContactOpeningBalanceAccountingProcessor`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor,
+posting. The builders with a runtime direction (`OpeningBalancePostingRequests`,
+`ContactOpeningBalancePostingRequests`, `SaleTaxLedgerEntriesBuilder`) use the `LedgerEntryRequest` constructor,
 or `LedgerEntryRequest.unlessZero` where the amount can be zero (`SaleTaxLedgerEntriesBuilder`).
 
 ## Zero-amount legs are omitted
@@ -137,7 +137,7 @@ them as `MoneyDisplay`, so an oversized running balance rounds instead of throwi
 - Exposed as `POST secured/contacts/{id}/ledger` with the standard `PageRequest` body (`parameters` is an empty object); contacts are
   never deleted, only status-changed, so the history always has an owner.
 
-- Contact opening balances post through `ContactOpeningBalanceAccountingProcessor`; a downward
+- Contact opening balances post through `ContactOpeningBalancePostingRequests`; a downward
   revision goes in the opposite column like any other reversal. See `contact_opening_balance/README.md`.
 
 ## Expense processors
@@ -208,6 +208,16 @@ the row back. See `loan/README.md`.
 | loan void | `LOAN_VOID` | debit `LOANS_PAYABLE`, credit asset account | the void's `void_date` | receivable raised |
 | loan repayment | `LOAN_REPAYMENT` | debit `LOANS_PAYABLE`, credit asset account | `repayment_date` | receivable raised |
 | loan repayment void | `LOAN_REPAYMENT_VOID` | debit asset account, credit `LOANS_PAYABLE` | the void's `void_date` | payable raised |
+
+`contact_opening_balance` settlements (money received from or paid to a contact against a pre-live balance) post the same
+way, through `ContactOpeningSettlementPostingRequests`. The payment account is the account of the chosen payment method,
+stored on the row.
+
+| Event | Source type | Entries | Posting date | Subledger (contact) |
+|---|---|---|---|---|
+| receipt from a contact (`RECEIVABLE`) | `CONTACT_OPENING_SETTLEMENT` | debit payment account, credit `TRADE_RECEIVABLES` | `settlement_date` | payable raised |
+| payment to a contact (`PAYABLE`) | `CONTACT_OPENING_SETTLEMENT` | debit `TRADE_PAYABLES`, credit payment account | `settlement_date` | receivable raised |
+| void of either | `CONTACT_OPENING_SETTLEMENT_VOID` | the recorded entries swapped | the void's `void_date` | the recorded column swapped |
 
 A void shares its original's reference and posts as a reversal (`reversal = true`), so a loan on a since-deactivated
 asset account can still be voided. Org-level requests carry no location, so `source_location_id` is null and the groups

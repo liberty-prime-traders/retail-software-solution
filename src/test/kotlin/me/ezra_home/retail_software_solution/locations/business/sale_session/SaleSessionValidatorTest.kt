@@ -107,6 +107,15 @@ class SaleSessionValidatorTest {
         saleSessionValidator.guardNoInactiveProducts(saleSession(listOf(activeProductLine)))
     }
 
+    @Test
+    fun `only a confirmed sale is refused as the source of a copy`() {
+        assertThrows(RtsGenericException::class.java) { saleSessionValidator.guardSourceSaleCopyable(SaleStatus.CONFIRMED) }
+
+        listOf(SaleStatus.DRAFT, SaleStatus.VOIDED, SaleStatus.DISCARDED).forEach { copyableStatus ->
+            saleSessionValidator.guardSourceSaleCopyable(copyableStatus)
+        }
+    }
+
     private fun percentageAdjustment(direction: AdjustmentDirection, percentage: BigDecimal, line: SaleSessionLine?) = SaleSessionAdjustment(
         identity = SessionIdentity.mintFreshIdentity(),
         relatedSaleLineIdentity = line?.identity,

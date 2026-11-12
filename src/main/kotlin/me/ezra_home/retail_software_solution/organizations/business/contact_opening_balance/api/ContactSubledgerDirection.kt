@@ -4,5 +4,10 @@ import me.ezra_home.retail_software_solution.util.enums.HasCode
 
 enum class ContactSubledgerDirection(override val code: String) : HasCode {
     RECEIVABLE("R"),
-    PAYABLE("P")
+    PAYABLE("P");
+
+    fun opposite(): ContactSubledgerDirection = when (this) {
+        RECEIVABLE -> PAYABLE
+        PAYABLE -> RECEIVABLE
+    }
 }

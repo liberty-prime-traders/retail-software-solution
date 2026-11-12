@@ -94,7 +94,7 @@ cost. `OpeningStockEntity` exists alongside them purely to:
    `ledger/processors/OpeningStockAccountingProcessor`
    (`SystemAccount.INVENTORY` debit / `SystemAccount.OPENING_BALANCE_EQUITY`
    credit, `LedgerSourceType.OPENING_STOCK`), the same offsetting account
-   `OpeningBalanceAccountingProcessor` uses for org opening balances.
+   `OpeningBalancePostingRequests` uses for org opening balances.
 
 ## REST surface
 
@@ -135,7 +135,7 @@ wraps `OpeningStockRepository.findByLocationProductIdIn`.
 
 This split exists to dodge a Spring circular-bean dependency, the exact
 trap `organizations/business/opening_balance/README.md` describes for
-`AccountDataFetcher`/`OpeningBalanceService`: `OpeningStockService`
+`AccountDataFetcher`/`OpeningBalanceReader`: `OpeningStockService`
 depends on `LocationProductService` and `LocationProductDataFetcher` (for
 `guardAllActive` and `findSummaryByIds`), and **both of those already
 depend on `LocationProductEnricher`** to build their own response DTOs.

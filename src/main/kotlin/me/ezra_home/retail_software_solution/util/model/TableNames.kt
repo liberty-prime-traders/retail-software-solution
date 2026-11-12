@@ -28,6 +28,8 @@ object TableNames {
     const val ADJUSTMENT_REASON = "adjustment_reason"
     const val CONTACT = "contact"
     const val CONTACT_OPENING_BALANCE = "contact_opening_balance"
+    const val CONTACT_OPENING_SETTLEMENT = "contact_opening_settlement"
+    const val CONTACT_OPENING_SETTLEMENT_VOID = "contact_opening_settlement_void"
     const val EVENT_PROCESSING_LOG = "event_processing_log"
     const val EXPENSE_TYPE = "expense_type"
     const val FISCAL_PERIOD = "fiscal_period"

@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-contact-opening-settlement-table
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: contact_opening_settlement
+      changes:
+        - createTable:
+            tableName: contact_opening_settlement
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: ${uuid_function}
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_reference_number_notnull
+                    unique: true
+                    uniqueConstraintName: uq_contact_opening_settlement_reference_number
+
+              - column:
+                  name: contact_reference_number
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_contact_reference_number_notnull
+
+              - column:
+                  name: subledger_direction
+                  type: varchar(5)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_subledger_direction_notnull
+
+              - column:
+                  name: payment_account_code
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_payment_account_code_notnull
+
+              - column:
+                  name: amount
+                  type: numeric(19, 4)
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_amount_notnull
+
+              - column:
+                  name: settlement_date
+                  type: date
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_settlement_date_notnull
+
+              - column:
+                  name: note
+                  type: text
+
+              - column:
+                  name: created_by_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    notNullConstraintName: contact_opening_settlement_created_by_id_notnull
+
+              - column:
+                  name: created_on
+                  type: timestamptz
+                  defaultValueDate: ${now}
+      rollback:
+        - dropTable:
+            tableName: contact_opening_settlement

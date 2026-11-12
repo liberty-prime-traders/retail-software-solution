@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.sale_session
 
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
+import me.ezra_home.retail_software_solution.locations.business.sale.api.SaleStatus
 import me.ezra_home.retail_software_solution.locations.business.sale_payment.api.SalePaymentValidator
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSession
 import me.ezra_home.retail_software_solution.locations.business.sale_session.api.SaleSessionAdjustment
@@ -84,6 +85,12 @@ class SaleSessionValidator(
             throw RtsGenericException(
                 "Cannot add a payment because the sale is ${saleSession.originalStatus}"
             )
+        }
+    }
+
+    fun guardSourceSaleCopyable(sourceSaleStatus: SaleStatus) {
+        if (sourceSaleStatus == SaleStatus.CONFIRMED) {
+            throw RtsGenericException("A confirmed sale cannot be copied")
         }
     }
 

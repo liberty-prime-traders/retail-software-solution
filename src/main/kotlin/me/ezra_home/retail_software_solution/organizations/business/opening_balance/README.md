@@ -35,73 +35,39 @@ exactly as it was posted.
 - `getHistory(accountCode)` is every row for that code, oldest first — no
   Envers/`@Audited` needed, since each row already *is* a point-in-time
   revision.
-- It makes Kafka replay safe (see below): a row never changes after it's
-  written, so its delta relative to whatever preceded it is always
-  reproducible, regardless of when you recompute it.
+- A row never changes after it's written, so its delta relative to whatever
+  preceded it is always reproducible, regardless of when you recompute it.
 
-## Ledger posting is async, and org-scoped
+## Ledger posting is synchronous, and org-scoped
 
 `upsert` computes `delta = newAmount - latest.amount` and, if non-zero,
-inserts the new row then publishes `OpeningBalanceUpsertedEvent` via
-`OpeningBalanceHandlerForKafka.publish` — the actual `LedgerEntryGroup` post
-happens later, in `ledger/processors/OpeningBalanceAccountingProcessor`, via
-the normal Kafka transaction-event pipeline.
+inserts the new row then posts it with `LedgerPostingService.post` in the same
+organization-schema transaction (`OpeningBalancePostingRequests.revised`). A
+posting failure, such as a closed fiscal period or an account that cannot take
+a posting, rolls the row back and reaches the caller. There is no event, no
+processor and no reissue.
 
-This required two changes to shared Kafka infra, because that pipeline was
-previously location-only:
-
-- `TransactionEvent.sourceContext` was widened from
-  `EventSourceContext.LocationLevel` to the base `EventSourceContext`
-  (`OrgLevel` already existed for the unrelated `catalog` event pipeline).
-  `OpeningBalanceUpsertedEvent` is the first `TransactionEvent` to use
-  `OrgLevel` — there's no location, this is an org-level admin action.
-- `TransactionEventProducer` / `DltPublisher` computed their Kafka partition
-  key by reading `sourceContext.locationSchema` directly; both now branch on
-  `LocationLevel`/`OrgLevel` to pick `locationSchema`/`orgSchema`.
-- `LedgerPostingService.saveLedgerGroup` used to call
-  `SessionContextProvider.getLocationId()` unconditionally (throws with no
-  location in session) — changed to the nullable
-  `SessionContextProvider.getSession().location?.id`, matching
-  `LedgerEntryGroupEntity.sourceLocationId: UUID?`, which was already
-  nullable. `LedgerEntryGroupRepository` gained
-  `existsBySourceReferenceNumberAndSourceLocationIdIsNull` so the idempotency
-  check works for a null location too.
-
-Only `OpeningBalanceAccountingProcessor` (in `ledger`) references
-`LedgerSourceType.OPENING_BALANCE`. `opening_balance` never imports anything
-from `ledger` at all; it only ever emits the event.
-
-## Reissue (`OpeningBalanceHandlerForKafka.reissue`)
-
-The generic DLT reissue contract assumes one event per **immutable** source
-document, rebuilt from current DB state. That's exactly what append-only
-buys here: `reissue(sourceDocumentId)` loads that *specific* row (never
-mutated since), finds the row immediately before it for the same account by
-`created_on`, and recomputes `delta = row.amount - previous.amount` — this
-is deterministic no matter how much later the DLT retry runs, unlike trying
-to infer "the delta that failed" from a mutable "current balance" row.
+`OpeningBalancePostingRequests` is the only class that references
+`LedgerSourceType.OPENING_BALANCE`. The account takes its normal side for a
+positive delta and the opposite side for a negative one, and
+`OPENING_BALANCE_EQUITY` takes the other side. The ledger group of an org-level
+posting has no location: `LedgerEntryGroupEntity.sourceLocationId` is nullable,
+and `LedgerPostingService.saveLedgerGroup` reads the session location as
+nullable.
 
 ## Cross-domain account lookups
 
 The account domain's real lookup path (`AccountCache`, `AccountDto`,
-`AccountType`) is internal, not `api/`. `OpeningBalanceService.upsert` and
-`OpeningBalanceHandlerForKafka.reissue` each call
-`account/api/AccountDataFetcher.findByCode` directly — a lean, single-account
+`AccountType`) is internal, not `api/`. `OpeningBalanceService.upsert` calls
+`account/api/AccountDataFetcher.getByCode` directly — a lean, single-account
 lookup added alongside this feature specifically to avoid pulling in
 `AccountService.getAll()` + `AccountResponseBuilder`'s full rolled-up tree
-just to validate one account — and each does its own not-found check
-(`?: throw RtsGenericException(...)`) right there, since only the caller
-has `accountCode` in scope for that message once the lookup returns null.
+just to validate one account.
 The resolved, non-null `AccountLookupDto` then goes through
 `OpeningBalanceAccountValidator.requireLeafActive`, a stateless `object`
 (not a Spring bean, takes the non-null DTO, no not-found concern) that
-throws on inactive/has-children. It's a plain object rather than a shared
-`@Component` specifically because `OpeningBalanceService` already depends
-on `OpeningBalanceHandlerForKafka` — making the validation a method *on*
-`OpeningBalanceService` (as briefly considered) would force
-`OpeningBalanceHandlerForKafka` to depend back on `OpeningBalanceService`,
-a direct two-bean cycle. A stateless object has no constructor and adds no
-edge to the Spring graph either way.
+throws on inactive/has-children. It's a plain object rather than a `@Component`, so it adds no edge to the
+Spring graph.
 
 `AccountDataFetcher` only exposes the raw lookup (`AccountLookupDto`:
 `accountIsActive`, `hasChildren`, `normalBalanceEntryType`), backed by two
@@ -112,18 +78,18 @@ it's this domain's business rule, not a general fact about accounts.
 `normalBalanceEntryType` is exposed on the DTO (instead of the internal
 `AccountType`) so this domain never has to import it. Posting direction
 flips when a correction's `delta` is negative
-(`OpeningBalanceHandlerForKafka.directionFor`).
+(`OpeningBalancePostingRequests`).
 
 This dependency only runs one way: `opening_balance` → `account/api`. The
 account domain also needs opening-balance amounts for its own
 `AccountResponseDto.openingBalance` rollup, via
-`OpeningBalanceService.getAmountsByAccountCodes(codes)` (latest row per
-code, via `OpeningBalanceRepository`'s `SELECT DISTINCT ON` query) — but
-`account`'s `AccountResponseBuilder` calls that directly rather than through
-`AccountDataFetcher`, specifically to avoid a Spring circular-bean
-dependency: `OpeningBalanceService` already depends on `AccountDataFetcher`
-directly, so `AccountDataFetcher` can't depend back on `OpeningBalanceService`
-too. See `account/README.md` for the full explanation.
+`OpeningBalanceReader.getAmountsByAccountCodes(codes)` (latest row per
+code, via `OpeningBalanceRepository`'s `SELECT DISTINCT ON` query). The reader
+depends only on the repository and is a separate bean from
+`OpeningBalanceService`, which depends on `LedgerPostingService`, which depends
+on `AccountService` → `AccountResponseBuilder`: `AccountResponseBuilder` calling
+`OpeningBalanceService` would close that loop into a Spring circular-bean
+dependency. See `account/README.md` for the full explanation.
 
 ## REST surface
 

@@ -5,14 +5,12 @@ import me.ezra_home.retail_software_solution.configuration.session.OrgSession
 import me.ezra_home.retail_software_solution.configuration.session.SessionContext
 import me.ezra_home.retail_software_solution.configuration.session.SessionContextProvider
 import me.ezra_home.retail_software_solution.messaging.kafka.common.EventSourceContext
-import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.OpeningBalanceUpsertedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.OpeningStockDeclaredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveredLineDto
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.PurchaseDeliveryRevisedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentRecordedEvent
 import me.ezra_home.retail_software_solution.messaging.kafka.transaction.events.SupplierPaymentVoidedEvent
-import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
 import me.ezra_home.retail_software_solution.organizations.business.account.api.RecordingAccountService
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactDto
@@ -21,7 +19,6 @@ import me.ezra_home.retail_software_solution.organizations.business.account.api.
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.helpers.LedgerPostingGate
-import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningBalanceAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.OpeningStockAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryAccountingProcessor
 import me.ezra_home.retail_software_solution.organizations.business.ledger.processors.PurchaseDeliveryRevisionAccountingProcessor
@@ -61,7 +58,6 @@ class SupplierAndOpeningPostingBalanceTest {
     private val supplierPaymentProcessor = SupplierPaymentAccountingProcessor(contactService, ledgerEntryGroupRepository, ledgerPostingService)
     private val supplierPaymentVoidProcessor = SupplierPaymentVoidAccountingProcessor(contactService, LedgerPostingGate(ledgerEntryGroupRepository), ledgerPostingService)
     private val openingStockProcessor = OpeningStockAccountingProcessor(ledgerEntryGroupRepository, ledgerPostingService)
-    private val openingBalanceProcessor = OpeningBalanceAccountingProcessor(ledgerEntryGroupRepository, ledgerPostingService)
 
     private val locationLevelContext = EventSourceContext.LocationLevel(orgSchema = "org-a", locationSchema = "loc-1")
     private val locationId = UUID.randomUUID()
@@ -137,22 +133,6 @@ class SupplierAndOpeningPostingBalanceTest {
 
         assertBalance("6.00", SystemAccount.INVENTORY)
         assertBalance("6.00", SystemAccount.OPENING_BALANCE_EQUITY)
-    }
-
-    @Test
-    fun `a debit opening balance on a debit normal account raises both sides`() {
-        post(openingBalanceProcessor.prepareLedgerRequest(openingBalanceUpsertedEvent(SystemAccount.CASH, EntryType.DEBIT, "50.00")))
-
-        assertBalance("50.00", SystemAccount.CASH)
-        assertBalance("50.00", SystemAccount.OPENING_BALANCE_EQUITY)
-    }
-
-    @Test
-    fun `a credit opening balance on a credit normal account raises it and draws equity down`() {
-        post(openingBalanceProcessor.prepareLedgerRequest(openingBalanceUpsertedEvent(SystemAccount.TRADE_PAYABLES, EntryType.CREDIT, "30.00")))
-
-        assertBalance("30.00", SystemAccount.TRADE_PAYABLES)
-        assertBalance("-30.00", SystemAccount.OPENING_BALANCE_EQUITY)
     }
 
     private fun post(ledgerPostingRequest: LedgerPostingRequest) {
@@ -250,18 +230,4 @@ class SupplierAndOpeningPostingBalanceTest {
         totalCost = Money.of(BigDecimal("6.00")),
         postingDate = LocalDate.of(2026, 1, 1)
     )
-
-    private fun openingBalanceUpsertedEvent(systemAccount: SystemAccount, entryType: EntryType, amount: String) =
-        OpeningBalanceUpsertedEvent(
-            eventId = UUID.randomUUID(),
-            sourceContext = EventSourceContext.OrgLevel(orgSchema = "org-a"),
-            timestamp = Instant.now(),
-            correlationId = null,
-            openingBalanceId = UUID.randomUUID(),
-            ledgerSourceReferenceNumber = "OB-1",
-            accountCode = systemAccount.code,
-            accountEntryType = entryType,
-            amount = PositiveMoney.of(BigDecimal(amount)),
-            postingDate = LocalDate.of(2026, 1, 1)
-        )
 }

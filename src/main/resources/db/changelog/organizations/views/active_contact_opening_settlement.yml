@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-view-active-contact-opening-settlement
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - viewExists:
+                viewName: active_contact_opening_settlement
+      changes:
+        - createView:
+            viewName: active_contact_opening_settlement
+            selectQuery: >-
+              SELECT s.id, s.contact_reference_number, s.subledger_direction, s.amount
+              FROM contact_opening_settlement s
+              WHERE NOT EXISTS (SELECT 1 FROM contact_opening_settlement_void v WHERE v.settlement_id = s.id)
+      rollback:
+        - dropView:
+            viewName: active_contact_opening_settlement

@@ -1,6 +1,7 @@
 package me.ezra_home.retail_software_solution.locations.business.delivery
 
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnLocationSchema
+import me.ezra_home.retail_software_solution.locations.business.location_product.api.LastPurchaseCostUpdateDto
 import me.ezra_home.retail_software_solution.locations.business.location_product.api.LocationProductService
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryStatus
 import me.ezra_home.retail_software_solution.locations.business.stock.api.updater.PurchaseDeliveryStockUpdater
@@ -35,8 +36,14 @@ class PurchaseDeliveryInventoryProcessor(
   @TransactionalOnLocationSchema
   override fun handle(event: PurchaseDeliveredEvent) {
     purchaseDeliveryStockUpdater.recordPurchaseDelivery(event)
-    val unitCostByProductId = event.lines.associate { it.locationProductId to it.unitCost }
-    locationProductService.updateLastPurchasePrices(unitCostByProductId)
+    val lastPurchaseCostUpdateDtos = event.lines.map { deliveredLine ->
+      LastPurchaseCostUpdateDto(
+        locationProductId = deliveredLine.locationProductId,
+        unitCost = deliveredLine.unitCost,
+        storageUnitsPerUserProvidedUnit = deliveredLine.storageUnitsPerUserProvidedUnit,
+      )
+    }
+    locationProductService.updateLastPurchaseCosts(lastPurchaseCostUpdateDtos)
     val delivery = deliveryRepository.findById(event.deliveryId).orElseThrow { UpdatingNonExistingRecordException() }
     delivery.status = PurchaseDeliveryStatus.RECEIVED
     deliveryRepository.save(delivery)

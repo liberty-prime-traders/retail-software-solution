@@ -321,8 +321,11 @@ live in the `delivery/` package and are coordinated through
    transaction):
    - Records stock movements via `PurchaseDeliveryStockUpdater`. Each `PURCHASE_RECEIVED` movement carries the context
      `Purchase <reference>`, from `PurchaseDeliveredEvent.purchaseReferenceNumber`.
-   - Updates `LocationProduct.lastPurchasePrice` from
-     `event.lines.unitCost`.
+   - Updates `LocationProduct.lastPurchasePrice` from `event.lines.unitCost`, converted to **cost per base unit**:
+     `unitCost x size of the product's base unit ÷ storageUnitsPerUserProvidedUnit`, half-up at 4 decimals
+     (`LastPurchaseCostUpdateDto.costPerBaseUnit`). A bale delivered at 180 with 18 pieces to the bale stores 10 for a
+     piece-based product. When one delivery carries two lines for the same product, the later line wins. Only
+     deliveries update it; a delivery line revision does not.
    - Flips the delivery from `PROCESSING` → `RECEIVED`.
 8. Payment status is recomputed at the end of `recordDelivery`
    (`purchasePaymentStatusService.patchThenReturnPaymentStatus`).

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-contact-opening-settlement-void-settlement
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_contact_opening_settlement_void_settlement
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: contact_opening_settlement_void
+            baseColumnNames: settlement_id
+            referencedTableName: contact_opening_settlement
+            referencedColumnNames: id
+            constraintName: fk_contact_opening_settlement_void_settlement
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: contact_opening_settlement_void
+            constraintName: fk_contact_opening_settlement_void_settlement

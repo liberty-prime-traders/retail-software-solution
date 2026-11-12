@@ -18,6 +18,7 @@ class SaleSessionLoader(
     private val domainToSessionMapper: DomainToSessionMapper,
     private val locationProductDataFetcher: LocationProductDataFetcher,
     private val saleSessionStockOverlay: SaleSessionStockOverlay,
+    private val saleSessionValidator: SaleSessionValidator,
 ) {
 
     fun newSession(sessionId: UUID, contactId: UUID): SaleSession {
@@ -33,6 +34,7 @@ class SaleSessionLoader(
 
     fun copyFromSale(sessionId: UUID, sourceSaleId: UUID): SaleSession {
         val sourceSaleHeader = saleDataFetcher.getSaleHeader(sourceSaleId)
+        saleSessionValidator.guardSourceSaleCopyable(sourceSaleHeader.status)
         val sourceSaleLines = saleDataFetcher.getSaleLines(sourceSaleId)
         val sourceSaleAdjustments = saleAdjustmentFetcher.getAdjustments(sourceSaleId)
 
