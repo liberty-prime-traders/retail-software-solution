@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.organizations.rest.endpoints
 
+import me.ezra_home.retail_software_solution.locations.business.last_purchase_cost_backfill.api.LastPurchaseCostBackfiller
 import me.ezra_home.retail_software_solution.locations.business.purchase_movement_context_backfill.api.PurchaseMovementContextBackfiller
 import me.ezra_home.retail_software_solution.locations.business.sale_cogs_backfill.api.SaleLineCogsBackfiller
 import me.ezra_home.retail_software_solution.locations.business.stock_adjustment_backfill.api.StockAdjustmentBackfiller
@@ -22,6 +23,7 @@ class AdminDataEndpoint(
     private val saleLineCogsBackfiller: SaleLineCogsBackfiller,
     private val stockAdjustmentBackfiller: StockAdjustmentBackfiller,
     private val purchaseMovementContextBackfiller: PurchaseMovementContextBackfiller,
+    private val lastPurchaseCostBackfiller: LastPurchaseCostBackfiller,
 ) {
 
     @PostMapping("seed-defaults")
@@ -41,4 +43,8 @@ class AdminDataEndpoint(
     @PostMapping("purchase-movement-context/backfill")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun backfillPurchaseMovementContext() = purchaseMovementContextBackfiller.startBackfillAllLocations()
+
+    @PostMapping("last-purchase-cost/backfill")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun backfillLastPurchaseCost() = lastPurchaseCostBackfiller.startBackfillAllLocations()
 }

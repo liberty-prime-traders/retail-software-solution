@@ -7,6 +7,7 @@ data class PurchasePaymentStatusSummaryRawRow(
   val paymentStatusCode: String,
   val purchaseCount: Long,
   val totalOrdered: BigDecimal,
+  val totalDelivered: BigDecimal,
   val totalPaid: BigDecimal
 )
 
@@ -14,5 +15,6 @@ data class PurchaseSupplierSummaryRawRow(
   val supplierId: UUID,
   val purchaseCount: Long,
   val totalOrdered: BigDecimal,
+  val totalDelivered: BigDecimal,
   val totalPaid: BigDecimal
 )

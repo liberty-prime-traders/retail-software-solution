@@ -842,10 +842,13 @@ Add new guards as early as the data they need is in scope.
 - **Summary** aggregates the whole filtered set (not a page) via `GROUP BY payment_status` and,
   only when `supplierIds` is non-empty, a second `GROUP BY supplier_id` query — omitted (`null`)
   otherwise, since an unfiltered per-supplier breakdown would be unbounded. Header totals
-  (`purchaseCount`/`totalOrdered`/`totalPaid`) are the sum of the `byPaymentStatus` rows in Kotlin,
+  (`purchaseCount`/`totalOrdered`/`totalDelivered`/`totalPaid`) are the sum of the `byPaymentStatus` rows in Kotlin,
   not a third query — same trick as `PaymentSearchService`. `totalOutstanding` is
-  `totalOrdered - totalPaid` (the ordered basis): a `PAID` purchase can still show non-zero
-  outstanding if more was ordered than delivered. `totalPaid` always excludes voided
+  `totalDelivered - totalPaid` (the delivered basis, matching `PurchaseResponseDto.deliveredTotal`): goods not yet
+  delivered are not owed, so an undelivered remainder never shows as outstanding. `totalDelivered` sums ACTIVE
+  `purchase_delivery_line` rows only (a third `LATERAL` join, rounded per line at the money scale like
+  `PurchaseDeliveryLineEntity.lineTotal()`). A prepaid, not-yet-delivered purchase therefore contributes a negative
+  amount to `totalOutstanding`. `totalPaid` always excludes voided
   `supplier_payment` rows (joined via `supplier_payment_void`), same as everywhere else paid amounts
   appear. Both `recordedFrom` and `recordedBefore` are required on list and summary searches and may span
   at most one year (`SearchGuards.guardBoundedRange`), so no query is an unbounded full-table scan. `recordedBefore` is exclusive. Amount filters reject

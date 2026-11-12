@@ -1,5 +1,6 @@
 package me.ezra_home.retail_software_solution.locations.business.purchase.search
 
+import me.ezra_home.retail_software_solution.locations.business.purchase.api.delivery.PurchaseDeliveryLineStatus
 import me.ezra_home.retail_software_solution.locations.business.purchase.api.search.PurchaseSearchParameters
 import me.ezra_home.retail_software_solution.util.business.Decimals
 import me.ezra_home.retail_software_solution.util.model.TableNames
@@ -38,12 +39,28 @@ object PurchaseSearchQueryBuilder {
     ) ${PurchaseSearchAliases.PAID_TOTAL} ON true
   """
 
+  // Revised delivery lines stay in the table, so only ACTIVE ones count. Per-line rounding matches
+  // PurchaseDeliveryLineEntity.lineTotal(), or the summary drifts from PurchaseResponseDto.deliveredTotal.
+  private fun deliveredTotalJoin(): String = """
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(ROUND(
+        pdl.user_provided_quantity_delivered * pdl.unit_cost,
+        ${Decimals.MoneyScale.scale}
+      )), 0) AS delivered_total
+      FROM ${TableNames.PURCHASE_DELIVERY} pd
+      JOIN ${TableNames.PURCHASE_DELIVERY_LINE} pdl ON pdl.purchase_delivery_id = pd.id
+      WHERE pd.purchase_id = ${PurchaseSearchAliases.PURCHASE}.id
+        AND pdl.status = '${PurchaseDeliveryLineStatus.ACTIVE.code}'
+    ) ${PurchaseSearchAliases.DELIVERED_TOTAL} ON true
+  """
+
   private const val LIST_FROM_ONLY = "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE}"
 
   private fun listFromWithOrderedTotal(): String = "$LIST_FROM_ONLY ${orderedTotalJoin()}"
 
   private fun summaryFromAndJoins(): String =
-    "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE} ${orderedTotalJoin()} $PAID_TOTAL_JOIN"
+    "FROM ${TableNames.PURCHASE} ${PurchaseSearchAliases.PURCHASE} ${orderedTotalJoin()} $PAID_TOTAL_JOIN " +
+      deliveredTotalJoin()
 
   fun buildPredicate(purchaseSearchParameters: PurchaseSearchParameters): QueryBuilderContext {
     val context = QueryBuilderContext()
@@ -142,6 +159,7 @@ object PurchaseSearchQueryBuilder {
         ${PurchaseSearchAliases.PURCHASE}.payment_status AS payment_status,
         COUNT(*) AS purchase_count,
         COALESCE(SUM(${PurchaseSearchAliases.ORDERED_TOTAL}.ordered_total), 0) AS total_ordered,
+        COALESCE(SUM(${PurchaseSearchAliases.DELIVERED_TOTAL}.delivered_total), 0) AS total_delivered,
         COALESCE(SUM(${PurchaseSearchAliases.PAID_TOTAL}.paid_total), 0) AS total_paid
       ${summaryFromAndJoins()}
       WHERE ${predicate.whereClauses.joinToString(" AND ")}
@@ -157,6 +175,7 @@ object PurchaseSearchQueryBuilder {
         ${PurchaseSearchAliases.PURCHASE}.supplier_id AS supplier_id,
         COUNT(*) AS purchase_count,
         COALESCE(SUM(${PurchaseSearchAliases.ORDERED_TOTAL}.ordered_total), 0) AS total_ordered,
+        COALESCE(SUM(${PurchaseSearchAliases.DELIVERED_TOTAL}.delivered_total), 0) AS total_delivered,
         COALESCE(SUM(${PurchaseSearchAliases.PAID_TOTAL}.paid_total), 0) AS total_paid
       ${summaryFromAndJoins()}
       WHERE ${predicate.whereClauses.joinToString(" AND ")}

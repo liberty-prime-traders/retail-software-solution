@@ -10,6 +10,7 @@ object PurchaseSearchRowMapper {
     paymentStatusCode = tuple.get("payment_status", String::class.java),
     purchaseCount = tuple.get("purchase_count", Number::class.java).toLong(),
     totalOrdered = tuple.get("total_ordered", BigDecimal::class.java),
+    totalDelivered = tuple.get("total_delivered", BigDecimal::class.java),
     totalPaid = tuple.get("total_paid", BigDecimal::class.java)
   )
 
@@ -17,6 +18,7 @@ object PurchaseSearchRowMapper {
     supplierId = tuple.get("supplier_id", UUID::class.java),
     purchaseCount = tuple.get("purchase_count", Number::class.java).toLong(),
     totalOrdered = tuple.get("total_ordered", BigDecimal::class.java),
+    totalDelivered = tuple.get("total_delivered", BigDecimal::class.java),
     totalPaid = tuple.get("total_paid", BigDecimal::class.java)
   )
 }

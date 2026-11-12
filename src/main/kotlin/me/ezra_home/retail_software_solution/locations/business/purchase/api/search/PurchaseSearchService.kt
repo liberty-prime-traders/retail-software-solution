@@ -59,6 +59,7 @@ class PurchaseSearchService(
     return PurchaseSearchSummaryDto(
       purchaseCount = byPaymentStatusRaw.sumOf { it.purchaseCount },
       totalOrdered = byPaymentStatusRaw.sumOf { it.totalOrdered },
+      totalDelivered = byPaymentStatusRaw.sumOf { it.totalDelivered },
       totalPaid = byPaymentStatusRaw.sumOf { it.totalPaid },
       byPaymentStatus = byPaymentStatus,
       bySupplier = bySupplier
@@ -69,6 +70,7 @@ class PurchaseSearchService(
     paymentStatus = PaymentStatus.entries.first { it.code == paymentStatusCode },
     purchaseCount = purchaseCount,
     totalOrdered = totalOrdered,
+    totalDelivered = totalDelivered,
     totalPaid = totalPaid
   )
 
@@ -77,6 +79,7 @@ class PurchaseSearchService(
     supplierName = supplierNamesById.getValue(supplierId),
     purchaseCount = purchaseCount,
     totalOrdered = totalOrdered,
+    totalDelivered = totalDelivered,
     totalPaid = totalPaid
   )
 }

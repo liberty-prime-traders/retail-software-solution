@@ -8,9 +8,10 @@ data class PurchasePaymentStatusSummaryDto(
   val paymentStatus: PaymentStatus,
   val purchaseCount: Long,
   val totalOrdered: BigDecimal,
+  val totalDelivered: BigDecimal,
   val totalPaid: BigDecimal
 ) {
-  val totalOutstanding: BigDecimal = totalOrdered - totalPaid
+  val totalOutstanding: BigDecimal = totalDelivered - totalPaid
 }
 
 data class PurchaseSupplierSummaryDto(
@@ -18,17 +19,19 @@ data class PurchaseSupplierSummaryDto(
   val supplierName: String,
   val purchaseCount: Long,
   val totalOrdered: BigDecimal,
+  val totalDelivered: BigDecimal,
   val totalPaid: BigDecimal
 ) {
-  val totalOutstanding: BigDecimal = totalOrdered - totalPaid
+  val totalOutstanding: BigDecimal = totalDelivered - totalPaid
 }
 
 data class PurchaseSearchSummaryDto(
   val purchaseCount: Long,
   val totalOrdered: BigDecimal,
+  val totalDelivered: BigDecimal,
   val totalPaid: BigDecimal,
   val byPaymentStatus: List<PurchasePaymentStatusSummaryDto>,
   val bySupplier: List<PurchaseSupplierSummaryDto>?
 ) {
-  val totalOutstanding: BigDecimal = totalOrdered - totalPaid
+  val totalOutstanding: BigDecimal = totalDelivered - totalPaid
 }
