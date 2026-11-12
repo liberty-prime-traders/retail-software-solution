@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-foreign-key-contact-opening-settlement-contact-reference-number
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_contact_opening_settlement_contact_reference_number
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: contact_opening_settlement
+            baseColumnNames: contact_reference_number
+            referencedTableName: contact
+            referencedColumnNames: reference_number
+            constraintName: fk_contact_opening_settlement_contact_reference_number
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: contact_opening_settlement
+            constraintName: fk_contact_opening_settlement_contact_reference_number
+
+  - changeSet:
+      id: add-foreign-key-contact-opening-settlement-payment-account-code
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyName: fk_contact_opening_settlement_payment_account_code
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: contact_opening_settlement
+            baseColumnNames: payment_account_code
+            referencedTableName: account
+            referencedColumnNames: code
+            constraintName: fk_contact_opening_settlement_payment_account_code
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: contact_opening_settlement
+            constraintName: fk_contact_opening_settlement_payment_account_code

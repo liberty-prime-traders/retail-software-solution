@@ -16,6 +16,8 @@ enum class LedgerSourceType(override val code: String, val postsToProfitAndLoss:
     SUPPLIER_PAYMENT_VOID("SPV", false),
     OPENING_BALANCE("OB", false),
     CONTACT_OPENING_BALANCE("COB", false),
+    CONTACT_OPENING_SETTLEMENT("COS", false),
+    CONTACT_OPENING_SETTLEMENT_VOID("COSV", false),
     OPENING_STOCK("OS", false),
     STOCK_ADJUSTMENT("SA", true),
     STOCK_TRANSFER_DISPATCH("STD", false),

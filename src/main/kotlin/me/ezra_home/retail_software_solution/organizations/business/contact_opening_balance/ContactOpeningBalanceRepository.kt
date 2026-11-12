@@ -10,12 +10,27 @@ import java.util.UUID
 @Repository
 interface ContactOpeningBalanceRepository : JpaRepository<ContactOpeningBalanceEntity, UUID> {
 
-    fun findFirstByContactReferenceNumberAndSubledgerDirectionOrderByCreatedOnDesc(
+    @Query("""
+        SELECT balance FROM ContactOpeningBalanceEntity balance
+        WHERE balance.contactReferenceNumber = :contactReferenceNumber
+        AND balance.subledgerDirection = :subledgerDirection
+        ORDER BY balance.createdOn DESC
+        LIMIT 1
+    """)
+    fun findLatestRevision(
         contactReferenceNumber: String,
         subledgerDirection: ContactSubledgerDirection
     ): ContactOpeningBalanceEntity?
 
-    fun findFirstByContactReferenceNumberAndSubledgerDirectionAndCreatedOnLessThanOrderByCreatedOnDesc(
+    @Query("""
+        SELECT balance FROM ContactOpeningBalanceEntity balance
+        WHERE balance.contactReferenceNumber = :contactReferenceNumber
+        AND balance.subledgerDirection = :subledgerDirection
+        AND balance.createdOn < :createdOn
+        ORDER BY balance.createdOn DESC
+        LIMIT 1
+    """)
+    fun findLatestRevisionBefore(
         contactReferenceNumber: String,
         subledgerDirection: ContactSubledgerDirection,
         createdOn: OffsetDateTime

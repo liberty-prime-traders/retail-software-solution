@@ -4,12 +4,15 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactService
 import me.ezra_home.retail_software_solution.organizations.business.contact.api.ContactStatus
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.ContactOpeningBalanceEntity
-import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.ContactOpeningBalanceHandlerForKafka
+import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.ContactOpeningBalancePostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.ContactOpeningBalanceRepository
+import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.ContactOpeningSettlementFinder
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.ledger.api.SubledgerBalanceDto
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.DateTimes
+import me.ezra_home.retail_software_solution.util.business.DisplayFormatters
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
@@ -24,7 +27,8 @@ import java.util.UUID
 class ContactOpeningBalanceService(
     private val contactOpeningBalanceRepository: ContactOpeningBalanceRepository,
     private val contactService: ContactService,
-    private val contactOpeningBalanceHandlerForKafka: ContactOpeningBalanceHandlerForKafka,
+    private val ledgerPostingService: LedgerPostingService,
+    private val contactOpeningSettlementFinder: ContactOpeningSettlementFinder,
     private val orgEntityAdvisoryLock: OrgEntityAdvisoryLock,
     private val fiscalPeriodService: FiscalPeriodService,
     private val userQualifier: UserQualifier
@@ -39,10 +43,26 @@ class ContactOpeningBalanceService(
         }
         orgEntityAdvisoryLock.acquire(LockNamespaces.CONTACT_OPENING_BALANCE, contactDto.referenceNumber)
         val existingBalance = SubledgerBalanceDto(
-            payable = latestAmount(contactDto.referenceNumber, ContactSubledgerDirection.PAYABLE),
-            receivable = latestAmount(contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE)
+            payable = contactOpeningSettlementFinder.declaredAmount(
+                contactDto.referenceNumber,
+                ContactSubledgerDirection.PAYABLE
+            ),
+            receivable = contactOpeningSettlementFinder.declaredAmount(
+                contactDto.referenceNumber,
+                ContactSubledgerDirection.RECEIVABLE
+            )
         )
         val targetBalance = contactOpeningBalanceSetDto.applyTo(existingBalance)
+        requireNotBelowSettled(
+            contactDto.referenceNumber,
+            ContactSubledgerDirection.RECEIVABLE,
+            targetBalance.receivable
+        )
+        requireNotBelowSettled(
+            contactDto.referenceNumber,
+            ContactSubledgerDirection.PAYABLE,
+            targetBalance.payable
+        )
         reviseSubledgerDirection(
             contactDto.referenceNumber, ContactSubledgerDirection.RECEIVABLE,
             existingBalance.receivable, targetBalance.receivable, postingDate
@@ -53,11 +73,21 @@ class ContactOpeningBalanceService(
         )
     }
 
-    private fun latestAmount(contactReferenceNumber: String, subledgerDirection: ContactSubledgerDirection): BigDecimal =
-        contactOpeningBalanceRepository.findFirstByContactReferenceNumberAndSubledgerDirectionOrderByCreatedOnDesc(
-            contactReferenceNumber,
-            subledgerDirection
-        )?.amount ?: BigDecimal.ZERO
+    private fun requireNotBelowSettled(
+        contactReferenceNumber: String,
+        subledgerDirection: ContactSubledgerDirection,
+        targetAmount: BigDecimal
+    ) {
+        val settledAmount = contactOpeningSettlementFinder.activeSettledAmount(contactReferenceNumber, subledgerDirection)
+        if (targetAmount < settledAmount) {
+            throw RtsGenericException(
+                "The ${subledgerDirection.name.lowercase()} opening balance cannot be set to " +
+                    "${DisplayFormatters.formatCurrency(targetAmount)}, below the " +
+                    "${DisplayFormatters.formatCurrency(settledAmount)} already settled against it; " +
+                    "void the settlements first"
+            )
+        }
+    }
 
     private fun reviseSubledgerDirection(
         contactReferenceNumber: String,
@@ -76,7 +106,15 @@ class ContactOpeningBalanceService(
                 amount = targetAmount
             )
         )
-        contactOpeningBalanceHandlerForKafka.publish(savedContactOpeningBalanceEntity, signedDelta, postingDate)
+        ledgerPostingService.post(
+            ContactOpeningBalancePostingRequests.revised(
+                ledgerSourceReferenceNumber = savedContactOpeningBalanceEntity.requiredReference(),
+                contactReferenceNumber = contactReferenceNumber,
+                subledgerDirection = subledgerDirection,
+                signedDelta = signedDelta,
+                postingDate = postingDate
+            )
+        )
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)

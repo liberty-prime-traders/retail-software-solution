@@ -3,7 +3,7 @@ package me.ezra_home.retail_software_solution.organizations.business.account
 import me.ezra_home.retail_software_solution.configuration.datasource.TransactionalOnOrganizationSchema
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountResponseDto
 import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
-import me.ezra_home.retail_software_solution.organizations.business.opening_balance.api.OpeningBalanceService
+import me.ezra_home.retail_software_solution.organizations.business.opening_balance.api.OpeningBalanceReader
 import me.ezra_home.retail_software_solution.util.ui_models.BalanceEffect
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -12,7 +12,7 @@ import java.math.BigDecimal
 @TransactionalOnOrganizationSchema(readOnly = true)
 class AccountResponseBuilder(
     private val accountRepository: AccountRepository,
-    private val openingBalanceService: OpeningBalanceService
+    private val openingBalanceReader: OpeningBalanceReader
 ) {
 
     fun buildResponse(accounts: AccountDto): AccountResponseDto {
@@ -24,7 +24,7 @@ class AccountResponseBuilder(
         val rawBalances = accountRepository
             .findBalancesByCodes(accountsByCode.keys.toSet())
             .associateBy(AccountBalance::code)
-        val rawOpeningBalances = openingBalanceService.getAmountsByAccountCodes(accountsByCode.keys)
+        val rawOpeningBalances = openingBalanceReader.getAmountsByAccountCodes(accountsByCode.keys)
         val rolledUpBalances = accountsByCode.keys.associateWith { code ->
             computeRolledUpAmount(code, accountsByCode) { rawBalances[it]?.currentBalance }
         }

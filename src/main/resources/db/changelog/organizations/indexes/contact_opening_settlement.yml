@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-index-contact-opening-settlement-contact-direction
+      author: ezra
+      labels: 2.0.0
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_contact_opening_settlement_contact_direction
+      changes:
+        - createIndex:
+            indexName: idx_contact_opening_settlement_contact_direction
+            tableName: contact_opening_settlement
+            columns:
+              - column:
+                  name: contact_reference_number
+              - column:
+                  name: subledger_direction
+      rollback:
+        - dropIndex:
+            indexName: idx_contact_opening_settlement_contact_direction
+            tableName: contact_opening_settlement

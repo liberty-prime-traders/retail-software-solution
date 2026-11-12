@@ -126,9 +126,10 @@ further edits; only `confirm` and `abandon` actually terminate the session.
 for the supplied `saleId` — returns the existing one (one-session-per-sale
 guarantee).
 
-`start({copyFromSaleId})` mints a new unsaved DRAFT session from a sale in **any** status
-(`SaleSessionLoader.copyFromSale`); it never short-circuits, and may be called repeatedly for the same
-source. It reads the persisted sale, so unsaved edits in the source's open session are not copied. The copy
+`start({copyFromSaleId})` mints a new unsaved DRAFT session from a DRAFT, VOIDED or DISCARDED sale
+(`SaleSessionLoader.copyFromSale`); a CONFIRMED source is rejected by `guardSourceSaleCopyable`, because copying
+a sale that really happened makes an accidental duplicate easy. It never short-circuits, and may be called
+repeatedly for the same source. It reads the persisted sale, so unsaved edits in the source's open session are not copied. The copy
 has `saleId = null`, fresh transient identities on every line and adjustment (adjustments re-keyed to the new
 line identities), no payments, `contactId` and `notes` carried, and `referenceNumber`, `soldById` and
 `dateSold` blank. Lines keep the stored `defaultSalePrice`, `lineTotal` and

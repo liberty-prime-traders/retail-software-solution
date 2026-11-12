@@ -4,9 +4,10 @@ import me.ezra_home.retail_software_solution.configuration.datasource.Transactio
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountDataFetcher
 import me.ezra_home.retail_software_solution.organizations.business.account.api.AccountStructureLock
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceAccountValidator
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceEntity
-import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceHandlerForKafka
+import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalancePostingRequests
 import me.ezra_home.retail_software_solution.organizations.business.opening_balance.OpeningBalanceRepository
 import me.ezra_home.retail_software_solution.util.business.DateTimes
 import me.ezra_home.retail_software_solution.util.business.mappers.UserQualifier
@@ -18,7 +19,7 @@ import java.math.BigDecimal
 class OpeningBalanceService(
     private val openingBalanceRepository: OpeningBalanceRepository,
     private val accountDataFetcher: AccountDataFetcher,
-    private val openingBalanceHandlerForKafka: OpeningBalanceHandlerForKafka,
+    private val ledgerPostingService: LedgerPostingService,
     private val accountStructureLock: AccountStructureLock,
     private val fiscalPeriodService: FiscalPeriodService,
     private val userQualifier: UserQualifier
@@ -35,16 +36,18 @@ class OpeningBalanceService(
         val delta = upsertDto.newAmount.toBigDecimal() - (latest?.amount ?: BigDecimal.ZERO)
         if (delta.compareTo(BigDecimal.ZERO) == 0) return
 
-        val saved = openingBalanceRepository.save(OpeningBalanceEntity(accountCode = upsertDto.accountCode, amount = upsertDto.newAmount.toBigDecimal()))
-        val accountEntryType = openingBalanceHandlerForKafka.directionFor(account.normalBalanceEntryType, delta)
-        openingBalanceHandlerForKafka.publish(saved, accountEntryType, delta.abs(), postingDate)
-    }
-
-    @TransactionalOnOrganizationSchema(readOnly = true)
-    fun getAmountsByAccountCodes(accountCodes: Set<String>): Map<String, BigDecimal> {
-        if (accountCodes.isEmpty()) return emptyMap()
-        return openingBalanceRepository.findLatestForAccountCodes(accountCodes)
-            .associate { it.accountCode to it.amount }
+        val saved = openingBalanceRepository.save(
+            OpeningBalanceEntity(accountCode = upsertDto.accountCode, amount = upsertDto.newAmount.toBigDecimal())
+        )
+        ledgerPostingService.post(
+            OpeningBalancePostingRequests.revised(
+                ledgerSourceReferenceNumber = saved.requiredReference(),
+                accountCode = upsertDto.accountCode,
+                normalBalanceEntryType = account.normalBalanceEntryType,
+                signedDelta = delta,
+                postingDate = postingDate
+            )
+        )
     }
 
     @TransactionalOnOrganizationSchema(readOnly = true)

@@ -10,7 +10,11 @@ import me.ezra_home.retail_software_solution.organizations.business.contact.api.
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceService
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactOpeningBalanceSetDto
 import me.ezra_home.retail_software_solution.organizations.business.contact_opening_balance.api.ContactSubledgerDirection
+import me.ezra_home.retail_software_solution.organizations.business.account.api.EntryType
+import me.ezra_home.retail_software_solution.organizations.business.account.api.SystemAccount
 import me.ezra_home.retail_software_solution.organizations.business.fiscal_period.api.FiscalPeriodService
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingRequest
+import me.ezra_home.retail_software_solution.organizations.business.ledger.api.LedgerPostingService
 import me.ezra_home.retail_software_solution.organizations.business.lock.api.OrgEntityAdvisoryLock
 import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.business.lock.LockNamespaces
@@ -41,21 +45,32 @@ class ContactOpeningBalanceServiceTest {
         arrayOf(ContactOpeningBalanceRepository::class.java)
     ) { _, method, arguments ->
         when (method.name) {
-            "save" -> (arguments[0] as ContactOpeningBalanceEntity).also { savedRevisions.add(it) }
+            "save" -> (arguments[0] as ContactOpeningBalanceEntity).also {
+                it.referenceNumber = "COB000001"
+                savedRevisions.add(it)
+            }
             "findByContactReferenceNumberOrderByCreatedOnAsc" -> historyRows
-            "findFirstByContactReferenceNumberAndSubledgerDirectionOrderByCreatedOnDesc" -> latestRevisionsBySubledgerDirection[arguments[1]]
             else -> throw UnsupportedOperationException(method.name)
         }
     } as ContactOpeningBalanceRepository
 
     private val contactService = mock(ContactService::class.java)
-    private val contactOpeningBalanceHandlerForKafka = mock(ContactOpeningBalanceHandlerForKafka::class.java)
+    private val ledgerPostingService = mock(LedgerPostingService::class.java)
     private val orgEntityAdvisoryLock = mock(OrgEntityAdvisoryLock::class.java)
     private val userQualifier = mock(UserQualifier::class.java)
+    private var activeSettledAmount = BigDecimal.ZERO
+    private val contactOpeningSettlementFinder = mock(ContactOpeningSettlementFinder::class.java) { invocation ->
+        when (invocation.method.name) {
+            "declaredAmount" -> latestRevisionsBySubledgerDirection[invocation.arguments[1]]?.amount ?: BigDecimal.ZERO
+            "activeSettledAmount" -> activeSettledAmount
+            else -> throw UnsupportedOperationException(invocation.method.name)
+        }
+    }
     private val contactOpeningBalanceService = ContactOpeningBalanceService(
         contactOpeningBalanceRepository,
         contactService,
-        contactOpeningBalanceHandlerForKafka,
+        ledgerPostingService,
+        contactOpeningSettlementFinder,
         orgEntityAdvisoryLock,
         mock(FiscalPeriodService::class.java),
         userQualifier
@@ -78,12 +93,12 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `the first revision publishes the whole amount as the delta`() {
+    fun `the first revision posts the whole amount as the delta`() {
         contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.00"))
 
         val saved = savedRevisions.single()
         assertEquals(ContactSubledgerDirection.RECEIVABLE, saved.subledgerDirection)
-        assertEquals(listOf("100.00"), publishedSignedDeltas())
+        assertEquals(listOf("100.00"), postedSignedDeltas())
         assertTrue(lockInvocations().single().arguments.toList() == listOf(LockNamespaces.CONTACT_OPENING_BALANCE, contactReferenceNumber))
     }
 
@@ -95,7 +110,7 @@ class ContactOpeningBalanceServiceTest {
             listOf(ContactSubledgerDirection.RECEIVABLE, ContactSubledgerDirection.PAYABLE),
             savedRevisions.map { it.subledgerDirection }
         )
-        assertEquals(listOf("100.00", "40.00"), publishedSignedDeltas())
+        assertEquals(listOf("100.00", "40.00"), postedSignedDeltas())
         assertEquals(1, lockInvocations().size)
     }
 
@@ -106,7 +121,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(receivable = "20.00"))
 
         assertEquals(ContactSubledgerDirection.RECEIVABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("20.00"), publishedSignedDeltas())
+        assertEquals(listOf("20.00"), postedSignedDeltas())
     }
 
     @Test
@@ -116,7 +131,7 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, ContactOpeningBalanceSetDto(payable = Optional.empty()))
 
         assertEquals("0.00", savedRevisions.single().amount.toPlainString())
-        assertEquals(listOf("-100.00"), publishedSignedDeltas())
+        assertEquals(listOf("-100.00"), postedSignedDeltas())
     }
 
     @Test
@@ -128,24 +143,24 @@ class ContactOpeningBalanceServiceTest {
     }
 
     @Test
-    fun `a revision upward and downward publishes the signed delta against the previous revision`() {
+    fun `a revision upward and downward posts the signed delta against the previous revision`() {
         givenLatestRevision(revisionRow(ContactSubledgerDirection.PAYABLE, "100.00"))
         contactOpeningBalanceService.set(contactId, setDto(payable = "130.00", receivable = "0"))
         givenLatestRevision(savedRevisions.last())
         contactOpeningBalanceService.set(contactId, setDto(payable = "90.00", receivable = "0"))
 
         assertEquals(2, savedRevisions.size)
-        assertEquals(listOf("30.00", "-40.00"), publishedSignedDeltas())
+        assertEquals(listOf("30.00", "-40.00"), postedSignedDeltas())
     }
 
     @Test
-    fun `a zero delta records no revision and publishes nothing`() {
+    fun `a zero delta records no revision and posts nothing`() {
         givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.00"))
 
         contactOpeningBalanceService.set(contactId, setDto(payable = "0", receivable = "100.00"))
 
         assertTrue(savedRevisions.isEmpty())
-        assertTrue(publishedSignedDeltas().isEmpty())
+        assertTrue(postedSignedDeltas().isEmpty())
     }
 
     @Test
@@ -161,7 +176,21 @@ class ContactOpeningBalanceServiceTest {
         contactOpeningBalanceService.set(contactId, setDto(payable = "40.00", receivable = "100.00"))
 
         assertEquals(ContactSubledgerDirection.PAYABLE, savedRevisions.single().subledgerDirection)
-        assertEquals(listOf("40.00"), publishedSignedDeltas())
+        assertEquals(listOf("40.00"), postedSignedDeltas())
+    }
+
+    @Test
+    fun `a side cannot be lowered below the amount already settled against it, and neither side is written`() {
+        givenLatestRevision(revisionRow(ContactSubledgerDirection.RECEIVABLE, "100.00"))
+        activeSettledAmount = BigDecimal("60.00")
+
+        assertThrows(RtsGenericException::class.java) {
+            contactOpeningBalanceService.set(contactId, setDto(payable = "40.00", receivable = "50.00"))
+        }
+        assertTrue(savedRevisions.isEmpty())
+
+        contactOpeningBalanceService.set(contactId, setDto(payable = "60.00", receivable = "60.00"))
+        assertEquals(listOf("60.00"), savedRevisions.map { it.amount.toPlainString() }.take(1))
     }
 
     @Test
@@ -240,10 +269,21 @@ class ContactOpeningBalanceServiceTest {
         receivable = receivable?.let { Optional.of(Money.of(BigDecimal(it))) }
     )
 
-    private fun publishedSignedDeltas(): List<String> =
-        mockingDetails(contactOpeningBalanceHandlerForKafka).invocations
-            .filter { it.method.name == "publish" }
-            .map { (it.arguments[1] as BigDecimal).toPlainString() }
+    private fun postedSignedDeltas(): List<String> =
+        mockingDetails(ledgerPostingService).invocations
+            .filter { it.method.name == "post" }
+            .map { signedDeltaOf(it.arguments[0] as LedgerPostingRequest) }
+
+    private fun signedDeltaOf(ledgerPostingRequest: LedgerPostingRequest): String {
+        val controlEntry = ledgerPostingRequest.entries.single {
+            it.accountCode != SystemAccount.OPENING_BALANCE_EQUITY.code
+        }
+        val controlAccountIsReceivables = controlEntry.accountCode == SystemAccount.TRADE_RECEIVABLES.code
+        val controlEntryIsDebit = controlEntry.entryType == EntryType.DEBIT
+        val raisesControlBalance = controlAccountIsReceivables == controlEntryIsDebit
+        val amount = controlEntry.amount.toBigDecimal().setScale(2)
+        return (if (raisesControlBalance) amount else amount.negate()).toPlainString()
+    }
 
     private fun lockInvocations() =
         mockingDetails(orgEntityAdvisoryLock).invocations.filter { it.method.name == "acquire" }

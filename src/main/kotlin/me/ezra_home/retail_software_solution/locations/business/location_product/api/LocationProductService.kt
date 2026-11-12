@@ -9,11 +9,11 @@ import me.ezra_home.retail_software_solution.locations.business.location_product
 import me.ezra_home.retail_software_solution.locations.business.location_product.LocationProductValidator
 import me.ezra_home.retail_software_solution.organizations.business.product.api.OrganizationProductService
 import me.ezra_home.retail_software_solution.organizations.business.product.api.ProductStatus
+import me.ezra_home.retail_software_solution.organizations.business.unitconversion.api.UnitConversionGraphFacade
 import me.ezra_home.retail_software_solution.util.business.Money
 import me.ezra_home.retail_software_solution.util.exceptions.RtsGenericException
 import me.ezra_home.retail_software_solution.util.exceptions.UpdatingNonExistingRecordException
 import org.springframework.stereotype.Service
-import java.math.BigDecimal
 import java.util.UUID
 
 @Service
@@ -23,7 +23,8 @@ class LocationProductService(
     private val locationProductCache: LocationProductCache,
     private val locationProductMapper: LocationProductMapper,
     private val locationProductEnricher: LocationProductEnricher,
-    private val organizationProductService: OrganizationProductService
+    private val organizationProductService: OrganizationProductService,
+    private val unitConversionGraphFacade: UnitConversionGraphFacade,
 ) {
 
     @TransactionalOnLocationSchema(readOnly = true)
@@ -35,9 +36,15 @@ class LocationProductService(
         )
     }
 
-    fun updateLastPurchasePrices(prices: Map<UUID, BigDecimal>) {
-        val products = locationProductRepository.findAllById(prices.keys)
-        products.forEach { it.lastPurchasePrice = prices[it.id] }
+    fun updateLastPurchaseCosts(lastPurchaseCostUpdateDtos: List<LastPurchaseCostUpdateDto>) {
+        val updatesByLocationProductId = lastPurchaseCostUpdateDtos.associateBy { it.locationProductId }
+        val products = locationProductRepository.findAllById(updatesByLocationProductId.keys)
+        val unitConversionGraph = unitConversionGraphFacade.getOrLoad()
+        products.forEach { product ->
+            val lastPurchaseCostUpdateDto = updatesByLocationProductId.getValue(product.id!!)
+            val storageUnitsPerBaseUnit = unitConversionGraph.getSizeInRoot(product.baseUnitId)
+            product.lastPurchasePrice = lastPurchaseCostUpdateDto.costPerBaseUnit(storageUnitsPerBaseUnit)
+        }
         locationProductRepository.saveAll(products)
         locationProductCache.evictAll()
     }
